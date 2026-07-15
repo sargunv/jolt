@@ -24,7 +24,7 @@ REPORTS = ROOT / "tools/bench/reports/machines"
 DRIVER = ROOT / "target/release/jolt_bench_driver"
 TIMING_DRIVER = WORK / "jolt_bench_driver-timing"
 ALLOCATION_DRIVER = WORK / "jolt_bench_driver-allocations"
-HARNESS_GENERATION = 1
+HARNESS_GENERATION = 2
 CORPUS_KEYS = REALISTIC_CORPUS_KEYS
 MODES = ("parse", "format", "end-to-end")
 
@@ -69,6 +69,12 @@ def measure(
                 "syntax": syntax,
                 "document": document,
                 "normalized": {
+                    **{
+                        f"{mode.replace('-', '_')}_ns_per_token": ratio(
+                            timing_median(stages[mode]), syntax["tokens"]
+                        )
+                        for mode in MODES
+                    },
                     "tree_reserved_bytes_per_token": ratio(
                         syntax["reserved_bytes"], syntax["tokens"]
                     ),
@@ -403,6 +409,9 @@ def print_summary(snapshot: dict[str, Any]) -> None:
         normalized = snapshot["corpora"][corpus]["structure"]["normalized"]
         print(
             f"{corpus:18} {'structure':10} "
+            f"{normalized['parse_ns_per_token']:.2f} parse ns/token, "
+            f"{normalized['format_ns_per_token']:.2f} format ns/token, "
+            f"{normalized['end_to_end_ns_per_token']:.2f} e2e ns/token, "
             f"{normalized['tree_reserved_bytes_per_token']:.2f} tree bytes/token, "
             f"{normalized['tree_reserved_bytes_per_node']:.2f} tree bytes/node, "
             f"{normalized['document_nodes_per_token']:.2f} doc nodes/token"

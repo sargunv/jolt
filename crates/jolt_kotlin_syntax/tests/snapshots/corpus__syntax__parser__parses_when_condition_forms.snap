@@ -15,98 +15,120 @@ fun conditionWhen(value: Int): String {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "conditionWhen" @ 4..17
-    ValueParameterList
-      LParen "(" @ 17..18
-      ValueParameter
-        Name
-          Identifier "value" @ 18..23
-        Colon ":" @ 23..24 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Int" @ 25..28
-      RParen ")" @ 28..29
-    Colon ":" @ 29..30 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "String" @ 31..37 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 38..39
-      Statement
-        ExpressionStatement
-          JumpExpression
-            ReturnKw "return" @ 44..50 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            WhenExpression
-              WhenKw "when" @ 51..55 trailing=[Whitespace " "]
-              WhenSubject
-                LParen "(" @ 56..57
-                NameExpression
-                  Identifier "value" @ 57..62
-                RParen ")" @ 62..63 trailing=[Whitespace " "]
-              LBrace "{" @ 64..65
-              WhenEntry
-                WhenCondition
-                  LiteralExpression
-                    IntegerLiteral "0" @ 74..75 leading=[Newline "\n", Whitespace "        "]
-                Comma "," @ 75..76 trailing=[Whitespace " "]
-                WhenCondition
-                  LiteralExpression
-                    IntegerLiteral "1" @ 77..78 trailing=[Whitespace " "]
-                Arrow "->" @ 79..81 trailing=[Whitespace " "]
-                StringTemplateExpression
-                  StringTemplateEntry
-                    OpenQuote "\"" @ 82..83
-                  StringTemplateEntry
-                    RegularStringPart "small" @ 83..88
-                  ClosingQuote "\"" @ 88..89
-              WhenEntry
-                WhenCondition
-                  InKw "in" @ 98..100 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                  BinaryExpression
-                    LiteralExpression
-                      IntegerLiteral "2" @ 101..102
-                    Range ".." @ 102..104
-                    LiteralExpression
-                      IntegerLiteral "10" @ 104..106 trailing=[Whitespace " "]
-                Arrow "->" @ 107..109 trailing=[Whitespace " "]
-                StringTemplateExpression
-                  StringTemplateEntry
-                    OpenQuote "\"" @ 110..111
-                  StringTemplateEntry
-                    RegularStringPart "medium" @ 111..117
-                  ClosingQuote "\"" @ 117..118
-              WhenEntry
-                WhenCondition
-                  NotIn "!in" @ 127..130 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                  BinaryExpression
-                    LiteralExpression
-                      IntegerLiteral "11" @ 131..133
-                    RangeUntil "..<" @ 133..136
-                    LiteralExpression
-                      IntegerLiteral "20" @ 136..138 trailing=[Whitespace " "]
-                Arrow "->" @ 139..141 trailing=[Whitespace " "]
-                StringTemplateExpression
-                  StringTemplateEntry
-                    OpenQuote "\"" @ 142..143
-                  StringTemplateEntry
-                    RegularStringPart "outside" @ 143..150
-                  ClosingQuote "\"" @ 150..151
-              WhenEntry
-                ElseKw "else" @ 160..164 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                Arrow "->" @ 165..167 trailing=[Whitespace " "]
-                StringTemplateExpression
-                  StringTemplateEntry
-                    OpenQuote "\"" @ 168..169
-                  StringTemplateEntry
-                    RegularStringPart "large" @ 169..174
-                  ClosingQuote "\"" @ 174..175
-              RBrace "}" @ 180..181 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 182..183 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "conditionWhen" @ 4..17
+      ValueParameterList
+        LParen "(" @ 17..18
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "value" @ 18..23
+            Colon ":" @ 23..24 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Int" @ 25..28
+        RParen ")" @ 28..29
+      Colon ":" @ 29..30 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "String" @ 31..37 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 38..39
+        BlockItemList
+          Statement
+            ExpressionStatement
+              JumpExpression
+                ReturnKw "return" @ 44..50 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                WhenExpression
+                  WhenKw "when" @ 51..55 trailing=[Whitespace " "]
+                  WhenSubject
+                    LParen "(" @ 56..57
+                    NameExpression
+                      Identifier "value" @ 57..62
+                    RParen ")" @ 62..63 trailing=[Whitespace " "]
+                  LBrace "{" @ 64..65
+                  WhenEntryList
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          LiteralExpression
+                            IntegerLiteral "0" @ 74..75 leading=[Newline "\n", Whitespace "        "]
+                        Comma "," @ 75..76 trailing=[Whitespace " "]
+                        WhenCondition
+                          LiteralExpression
+                            IntegerLiteral "1" @ 77..78 trailing=[Whitespace " "]
+                      Arrow "->" @ 79..81 trailing=[Whitespace " "]
+                      StringTemplateExpression
+                        StringTemplateEntryList
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 82..83
+                          StringTemplateEntry
+                            RegularStringPart "small" @ 83..88
+                        ClosingQuote "\"" @ 88..89
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          InKw "in" @ 98..100 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                          BinaryExpression
+                            LiteralExpression
+                              IntegerLiteral "2" @ 101..102
+                            Range ".." @ 102..104
+                            LiteralExpression
+                              IntegerLiteral "10" @ 104..106 trailing=[Whitespace " "]
+                      Arrow "->" @ 107..109 trailing=[Whitespace " "]
+                      StringTemplateExpression
+                        StringTemplateEntryList
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 110..111
+                          StringTemplateEntry
+                            RegularStringPart "medium" @ 111..117
+                        ClosingQuote "\"" @ 117..118
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          NotIn "!in" @ 127..130 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                          BinaryExpression
+                            LiteralExpression
+                              IntegerLiteral "11" @ 131..133
+                            RangeUntil "..<" @ 133..136
+                            LiteralExpression
+                              IntegerLiteral "20" @ 136..138 trailing=[Whitespace " "]
+                      Arrow "->" @ 139..141 trailing=[Whitespace " "]
+                      StringTemplateExpression
+                        StringTemplateEntryList
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 142..143
+                          StringTemplateEntry
+                            RegularStringPart "outside" @ 143..150
+                        ClosingQuote "\"" @ 150..151
+                    WhenEntry
+                      ElseKw "else" @ 160..164 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      WhenConditionSeparatedList
+                      Arrow "->" @ 165..167 trailing=[Whitespace " "]
+                      StringTemplateExpression
+                        StringTemplateEntryList
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 168..169
+                          StringTemplateEntry
+                            RegularStringPart "large" @ 169..174
+                        ClosingQuote "\"" @ 174..175
+                  RBrace "}" @ 180..181 leading=[Newline "\n", Whitespace "    "]
+            TerminatorList
+        RBrace "}" @ 182..183 leading=[Newline "\n"]
   Eof "" @ 184..184 leading=[Newline "\n"]
 
 diagnostics:

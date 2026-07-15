@@ -8,44 +8,57 @@ input:
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  Statement
-    ExpressionStatement
-      NavigationExpression
-        CallExpression
+    ImportDirectiveList
+  KotlinFileItemList
+    Statement
+      ExpressionStatement
+        NavigationExpression
           CallExpression
-            CollectionLiteralExpression
-              LBracket "[" @ 0..1 trailing=[Whitespace " "]
-              RBracket "]" @ 2..3 trailing=[Whitespace " "]
-            LambdaExpression
-              LBrace "{" @ 4..5 trailing=[Whitespace " "]
-              RBrace "}" @ 6..7 trailing=[Whitespace " "]
-          ValueArgumentList
-            LParen "(" @ 8..9 trailing=[Whitespace " "]
-            RParen ")" @ 10..11 trailing=[Whitespace " "]
-        Dot "." @ 12..13 trailing=[Whitespace " "]
-      ErrorNode
-        Question "?" @ 14..15 trailing=[Whitespace " "]
-      ErrorNode
-        ColonColon "::" @ 16..18 trailing=[Whitespace " "]
-      ErrorNode
-        Colon ":" @ 19..20 trailing=[Whitespace " "]
-    Semicolon ";" @ 21..22 trailing=[Whitespace " "]
-    DoubleSemicolon ";;" @ 23..25 trailing=[Whitespace " "]
-  Statement
-    ExpressionStatement
-      BinaryExpression
+            CallExpression
+              CollectionLiteralExpression
+                LBracket "[" @ 0..1 trailing=[Whitespace " "]
+                ValueArgumentSeparatedList
+                RBracket "]" @ 2..3 trailing=[Whitespace " "]
+              TypeArgumentListList
+              LambdaExpressionList
+                LambdaExpression
+                  LambdaBody
+                    LBrace "{" @ 4..5 trailing=[Whitespace " "]
+                    LambdaBodyItemList
+                    RBrace "}" @ 6..7 trailing=[Whitespace " "]
+            TypeArgumentListList
+            ValueArgumentList
+              LParen "(" @ 8..9 trailing=[Whitespace " "]
+              ValueArgumentEntryList
+              RParen ")" @ 10..11 trailing=[Whitespace " "]
+            LambdaExpressionList
+          Dot "." @ 12..13 trailing=[Whitespace " "]
         ErrorNode
-          Range ".." @ 26..28 trailing=[Whitespace " "]
-        RangeUntil "..<" @ 29..32 trailing=[Whitespace " "]
+          Question "?" @ 14..15 trailing=[Whitespace " "]
         ErrorNode
-          Assign "=" @ 33..34 trailing=[Whitespace " "]
-      ErrorNode
-        Hash "#" @ 35..36 trailing=[Whitespace " "]
-      ErrorNode
-        At "@" @ 37..38 trailing=[Whitespace " "]
-      ErrorNode
-        Comma "," @ 39..40
+          ColonColon "::" @ 16..18 trailing=[Whitespace " "]
+        ErrorNode
+          Colon ":" @ 19..20 trailing=[Whitespace " "]
+      TerminatorList
+        Semicolon ";" @ 21..22 trailing=[Whitespace " "]
+        DoubleSemicolon ";;" @ 23..25 trailing=[Whitespace " "]
+    Statement
+      ExpressionStatement
+        BinaryExpression
+          ErrorNode
+            Range ".." @ 26..28 trailing=[Whitespace " "]
+          RangeUntil "..<" @ 29..32 trailing=[Whitespace " "]
+          ErrorNode
+            Assign "=" @ 33..34 trailing=[Whitespace " "]
+        ErrorNode
+          Hash "#" @ 35..36 trailing=[Whitespace " "]
+        ErrorNode
+          At "@" @ 37..38 trailing=[Whitespace " "]
+        ErrorNode
+          Comma "," @ 39..40
+      TerminatorList
   Eof "" @ 41..41 leading=[Newline "\n"]
 
 diagnostics:

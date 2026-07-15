@@ -13,93 +13,118 @@ fun unary(counter: Counter): Int {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "unary" @ 4..9
-    ValueParameterList
-      LParen "(" @ 9..10
-      ValueParameter
-        Name
-          Identifier "counter" @ 10..17
-        Colon ":" @ 17..18 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Counter" @ 19..26
-      RParen ")" @ 26..27
-    Colon ":" @ 27..28 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "Int" @ 29..32 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 33..34
-      PropertyDeclaration
-        VarKw "var" @ 39..42 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
           Name
-            Identifier "index" @ 43..48 trailing=[Whitespace " "]
-        Assign "=" @ 49..50 trailing=[Whitespace " "]
-        LiteralExpression
-          IntegerLiteral "0" @ 51..52
-      PropertyDeclaration
-        ValKw "val" @ 57..60 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "before" @ 61..67 trailing=[Whitespace " "]
-        Assign "=" @ 68..69 trailing=[Whitespace " "]
-        BinaryExpression
-          UnaryExpression
-            PlusPlus "++" @ 70..72
-            NameExpression
-              Identifier "index" @ 72..77 trailing=[Whitespace " "]
-          Plus "+" @ 78..79 trailing=[Whitespace " "]
-          PostfixExpression
-            NavigationExpression
-              NameExpression
-                Identifier "counter" @ 80..87
-              Dot "." @ 87..88
-              Identifier "value" @ 88..93
-            MinusMinus "--" @ 93..95
-      PropertyDeclaration
-        ValKw "val" @ 100..103 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "after" @ 104..109 trailing=[Whitespace " "]
-        Assign "=" @ 110..111 trailing=[Whitespace " "]
-        BinaryExpression
-          UnaryExpression
-            Minus "-" @ 112..113
-            NameExpression
-              Identifier "before" @ 113..119 trailing=[Whitespace " "]
-          Plus "+" @ 120..121 trailing=[Whitespace " "]
-          UnaryExpression
-            Plus "+" @ 122..123
-            NameExpression
-              Identifier "index" @ 123..128
-      Statement
-        ExpressionStatement
-          JumpExpression
-            ReturnKw "return" @ 133..139 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            IfExpression
-              IfKw "if" @ 140..142 trailing=[Whitespace " "]
-              ParenthesizedExpression
-                LParen "(" @ 143..144
-                UnaryExpression
-                  Bang "!" @ 144..145
-                  NavigationExpression
-                    NameExpression
-                      Identifier "counter" @ 145..152
-                    Dot "." @ 152..153
-                    Identifier "done" @ 153..157
-                RParen ")" @ 157..158 trailing=[Whitespace " "]
-              NameExpression
-                Identifier "after" @ 159..164 trailing=[Whitespace " "]
-              ElseKw "else" @ 165..169 trailing=[Whitespace " "]
-              NameExpression
-                Identifier "before" @ 170..176
-      RBrace "}" @ 177..178 leading=[Newline "\n"]
+            Identifier "unary" @ 4..9
+      ValueParameterList
+        LParen "(" @ 9..10
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "counter" @ 10..17
+            Colon ":" @ 17..18 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Counter" @ 19..26
+        RParen ")" @ 26..27
+      Colon ":" @ 27..28 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "Int" @ 29..32 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 33..34
+        BlockItemList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            VarKw "var" @ 39..42 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "index" @ 43..48 trailing=[Whitespace " "]
+            Assign "=" @ 49..50 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "0" @ 51..52
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 57..60 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "before" @ 61..67 trailing=[Whitespace " "]
+            Assign "=" @ 68..69 trailing=[Whitespace " "]
+            BinaryExpression
+              UnaryExpression
+                PlusPlus "++" @ 70..72
+                NameExpression
+                  Identifier "index" @ 72..77 trailing=[Whitespace " "]
+              Plus "+" @ 78..79 trailing=[Whitespace " "]
+              PostfixExpression
+                NavigationExpression
+                  NameExpression
+                    Identifier "counter" @ 80..87
+                  Dot "." @ 87..88
+                  Identifier "value" @ 88..93
+                MinusMinus "--" @ 93..95
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 100..103 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "after" @ 104..109 trailing=[Whitespace " "]
+            Assign "=" @ 110..111 trailing=[Whitespace " "]
+            BinaryExpression
+              UnaryExpression
+                Minus "-" @ 112..113
+                NameExpression
+                  Identifier "before" @ 113..119 trailing=[Whitespace " "]
+              Plus "+" @ 120..121 trailing=[Whitespace " "]
+              UnaryExpression
+                Plus "+" @ 122..123
+                NameExpression
+                  Identifier "index" @ 123..128
+            PropertyBodyMemberList
+          Statement
+            ExpressionStatement
+              JumpExpression
+                ReturnKw "return" @ 133..139 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                IfExpression
+                  IfKw "if" @ 140..142 trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 143..144
+                    UnaryExpression
+                      Bang "!" @ 144..145
+                      NavigationExpression
+                        NameExpression
+                          Identifier "counter" @ 145..152
+                        Dot "." @ 152..153
+                        Identifier "done" @ 153..157
+                    RParen ")" @ 157..158 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "after" @ 159..164 trailing=[Whitespace " "]
+                  ElseKw "else" @ 165..169 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "before" @ 170..176
+            TerminatorList
+        RBrace "}" @ 177..178 leading=[Newline "\n"]
   Eof "" @ 179..179 leading=[Newline "\n"]
 
 diagnostics:

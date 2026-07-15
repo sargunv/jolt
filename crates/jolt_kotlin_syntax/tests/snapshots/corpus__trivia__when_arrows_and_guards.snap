@@ -19,134 +19,171 @@ fun describe(event: Event): String =
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "trivia" @ 20..26
+      QualifiedNameSegmentList
+        Name
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "trivia" @ 20..26
+    TerminatorList
   ImportList
-  InterfaceDeclaration
-    ModifierList
-      Identifier "sealed" @ 28..34 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    InterfaceKw "interface" @ 35..44 trailing=[Whitespace " "]
-    Name
-      Identifier "Event" @ 45..50 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 51..52
-      ClassMemberDeclaration
-        ClassDeclaration
-          ModifierList
-            Identifier "data" @ 57..61 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          ClassKw "class" @ 62..67 trailing=[Whitespace " "]
+    ImportDirectiveList
+  KotlinFileItemList
+    InterfaceDeclaration
+      ModifierListSequence
+        ModifierList
+          ModifierItemList
+            Identifier "sealed" @ 28..34 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierListSequence
+      InterfaceKw "interface" @ 35..44 trailing=[Whitespace " "]
+      Name
+        Identifier "Event" @ 45..50 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 51..52
+        ClassMemberList
+          ClassMemberDeclaration
+            ClassDeclaration
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "data" @ 57..61 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              ClassKw "class" @ 62..67 trailing=[Whitespace " "]
+              Name
+                Identifier "Click" @ 68..73
+              PrimaryConstructor
+                ModifierListSequence
+                ValueParameterList
+                  LParen "(" @ 73..74
+                  ValueParameterSeparatedList
+                    ValueParameter
+                      ModifierListSequence
+                      ValKw "val" @ 74..77 trailing=[Whitespace " "]
+                      Name
+                        Identifier "button" @ 78..84
+                      Colon ":" @ 84..85 trailing=[Whitespace " "]
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            Identifier "Int" @ 86..89
+                  RParen ")" @ 89..90 trailing=[Whitespace " "]
+              Colon ":" @ 91..92 trailing=[Whitespace " "]
+              DelegationSpecifierList
+                DelegationSpecifierSeparatedList
+                  DelegationSpecifier
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          Identifier "Event" @ 93..98
+          ClassMemberDeclaration
+            ObjectDeclaration
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "data" @ 103..107 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              ObjectKw "object" @ 108..114 trailing=[Whitespace " "]
+              Name
+                Identifier "Idle" @ 115..119 trailing=[Whitespace " "]
+              Colon ":" @ 120..121 trailing=[Whitespace " "]
+              DelegationSpecifierList
+                DelegationSpecifierSeparatedList
+                  DelegationSpecifier
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          Identifier "Event" @ 122..127
+        RBrace "}" @ 128..129 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 131..134 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
           Name
-            Identifier "Click" @ 68..73
-          PrimaryConstructor
-            ValueParameterList
-              LParen "(" @ 73..74
-              ValueParameter
-                ValKw "val" @ 74..77 trailing=[Whitespace " "]
-                Name
-                  Identifier "button" @ 78..84
-                Colon ":" @ 84..85 trailing=[Whitespace " "]
+            Identifier "describe" @ 135..143
+      ValueParameterList
+        LParen "(" @ 143..144
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "event" @ 144..149
+            Colon ":" @ 149..150 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Event" @ 151..156
+        RParen ")" @ 156..157
+      Colon ":" @ 157..158 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "String" @ 159..165 trailing=[Whitespace " "]
+      Assign "=" @ 166..167
+      WhenExpression
+        WhenKw "when" @ 172..176 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-keyword */", Whitespace " "]
+        WhenSubject
+          LParen "(" @ 208..209
+          NameExpression
+            Identifier "event" @ 209..214
+          RParen ")" @ 214..215 trailing=[Whitespace " "]
+        LBrace "{" @ 216..217
+        WhenEntryList
+          WhenEntry
+            WhenConditionSeparatedList
+              WhenCondition
+                IsKw "is" @ 226..228 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                 TypeReference
                   UserType
-                    Identifier "Int" @ 86..89
-              RParen ")" @ 89..90 trailing=[Whitespace " "]
-          Colon ":" @ 91..92 trailing=[Whitespace " "]
-          DelegationSpecifierList
-            DelegationSpecifier
-              TypeReference
-                UserType
-                  Identifier "Event" @ 93..98
-      ClassMemberDeclaration
-        ObjectDeclaration
-          ModifierList
-            Identifier "data" @ 103..107 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          ObjectKw "object" @ 108..114 trailing=[Whitespace " "]
-          Name
-            Identifier "Idle" @ 115..119 trailing=[Whitespace " "]
-          Colon ":" @ 120..121 trailing=[Whitespace " "]
-          DelegationSpecifierList
-            DelegationSpecifier
-              TypeReference
-                UserType
-                  Identifier "Event" @ 122..127
-      RBrace "}" @ 128..129 leading=[Newline "\n"]
-  FunctionDeclaration
-    FunKw "fun" @ 131..134 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "describe" @ 135..143
-    ValueParameterList
-      LParen "(" @ 143..144
-      ValueParameter
-        Name
-          Identifier "event" @ 144..149
-        Colon ":" @ 149..150 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Event" @ 151..156
-      RParen ")" @ 156..157
-    Colon ":" @ 157..158 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "String" @ 159..165 trailing=[Whitespace " "]
-    Assign "=" @ 166..167
-    WhenExpression
-      WhenKw "when" @ 172..176 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-keyword */", Whitespace " "]
-      WhenSubject
-        LParen "(" @ 208..209
-        NameExpression
-          Identifier "event" @ 209..214
-        RParen ")" @ 214..215 trailing=[Whitespace " "]
-      LBrace "{" @ 216..217
-      WhenEntry
-        WhenCondition
-          IsKw "is" @ 226..228 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Event" @ 229..234
-              Dot "." @ 234..235
-              Identifier "Click" @ 235..240 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-condition */", Whitespace " "]
-        WhenGuard
-          IfKw "if" @ 274..276 trailing=[Whitespace " "]
-          BinaryExpression
-            NavigationExpression
-              NameExpression
-                Identifier "event" @ 277..282
-              Dot "." @ 282..283
-              Identifier "button" @ 283..289 trailing=[Whitespace " "]
-            EqEq "==" @ 290..292 trailing=[Whitespace " "]
-            LiteralExpression
-              IntegerLiteral "1" @ 293..294 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-guard */", Whitespace " "]
-        Arrow "->" @ 324..326 trailing=[Whitespace " "]
-        StringTemplateExpression
-          StringTemplateEntry
-            OpenQuote "\"" @ 327..328
-          StringTemplateEntry
-            RegularStringPart "primary" @ 328..335
-          ClosingQuote "\"" @ 335..336
-      WhenEntry
-        WhenCondition
-          NavigationExpression
-            NameExpression
-              Identifier "Event" @ 345..350 leading=[Newline "\n", Whitespace "        "]
-            Dot "." @ 350..351
-            Identifier "Idle" @ 351..355 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:object-case */", Whitespace " "]
-        Arrow "->" @ 386..388 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:arrow-right */", Whitespace " "]
-        StringTemplateExpression
-          StringTemplateEntry
-            OpenQuote "\"" @ 419..420
-          StringTemplateEntry
-            RegularStringPart "idle" @ 420..424
-          ClosingQuote "\"" @ 424..425
-      RBrace "}" @ 430..431 leading=[Newline "\n", Whitespace "    "]
+                    UserTypeSegmentList
+                      Identifier "Event" @ 229..234
+                      Dot "." @ 234..235
+                      Identifier "Click" @ 235..240 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-condition */", Whitespace " "]
+            WhenGuard
+              IfKw "if" @ 274..276 trailing=[Whitespace " "]
+              BinaryExpression
+                NavigationExpression
+                  NameExpression
+                    Identifier "event" @ 277..282
+                  Dot "." @ 282..283
+                  Identifier "button" @ 283..289 trailing=[Whitespace " "]
+                EqEq "==" @ 290..292 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "1" @ 293..294 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-guard */", Whitespace " "]
+            Arrow "->" @ 324..326 trailing=[Whitespace " "]
+            StringTemplateExpression
+              StringTemplateEntryList
+                StringTemplateEntry
+                  OpenQuote "\"" @ 327..328
+                StringTemplateEntry
+                  RegularStringPart "primary" @ 328..335
+              ClosingQuote "\"" @ 335..336
+          WhenEntry
+            WhenConditionSeparatedList
+              WhenCondition
+                NavigationExpression
+                  NameExpression
+                    Identifier "Event" @ 345..350 leading=[Newline "\n", Whitespace "        "]
+                  Dot "." @ 350..351
+                  Identifier "Idle" @ 351..355 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:object-case */", Whitespace " "]
+            Arrow "->" @ 386..388 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:arrow-right */", Whitespace " "]
+            StringTemplateExpression
+              StringTemplateEntryList
+                StringTemplateEntry
+                  OpenQuote "\"" @ 419..420
+                StringTemplateEntry
+                  RegularStringPart "idle" @ 420..424
+              ClosingQuote "\"" @ 424..425
+        RBrace "}" @ 430..431 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 432..432 leading=[Newline "\n"]
 
 diagnostics:

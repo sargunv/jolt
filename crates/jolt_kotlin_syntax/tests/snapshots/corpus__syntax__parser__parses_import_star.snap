@@ -12,50 +12,65 @@ class StarImport(val names: List<String>)
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "samples" @ 8..15
-      Dot "." @ 15..16
-      Name
-        Identifier "imports" @ 16..23
+      QualifiedNameSegmentList
+        Name
+          Identifier "samples" @ 8..15
+        Dot "." @ 15..16
+        Name
+          Identifier "imports" @ 16..23
+    TerminatorList
   ImportList
-    ImportDirective
-      Identifier "import" @ 25..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        Name
-          Identifier "kotlin" @ 32..38
-        Dot "." @ 38..39
-        Name
-          Identifier "collections" @ 39..50
-        Dot "." @ 50..51
-      Star "*" @ 51..52
-  ClassDeclaration
-    ClassKw "class" @ 54..59 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "StarImport" @ 60..70
-    PrimaryConstructor
-      ValueParameterList
-        LParen "(" @ 70..71
-        ValueParameter
-          ValKw "val" @ 71..74 trailing=[Whitespace " "]
-          Name
-            Identifier "names" @ 75..80
-          Colon ":" @ 80..81 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "List" @ 82..86
-              TypeArgumentList
-                Lt "<" @ 86..87
-                TypeProjectionList
-                  TypeArgument
-                    TypeProjection
-                      TypeReference
-                        UserType
-                          Identifier "String" @ 87..93
-                Gt ">" @ 93..94
-        RParen ")" @ 94..95
+    ImportDirectiveList
+      ImportDirective
+        Identifier "import" @ 25..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "kotlin" @ 32..38
+            Dot "." @ 38..39
+            Name
+              Identifier "collections" @ 39..50
+            Dot "." @ 50..51
+        Star "*" @ 51..52
+        TerminatorList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 54..59 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "StarImport" @ 60..70
+      PrimaryConstructor
+        ModifierListSequence
+        ValueParameterList
+          LParen "(" @ 70..71
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierListSequence
+              ValKw "val" @ 71..74 trailing=[Whitespace " "]
+              Name
+                Identifier "names" @ 75..80
+              Colon ":" @ 80..81 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "List" @ 82..86
+                    TypeArgumentList
+                      Lt "<" @ 86..87
+                      TypeProjectionList
+                        TypeProjectionSeparatedList
+                          TypeArgument
+                            TypeProjection
+                              TypeReference
+                                UserType
+                                  UserTypeSegmentList
+                                    Identifier "String" @ 87..93
+                      Gt ">" @ 93..94
+          RParen ")" @ 94..95
   Eof "" @ 96..96 leading=[Newline "\n"]
 
 diagnostics:

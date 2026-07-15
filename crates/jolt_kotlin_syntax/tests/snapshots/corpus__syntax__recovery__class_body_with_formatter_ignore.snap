@@ -14,44 +14,63 @@ class Demo {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Name
-      Identifier "Demo" @ 6..10 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 11..12
-      ClassMemberDeclaration
-        FunctionDeclaration
-          FunKw "fun" @ 15..18 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "before" @ 19..25
-          ValueParameterList
-            LParen "(" @ 25..26
-            RParen ")" @ 26..27 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 28..29
-            RBrace "}" @ 29..30
-      ClassMemberDeclaration
-        FunctionDeclaration
-          FunKw "fun" @ 53..56 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "raw" @ 57..60
-          ValueParameterList
-            LParen "(" @ 60..61
-            RParen ")" @ 61..62
-          Block
-            LBrace "{" @ 62..63 trailing=[Whitespace " "]
-            RBrace "}" @ 64..65
-      ClassMemberDeclaration
-        Statement
-          ExpressionStatement
-            UnaryExpression
-              Plus "+" @ 100..101 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  ", BlockComment "/* member */", Whitespace " "]
-              ErrorNode
-      RBrace "}" @ 102..103 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "Demo" @ 6..10 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 11..12
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              FunKw "fun" @ 15..18 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "before" @ 19..25
+              ValueParameterList
+                LParen "(" @ 25..26
+                ValueParameterSeparatedList
+                RParen ")" @ 26..27 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 28..29
+                BlockItemList
+                RBrace "}" @ 29..30
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              FunKw "fun" @ 53..56 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "raw" @ 57..60
+              ValueParameterList
+                LParen "(" @ 60..61
+                ValueParameterSeparatedList
+                RParen ")" @ 61..62
+              Block
+                LBrace "{" @ 62..63 trailing=[Whitespace " "]
+                BlockItemList
+                RBrace "}" @ 64..65
+          ClassMemberDeclaration
+            Statement
+              ExpressionStatement
+                UnaryExpression
+                  Plus "+" @ 100..101 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  ", BlockComment "/* member */", Whitespace " "]
+                  ErrorNode
+              TerminatorList
+        RBrace "}" @ 102..103 leading=[Newline "\n"]
   Eof "" @ 104..104 leading=[Newline "\n"]
 
 diagnostics:

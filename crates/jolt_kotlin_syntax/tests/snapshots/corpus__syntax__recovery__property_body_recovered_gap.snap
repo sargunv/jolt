@@ -9,31 +9,43 @@ val property: Int +
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  PropertyDeclaration
-    ValKw "val" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "property" @ 4..12
-    Colon ":" @ 12..13 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "Int" @ 14..17 trailing=[Whitespace " "]
-  Statement
-    ExpressionStatement
-      AssignmentExpression
-        ErrorNode
-          UnaryExpression
-            Plus "+" @ 18..19
-            CallExpression
-              NameExpression
-                Identifier "get" @ 24..27 leading=[Newline "\n", Whitespace "    "]
-              ValueArgumentList
-                LParen "(" @ 27..28
-                RParen ")" @ 28..29 trailing=[Whitespace " "]
-        Assign "=" @ 30..31 trailing=[Whitespace " "]
-        LiteralExpression
-          IntegerLiteral "1" @ 32..33
+    ImportDirectiveList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "property" @ 4..12
+      Colon ":" @ 12..13 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "Int" @ 14..17 trailing=[Whitespace " "]
+      PropertyBodyMemberList
+    Statement
+      ExpressionStatement
+        AssignmentExpression
+          ErrorNode
+            UnaryExpression
+              Plus "+" @ 18..19
+              CallExpression
+                NameExpression
+                  Identifier "get" @ 24..27 leading=[Newline "\n", Whitespace "    "]
+                TypeArgumentListList
+                ValueArgumentList
+                  LParen "(" @ 27..28
+                  ValueArgumentEntryList
+                  RParen ")" @ 28..29 trailing=[Whitespace " "]
+                LambdaExpressionList
+          Assign "=" @ 30..31 trailing=[Whitespace " "]
+          LiteralExpression
+            IntegerLiteral "1" @ 32..33
+      TerminatorList
   Eof "" @ 34..34 leading=[Newline "\n"]
 
 diagnostics:

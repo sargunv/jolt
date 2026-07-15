@@ -3,7 +3,8 @@ source: crates/jolt_kotlin_fmt/tests/corpus.rs
 expression: snapshot
 ---
 formatted:
-
+// Copyright 2026 Example
+// A comment-only Kotlin file with a final newline.
 
 diagnostics:
 (none)

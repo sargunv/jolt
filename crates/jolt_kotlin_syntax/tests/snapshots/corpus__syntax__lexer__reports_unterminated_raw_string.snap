@@ -8,16 +8,21 @@ input:
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  Statement
-    ExpressionStatement
-      StringTemplateExpression
-        StringTemplateEntry
-          OpenQuote "\"\"\"" @ 0..3
-        StringTemplateEntry
-          RegularStringPart "abc" @ 3..6
-        StringTemplateEntry
-          RegularStringPart "\n" @ 6..7
+    ImportDirectiveList
+  KotlinFileItemList
+    Statement
+      ExpressionStatement
+        StringTemplateExpression
+          StringTemplateEntryList
+            StringTemplateEntry
+              OpenQuote "\"\"\"" @ 0..3
+            StringTemplateEntry
+              RegularStringPart "abc" @ 3..6
+            StringTemplateEntry
+              RegularStringPart "\n" @ 6..7
+      TerminatorList
   Eof "" @ 7..7
 
 diagnostics:

@@ -37,6 +37,7 @@ impl Parser<'_> {
     pub(in crate::parser::grammar) fn parse_class_body(&mut self) {
         let marker = self.start();
         self.expect(K::LBrace, "expected class body");
+        let members = self.start();
         while !self.at_block_end() {
             if self.eat_optional_separators() && self.at_block_end() {
                 break;
@@ -52,11 +53,12 @@ impl Parser<'_> {
                 self.recover_class_member();
                 self.ensure_progress(before, "expected class member");
             }
-            self.complete(member, K::ClassMemberDeclaration);
             if self.at(K::Comma) {
                 self.bump();
             }
+            self.complete(member, K::ClassMemberDeclaration);
         }
+        self.complete(members, K::ClassMemberList);
         self.expect(K::RBrace, "expected '}' after class body");
         self.complete(marker, K::ClassBody);
     }

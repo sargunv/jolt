@@ -9,56 +9,75 @@ values[/* index */ , 0] }
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "demo" @ 4..8
-    ValueParameterList
-      LParen "(" @ 8..9
-      ValueParameter
-        Name
-          Identifier "values" @ 9..15
-        Colon ":" @ 15..16 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "List" @ 17..21
-            TypeArgumentList
-              Lt "<" @ 21..22
-              TypeProjectionList
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "Int" @ 22..25
-              Gt ">" @ 25..26
-      RParen ")" @ 26..27 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 28..29 trailing=[Whitespace " "]
-      Statement
-        ExpressionStatement
-          CollectionLiteralExpression
-            LBracket "[" @ 30..31 trailing=[BlockComment "/* collection */", Whitespace " "]
-            Comma "," @ 48..49 trailing=[Whitespace " "]
-            ErrorNode
-            ValueArgument
-              NameExpression
-                Identifier "value" @ 50..55
-            RBracket "]" @ 55..56
-      Statement
-        ExpressionStatement
-          IndexExpression
-            NameExpression
-              Identifier "values" @ 57..63 leading=[Newline "\n"]
-            LBracket "[" @ 63..64 trailing=[BlockComment "/* index */", Whitespace " "]
-            Comma "," @ 76..77 trailing=[Whitespace " "]
-            ErrorNode
-            ValueArgument
-              LiteralExpression
-                IntegerLiteral "0" @ 78..79
-            RBracket "]" @ 79..80 trailing=[Whitespace " "]
-      RBrace "}" @ 81..82
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "demo" @ 4..8
+      ValueParameterList
+        LParen "(" @ 8..9
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "values" @ 9..15
+            Colon ":" @ 15..16 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "List" @ 17..21
+                  TypeArgumentList
+                    Lt "<" @ 21..22
+                    TypeProjectionList
+                      TypeProjectionSeparatedList
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "Int" @ 22..25
+                    Gt ">" @ 25..26
+        RParen ")" @ 26..27 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 28..29 trailing=[Whitespace " "]
+        BlockItemList
+          Statement
+            ExpressionStatement
+              CollectionLiteralExpression
+                LBracket "[" @ 30..31 trailing=[BlockComment "/* collection */", Whitespace " "]
+                ValueArgumentSeparatedList
+                  Comma "," @ 48..49 trailing=[Whitespace " "]
+                  ErrorNode
+                  ValueArgument
+                    ValueArgumentPrefixList
+                    NameExpression
+                      Identifier "value" @ 50..55
+                RBracket "]" @ 55..56
+            TerminatorList
+          Statement
+            ExpressionStatement
+              IndexExpression
+                NameExpression
+                  Identifier "values" @ 57..63 leading=[Newline "\n"]
+                LBracket "[" @ 63..64 trailing=[BlockComment "/* index */", Whitespace " "]
+                ValueArgumentSeparatedList
+                  Comma "," @ 76..77 trailing=[Whitespace " "]
+                  ErrorNode
+                  ValueArgument
+                    ValueArgumentPrefixList
+                    LiteralExpression
+                      IntegerLiteral "0" @ 78..79
+                RBracket "]" @ 79..80 trailing=[Whitespace " "]
+            TerminatorList
+        RBrace "}" @ 81..82
   Eof "" @ 83..83 leading=[Newline "\n"]
 
 diagnostics:

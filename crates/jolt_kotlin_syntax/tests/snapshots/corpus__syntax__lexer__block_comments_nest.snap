@@ -8,15 +8,22 @@ val x /* outer /* inner */ outer */ = 1
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  PropertyDeclaration
-    ValKw "val" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "x" @ 4..5 trailing=[Whitespace " ", BlockComment "/* outer /* inner */ outer */", Whitespace " "]
-    Assign "=" @ 36..37 trailing=[Whitespace " "]
-    LiteralExpression
-      IntegerLiteral "1" @ 38..39
+    ImportDirectiveList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "x" @ 4..5 trailing=[Whitespace " ", BlockComment "/* outer /* inner */ outer */", Whitespace " "]
+      Assign "=" @ 36..37 trailing=[Whitespace " "]
+      LiteralExpression
+        IntegerLiteral "1" @ 38..39
+      PropertyBodyMemberList
   Eof "" @ 40..40 leading=[Newline "\n"]
 
 diagnostics:

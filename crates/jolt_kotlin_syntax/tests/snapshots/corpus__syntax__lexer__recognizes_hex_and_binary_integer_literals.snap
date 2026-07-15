@@ -8,17 +8,21 @@ input:
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  Statement
-    ExpressionStatement
-      LiteralExpression
-        IntegerLiteral "0xCAFE" @ 0..6 trailing=[Whitespace " "]
-      ErrorNode
-        IntegerLiteral "0Xdead_BEEF" @ 7..18 trailing=[Whitespace " "]
-      ErrorNode
-        IntegerLiteral "0b1010" @ 19..25 trailing=[Whitespace " "]
-      ErrorNode
-        IntegerLiteral "0B1111" @ 26..32
+    ImportDirectiveList
+  KotlinFileItemList
+    Statement
+      ExpressionStatement
+        LiteralExpression
+          IntegerLiteral "0xCAFE" @ 0..6 trailing=[Whitespace " "]
+        ErrorNode
+          IntegerLiteral "0Xdead_BEEF" @ 7..18 trailing=[Whitespace " "]
+        ErrorNode
+          IntegerLiteral "0b1010" @ 19..25 trailing=[Whitespace " "]
+        ErrorNode
+          IntegerLiteral "0B1111" @ 26..32
+      TerminatorList
   Eof "" @ 33..33 leading=[Newline "\n"]
 
 diagnostics:

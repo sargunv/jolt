@@ -24,127 +24,176 @@ val cached: String /* JOLT-TRIVIA:property-delegate-type */ by lazy /* JOLT-TRIV
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "trivia" @ 20..26
+      QualifiedNameSegmentList
+        Name
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "trivia" @ 20..26
+    TerminatorList
   ImportList
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 28..37 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Logger" @ 38..44 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 45..46
-      ClassMemberDeclaration
-        FunctionDeclaration
-          FunKw "fun" @ 51..54 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "log" @ 55..58
-          ValueParameterList
-            LParen "(" @ 58..59
-            ValueParameter
-              Name
-                Identifier "message" @ 59..66
-              Colon ":" @ 66..67 trailing=[Whitespace " "]
-              TypeReference
-                UserType
-                  Identifier "String" @ 68..74
-            RParen ")" @ 74..75
-      RBrace "}" @ 76..77 leading=[Newline "\n"]
-  ClassDeclaration
-    ClassKw "class" @ 79..84 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "ConsoleLogger" @ 85..98 trailing=[Whitespace " "]
-    Colon ":" @ 99..100 trailing=[Whitespace " "]
-    DelegationSpecifierList
-      DelegationSpecifier
-        TypeReference
-          UserType
-            Identifier "Logger" @ 101..107 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 108..109
-      ClassMemberDeclaration
-        FunctionDeclaration
-          ModifierList
-            Identifier "override" @ 114..122 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          FunKw "fun" @ 123..126 trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "log" @ 127..130
-          ValueParameterList
-            LParen "(" @ 130..131
-            ValueParameter
-              Name
-                Identifier "message" @ 131..138
-              Colon ":" @ 138..139 trailing=[Whitespace " "]
-              TypeReference
-                UserType
-                  Identifier "String" @ 140..146
-            RParen ")" @ 146..147 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 148..149
-            RBrace "}" @ 149..150
-      RBrace "}" @ 151..152 leading=[Newline "\n"]
-  ClassDeclaration
-    ClassKw "class" @ 154..159 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Service" @ 160..167
-    PrimaryConstructor
-      ValueParameterList
-        LParen "(" @ 167..168
-        ValueParameter
-          ModifierList
-            Identifier "private" @ 173..180 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          ValKw "val" @ 181..184 trailing=[Whitespace " "]
-          Name
-            Identifier "logger" @ 185..191
-          Colon ":" @ 191..192 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Logger" @ 193..199
-        Comma "," @ 199..200
-        RParen ")" @ 201..202 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Colon ":" @ 203..204 trailing=[Whitespace " "]
-    DelegationSpecifierList
-      DelegationSpecifier
-        TypeReference
-          UserType
-            Identifier "Logger" @ 205..211 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:delegation-type */", Whitespace " "]
-        Identifier "by" @ 246..248 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:delegation-by */", Whitespace " "]
-        NameExpression
-          Identifier "logger" @ 281..287
-  PropertyDeclaration
-    ValKw "val" @ 289..292 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    CallableName
+    ImportDirectiveList
+  KotlinFileItemList
+    InterfaceDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      InterfaceKw "interface" @ 28..37 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
-        Identifier "cached" @ 293..299
-    Colon ":" @ 299..300 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "String" @ 301..307 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-delegate-type */", Whitespace " "]
-    Identifier "by" @ 349..351 trailing=[Whitespace " "]
-    CallExpression
-      NameExpression
-        Identifier "lazy" @ 352..356 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-by */", Whitespace " "]
-      LambdaExpression
-        LBrace "{" @ 387..388
-        Statement
-          ExpressionStatement
-            StringTemplateExpression
-              StringTemplateEntry
-                OpenQuote "\"" @ 393..394 leading=[Newline "\n", Whitespace "    "]
-              StringTemplateEntry
-                RegularStringPart "value" @ 394..399
-              ClosingQuote "\"" @ 399..400
-        RBrace "}" @ 401..402 leading=[Newline "\n"]
+        Identifier "Logger" @ 38..44 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 45..46
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              FunKw "fun" @ 51..54 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "log" @ 55..58
+              ValueParameterList
+                LParen "(" @ 58..59
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierListSequence
+                    Name
+                      Identifier "message" @ 59..66
+                    Colon ":" @ 66..67 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          Identifier "String" @ 68..74
+                RParen ")" @ 74..75
+        RBrace "}" @ 76..77 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 79..84 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "ConsoleLogger" @ 85..98 trailing=[Whitespace " "]
+      Colon ":" @ 99..100 trailing=[Whitespace " "]
+      DelegationSpecifierList
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Logger" @ 101..107 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 108..109
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "override" @ 114..122 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              FunKw "fun" @ 123..126 trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "log" @ 127..130
+              ValueParameterList
+                LParen "(" @ 130..131
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierListSequence
+                    Name
+                      Identifier "message" @ 131..138
+                    Colon ":" @ 138..139 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          Identifier "String" @ 140..146
+                RParen ")" @ 146..147 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 148..149
+                BlockItemList
+                RBrace "}" @ 149..150
+        RBrace "}" @ 151..152 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 154..159 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Service" @ 160..167
+      PrimaryConstructor
+        ModifierListSequence
+        ValueParameterList
+          LParen "(" @ 167..168
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "private" @ 173..180 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ValKw "val" @ 181..184 trailing=[Whitespace " "]
+              Name
+                Identifier "logger" @ 185..191
+              Colon ":" @ 191..192 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Logger" @ 193..199
+            Comma "," @ 199..200
+          RParen ")" @ 201..202 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Colon ":" @ 203..204 trailing=[Whitespace " "]
+      DelegationSpecifierList
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Logger" @ 205..211 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:delegation-type */", Whitespace " "]
+            Identifier "by" @ 246..248 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:delegation-by */", Whitespace " "]
+            NameExpression
+              Identifier "logger" @ 281..287
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 289..292 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "cached" @ 293..299
+      Colon ":" @ 299..300 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "String" @ 301..307 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-delegate-type */", Whitespace " "]
+      Identifier "by" @ 349..351 trailing=[Whitespace " "]
+      CallExpression
+        NameExpression
+          Identifier "lazy" @ 352..356 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-by */", Whitespace " "]
+        TypeArgumentListList
+        LambdaExpressionList
+          LambdaExpression
+            LambdaBody
+              LBrace "{" @ 387..388
+              LambdaBodyItemList
+                Statement
+                  ExpressionStatement
+                    StringTemplateExpression
+                      StringTemplateEntryList
+                        StringTemplateEntry
+                          OpenQuote "\"" @ 393..394 leading=[Newline "\n", Whitespace "    "]
+                        StringTemplateEntry
+                          RegularStringPart "value" @ 394..399
+                      ClosingQuote "\"" @ 399..400
+                  TerminatorList
+              RBrace "}" @ 401..402 leading=[Newline "\n"]
+      PropertyBodyMemberList
   Eof "" @ 403..403 leading=[Newline "\n"]
 
 diagnostics:

@@ -14,114 +14,160 @@ val receiverBlock: ReceiverBlock = { count -> repeat(count) { trim() } }
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  TypeAliasDeclaration
-    TypeAliasKw "typealias" @ 0..9 trailing=[Whitespace " "]
-    Name
-      Identifier "Suspended" @ 10..19 trailing=[Whitespace " "]
-    Assign "=" @ 20..21 trailing=[Whitespace " "]
-    TypeReference
-      FunctionType
-        Identifier "suspend" @ 22..29 trailing=[Whitespace " "]
+    ImportDirectiveList
+  KotlinFileItemList
+    TypeAliasDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      TypeAliasKw "typealias" @ 0..9 trailing=[Whitespace " "]
+      Name
+        Identifier "Suspended" @ 10..19 trailing=[Whitespace " "]
+      Assign "=" @ 20..21 trailing=[Whitespace " "]
+      TypeReference
         FunctionType
-          ParenthesizedType
-            LParen "(" @ 30..31
-            FunctionTypeParameter
-              TypeReference
-                UserType
-                  Identifier "String" @ 31..37
-            RParen ")" @ 37..38 trailing=[Whitespace " "]
-          Arrow "->" @ 39..41 trailing=[Whitespace " "]
-          UserType
-            Identifier "Int" @ 42..45
-  TypeAliasDeclaration
-    TypeAliasKw "typealias" @ 47..56 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "ReceiverBlock" @ 57..70 trailing=[Whitespace " "]
-    Assign "=" @ 71..72 trailing=[Whitespace " "]
-    TypeReference
-      FunctionType
-        ReceiverType
-          UserType
-            Identifier "String" @ 73..79
-          Dot "." @ 79..80
-          ParenthesizedType
-            LParen "(" @ 80..81
-            FunctionTypeParameter
-              TypeReference
-                UserType
-                  Identifier "Int" @ 81..84
-            RParen ")" @ 84..85 trailing=[Whitespace " "]
-        Arrow "->" @ 86..88 trailing=[Whitespace " "]
-        UserType
-          Identifier "Unit" @ 89..93
-  TypeAliasDeclaration
-    TypeAliasKw "typealias" @ 95..104 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "NullableCallback" @ 105..121 trailing=[Whitespace " "]
-    Assign "=" @ 122..123 trailing=[Whitespace " "]
-    TypeReference
-      NullableType
-        ParenthesizedType
-          LParen "(" @ 124..125
-          FunctionTypeParameter
-            TypeReference
-              FunctionType
+          SuspendedFunctionType
+            Identifier "suspend" @ 22..29 trailing=[Whitespace " "]
+            FunctionType
+              ArrowFunctionType
                 ParenthesizedType
-                  LParen "(" @ 125..126
+                  AnnotationList
+                  LParen "(" @ 30..31
+                  ParenthesizedTypeEntryList
+                    FunctionTypeParameter
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            Identifier "String" @ 31..37
+                  RParen ")" @ 37..38 trailing=[Whitespace " "]
+                Arrow "->" @ 39..41 trailing=[Whitespace " "]
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Int" @ 42..45
+    TypeAliasDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      TypeAliasKw "typealias" @ 47..56 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "ReceiverBlock" @ 57..70 trailing=[Whitespace " "]
+      Assign "=" @ 71..72 trailing=[Whitespace " "]
+      TypeReference
+        FunctionType
+          ArrowFunctionType
+            ReceiverType
+              UserType
+                UserTypeSegmentList
+                  Identifier "String" @ 73..79
+              Dot "." @ 79..80
+              ParenthesizedType
+                AnnotationList
+                LParen "(" @ 80..81
+                ParenthesizedTypeEntryList
                   FunctionTypeParameter
                     TypeReference
-                      NullableType
-                        UserType
-                          Identifier "String" @ 126..132
-                        Question "?" @ 132..133
-                  RParen ")" @ 133..134 trailing=[Whitespace " "]
-                Arrow "->" @ 135..137 trailing=[Whitespace " "]
-                UserType
-                  Identifier "Unit" @ 138..142
-          RParen ")" @ 142..143
-        Question "?" @ 143..144
-  PropertyDeclaration
-    ValKw "val" @ 146..149 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    CallableName
+                      UserType
+                        UserTypeSegmentList
+                          Identifier "Int" @ 81..84
+                RParen ")" @ 84..85 trailing=[Whitespace " "]
+            Arrow "->" @ 86..88 trailing=[Whitespace " "]
+            UserType
+              UserTypeSegmentList
+                Identifier "Unit" @ 89..93
+    TypeAliasDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      TypeAliasKw "typealias" @ 95..104 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
-        Identifier "receiverBlock" @ 150..163
-    Colon ":" @ 163..164 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "ReceiverBlock" @ 165..178 trailing=[Whitespace " "]
-    Assign "=" @ 179..180 trailing=[Whitespace " "]
-    LambdaExpression
-      LBrace "{" @ 181..182 trailing=[Whitespace " "]
-      LambdaParameterList
-        LambdaParameter
+        Identifier "NullableCallback" @ 105..121 trailing=[Whitespace " "]
+      Assign "=" @ 122..123 trailing=[Whitespace " "]
+      TypeReference
+        NullableType
+          ParenthesizedType
+            AnnotationList
+            LParen "(" @ 124..125
+            ParenthesizedTypeEntryList
+              FunctionTypeParameter
+                TypeReference
+                  FunctionType
+                    ArrowFunctionType
+                      ParenthesizedType
+                        AnnotationList
+                        LParen "(" @ 125..126
+                        ParenthesizedTypeEntryList
+                          FunctionTypeParameter
+                            TypeReference
+                              NullableType
+                                UserType
+                                  UserTypeSegmentList
+                                    Identifier "String" @ 126..132
+                                Question "?" @ 132..133
+                        RParen ")" @ 133..134 trailing=[Whitespace " "]
+                      Arrow "->" @ 135..137 trailing=[Whitespace " "]
+                      UserType
+                        UserTypeSegmentList
+                          Identifier "Unit" @ 138..142
+            RParen ")" @ 142..143
+          Question "?" @ 143..144
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 146..149 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
           Name
-            Identifier "count" @ 183..188 trailing=[Whitespace " "]
-        Arrow "->" @ 189..191 trailing=[Whitespace " "]
-      Statement
-        ExpressionStatement
-          CallExpression
-            CallExpression
-              NameExpression
-                Identifier "repeat" @ 192..198
-              ValueArgumentList
-                LParen "(" @ 198..199
-                ValueArgument
+            Identifier "receiverBlock" @ 150..163
+      Colon ":" @ 163..164 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "ReceiverBlock" @ 165..178 trailing=[Whitespace " "]
+      Assign "=" @ 179..180 trailing=[Whitespace " "]
+      LambdaExpression
+        LambdaBody
+          LBrace "{" @ 181..182 trailing=[Whitespace " "]
+          LambdaParameterList
+            LambdaParameterSeparatedList
+              LambdaParameter
+                Name
+                  Identifier "count" @ 183..188 trailing=[Whitespace " "]
+            Arrow "->" @ 189..191 trailing=[Whitespace " "]
+          LambdaBodyItemList
+            Statement
+              ExpressionStatement
+                CallExpression
                   NameExpression
-                    Identifier "count" @ 199..204
-                RParen ")" @ 204..205 trailing=[Whitespace " "]
-            LambdaExpression
-              LBrace "{" @ 206..207 trailing=[Whitespace " "]
-              Statement
-                ExpressionStatement
-                  CallExpression
-                    NameExpression
-                      Identifier "trim" @ 208..212
-                    ValueArgumentList
-                      LParen "(" @ 212..213
-                      RParen ")" @ 213..214 trailing=[Whitespace " "]
-              RBrace "}" @ 215..216 trailing=[Whitespace " "]
-      RBrace "}" @ 217..218
+                    Identifier "repeat" @ 192..198
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 198..199
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "count" @ 199..204
+                    RParen ")" @ 204..205 trailing=[Whitespace " "]
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 206..207 trailing=[Whitespace " "]
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              CallExpression
+                                NameExpression
+                                  Identifier "trim" @ 208..212
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 212..213
+                                  ValueArgumentEntryList
+                                  RParen ")" @ 213..214 trailing=[Whitespace " "]
+                                LambdaExpressionList
+                            TerminatorList
+                        RBrace "}" @ 215..216 trailing=[Whitespace " "]
+              TerminatorList
+          RBrace "}" @ 217..218
+      PropertyBodyMemberList
   Eof "" @ 219..219 leading=[Newline "\n"]
 
 diagnostics:

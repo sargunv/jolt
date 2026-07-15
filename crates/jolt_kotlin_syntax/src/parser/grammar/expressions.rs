@@ -136,7 +136,7 @@ impl Parser<'_> {
 
             match self.current_kind() {
                 K::Lt if self.type_argument_list_is_call_suffix_ahead() => {
-                    self.parse_type_argument_list();
+                    expression = self.parse_call_suffix(expression);
                 }
                 K::Lt => {
                     if let Some(message) = self.type_argument_list_issue_ahead() {
@@ -152,26 +152,20 @@ impl Parser<'_> {
                             "callable reference call syntax is reserved",
                         );
                     }
-                    let call = self.precede(expression);
-                    self.parse_value_argument_list();
-                    expression = self.complete(call, K::CallExpression);
+                    expression = self.parse_call_suffix(expression);
                 }
                 K::LBracket => {
                     let index = self.precede(expression);
                     self.expect(K::LBracket, "expected '['");
-                    self.parse_comma_separated_until(K::RBracket, K::ValueArgument);
+                    self.parse_value_arguments_until(K::RBracket, K::ValueArgumentSeparatedList);
                     self.expect(K::RBracket, "expected ']'");
                     expression = self.complete(index, K::IndexExpression);
                 }
                 K::LBrace => {
-                    let call = self.precede(expression);
-                    self.parse_lambda_expression();
-                    expression = self.complete(call, K::CallExpression);
+                    expression = self.parse_call_suffix(expression);
                 }
                 kind if self.at_labeled_lambda_start(kind) => {
-                    let call = self.precede(expression);
-                    self.parse_labeled_lambda_expression();
-                    expression = self.complete(call, K::CallExpression);
+                    expression = self.parse_call_suffix(expression);
                 }
                 K::Dot | K::SafeAccess => {
                     let navigation = self.precede(expression);
@@ -181,8 +175,10 @@ impl Parser<'_> {
                 }
                 K::Question if self.at_split_safe_access() => {
                     let navigation = self.precede(expression);
+                    let operator = self.start();
                     self.bump();
                     self.bump();
+                    self.complete(operator, K::SplitSafeNavigationOperator);
                     self.parse_navigation_member();
                     expression = self.complete(navigation, K::NavigationExpression);
                 }
@@ -194,12 +190,14 @@ impl Parser<'_> {
                     }
                     if self.at_identifier_like() || matches!(self.current_kind(), K::ClassKw) {
                         self.bump();
-                        if self.at(K::Lt) {
-                            self.parse_type_argument_list();
-                        }
                     } else {
                         self.expected_here("expected callable reference name");
                     }
+                    let type_arguments = self.start();
+                    while self.at(K::Lt) {
+                        self.parse_type_argument_list();
+                    }
+                    self.complete(type_arguments, K::TypeArgumentListList);
                     expression = self.complete(reference, K::CallableReferenceExpression);
                 }
                 K::PlusPlus | K::MinusMinus | K::BangBang => {
@@ -222,10 +220,38 @@ impl Parser<'_> {
         }
     }
 
+    fn parse_call_suffix(&mut self, callee: CompletedMarker) -> CompletedMarker {
+        let call = self.precede(callee);
+        let type_arguments = self.start();
+        while self.at(K::Lt) && self.type_argument_list_is_call_suffix_ahead() {
+            self.parse_type_argument_list();
+        }
+        self.complete(type_arguments, K::TypeArgumentListList);
+
+        if self.at(K::LParen) {
+            self.parse_value_argument_list();
+        }
+
+        let lambdas = self.start();
+        loop {
+            let kind = self.current_kind();
+            if !self.at(K::LBrace) && !self.at_labeled_lambda_start(kind) {
+                break;
+            }
+            if self.at(K::LBrace) {
+                self.parse_lambda_expression();
+            } else {
+                self.parse_labeled_lambda_expression();
+            }
+        }
+        self.complete(lambdas, K::LambdaExpressionList);
+        self.complete(call, K::CallExpression)
+    }
+
     fn parse_primary_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
         match self.current_kind() {
             K::At | K::Hash => self.parse_annotated_expression(stops),
-            K::IfKw => self.parse_if_expression(),
+            K::IfKw => self.parse_if_expression(stops),
             K::WhenKw => self.parse_when_expression(),
             K::TryKw => self.parse_try_expression(),
             K::ForKw | K::WhileKw | K::DoKw => self.parse_loop_expression(),
@@ -266,7 +292,21 @@ impl Parser<'_> {
 
     fn parse_annotated_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
         let marker = self.start();
-        self.parse_modifier_list();
+        let prefix = self.start();
+        while self.at_modifier_or_annotation() {
+            if self.at(K::At) || self.at(K::Hash) {
+                self.parse_annotation();
+            } else {
+                let modifier = self.start();
+                let items = self.start();
+                while self.at_modifier_or_annotation() && !self.at(K::At) && !self.at(K::Hash) {
+                    self.bump();
+                }
+                self.complete(items, K::ModifierItemList);
+                self.complete(modifier, K::ModifierList);
+            }
+        }
+        self.complete(prefix, K::AnnotationModifierList);
         if self.at_expression_boundary(stops) {
             let error = self.start();
             self.expected_here("expected expression");
@@ -297,9 +337,53 @@ impl Parser<'_> {
     pub(in crate::parser::grammar) fn parse_value_argument_list(&mut self) {
         let marker = self.start();
         self.expect(K::LParen, "expected argument list");
-        self.parse_comma_separated_until(K::RParen, K::ValueArgument);
+        self.parse_value_arguments_until(K::RParen, K::ValueArgumentEntryList);
         self.expect(K::RParen, "expected ')' after arguments");
         self.complete(marker, K::ValueArgumentList);
+    }
+
+    pub(in crate::parser::grammar) fn parse_value_arguments_until(
+        &mut self,
+        close: K,
+        list_kind: K,
+    ) {
+        let entries = self.start();
+        let mut expect_item = true;
+        while !self.at(K::Eof) && !self.at(close) {
+            let before = self.position();
+            if self.eat(K::Comma) {
+                if expect_item && !self.at(K::Eof) && !self.at(close) {
+                    let missing = self.start();
+                    self.expected_here("expected list item");
+                    self.complete(missing, K::ErrorNode);
+                }
+                expect_item = true;
+                continue;
+            }
+            self.parse_value_argument(close);
+            expect_item = false;
+            self.ensure_progress(before, "expected list item");
+        }
+        self.complete(entries, list_kind);
+    }
+
+    fn parse_value_argument(&mut self, close: K) {
+        let argument = self.start();
+        let prefix = self.start();
+        while self.at(K::Star) || self.at(K::At) || self.at(K::Hash) {
+            if self.at(K::Star) {
+                self.bump();
+            } else {
+                self.parse_annotation();
+            }
+        }
+        self.complete(prefix, K::ValueArgumentPrefixList);
+        if self.at_identifier_like() && self.nth_kind(1) == K::Assign {
+            self.parse_name();
+            self.bump();
+        }
+        self.parse_expression_until(&[K::Comma, close]);
+        self.complete(argument, K::ValueArgument);
     }
 
     fn parse_parenthesized_expression(&mut self) -> CompletedMarker {
@@ -346,12 +430,14 @@ impl Parser<'_> {
         }
         if self.at_identifier_like() || matches!(self.current_kind(), K::ClassKw) {
             self.bump();
-            if self.at(K::Lt) {
-                self.parse_type_argument_list();
-            }
         } else {
             self.expected_here("expected callable reference name");
         }
+        let type_arguments = self.start();
+        while self.at(K::Lt) {
+            self.parse_type_argument_list();
+        }
+        self.complete(type_arguments, K::TypeArgumentListList);
         self.complete(marker, K::CallableReferenceExpression)
     }
 

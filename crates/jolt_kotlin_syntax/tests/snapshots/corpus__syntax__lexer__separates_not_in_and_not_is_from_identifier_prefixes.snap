@@ -8,21 +8,25 @@ input:
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  Statement
-    ExpressionStatement
-      ErrorNode
-        NotIn "!in" @ 0..3 trailing=[Whitespace " "]
-      ErrorNode
-        Bang "!" @ 4..5
-      ErrorNode
-        Identifier "inside" @ 5..11 trailing=[Whitespace " "]
-      ErrorNode
-        NotIs "!is" @ 12..15 trailing=[Whitespace " "]
-      ErrorNode
-        Bang "!" @ 16..17
-      ErrorNode
-        Identifier "issue" @ 17..22
+    ImportDirectiveList
+  KotlinFileItemList
+    Statement
+      ExpressionStatement
+        ErrorNode
+          NotIn "!in" @ 0..3 trailing=[Whitespace " "]
+        ErrorNode
+          Bang "!" @ 4..5
+        ErrorNode
+          Identifier "inside" @ 5..11 trailing=[Whitespace " "]
+        ErrorNode
+          NotIs "!is" @ 12..15 trailing=[Whitespace " "]
+        ErrorNode
+          Bang "!" @ 16..17
+        ErrorNode
+          Identifier "issue" @ 17..22
+      TerminatorList
   Eof "" @ 23..23 leading=[Newline "\n"]
 
 diagnostics:

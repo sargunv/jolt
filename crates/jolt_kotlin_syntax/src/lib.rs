@@ -6,6 +6,7 @@ mod kind;
 mod language;
 mod lexer;
 mod nodes;
+mod normalization;
 mod parser;
 mod shape;
 
@@ -16,4 +17,5 @@ pub use kind::KotlinSyntaxKind;
 pub use language::KotlinLanguage;
 pub use lexer::KotlinLexer;
 pub use nodes::*;
+pub use normalization::*;
 pub use parser::{KotlinParse, parse_kotlin_file};

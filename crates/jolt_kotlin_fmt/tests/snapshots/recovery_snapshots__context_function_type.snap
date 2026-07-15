@@ -6,9 +6,7 @@ input:
 typealias Handler = context(First, /* orphan */ , Second) () -> Unit
 
 formatted:
-typealias Handler = context(First, /* orphan */
-,
-Second) () -> Unit
+typealias Handler = context(First, /* orphan */ ,   Second) () -> Unit
 
 diagnostics:
-(none)
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(50), end: TextSize(56) }) message=expected function type parameter between commas

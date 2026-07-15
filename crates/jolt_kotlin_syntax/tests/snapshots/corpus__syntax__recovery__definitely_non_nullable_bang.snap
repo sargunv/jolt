@@ -8,37 +8,51 @@ fun <T> definitelyNonNullable(value: T!!): T = value
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    TypeParameterList
-      Lt "<" @ 4..5
-      TypeParameter
-        Name
-          Identifier "T" @ 5..6
-      Gt ">" @ 6..7 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "definitelyNonNullable" @ 8..29
-    ValueParameterList
-      LParen "(" @ 29..30
-      ValueParameter
-        Name
-          Identifier "value" @ 30..35
-        Colon ":" @ 35..36 trailing=[Whitespace " "]
-        TypeReference
-          DefinitelyNonNullableType
-            UserType
-              Identifier "T" @ 37..38
-            BangBang "!!" @ 38..40
-      RParen ")" @ 40..41
-    Colon ":" @ 41..42 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "T" @ 43..44 trailing=[Whitespace " "]
-    Assign "=" @ 45..46 trailing=[Whitespace " "]
-    NameExpression
-      Identifier "value" @ 47..52
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      TypeParameterList
+        Lt "<" @ 4..5
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierListSequence
+            Name
+              Identifier "T" @ 5..6
+        Gt ">" @ 6..7 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "definitelyNonNullable" @ 8..29
+      ValueParameterList
+        LParen "(" @ 29..30
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "value" @ 30..35
+            Colon ":" @ 35..36 trailing=[Whitespace " "]
+            TypeReference
+              DefinitelyNonNullableType
+                BangDefinitelyNonNullableType
+                  UserType
+                    UserTypeSegmentList
+                      Identifier "T" @ 37..38
+                  BangBang "!!" @ 38..40
+        RParen ")" @ 40..41
+      Colon ":" @ 41..42 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "T" @ 43..44 trailing=[Whitespace " "]
+      Assign "=" @ 45..46 trailing=[Whitespace " "]
+      NameExpression
+        Identifier "value" @ 47..52
   Eof "" @ 53..53 leading=[Newline "\n"]
 
 diagnostics:

@@ -15,131 +15,166 @@ fun infixCalls(bits: Bits, mask: Bits): Bits {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "infixCalls" @ 4..14
-    ValueParameterList
-      LParen "(" @ 14..15
-      ValueParameter
-        Name
-          Identifier "bits" @ 15..19
-        Colon ":" @ 19..20 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Bits" @ 21..25
-      Comma "," @ 25..26 trailing=[Whitespace " "]
-      ValueParameter
-        Name
-          Identifier "mask" @ 27..31
-        Colon ":" @ 31..32 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Bits" @ 33..37
-      RParen ")" @ 37..38
-    Colon ":" @ 38..39 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "Bits" @ 40..44 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 45..46
-      PropertyDeclaration
-        ValKw "val" @ 51..54 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
           Name
-            Identifier "combined" @ 55..63 trailing=[Whitespace " "]
-        Assign "=" @ 64..65 trailing=[Whitespace " "]
-        BinaryExpression
-          BinaryExpression
-            NameExpression
-              Identifier "bits" @ 66..70 trailing=[Whitespace " "]
-            Identifier "or" @ 71..73 trailing=[Whitespace " "]
-            NameExpression
-              Identifier "mask" @ 74..78 trailing=[Whitespace " "]
-          Identifier "and" @ 79..82 trailing=[Whitespace " "]
-          NavigationExpression
-            NameExpression
-              Identifier "Bits" @ 83..87
-            Dot "." @ 87..88
-            Identifier "Enabled" @ 88..95
-      PropertyDeclaration
-        ValKw "val" @ 100..103 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "readable" @ 104..112 trailing=[Whitespace " "]
-        Assign "=" @ 113..114 trailing=[Whitespace " "]
-        BinaryExpression
-          BinaryExpression
-            NameExpression
-              Identifier "bits" @ 115..119 trailing=[Whitespace " "]
-            Identifier "and" @ 120..123 trailing=[Whitespace " "]
-            NameExpression
-              Identifier "mask" @ 124..128 trailing=[Whitespace " "]
-          Identifier "or" @ 129..131 trailing=[Whitespace " "]
-          NavigationExpression
-            NameExpression
-              Identifier "Bits" @ 132..136
-            Dot "." @ 136..137
-            Identifier "Enabled" @ 137..144
-      PropertyDeclaration
-        ValKw "val" @ 149..152 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "rightOperand" @ 153..165 trailing=[Whitespace " "]
-        Assign "=" @ 166..167 trailing=[Whitespace " "]
-        BinaryExpression
-          NameExpression
-            Identifier "bits" @ 168..172 trailing=[Whitespace " "]
-          Identifier "context" @ 173..180 trailing=[Whitespace " "]
-          BinaryExpression
-            NameExpression
-              Identifier "mask" @ 181..185 trailing=[Whitespace " "]
-            Plus "+" @ 186..187 trailing=[Whitespace " "]
-            NavigationExpression
+            Identifier "infixCalls" @ 4..14
+      ValueParameterList
+        LParen "(" @ 14..15
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "bits" @ 15..19
+            Colon ":" @ 19..20 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Bits" @ 21..25
+          Comma "," @ 25..26 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "mask" @ 27..31
+            Colon ":" @ 31..32 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Bits" @ 33..37
+        RParen ")" @ 37..38
+      Colon ":" @ 38..39 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "Bits" @ 40..44 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 45..46
+        BlockItemList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 51..54 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "combined" @ 55..63 trailing=[Whitespace " "]
+            Assign "=" @ 64..65 trailing=[Whitespace " "]
+            BinaryExpression
+              BinaryExpression
+                NameExpression
+                  Identifier "bits" @ 66..70 trailing=[Whitespace " "]
+                Identifier "or" @ 71..73 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "mask" @ 74..78 trailing=[Whitespace " "]
+              Identifier "and" @ 79..82 trailing=[Whitespace " "]
+              NavigationExpression
+                NameExpression
+                  Identifier "Bits" @ 83..87
+                Dot "." @ 87..88
+                Identifier "Enabled" @ 88..95
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 100..103 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "readable" @ 104..112 trailing=[Whitespace " "]
+            Assign "=" @ 113..114 trailing=[Whitespace " "]
+            BinaryExpression
+              BinaryExpression
+                NameExpression
+                  Identifier "bits" @ 115..119 trailing=[Whitespace " "]
+                Identifier "and" @ 120..123 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "mask" @ 124..128 trailing=[Whitespace " "]
+              Identifier "or" @ 129..131 trailing=[Whitespace " "]
+              NavigationExpression
+                NameExpression
+                  Identifier "Bits" @ 132..136
+                Dot "." @ 136..137
+                Identifier "Enabled" @ 137..144
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 149..152 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "rightOperand" @ 153..165 trailing=[Whitespace " "]
+            Assign "=" @ 166..167 trailing=[Whitespace " "]
+            BinaryExpression
               NameExpression
-                Identifier "Bits" @ 188..192
-              Dot "." @ 192..193
-              Identifier "Enabled" @ 193..200
-      PropertyDeclaration
-        ValKw "val" @ 205..208 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "leftOperand" @ 209..220 trailing=[Whitespace " "]
-        Assign "=" @ 221..222 trailing=[Whitespace " "]
-        BinaryExpression
-          BinaryExpression
-            NameExpression
-              Identifier "bits" @ 223..227 trailing=[Whitespace " "]
-            Plus "+" @ 228..229 trailing=[Whitespace " "]
-            NameExpression
-              Identifier "mask" @ 230..234 trailing=[Whitespace " "]
-          Identifier "context" @ 235..242 trailing=[Whitespace " "]
-          NavigationExpression
-            NameExpression
-              Identifier "Bits" @ 243..247
-            Dot "." @ 247..248
-            Identifier "Enabled" @ 248..255
-      PropertyDeclaration
-        ValKw "val" @ 260..263 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "named" @ 264..269 trailing=[Whitespace " "]
-        Assign "=" @ 270..271 trailing=[Whitespace " "]
-        BinaryExpression
-          NameExpression
-            Identifier "combined" @ 272..280 trailing=[Whitespace " "]
-          Identifier "context" @ 281..288 trailing=[Whitespace " "]
-          NameExpression
-            Identifier "mask" @ 289..293
-      Statement
-        ExpressionStatement
-          JumpExpression
-            ReturnKw "return" @ 298..304 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            NameExpression
-              Identifier "named" @ 305..310
-      RBrace "}" @ 311..312 leading=[Newline "\n"]
+                Identifier "bits" @ 168..172 trailing=[Whitespace " "]
+              Identifier "context" @ 173..180 trailing=[Whitespace " "]
+              BinaryExpression
+                NameExpression
+                  Identifier "mask" @ 181..185 trailing=[Whitespace " "]
+                Plus "+" @ 186..187 trailing=[Whitespace " "]
+                NavigationExpression
+                  NameExpression
+                    Identifier "Bits" @ 188..192
+                  Dot "." @ 192..193
+                  Identifier "Enabled" @ 193..200
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 205..208 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "leftOperand" @ 209..220 trailing=[Whitespace " "]
+            Assign "=" @ 221..222 trailing=[Whitespace " "]
+            BinaryExpression
+              BinaryExpression
+                NameExpression
+                  Identifier "bits" @ 223..227 trailing=[Whitespace " "]
+                Plus "+" @ 228..229 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "mask" @ 230..234 trailing=[Whitespace " "]
+              Identifier "context" @ 235..242 trailing=[Whitespace " "]
+              NavigationExpression
+                NameExpression
+                  Identifier "Bits" @ 243..247
+                Dot "." @ 247..248
+                Identifier "Enabled" @ 248..255
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 260..263 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "named" @ 264..269 trailing=[Whitespace " "]
+            Assign "=" @ 270..271 trailing=[Whitespace " "]
+            BinaryExpression
+              NameExpression
+                Identifier "combined" @ 272..280 trailing=[Whitespace " "]
+              Identifier "context" @ 281..288 trailing=[Whitespace " "]
+              NameExpression
+                Identifier "mask" @ 289..293
+            PropertyBodyMemberList
+          Statement
+            ExpressionStatement
+              JumpExpression
+                ReturnKw "return" @ 298..304 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "named" @ 305..310
+            TerminatorList
+        RBrace "}" @ 311..312 leading=[Newline "\n"]
   Eof "" @ 313..313 leading=[Newline "\n"]
 
 diagnostics:

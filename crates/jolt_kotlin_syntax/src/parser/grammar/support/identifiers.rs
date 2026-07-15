@@ -5,6 +5,7 @@ use super::super::Parser;
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn parse_qualified_name(&mut self) {
         let marker = self.start();
+        let segments = self.start();
         self.parse_name();
         while self.eat(K::Dot) {
             if self.at(K::Star) {
@@ -12,6 +13,7 @@ impl Parser<'_> {
             }
             self.parse_name();
         }
+        self.complete(segments, K::QualifiedNameSegmentList);
         self.complete(marker, K::QualifiedName);
     }
 

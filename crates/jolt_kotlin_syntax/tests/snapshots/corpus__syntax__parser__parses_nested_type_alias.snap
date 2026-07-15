@@ -12,49 +12,68 @@ class Aliases {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Name
-      Identifier "Aliases" @ 6..13 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 14..15
-      ClassMemberDeclaration
-        TypeAliasDeclaration
-          TypeAliasKw "typealias" @ 20..29 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Name
-            Identifier "Names" @ 30..35 trailing=[Whitespace " "]
-          Assign "=" @ 36..37 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "List" @ 38..42
-              TypeArgumentList
-                Lt "<" @ 42..43
-                TypeProjectionList
-                  TypeArgument
-                    TypeProjection
-                      TypeReference
-                        UserType
-                          Identifier "String" @ 43..49
-                Gt ">" @ 49..50
-      ClassMemberDeclaration
-        PropertyDeclaration
-          ValKw "val" @ 56..59 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "names" @ 60..65
-          Colon ":" @ 65..66 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Names" @ 67..72 trailing=[Whitespace " "]
-          Assign "=" @ 73..74 trailing=[Whitespace " "]
-          CallExpression
-            NameExpression
-              Identifier "emptyList" @ 75..84
-            ValueArgumentList
-              LParen "(" @ 84..85
-              RParen ")" @ 85..86
-      RBrace "}" @ 87..88 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "Aliases" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15
+        ClassMemberList
+          ClassMemberDeclaration
+            TypeAliasDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              TypeAliasKw "typealias" @ 20..29 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "Names" @ 30..35 trailing=[Whitespace " "]
+              Assign "=" @ 36..37 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "List" @ 38..42
+                    TypeArgumentList
+                      Lt "<" @ 42..43
+                      TypeProjectionList
+                        TypeProjectionSeparatedList
+                          TypeArgument
+                            TypeProjection
+                              TypeReference
+                                UserType
+                                  UserTypeSegmentList
+                                    Identifier "String" @ 43..49
+                      Gt ">" @ 49..50
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              ValKw "val" @ 56..59 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "names" @ 60..65
+              Colon ":" @ 65..66 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Names" @ 67..72 trailing=[Whitespace " "]
+              Assign "=" @ 73..74 trailing=[Whitespace " "]
+              CallExpression
+                NameExpression
+                  Identifier "emptyList" @ 75..84
+                TypeArgumentListList
+                ValueArgumentList
+                  LParen "(" @ 84..85
+                  ValueArgumentEntryList
+                  RParen ")" @ 85..86
+                LambdaExpressionList
+              PropertyBodyMemberList
+        RBrace "}" @ 87..88 leading=[Newline "\n"]
   Eof "" @ 89..89 leading=[Newline "\n"]
 
 diagnostics:

@@ -18,117 +18,154 @@ class CollectionUse {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "trivia" @ 20..26
+      QualifiedNameSegmentList
+        Name
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "trivia" @ 20..26
+    TerminatorList
   ImportList
-  ClassDeclaration
-    ModifierList
-      Identifier "annotation" @ 28..38 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    ClassKw "class" @ 39..44 trailing=[Whitespace " "]
-    Name
-      Identifier "Tags" @ 45..49
-    PrimaryConstructor
-      ValueParameterList
-        LParen "(" @ 49..50
-        ValueParameter
-          ValKw "val" @ 50..53 trailing=[Whitespace " "]
-          Name
-            Identifier "names" @ 54..59
-          Colon ":" @ 59..60 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Array" @ 61..66
-              TypeArgumentList
-                Lt "<" @ 66..67
-                TypeProjectionList
-                  TypeArgument
-                    TypeProjection
-                      TypeReference
-                        UserType
-                          Identifier "String" @ 67..73
-                Gt ">" @ 73..74
-        RParen ")" @ 74..75
-  ClassDeclaration
-    ModifierList
-      Annotation
-        At "@" @ 77..78 leading=[Newline "\n", Newline "\n"]
-        QualifiedName
-          Name
-            Identifier "Tags" @ 78..82
-        AnnotationArgumentList
-          LParen "(" @ 82..83
-          ValueArgument
-            CollectionLiteralExpression
-              LBracket "[" @ 83..84 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:collection-literal-open */", Whitespace " "]
-              ValueArgument
-                StringTemplateExpression
-                  StringTemplateEntry
-                    OpenQuote "\"" @ 127..128
-                  StringTemplateEntry
-                    RegularStringPart "alpha" @ 128..133
-                  ClosingQuote "\"" @ 133..134
-              Comma "," @ 134..135 trailing=[Whitespace " "]
-              ValueArgument
-                StringTemplateExpression
-                  StringTemplateEntry
-                    OpenQuote "\"" @ 136..137
-                  StringTemplateEntry
-                    RegularStringPart "beta" @ 137..141
-                  ClosingQuote "\"" @ 141..142 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:collection-literal-close */", Whitespace " "]
-              RBracket "]" @ 186..187
-          RParen ")" @ 187..188
-    ClassKw "class" @ 189..194 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "CollectionUse" @ 195..208 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 209..210
-      ClassMemberDeclaration
-        PropertyDeclaration
-          ValKw "val" @ 215..218 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "table" @ 219..224 trailing=[Whitespace " "]
-          Assign "=" @ 225..226 trailing=[Whitespace " "]
-          CallExpression
-            NameExpression
-              Identifier "mapOf" @ 227..232
-            ValueArgumentList
-              LParen "(" @ 232..233
-              ValueArgument
-                BinaryExpression
-                  StringTemplateExpression
-                    StringTemplateEntry
-                      OpenQuote "\"" @ 242..243 leading=[Newline "\n", Whitespace "        "]
-                    StringTemplateEntry
-                      RegularStringPart "one" @ 243..246
-                    ClosingQuote "\"" @ 246..247 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:pair-key */", Whitespace " "]
-                  Identifier "to" @ 275..277 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:to-call */", Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "1" @ 304..305
-              Comma "," @ 305..306
-              ValueArgument
-                BinaryExpression
-                  StringTemplateExpression
-                    StringTemplateEntry
-                      OpenQuote "\"" @ 315..316 leading=[Newline "\n", Whitespace "        "]
-                    StringTemplateEntry
-                      RegularStringPart "two" @ 316..319
-                    ClosingQuote "\"" @ 319..320 trailing=[Whitespace " "]
-                  Identifier "to" @ 321..323 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "2" @ 324..325
-              Comma "," @ 325..326
-              RParen ")" @ 331..332 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 333..334 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+        ModifierList
+          ModifierItemList
+            Identifier "annotation" @ 28..38 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierListSequence
+      ClassKw "class" @ 39..44 trailing=[Whitespace " "]
+      Name
+        Identifier "Tags" @ 45..49
+      PrimaryConstructor
+        ModifierListSequence
+        ValueParameterList
+          LParen "(" @ 49..50
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierListSequence
+              ValKw "val" @ 50..53 trailing=[Whitespace " "]
+              Name
+                Identifier "names" @ 54..59
+              Colon ":" @ 59..60 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Array" @ 61..66
+                    TypeArgumentList
+                      Lt "<" @ 66..67
+                      TypeProjectionList
+                        TypeProjectionSeparatedList
+                          TypeArgument
+                            TypeProjection
+                              TypeReference
+                                UserType
+                                  UserTypeSegmentList
+                                    Identifier "String" @ 67..73
+                      Gt ">" @ 73..74
+          RParen ")" @ 74..75
+    ClassDeclaration
+      ModifierListSequence
+        ModifierList
+          ModifierItemList
+            Annotation
+              At "@" @ 77..78 leading=[Newline "\n", Newline "\n"]
+              QualifiedName
+                QualifiedNameSegmentList
+                  Name
+                    Identifier "Tags" @ 78..82
+              AnnotationArgumentList
+                LParen "(" @ 82..83
+                ValueArgumentSeparatedList
+                  ValueArgument
+                    ValueArgumentPrefixList
+                    CollectionLiteralExpression
+                      LBracket "[" @ 83..84 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:collection-literal-open */", Whitespace " "]
+                      ValueArgumentSeparatedList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                OpenQuote "\"" @ 127..128
+                              StringTemplateEntry
+                                RegularStringPart "alpha" @ 128..133
+                            ClosingQuote "\"" @ 133..134
+                        Comma "," @ 134..135 trailing=[Whitespace " "]
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                OpenQuote "\"" @ 136..137
+                              StringTemplateEntry
+                                RegularStringPart "beta" @ 137..141
+                            ClosingQuote "\"" @ 141..142 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:collection-literal-close */", Whitespace " "]
+                      RBracket "]" @ 186..187
+                RParen ")" @ 187..188
+      ModifierListSequence
+      ClassKw "class" @ 189..194 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "CollectionUse" @ 195..208 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 209..210
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              ValKw "val" @ 215..218 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "table" @ 219..224 trailing=[Whitespace " "]
+              Assign "=" @ 225..226 trailing=[Whitespace " "]
+              CallExpression
+                NameExpression
+                  Identifier "mapOf" @ 227..232
+                TypeArgumentListList
+                ValueArgumentList
+                  LParen "(" @ 232..233
+                  ValueArgumentEntryList
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      BinaryExpression
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 242..243 leading=[Newline "\n", Whitespace "        "]
+                            StringTemplateEntry
+                              RegularStringPart "one" @ 243..246
+                          ClosingQuote "\"" @ 246..247 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:pair-key */", Whitespace " "]
+                        Identifier "to" @ 275..277 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:to-call */", Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "1" @ 304..305
+                    Comma "," @ 305..306
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      BinaryExpression
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 315..316 leading=[Newline "\n", Whitespace "        "]
+                            StringTemplateEntry
+                              RegularStringPart "two" @ 316..319
+                          ClosingQuote "\"" @ 319..320 trailing=[Whitespace " "]
+                        Identifier "to" @ 321..323 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "2" @ 324..325
+                    Comma "," @ 325..326
+                  RParen ")" @ 331..332 leading=[Newline "\n", Whitespace "    "]
+                LambdaExpressionList
+              PropertyBodyMemberList
+        RBrace "}" @ 333..334 leading=[Newline "\n"]
   Eof "" @ 335..335 leading=[Newline "\n"]
 
 diagnostics:

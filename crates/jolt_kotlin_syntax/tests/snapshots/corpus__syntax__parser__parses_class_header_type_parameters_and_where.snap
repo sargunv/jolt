@@ -12,110 +12,141 @@ class Sink<in T>(private val name: String)
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Name
-      Identifier "Registry" @ 6..14
-    TypeParameterList
-      Lt "<" @ 14..15
-      TypeParameter
-        Name
-          Identifier "K" @ 15..16
-      Comma "," @ 16..17 trailing=[Whitespace " "]
-      TypeParameter
-        Name
-          Identifier "V" @ 18..19
-      Gt ">" @ 19..20
-    PrimaryConstructor
-      ValueParameterList
-        LParen "(" @ 20..21
-        ValueParameter
-          ModifierList
-            Identifier "private" @ 26..33 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          ValKw "val" @ 34..37 trailing=[Whitespace " "]
-          Name
-            Identifier "values" @ 38..44
-          Colon ":" @ 44..45 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Map" @ 46..49
-              TypeArgumentList
-                Lt "<" @ 49..50
-                TypeProjectionList
-                  TypeArgument
-                    TypeProjection
-                      TypeReference
-                        UserType
-                          Identifier "K" @ 50..51
-                  Comma "," @ 51..52 trailing=[Whitespace " "]
-                  TypeArgument
-                    TypeProjection
-                      TypeReference
-                        UserType
-                          Identifier "V" @ 53..54
-                Gt ">" @ 54..55
-        Comma "," @ 55..56
-        RParen ")" @ 57..58 leading=[Newline "\n"] trailing=[Whitespace " "]
-    TypeConstraintList
-      Identifier "where" @ 59..64 trailing=[Whitespace " "]
-      TypeConstraint
-        Name
-          Identifier "K" @ 65..66 trailing=[Whitespace " "]
-        Colon ":" @ 67..68 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "CharSequence" @ 69..81
-      Comma "," @ 81..82 trailing=[Whitespace " "]
-      TypeConstraint
-        Name
-          Identifier "K" @ 83..84 trailing=[Whitespace " "]
-        Colon ":" @ 85..86 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Comparable" @ 87..97
-            TypeArgumentList
-              Lt "<" @ 97..98
-              TypeProjectionList
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "K" @ 98..99
-              Gt ">" @ 99..100
-      Comma "," @ 100..101 trailing=[Whitespace " "]
-      TypeConstraint
-        Name
-          Identifier "V" @ 102..103 trailing=[Whitespace " "]
-        Colon ":" @ 104..105 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Any" @ 106..109
-  ClassDeclaration
-    ClassKw "class" @ 111..116 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Sink" @ 117..121
-    TypeParameterList
-      Lt "<" @ 121..122
-      TypeParameter
-        InKw "in" @ 122..124 trailing=[Whitespace " "]
-        Name
-          Identifier "T" @ 125..126
-      Gt ">" @ 126..127
-    PrimaryConstructor
-      ValueParameterList
-        LParen "(" @ 127..128
-        ValueParameter
-          ModifierList
-            Identifier "private" @ 128..135 trailing=[Whitespace " "]
-          ValKw "val" @ 136..139 trailing=[Whitespace " "]
-          Name
-            Identifier "name" @ 140..144
-          Colon ":" @ 144..145 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 146..152
-        RParen ")" @ 152..153
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "Registry" @ 6..14
+      TypeParameterList
+        Lt "<" @ 14..15
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierListSequence
+            Name
+              Identifier "K" @ 15..16
+          Comma "," @ 16..17 trailing=[Whitespace " "]
+          TypeParameter
+            ModifierListSequence
+            Name
+              Identifier "V" @ 18..19
+        Gt ">" @ 19..20
+      PrimaryConstructor
+        ModifierListSequence
+        ValueParameterList
+          LParen "(" @ 20..21
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "private" @ 26..33 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ValKw "val" @ 34..37 trailing=[Whitespace " "]
+              Name
+                Identifier "values" @ 38..44
+              Colon ":" @ 44..45 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Map" @ 46..49
+                    TypeArgumentList
+                      Lt "<" @ 49..50
+                      TypeProjectionList
+                        TypeProjectionSeparatedList
+                          TypeArgument
+                            TypeProjection
+                              TypeReference
+                                UserType
+                                  UserTypeSegmentList
+                                    Identifier "K" @ 50..51
+                          Comma "," @ 51..52 trailing=[Whitespace " "]
+                          TypeArgument
+                            TypeProjection
+                              TypeReference
+                                UserType
+                                  UserTypeSegmentList
+                                    Identifier "V" @ 53..54
+                      Gt ">" @ 54..55
+            Comma "," @ 55..56
+          RParen ")" @ 57..58 leading=[Newline "\n"] trailing=[Whitespace " "]
+      TypeConstraintList
+        Identifier "where" @ 59..64 trailing=[Whitespace " "]
+        TypeConstraintSeparatedList
+          TypeConstraint
+            Name
+              Identifier "K" @ 65..66 trailing=[Whitespace " "]
+            Colon ":" @ 67..68 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "CharSequence" @ 69..81
+          Comma "," @ 81..82 trailing=[Whitespace " "]
+          TypeConstraint
+            Name
+              Identifier "K" @ 83..84 trailing=[Whitespace " "]
+            Colon ":" @ 85..86 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Comparable" @ 87..97
+                  TypeArgumentList
+                    Lt "<" @ 97..98
+                    TypeProjectionList
+                      TypeProjectionSeparatedList
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "K" @ 98..99
+                    Gt ">" @ 99..100
+          Comma "," @ 100..101 trailing=[Whitespace " "]
+          TypeConstraint
+            Name
+              Identifier "V" @ 102..103 trailing=[Whitespace " "]
+            Colon ":" @ 104..105 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Any" @ 106..109
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 111..116 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Sink" @ 117..121
+      TypeParameterList
+        Lt "<" @ 121..122
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierListSequence
+            InKw "in" @ 122..124 trailing=[Whitespace " "]
+            Name
+              Identifier "T" @ 125..126
+        Gt ">" @ 126..127
+      PrimaryConstructor
+        ModifierListSequence
+        ValueParameterList
+          LParen "(" @ 127..128
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "private" @ 128..135 trailing=[Whitespace " "]
+              ValKw "val" @ 136..139 trailing=[Whitespace " "]
+              Name
+                Identifier "name" @ 140..144
+              Colon ":" @ 144..145 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 146..152
+          RParen ")" @ 152..153
   Eof "" @ 154..154 leading=[Newline "\n"]
 
 diagnostics:

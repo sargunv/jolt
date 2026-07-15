@@ -8,28 +8,38 @@ fun trailingUserTypeDot(value: example.Type.) = value
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "trailingUserTypeDot" @ 4..23
-    ValueParameterList
-      LParen "(" @ 23..24
-      ValueParameter
-        Name
-          Identifier "value" @ 24..29
-        Colon ":" @ 29..30 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "example" @ 31..38
-            Dot "." @ 38..39
-            Identifier "Type" @ 39..43
-            Dot "." @ 43..44
-      RParen ")" @ 44..45 trailing=[Whitespace " "]
-    Assign "=" @ 46..47 trailing=[Whitespace " "]
-    NameExpression
-      Identifier "value" @ 48..53
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "trailingUserTypeDot" @ 4..23
+      ValueParameterList
+        LParen "(" @ 23..24
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "value" @ 24..29
+            Colon ":" @ 29..30 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "example" @ 31..38
+                  Dot "." @ 38..39
+                  Identifier "Type" @ 39..43
+                  Dot "." @ 43..44
+        RParen ")" @ 44..45 trailing=[Whitespace " "]
+      Assign "=" @ 46..47 trailing=[Whitespace " "]
+      NameExpression
+        Identifier "value" @ 48..53
   Eof "" @ 54..54 leading=[Newline "\n"]
 
 diagnostics:

@@ -11,52 +11,64 @@ fun nestedRecoveredWhenCondition(value: Int) = when (value) {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "nestedRecoveredWhenCondition" @ 4..32
-    ValueParameterList
-      LParen "(" @ 32..33
-      ValueParameter
-        Name
-          Identifier "value" @ 33..38
-        Colon ":" @ 38..39 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Int" @ 40..43
-      RParen ")" @ 43..44 trailing=[Whitespace " "]
-    Assign "=" @ 45..46 trailing=[Whitespace " "]
-    WhenExpression
-      WhenKw "when" @ 47..51 trailing=[Whitespace " "]
-      WhenSubject
-        LParen "(" @ 52..53
-        NameExpression
-          Identifier "value" @ 53..58
-        RParen ")" @ 58..59 trailing=[Whitespace " "]
-      LBrace "{" @ 60..61
-      WhenEntry
-        WhenCondition
-          LiteralExpression
-            IntegerLiteral "0" @ 66..67 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          ErrorNode
-            OpenQuote "\"" @ 68..69
-          ErrorNode
-            RegularStringPart "zero" @ 69..73
-          ErrorNode
-            ClosingQuote "\"" @ 73..74
-        ErrorNode
-          ElseKw "else" @ 79..83 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        ErrorNode
-          Arrow "->" @ 84..86 trailing=[Whitespace " "]
-        ErrorNode
-          OpenQuote "\"" @ 87..88
-        ErrorNode
-          RegularStringPart "other" @ 88..93
-        ErrorNode
-          ClosingQuote "\"" @ 93..94
-      RBrace "}" @ 95..96 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "nestedRecoveredWhenCondition" @ 4..32
+      ValueParameterList
+        LParen "(" @ 32..33
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "value" @ 33..38
+            Colon ":" @ 38..39 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Int" @ 40..43
+        RParen ")" @ 43..44 trailing=[Whitespace " "]
+      Assign "=" @ 45..46 trailing=[Whitespace " "]
+      WhenExpression
+        WhenKw "when" @ 47..51 trailing=[Whitespace " "]
+        WhenSubject
+          LParen "(" @ 52..53
+          NameExpression
+            Identifier "value" @ 53..58
+          RParen ")" @ 58..59 trailing=[Whitespace " "]
+        LBrace "{" @ 60..61
+        WhenEntryList
+          WhenEntry
+            WhenConditionSeparatedList
+              WhenCondition
+                LiteralExpression
+                  IntegerLiteral "0" @ 66..67 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                ErrorNode
+                  OpenQuote "\"" @ 68..69
+                ErrorNode
+                  RegularStringPart "zero" @ 69..73
+                ErrorNode
+                  ClosingQuote "\"" @ 73..74
+            ErrorNode
+              ElseKw "else" @ 79..83 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            ErrorNode
+              Arrow "->" @ 84..86 trailing=[Whitespace " "]
+            ErrorNode
+              OpenQuote "\"" @ 87..88
+            ErrorNode
+              RegularStringPart "other" @ 88..93
+            ErrorNode
+              ClosingQuote "\"" @ 93..94
+        RBrace "}" @ 95..96 leading=[Newline "\n"]
   Eof "" @ 97..97 leading=[Newline "\n"]
 
 diagnostics:

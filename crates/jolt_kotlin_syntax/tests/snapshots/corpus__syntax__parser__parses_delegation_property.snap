@@ -10,39 +10,56 @@ class LazyProperty {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Name
-      Identifier "LazyProperty" @ 6..18 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 19..20
-      ClassMemberDeclaration
-        PropertyDeclaration
-          ValKw "val" @ 25..28 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "message" @ 29..36
-          Colon ":" @ 36..37 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 38..44 trailing=[Whitespace " "]
-          Identifier "by" @ 45..47 trailing=[Whitespace " "]
-          CallExpression
-            NameExpression
-              Identifier "lazy" @ 48..52 trailing=[Whitespace " "]
-            LambdaExpression
-              LBrace "{" @ 53..54 trailing=[Whitespace " "]
-              Statement
-                ExpressionStatement
-                  StringTemplateExpression
-                    StringTemplateEntry
-                      OpenQuote "\"" @ 55..56
-                    StringTemplateEntry
-                      RegularStringPart "ready" @ 56..61
-                    ClosingQuote "\"" @ 61..62 trailing=[Whitespace " "]
-              RBrace "}" @ 63..64
-      RBrace "}" @ 65..66 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "LazyProperty" @ 6..18 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 19..20
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              ValKw "val" @ 25..28 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "message" @ 29..36
+              Colon ":" @ 36..37 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 38..44 trailing=[Whitespace " "]
+              Identifier "by" @ 45..47 trailing=[Whitespace " "]
+              CallExpression
+                NameExpression
+                  Identifier "lazy" @ 48..52 trailing=[Whitespace " "]
+                TypeArgumentListList
+                LambdaExpressionList
+                  LambdaExpression
+                    LambdaBody
+                      LBrace "{" @ 53..54 trailing=[Whitespace " "]
+                      LambdaBodyItemList
+                        Statement
+                          ExpressionStatement
+                            StringTemplateExpression
+                              StringTemplateEntryList
+                                StringTemplateEntry
+                                  OpenQuote "\"" @ 55..56
+                                StringTemplateEntry
+                                  RegularStringPart "ready" @ 56..61
+                              ClosingQuote "\"" @ 61..62 trailing=[Whitespace " "]
+                          TerminatorList
+                      RBrace "}" @ 63..64
+              PropertyBodyMemberList
+        RBrace "}" @ 65..66 leading=[Newline "\n"]
   Eof "" @ 67..67 leading=[Newline "\n"]
 
 diagnostics:

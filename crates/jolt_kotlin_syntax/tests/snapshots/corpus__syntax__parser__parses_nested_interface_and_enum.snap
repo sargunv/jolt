@@ -17,52 +17,70 @@ class Container {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Name
-      Identifier "Container" @ 6..15 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 16..17
-      ClassMemberDeclaration
-        InterfaceDeclaration
-          InterfaceKw "interface" @ 22..31 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Name
-            Identifier "Entry" @ 32..37 trailing=[Whitespace " "]
-          ClassBody
-            LBrace "{" @ 38..39
-            ClassMemberDeclaration
-              PropertyDeclaration
-                ValKw "val" @ 48..51 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                CallableName
-                  Name
-                    Identifier "key" @ 52..55
-                Colon ":" @ 55..56 trailing=[Whitespace " "]
-                TypeReference
-                  UserType
-                    Identifier "String" @ 57..63
-            RBrace "}" @ 68..69 leading=[Newline "\n", Whitespace "    "]
-      ClassMemberDeclaration
-        ClassDeclaration
-          ModifierList
-            Identifier "enum" @ 75..79 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          ClassKw "class" @ 80..85 trailing=[Whitespace " "]
-          Name
-            Identifier "Kind" @ 86..90 trailing=[Whitespace " "]
-          ClassBody
-            LBrace "{" @ 91..92
-            ClassMemberDeclaration
-              EnumEntry
-                NameExpression
-                  Identifier "First" @ 101..106 leading=[Newline "\n", Whitespace "        "]
-            Comma "," @ 106..107
-            ClassMemberDeclaration
-              EnumEntry
-                NameExpression
-                  Identifier "Second" @ 116..122 leading=[Newline "\n", Whitespace "        "]
-            Comma "," @ 122..123
-            RBrace "}" @ 128..129 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 130..131 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "Container" @ 6..15 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 16..17
+        ClassMemberList
+          ClassMemberDeclaration
+            InterfaceDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              InterfaceKw "interface" @ 22..31 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "Entry" @ 32..37 trailing=[Whitespace " "]
+              ClassBody
+                LBrace "{" @ 38..39
+                ClassMemberList
+                  ClassMemberDeclaration
+                    PropertyDeclaration
+                      ModifierListSequence
+                      ModifierListSequence
+                      ValKw "val" @ 48..51 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      CallableName
+                        CallableNamePartList
+                          Name
+                            Identifier "key" @ 52..55
+                      Colon ":" @ 55..56 trailing=[Whitespace " "]
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            Identifier "String" @ 57..63
+                      PropertyBodyMemberList
+                RBrace "}" @ 68..69 leading=[Newline "\n", Whitespace "    "]
+          ClassMemberDeclaration
+            ClassDeclaration
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "enum" @ 75..79 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              ClassKw "class" @ 80..85 trailing=[Whitespace " "]
+              Name
+                Identifier "Kind" @ 86..90 trailing=[Whitespace " "]
+              ClassBody
+                LBrace "{" @ 91..92
+                ClassMemberList
+                  ClassMemberDeclaration
+                    EnumEntry
+                      NameExpression
+                        Identifier "First" @ 101..106 leading=[Newline "\n", Whitespace "        "]
+                    Comma "," @ 106..107
+                  ClassMemberDeclaration
+                    EnumEntry
+                      NameExpression
+                        Identifier "Second" @ 116..122 leading=[Newline "\n", Whitespace "        "]
+                    Comma "," @ 122..123
+                RBrace "}" @ 128..129 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 130..131 leading=[Newline "\n"]
   Eof "" @ 132..132 leading=[Newline "\n"]
 
 diagnostics:

@@ -2,10 +2,12 @@ use std::borrow::Cow;
 
 use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    KotlinComment, KotlinCommentKind, KotlinSyntaxToken, TokenGap, token_gap,
+    KotlinComment, KotlinCommentKind, KotlinRoleElement, KotlinSyntaxToken, TerminatorList,
 };
+use jolt_syntax::RemovalClaim;
 
 use crate::helpers::formatter_ignore::is_formatter_control_marker;
+use crate::helpers::recovery::{KotlinFormatListPart, resolve_list_part};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum LeadingTrivia {
@@ -27,47 +29,19 @@ pub(crate) enum InlineLeadingTrivia {
     BeforeToken,
 }
 
-pub(crate) fn format_leading_comment_runs<'source, Item>(
-    doc: &mut DocBuilder<'source>,
-    items: impl IntoIterator<Item = Item>,
-    mut has_leading_comments: impl FnMut(&Item) -> bool,
-    mut format_run: impl FnMut(&mut DocBuilder<'source>, Vec<Item>) -> Doc<'source>,
-) -> Doc<'source> {
-    let items = items.into_iter();
-    let (lower, _) = items.size_hint();
-    let mut current_run = Vec::with_capacity(lower);
-    doc.concat_list(|docs| {
-        for item in items {
-            if has_leading_comments(&item) && !current_run.is_empty() {
-                push_leading_comment_run(docs, std::mem::take(&mut current_run), &mut format_run);
-            }
-            current_run.push(item);
-        }
-        if !current_run.is_empty() {
-            push_leading_comment_run(docs, current_run, &mut format_run);
-        }
-    })
-}
-
-fn push_leading_comment_run<'source, Item>(
-    docs: &mut ConcatBuilder<'_, 'source>,
-    run: Vec<Item>,
-    format_run: &mut impl FnMut(&mut DocBuilder<'source>, Vec<Item>) -> Doc<'source>,
-) {
-    if !docs.is_empty() {
-        let empty_line = docs.empty_line();
-        docs.push(empty_line);
-    }
-    let run = format_run(docs, run);
-    docs.push(run);
-}
-
 pub(crate) fn format_leading_comments<'source>(
     doc: &mut DocBuilder<'source>,
     token: &KotlinSyntaxToken<'source>,
 ) -> Doc<'source> {
+    format_leading_comment_list(doc, token.leading_comments())
+}
+
+pub(crate) fn format_leading_comment_list<'source>(
+    doc: &mut DocBuilder<'source>,
+    comments: impl IntoIterator<Item = KotlinComment<'source>>,
+) -> Doc<'source> {
     doc.concat_list(|docs| {
-        for comment in token.leading_comments() {
+        for comment in comments {
             let comment = format_comment(docs, &comment);
             docs.push(comment);
             let hard_line = docs.hard_line();
@@ -141,22 +115,80 @@ pub(crate) fn format_removed_comments<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = KotlinComment<'source>>,
 ) -> Option<Doc<'source>> {
-    let mut is_empty = true;
+    let mut has_claims = false;
+    let mut has_output = false;
     let comments = doc.concat_list(|docs| {
         for comment in comments {
             if is_formatter_control_marker(comment.text()) {
+                let claim = docs.claimed_trivia(Doc::nil(), comment.source_pieces());
+                docs.push(claim);
+                has_claims = true;
                 continue;
             }
-            if !docs.is_empty() {
+            if has_output {
                 let hard_line = docs.hard_line();
                 docs.push(hard_line);
             }
             let comment = format_comment(docs, &comment);
             docs.push(comment);
+            has_claims = true;
+            has_output = true;
         }
-        is_empty = docs.is_empty();
     });
-    (!is_empty).then_some(comments)
+    has_claims.then_some(comments)
+}
+
+pub(crate) fn format_removed_separator<'source>(
+    doc: &mut DocBuilder<'source>,
+    token: &KotlinSyntaxToken<'source>,
+    claim: Option<RemovalClaim<'source>>,
+    space_before_comments: bool,
+) -> Doc<'source> {
+    let Some(claim) = claim else {
+        doc.block_on_invariant("Kotlin syntax did not authorize separator removal");
+        return format_token(
+            doc,
+            token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        );
+    };
+    let removed = doc.removed_source(claim);
+    let comments = format_removed_comments(doc, comments_from_tokens([*token]));
+    match comments {
+        Some(comments) if space_before_comments => {
+            let space = doc.space();
+            doc.concat([removed, space, comments])
+        }
+        Some(comments) => doc.concat([removed, comments]),
+        None => removed,
+    }
+}
+
+pub(crate) fn format_terminator_list<'source>(
+    doc: &mut DocBuilder<'source>,
+    terminators: &TerminatorList<'source>,
+    space_before_comments: bool,
+) -> Doc<'source> {
+    doc.concat_list(|docs| {
+        for part in terminators.parts() {
+            let token = match resolve_list_part(part, docs) {
+                KotlinFormatListPart::Item(KotlinRoleElement::Token(token))
+                | KotlinFormatListPart::Separator(token) => token,
+                KotlinFormatListPart::Item(KotlinRoleElement::Node(_)) => {
+                    docs.block_on_invariant("Kotlin terminator list contained a node");
+                    continue;
+                }
+                KotlinFormatListPart::Malformed(recovery) => {
+                    docs.push(recovery);
+                    continue;
+                }
+            };
+            let claim = terminators.separator_removal_claim(token);
+            let removed = format_removed_separator(docs, &token, claim, space_before_comments);
+            docs.push(removed);
+        }
+    })
 }
 
 pub(crate) fn has_delimiter_dangling_comments<'source>(
@@ -213,11 +245,21 @@ pub(crate) fn format_token<'source>(
     leading: LeadingTrivia,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
+    let token_doc = doc.source_token(token);
+    format_token_doc(doc, token, token_doc, leading, trailing)
+}
+
+pub(crate) fn format_token_doc<'source>(
+    doc: &mut DocBuilder<'source>,
+    token: &KotlinSyntaxToken<'source>,
+    token_doc: Doc<'source>,
+    leading: LeadingTrivia,
+    trailing: TrailingTrivia,
+) -> Doc<'source> {
     let leading = match leading {
         LeadingTrivia::Preserve => format_leading_comments(doc, token),
         LeadingTrivia::SuppressAlreadyHandled => doc.nil(),
     };
-    let token_doc = format_token_text(doc, token.text());
     let trailing = match trailing {
         TrailingTrivia::Preserve => format_trailing_comments(doc, token),
         TrailingTrivia::BeforeLineBreak => format_trailing_comments_before_line_break(doc, token),
@@ -246,51 +288,6 @@ pub(crate) fn format_token<'source>(
         TrailingTrivia::RelocatedToEnclosingContext => doc.nil(),
     };
     doc.concat([leading, token_doc, trailing])
-}
-
-pub(crate) fn format_token_sequence<'source>(
-    doc: &mut DocBuilder<'source>,
-    tokens: impl IntoIterator<Item = KotlinSyntaxToken<'source>>,
-    leading: LeadingTrivia,
-) -> Doc<'source> {
-    let tokens = tokens.into_iter();
-    let mut previous = None;
-    doc.concat_list(|docs| {
-        for (index, token) in tokens.enumerate() {
-            if let Some(previous) = previous {
-                let gap = format_token_gap(docs, &previous, &token);
-                docs.push(gap);
-            }
-            let token_doc = format_token(
-                docs,
-                &token,
-                if index == 0 {
-                    leading
-                } else {
-                    LeadingTrivia::Preserve
-                },
-                TrailingTrivia::Preserve,
-            );
-            docs.push(token_doc);
-            previous = Some(token);
-        }
-    })
-}
-
-pub(crate) fn format_token_gap<'source>(
-    doc: &mut DocBuilder<'source>,
-    left: &KotlinSyntaxToken<'source>,
-    right: &KotlinSyntaxToken<'source>,
-) -> Doc<'source> {
-    if trailing_comments_force_line(left) {
-        return doc.nil();
-    }
-
-    match token_gap(left, right) {
-        TokenGap::None => doc.nil(),
-        TokenGap::Whitespace => doc.space(),
-        TokenGap::Line => doc.hard_line(),
-    }
 }
 
 pub(crate) fn format_token_with_inline_leading_comments<'source>(
@@ -323,23 +320,13 @@ pub(crate) fn format_comment<'source>(
     doc: &mut DocBuilder<'source>,
     comment: &KotlinComment<'source>,
 ) -> Doc<'source> {
-    match comment.kind() {
+    let formatted = match comment.kind() {
         KotlinCommentKind::Line | KotlinCommentKind::Block => {
             format_comment_lines(doc, preserved_comment_lines(comment.text()))
         }
         KotlinCommentKind::Doc => format_star_block_comment(doc, comment.text()),
-    }
-}
-
-pub(crate) fn format_token_text<'source>(
-    doc: &mut DocBuilder<'source>,
-    token_text: &'source str,
-) -> Doc<'source> {
-    if token_text.contains(['\n', '\r']) {
-        doc.literal_text(token_text)
-    } else {
-        doc.text(token_text)
-    }
+    };
+    doc.claimed_trivia(formatted, comment.source_pieces())
 }
 
 pub(crate) fn comment_forces_line(comment: &KotlinComment<'_>) -> bool {

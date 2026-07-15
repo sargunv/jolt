@@ -3,6 +3,8 @@ package com.example.declarations
 interface Source<T>
 interface Sink<T>
 
+val <T> T.cached: T where T : Any by lazy { this }
+
 fun <T, R> connect(source: T, value: R): R
     where T : Source<R>,
           T : Sink<R> {

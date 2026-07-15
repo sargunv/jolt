@@ -12,60 +12,77 @@ fun invalidAssignmentTargets(value: Int) {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "invalidAssignmentTargets" @ 4..28
-    ValueParameterList
-      LParen "(" @ 28..29
-      ValueParameter
-        Name
-          Identifier "value" @ 29..34
-        Colon ":" @ 34..35 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Int" @ 36..39
-      RParen ")" @ 39..40 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 41..42
-      Statement
-        ExpressionStatement
-          AssignmentExpression
-            ErrorNode
-              LiteralExpression
-                IntegerLiteral "1" @ 47..48 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            Assign "=" @ 49..50 trailing=[Whitespace " "]
-            NameExpression
-              Identifier "value" @ 51..56
-      Statement
-        ExpressionStatement
-          AssignmentExpression
-            ErrorNode
-              BinaryExpression
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "invalidAssignmentTargets" @ 4..28
+      ValueParameterList
+        LParen "(" @ 28..29
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "value" @ 29..34
+            Colon ":" @ 34..35 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Int" @ 36..39
+        RParen ")" @ 39..40 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 41..42
+        BlockItemList
+          Statement
+            ExpressionStatement
+              AssignmentExpression
+                ErrorNode
+                  LiteralExpression
+                    IntegerLiteral "1" @ 47..48 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                Assign "=" @ 49..50 trailing=[Whitespace " "]
                 NameExpression
-                  Identifier "value" @ 61..66 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                Plus "+" @ 67..68 trailing=[Whitespace " "]
+                  Identifier "value" @ 51..56
+            TerminatorList
+          Statement
+            ExpressionStatement
+              AssignmentExpression
+                ErrorNode
+                  BinaryExpression
+                    NameExpression
+                      Identifier "value" @ 61..66 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    Plus "+" @ 67..68 trailing=[Whitespace " "]
+                    LiteralExpression
+                      IntegerLiteral "1" @ 69..70 trailing=[Whitespace " "]
+                Assign "=" @ 71..72 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "value" @ 73..78
+            TerminatorList
+          Statement
+            ExpressionStatement
+              AssignmentExpression
+                ErrorNode
+                  CallExpression
+                    NameExpression
+                      Identifier "value" @ 83..88 leading=[Newline "\n", Whitespace "    "]
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 88..89
+                      ValueArgumentEntryList
+                      RParen ")" @ 89..90 trailing=[Whitespace " "]
+                    LambdaExpressionList
+                Assign "=" @ 91..92 trailing=[Whitespace " "]
                 LiteralExpression
-                  IntegerLiteral "1" @ 69..70 trailing=[Whitespace " "]
-            Assign "=" @ 71..72 trailing=[Whitespace " "]
-            NameExpression
-              Identifier "value" @ 73..78
-      Statement
-        ExpressionStatement
-          AssignmentExpression
-            ErrorNode
-              CallExpression
-                NameExpression
-                  Identifier "value" @ 83..88 leading=[Newline "\n", Whitespace "    "]
-                ValueArgumentList
-                  LParen "(" @ 88..89
-                  RParen ")" @ 89..90 trailing=[Whitespace " "]
-            Assign "=" @ 91..92 trailing=[Whitespace " "]
-            LiteralExpression
-              IntegerLiteral "3" @ 93..94
-      RBrace "}" @ 95..96 leading=[Newline "\n"]
+                  IntegerLiteral "3" @ 93..94
+            TerminatorList
+        RBrace "}" @ 95..96 leading=[Newline "\n"]
   Eof "" @ 97..97 leading=[Newline "\n"]
 
 diagnostics:

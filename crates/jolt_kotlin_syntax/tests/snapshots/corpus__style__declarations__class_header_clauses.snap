@@ -17,86 +17,113 @@ class Repository<T : Any>(
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "declarations" @ 20..32
-  ImportList
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 34..43 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Readable" @ 44..52
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 53..62 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Writable" @ 63..71
-  ClassDeclaration
-    ClassKw "class" @ 73..78 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Repository" @ 79..89
-    TypeParameterList
-      Lt "<" @ 89..90
-      TypeParameter
+      QualifiedNameSegmentList
         Name
-          Identifier "T" @ 90..91 trailing=[Whitespace " "]
-        Colon ":" @ 92..93 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Any" @ 94..97
-      Gt ">" @ 97..98
-    PrimaryConstructor
-      ValueParameterList
-        LParen "(" @ 98..99
-        ValueParameter
-          ModifierList
-            Identifier "private" @ 104..111 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          ValKw "val" @ 112..115 trailing=[Whitespace " "]
-          Name
-            Identifier "name" @ 116..120
-          Colon ":" @ 120..121 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 122..128
-        Comma "," @ 128..129
-        ValueParameter
-          ModifierList
-            Identifier "private" @ 134..141 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          ValKw "val" @ 142..145 trailing=[Whitespace " "]
-          Name
-            Identifier "items" @ 146..151
-          Colon ":" @ 151..152 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "MutableList" @ 153..164
-              TypeArgumentList
-                Lt "<" @ 164..165
-                TypeProjectionList
-                  TypeArgument
-                    TypeProjection
-                      TypeReference
-                        UserType
-                          Identifier "T" @ 165..166
-                Gt ">" @ 166..167
-        Comma "," @ 167..168
-        RParen ")" @ 169..170 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Colon ":" @ 171..172 trailing=[Whitespace " "]
-    DelegationSpecifierList
-      DelegationSpecifier
-        TypeReference
-          UserType
-            Identifier "Readable" @ 173..181
-      Comma "," @ 181..182
-      DelegationSpecifier
-        TypeReference
-          UserType
-            Identifier "Writable" @ 187..195 leading=[Newline "\n", Whitespace "    "]
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "declarations" @ 20..32
+    TerminatorList
+  ImportList
+    ImportDirectiveList
+  KotlinFileItemList
+    InterfaceDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      InterfaceKw "interface" @ 34..43 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Readable" @ 44..52
+    InterfaceDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      InterfaceKw "interface" @ 53..62 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Writable" @ 63..71
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 73..78 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Repository" @ 79..89
+      TypeParameterList
+        Lt "<" @ 89..90
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierListSequence
+            Name
+              Identifier "T" @ 90..91 trailing=[Whitespace " "]
+            Colon ":" @ 92..93 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Any" @ 94..97
+        Gt ">" @ 97..98
+      PrimaryConstructor
+        ModifierListSequence
+        ValueParameterList
+          LParen "(" @ 98..99
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "private" @ 104..111 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ValKw "val" @ 112..115 trailing=[Whitespace " "]
+              Name
+                Identifier "name" @ 116..120
+              Colon ":" @ 120..121 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 122..128
+            Comma "," @ 128..129
+            ValueParameter
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "private" @ 134..141 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ValKw "val" @ 142..145 trailing=[Whitespace " "]
+              Name
+                Identifier "items" @ 146..151
+              Colon ":" @ 151..152 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "MutableList" @ 153..164
+                    TypeArgumentList
+                      Lt "<" @ 164..165
+                      TypeProjectionList
+                        TypeProjectionSeparatedList
+                          TypeArgument
+                            TypeProjection
+                              TypeReference
+                                UserType
+                                  UserTypeSegmentList
+                                    Identifier "T" @ 165..166
+                      Gt ">" @ 166..167
+            Comma "," @ 167..168
+          RParen ")" @ 169..170 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Colon ":" @ 171..172 trailing=[Whitespace " "]
+      DelegationSpecifierList
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Readable" @ 173..181
+          Comma "," @ 181..182
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Writable" @ 187..195 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 196..196 leading=[Newline "\n"]
 
 diagnostics:

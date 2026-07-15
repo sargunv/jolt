@@ -14,44 +14,63 @@ class Outer {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Name
-      Identifier "Outer" @ 6..11 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 12..13
-      ClassMemberDeclaration
-        ClassDeclaration
-          ClassKw "class" @ 18..23 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Name
-            Identifier "Inner" @ 24..29
-      ClassMemberDeclaration
-        ObjectDeclaration
-          ObjectKw "object" @ 35..41 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Name
-            Identifier "NestedObject" @ 42..54
-      ClassMemberDeclaration
-        FunctionDeclaration
-          FunKw "fun" @ 60..63 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "build" @ 64..69
-          ValueParameterList
-            LParen "(" @ 69..70
-            RParen ")" @ 70..71
-          Colon ":" @ 71..72 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Inner" @ 73..78 trailing=[Whitespace " "]
-          Assign "=" @ 79..80 trailing=[Whitespace " "]
-          CallExpression
-            NameExpression
-              Identifier "Inner" @ 81..86
-            ValueArgumentList
-              LParen "(" @ 86..87
-              RParen ")" @ 87..88
-      RBrace "}" @ 89..90 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "Outer" @ 6..11 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 12..13
+        ClassMemberList
+          ClassMemberDeclaration
+            ClassDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              ClassKw "class" @ 18..23 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "Inner" @ 24..29
+          ClassMemberDeclaration
+            ObjectDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              ObjectKw "object" @ 35..41 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "NestedObject" @ 42..54
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              FunKw "fun" @ 60..63 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "build" @ 64..69
+              ValueParameterList
+                LParen "(" @ 69..70
+                ValueParameterSeparatedList
+                RParen ")" @ 70..71
+              Colon ":" @ 71..72 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Inner" @ 73..78 trailing=[Whitespace " "]
+              Assign "=" @ 79..80 trailing=[Whitespace " "]
+              CallExpression
+                NameExpression
+                  Identifier "Inner" @ 81..86
+                TypeArgumentListList
+                ValueArgumentList
+                  LParen "(" @ 86..87
+                  ValueArgumentEntryList
+                  RParen ")" @ 87..88
+                LambdaExpressionList
+        RBrace "}" @ 89..90 leading=[Newline "\n"]
   Eof "" @ 91..91 leading=[Newline "\n"]
 
 diagnostics:

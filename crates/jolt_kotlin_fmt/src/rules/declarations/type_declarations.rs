@@ -1,114 +1,151 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     ClassBody, ClassDeclaration, CompanionObject, DelegationSpecifier, DelegationSpecifierList,
-    InterfaceDeclaration, KotlinSyntaxToken, ModifierList, Name, ObjectDeclaration,
-    ObjectExpression, PrimaryConstructor, RecoveredSeparatedListEntry,
+    InterfaceDeclaration, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken,
+    KotlinSyntaxView, ObjectDeclaration, ObjectExpression, PrimaryConstructor,
 };
 
-use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_token, format_token_sequence,
-};
+use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
 use crate::helpers::lists::{CommaListItem, comma_list};
+use crate::helpers::recovery::{
+    KotlinFormatField, KotlinFormatListPart, format_optional_field, format_or_verbatim,
+    format_required_field, resolve_list_part, resolve_required_field,
+};
 use crate::rules::expressions::{format_expression, format_value_argument_list};
 use crate::rules::names::format_name;
-use crate::rules::types::format_type_reference;
-use crate::rules::types::{format_type_constraint_list, format_type_parameter_list};
+use crate::rules::types::{
+    format_type_constraint_list, format_type_parameter_list, format_type_reference,
+};
 use crate::rules::variables::format_value_parameter_list;
 
 use super::{
-    format_inline_modifier_prefix, format_modifier_prefix, member_bodies::format_class_body,
+    format_declaration_prefix, format_inline_modifier_prefix, member_bodies::format_class_body,
 };
 
 pub(super) fn format_class_declaration<'source>(
     doc: &mut DocBuilder<'source>,
     declaration: &ClassDeclaration<'source>,
 ) -> Doc<'source> {
-    let constructor = declaration.primary_constructor();
-    let type_parameters = declaration.type_parameter_list();
-    let tail = if let Some(constructor) = constructor {
-        if declaration.name().is_some() {
-            simple_primary_constructor_tail(doc, &constructor)
-        } else {
-            None
-        }
-    } else {
-        None
-    };
-    format_simple_type_declaration(
-        doc,
-        SimpleTypeDeclaration {
-            modifiers: declaration.modifiers(),
-            keyword: declaration.class_token(),
-            name: declaration.name(),
-            type_parameters,
-            tail,
-            colon: declaration.colon(),
-            delegation: declaration.delegation_specifier_list(),
-            constraints: declaration.type_constraint_list(),
-            body: declaration.body(),
-        },
-    )
+    format_or_verbatim(declaration, doc, |doc| {
+        let prefix = format_declaration_prefix(
+            doc,
+            declaration.leading_modifiers(),
+            declaration.context(),
+            declaration.post_context_modifiers(),
+        );
+        let keyword = format_keyword(doc, declaration.class_token(), true);
+        let name =
+            format_required_field(declaration.name(), doc, |name, doc| format_name(doc, &name));
+        let type_parameters =
+            format_optional_field(declaration.type_parameters(), doc, |parameters, doc| {
+                format_type_parameter_list(doc, Some(parameters))
+            });
+        let constructor = format_optional_field(
+            declaration.primary_constructor(),
+            doc,
+            |constructor, doc| format_primary_constructor(doc, &constructor),
+        );
+        let tail = format_type_tail(
+            doc,
+            declaration.colon(),
+            declaration.delegation(),
+            Some(declaration.constraints()),
+            declaration.body(),
+        );
+        let declaration = doc.concat([prefix, keyword, name, type_parameters, constructor, tail]);
+        doc.group(declaration)
+    })
 }
 
 pub(super) fn format_interface_declaration<'source>(
     doc: &mut DocBuilder<'source>,
     declaration: &InterfaceDeclaration<'source>,
 ) -> Doc<'source> {
-    format_simple_type_declaration(
-        doc,
-        SimpleTypeDeclaration {
-            modifiers: declaration.modifiers(),
-            keyword: declaration.interface_token(),
-            name: declaration.name(),
-            type_parameters: declaration.type_parameter_list(),
-            tail: None,
-            colon: declaration.colon(),
-            delegation: declaration.delegation_specifier_list(),
-            constraints: declaration.type_constraint_list(),
-            body: declaration.body(),
-        },
-    )
+    format_or_verbatim(declaration, doc, |doc| {
+        let prefix = format_declaration_prefix(
+            doc,
+            declaration.leading_modifiers(),
+            declaration.context(),
+            declaration.post_context_modifiers(),
+        );
+        let keyword = format_keyword(doc, declaration.interface_token(), true);
+        let name =
+            format_required_field(declaration.name(), doc, |name, doc| format_name(doc, &name));
+        let type_parameters =
+            format_optional_field(declaration.type_parameters(), doc, |parameters, doc| {
+                format_type_parameter_list(doc, Some(parameters))
+            });
+        let tail = format_type_tail(
+            doc,
+            declaration.colon(),
+            declaration.delegation(),
+            Some(declaration.constraints()),
+            declaration.body(),
+        );
+        let declaration = doc.concat([prefix, keyword, name, type_parameters, tail]);
+        doc.group(declaration)
+    })
 }
 
 pub(super) fn format_object_declaration<'source>(
     doc: &mut DocBuilder<'source>,
     declaration: &ObjectDeclaration<'source>,
 ) -> Doc<'source> {
-    let modifiers = declaration.modifiers();
-    format_simple_type_declaration(
-        doc,
-        SimpleTypeDeclaration {
-            modifiers,
-            keyword: declaration.object_token(),
-            name: declaration.name(),
-            type_parameters: None,
-            tail: None,
-            colon: declaration.colon(),
-            delegation: declaration.delegation_specifier_list(),
-            constraints: None,
-            body: declaration.body(),
-        },
-    )
+    format_or_verbatim(declaration, doc, |doc| {
+        let prefix = format_declaration_prefix(
+            doc,
+            declaration.leading_modifiers(),
+            declaration.context(),
+            declaration.post_context_modifiers(),
+        );
+        let keyword = format_keyword(doc, declaration.object_token(), false);
+        let name = format_optional_field(declaration.name(), doc, |name, doc| {
+            let space = doc.space();
+            let name = format_name(doc, &name);
+            doc.concat([space, name])
+        });
+        let tail = format_type_tail(
+            doc,
+            declaration.colon(),
+            declaration.delegation(),
+            None,
+            declaration.body(),
+        );
+        let declaration = doc.concat([prefix, keyword, name, tail]);
+        doc.group(declaration)
+    })
 }
 
 pub(super) fn format_companion_object<'source>(
     doc: &mut DocBuilder<'source>,
     declaration: &CompanionObject<'source>,
 ) -> Doc<'source> {
-    format_simple_type_declaration(
-        doc,
-        SimpleTypeDeclaration {
-            modifiers: declaration.modifiers(),
-            keyword: declaration.object_token(),
-            name: declaration.name(),
-            type_parameters: None,
-            tail: None,
-            colon: declaration.colon(),
-            delegation: declaration.delegation_specifier_list(),
-            constraints: None,
-            body: declaration.body(),
-        },
-    )
+    format_or_verbatim(declaration, doc, |doc| {
+        let prefix = format_declaration_prefix(
+            doc,
+            declaration.leading_modifiers(),
+            declaration.context(),
+            declaration.post_context_modifiers(),
+        );
+        let companion = format_keyword(doc, declaration.companion_token(), true);
+        let object = format_optional_field(declaration.object_token(), doc, |token, doc| {
+            format_keyword_token(doc, token)
+        });
+        let name = format_optional_field(declaration.name(), doc, |name, doc| {
+            let space = doc.space();
+            let name = format_name(doc, &name);
+            doc.concat([space, name])
+        });
+        let tail = format_type_tail(
+            doc,
+            declaration.colon(),
+            declaration.delegation(),
+            None,
+            declaration.body(),
+        );
+        let declaration = doc.concat([prefix, companion, object, name, tail]);
+        doc.group(declaration)
+    })
 }
 
 pub(crate) fn format_object_expression<'source>(
@@ -116,272 +153,266 @@ pub(crate) fn format_object_expression<'source>(
     expression: &ObjectExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let keyword = if let Some(keyword) = expression.object_token() {
-        format_token(
-            doc,
-            &keyword,
-            leading,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        )
+    format_or_verbatim(expression, doc, |doc| {
+        let keyword = format_required_field(expression.object_token(), doc, |token, doc| {
+            format_token(
+                doc,
+                &token,
+                leading,
+                TrailingTrivia::RelocatedToEnclosingContext,
+            )
+        });
+        let delegation =
+            format_object_expression_delegation(doc, expression.colon(), expression.delegation());
+        let body = format_optional_field(expression.body(), doc, |body, doc| {
+            format_class_body(doc, Some(body))
+        });
+        let expression = doc.concat([keyword, delegation, body]);
+        doc.group(expression)
+    })
+}
+
+fn format_type_tail<'source>(
+    doc: &mut DocBuilder<'source>,
+    colon: Result<
+        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
+        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
+    >,
+    delegation: Result<
+        KotlinSyntaxField<'source, DelegationSpecifierList<'source>>,
+        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
+    >,
+    constraints: Option<
+        Result<
+            KotlinSyntaxField<'source, jolt_kotlin_syntax::TypeConstraintList<'source>>,
+            jolt_kotlin_syntax::KotlinSyntaxInvariantError,
+        >,
+    >,
+    body: Result<
+        KotlinSyntaxField<'source, ClassBody<'source>>,
+        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
+    >,
+) -> Doc<'source> {
+    let delegation = format_delegation_tail(doc, colon, delegation);
+    let constraints = constraints.map_or_else(Doc::nil, |constraints| {
+        format_optional_field(constraints, doc, |constraints, doc| {
+            format_type_constraint_list(doc, Some(constraints))
+        })
+    });
+    let body = format_optional_field(body, doc, |body, doc| format_class_body(doc, Some(body)));
+    doc.concat([delegation, constraints, body])
+}
+
+fn format_delegation_tail<'source>(
+    doc: &mut DocBuilder<'source>,
+    colon: Result<
+        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
+        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
+    >,
+    delegation: Result<
+        KotlinSyntaxField<'source, DelegationSpecifierList<'source>>,
+        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
+    >,
+) -> Doc<'source> {
+    let has_delegation = !matches!(colon, Ok(KotlinSyntaxField::Missing(_)))
+        || !matches!(delegation, Ok(KotlinSyntaxField::Missing(_)));
+    let colon = format_optional_field(colon, doc, |colon, doc| format_keyword_token(doc, colon));
+    let delegation = format_optional_field(delegation, doc, |delegation, doc| {
+        let delegation = format_delegation_specifier_list(doc, &delegation);
+        doc.group(delegation)
+    });
+    if has_delegation {
+        let line = doc.line();
+        let inner_line = doc.line();
+        let specifiers = doc.concat([inner_line, delegation]);
+        let specifiers = doc.group(specifiers);
+        let specifiers = doc.indent(specifiers);
+        let tail = doc.concat([line, colon, specifiers]);
+        doc.indent(tail)
     } else {
-        doc.nil()
-    };
-    let delegation = format_object_expression_delegation(
-        doc,
-        expression.colon(),
-        expression.delegation_specifier_list(),
-    );
-    let body = format_class_body(doc, expression.body());
-    let expression = doc.concat([keyword, delegation, body]);
-    doc.group(expression)
+        Doc::nil()
+    }
 }
 
 fn format_object_expression_delegation<'source>(
     doc: &mut DocBuilder<'source>,
-    colon: Option<KotlinSyntaxToken<'source>>,
-    delegation: Option<DelegationSpecifierList<'source>>,
+    colon: Result<
+        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
+        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
+    >,
+    delegation: Result<
+        KotlinSyntaxField<'source, DelegationSpecifierList<'source>>,
+        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
+    >,
 ) -> Doc<'source> {
-    let Some(delegation) = delegation else {
-        return doc.nil();
+    let delegation = match crate::helpers::recovery::resolve_optional_field(delegation, doc) {
+        KotlinFormatField::Present(Some(delegation)) => delegation,
+        KotlinFormatField::Present(None) => return Doc::nil(),
+        KotlinFormatField::Malformed(recovery) => return recovery,
     };
-    let mut entries = delegation.entries_with_recovered();
-    let first = entries.next();
-    if entries.next().is_none()
-        && let Some(RecoveredSeparatedListEntry::Entry(entry)) = first
-        && entry.comma.is_none()
+    let entries = match resolve_required_field(delegation.entries(), doc) {
+        KotlinFormatField::Present(entries) => entries,
+        KotlinFormatField::Malformed(recovery) => return recovery,
+    };
+    let items = physical_delegation_items(doc, entries.parts());
+    if delegation.is_recovery_free()
+        && let [
+            CommaListItem {
+                doc: specifier,
+                comma: None,
+            },
+        ] = items.as_slice()
     {
-        let before_colon = doc.space();
-        let colon = if let Some(colon) = colon {
+        let before = doc.space();
+        let colon = format_optional_field(colon, doc, |colon, doc| {
             format_token(
                 doc,
                 &colon,
                 LeadingTrivia::Preserve,
                 TrailingTrivia::RelocatedToEnclosingContext,
             )
-        } else {
-            doc.nil()
-        };
-        let after_colon = doc.space();
-        let specifier = format_delegation_specifier(doc, &entry.specifier);
-        return doc.concat([before_colon, colon, after_colon, specifier]);
+        });
+        let after = doc.space();
+        return doc.concat([before, colon, after, *specifier]);
     }
 
-    format_delegation_specifier_list(doc, colon, Some(delegation))
-}
-
-struct SimpleTypeDeclaration<'source> {
-    modifiers: Option<ModifierList<'source>>,
-    keyword: Option<KotlinSyntaxToken<'source>>,
-    name: Option<Name<'source>>,
-    type_parameters: Option<jolt_kotlin_syntax::TypeParameterList<'source>>,
-    tail: Option<DeclarationTail<'source>>,
-    colon: Option<KotlinSyntaxToken<'source>>,
-    delegation: Option<DelegationSpecifierList<'source>>,
-    constraints: Option<jolt_kotlin_syntax::TypeConstraintList<'source>>,
-    body: Option<ClassBody<'source>>,
-}
-
-fn format_simple_type_declaration<'source>(
-    doc: &mut DocBuilder<'source>,
-    declaration: SimpleTypeDeclaration<'source>,
-) -> Doc<'source> {
-    let SimpleTypeDeclaration {
-        modifiers,
-        keyword,
-        name,
-        type_parameters,
-        tail,
-        colon,
-        delegation,
-        constraints,
-        body,
-    } = declaration;
-    let modifiers = format_modifier_prefix(doc, modifiers);
-    let keyword = if let Some(keyword) = keyword {
-        format_token(
-            doc,
-            &keyword,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        )
-    } else {
-        doc.nil()
-    };
-    let name = if let Some(name) = name.as_ref() {
-        let space = doc.space();
-        let name = format_name(doc, name);
-        doc.concat([space, name])
-    } else {
-        doc.nil()
-    };
-    let type_parameters = format_type_parameter_list(doc, type_parameters);
-    let tail = tail.map_or_else(|| doc.nil(), |tail| tail.doc);
-    let delegation = format_delegation_specifier_list(doc, colon, delegation);
-    let constraints = format_type_constraint_list(doc, constraints);
-    let body = format_class_body(doc, body);
-    let declaration = doc.concat([
-        modifiers,
-        keyword,
-        name,
-        type_parameters,
-        tail,
-        delegation,
-        constraints,
-        body,
-    ]);
-    doc.group(declaration)
-}
-
-fn format_delegation_specifier_list<'source>(
-    doc: &mut DocBuilder<'source>,
-    colon: Option<KotlinSyntaxToken<'source>>,
-    delegation: Option<DelegationSpecifierList<'source>>,
-) -> Doc<'source> {
-    let Some(delegation) = delegation else {
-        return doc.nil();
-    };
-    let DelegationSpecifierListItems { items } = delegation_specifier_list_items(doc, &delegation);
-    if items.is_empty() {
-        return doc.nil();
-    }
-
+    let colon = format_optional_field(colon, doc, |colon, doc| format_keyword_token(doc, colon));
     let line = doc.line();
-    let colon = if let Some(colon) = colon {
-        format_token(
-            doc,
-            &colon,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        )
-    } else {
-        doc.nil()
-    };
     let inner_line = doc.line();
     let specifiers = comma_list(doc, items);
     let specifiers = doc.concat([inner_line, specifiers]);
     let specifiers = doc.group(specifiers);
     let specifiers = doc.indent(specifiers);
-    let list = doc.concat([line, colon, specifiers]);
-    doc.indent(list)
+    let tail = doc.concat([line, colon, specifiers]);
+    doc.indent(tail)
 }
 
-struct DelegationSpecifierListItems<'source> {
-    items: Vec<CommaListItem<'source>>,
-}
-
-fn delegation_specifier_list_items<'source>(
+fn format_delegation_specifier_list<'source>(
     doc: &mut DocBuilder<'source>,
     delegation: &DelegationSpecifierList<'source>,
-) -> DelegationSpecifierListItems<'source> {
-    let entries = delegation.entries_with_recovered();
-    let (lower, _) = entries.size_hint();
-    let mut items = Vec::with_capacity(lower);
-
-    for entry in entries {
-        push_delegation_specifier_entry(doc, &mut items, entry);
-    }
-
-    DelegationSpecifierListItems { items }
+) -> Doc<'source> {
+    format_or_verbatim(delegation, doc, |doc| {
+        match resolve_required_field(delegation.entries(), doc) {
+            KotlinFormatField::Present(entries) => {
+                let items = physical_delegation_items(doc, entries.parts());
+                comma_list(doc, items)
+            }
+            KotlinFormatField::Malformed(recovery) => recovery,
+        }
+    })
 }
 
-fn push_delegation_specifier_entry<'source>(
+fn physical_delegation_items<'source>(
     doc: &mut DocBuilder<'source>,
-    items: &mut Vec<CommaListItem<'source>>,
-    entry: RecoveredSeparatedListEntry<
-        'source,
-        jolt_kotlin_syntax::DelegationSpecifierListEntry<'source>,
+    parts: impl Iterator<
+        Item = Result<
+            KotlinSyntaxListPart<'source, DelegationSpecifier<'source>>,
+            jolt_kotlin_syntax::KotlinSyntaxInvariantError,
+        >,
     >,
-) {
-    match entry {
-        RecoveredSeparatedListEntry::Entry(entry) => items.push(CommaListItem {
-            doc: format_delegation_specifier(doc, &entry.specifier),
-            comma: entry.comma,
-        }),
-        RecoveredSeparatedListEntry::Token(token) => items.push(CommaListItem {
-            doc: format_token_sequence(doc, std::iter::once(token), LeadingTrivia::Preserve),
-            comma: None,
-        }),
-        RecoveredSeparatedListEntry::Error(error) => items.push(CommaListItem {
-            doc: format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve),
-            comma: None,
-        }),
-        RecoveredSeparatedListEntry::Node(node) => items.push(CommaListItem {
-            doc: format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve),
-            comma: None,
-        }),
+) -> Vec<CommaListItem<'source>> {
+    let mut items = Vec::new();
+    for part in parts {
+        match resolve_list_part(part, doc) {
+            KotlinFormatListPart::Item(specifier) => items.push(CommaListItem {
+                doc: format_delegation_specifier(doc, &specifier),
+                comma: None,
+            }),
+            KotlinFormatListPart::Separator(comma) => {
+                if let Some(item) = items.last_mut() {
+                    item.comma = Some(comma);
+                }
+            }
+            KotlinFormatListPart::Malformed(recovery) => items.push(CommaListItem {
+                doc: recovery,
+                comma: None,
+            }),
+        }
     }
+    items
 }
 
 fn format_delegation_specifier<'source>(
     doc: &mut DocBuilder<'source>,
     specifier: &DelegationSpecifier<'source>,
 ) -> Doc<'source> {
-    let Some(ty) = specifier.ty() else {
-        return if let Some(expression) = specifier.expression() {
-            format_expression(doc, &expression)
-        } else {
-            doc.nil()
-        };
-    };
-
-    let ty = format_type_reference(doc, &ty);
-    let arguments = if let Some(arguments) = specifier.value_argument_list() {
-        format_value_argument_list(doc, &arguments)
-    } else {
-        doc.nil()
-    };
-    let by = if let Some(by) = specifier.by_token() {
-        let before_by = doc.space();
-        let by = format_token(doc, &by, LeadingTrivia::Preserve, TrailingTrivia::Preserve);
-        let after_by = doc.space();
-        let expression = if let Some(expression) = specifier.expression() {
-            format_expression(doc, &expression)
-        } else {
-            doc.nil()
-        };
-        doc.concat([before_by, by, after_by, expression])
-    } else {
-        doc.nil()
-    };
-    doc.concat([ty, arguments, by])
-}
-
-fn simple_primary_constructor_tail<'source>(
-    doc: &mut DocBuilder<'source>,
-    constructor: &PrimaryConstructor<'source>,
-) -> Option<DeclarationTail<'source>> {
-    let parameters = constructor.value_parameter_list()?;
-    let modifiers = constructor.modifiers();
-    let constructor_token = constructor.constructor_token();
-
-    if modifiers.is_none() && constructor_token.is_none() {
-        return Some(DeclarationTail {
-            doc: format_value_parameter_list(doc, &parameters),
+    format_or_verbatim(specifier, doc, |doc| {
+        let ty = format_required_field(specifier.r#type(), doc, |ty, doc| {
+            format_type_reference(doc, &ty)
         });
-    }
-
-    let space = doc.space();
-    let modifiers = if let Some(modifiers) = modifiers {
-        format_inline_modifier_prefix(doc, &modifiers)
-    } else {
-        doc.nil()
-    };
-    let constructor_token = if let Some(token) = constructor_token {
-        format_token(
-            doc,
-            &token,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::Preserve,
-        )
-    } else {
-        doc.nil()
-    };
-    let parameters = format_value_parameter_list(doc, &parameters);
-    Some(DeclarationTail {
-        doc: doc.concat([space, modifiers, constructor_token, parameters]),
+        let arguments = format_optional_field(specifier.arguments(), doc, |arguments, doc| {
+            format_value_argument_list(doc, &arguments)
+        });
+        let by = format_optional_field(specifier.by_token(), doc, |by, doc| {
+            let space = doc.space();
+            let by = format_token(doc, &by, LeadingTrivia::Preserve, TrailingTrivia::Preserve);
+            doc.concat([space, by])
+        });
+        let delegate = format_optional_field(specifier.delegate(), doc, |delegate, doc| {
+            let space = doc.space();
+            let delegate = format_expression(doc, &delegate);
+            doc.concat([space, delegate])
+        });
+        doc.concat([ty, arguments, by, delegate])
     })
 }
 
-struct DeclarationTail<'source> {
-    doc: Doc<'source>,
+fn format_primary_constructor<'source>(
+    doc: &mut DocBuilder<'source>,
+    constructor: &PrimaryConstructor<'source>,
+) -> Doc<'source> {
+    format_or_verbatim(constructor, doc, |doc| {
+        let modifiers = format_inline_modifier_prefix(doc, constructor.modifiers());
+        let keyword = format_optional_field(constructor.constructor_token(), doc, |token, doc| {
+            format_token(
+                doc,
+                &token,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::Preserve,
+            )
+        });
+        let parameters = format_required_field(constructor.parameters(), doc, |parameters, doc| {
+            format_value_parameter_list(doc, &parameters)
+        });
+        if matches!(
+            constructor.constructor_token(),
+            Ok(KotlinSyntaxField::Missing(_))
+        ) {
+            parameters
+        } else {
+            let space = doc.space();
+            doc.concat([space, modifiers, keyword, parameters])
+        }
+    })
+}
+
+fn format_keyword<'source>(
+    doc: &mut DocBuilder<'source>,
+    field: Result<
+        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
+        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
+    >,
+    trailing_space: bool,
+) -> Doc<'source> {
+    format_required_field(field, doc, |token, doc| {
+        let token = format_keyword_token(doc, token);
+        if trailing_space {
+            let space = doc.space();
+            doc.concat([token, space])
+        } else {
+            token
+        }
+    })
+}
+
+fn format_keyword_token<'source>(
+    doc: &mut DocBuilder<'source>,
+    token: KotlinSyntaxToken<'source>,
+) -> Doc<'source> {
+    format_token(
+        doc,
+        &token,
+        LeadingTrivia::Preserve,
+        TrailingTrivia::RelocatedToEnclosingContext,
+    )
 }

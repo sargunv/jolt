@@ -8,6 +8,8 @@ package com.example.declarations
 interface Source<T>
 interface Sink<T>
 
+val <T> T.cached: T where T : Any by lazy { this }
+
 fun <T, R> connect(source: T, value: R): R
     where T : Source<R>,
           T : Sink<R> {
@@ -17,120 +19,209 @@ fun <T, R> connect(source: T, value: R): R
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "declarations" @ 20..32
+      QualifiedNameSegmentList
+        Name
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "declarations" @ 20..32
+    TerminatorList
   ImportList
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 34..43 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Source" @ 44..50
-    TypeParameterList
-      Lt "<" @ 50..51
-      TypeParameter
-        Name
-          Identifier "T" @ 51..52
-      Gt ">" @ 52..53
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 54..63 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Sink" @ 64..68
-    TypeParameterList
-      Lt "<" @ 68..69
-      TypeParameter
-        Name
-          Identifier "T" @ 69..70
-      Gt ">" @ 70..71
-  FunctionDeclaration
-    FunKw "fun" @ 73..76 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    TypeParameterList
-      Lt "<" @ 77..78
-      TypeParameter
-        Name
-          Identifier "T" @ 78..79
-      Comma "," @ 79..80 trailing=[Whitespace " "]
-      TypeParameter
-        Name
-          Identifier "R" @ 81..82
-      Gt ">" @ 82..83 trailing=[Whitespace " "]
-    CallableName
+    ImportDirectiveList
+  KotlinFileItemList
+    InterfaceDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      InterfaceKw "interface" @ 34..43 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
-        Identifier "connect" @ 84..91
-    ValueParameterList
-      LParen "(" @ 91..92
-      ValueParameter
-        Name
-          Identifier "source" @ 92..98
-        Colon ":" @ 98..99 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "T" @ 100..101
-      Comma "," @ 101..102 trailing=[Whitespace " "]
-      ValueParameter
-        Name
-          Identifier "value" @ 103..108
-        Colon ":" @ 108..109 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "R" @ 110..111
-      RParen ")" @ 111..112
-    Colon ":" @ 112..113 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "R" @ 114..115
-    TypeConstraintList
-      Identifier "where" @ 120..125 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-      TypeConstraint
-        Name
-          Identifier "T" @ 126..127 trailing=[Whitespace " "]
-        Colon ":" @ 128..129 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Source" @ 130..136
-            TypeArgumentList
-              Lt "<" @ 136..137
-              TypeProjectionList
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "R" @ 137..138
-              Gt ">" @ 138..139
-      Comma "," @ 139..140
-      TypeConstraint
-        Name
-          Identifier "T" @ 151..152 leading=[Newline "\n", Whitespace "          "] trailing=[Whitespace " "]
-        Colon ":" @ 153..154 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Sink" @ 155..159
-            TypeArgumentList
-              Lt "<" @ 159..160
-              TypeProjectionList
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "R" @ 160..161
-              Gt ">" @ 161..162 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 163..164
-      Statement
-        ExpressionStatement
-          JumpExpression
-            ReturnKw "return" @ 169..175 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            NameExpression
-              Identifier "value" @ 176..181
-      RBrace "}" @ 182..183 leading=[Newline "\n"]
-  Eof "" @ 184..184 leading=[Newline "\n"]
+        Identifier "Source" @ 44..50
+      TypeParameterList
+        Lt "<" @ 50..51
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierListSequence
+            Name
+              Identifier "T" @ 51..52
+        Gt ">" @ 52..53
+    InterfaceDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      InterfaceKw "interface" @ 54..63 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Sink" @ 64..68
+      TypeParameterList
+        Lt "<" @ 68..69
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierListSequence
+            Name
+              Identifier "T" @ 69..70
+        Gt ">" @ 70..71
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 73..76 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      TypeParameterList
+        Lt "<" @ 77..78
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierListSequence
+            Name
+              Identifier "T" @ 78..79
+        Gt ">" @ 79..80 trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          TypeReference
+            UserType
+              UserTypeSegmentList
+                Identifier "T" @ 81..82
+          Dot "." @ 82..83
+          Name
+            Identifier "cached" @ 83..89
+      Colon ":" @ 89..90 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "T" @ 91..92 trailing=[Whitespace " "]
+      TypeConstraintList
+        Identifier "where" @ 93..98 trailing=[Whitespace " "]
+        TypeConstraintSeparatedList
+          TypeConstraint
+            Name
+              Identifier "T" @ 99..100 trailing=[Whitespace " "]
+            Colon ":" @ 101..102 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Any" @ 103..106 trailing=[Whitespace " "]
+      Identifier "by" @ 107..109 trailing=[Whitespace " "]
+      CallExpression
+        NameExpression
+          Identifier "lazy" @ 110..114 trailing=[Whitespace " "]
+        TypeArgumentListList
+        LambdaExpressionList
+          LambdaExpression
+            LambdaBody
+              LBrace "{" @ 115..116 trailing=[Whitespace " "]
+              LambdaBodyItemList
+                Statement
+                  ExpressionStatement
+                    ThisExpression
+                      ThisKw "this" @ 117..121 trailing=[Whitespace " "]
+                  TerminatorList
+              RBrace "}" @ 122..123
+      PropertyBodyMemberList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 125..128 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      TypeParameterList
+        Lt "<" @ 129..130
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierListSequence
+            Name
+              Identifier "T" @ 130..131
+          Comma "," @ 131..132 trailing=[Whitespace " "]
+          TypeParameter
+            ModifierListSequence
+            Name
+              Identifier "R" @ 133..134
+        Gt ">" @ 134..135 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "connect" @ 136..143
+      ValueParameterList
+        LParen "(" @ 143..144
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "source" @ 144..150
+            Colon ":" @ 150..151 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "T" @ 152..153
+          Comma "," @ 153..154 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "value" @ 155..160
+            Colon ":" @ 160..161 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "R" @ 162..163
+        RParen ")" @ 163..164
+      Colon ":" @ 164..165 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "R" @ 166..167
+      TypeConstraintList
+        Identifier "where" @ 172..177 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        TypeConstraintSeparatedList
+          TypeConstraint
+            Name
+              Identifier "T" @ 178..179 trailing=[Whitespace " "]
+            Colon ":" @ 180..181 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Source" @ 182..188
+                  TypeArgumentList
+                    Lt "<" @ 188..189
+                    TypeProjectionList
+                      TypeProjectionSeparatedList
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "R" @ 189..190
+                    Gt ">" @ 190..191
+          Comma "," @ 191..192
+          TypeConstraint
+            Name
+              Identifier "T" @ 203..204 leading=[Newline "\n", Whitespace "          "] trailing=[Whitespace " "]
+            Colon ":" @ 205..206 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Sink" @ 207..211
+                  TypeArgumentList
+                    Lt "<" @ 211..212
+                    TypeProjectionList
+                      TypeProjectionSeparatedList
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "R" @ 212..213
+                    Gt ">" @ 213..214 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 215..216
+        BlockItemList
+          Statement
+            ExpressionStatement
+              JumpExpression
+                ReturnKw "return" @ 221..227 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "value" @ 228..233
+            TerminatorList
+        RBrace "}" @ 234..235 leading=[Newline "\n"]
+  Eof "" @ 236..236 leading=[Newline "\n"]
 
 diagnostics:
   (none)

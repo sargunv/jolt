@@ -27,175 +27,236 @@ class LayerNode : MapNode(), Service by ServiceImpl()
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
-    Name
-      Identifier "Service" @ 10..17 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 18..19
-      ClassMemberDeclaration
-        FunctionDeclaration
-          FunKw "fun" @ 24..27 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
+    ImportDirectiveList
+  KotlinFileItemList
+    InterfaceDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
+      Name
+        Identifier "Service" @ 10..17 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 18..19
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              FunKw "fun" @ 24..27 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "call" @ 28..32
+              ValueParameterList
+                LParen "(" @ 32..33
+                ValueParameterSeparatedList
+                RParen ")" @ 33..34
+              Colon ":" @ 34..35 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 36..42
+        RBrace "}" @ 43..44 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 46..51 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "ServiceImpl" @ 52..63 trailing=[Whitespace " "]
+      Colon ":" @ 64..65 trailing=[Whitespace " "]
+      DelegationSpecifierList
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Service" @ 66..73 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 74..75
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "override" @ 80..88 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              FunKw "fun" @ 89..92 trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "call" @ 93..97
+              ValueParameterList
+                LParen "(" @ 97..98
+                ValueParameterSeparatedList
+                RParen ")" @ 98..99
+              Colon ":" @ 99..100 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 101..107 trailing=[Whitespace " "]
+              Assign "=" @ 108..109 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 110..111
+                  StringTemplateEntry
+                    RegularStringPart "ok" @ 111..113
+                ClosingQuote "\"" @ 113..114
+        RBrace "}" @ 115..116 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 118..123 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "DelegatingService" @ 124..141
+      PrimaryConstructor
+        ModifierListSequence
+        ValueParameterList
+          LParen "(" @ 141..142
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "private" @ 142..149 trailing=[Whitespace " "]
+              ValKw "val" @ 150..153 trailing=[Whitespace " "]
+              Name
+                Identifier "service" @ 154..161
+              Colon ":" @ 161..162 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Service" @ 163..170
+          RParen ")" @ 170..171 trailing=[Whitespace " "]
+      Colon ":" @ 172..173 trailing=[Whitespace " "]
+      DelegationSpecifierList
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Service" @ 174..181 trailing=[Whitespace " "]
+            Identifier "by" @ 182..184 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "service" @ 185..192
+    InterfaceDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      InterfaceKw "interface" @ 194..203 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "ExpressionValue" @ 204..219
+    InterfaceDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      InterfaceKw "interface" @ 221..230 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "NumberValue" @ 231..242
+      TypeParameterList
+        Lt "<" @ 242..243
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierListSequence
             Name
-              Identifier "call" @ 28..32
-          ValueParameterList
-            LParen "(" @ 32..33
-            RParen ")" @ 33..34
-          Colon ":" @ 34..35 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 36..42
-      RBrace "}" @ 43..44 leading=[Newline "\n"]
-  ClassDeclaration
-    ClassKw "class" @ 46..51 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "ServiceImpl" @ 52..63 trailing=[Whitespace " "]
-    Colon ":" @ 64..65 trailing=[Whitespace " "]
-    DelegationSpecifierList
-      DelegationSpecifier
-        TypeReference
-          UserType
-            Identifier "Service" @ 66..73 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 74..75
-      ClassMemberDeclaration
-        FunctionDeclaration
-          ModifierList
-            Identifier "override" @ 80..88 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          FunKw "fun" @ 89..92 trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "call" @ 93..97
-          ValueParameterList
-            LParen "(" @ 97..98
-            RParen ")" @ 98..99
-          Colon ":" @ 99..100 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 101..107 trailing=[Whitespace " "]
-          Assign "=" @ 108..109 trailing=[Whitespace " "]
-          StringTemplateExpression
-            StringTemplateEntry
-              OpenQuote "\"" @ 110..111
-            StringTemplateEntry
-              RegularStringPart "ok" @ 111..113
-            ClosingQuote "\"" @ 113..114
-      RBrace "}" @ 115..116 leading=[Newline "\n"]
-  ClassDeclaration
-    ClassKw "class" @ 118..123 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "DelegatingService" @ 124..141
-    PrimaryConstructor
-      ValueParameterList
-        LParen "(" @ 141..142
-        ValueParameter
-          ModifierList
-            Identifier "private" @ 142..149 trailing=[Whitespace " "]
-          ValKw "val" @ 150..153 trailing=[Whitespace " "]
-          Name
-            Identifier "service" @ 154..161
-          Colon ":" @ 161..162 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Service" @ 163..170
-        RParen ")" @ 170..171 trailing=[Whitespace " "]
-    Colon ":" @ 172..173 trailing=[Whitespace " "]
-    DelegationSpecifierList
-      DelegationSpecifier
-        TypeReference
-          UserType
-            Identifier "Service" @ 174..181 trailing=[Whitespace " "]
-        Identifier "by" @ 182..184 trailing=[Whitespace " "]
-        NameExpression
-          Identifier "service" @ 185..192
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 194..203 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "ExpressionValue" @ 204..219
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 221..230 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "NumberValue" @ 231..242
-    TypeParameterList
-      Lt "<" @ 242..243
-      TypeParameter
-        Name
-          Identifier "U" @ 243..244
-      Gt ">" @ 244..245 trailing=[Whitespace " "]
-    Colon ":" @ 246..247
-    DelegationSpecifierList
-      DelegationSpecifier
-        TypeReference
-          UserType
-            Identifier "ExpressionValue" @ 252..267 leading=[Newline "\n", Whitespace "    "]
-      Comma "," @ 267..268
-      DelegationSpecifier
-        TypeReference
-          UserType
-            Identifier "InterpolatableValue" @ 273..292 leading=[Newline "\n", Whitespace "    "]
-            TypeArgumentList
-              Lt "<" @ 292..293
-              TypeProjectionList
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "U" @ 293..294
-              Gt ">" @ 294..295
-      Comma "," @ 295..296
-      DelegationSpecifier
-        TypeReference
-          UserType
-            Identifier "ComparableValue" @ 301..316 leading=[Newline "\n", Whitespace "    "]
-            TypeArgumentList
-              Lt "<" @ 316..317
-              TypeProjectionList
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "NumberValue" @ 317..328
-                        TypeArgumentList
-                          Lt "<" @ 328..329
-                          TypeProjectionList
-                            TypeArgument
-                              TypeProjection
-                                TypeReference
-                                  UserType
-                                    Identifier "U" @ 329..330
-                          Gt ">" @ 330..331
-              Gt ">" @ 331..332
-  ClassDeclaration
-    ClassKw "class" @ 334..339 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "MapNode" @ 340..347
-  ClassDeclaration
-    ClassKw "class" @ 349..354 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "LayerNode" @ 355..364 trailing=[Whitespace " "]
-    Colon ":" @ 365..366 trailing=[Whitespace " "]
-    DelegationSpecifierList
-      DelegationSpecifier
-        TypeReference
-          UserType
-            Identifier "MapNode" @ 367..374
-        ValueArgumentList
-          LParen "(" @ 374..375
-          RParen ")" @ 375..376
-      Comma "," @ 376..377 trailing=[Whitespace " "]
-      DelegationSpecifier
-        TypeReference
-          UserType
-            Identifier "Service" @ 378..385 trailing=[Whitespace " "]
-        Identifier "by" @ 386..388 trailing=[Whitespace " "]
-        CallExpression
-          NameExpression
-            Identifier "ServiceImpl" @ 389..400
-          ValueArgumentList
-            LParen "(" @ 400..401
-            RParen ")" @ 401..402
+              Identifier "U" @ 243..244
+        Gt ">" @ 244..245 trailing=[Whitespace " "]
+      Colon ":" @ 246..247
+      DelegationSpecifierList
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "ExpressionValue" @ 252..267 leading=[Newline "\n", Whitespace "    "]
+          Comma "," @ 267..268
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "InterpolatableValue" @ 273..292 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentList
+                    Lt "<" @ 292..293
+                    TypeProjectionList
+                      TypeProjectionSeparatedList
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "U" @ 293..294
+                    Gt ">" @ 294..295
+          Comma "," @ 295..296
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "ComparableValue" @ 301..316 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentList
+                    Lt "<" @ 316..317
+                    TypeProjectionList
+                      TypeProjectionSeparatedList
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "NumberValue" @ 317..328
+                                  TypeArgumentList
+                                    Lt "<" @ 328..329
+                                    TypeProjectionList
+                                      TypeProjectionSeparatedList
+                                        TypeArgument
+                                          TypeProjection
+                                            TypeReference
+                                              UserType
+                                                UserTypeSegmentList
+                                                  Identifier "U" @ 329..330
+                                    Gt ">" @ 330..331
+                    Gt ">" @ 331..332
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 334..339 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "MapNode" @ 340..347
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 349..354 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "LayerNode" @ 355..364 trailing=[Whitespace " "]
+      Colon ":" @ 365..366 trailing=[Whitespace " "]
+      DelegationSpecifierList
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "MapNode" @ 367..374
+            ValueArgumentList
+              LParen "(" @ 374..375
+              ValueArgumentEntryList
+              RParen ")" @ 375..376
+          Comma "," @ 376..377 trailing=[Whitespace " "]
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Service" @ 378..385 trailing=[Whitespace " "]
+            Identifier "by" @ 386..388 trailing=[Whitespace " "]
+            CallExpression
+              NameExpression
+                Identifier "ServiceImpl" @ 389..400
+              TypeArgumentListList
+              ValueArgumentList
+                LParen "(" @ 400..401
+                ValueArgumentEntryList
+                RParen ")" @ 401..402
+              LambdaExpressionList
   Eof "" @ 403..403 leading=[Newline "\n"]
 
 diagnostics:

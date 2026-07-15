@@ -12,40 +12,57 @@ interface Named {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
-    Name
-      Identifier "Named" @ 10..15 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 16..17
-      ClassMemberDeclaration
-        PropertyDeclaration
-          ValKw "val" @ 22..25 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "name" @ 26..30
-          Colon ":" @ 30..31 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 32..38
-      ClassMemberDeclaration
-        FunctionDeclaration
-          FunKw "fun" @ 44..47 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "display" @ 48..55
-          ValueParameterList
-            LParen "(" @ 55..56
-            RParen ")" @ 56..57
-          Colon ":" @ 57..58 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 59..65 trailing=[Whitespace " "]
-          Assign "=" @ 66..67 trailing=[Whitespace " "]
-          NameExpression
-            Identifier "name" @ 68..72
-      RBrace "}" @ 73..74 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    InterfaceDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
+      Name
+        Identifier "Named" @ 10..15 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 16..17
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              ValKw "val" @ 22..25 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "name" @ 26..30
+              Colon ":" @ 30..31 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 32..38
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              FunKw "fun" @ 44..47 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "display" @ 48..55
+              ValueParameterList
+                LParen "(" @ 55..56
+                ValueParameterSeparatedList
+                RParen ")" @ 56..57
+              Colon ":" @ 57..58 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 59..65 trailing=[Whitespace " "]
+              Assign "=" @ 66..67 trailing=[Whitespace " "]
+              NameExpression
+                Identifier "name" @ 68..72
+        RBrace "}" @ 73..74 leading=[Newline "\n"]
   Eof "" @ 75..75 leading=[Newline "\n"]
 
 diagnostics:

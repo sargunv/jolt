@@ -4,11 +4,12 @@ mod source;
 use std::fmt;
 
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
-use jolt_syntax::{SyntaxTree, build_syntax_tree};
+use jolt_syntax::{SyntaxTree, build_syntax_tree_with_factory};
 
 use crate::{
     KotlinFile,
     nodes::{KotlinSyntaxNode, cast_kotlin_file},
+    shape::KotlinSyntaxFactory,
 };
 
 use self::source::Parser;
@@ -123,7 +124,13 @@ pub fn parse_kotlin_file(source: &str) -> KotlinParse<'_> {
 
 fn finish_parse(source: &str, parse: source::ParseEvents) -> KotlinParse<'_> {
     let mut diagnostics = parse.diagnostics;
-    let tree = match build_syntax_tree(&parse.events, parse.tokens, parse.trivia) {
+    let tree = match build_syntax_tree_with_factory(
+        source,
+        &parse.events,
+        parse.tokens,
+        parse.trivia,
+        &KotlinSyntaxFactory,
+    ) {
         Ok(tree) => tree,
         Err(error) => {
             diagnostics.push(invalid_event_stream_diagnostic(&error));

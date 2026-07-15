@@ -14,74 +14,98 @@ class Customer(val name: String) {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "docs" @ 20..24
+      QualifiedNameSegmentList
+        Name
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "docs" @ 20..24
+    TerminatorList
   ImportList
-  ClassDeclaration
-    ClassKw "class" @ 26..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Customer" @ 32..40
-    PrimaryConstructor
-      ValueParameterList
-        LParen "(" @ 40..41
-        ValueParameter
-          ValKw "val" @ 41..44 trailing=[Whitespace " "]
-          Name
-            Identifier "name" @ 45..49
-          Colon ":" @ 49..50 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 51..57
-        RParen ")" @ 57..58 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 59..60
-      ClassMemberDeclaration
-        PropertyDeclaration
-          VarKw "var" @ 65..68 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "visits" @ 69..75
-          Colon ":" @ 75..76 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Int" @ 77..80 trailing=[Whitespace " "]
-          Assign "=" @ 81..82 trailing=[Whitespace " "]
-          LiteralExpression
-            IntegerLiteral "0" @ 83..84
-      ClassMemberDeclaration
-        FunctionDeclaration
-          FunKw "fun" @ 90..93 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "greet" @ 94..99
-          ValueParameterList
-            LParen "(" @ 99..100
-            RParen ")" @ 100..101
-          Colon ":" @ 101..102 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 103..109 trailing=[Whitespace " "]
-          Assign "=" @ 110..111 trailing=[Whitespace " "]
-          StringTemplateExpression
-            StringTemplateEntry
-              OpenQuote "\"" @ 112..113
-            StringTemplateEntry
-              RegularStringPart "Welcome, " @ 113..122
-            StringTemplateEntry
-              ShortTemplateEntryStart "$" @ 122..123
-            StringTemplateEntry
-              Identifier "name" @ 123..127
-            ClosingQuote "\"" @ 127..128
-      RBrace "}" @ 129..130 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 26..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Customer" @ 32..40
+      PrimaryConstructor
+        ModifierListSequence
+        ValueParameterList
+          LParen "(" @ 40..41
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierListSequence
+              ValKw "val" @ 41..44 trailing=[Whitespace " "]
+              Name
+                Identifier "name" @ 45..49
+              Colon ":" @ 49..50 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 51..57
+          RParen ")" @ 57..58 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 59..60
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              VarKw "var" @ 65..68 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "visits" @ 69..75
+              Colon ":" @ 75..76 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Int" @ 77..80 trailing=[Whitespace " "]
+              Assign "=" @ 81..82 trailing=[Whitespace " "]
+              LiteralExpression
+                IntegerLiteral "0" @ 83..84
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              FunKw "fun" @ 90..93 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "greet" @ 94..99
+              ValueParameterList
+                LParen "(" @ 99..100
+                ValueParameterSeparatedList
+                RParen ")" @ 100..101
+              Colon ":" @ 101..102 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 103..109 trailing=[Whitespace " "]
+              Assign "=" @ 110..111 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 112..113
+                  StringTemplateEntry
+                    RegularStringPart "Welcome, " @ 113..122
+                  StringTemplateEntry
+                    ShortTemplateEntryStart "$" @ 122..123
+                  StringTemplateEntry
+                    Identifier "name" @ 123..127
+                ClosingQuote "\"" @ 127..128
+        RBrace "}" @ 129..130 leading=[Newline "\n"]
   Eof "" @ 131..131 leading=[Newline "\n"]
 
 diagnostics:

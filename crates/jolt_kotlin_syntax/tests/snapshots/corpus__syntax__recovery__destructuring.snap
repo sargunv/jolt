@@ -8,27 +8,35 @@ val (first, /* orphan */ , second) = pair
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  PropertyDeclaration
-    ValKw "val" @ 0..3 trailing=[Whitespace " "]
-    DestructuringDeclaration
-      LParen "(" @ 4..5
-      DestructuringEntry
-        Name
-          Identifier "first" @ 5..10
-      Comma "," @ 10..11 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
-      Comma "," @ 25..26 trailing=[Whitespace " "]
-      DestructuringEntry
-        Name
-          Identifier "second" @ 27..33
-      RParen ")" @ 33..34 trailing=[Whitespace " "]
-    Assign "=" @ 35..36 trailing=[Whitespace " "]
-    NameExpression
-      Identifier "pair" @ 37..41
+    ImportDirectiveList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      DestructuringDeclaration
+        LParen "(" @ 4..5
+        DestructuringEntrySeparatedList
+          DestructuringEntry
+            Name
+              Identifier "first" @ 5..10
+          Comma "," @ 10..11 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
+          Comma "," @ 25..26 trailing=[Whitespace " "]
+          ErrorNode
+          DestructuringEntry
+            Name
+              Identifier "second" @ 27..33
+        RParen ")" @ 33..34 trailing=[Whitespace " "]
+      Assign "=" @ 35..36 trailing=[Whitespace " "]
+      NameExpression
+        Identifier "pair" @ 37..41
+      PropertyBodyMemberList
   Eof "" @ 42..42 leading=[Newline "\n"]
 
 diagnostics:
-  (none)
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=27..33 message="expected destructuring entry between commas"
 
 diagnostics:
-(none)
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(27), end: TextSize(33) }) message=expected destructuring entry between commas

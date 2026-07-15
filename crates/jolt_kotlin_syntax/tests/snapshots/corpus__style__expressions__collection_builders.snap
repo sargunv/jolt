@@ -19,90 +19,119 @@ val index = mapOf(
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "expressions" @ 20..31
+      QualifiedNameSegmentList
+        Name
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "expressions" @ 20..31
+    TerminatorList
   ImportList
-  PropertyDeclaration
-    ValKw "val" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "words" @ 37..42 trailing=[Whitespace " "]
-    Assign "=" @ 43..44 trailing=[Whitespace " "]
-    CallExpression
-      NameExpression
-        Identifier "listOf" @ 45..51
-      ValueArgumentList
-        LParen "(" @ 51..52
-        ValueArgument
-          StringTemplateExpression
-            StringTemplateEntry
-              OpenQuote "\"" @ 57..58 leading=[Newline "\n", Whitespace "    "]
-            StringTemplateEntry
-              RegularStringPart "alpha" @ 58..63
-            ClosingQuote "\"" @ 63..64
-        Comma "," @ 64..65
-        ValueArgument
-          StringTemplateExpression
-            StringTemplateEntry
-              OpenQuote "\"" @ 70..71 leading=[Newline "\n", Whitespace "    "]
-            StringTemplateEntry
-              RegularStringPart "beta" @ 71..75
-            ClosingQuote "\"" @ 75..76
-        Comma "," @ 76..77
-        ValueArgument
-          StringTemplateExpression
-            StringTemplateEntry
-              OpenQuote "\"" @ 82..83 leading=[Newline "\n", Whitespace "    "]
-            StringTemplateEntry
-              RegularStringPart "gamma" @ 83..88
-            ClosingQuote "\"" @ 88..89
-        Comma "," @ 89..90
-        RParen ")" @ 91..92 leading=[Newline "\n"]
-  PropertyDeclaration
-    ValKw "val" @ 94..97 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "index" @ 98..103 trailing=[Whitespace " "]
-    Assign "=" @ 104..105 trailing=[Whitespace " "]
-    CallExpression
-      NameExpression
-        Identifier "mapOf" @ 106..111
-      ValueArgumentList
-        LParen "(" @ 111..112
-        ValueArgument
-          BinaryExpression
-            StringTemplateExpression
-              StringTemplateEntry
-                OpenQuote "\"" @ 117..118 leading=[Newline "\n", Whitespace "    "]
-              StringTemplateEntry
-                RegularStringPart "alpha" @ 118..123
-              ClosingQuote "\"" @ 123..124 trailing=[Whitespace " "]
-            Identifier "to" @ 125..127 trailing=[Whitespace " "]
-            LiteralExpression
-              IntegerLiteral "1" @ 128..129
-        Comma "," @ 129..130
-        ValueArgument
-          BinaryExpression
-            StringTemplateExpression
-              StringTemplateEntry
-                OpenQuote "\"" @ 135..136 leading=[Newline "\n", Whitespace "    "]
-              StringTemplateEntry
-                RegularStringPart "beta" @ 136..140
-              ClosingQuote "\"" @ 140..141 trailing=[Whitespace " "]
-            Identifier "to" @ 142..144 trailing=[Whitespace " "]
-            LiteralExpression
-              IntegerLiteral "2" @ 145..146
-        Comma "," @ 146..147
-        RParen ")" @ 148..149 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "words" @ 37..42 trailing=[Whitespace " "]
+      Assign "=" @ 43..44 trailing=[Whitespace " "]
+      CallExpression
+        NameExpression
+          Identifier "listOf" @ 45..51
+        TypeArgumentListList
+        ValueArgumentList
+          LParen "(" @ 51..52
+          ValueArgumentEntryList
+            ValueArgument
+              ValueArgumentPrefixList
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 57..58 leading=[Newline "\n", Whitespace "    "]
+                  StringTemplateEntry
+                    RegularStringPart "alpha" @ 58..63
+                ClosingQuote "\"" @ 63..64
+            Comma "," @ 64..65
+            ValueArgument
+              ValueArgumentPrefixList
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 70..71 leading=[Newline "\n", Whitespace "    "]
+                  StringTemplateEntry
+                    RegularStringPart "beta" @ 71..75
+                ClosingQuote "\"" @ 75..76
+            Comma "," @ 76..77
+            ValueArgument
+              ValueArgumentPrefixList
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 82..83 leading=[Newline "\n", Whitespace "    "]
+                  StringTemplateEntry
+                    RegularStringPart "gamma" @ 83..88
+                ClosingQuote "\"" @ 88..89
+            Comma "," @ 89..90
+          RParen ")" @ 91..92 leading=[Newline "\n"]
+        LambdaExpressionList
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 94..97 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "index" @ 98..103 trailing=[Whitespace " "]
+      Assign "=" @ 104..105 trailing=[Whitespace " "]
+      CallExpression
+        NameExpression
+          Identifier "mapOf" @ 106..111
+        TypeArgumentListList
+        ValueArgumentList
+          LParen "(" @ 111..112
+          ValueArgumentEntryList
+            ValueArgument
+              ValueArgumentPrefixList
+              BinaryExpression
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 117..118 leading=[Newline "\n", Whitespace "    "]
+                    StringTemplateEntry
+                      RegularStringPart "alpha" @ 118..123
+                  ClosingQuote "\"" @ 123..124 trailing=[Whitespace " "]
+                Identifier "to" @ 125..127 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "1" @ 128..129
+            Comma "," @ 129..130
+            ValueArgument
+              ValueArgumentPrefixList
+              BinaryExpression
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 135..136 leading=[Newline "\n", Whitespace "    "]
+                    StringTemplateEntry
+                      RegularStringPart "beta" @ 136..140
+                  ClosingQuote "\"" @ 140..141 trailing=[Whitespace " "]
+                Identifier "to" @ 142..144 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "2" @ 145..146
+            Comma "," @ 146..147
+          RParen ")" @ 148..149 leading=[Newline "\n"]
+        LambdaExpressionList
+      PropertyBodyMemberList
   Eof "" @ 150..150 leading=[Newline "\n"]
 
 diagnostics:

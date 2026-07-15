@@ -8,13 +8,18 @@ input:
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  Statement
-    ExpressionStatement
-      StringTemplateExpression
-        StringTemplateEntry
-          OpenQuote "\"\"\"" @ 0..3
-        ClosingQuote "\"\"\"" @ 3..6
+    ImportDirectiveList
+  KotlinFileItemList
+    Statement
+      ExpressionStatement
+        StringTemplateExpression
+          StringTemplateEntryList
+            StringTemplateEntry
+              OpenQuote "\"\"\"" @ 0..3
+          ClosingQuote "\"\"\"" @ 3..6
+      TerminatorList
   Eof "" @ 7..7 leading=[Newline "\n"]
 
 diagnostics:

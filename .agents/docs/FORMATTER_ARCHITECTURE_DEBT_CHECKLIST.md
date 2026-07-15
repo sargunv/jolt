@@ -608,6 +608,44 @@ token, comment, formatter-ignore, removal, normalization, bogus, and
 lexical-boundary paths carry exact claims. Delete Kotlin's compact/fallback
 construction and direct child-search recovery accessors in the same commit.
 
+Implementation status: **complete, acceptance blocked by the performance gate**.
+Kotlin now uses the same uniform physical node/slot model as Java. Generated
+fixed fields, constructed roles, and physical lists replace the 3,571-line
+handwritten recovery-accessor layer. The formatter consumes only typed physical
+fields/lists, dispatches syntax-owned malformed cores through tracked verbatim
+output, centralizes lexical safety, and carries exact claims for comments,
+formatter-ignore ranges, separator removal, and precedence parentheses. Valid
+canonical snapshots match Phase 8 except that comment-only files now correctly
+retain their EOF comments. The realistic ktfmt and MapLibre Compose inputs
+format deterministically, reparse, and are idempotent.
+
+The 246-fixture Kotlin schema audit records 15,884 nodes: 15,636 exact valid
+shapes and 180 syntax-owned malformed nodes. Clean fixtures have zero missing
+required shapes and zero unexpected shapes. The constrained delegated-property
+regression is covered explicitly, separator-removal claims verify direct
+recovery-free list ownership, and lexical safety covers every compound
+punctuation boundary, including `=>` and `;;`. Phase 9 is net -2,328 Rust lines
+relative to Phase 8, excluding fixtures, snapshots, reports, and documentation.
+
+The same-machine report is nevertheless red against the accepted Phase 8 report:
+
+| MapLibre Kotlin metric        |   Phase 8 |   Phase 9 |  Delta |
+| ----------------------------- | --------: | --------: | -----: |
+| Parse                         |  7.613 ms |  9.673 ms | +27.1% |
+| Format                        | 12.804 ms | 13.724 ms |  +7.2% |
+| End-to-end                    | 20.293 ms | 23.750 ms | +17.0% |
+| Parse allocated bytes         |  40.46 MB |  46.90 MB | +15.9% |
+| Tree reserved bytes per token |    146.81 |    166.69 | +13.5% |
+
+Java's unchanged parse path measured 3.6% slower in the same run, which
+indicates machine drift, but drift-adjusted Kotlin parse remains about 23%
+slower. The physical Kotlin tree grows from 156,227 to 242,680 nodes as list and
+constructed roles become real nodes; per-node reserve improves from 147.08 to
+107.51 bytes, but total tree reserve still exceeds the incremental budget. Do
+not accept Phase 9 until this construction/storage cost is reduced or the
+incremental gate is explicitly amended. Phase 10 may not silently inherit the
+regression.
+
 ### New Phase 10: Shared Uniform-Tree Architecture Closeout
 
 Remove test-only reference construction, temporary audit carriers, the

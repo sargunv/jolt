@@ -26,12 +26,20 @@ impl Parser<'_> {
             return;
         }
 
+        if allow_class_members && self.at_soft_keyword("init") {
+            let marker = self.start();
+            self.bump();
+            self.parse_block();
+            self.complete(marker, K::InitializerBlock);
+            return;
+        }
+
         let marker = self.start();
         self.parse_modifier_list();
         if self.at_context_parameter_clause() {
             self.parse_context_parameter_clause();
-            self.parse_modifier_list();
         }
+        self.parse_modifier_list();
 
         let kind = match self.current_kind() {
             K::ClassKw => {
@@ -198,11 +206,14 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_modifier_list(&mut self) {
+        let sequence = self.start();
         if !self.at_modifier_or_annotation() {
+            self.complete(sequence, K::ModifierListSequence);
             return;
         }
 
         let marker = self.start();
+        let modifiers = self.start();
         while self.at_modifier_or_annotation() {
             let before = self.position();
             if self.at(K::At) || self.at(K::Hash) {
@@ -212,7 +223,9 @@ impl Parser<'_> {
             }
             self.ensure_progress(before, "expected modifier or annotation");
         }
+        self.complete(modifiers, K::ModifierItemList);
         self.complete(marker, K::ModifierList);
+        self.complete(sequence, K::ModifierListSequence);
     }
 
     pub(super) fn parse_annotation(&mut self) {
@@ -234,7 +247,7 @@ impl Parser<'_> {
     pub(super) fn parse_annotation_argument_list(&mut self) {
         let marker = self.start();
         self.expect(K::LParen, "expected annotation argument list");
-        self.parse_comma_separated_until(K::RParen, K::ValueArgument);
+        self.parse_value_arguments_until(K::RParen, K::ValueArgumentSeparatedList);
         self.expect(K::RParen, "expected ')' after annotation arguments");
         self.complete(marker, K::AnnotationArgumentList);
     }

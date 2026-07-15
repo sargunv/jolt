@@ -8,26 +8,35 @@ class Box<First, /* orphan */ , Second>
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Name
-      Identifier "Box" @ 6..9
-    TypeParameterList
-      Lt "<" @ 9..10
-      TypeParameter
-        Name
-          Identifier "First" @ 10..15
-      Comma "," @ 15..16 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
-      Comma "," @ 30..31 trailing=[Whitespace " "]
-      TypeParameter
-        Name
-          Identifier "Second" @ 32..38
-      Gt ">" @ 38..39
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "Box" @ 6..9
+      TypeParameterList
+        Lt "<" @ 9..10
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierListSequence
+            Name
+              Identifier "First" @ 10..15
+          Comma "," @ 15..16 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
+          Comma "," @ 30..31 trailing=[Whitespace " "]
+          ErrorNode
+          TypeParameter
+            ModifierListSequence
+            Name
+              Identifier "Second" @ 32..38
+        Gt ">" @ 38..39
   Eof "" @ 40..40 leading=[Newline "\n"]
 
 diagnostics:
-  (none)
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=32..38 message="expected type parameter between commas"
 
 diagnostics:
-(none)
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(32), end: TextSize(38) }) message=expected type parameter between commas

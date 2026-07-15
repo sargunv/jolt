@@ -20,104 +20,137 @@ class Location {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "declarations" @ 20..32
+      QualifiedNameSegmentList
+        Name
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "declarations" @ 20..32
+    TerminatorList
   ImportList
-  ClassDeclaration
-    ClassKw "class" @ 34..39 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Location" @ 40..48 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 49..50
-      ClassMemberDeclaration
-        PropertyDeclaration
-          ValKw "val" @ 55..58 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "city" @ 59..63
-          Colon ":" @ 63..64 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 65..71
-          ExplicitBackingField
-            Identifier "field" @ 80..85 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-            Assign "=" @ 86..87 trailing=[Whitespace " "]
-            StringTemplateExpression
-              StringTemplateEntry
-                OpenQuote "\"" @ 88..89
-              StringTemplateEntry
-                RegularStringPart "Paris" @ 89..94
-              ClosingQuote "\"" @ 94..95
-      ClassMemberDeclaration
-        PropertyDeclaration
-          VarKw "var" @ 101..104 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "country" @ 105..112
-          Colon ":" @ 112..113 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 114..120
-          ExplicitBackingField
-            Identifier "field" @ 129..134 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-            Assign "=" @ 135..136 trailing=[Whitespace " "]
-            StringTemplateExpression
-              StringTemplateEntry
-                OpenQuote "\"" @ 137..138
-              StringTemplateEntry
-                RegularStringPart "FR" @ 138..140
-              ClosingQuote "\"" @ 140..141
-          PropertyAccessor
-            Identifier "get" @ 150..153 leading=[Newline "\n", Whitespace "        "]
-            ValueParameterList
-              LParen "(" @ 153..154
-              RParen ")" @ 154..155 trailing=[Whitespace " "]
-            Assign "=" @ 156..157 trailing=[Whitespace " "]
-            CallExpression
-              NavigationExpression
-                NameExpression
-                  Identifier "field" @ 158..163
-                Dot "." @ 163..164
-                Identifier "uppercase" @ 164..173
-              ValueArgumentList
-                LParen "(" @ 173..174
-                RParen ")" @ 174..175
-          PropertyAccessor
-            Identifier "set" @ 184..187 leading=[Newline "\n", Whitespace "        "]
-            ValueParameterList
-              LParen "(" @ 187..188
-              ValueParameter
-                Name
-                  Identifier "value" @ 188..193
-              RParen ")" @ 193..194 trailing=[Whitespace " "]
-            Block
-              LBrace "{" @ 195..196
-              Statement
-                ExpressionStatement
-                  AssignmentExpression
-                    NameExpression
-                      Identifier "field" @ 209..214 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                    Assign "=" @ 215..216 trailing=[Whitespace " "]
-                    CallExpression
-                      NavigationExpression
-                        NameExpression
-                          Identifier "value" @ 217..222
-                        Dot "." @ 222..223
-                        Identifier "trim" @ 223..227
-                      ValueArgumentList
-                        LParen "(" @ 227..228
-                        RParen ")" @ 228..229
-              RBrace "}" @ 238..239 leading=[Newline "\n", Whitespace "        "]
-      RBrace "}" @ 240..241 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 34..39 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Location" @ 40..48 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 49..50
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              ValKw "val" @ 55..58 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "city" @ 59..63
+              Colon ":" @ 63..64 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 65..71
+              PropertyBodyMemberList
+                ExplicitBackingField
+                  Identifier "field" @ 80..85 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  Assign "=" @ 86..87 trailing=[Whitespace " "]
+                  StringTemplateExpression
+                    StringTemplateEntryList
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 88..89
+                      StringTemplateEntry
+                        RegularStringPart "Paris" @ 89..94
+                    ClosingQuote "\"" @ 94..95
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              VarKw "var" @ 101..104 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "country" @ 105..112
+              Colon ":" @ 112..113 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 114..120
+              PropertyBodyMemberList
+                ExplicitBackingField
+                  Identifier "field" @ 129..134 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  Assign "=" @ 135..136 trailing=[Whitespace " "]
+                  StringTemplateExpression
+                    StringTemplateEntryList
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 137..138
+                      StringTemplateEntry
+                        RegularStringPart "FR" @ 138..140
+                    ClosingQuote "\"" @ 140..141
+                PropertyAccessor
+                  ModifierListSequence
+                  Identifier "get" @ 150..153 leading=[Newline "\n", Whitespace "        "]
+                  ValueParameterList
+                    LParen "(" @ 153..154
+                    ValueParameterSeparatedList
+                    RParen ")" @ 154..155 trailing=[Whitespace " "]
+                  Assign "=" @ 156..157 trailing=[Whitespace " "]
+                  CallExpression
+                    NavigationExpression
+                      NameExpression
+                        Identifier "field" @ 158..163
+                      Dot "." @ 163..164
+                      Identifier "uppercase" @ 164..173
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 173..174
+                      ValueArgumentEntryList
+                      RParen ")" @ 174..175
+                    LambdaExpressionList
+                PropertyAccessor
+                  ModifierListSequence
+                  Identifier "set" @ 184..187 leading=[Newline "\n", Whitespace "        "]
+                  ValueParameterList
+                    LParen "(" @ 187..188
+                    ValueParameterSeparatedList
+                      ValueParameter
+                        ModifierListSequence
+                        Name
+                          Identifier "value" @ 188..193
+                    RParen ")" @ 193..194 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 195..196
+                    BlockItemList
+                      Statement
+                        ExpressionStatement
+                          AssignmentExpression
+                            NameExpression
+                              Identifier "field" @ 209..214 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                            Assign "=" @ 215..216 trailing=[Whitespace " "]
+                            CallExpression
+                              NavigationExpression
+                                NameExpression
+                                  Identifier "value" @ 217..222
+                                Dot "." @ 222..223
+                                Identifier "trim" @ 223..227
+                              TypeArgumentListList
+                              ValueArgumentList
+                                LParen "(" @ 227..228
+                                ValueArgumentEntryList
+                                RParen ")" @ 228..229
+                              LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 238..239 leading=[Newline "\n", Whitespace "        "]
+        RBrace "}" @ 240..241 leading=[Newline "\n"]
   Eof "" @ 242..242 leading=[Newline "\n"]
 
 diagnostics:

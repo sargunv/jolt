@@ -11,46 +11,64 @@ fun missingCollectionElement(): Any {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "missingCollectionElement" @ 4..28
-    ValueParameterList
-      LParen "(" @ 28..29
-      RParen ")" @ 29..30
-    Colon ":" @ 30..31 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "Any" @ 32..35 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 36..37
-      PropertyDeclaration
-        ValKw "val" @ 42..45 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
           Name
-            Identifier "values" @ 46..52 trailing=[Whitespace " "]
-        Assign "=" @ 53..54 trailing=[Whitespace " "]
-        CollectionLiteralExpression
-          LBracket "[" @ 55..56
-          ValueArgument
-            LiteralExpression
-              IntegerLiteral "1" @ 56..57
-          Comma "," @ 57..58 trailing=[Whitespace " "]
-          Comma "," @ 59..60 trailing=[Whitespace " "]
-          ErrorNode
-          ValueArgument
-            LiteralExpression
-              IntegerLiteral "3" @ 61..62
-          RBracket "]" @ 62..63
-      Statement
-        ExpressionStatement
-          JumpExpression
-            ReturnKw "return" @ 68..74 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            NameExpression
-              Identifier "values" @ 75..81
-      RBrace "}" @ 82..83 leading=[Newline "\n"]
+            Identifier "missingCollectionElement" @ 4..28
+      ValueParameterList
+        LParen "(" @ 28..29
+        ValueParameterSeparatedList
+        RParen ")" @ 29..30
+      Colon ":" @ 30..31 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "Any" @ 32..35 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 36..37
+        BlockItemList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 42..45 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "values" @ 46..52 trailing=[Whitespace " "]
+            Assign "=" @ 53..54 trailing=[Whitespace " "]
+            CollectionLiteralExpression
+              LBracket "[" @ 55..56
+              ValueArgumentSeparatedList
+                ValueArgument
+                  ValueArgumentPrefixList
+                  LiteralExpression
+                    IntegerLiteral "1" @ 56..57
+                Comma "," @ 57..58 trailing=[Whitespace " "]
+                Comma "," @ 59..60 trailing=[Whitespace " "]
+                ErrorNode
+                ValueArgument
+                  ValueArgumentPrefixList
+                  LiteralExpression
+                    IntegerLiteral "3" @ 61..62
+              RBracket "]" @ 62..63
+            PropertyBodyMemberList
+          Statement
+            ExpressionStatement
+              JumpExpression
+                ReturnKw "return" @ 68..74 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "values" @ 75..81
+            TerminatorList
+        RBrace "}" @ 82..83 leading=[Newline "\n"]
   Eof "" @ 84..84 leading=[Newline "\n"]
 
 diagnostics:

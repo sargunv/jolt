@@ -10,58 +10,75 @@ fun explicitContextArgumentNames() {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "explicitContextArgumentNames" @ 4..32
-    ValueParameterList
-      LParen "(" @ 32..33
-      RParen ")" @ 33..34 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 35..36
-      Statement
-        ExpressionStatement
-          CallExpression
-            NameExpression
-              Identifier "render" @ 41..47 leading=[Newline "\n", Whitespace "    "]
-            ValueArgumentList
-              LParen "(" @ 47..48
-              ValueArgument
-                AssignmentExpression
-                  NameExpression
-                    Identifier "user" @ 48..52 trailing=[Whitespace " "]
-                  Assign "=" @ 53..54 trailing=[Whitespace " "]
-                  NameExpression
-                    Identifier "currentUser" @ 55..66
-              Comma "," @ 66..67 trailing=[Whitespace " "]
-              ValueArgument
-                AssignmentExpression
-                  NameExpression
-                    Identifier "theme" @ 68..73 trailing=[Whitespace " "]
-                  Assign "=" @ 74..75 trailing=[Whitespace " "]
-                  NameExpression
-                    Identifier "darkTheme" @ 76..85
-              Comma "," @ 85..86 trailing=[Whitespace " "]
-              ValueArgument
-                AssignmentExpression
-                  NameExpression
-                    Identifier "content" @ 87..94 trailing=[Whitespace " "]
-                  Assign "=" @ 95..96 trailing=[Whitespace " "]
-                  LambdaExpression
-                    LBrace "{" @ 97..98 trailing=[Whitespace " "]
-                    Statement
-                      ExpressionStatement
-                        StringTemplateExpression
-                          StringTemplateEntry
-                            OpenQuote "\"" @ 99..100
-                          StringTemplateEntry
-                            RegularStringPart "ready" @ 100..105
-                          ClosingQuote "\"" @ 105..106 trailing=[Whitespace " "]
-                    RBrace "}" @ 107..108
-              RParen ")" @ 108..109
-      RBrace "}" @ 110..111 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "explicitContextArgumentNames" @ 4..32
+      ValueParameterList
+        LParen "(" @ 32..33
+        ValueParameterSeparatedList
+        RParen ")" @ 33..34 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 35..36
+        BlockItemList
+          Statement
+            ExpressionStatement
+              CallExpression
+                NameExpression
+                  Identifier "render" @ 41..47 leading=[Newline "\n", Whitespace "    "]
+                TypeArgumentListList
+                ValueArgumentList
+                  LParen "(" @ 47..48
+                  ValueArgumentEntryList
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      Name
+                        Identifier "user" @ 48..52 trailing=[Whitespace " "]
+                      Assign "=" @ 53..54 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "currentUser" @ 55..66
+                    Comma "," @ 66..67 trailing=[Whitespace " "]
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      Name
+                        Identifier "theme" @ 68..73 trailing=[Whitespace " "]
+                      Assign "=" @ 74..75 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "darkTheme" @ 76..85
+                    Comma "," @ 85..86 trailing=[Whitespace " "]
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      Name
+                        Identifier "content" @ 87..94 trailing=[Whitespace " "]
+                      Assign "=" @ 95..96 trailing=[Whitespace " "]
+                      LambdaExpression
+                        LambdaBody
+                          LBrace "{" @ 97..98 trailing=[Whitespace " "]
+                          LambdaBodyItemList
+                            Statement
+                              ExpressionStatement
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 99..100
+                                    StringTemplateEntry
+                                      RegularStringPart "ready" @ 100..105
+                                  ClosingQuote "\"" @ 105..106 trailing=[Whitespace " "]
+                              TerminatorList
+                          RBrace "}" @ 107..108
+                  RParen ")" @ 108..109
+                LambdaExpressionList
+            TerminatorList
+        RBrace "}" @ 110..111 leading=[Newline "\n"]
   Eof "" @ 112..112 leading=[Newline "\n"]
 
 diagnostics:

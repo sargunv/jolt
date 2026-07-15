@@ -1,11 +1,11 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_kotlin_syntax::{KotlinSyntaxToken, RecoveredSeparatedListEntry};
+use jolt_kotlin_syntax::{KotlinSyntaxInvariantError, KotlinSyntaxListPart, KotlinSyntaxToken};
 
 use crate::helpers::comments::{
-    InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, delimiter_dangling_comments,
-    format_dangling_comments, format_leading_comments, format_separator_with_comments,
-    format_token, format_token_after_relocated_leading_comments, format_token_sequence,
-    format_token_with_inline_leading_comments, has_delimiter_dangling_comments,
+    InlineLeadingTrivia, TrailingTrivia, delimiter_dangling_comments, format_dangling_comments,
+    format_leading_comments, format_separator_with_comments,
+    format_token_after_relocated_leading_comments, format_token_with_inline_leading_comments,
+    has_delimiter_dangling_comments,
 };
 
 pub(crate) struct CommaListItem<'source> {
@@ -19,7 +19,23 @@ pub(crate) fn parenthesized_list<'source>(
     close: Option<&KotlinSyntaxToken<'source>>,
     items: Vec<CommaListItem<'source>>,
 ) -> Doc<'source> {
-    delimited_comma_list(doc, open, close, items, false)
+    delimited_comma_list(doc, open, close, items, false, TrailingTrivia::Preserve)
+}
+
+pub(crate) fn annotation_parenthesized_list<'source>(
+    doc: &mut DocBuilder<'source>,
+    open: Option<&KotlinSyntaxToken<'source>>,
+    close: Option<&KotlinSyntaxToken<'source>>,
+    items: Vec<CommaListItem<'source>>,
+) -> Doc<'source> {
+    delimited_comma_list(
+        doc,
+        open,
+        close,
+        items,
+        false,
+        TrailingTrivia::BeforeLineBreak,
+    )
 }
 
 pub(crate) fn force_parenthesized_list<'source>(
@@ -28,7 +44,7 @@ pub(crate) fn force_parenthesized_list<'source>(
     close: Option<&KotlinSyntaxToken<'source>>,
     items: Vec<CommaListItem<'source>>,
 ) -> Doc<'source> {
-    delimited_comma_list(doc, open, close, items, true)
+    delimited_comma_list(doc, open, close, items, true, TrailingTrivia::Preserve)
 }
 
 pub(crate) fn angle_bracket_list<'source>(
@@ -37,7 +53,7 @@ pub(crate) fn angle_bracket_list<'source>(
     close: Option<&KotlinSyntaxToken<'source>>,
     items: Vec<CommaListItem<'source>>,
 ) -> Doc<'source> {
-    delimited_comma_list(doc, open, close, items, false)
+    delimited_comma_list(doc, open, close, items, false, TrailingTrivia::Preserve)
 }
 
 pub(crate) fn square_bracket_list<'source>(
@@ -46,7 +62,7 @@ pub(crate) fn square_bracket_list<'source>(
     close: Option<&KotlinSyntaxToken<'source>>,
     items: Vec<CommaListItem<'source>>,
 ) -> Doc<'source> {
-    delimited_comma_list(doc, open, close, items, false)
+    delimited_comma_list(doc, open, close, items, false, TrailingTrivia::Preserve)
 }
 
 pub(crate) fn compact_angle_bracket_list<'source>(
@@ -82,9 +98,10 @@ fn delimited_comma_list<'source>(
     close: Option<&KotlinSyntaxToken<'source>>,
     items: Vec<CommaListItem<'source>>,
     force_multiline: bool,
+    close_trailing: TrailingTrivia,
 ) -> Doc<'source> {
     if items.is_empty() {
-        return empty_delimited_list(doc, open, close);
+        return empty_delimited_list(doc, open, close, close_trailing);
     }
     if let [item] = items.as_slice()
         && !force_multiline
@@ -92,7 +109,7 @@ fn delimited_comma_list<'source>(
         && !has_delimiter_dangling_comments(open, close)
     {
         let open = format_open_delimiter(doc, open);
-        let close = format_close_delimiter(doc, close);
+        let close = format_close_delimiter(doc, close, close_trailing);
         return doc.concat([open, item.doc, close]);
     }
 
@@ -102,7 +119,7 @@ fn delimited_comma_list<'source>(
     let close_comments = format_close_leading_comments(doc, close);
     let indented_contents = doc.concat([open_doc, list, close_comments]);
     let indented_contents = doc.indent(indented_contents);
-    let close_doc = format_close_with_spacing(doc, close);
+    let close_doc = format_close_with_spacing(doc, close, close_trailing);
     let contents = doc.concat([indented_contents, close_doc]);
 
     if force_multiline || has_trailing_comma || has_delimiter_dangling_comments(open, close) {
@@ -136,34 +153,37 @@ pub(crate) fn comma_list<'source>(
     })
 }
 
-pub(crate) fn recovered_comma_list_items<'source, Entry>(
+pub(crate) fn physical_comma_list_items<'source, Entry>(
     doc: &mut DocBuilder<'source>,
-    entries: impl IntoIterator<Item = RecoveredSeparatedListEntry<'source, Entry>>,
+    entries: impl IntoIterator<
+        Item = Result<KotlinSyntaxListPart<'source, Entry>, KotlinSyntaxInvariantError>,
+    >,
     mut format_entry: impl FnMut(&mut DocBuilder<'source>, Entry) -> CommaListItem<'source>,
 ) -> Vec<CommaListItem<'source>> {
-    entries
-        .into_iter()
-        .map(move |entry| match entry {
-            RecoveredSeparatedListEntry::Entry(entry) => format_entry(doc, entry),
-            RecoveredSeparatedListEntry::Token(token) => CommaListItem {
-                doc: format_token(
-                    doc,
-                    &token,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::Preserve,
-                ),
+    use crate::helpers::recovery::{KotlinFormatListPart, resolve_list_part};
+
+    let mut items = Vec::new();
+    for part in entries {
+        match resolve_list_part(part, doc) {
+            KotlinFormatListPart::Item(entry) => items.push(format_entry(doc, entry)),
+            KotlinFormatListPart::Separator(comma) => {
+                if let Some(item) = items.last_mut() {
+                    item.comma = Some(comma);
+                } else {
+                    let comma = format_separator_with_comments(doc, &comma, Doc::nil());
+                    items.push(CommaListItem {
+                        doc: comma,
+                        comma: None,
+                    });
+                }
+            }
+            KotlinFormatListPart::Malformed(malformed) => items.push(CommaListItem {
+                doc: malformed,
                 comma: None,
-            },
-            RecoveredSeparatedListEntry::Error(error) => CommaListItem {
-                doc: format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve),
-                comma: None,
-            },
-            RecoveredSeparatedListEntry::Node(node) => CommaListItem {
-                doc: format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve),
-                comma: None,
-            },
-        })
-        .collect()
+            }),
+        }
+    }
+    items
 }
 
 fn format_open_delimiter<'source>(
@@ -177,10 +197,11 @@ fn empty_delimited_list<'source>(
     doc: &mut DocBuilder<'source>,
     open: Option<&KotlinSyntaxToken<'source>>,
     close: Option<&KotlinSyntaxToken<'source>>,
+    close_trailing: TrailingTrivia,
 ) -> Doc<'source> {
     if !has_delimiter_dangling_comments(open, close) {
         let open = format_open_delimiter(doc, open);
-        let close = format_close_delimiter(doc, close);
+        let close = format_close_delimiter(doc, close, close_trailing);
         return doc.concat([open, close]);
     }
 
@@ -190,7 +211,7 @@ fn empty_delimited_list<'source>(
     let body = doc.concat([line, comments]);
     let body = doc.indent(body);
     let close_line = doc.hard_line();
-    let close = format_close_delimiter_without_leading(doc, close);
+    let close = format_close_delimiter_without_leading(doc, close, close_trailing);
     let list = doc.concat([open_doc, body, close_line, close]);
     doc.force_group(list)
 }
@@ -231,6 +252,7 @@ fn format_open_delimiter_with_trailing<'source>(
 fn format_close_with_spacing<'source>(
     doc: &mut DocBuilder<'source>,
     close: Option<&KotlinSyntaxToken<'source>>,
+    trailing: TrailingTrivia,
 ) -> Doc<'source> {
     let close_has_leading_comments =
         close.is_some_and(|token| !token.leading_comments().is_empty());
@@ -240,7 +262,7 @@ fn format_close_with_spacing<'source>(
     } else {
         doc.soft_line()
     };
-    let close = format_close_delimiter_without_leading(doc, close);
+    let close = format_close_delimiter_without_leading(doc, close, trailing);
     doc.concat([line, close])
 }
 
@@ -264,6 +286,7 @@ fn format_close_leading_comments<'source>(
 fn format_close_delimiter<'source>(
     doc: &mut DocBuilder<'source>,
     token: Option<&KotlinSyntaxToken<'source>>,
+    trailing: TrailingTrivia,
 ) -> Doc<'source> {
     if let Some(token) = token {
         let close_has_leading_comments = !token.leading_comments().is_empty();
@@ -272,8 +295,7 @@ fn format_close_delimiter<'source>(
         } else {
             doc.nil()
         };
-        let token =
-            format_token_after_relocated_leading_comments(doc, token, TrailingTrivia::Preserve);
+        let token = format_token_after_relocated_leading_comments(doc, token, trailing);
         doc.concat([leading, token])
     } else {
         doc.nil()
@@ -283,9 +305,10 @@ fn format_close_delimiter<'source>(
 fn format_close_delimiter_without_leading<'source>(
     doc: &mut DocBuilder<'source>,
     token: Option<&KotlinSyntaxToken<'source>>,
+    trailing: TrailingTrivia,
 ) -> Doc<'source> {
     if let Some(token) = token {
-        format_token_after_relocated_leading_comments(doc, token, TrailingTrivia::Preserve)
+        format_token_after_relocated_leading_comments(doc, token, trailing)
     } else {
         doc.nil()
     }

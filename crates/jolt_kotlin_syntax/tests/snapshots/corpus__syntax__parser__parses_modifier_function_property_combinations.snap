@@ -12,56 +12,77 @@ abstract class ModifiedMembers {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  ClassDeclaration
-    ModifierList
-      Identifier "abstract" @ 0..8 trailing=[Whitespace " "]
-    ClassKw "class" @ 9..14 trailing=[Whitespace " "]
-    Name
-      Identifier "ModifiedMembers" @ 15..30 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 31..32
-      ClassMemberDeclaration
-        PropertyDeclaration
-          ModifierList
-            Identifier "protected" @ 37..46 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            Identifier "abstract" @ 47..55 trailing=[Whitespace " "]
-          ValKw "val" @ 56..59 trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "size" @ 60..64
-          Colon ":" @ 64..65 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Int" @ 66..69
-      ClassMemberDeclaration
-        FunctionDeclaration
-          ModifierList
-            Identifier "public" @ 75..81 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            Identifier "final" @ 82..87 trailing=[Whitespace " "]
-          FunKw "fun" @ 88..91 trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "label" @ 92..97
-          ValueParameterList
-            LParen "(" @ 97..98
-            RParen ")" @ 98..99
-          Colon ":" @ 99..100 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 101..107 trailing=[Whitespace " "]
-          Assign "=" @ 108..109 trailing=[Whitespace " "]
-          StringTemplateExpression
-            StringTemplateEntry
-              OpenQuote "\"" @ 110..111
-            StringTemplateEntry
-              RegularStringPart "size=" @ 111..116
-            StringTemplateEntry
-              ShortTemplateEntryStart "$" @ 116..117
-            StringTemplateEntry
-              Identifier "size" @ 117..121
-            ClosingQuote "\"" @ 121..122
-      RBrace "}" @ 123..124 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+        ModifierList
+          ModifierItemList
+            Identifier "abstract" @ 0..8 trailing=[Whitespace " "]
+      ModifierListSequence
+      ClassKw "class" @ 9..14 trailing=[Whitespace " "]
+      Name
+        Identifier "ModifiedMembers" @ 15..30 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 31..32
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "protected" @ 37..46 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    Identifier "abstract" @ 47..55 trailing=[Whitespace " "]
+              ModifierListSequence
+              ValKw "val" @ 56..59 trailing=[Whitespace " "]
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "size" @ 60..64
+              Colon ":" @ 64..65 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Int" @ 66..69
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "public" @ 75..81 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    Identifier "final" @ 82..87 trailing=[Whitespace " "]
+              ModifierListSequence
+              FunKw "fun" @ 88..91 trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "label" @ 92..97
+              ValueParameterList
+                LParen "(" @ 97..98
+                ValueParameterSeparatedList
+                RParen ")" @ 98..99
+              Colon ":" @ 99..100 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 101..107 trailing=[Whitespace " "]
+              Assign "=" @ 108..109 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 110..111
+                  StringTemplateEntry
+                    RegularStringPart "size=" @ 111..116
+                  StringTemplateEntry
+                    ShortTemplateEntryStart "$" @ 116..117
+                  StringTemplateEntry
+                    Identifier "size" @ 117..121
+                ClosingQuote "\"" @ 121..122
+        RBrace "}" @ 123..124 leading=[Newline "\n"]
   Eof "" @ 125..125 leading=[Newline "\n"]
 
 diagnostics:

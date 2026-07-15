@@ -17,8 +17,8 @@ a separate record or acceptance workflow.
 Each report contains parse-only, format-only over an already-parsed tree, and
 end-to-end measurements. It records raw timing samples and dispersion,
 allocation counts and bytes, peak RSS, syntax-tree bytes per token and node,
-formatter document nodes per token, source identity, toolchain, corpus digests,
-and the commands used.
+parse, format, and end-to-end nanoseconds per token, formatter document nodes
+per token, source identity, toolchain, corpus digests, and the commands used.
 
 Timing and allocation samples run in separate release binaries so allocation
 accounting cannot affect timing. Peak RSS uses a dedicated one-shot subprocess

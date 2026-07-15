@@ -28,271 +28,373 @@ fun lambdas(values: List<String>) {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "lambdas" @ 4..11
-    ValueParameterList
-      LParen "(" @ 11..12
-      ValueParameter
-        Name
-          Identifier "values" @ 12..18
-        Colon ":" @ 18..19 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "List" @ 20..24
-            TypeArgumentList
-              Lt "<" @ 24..25
-              TypeProjectionList
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "String" @ 25..31
-              Gt ">" @ 31..32
-      RParen ")" @ 32..33 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 34..35
-      PropertyDeclaration
-        ValKw "val" @ 40..43 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
           Name
-            Identifier "implicit" @ 44..52 trailing=[Whitespace " "]
-        Assign "=" @ 53..54 trailing=[Whitespace " "]
-        CallExpression
-          NavigationExpression
-            NameExpression
-              Identifier "values" @ 55..61
-            Dot "." @ 61..62
-            Identifier "map" @ 62..65 trailing=[Whitespace " "]
-          LambdaExpression
-            LBrace "{" @ 66..67 trailing=[Whitespace " "]
-            Statement
-              ExpressionStatement
-                NavigationExpression
-                  NameExpression
-                    Identifier "it" @ 68..70
-                  Dot "." @ 70..71
-                  Identifier "length" @ 71..77 trailing=[Whitespace " "]
-            RBrace "}" @ 78..79
-      PropertyDeclaration
-        ValKw "val" @ 84..87 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "typed" @ 88..93 trailing=[Whitespace " "]
-        Assign "=" @ 94..95 trailing=[Whitespace " "]
-        CallExpression
-          NavigationExpression
-            NameExpression
-              Identifier "values" @ 96..102
-            Dot "." @ 102..103
-            Identifier "map" @ 103..106 trailing=[Whitespace " "]
-          LambdaExpression
-            LBrace "{" @ 107..108 trailing=[Whitespace " "]
-            LambdaParameterList
-              LambdaParameter
-                Name
-                  Identifier "value" @ 109..114
-                Colon ":" @ 114..115 trailing=[Whitespace " "]
-                TypeReference
-                  UserType
-                    Identifier "String" @ 116..122 trailing=[Whitespace " "]
-              Arrow "->" @ 123..125 trailing=[Whitespace " "]
-            Statement
-              ExpressionStatement
-                CallExpression
-                  NavigationExpression
-                    NameExpression
-                      Identifier "value" @ 126..131
-                    Dot "." @ 131..132
-                    Identifier "trim" @ 132..136
-                  ValueArgumentList
-                    LParen "(" @ 136..137
-                    RParen ")" @ 137..138 trailing=[Whitespace " "]
-            RBrace "}" @ 139..140
-      PropertyDeclaration
-        ValKw "val" @ 145..148 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "labeled" @ 149..156 trailing=[Whitespace " "]
-        Assign "=" @ 157..158 trailing=[Whitespace " "]
-        CallExpression
-          NavigationExpression
-            NameExpression
-              Identifier "values" @ 159..165
-            Dot "." @ 165..166
-            Identifier "forEach" @ 166..173 trailing=[Whitespace " "]
-          LambdaExpression
-            Identifier "label" @ 174..179
-            At "@" @ 179..180
-            LambdaExpression
-              LBrace "{" @ 180..181
-              Statement
-                ExpressionStatement
-                  IfExpression
-                    IfKw "if" @ 190..192 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                    ParenthesizedExpression
-                      LParen "(" @ 193..194
-                      CallExpression
-                        NavigationExpression
-                          NameExpression
-                            Identifier "it" @ 194..196
-                          Dot "." @ 196..197
-                          Identifier "isEmpty" @ 197..204
-                        ValueArgumentList
-                          LParen "(" @ 204..205
-                          RParen ")" @ 205..206
-                      RParen ")" @ 206..207 trailing=[Whitespace " "]
-                    JumpExpression
-                      ReturnKw "return" @ 208..214
-                      At "@" @ 214..215
-                      Identifier "label" @ 215..220
-              Statement
-                ExpressionStatement
-                  CallExpression
-                    NameExpression
-                      Identifier "consume" @ 229..236 leading=[Newline "\n", Whitespace "        "]
-                    ValueArgumentList
-                      LParen "(" @ 236..237
-                      ValueArgument
-                        NameExpression
-                          Identifier "it" @ 237..239
-                      RParen ")" @ 239..240
-              RBrace "}" @ 245..246 leading=[Newline "\n", Whitespace "    "]
-      PropertyDeclaration
-        ValKw "val" @ 251..254 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "block" @ 255..260 trailing=[Whitespace " "]
-        Assign "=" @ 261..262 trailing=[Whitespace " "]
-        LambdaExpression
-          LBrace "{" @ 263..264
-          PropertyDeclaration
-            ValKw "val" @ 273..276 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-            CallableName
-              Name
-                Identifier "maxLine" @ 277..284
-            Colon ":" @ 284..285 trailing=[Whitespace " "]
+            Identifier "lambdas" @ 4..11
+      ValueParameterList
+        LParen "(" @ 11..12
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "values" @ 12..18
+            Colon ":" @ 18..19 trailing=[Whitespace " "]
             TypeReference
-              FunctionType
-                ParenthesizedType
-                  LParen "(" @ 286..287
-                  FunctionTypeParameter
-                    TypeReference
-                      UserType
-                        Identifier "String" @ 287..293
-                  RParen ")" @ 293..294 trailing=[Whitespace " "]
-                Arrow "->" @ 295..297 trailing=[Whitespace " "]
-                UserType
-                  Identifier "Int" @ 298..301 trailing=[Whitespace " "]
-            Assign "=" @ 302..303 trailing=[Whitespace " "]
-            LambdaExpression
-              LBrace "{" @ 304..305 trailing=[Whitespace " "]
-              LambdaParameterList
-                LambdaParameter
-                  Name
-                    Identifier "text" @ 306..310 trailing=[Whitespace " "]
-                Arrow "->" @ 311..313
-              Statement
-                ExpressionStatement
-                  IfExpression
-                    IfKw "if" @ 326..328 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                    ParenthesizedExpression
-                      LParen "(" @ 329..330
-                      BinaryExpression
-                        CallExpression
-                          NavigationExpression
-                            NameExpression
-                              Identifier "text" @ 330..334
-                            Dot "." @ 334..335
-                            Identifier "indexOf" @ 335..342
-                          ValueArgumentList
-                            LParen "(" @ 342..343
-                            ValueArgument
-                              LiteralExpression
-                                CharacterLiteral "' '" @ 343..346
-                            RParen ")" @ 346..347 trailing=[Whitespace " "]
-                        EqEq "==" @ 348..350 trailing=[Whitespace " "]
-                        UnaryExpression
-                          Minus "-" @ 351..352
-                          LiteralExpression
-                            IntegerLiteral "1" @ 352..353
-                      RParen ")" @ 353..354 trailing=[Whitespace " "]
-                    LambdaExpression
-                      LBrace "{" @ 355..356
-                      Statement
-                        ExpressionStatement
-                          LiteralExpression
-                            IntegerLiteral "0" @ 373..374 leading=[Newline "\n", Whitespace "                "]
-                      RBrace "}" @ 387..388 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                    ElseKw "else" @ 389..393 trailing=[Whitespace " "]
-                    LambdaExpression
-                      LBrace "{" @ 394..395
-                      Statement
-                        ExpressionStatement
-                          NavigationExpression
-                            NameExpression
-                              Identifier "text" @ 412..416 leading=[Newline "\n", Whitespace "                "]
-                            Dot "." @ 416..417
-                            Identifier "length" @ 417..423
-                      RBrace "}" @ 436..437 leading=[Newline "\n", Whitespace "            "]
-              RBrace "}" @ 446..447 leading=[Newline "\n", Whitespace "        "]
-          Statement
-            ExpressionStatement
-              NameExpression
-                Identifier "maxLine" @ 456..463 leading=[Newline "\n", Whitespace "        "]
-          RBrace "}" @ 468..469 leading=[Newline "\n", Whitespace "    "]
-      PropertyDeclaration
-        ValKw "val" @ 474..477 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "functionTyped" @ 478..491 trailing=[Whitespace " "]
-        Assign "=" @ 492..493 trailing=[Whitespace " "]
-        CallExpression
-          NavigationExpression
-            NameExpression
-              Identifier "values" @ 494..500
-            Dot "." @ 500..501
-            Identifier "map" @ 501..504 trailing=[Whitespace " "]
-          LambdaExpression
-            LBrace "{" @ 505..506 trailing=[Whitespace " "]
-            LambdaParameterList
-              LambdaParameter
+              UserType
+                UserTypeSegmentList
+                  Identifier "List" @ 20..24
+                  TypeArgumentList
+                    Lt "<" @ 24..25
+                    TypeProjectionList
+                      TypeProjectionSeparatedList
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "String" @ 25..31
+                    Gt ">" @ 31..32
+        RParen ")" @ 32..33 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 34..35
+        BlockItemList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 40..43 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
                 Name
-                  Identifier "transform" @ 507..516
-                Colon ":" @ 516..517 trailing=[Whitespace " "]
-                TypeReference
-                  FunctionType
-                    ParenthesizedType
-                      LParen "(" @ 518..519
-                      FunctionTypeParameter
-                        TypeReference
+                  Identifier "implicit" @ 44..52 trailing=[Whitespace " "]
+            Assign "=" @ 53..54 trailing=[Whitespace " "]
+            CallExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "values" @ 55..61
+                Dot "." @ 61..62
+                Identifier "map" @ 62..65 trailing=[Whitespace " "]
+              TypeArgumentListList
+              LambdaExpressionList
+                LambdaExpression
+                  LambdaBody
+                    LBrace "{" @ 66..67 trailing=[Whitespace " "]
+                    LambdaBodyItemList
+                      Statement
+                        ExpressionStatement
+                          NavigationExpression
+                            NameExpression
+                              Identifier "it" @ 68..70
+                            Dot "." @ 70..71
+                            Identifier "length" @ 71..77 trailing=[Whitespace " "]
+                        TerminatorList
+                    RBrace "}" @ 78..79
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 84..87 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "typed" @ 88..93 trailing=[Whitespace " "]
+            Assign "=" @ 94..95 trailing=[Whitespace " "]
+            CallExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "values" @ 96..102
+                Dot "." @ 102..103
+                Identifier "map" @ 103..106 trailing=[Whitespace " "]
+              TypeArgumentListList
+              LambdaExpressionList
+                LambdaExpression
+                  LambdaBody
+                    LBrace "{" @ 107..108 trailing=[Whitespace " "]
+                    LambdaParameterList
+                      LambdaParameterSeparatedList
+                        LambdaParameter
+                          Name
+                            Identifier "value" @ 109..114
+                          Colon ":" @ 114..115 trailing=[Whitespace " "]
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                Identifier "String" @ 116..122 trailing=[Whitespace " "]
+                      Arrow "->" @ 123..125 trailing=[Whitespace " "]
+                    LambdaBodyItemList
+                      Statement
+                        ExpressionStatement
+                          CallExpression
+                            NavigationExpression
+                              NameExpression
+                                Identifier "value" @ 126..131
+                              Dot "." @ 131..132
+                              Identifier "trim" @ 132..136
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 136..137
+                              ValueArgumentEntryList
+                              RParen ")" @ 137..138 trailing=[Whitespace " "]
+                            LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 139..140
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 145..148 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "labeled" @ 149..156 trailing=[Whitespace " "]
+            Assign "=" @ 157..158 trailing=[Whitespace " "]
+            CallExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "values" @ 159..165
+                Dot "." @ 165..166
+                Identifier "forEach" @ 166..173 trailing=[Whitespace " "]
+              TypeArgumentListList
+              LambdaExpressionList
+                LambdaExpression
+                  LabeledLambdaExpression
+                    Identifier "label" @ 174..179
+                    At "@" @ 179..180
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 180..181
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              IfExpression
+                                IfKw "if" @ 190..192 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                                ParenthesizedExpression
+                                  LParen "(" @ 193..194
+                                  CallExpression
+                                    NavigationExpression
+                                      NameExpression
+                                        Identifier "it" @ 194..196
+                                      Dot "." @ 196..197
+                                      Identifier "isEmpty" @ 197..204
+                                    TypeArgumentListList
+                                    ValueArgumentList
+                                      LParen "(" @ 204..205
+                                      ValueArgumentEntryList
+                                      RParen ")" @ 205..206
+                                    LambdaExpressionList
+                                  RParen ")" @ 206..207 trailing=[Whitespace " "]
+                                JumpExpression
+                                  ReturnKw "return" @ 208..214
+                                  At "@" @ 214..215
+                                  Identifier "label" @ 215..220
+                            TerminatorList
+                          Statement
+                            ExpressionStatement
+                              CallExpression
+                                NameExpression
+                                  Identifier "consume" @ 229..236 leading=[Newline "\n", Whitespace "        "]
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 236..237
+                                  ValueArgumentEntryList
+                                    ValueArgument
+                                      ValueArgumentPrefixList
+                                      NameExpression
+                                        Identifier "it" @ 237..239
+                                  RParen ")" @ 239..240
+                                LambdaExpressionList
+                            TerminatorList
+                        RBrace "}" @ 245..246 leading=[Newline "\n", Whitespace "    "]
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 251..254 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "block" @ 255..260 trailing=[Whitespace " "]
+            Assign "=" @ 261..262 trailing=[Whitespace " "]
+            LambdaExpression
+              LambdaBody
+                LBrace "{" @ 263..264
+                LambdaBodyItemList
+                  PropertyDeclaration
+                    ModifierListSequence
+                    ModifierListSequence
+                    ValKw "val" @ 273..276 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    CallableName
+                      CallableNamePartList
+                        Name
+                          Identifier "maxLine" @ 277..284
+                    Colon ":" @ 284..285 trailing=[Whitespace " "]
+                    TypeReference
+                      FunctionType
+                        ArrowFunctionType
+                          ParenthesizedType
+                            AnnotationList
+                            LParen "(" @ 286..287
+                            ParenthesizedTypeEntryList
+                              FunctionTypeParameter
+                                TypeReference
+                                  UserType
+                                    UserTypeSegmentList
+                                      Identifier "String" @ 287..293
+                            RParen ")" @ 293..294 trailing=[Whitespace " "]
+                          Arrow "->" @ 295..297 trailing=[Whitespace " "]
                           UserType
-                            Identifier "String" @ 519..525
-                      RParen ")" @ 525..526 trailing=[Whitespace " "]
-                    Arrow "->" @ 527..529 trailing=[Whitespace " "]
-                    UserType
-                      Identifier "Int" @ 530..533 trailing=[Whitespace " "]
-              Arrow "->" @ 534..536
-            Statement
-              ExpressionStatement
-                CallExpression
-                  NameExpression
-                    Identifier "transform" @ 545..554 leading=[Newline "\n", Whitespace "        "]
-                  ValueArgumentList
-                    LParen "(" @ 554..555
-                    ValueArgument
-                      StringTemplateExpression
-                        StringTemplateEntry
-                          OpenQuote "\"" @ 555..556
-                        StringTemplateEntry
-                          RegularStringPart "value" @ 556..561
-                        ClosingQuote "\"" @ 561..562
-                    RParen ")" @ 562..563
-            RBrace "}" @ 568..569 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 570..571 leading=[Newline "\n"]
+                            UserTypeSegmentList
+                              Identifier "Int" @ 298..301 trailing=[Whitespace " "]
+                    Assign "=" @ 302..303 trailing=[Whitespace " "]
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 304..305 trailing=[Whitespace " "]
+                        LambdaParameterList
+                          LambdaParameterSeparatedList
+                            LambdaParameter
+                              Name
+                                Identifier "text" @ 306..310 trailing=[Whitespace " "]
+                          Arrow "->" @ 311..313
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              IfExpression
+                                IfKw "if" @ 326..328 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                                ParenthesizedExpression
+                                  LParen "(" @ 329..330
+                                  BinaryExpression
+                                    CallExpression
+                                      NavigationExpression
+                                        NameExpression
+                                          Identifier "text" @ 330..334
+                                        Dot "." @ 334..335
+                                        Identifier "indexOf" @ 335..342
+                                      TypeArgumentListList
+                                      ValueArgumentList
+                                        LParen "(" @ 342..343
+                                        ValueArgumentEntryList
+                                          ValueArgument
+                                            ValueArgumentPrefixList
+                                            LiteralExpression
+                                              CharacterLiteral "' '" @ 343..346
+                                        RParen ")" @ 346..347 trailing=[Whitespace " "]
+                                      LambdaExpressionList
+                                    EqEq "==" @ 348..350 trailing=[Whitespace " "]
+                                    UnaryExpression
+                                      Minus "-" @ 351..352
+                                      LiteralExpression
+                                        IntegerLiteral "1" @ 352..353
+                                  RParen ")" @ 353..354 trailing=[Whitespace " "]
+                                Block
+                                  LBrace "{" @ 355..356
+                                  BlockItemList
+                                    Statement
+                                      ExpressionStatement
+                                        LiteralExpression
+                                          IntegerLiteral "0" @ 373..374 leading=[Newline "\n", Whitespace "                "]
+                                      TerminatorList
+                                  RBrace "}" @ 387..388 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                                ElseKw "else" @ 389..393 trailing=[Whitespace " "]
+                                Block
+                                  LBrace "{" @ 394..395
+                                  BlockItemList
+                                    Statement
+                                      ExpressionStatement
+                                        NavigationExpression
+                                          NameExpression
+                                            Identifier "text" @ 412..416 leading=[Newline "\n", Whitespace "                "]
+                                          Dot "." @ 416..417
+                                          Identifier "length" @ 417..423
+                                      TerminatorList
+                                  RBrace "}" @ 436..437 leading=[Newline "\n", Whitespace "            "]
+                            TerminatorList
+                        RBrace "}" @ 446..447 leading=[Newline "\n", Whitespace "        "]
+                    PropertyBodyMemberList
+                  Statement
+                    ExpressionStatement
+                      NameExpression
+                        Identifier "maxLine" @ 456..463 leading=[Newline "\n", Whitespace "        "]
+                    TerminatorList
+                RBrace "}" @ 468..469 leading=[Newline "\n", Whitespace "    "]
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 474..477 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "functionTyped" @ 478..491 trailing=[Whitespace " "]
+            Assign "=" @ 492..493 trailing=[Whitespace " "]
+            CallExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "values" @ 494..500
+                Dot "." @ 500..501
+                Identifier "map" @ 501..504 trailing=[Whitespace " "]
+              TypeArgumentListList
+              LambdaExpressionList
+                LambdaExpression
+                  LambdaBody
+                    LBrace "{" @ 505..506 trailing=[Whitespace " "]
+                    LambdaParameterList
+                      LambdaParameterSeparatedList
+                        LambdaParameter
+                          Name
+                            Identifier "transform" @ 507..516
+                          Colon ":" @ 516..517 trailing=[Whitespace " "]
+                          TypeReference
+                            FunctionType
+                              ArrowFunctionType
+                                ParenthesizedType
+                                  AnnotationList
+                                  LParen "(" @ 518..519
+                                  ParenthesizedTypeEntryList
+                                    FunctionTypeParameter
+                                      TypeReference
+                                        UserType
+                                          UserTypeSegmentList
+                                            Identifier "String" @ 519..525
+                                  RParen ")" @ 525..526 trailing=[Whitespace " "]
+                                Arrow "->" @ 527..529 trailing=[Whitespace " "]
+                                UserType
+                                  UserTypeSegmentList
+                                    Identifier "Int" @ 530..533 trailing=[Whitespace " "]
+                      Arrow "->" @ 534..536
+                    LambdaBodyItemList
+                      Statement
+                        ExpressionStatement
+                          CallExpression
+                            NameExpression
+                              Identifier "transform" @ 545..554 leading=[Newline "\n", Whitespace "        "]
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 554..555
+                              ValueArgumentEntryList
+                                ValueArgument
+                                  ValueArgumentPrefixList
+                                  StringTemplateExpression
+                                    StringTemplateEntryList
+                                      StringTemplateEntry
+                                        OpenQuote "\"" @ 555..556
+                                      StringTemplateEntry
+                                        RegularStringPart "value" @ 556..561
+                                    ClosingQuote "\"" @ 561..562
+                              RParen ")" @ 562..563
+                            LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 568..569 leading=[Newline "\n", Whitespace "    "]
+            PropertyBodyMemberList
+        RBrace "}" @ 570..571 leading=[Newline "\n"]
   Eof "" @ 572..572 leading=[Newline "\n"]
 
 diagnostics:

@@ -18,102 +18,140 @@ class AuditedStore(private val delegate: Store) : Store by delegate
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "declarations" @ 20..32
+      QualifiedNameSegmentList
+        Name
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "declarations" @ 20..32
+    TerminatorList
   ImportList
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 34..43 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Store" @ 44..49 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 50..51
-      ClassMemberDeclaration
-        FunctionDeclaration
-          FunKw "fun" @ 56..59 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "save" @ 60..64
-          ValueParameterList
-            LParen "(" @ 64..65
+    ImportDirectiveList
+  KotlinFileItemList
+    InterfaceDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      InterfaceKw "interface" @ 34..43 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Store" @ 44..49 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 50..51
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              FunKw "fun" @ 56..59 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "save" @ 60..64
+              ValueParameterList
+                LParen "(" @ 64..65
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierListSequence
+                    Name
+                      Identifier "value" @ 65..70
+                    Colon ":" @ 70..71 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          Identifier "String" @ 72..78
+                RParen ")" @ 78..79
+        RBrace "}" @ 80..81 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 83..88 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "MemoryStore" @ 89..100 trailing=[Whitespace " "]
+      Colon ":" @ 101..102 trailing=[Whitespace " "]
+      DelegationSpecifierList
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Store" @ 103..108 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 109..110
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "override" @ 115..123 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              FunKw "fun" @ 124..127 trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "save" @ 128..132
+              ValueParameterList
+                LParen "(" @ 132..133
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierListSequence
+                    Name
+                      Identifier "value" @ 133..138
+                    Colon ":" @ 138..139 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          Identifier "String" @ 140..146
+                RParen ")" @ 146..147 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 148..149
+                BlockItemList
+                RBrace "}" @ 149..150
+        RBrace "}" @ 151..152 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 154..159 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "AuditedStore" @ 160..172
+      PrimaryConstructor
+        ModifierListSequence
+        ValueParameterList
+          LParen "(" @ 172..173
+          ValueParameterSeparatedList
             ValueParameter
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "private" @ 173..180 trailing=[Whitespace " "]
+              ValKw "val" @ 181..184 trailing=[Whitespace " "]
               Name
-                Identifier "value" @ 65..70
-              Colon ":" @ 70..71 trailing=[Whitespace " "]
+                Identifier "delegate" @ 185..193
+              Colon ":" @ 193..194 trailing=[Whitespace " "]
               TypeReference
                 UserType
-                  Identifier "String" @ 72..78
-            RParen ")" @ 78..79
-      RBrace "}" @ 80..81 leading=[Newline "\n"]
-  ClassDeclaration
-    ClassKw "class" @ 83..88 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "MemoryStore" @ 89..100 trailing=[Whitespace " "]
-    Colon ":" @ 101..102 trailing=[Whitespace " "]
-    DelegationSpecifierList
-      DelegationSpecifier
-        TypeReference
-          UserType
-            Identifier "Store" @ 103..108 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 109..110
-      ClassMemberDeclaration
-        FunctionDeclaration
-          ModifierList
-            Identifier "override" @ 115..123 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          FunKw "fun" @ 124..127 trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "save" @ 128..132
-          ValueParameterList
-            LParen "(" @ 132..133
-            ValueParameter
-              Name
-                Identifier "value" @ 133..138
-              Colon ":" @ 138..139 trailing=[Whitespace " "]
-              TypeReference
-                UserType
-                  Identifier "String" @ 140..146
-            RParen ")" @ 146..147 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 148..149
-            RBrace "}" @ 149..150
-      RBrace "}" @ 151..152 leading=[Newline "\n"]
-  ClassDeclaration
-    ClassKw "class" @ 154..159 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "AuditedStore" @ 160..172
-    PrimaryConstructor
-      ValueParameterList
-        LParen "(" @ 172..173
-        ValueParameter
-          ModifierList
-            Identifier "private" @ 173..180 trailing=[Whitespace " "]
-          ValKw "val" @ 181..184 trailing=[Whitespace " "]
-          Name
-            Identifier "delegate" @ 185..193
-          Colon ":" @ 193..194 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Store" @ 195..200
-        RParen ")" @ 200..201 trailing=[Whitespace " "]
-    Colon ":" @ 202..203 trailing=[Whitespace " "]
-    DelegationSpecifierList
-      DelegationSpecifier
-        TypeReference
-          UserType
-            Identifier "Store" @ 204..209 trailing=[Whitespace " "]
-        Identifier "by" @ 210..212 trailing=[Whitespace " "]
-        NameExpression
-          Identifier "delegate" @ 213..221
+                  UserTypeSegmentList
+                    Identifier "Store" @ 195..200
+          RParen ")" @ 200..201 trailing=[Whitespace " "]
+      Colon ":" @ 202..203 trailing=[Whitespace " "]
+      DelegationSpecifierList
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Store" @ 204..209 trailing=[Whitespace " "]
+            Identifier "by" @ 210..212 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "delegate" @ 213..221
   Eof "" @ 222..222 leading=[Newline "\n"]
 
 diagnostics:

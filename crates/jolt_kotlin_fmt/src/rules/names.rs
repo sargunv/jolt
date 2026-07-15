@@ -1,36 +1,120 @@
-use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_kotlin_syntax::{KotlinComment, KotlinSyntaxToken, QualifiedName};
 use std::cmp::Ordering;
 
+use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_kotlin_syntax::{
+    KotlinComment, KotlinNode, KotlinRoleElement, KotlinSyntaxField, KotlinSyntaxListPart,
+    KotlinSyntaxToken, Name, QualifiedName,
+};
+
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, comment_forces_line, format_comment, format_token_text,
+    LeadingTrivia, TrailingTrivia, comment_forces_line, format_comment, format_token,
+};
+use crate::helpers::recovery::{
+    KotlinFormatField, KotlinFormatListPart, format_or_verbatim, format_required_field,
+    resolve_list_part, resolve_required_field,
 };
 
 pub(crate) fn format_name<'source>(
     doc: &mut DocBuilder<'source>,
-    name: &jolt_kotlin_syntax::Name<'source>,
+    name: &Name<'source>,
 ) -> Doc<'source> {
-    let Some(token) = name.token_iter().next() else {
-        return doc.nil();
-    };
-
-    crate::helpers::comments::format_token(
-        doc,
-        &token,
-        LeadingTrivia::Preserve,
-        TrailingTrivia::Preserve,
-    )
+    format_or_verbatim(name, doc, |doc| {
+        format_required_field(name.identifier(), doc, |token, doc| {
+            format_token(
+                doc,
+                &token,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::Preserve,
+            )
+        })
+    })
 }
 
 pub(crate) fn format_qualified_name<'source>(
     doc: &mut DocBuilder<'source>,
     name: &QualifiedName<'source>,
 ) -> Doc<'source> {
-    if tokens_have_line_comments(name) {
-        return format_multiline_qualified_name(doc, name);
-    }
+    format_or_verbatim(name, doc, |doc| {
+        let multiline = qualified_name_has_line_comments(name);
+        let contents = format_qualified_name_parts(doc, name, multiline);
+        if multiline {
+            doc.indent(contents)
+        } else {
+            contents
+        }
+    })
+}
 
-    format_inline_qualified_name(doc, name)
+fn format_qualified_name_parts<'source>(
+    doc: &mut DocBuilder<'source>,
+    name: &QualifiedName<'source>,
+    multiline: bool,
+) -> Doc<'source> {
+    match resolve_required_field(name.segments(), doc) {
+        KotlinFormatField::Present(segments) => doc.concat_list(|docs| {
+            for part in segments.parts() {
+                match resolve_list_part(part, docs) {
+                    KotlinFormatListPart::Item(element) => match element {
+                        KotlinRoleElement::Node(node) => {
+                            if let Some(name) = Name::cast(node) {
+                                let formatted = format_name(docs, &name);
+                                docs.push(formatted);
+                            } else {
+                                docs.block_on_invariant("invalid qualified-name segment node");
+                            }
+                        }
+                        KotlinRoleElement::Token(token) => {
+                            if multiline {
+                                let line = docs.hard_line();
+                                docs.push(line);
+                            }
+                            let dot = format_name_dot(docs, &token);
+                            docs.push(dot);
+                        }
+                    },
+                    KotlinFormatListPart::Separator(separator) => {
+                        docs.block_on_invariant(format!(
+                            "unexpected qualified-name separator slot: {:?}",
+                            separator.kind()
+                        ));
+                    }
+                    KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
+                }
+            }
+        }),
+        KotlinFormatField::Malformed(recovery) => recovery,
+    }
+}
+
+fn qualified_name_has_line_comments(name: &QualifiedName<'_>) -> bool {
+    let Ok(KotlinSyntaxField::Present(segments)) = name.segments() else {
+        return false;
+    };
+    segments.parts().any(|part| match part {
+        Ok(KotlinSyntaxListPart::Item(KotlinRoleElement::Token(token))) => {
+            token_has_line_comments(&token)
+        }
+        Ok(KotlinSyntaxListPart::Item(KotlinRoleElement::Node(node))) => {
+            node.first_token()
+                .is_some_and(|token| token_has_line_comments(&token))
+                || node
+                    .last_token()
+                    .is_some_and(|token| token_has_line_comments(&token))
+        }
+        Ok(
+            KotlinSyntaxListPart::Separator(_)
+            | KotlinSyntaxListPart::Missing(_)
+            | KotlinSyntaxListPart::Malformed(_),
+        )
+        | Err(_) => false,
+    })
+}
+
+fn token_has_line_comments(token: &KotlinSyntaxToken<'_>) -> bool {
+    token
+        .leading_comments()
+        .chain(token.trailing_comments())
+        .any(|comment| comment_forces_line(&comment))
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -48,8 +132,22 @@ impl<'source> NameSortKey<'source> {
     }
 
     pub(crate) fn new(name: &QualifiedName<'source>, on_demand: bool) -> Self {
+        let mut identifiers = Vec::new();
+        if let Ok(KotlinSyntaxField::Present(segments)) = name.segments() {
+            for part in segments.parts() {
+                let Ok(KotlinSyntaxListPart::Item(KotlinRoleElement::Node(node))) = part else {
+                    continue;
+                };
+                let Some(name) = Name::cast(node) else {
+                    continue;
+                };
+                if let Ok(KotlinSyntaxField::Present(identifier)) = name.identifier() {
+                    identifiers.push(identifier.text());
+                }
+            }
+        }
         Self {
-            segments: name.identifiers().map(|token| token.text()).collect(),
+            segments: identifiers,
             on_demand,
         }
     }
@@ -81,127 +179,13 @@ impl PartialOrd for NameSortKey<'_> {
     }
 }
 
-fn tokens_have_line_comments(name: &QualifiedName<'_>) -> bool {
-    name.identifiers().chain(name.dots()).any(|token| {
-        token
-            .leading_comments()
-            .chain(token.trailing_comments())
-            .any(|comment| comment_forces_line(&comment))
-    })
-}
-
-fn format_inline_qualified_name<'source>(
-    doc: &mut DocBuilder<'source>,
-    name: &QualifiedName<'source>,
-) -> Doc<'source> {
-    let mut segments = name.segments().peekable();
-    let trailing_dot = name.trailing_dot();
-    doc.concat_list(|docs| {
-        while let Some(segment) = segments.next() {
-            if let Some(dot) = segment.dot_before {
-                let dot = format_name_dot(docs, &dot);
-                docs.push(dot);
-            }
-
-            let is_last = segments.peek().is_none();
-            let followed_by_dot = segments
-                .peek()
-                .is_some_and(|next| next.dot_before.is_some())
-                || (is_last && trailing_dot.is_some());
-
-            if let Some(token) = segment.name.first_token() {
-                let token = format_inline_name_segment(docs, &token, followed_by_dot);
-                docs.push(token);
-            }
-        }
-
-        if let Some(dot) = trailing_dot {
-            let dot = format_name_dot(docs, &dot);
-            docs.push(dot);
-        }
-    })
-}
-
-fn format_multiline_qualified_name<'source>(
-    doc: &mut DocBuilder<'source>,
-    name: &QualifiedName<'source>,
-) -> Doc<'source> {
-    let mut segments = name.segments().peekable();
-    let trailing_dot = name.trailing_dot();
-    doc.concat_list(|docs| {
-        while segments
-            .peek()
-            .is_some_and(|segment| segment.dot_before.is_none())
-        {
-            let segment = segments.next().expect("peeked name segment exists");
-            if let Some(token) = segment.name.first_token() {
-                let token = format_name_segment(docs, &token);
-                docs.push(token);
-            }
-        }
-
-        let tail = docs.concat_list(|tail_docs| {
-            for segment in segments {
-                if let Some(dot) = segment.dot_before {
-                    let hard_line = tail_docs.hard_line();
-                    tail_docs.push(hard_line);
-                    let dot = format_name_dot(tail_docs, &dot);
-                    tail_docs.push(dot);
-                }
-
-                if let Some(token) = segment.name.first_token() {
-                    let token = format_name_segment(tail_docs, &token);
-                    tail_docs.push(token);
-                }
-            }
-
-            if let Some(dot) = trailing_dot {
-                let hard_line = tail_docs.hard_line();
-                tail_docs.push(hard_line);
-                let dot = format_name_dot(tail_docs, &dot);
-                tail_docs.push(dot);
-            }
-        });
-
-        let tail = docs.indent(tail);
-        docs.push(tail);
-    })
-}
-
 fn format_name_dot<'source>(
     doc: &mut DocBuilder<'source>,
     dot: &KotlinSyntaxToken<'source>,
 ) -> Doc<'source> {
     let leading = format_leading_dot_comments(doc, dot.leading_comments());
-    let text = format_token_text(doc, dot.text());
+    let text = doc.source_token(dot);
     let trailing = format_inline_comments(doc, dot.trailing_comments());
-    doc.concat([leading, text, trailing])
-}
-
-fn format_name_segment<'source>(
-    doc: &mut DocBuilder<'source>,
-    segment: &KotlinSyntaxToken<'source>,
-) -> Doc<'source> {
-    crate::helpers::comments::format_token(
-        doc,
-        segment,
-        LeadingTrivia::Preserve,
-        TrailingTrivia::Preserve,
-    )
-}
-
-fn format_inline_name_segment<'source>(
-    doc: &mut DocBuilder<'source>,
-    segment: &KotlinSyntaxToken<'source>,
-    followed_by_dot: bool,
-) -> Doc<'source> {
-    let leading = format_inline_comments(doc, segment.leading_comments());
-    let text = format_token_text(doc, segment.text());
-    let trailing = if followed_by_dot {
-        format_leading_dot_comments(doc, segment.trailing_comments())
-    } else {
-        format_inline_comments(doc, segment.trailing_comments())
-    };
     doc.concat([leading, text, trailing])
 }
 

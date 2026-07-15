@@ -8,17 +8,21 @@ _ x0 x_y a1_b2
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  Statement
-    ExpressionStatement
-      BinaryExpression
-        NameExpression
-          Identifier "_" @ 0..1 trailing=[Whitespace " "]
-        Identifier "x0" @ 2..4 trailing=[Whitespace " "]
-        NameExpression
-          Identifier "x_y" @ 5..8 trailing=[Whitespace " "]
-      ErrorNode
-        Identifier "a1_b2" @ 9..14
+    ImportDirectiveList
+  KotlinFileItemList
+    Statement
+      ExpressionStatement
+        BinaryExpression
+          NameExpression
+            Identifier "_" @ 0..1 trailing=[Whitespace " "]
+          Identifier "x0" @ 2..4 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "x_y" @ 5..8 trailing=[Whitespace " "]
+        ErrorNode
+          Identifier "a1_b2" @ 9..14
+      TerminatorList
   Eof "" @ 15..15 leading=[Newline "\n"]
 
 diagnostics:

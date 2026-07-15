@@ -20,97 +20,133 @@ internal /* JOLT-TRIVIA:internal-modifier */ object Registry {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "trivia" @ 20..26
+      QualifiedNameSegmentList
+        Name
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "trivia" @ 20..26
+    TerminatorList
   ImportList
-  ClassDeclaration
-    ModifierList
-      Identifier "public" @ 28..34 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:public-modifier */", Whitespace " "]
-      Identifier "sealed" @ 69..75 trailing=[Whitespace " "]
-    ClassKw "class" @ 76..81 trailing=[Whitespace " "]
-    Name
-      Identifier "Node" @ 82..86 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 87..88
-      ClassMemberDeclaration
-        ClassDeclaration
-          ModifierList
-            Identifier "data" @ 93..97 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:data-modifier */", Whitespace " "]
-          ClassKw "class" @ 130..135 trailing=[Whitespace " "]
-          Name
-            Identifier "Leaf" @ 136..140
-          PrimaryConstructor
-            ValueParameterList
-              LParen "(" @ 140..141
-              ValueParameter
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+        ModifierList
+          ModifierItemList
+            Identifier "public" @ 28..34 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:public-modifier */", Whitespace " "]
+            Identifier "sealed" @ 69..75 trailing=[Whitespace " "]
+      ModifierListSequence
+      ClassKw "class" @ 76..81 trailing=[Whitespace " "]
+      Name
+        Identifier "Node" @ 82..86 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 87..88
+        ClassMemberList
+          ClassMemberDeclaration
+            ClassDeclaration
+              ModifierListSequence
                 ModifierList
-                  Identifier "private" @ 150..157 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:private-modifier */", Whitespace " "]
-                ValKw "val" @ 193..196 trailing=[Whitespace " "]
-                Name
-                  Identifier "value" @ 197..202
-                Colon ":" @ 202..203 trailing=[Whitespace " "]
-                TypeReference
-                  UserType
-                    Identifier "String" @ 204..210
-              Comma "," @ 210..211
-              RParen ")" @ 216..217 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Colon ":" @ 218..219 trailing=[Whitespace " "]
-          DelegationSpecifierList
-            DelegationSpecifier
+                  ModifierItemList
+                    Identifier "data" @ 93..97 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:data-modifier */", Whitespace " "]
+              ModifierListSequence
+              ClassKw "class" @ 130..135 trailing=[Whitespace " "]
+              Name
+                Identifier "Leaf" @ 136..140
+              PrimaryConstructor
+                ModifierListSequence
+                ValueParameterList
+                  LParen "(" @ 140..141
+                  ValueParameterSeparatedList
+                    ValueParameter
+                      ModifierListSequence
+                        ModifierList
+                          ModifierItemList
+                            Identifier "private" @ 150..157 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:private-modifier */", Whitespace " "]
+                      ValKw "val" @ 193..196 trailing=[Whitespace " "]
+                      Name
+                        Identifier "value" @ 197..202
+                      Colon ":" @ 202..203 trailing=[Whitespace " "]
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            Identifier "String" @ 204..210
+                    Comma "," @ 210..211
+                  RParen ")" @ 216..217 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Colon ":" @ 218..219 trailing=[Whitespace " "]
+              DelegationSpecifierList
+                DelegationSpecifierSeparatedList
+                  DelegationSpecifier
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          Identifier "Node" @ 220..224
+                    ValueArgumentList
+                      LParen "(" @ 224..225
+                      ValueArgumentEntryList
+                      RParen ")" @ 225..226
+          ClassMemberDeclaration
+            ClassDeclaration
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "protected" @ 232..241 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:protected-modifier */", Whitespace " "]
+                    Identifier "abstract" @ 279..287 trailing=[Whitespace " "]
+              ModifierListSequence
+              ClassKw "class" @ 288..293 trailing=[Whitespace " "]
+              Name
+                Identifier "Branch" @ 294..300 trailing=[Whitespace " "]
+              Colon ":" @ 301..302 trailing=[Whitespace " "]
+              DelegationSpecifierList
+                DelegationSpecifierSeparatedList
+                  DelegationSpecifier
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          Identifier "Node" @ 303..307
+                    ValueArgumentList
+                      LParen "(" @ 307..308
+                      ValueArgumentEntryList
+                      RParen ")" @ 308..309
+        RBrace "}" @ 310..311 leading=[Newline "\n"]
+    ObjectDeclaration
+      ModifierListSequence
+        ModifierList
+          ModifierItemList
+            Identifier "internal" @ 313..321 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:internal-modifier */", Whitespace " "]
+      ModifierListSequence
+      ObjectKw "object" @ 358..364 trailing=[Whitespace " "]
+      Name
+        Identifier "Registry" @ 365..373 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 374..375
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "lateinit" @ 380..388 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lateinit-modifier */", Whitespace " "]
+              ModifierListSequence
+              VarKw "var" @ 425..428 trailing=[Whitespace " "]
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "current" @ 429..436
+              Colon ":" @ 436..437 trailing=[Whitespace " "]
               TypeReference
                 UserType
-                  Identifier "Node" @ 220..224
-              ValueArgumentList
-                LParen "(" @ 224..225
-                RParen ")" @ 225..226
-      ClassMemberDeclaration
-        ClassDeclaration
-          ModifierList
-            Identifier "protected" @ 232..241 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:protected-modifier */", Whitespace " "]
-            Identifier "abstract" @ 279..287 trailing=[Whitespace " "]
-          ClassKw "class" @ 288..293 trailing=[Whitespace " "]
-          Name
-            Identifier "Branch" @ 294..300 trailing=[Whitespace " "]
-          Colon ":" @ 301..302 trailing=[Whitespace " "]
-          DelegationSpecifierList
-            DelegationSpecifier
-              TypeReference
-                UserType
-                  Identifier "Node" @ 303..307
-              ValueArgumentList
-                LParen "(" @ 307..308
-                RParen ")" @ 308..309
-      RBrace "}" @ 310..311 leading=[Newline "\n"]
-  ObjectDeclaration
-    ModifierList
-      Identifier "internal" @ 313..321 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:internal-modifier */", Whitespace " "]
-    ObjectKw "object" @ 358..364 trailing=[Whitespace " "]
-    Name
-      Identifier "Registry" @ 365..373 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 374..375
-      ClassMemberDeclaration
-        PropertyDeclaration
-          ModifierList
-            Identifier "lateinit" @ 380..388 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lateinit-modifier */", Whitespace " "]
-          VarKw "var" @ 425..428 trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "current" @ 429..436
-          Colon ":" @ 436..437 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Node" @ 438..442
-      RBrace "}" @ 443..444 leading=[Newline "\n"]
+                  UserTypeSegmentList
+                    Identifier "Node" @ 438..442
+              PropertyBodyMemberList
+        RBrace "}" @ 443..444 leading=[Newline "\n"]
   Eof "" @ 445..445 leading=[Newline "\n"]
 
 diagnostics:

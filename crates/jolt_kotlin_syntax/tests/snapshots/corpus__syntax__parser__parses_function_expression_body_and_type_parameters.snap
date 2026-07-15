@@ -11,98 +11,126 @@ fun <T : Comparable<T>> maxOf(left: T, right: T): T =
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    TypeParameterList
-      Lt "<" @ 4..5
-      TypeParameter
-        Name
-          Identifier "T" @ 5..6
-      Gt ">" @ 6..7 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "identity" @ 8..16
-    ValueParameterList
-      LParen "(" @ 16..17
-      ValueParameter
-        Name
-          Identifier "value" @ 17..22
-        Colon ":" @ 22..23 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "T" @ 24..25
-      RParen ")" @ 25..26
-    Colon ":" @ 26..27 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "T" @ 28..29 trailing=[Whitespace " "]
-    Assign "=" @ 30..31 trailing=[Whitespace " "]
-    NameExpression
-      Identifier "value" @ 32..37
-  FunctionDeclaration
-    FunKw "fun" @ 39..42 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    TypeParameterList
-      Lt "<" @ 43..44
-      TypeParameter
-        Name
-          Identifier "T" @ 44..45 trailing=[Whitespace " "]
-        Colon ":" @ 46..47 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Comparable" @ 48..58
-            TypeArgumentList
-              Lt "<" @ 58..59
-              TypeProjectionList
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "T" @ 59..60
-              Gt ">" @ 60..61
-      Gt ">" @ 61..62 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "maxOf" @ 63..68
-    ValueParameterList
-      LParen "(" @ 68..69
-      ValueParameter
-        Name
-          Identifier "left" @ 69..73
-        Colon ":" @ 73..74 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "T" @ 75..76
-      Comma "," @ 76..77 trailing=[Whitespace " "]
-      ValueParameter
-        Name
-          Identifier "right" @ 78..83
-        Colon ":" @ 83..84 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "T" @ 85..86
-      RParen ")" @ 86..87
-    Colon ":" @ 87..88 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "T" @ 89..90 trailing=[Whitespace " "]
-    Assign "=" @ 91..92
-    IfExpression
-      IfKw "if" @ 97..99 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-      ParenthesizedExpression
-        LParen "(" @ 100..101
-        BinaryExpression
-          NameExpression
-            Identifier "left" @ 101..105 trailing=[Whitespace " "]
-          GtEq ">=" @ 106..108 trailing=[Whitespace " "]
-          NameExpression
-            Identifier "right" @ 109..114
-        RParen ")" @ 114..115 trailing=[Whitespace " "]
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      TypeParameterList
+        Lt "<" @ 4..5
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierListSequence
+            Name
+              Identifier "T" @ 5..6
+        Gt ">" @ 6..7 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "identity" @ 8..16
+      ValueParameterList
+        LParen "(" @ 16..17
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "value" @ 17..22
+            Colon ":" @ 22..23 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "T" @ 24..25
+        RParen ")" @ 25..26
+      Colon ":" @ 26..27 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "T" @ 28..29 trailing=[Whitespace " "]
+      Assign "=" @ 30..31 trailing=[Whitespace " "]
       NameExpression
-        Identifier "left" @ 116..120 trailing=[Whitespace " "]
-      ElseKw "else" @ 121..125 trailing=[Whitespace " "]
-      NameExpression
-        Identifier "right" @ 126..131
+        Identifier "value" @ 32..37
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 39..42 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      TypeParameterList
+        Lt "<" @ 43..44
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierListSequence
+            Name
+              Identifier "T" @ 44..45 trailing=[Whitespace " "]
+            Colon ":" @ 46..47 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Comparable" @ 48..58
+                  TypeArgumentList
+                    Lt "<" @ 58..59
+                    TypeProjectionList
+                      TypeProjectionSeparatedList
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "T" @ 59..60
+                    Gt ">" @ 60..61
+        Gt ">" @ 61..62 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "maxOf" @ 63..68
+      ValueParameterList
+        LParen "(" @ 68..69
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "left" @ 69..73
+            Colon ":" @ 73..74 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "T" @ 75..76
+          Comma "," @ 76..77 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "right" @ 78..83
+            Colon ":" @ 83..84 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "T" @ 85..86
+        RParen ")" @ 86..87
+      Colon ":" @ 87..88 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "T" @ 89..90 trailing=[Whitespace " "]
+      Assign "=" @ 91..92
+      IfExpression
+        IfKw "if" @ 97..99 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        ParenthesizedExpression
+          LParen "(" @ 100..101
+          BinaryExpression
+            NameExpression
+              Identifier "left" @ 101..105 trailing=[Whitespace " "]
+            GtEq ">=" @ 106..108 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "right" @ 109..114
+          RParen ")" @ 114..115 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "left" @ 116..120 trailing=[Whitespace " "]
+        ElseKw "else" @ 121..125 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "right" @ 126..131
   Eof "" @ 132..132 leading=[Newline "\n"]
 
 diagnostics:

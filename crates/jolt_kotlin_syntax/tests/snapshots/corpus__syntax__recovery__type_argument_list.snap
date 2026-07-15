@@ -8,43 +8,59 @@ fun demo() { call<First, /* orphan */ , Second>() }
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "demo" @ 4..8
-    ValueParameterList
-      LParen "(" @ 8..9
-      RParen ")" @ 9..10 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 11..12 trailing=[Whitespace " "]
-      Statement
-        ExpressionStatement
-          CallExpression
-            NameExpression
-              Identifier "call" @ 13..17
-            TypeArgumentList
-              Lt "<" @ 17..18
-              TypeProjectionList
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "First" @ 18..23
-                Comma "," @ 23..24 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
-                Comma "," @ 38..39 trailing=[Whitespace " "]
-                ErrorNode
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "Second" @ 40..46
-              Gt ">" @ 46..47
-            ValueArgumentList
-              LParen "(" @ 47..48
-              RParen ")" @ 48..49 trailing=[Whitespace " "]
-      RBrace "}" @ 50..51
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "demo" @ 4..8
+      ValueParameterList
+        LParen "(" @ 8..9
+        ValueParameterSeparatedList
+        RParen ")" @ 9..10 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 11..12 trailing=[Whitespace " "]
+        BlockItemList
+          Statement
+            ExpressionStatement
+              CallExpression
+                NameExpression
+                  Identifier "call" @ 13..17
+                TypeArgumentListList
+                  TypeArgumentList
+                    Lt "<" @ 17..18
+                    TypeProjectionList
+                      TypeProjectionSeparatedList
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "First" @ 18..23
+                        Comma "," @ 23..24 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
+                        Comma "," @ 38..39 trailing=[Whitespace " "]
+                        ErrorNode
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "Second" @ 40..46
+                    Gt ">" @ 46..47
+                ValueArgumentList
+                  LParen "(" @ 47..48
+                  ValueArgumentEntryList
+                  RParen ")" @ 48..49 trailing=[Whitespace " "]
+                LambdaExpressionList
+            TerminatorList
+        RBrace "}" @ 50..51
   Eof "" @ 52..52 leading=[Newline "\n"]
 
 diagnostics:

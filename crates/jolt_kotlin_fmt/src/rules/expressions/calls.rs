@@ -1,86 +1,58 @@
 use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    CallExpression, CollectionLiteralExpression, Expression, ExpressionParentRole, IndexExpression,
-    NavigationExpression, NavigationOperatorTokens, RecoveredSeparatedListEntry, ValueArgument,
-    ValueArgumentList,
+    Annotation, CallExpression, CollectionLiteralExpression, Expression, IndexExpression,
+    KotlinRoleElement, KotlinSyntaxField, KotlinSyntaxInvariantError, KotlinSyntaxListPart,
+    KotlinSyntaxToken, KotlinSyntaxView, NavigationExpression, SplitSafeNavigationOperator,
+    ValueArgument, ValueArgumentList, ValueArgumentListEntry,
 };
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_leading_comments, format_token, format_token_sequence,
-    token_has_comments,
+    LeadingTrivia, TrailingTrivia, format_leading_comments, format_token, token_has_comments,
 };
 use crate::helpers::lists::{
     CommaListItem, compact_parenthesized_list, compact_square_bracket_list,
     force_parenthesized_list, parenthesized_list, square_bracket_list,
 };
+use crate::helpers::recovery::{
+    KotlinFormatDelimiter, KotlinFormatField, KotlinFormatListPart, format_optional_field,
+    format_or_verbatim, format_required_field, resolve_list_part, resolve_required_delimiter,
+    resolve_required_field,
+};
+use crate::rules::annotations::format_annotation;
+use crate::rules::names::format_name;
+use crate::rules::types::format_type_argument_list;
 
 use super::{format_expression_with_leading, lambdas::format_lambda_expression};
-use crate::rules::types::format_type_argument_list;
 
 pub(super) fn format_navigation_expression<'source>(
     doc: &mut DocBuilder<'source>,
     expression: &NavigationExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let expression = Expression::NavigationExpression(*expression);
-    if !is_member_chain_child(doc, &expression)
-        && let Some(chain) = format_member_chain(doc, expression, leading)
-    {
-        return chain;
-    }
-    let Expression::NavigationExpression(expression) = expression else {
-        return doc.nil();
-    };
-
-    let Some(receiver) = expression.receiver() else {
-        let prefix = format_token_sequence(doc, expression.recovered_prefix_tokens(), leading);
-        let operator = format_navigation_operator(
-            doc,
-            expression.operator_tokens(),
-            LeadingTrivia::Preserve,
-            TrailingTrivia::BeforeSpaceIfComments,
-        );
-        let selector = if let Some(selector) = expression.selector_token() {
-            format_token(
-                doc,
-                &selector,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::Preserve,
-            )
-        } else {
-            doc.nil()
+    format_or_verbatim(expression, doc, |doc| {
+        let expression = Expression::NavigationExpression(*expression);
+        if let Some(chain) = format_member_chain(doc, expression, leading) {
+            return chain;
+        }
+        let Expression::NavigationExpression(expression) = expression else {
+            unreachable!()
         };
-        return doc.concat([prefix, operator, selector]);
-    };
-    let operators = expression.operator_tokens();
-    if operators.is_empty() {
-        return format_expression_with_leading(doc, &receiver, leading);
-    }
-    let Some(selector) = expression.selector_token() else {
-        let receiver = format_expression_with_leading(doc, &receiver, leading);
-        let operator = format_navigation_operator(
-            doc,
-            operators,
-            LeadingTrivia::SuppressAlreadyHandled,
-            TrailingTrivia::Preserve,
-        );
-        return doc.concat([receiver, operator]);
-    };
-
-    let receiver = format_expression_with_leading(doc, &receiver, leading);
-    let operator = format_navigation_operator(
-        doc,
-        operators,
-        LeadingTrivia::SuppressAlreadyHandled,
-        TrailingTrivia::RelocatedToEnclosingContext,
-    );
-    let selector = format_token(
-        doc,
-        &selector,
-        LeadingTrivia::Preserve,
-        TrailingTrivia::Preserve,
-    );
-    doc.concat([receiver, operator, selector])
+        let receiver = format_required_field(expression.receiver(), doc, |receiver, doc| {
+            format_expression_with_leading(doc, &receiver, leading)
+        });
+        let operator = format_required_field(expression.operator(), doc, |operator, doc| {
+            format_navigation_operator(
+                doc,
+                operator,
+                LeadingTrivia::SuppressAlreadyHandled,
+                TrailingTrivia::RelocatedToEnclosingContext,
+            )
+        });
+        let selector = format_required_field(expression.selector(), doc, |selector, doc| {
+            format_navigation_selector(doc, selector)
+        });
+        doc.concat([receiver, operator, selector])
+    })
 }
 
 pub(super) fn format_call_expression<'source>(
@@ -88,41 +60,20 @@ pub(super) fn format_call_expression<'source>(
     expression: &CallExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let expression = Expression::CallExpression(*expression);
-    if !is_member_chain_child(doc, &expression)
-        && let Some(chain) = format_member_chain(doc, expression, leading)
-    {
-        return chain;
-    }
-    let Expression::CallExpression(expression) = expression else {
-        return doc.nil();
-    };
-
-    let callee = if let Some(callee) = expression.callee() {
-        format_expression_with_leading(doc, &callee, leading)
-    } else {
-        doc.nil()
-    };
-    let type_arguments = expression
-        .type_argument_lists()
-        .map(|arguments| format_type_argument_list(doc, &arguments))
-        .collect::<Vec<_>>();
-    let type_arguments = doc.concat(type_arguments);
-    let value_arguments = if let Some(arguments) = expression.value_argument_list() {
-        format_value_argument_list(doc, &arguments)
-    } else {
-        doc.nil()
-    };
-    let lambdas = expression
-        .lambdas()
-        .map(|lambda| {
-            let space = doc.space();
-            let lambda = format_lambda_expression(doc, &lambda, LeadingTrivia::Preserve);
-            doc.concat([space, lambda])
-        })
-        .collect::<Vec<_>>();
-    let lambdas = doc.concat(lambdas);
-    doc.concat([callee, type_arguments, value_arguments, lambdas])
+    format_or_verbatim(expression, doc, |doc| {
+        let expression = Expression::CallExpression(*expression);
+        if let Some(chain) = format_member_chain(doc, expression, leading) {
+            return chain;
+        }
+        let Expression::CallExpression(expression) = expression else {
+            unreachable!()
+        };
+        let callee = format_required_field(expression.callee(), doc, |callee, doc| {
+            format_expression_with_leading(doc, &callee, leading)
+        });
+        let suffix = format_call_arguments(doc, &expression);
+        doc.concat([callee, suffix])
+    })
 }
 
 pub(super) fn format_index_expression<'source>(
@@ -130,24 +81,18 @@ pub(super) fn format_index_expression<'source>(
     expression: &IndexExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let expression = Expression::IndexExpression(*expression);
-    if !is_member_chain_child(doc, &expression)
-        && let Some(chain) = format_member_chain(doc, expression, leading)
-    {
-        return chain;
-    }
-    let Expression::IndexExpression(expression) = expression else {
-        return doc.nil();
-    };
-
-    let Some(receiver) = expression.receiver() else {
-        return format_index_suffix(doc, &expression);
-    };
-
-    let receiver = format_expression_with_leading(doc, &receiver, leading);
-    let suffix = format_index_suffix(doc, &expression);
-    let contents = doc.concat([receiver, suffix]);
-    doc.group(contents)
+    format_or_verbatim(expression, doc, |doc| {
+        let expression_family = Expression::IndexExpression(*expression);
+        if let Some(chain) = format_member_chain(doc, expression_family, leading) {
+            return chain;
+        }
+        let receiver = format_required_field(expression.receiver(), doc, |receiver, doc| {
+            format_expression_with_leading(doc, &receiver, leading)
+        });
+        let suffix = format_index_suffix(doc, expression);
+        let contents = doc.concat([receiver, suffix]);
+        doc.group(contents)
+    })
 }
 
 pub(super) fn format_collection_literal_expression<'source>(
@@ -155,19 +100,14 @@ pub(super) fn format_collection_literal_expression<'source>(
     expression: &CollectionLiteralExpression<'source>,
     _leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let SquareArgumentListItems {
-        items,
-        has_recovered_tokens,
-    } = collection_literal_items(doc, expression);
-    let has_trailing_comma = items.last().is_some_and(|item| item.comma.is_some());
-    let open = expression.open_bracket();
-    let close = expression.close_bracket();
-
-    if has_trailing_comma || has_recovered_tokens {
-        square_bracket_list(doc, open.as_ref(), close.as_ref(), items)
-    } else {
-        compact_square_bracket_list(doc, open.as_ref(), close.as_ref(), items)
-    }
+    format_or_verbatim(expression, doc, |doc| {
+        format_square_argument_list(
+            doc,
+            expression.open_bracket(),
+            expression.entries(),
+            expression.close_bracket(),
+        )
+    })
 }
 
 struct MemberChainBuilder<'source> {
@@ -188,8 +128,9 @@ impl<'source> MemberChainBuilder<'source> {
     ) -> Option<Doc<'source>> {
         let root = self.root?;
         let keep_first_suffix_with_root = is_simple_member_chain_root(&root)
-            && (self.suffix_count == 0 || !self.first_suffix_forces_break);
-
+            && (self.suffix_count == 0
+                || !self.first_suffix_forces_break
+                || matches!(root, Expression::CallExpression(_)));
         let leading_comments = format_expression_leading_comments(doc, &root, leading);
         let root_doc =
             format_expression_with_leading(doc, &root, LeadingTrivia::SuppressAlreadyHandled);
@@ -207,50 +148,50 @@ impl<'source> MemberChainBuilder<'source> {
 
     fn push_suffix(
         &mut self,
-        rest_suffixes: &mut ConcatBuilder<'_, 'source>,
+        rest: &mut ConcatBuilder<'_, 'source>,
         suffix: Doc<'source>,
-        forces_break_before: bool,
+        forces_break: bool,
     ) {
-        self.flush_field_run(rest_suffixes);
-        self.append_suffix(rest_suffixes, suffix, forces_break_before);
+        self.flush_field_run(rest);
+        self.append_suffix(rest, suffix, forces_break);
     }
 
     fn push_navigation_suffix(
         &mut self,
-        rest_suffixes: &mut ConcatBuilder<'_, 'source>,
+        rest: &mut ConcatBuilder<'_, 'source>,
         suffix: Doc<'source>,
-        forces_break_before: bool,
+        forces_break: bool,
     ) {
-        if forces_break_before {
-            self.push_suffix(rest_suffixes, suffix, true);
+        if forces_break {
+            self.push_suffix(rest, suffix, true);
         } else {
             self.field_run = Some(match self.field_run.take() {
-                Some(run) => rest_suffixes.concat([run, suffix]),
+                Some(run) => rest.concat([run, suffix]),
                 None => suffix,
             });
         }
     }
 
-    fn flush_field_run(&mut self, rest_suffixes: &mut ConcatBuilder<'_, 'source>) {
+    fn flush_field_run(&mut self, rest: &mut ConcatBuilder<'_, 'source>) {
         if let Some(run) = self.field_run.take() {
-            self.append_suffix(rest_suffixes, run, false);
+            self.append_suffix(rest, run, false);
         }
     }
 
     fn append_suffix(
         &mut self,
-        rest_suffixes: &mut ConcatBuilder<'_, 'source>,
+        rest: &mut ConcatBuilder<'_, 'source>,
         suffix: Doc<'source>,
-        forces_break_before: bool,
+        forces_break: bool,
     ) {
-        self.force_multiline |= forces_break_before;
+        self.force_multiline |= forces_break;
         if self.suffix_count == 0 {
             self.first_suffix = Some(suffix);
-            self.first_suffix_forces_break = forces_break_before;
+            self.first_suffix_forces_break = forces_break;
         } else {
-            let soft_line = rest_suffixes.soft_line();
-            rest_suffixes.push(soft_line);
-            rest_suffixes.push(suffix);
+            let line = rest.soft_line();
+            rest.push(line);
+            rest.push(suffix);
         }
         self.suffix_count += 1;
     }
@@ -269,52 +210,47 @@ fn format_member_chain<'source>(
         force_multiline: false,
         field_run: None,
     };
-
     let mut valid = false;
-    let rest_suffixes = doc.concat_list(|rest_suffixes| {
-        valid = append_chain_expression(rest_suffixes, &mut builder, expression).is_some();
+    let rest = doc.concat_list(|rest| {
+        valid = append_chain_expression(rest, &mut builder, expression).is_some();
         if valid {
-            builder.flush_field_run(rest_suffixes);
+            builder.flush_field_run(rest);
         }
     });
-    if valid {
-        builder.finish(doc, leading, rest_suffixes)
-    } else {
-        None
-    }
+    valid.then(|| builder.finish(doc, leading, rest)).flatten()
 }
 
 fn append_chain_expression<'source>(
-    rest_suffixes: &mut ConcatBuilder<'_, 'source>,
+    rest: &mut ConcatBuilder<'_, 'source>,
     builder: &mut MemberChainBuilder<'source>,
     expression: Expression<'source>,
 ) -> Option<()> {
     match expression {
         Expression::CallExpression(call) => {
-            let callee = call.callee()?;
+            let callee = present_required(call.callee())?;
             let Expression::NavigationExpression(navigation) = callee else {
                 return None;
             };
-            append_chain_receiver(rest_suffixes, builder, navigation.receiver()?);
-            let forces_break_before =
-                navigation_operator_has_leading_comments(rest_suffixes, &navigation)
-                    || call_has_lambdas(rest_suffixes, &call);
-            let suffix = format_call_suffix(rest_suffixes, &navigation, &call)?;
-            builder.push_suffix(rest_suffixes, suffix, forces_break_before);
+            append_chain_receiver(rest, builder, present_required(navigation.receiver())?);
+            let forces_break = navigation_operator_has_leading_comments(&navigation)
+                || (call_has_lambdas(&call) && !call_has_parenthesized_arguments(&call));
+            let navigation = format_navigation_suffix(rest, &navigation)?;
+            let arguments = format_call_arguments(rest, &call);
+            let suffix = rest.concat([navigation, arguments]);
+            builder.push_suffix(rest, suffix, forces_break);
             Some(())
         }
         Expression::NavigationExpression(navigation) => {
-            append_chain_receiver(rest_suffixes, builder, navigation.receiver()?);
-            let suffix = format_navigation_suffix(rest_suffixes, &navigation)?;
-            let forces_break_before =
-                navigation_operator_has_leading_comments(rest_suffixes, &navigation);
-            builder.push_navigation_suffix(rest_suffixes, suffix, forces_break_before);
+            append_chain_receiver(rest, builder, present_required(navigation.receiver())?);
+            let suffix = format_navigation_suffix(rest, &navigation)?;
+            let forces_break = navigation_operator_has_leading_comments(&navigation);
+            builder.push_navigation_suffix(rest, suffix, forces_break);
             Some(())
         }
         Expression::IndexExpression(index) => {
-            append_chain_receiver(rest_suffixes, builder, index.receiver()?);
-            let suffix = format_index_suffix(rest_suffixes, &index);
-            builder.push_suffix(rest_suffixes, suffix, false);
+            append_chain_receiver(rest, builder, present_required(index.receiver())?);
+            let suffix = format_index_suffix(rest, &index);
+            builder.push_suffix(rest, suffix, false);
             Some(())
         }
         _ => None,
@@ -322,11 +258,11 @@ fn append_chain_expression<'source>(
 }
 
 fn append_chain_receiver<'source>(
-    rest_suffixes: &mut ConcatBuilder<'_, 'source>,
+    rest: &mut ConcatBuilder<'_, 'source>,
     builder: &mut MemberChainBuilder<'source>,
     receiver: Expression<'source>,
 ) {
-    if append_chain_expression(rest_suffixes, builder, receiver).is_none() {
+    if append_chain_expression(rest, builder, receiver).is_none() {
         builder.root = Some(receiver);
     }
 }
@@ -335,32 +271,29 @@ fn member_chain<'source>(
     doc: &mut DocBuilder<'source>,
     root: Doc<'source>,
     first_suffix: Option<Doc<'source>>,
-    rest_suffixes: Doc<'source>,
+    rest: Doc<'source>,
     suffix_count: u32,
     force_multiline: bool,
-    keep_first_suffix_with_root: bool,
+    keep_first: bool,
 ) -> Doc<'source> {
     if suffix_count == 0 {
         return root;
     }
-
-    let first_suffix = first_suffix.expect("member chain suffix exists");
-    let head = if keep_first_suffix_with_root {
-        doc.concat([root, first_suffix])
+    let first = first_suffix.expect("member chain suffix exists");
+    let head = if keep_first {
+        doc.concat([root, first])
     } else {
         root
     };
-    let rest = if keep_first_suffix_with_root {
-        rest_suffixes
+    let rest = if keep_first {
+        rest
     } else {
-        let soft_line = doc.soft_line();
-        doc.concat([soft_line, first_suffix, rest_suffixes])
+        let line = doc.soft_line();
+        doc.concat([line, first, rest])
     };
-
-    if keep_first_suffix_with_root && suffix_count == 1 {
+    if keep_first && suffix_count == 1 {
         return doc.group(head);
     }
-
     let rest = doc.indent(rest);
     let contents = doc.concat([head, rest]);
     if force_multiline {
@@ -378,221 +311,206 @@ fn format_expression_leading_comments<'source>(
     if leading == LeadingTrivia::SuppressAlreadyHandled {
         return doc.nil();
     }
-
-    if let Some(token) = expression.first_token() {
-        format_leading_comments(doc, &token)
-    } else {
-        doc.nil()
-    }
+    let Some(token) = expression.first_token() else {
+        return doc.nil();
+    };
+    format_leading_comments(doc, &token)
 }
 
-fn format_call_suffix<'source>(
+fn format_call_arguments<'source>(
     doc: &mut DocBuilder<'source>,
-    navigation: &NavigationExpression<'source>,
     call: &CallExpression<'source>,
-) -> Option<Doc<'source>> {
-    let navigation = format_navigation_suffix(doc, navigation)?;
-    let type_arguments = call
-        .type_argument_lists()
-        .map(|arguments| format_type_argument_list(doc, &arguments))
-        .collect::<Vec<_>>();
-    let type_arguments = doc.concat(type_arguments);
-    let value_arguments = if let Some(arguments) = call.value_argument_list() {
-        format_value_argument_list(doc, &arguments)
-    } else {
-        doc.nil()
-    };
-    let lambdas = call
-        .lambdas()
-        .map(|lambda| {
-            let space = doc.space();
-            let lambda = format_lambda_expression(doc, &lambda, LeadingTrivia::Preserve);
-            doc.concat([space, lambda])
+) -> Doc<'source> {
+    let type_arguments = format_required_field(call.type_arguments(), doc, |arguments, doc| {
+        doc.concat_list(|docs| {
+            for part in arguments.parts() {
+                match resolve_list_part(part, docs) {
+                    KotlinFormatListPart::Item(arguments) => {
+                        let formatted = format_type_argument_list(docs, &arguments);
+                        docs.push(formatted);
+                    }
+                    KotlinFormatListPart::Separator(separator) => docs.block_on_invariant(format!(
+                        "unexpected type-argument-list separator: {:?}",
+                        separator.kind()
+                    )),
+                    KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
+                }
+            }
         })
-        .collect::<Vec<_>>();
-    let lambdas = doc.concat(lambdas);
-    Some(doc.concat([navigation, type_arguments, value_arguments, lambdas]))
+    });
+    let values = format_optional_field(call.arguments(), doc, |arguments, doc| {
+        format_value_argument_list(doc, &arguments)
+    });
+    let lambdas = format_required_field(call.lambdas(), doc, |lambdas, doc| {
+        doc.concat_list(|docs| {
+            for part in lambdas.parts() {
+                match resolve_list_part(part, docs) {
+                    KotlinFormatListPart::Item(lambda) => {
+                        let space = docs.space();
+                        docs.push(space);
+                        let lambda =
+                            format_lambda_expression(docs, &lambda, LeadingTrivia::Preserve);
+                        docs.push(lambda);
+                    }
+                    KotlinFormatListPart::Separator(separator) => docs.block_on_invariant(format!(
+                        "unexpected lambda-list separator: {:?}",
+                        separator.kind()
+                    )),
+                    KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
+                }
+            }
+        })
+    });
+    doc.concat([type_arguments, values, lambdas])
 }
 
 fn format_navigation_suffix<'source>(
     doc: &mut DocBuilder<'source>,
     navigation: &NavigationExpression<'source>,
 ) -> Option<Doc<'source>> {
-    let operators = navigation.operator_tokens();
-    if operators.is_empty() {
-        return None;
-    }
-    let selector = navigation.selector_token()?;
-
+    let operator = present_required(navigation.operator())?;
+    let selector = present_required(navigation.selector())?;
     let operator = format_navigation_operator(
         doc,
-        operators,
+        operator,
         LeadingTrivia::Preserve,
         TrailingTrivia::BeforeSpaceIfComments,
     );
-    let selector = format_token(
-        doc,
-        &selector,
-        LeadingTrivia::Preserve,
-        TrailingTrivia::Preserve,
-    );
+    let selector = format_navigation_selector(doc, selector);
     Some(doc.concat([operator, selector]))
-}
-
-fn navigation_operator_has_leading_comments(
-    _doc: &mut DocBuilder<'_>,
-    navigation: &NavigationExpression<'_>,
-) -> bool {
-    navigation
-        .operator_tokens()
-        .first()
-        .is_some_and(|operator| !operator.leading_comments().is_empty())
 }
 
 fn format_navigation_operator<'source>(
     doc: &mut DocBuilder<'source>,
-    tokens: NavigationOperatorTokens<'source>,
+    operator: KotlinRoleElement<'source>,
     leading: LeadingTrivia,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
-    let last_index = tokens.len().saturating_sub(1);
-    let tokens = tokens
-        .iter()
-        .enumerate()
-        .map(|(index, token)| {
-            format_token(
-                doc,
-                &token,
-                if index == 0 {
-                    leading
-                } else {
-                    LeadingTrivia::SuppressAlreadyHandled
-                },
-                if index == last_index {
-                    trailing
-                } else {
-                    TrailingTrivia::RelocatedToEnclosingContext
-                },
-            )
+    if let Some(token) = operator.token() {
+        return format_token(doc, &token, leading, trailing);
+    }
+    if let Some(split) = operator.cast_node::<SplitSafeNavigationOperator<'source>>() {
+        return format_or_verbatim(&split, doc, |doc| {
+            let question = format_required_field(split.question(), doc, |token, doc| {
+                format_token(
+                    doc,
+                    &token,
+                    leading,
+                    TrailingTrivia::RelocatedToEnclosingContext,
+                )
+            });
+            let dot = format_required_field(split.dot(), doc, |token, doc| {
+                format_token(doc, &token, LeadingTrivia::SuppressAlreadyHandled, trailing)
+            });
+            doc.concat([question, dot])
+        });
+    }
+    doc.block_on_invariant("invalid navigation operator");
+    Doc::nil()
+}
+
+fn format_navigation_selector<'source>(
+    doc: &mut DocBuilder<'source>,
+    selector: KotlinRoleElement<'source>,
+) -> Doc<'source> {
+    if let Some(token) = selector.token() {
+        format_token(
+            doc,
+            &token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        )
+    } else if let Some(expression) = selector.cast_family::<Expression<'source>>() {
+        format_expression_with_leading(doc, &expression, LeadingTrivia::Preserve)
+    } else {
+        doc.block_on_invariant("invalid navigation selector");
+        Doc::nil()
+    }
+}
+
+fn navigation_operator_has_leading_comments(navigation: &NavigationExpression<'_>) -> bool {
+    present_required(navigation.operator())
+        .and_then(|operator| {
+            operator.token().or_else(|| {
+                operator
+                    .cast_node::<SplitSafeNavigationOperator<'_>>()
+                    .and_then(|operator| operator.first_token())
+            })
         })
-        .collect::<Vec<_>>();
-    doc.concat(tokens)
-}
-
-fn call_has_lambdas(_doc: &mut DocBuilder<'_>, call: &CallExpression<'_>) -> bool {
-    call.lambdas().next().is_some()
-}
-
-fn is_member_chain_child(_doc: &mut DocBuilder<'_>, expression: &Expression<'_>) -> bool {
-    matches!(
-        expression.parent_role(),
-        Some(ExpressionParentRole::NavigationReceiver | ExpressionParentRole::IndexReceiver)
-    )
+        .is_some_and(|operator| !operator.leading_comments().is_empty())
 }
 
 fn format_index_suffix<'source>(
     doc: &mut DocBuilder<'source>,
     index: &IndexExpression<'source>,
 ) -> Doc<'source> {
-    let SquareArgumentListItems {
-        items,
-        has_recovered_tokens,
-    } = index_argument_items(doc, index);
-    let has_trailing_comma = items.last().is_some_and(|item| item.comma.is_some());
-    if has_trailing_comma || has_recovered_tokens {
-        square_bracket_list(
-            doc,
-            index.open_bracket().as_ref(),
-            index.close_bracket().as_ref(),
-            items,
-        )
+    format_square_argument_list(
+        doc,
+        index.open_bracket(),
+        index.entries(),
+        index.close_bracket(),
+    )
+}
+
+fn format_square_argument_list<'source, Entries>(
+    doc: &mut DocBuilder<'source>,
+    open: Result<
+        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
+        KotlinSyntaxInvariantError,
+    >,
+    entries: Result<KotlinSyntaxField<'source, Entries>, KotlinSyntaxInvariantError>,
+    close: Result<
+        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
+        KotlinSyntaxInvariantError,
+    >,
+) -> Doc<'source>
+where
+    Entries: PhysicalValueArgumentList<'source>,
+{
+    let open = resolve_required_delimiter(open, doc);
+    let close = resolve_required_delimiter(close, doc);
+    let (items, recovered) = match resolve_required_field(entries, doc) {
+        KotlinFormatField::Present(entries) => value_argument_items(doc, entries.parts()),
+        KotlinFormatField::Malformed(recovery) => (
+            vec![CommaListItem {
+                doc: recovery,
+                comma: None,
+            }],
+            true,
+        ),
+    };
+    let trailing = items.last().is_some_and(|item| item.comma.is_some());
+    let list = if trailing || recovered {
+        square_bracket_list(doc, open.source(), close.source(), items)
     } else {
-        compact_square_bracket_list(
-            doc,
-            index.open_bracket().as_ref(),
-            index.close_bracket().as_ref(),
-            items,
-        )
-    }
+        compact_square_bracket_list(doc, open.source(), close.source(), items)
+    };
+    concat_delimiter_recovery(doc, &open, list, &close)
 }
 
-struct SquareArgumentListItems<'source> {
-    items: Vec<CommaListItem<'source>>,
-    has_recovered_tokens: bool,
+trait PhysicalValueArgumentList<'source> {
+    fn parts(
+        &self,
+    ) -> impl Iterator<
+        Item = Result<
+            KotlinSyntaxListPart<'source, ValueArgument<'source>>,
+            KotlinSyntaxInvariantError,
+        >,
+    > + '_;
 }
 
-fn collection_literal_items<'source>(
-    doc: &mut DocBuilder<'source>,
-    expression: &CollectionLiteralExpression<'source>,
-) -> SquareArgumentListItems<'source> {
-    let entries = expression.entries_with_recovered();
-    let (lower, _) = entries.size_hint();
-    let mut items = Vec::with_capacity(lower);
-    let mut has_recovered_tokens = false;
-
-    for entry in entries {
-        has_recovered_tokens |= push_square_argument_entry(doc, &mut items, entry);
-    }
-
-    SquareArgumentListItems {
-        items,
-        has_recovered_tokens,
-    }
-}
-
-fn index_argument_items<'source>(
-    doc: &mut DocBuilder<'source>,
-    index: &IndexExpression<'source>,
-) -> SquareArgumentListItems<'source> {
-    let entries = index.entries_with_recovered();
-    let (lower, _) = entries.size_hint();
-    let mut items = Vec::with_capacity(lower);
-    let mut has_recovered_tokens = false;
-
-    for entry in entries {
-        has_recovered_tokens |= push_square_argument_entry(doc, &mut items, entry);
-    }
-
-    SquareArgumentListItems {
-        items,
-        has_recovered_tokens,
-    }
-}
-
-fn push_square_argument_entry<'source>(
-    doc: &mut DocBuilder<'source>,
-    items: &mut Vec<CommaListItem<'source>>,
-    entry: RecoveredSeparatedListEntry<'source, jolt_kotlin_syntax::ValueArgumentEntry<'source>>,
-) -> bool {
-    match entry {
-        RecoveredSeparatedListEntry::Entry(entry) => {
-            items.push(CommaListItem {
-                doc: format_value_argument(doc, &entry.argument),
-                comma: entry.comma,
-            });
-            false
-        }
-        RecoveredSeparatedListEntry::Token(token) => {
-            items.push(CommaListItem {
-                doc: format_token_sequence(doc, std::iter::once(token), LeadingTrivia::Preserve),
-                comma: None,
-            });
-            true
-        }
-        RecoveredSeparatedListEntry::Error(error) => {
-            items.push(CommaListItem {
-                doc: format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve),
-                comma: None,
-            });
-            true
-        }
-        RecoveredSeparatedListEntry::Node(node) => {
-            items.push(CommaListItem {
-                doc: format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve),
-                comma: None,
-            });
-            true
-        }
+impl<'source> PhysicalValueArgumentList<'source>
+    for jolt_kotlin_syntax::ValueArgumentSeparatedList<'source>
+{
+    fn parts(
+        &self,
+    ) -> impl Iterator<
+        Item = Result<
+            KotlinSyntaxListPart<'source, ValueArgument<'source>>,
+            KotlinSyntaxInvariantError,
+        >,
+    > + '_ {
+        self.parts()
     }
 }
 
@@ -602,188 +520,273 @@ const fn is_simple_member_chain_root(expression: &Expression<'_>) -> bool {
         Expression::NameExpression(_)
             | Expression::ThisExpression(_)
             | Expression::SuperExpression(_)
+            | Expression::CallExpression(_)
     )
+}
+
+fn call_has_lambdas(call: &CallExpression<'_>) -> bool {
+    match call.lambdas() {
+        Ok(KotlinSyntaxField::Present(lambdas)) => lambdas
+            .parts()
+            .any(|part| matches!(part, Ok(KotlinSyntaxListPart::Item(_)))),
+        Ok(KotlinSyntaxField::Missing(_) | KotlinSyntaxField::Malformed(_)) | Err(_) => false,
+    }
+}
+
+fn call_has_parenthesized_arguments(call: &CallExpression<'_>) -> bool {
+    matches!(call.arguments(), Ok(KotlinSyntaxField::Present(_)))
 }
 
 pub(crate) fn format_value_argument_list<'source>(
     doc: &mut DocBuilder<'source>,
     arguments: &ValueArgumentList<'source>,
 ) -> Doc<'source> {
-    let ValueArgumentListItems {
-        items,
-        has_argument_leading_comments,
-        has_recovered_tokens,
-    } = value_argument_list_items(doc, arguments);
-    let has_trailing_comma = items.last().is_some_and(|item| item.comma.is_some());
-    if has_argument_leading_comments || has_recovered_tokens {
-        force_parenthesized_list(
-            doc,
-            arguments.open_paren().as_ref(),
-            arguments.close_paren().as_ref(),
-            items,
-        )
-    } else if has_trailing_comma
-        || arguments
-            .open_paren()
-            .as_ref()
-            .is_some_and(|token| token_has_comments(token))
-        || arguments
-            .close_paren()
-            .as_ref()
-            .is_some_and(|token| token_has_comments(token))
-    {
-        parenthesized_list(
-            doc,
-            arguments.open_paren().as_ref(),
-            arguments.close_paren().as_ref(),
-            items,
-        )
-    } else {
-        compact_parenthesized_list(
-            doc,
-            arguments.open_paren().as_ref(),
-            arguments.close_paren().as_ref(),
-            items,
-        )
-    }
+    format_or_verbatim(arguments, doc, |doc| {
+        let open = resolve_required_delimiter(arguments.open_paren(), doc);
+        let close = resolve_required_delimiter(arguments.close_paren(), doc);
+        let (items, has_recovery) = match resolve_required_field(arguments.entries(), doc) {
+            KotlinFormatField::Present(entries) => {
+                value_argument_list_entry_items(doc, entries.parts())
+            }
+            KotlinFormatField::Malformed(recovery) => (
+                vec![CommaListItem {
+                    doc: recovery,
+                    comma: None,
+                }],
+                true,
+            ),
+        };
+        let has_comments = items.iter().any(|item| item.doc != Doc::nil())
+            && value_argument_list_has_leading_comments(arguments);
+        let trailing = items.last().is_some_and(|item| item.comma.is_some());
+        let delimiter_comments = open.source().is_some_and(token_has_comments)
+            || close.source().is_some_and(token_has_comments);
+        let list = if has_comments || has_recovery {
+            force_parenthesized_list(doc, open.source(), close.source(), items)
+        } else if trailing || delimiter_comments {
+            parenthesized_list(doc, open.source(), close.source(), items)
+        } else {
+            compact_parenthesized_list(doc, open.source(), close.source(), items)
+        };
+        concat_delimiter_recovery(doc, &open, list, &close)
+    })
 }
 
-struct ValueArgumentListItems<'source> {
-    items: Vec<CommaListItem<'source>>,
-    has_argument_leading_comments: bool,
-    has_recovered_tokens: bool,
-}
-
-fn value_argument_list_items<'source>(
+fn value_argument_list_entry_items<'source>(
     doc: &mut DocBuilder<'source>,
-    arguments: &ValueArgumentList<'source>,
-) -> ValueArgumentListItems<'source> {
-    let entries = arguments.entries_with_recovered();
-    let (lower, _) = entries.size_hint();
-    let mut items = Vec::with_capacity(lower);
-    let mut previous_comma = None;
-    let mut has_argument_leading_comments = false;
-    let mut has_recovered_tokens = false;
-
-    for entry in entries {
-        match entry {
-            RecoveredSeparatedListEntry::Entry(entry) => {
-                let leading = if previous_comma.is_some() {
-                    LeadingTrivia::SuppressAlreadyHandled
-                } else {
-                    LeadingTrivia::Preserve
+    parts: impl Iterator<
+        Item = Result<
+            KotlinSyntaxListPart<'source, ValueArgumentListEntry<'source>>,
+            KotlinSyntaxInvariantError,
+        >,
+    >,
+) -> (Vec<CommaListItem<'source>>, bool) {
+    let mut items = Vec::new();
+    let mut recovered = false;
+    for part in parts {
+        let empty_malformed = matches!(
+            &part,
+            Ok(KotlinSyntaxListPart::Malformed(malformed)) if malformed.first_token().is_none()
+        );
+        match resolve_list_part(part, doc) {
+            KotlinFormatListPart::Item(entry) => {
+                let formatted = match entry {
+                    ValueArgumentListEntry::ValueArgument(argument) => {
+                        format_value_argument(doc, &argument)
+                    }
+                    ValueArgumentListEntry::BogusValueArgument(bogus) => {
+                        crate::helpers::recovery::format_malformed(&bogus, doc)
+                    }
                 };
-                has_argument_leading_comments |= entry
-                    .argument
-                    .first_token()
-                    .is_some_and(|token| !token.leading_comments().is_empty());
                 items.push(CommaListItem {
-                    doc: format_value_argument_with_leading(doc, &entry.argument, leading),
-                    comma: entry.comma,
+                    doc: formatted,
+                    comma: None,
                 });
-                previous_comma = entry.comma;
             }
-            RecoveredSeparatedListEntry::Token(token) => {
-                items.push(CommaListItem {
-                    doc: format_token_sequence(
+            KotlinFormatListPart::Separator(comma) => {
+                if let Some(item) = items.last_mut() {
+                    item.comma = Some(comma);
+                } else {
+                    recovered = true;
+                    let comma = format_token(
                         doc,
-                        std::iter::once(token),
+                        &comma,
                         LeadingTrivia::Preserve,
-                    ),
-                    comma: None,
-                });
-                has_recovered_tokens = true;
+                        TrailingTrivia::Preserve,
+                    );
+                    items.push(CommaListItem {
+                        doc: comma,
+                        comma: None,
+                    });
+                }
             }
-            RecoveredSeparatedListEntry::Error(error) => {
-                items.push(CommaListItem {
-                    doc: format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve),
-                    comma: None,
-                });
-                has_recovered_tokens = true;
-            }
-            RecoveredSeparatedListEntry::Node(node) => {
-                items.push(CommaListItem {
-                    doc: format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve),
-                    comma: None,
-                });
-                has_recovered_tokens = true;
+            KotlinFormatListPart::Malformed(recovery) => {
+                recovered = true;
+                if empty_malformed && let Some(item) = items.last_mut() {
+                    item.doc = doc.concat([item.doc, recovery]);
+                } else {
+                    items.push(CommaListItem {
+                        doc: recovery,
+                        comma: None,
+                    });
+                }
             }
         }
     }
+    (items, recovered)
+}
 
-    ValueArgumentListItems {
-        items,
-        has_argument_leading_comments,
-        has_recovered_tokens,
+fn value_argument_list_has_leading_comments(arguments: &ValueArgumentList<'_>) -> bool {
+    let Some(entries) = present_required(arguments.entries()) else {
+        return false;
+    };
+    entries.parts().any(|part| match part {
+        Ok(KotlinSyntaxListPart::Item(argument)) => argument
+            .first_token()
+            .is_some_and(|token| !token.leading_comments().is_empty()),
+        _ => false,
+    })
+}
+
+fn value_argument_items<'source>(
+    doc: &mut DocBuilder<'source>,
+    parts: impl Iterator<
+        Item = Result<
+            KotlinSyntaxListPart<'source, ValueArgument<'source>>,
+            KotlinSyntaxInvariantError,
+        >,
+    >,
+) -> (Vec<CommaListItem<'source>>, bool) {
+    let mut items = Vec::new();
+    let mut recovered = false;
+    for part in parts {
+        let empty_malformed = matches!(
+            &part,
+            Ok(KotlinSyntaxListPart::Malformed(malformed)) if malformed.first_token().is_none()
+        );
+        match resolve_list_part(part, doc) {
+            KotlinFormatListPart::Item(argument) => items.push(CommaListItem {
+                doc: format_value_argument(doc, &argument),
+                comma: None,
+            }),
+            KotlinFormatListPart::Separator(comma) => {
+                if let Some(item) = items.last_mut() {
+                    item.comma = Some(comma);
+                } else {
+                    recovered = true;
+                    let comma = format_token(
+                        doc,
+                        &comma,
+                        LeadingTrivia::Preserve,
+                        TrailingTrivia::Preserve,
+                    );
+                    items.push(CommaListItem {
+                        doc: comma,
+                        comma: None,
+                    });
+                }
+            }
+            KotlinFormatListPart::Malformed(recovery) => {
+                recovered = true;
+                if empty_malformed && let Some(item) = items.last_mut() {
+                    item.doc = doc.concat([item.doc, recovery]);
+                } else {
+                    items.push(CommaListItem {
+                        doc: recovery,
+                        comma: None,
+                    });
+                }
+            }
+        }
     }
+    (items, recovered)
 }
 
 pub(crate) fn format_value_argument<'source>(
     doc: &mut DocBuilder<'source>,
     argument: &ValueArgument<'source>,
 ) -> Doc<'source> {
-    format_value_argument_with_leading(doc, argument, LeadingTrivia::Preserve)
-}
-
-fn format_value_argument_with_leading<'source>(
-    doc: &mut DocBuilder<'source>,
-    argument: &ValueArgument<'source>,
-    leading: LeadingTrivia,
-) -> Doc<'source> {
-    let Some(expression) = argument.expression() else {
-        return format_recovered_value_argument_tokens(doc, argument, leading);
-    };
-    let has_named_assign = argument.assign_token().is_some();
-
-    let prefix = format_value_argument_prefix(doc, argument);
-    let expression = format_expression_with_leading(
-        doc,
-        &expression,
-        if has_named_assign {
-            LeadingTrivia::Preserve
-        } else {
-            leading
-        },
-    );
-    doc.concat([prefix, expression])
-}
-
-fn format_recovered_value_argument_tokens<'source>(
-    doc: &mut DocBuilder<'source>,
-    argument: &ValueArgument<'source>,
-    leading: LeadingTrivia,
-) -> Doc<'source> {
-    format_token_sequence(doc, argument.token_iter(), leading)
-}
-
-fn format_value_argument_prefix<'source>(
-    doc: &mut DocBuilder<'source>,
-    argument: &ValueArgument<'source>,
-) -> Doc<'source> {
-    let tokens = argument.prefix_tokens();
-    doc.concat_list(|docs| {
-        for token in tokens {
-            if token.kind() == jolt_kotlin_syntax::KotlinSyntaxKind::Assign {
-                let space = docs.space();
-                docs.push(space);
-                let token = format_token(
-                    docs,
-                    &token,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::Preserve,
-                );
-                docs.push(token);
-                let space = docs.space();
-                docs.push(space);
-            } else {
-                let token = format_token(
-                    docs,
-                    &token,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::RelocatedToEnclosingContext,
-                );
-                docs.push(token);
-            }
-        }
+    format_or_verbatim(argument, doc, |doc| {
+        let prefix = format_required_field(argument.prefix(), doc, |prefix, doc| {
+            doc.concat_list(|docs| {
+                for part in prefix.parts() {
+                    match resolve_list_part(part, docs) {
+                        KotlinFormatListPart::Item(role) => {
+                            let formatted = format_value_argument_prefix_item(docs, role);
+                            docs.push(formatted);
+                        }
+                        KotlinFormatListPart::Separator(separator) => {
+                            docs.block_on_invariant(format!(
+                                "unexpected argument-prefix separator: {:?}",
+                                separator.kind()
+                            ));
+                        }
+                        KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
+                    }
+                }
+            })
+        });
+        let name = format_optional_field(argument.name(), doc, |name, doc| format_name(doc, &name));
+        let assign = format_optional_field(argument.assign(), doc, |assign, doc| {
+            let before = doc.space();
+            let assign = format_token(
+                doc,
+                &assign,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::Preserve,
+            );
+            let after = doc.space();
+            doc.concat([before, assign, after])
+        });
+        let expression = format_required_field(argument.expression(), doc, |expression, doc| {
+            format_expression_with_leading(doc, &expression, LeadingTrivia::Preserve)
+        });
+        doc.concat([prefix, name, assign, expression])
     })
+}
+
+fn format_value_argument_prefix_item<'source>(
+    doc: &mut DocBuilder<'source>,
+    role: KotlinRoleElement<'source>,
+) -> Doc<'source> {
+    if let Some(token) = role.token() {
+        format_token(
+            doc,
+            &token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        )
+    } else if let Some(annotation) = role.cast_node::<Annotation<'source>>() {
+        format_annotation(doc, &annotation)
+    } else {
+        doc.block_on_invariant("invalid value-argument prefix");
+        Doc::nil()
+    }
+}
+
+fn present_required<T>(
+    field: Result<KotlinSyntaxField<'_, T>, KotlinSyntaxInvariantError>,
+) -> Option<T> {
+    match field.ok()? {
+        KotlinSyntaxField::Present(value) => Some(value),
+        KotlinSyntaxField::Missing(_) | KotlinSyntaxField::Malformed(_) => None,
+    }
+}
+
+fn delimiter_recovery<'source>(delimiter: &KotlinFormatDelimiter<'source>) -> Doc<'source> {
+    match delimiter {
+        KotlinFormatDelimiter::Source(_) => Doc::nil(),
+        KotlinFormatDelimiter::Recovery(recovery) => *recovery,
+    }
+}
+
+fn concat_delimiter_recovery<'source>(
+    doc: &mut DocBuilder<'source>,
+    open: &KotlinFormatDelimiter<'source>,
+    list: Doc<'source>,
+    close: &KotlinFormatDelimiter<'source>,
+) -> Doc<'source> {
+    let open = delimiter_recovery(open);
+    let close = delimiter_recovery(close);
+    doc.concat([open, list, close])
 }

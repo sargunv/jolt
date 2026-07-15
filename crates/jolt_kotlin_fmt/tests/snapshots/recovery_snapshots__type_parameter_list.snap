@@ -6,7 +6,7 @@ input:
 class Box<First, /* orphan */ , Second>
 
 formatted:
-class Box<First, /* orphan */ , Second>
+class Box<First, /* orphan */ ,   Second>
 
 diagnostics:
-(none)
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(32), end: TextSize(38) }) message=expected type parameter between commas

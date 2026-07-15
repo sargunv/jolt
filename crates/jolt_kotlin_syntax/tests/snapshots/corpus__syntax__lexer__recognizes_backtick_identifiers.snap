@@ -8,15 +8,19 @@ input:
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  Statement
-    ExpressionStatement
-      BinaryExpression
-        NameExpression
-          Identifier "`class`" @ 0..7 trailing=[Whitespace " "]
-        Identifier "`two words`" @ 8..19 trailing=[Whitespace " "]
-        NameExpression
-          Identifier "`operator+`" @ 20..31
+    ImportDirectiveList
+  KotlinFileItemList
+    Statement
+      ExpressionStatement
+        BinaryExpression
+          NameExpression
+            Identifier "`class`" @ 0..7 trailing=[Whitespace " "]
+          Identifier "`two words`" @ 8..19 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "`operator+`" @ 20..31
+      TerminatorList
   Eof "" @ 32..32 leading=[Newline "\n"]
 
 diagnostics:

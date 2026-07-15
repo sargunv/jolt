@@ -8,73 +8,77 @@ input:
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  Statement
-    ExpressionStatement
-      BinaryExpression
+    ImportDirectiveList
+  KotlinFileItemList
+    Statement
+      ExpressionStatement
         BinaryExpression
           BinaryExpression
-            UnaryExpression
-              PlusPlus "++" @ 0..2 trailing=[Whitespace " "]
+            BinaryExpression
               UnaryExpression
-                MinusMinus "--" @ 3..5 trailing=[Whitespace " "]
+                PlusPlus "++" @ 0..2 trailing=[Whitespace " "]
                 UnaryExpression
-                  Star "*" @ 6..7 trailing=[Whitespace " "]
+                  MinusMinus "--" @ 3..5 trailing=[Whitespace " "]
                   UnaryExpression
-                    Plus "+" @ 8..9 trailing=[Whitespace " "]
+                    Star "*" @ 6..7 trailing=[Whitespace " "]
                     UnaryExpression
-                      Minus "-" @ 10..11 trailing=[Whitespace " "]
+                      Plus "+" @ 8..9 trailing=[Whitespace " "]
                       UnaryExpression
-                        Bang "!" @ 12..13 trailing=[Whitespace " "]
-                        ErrorNode
-                          Slash "/" @ 14..15 trailing=[Whitespace " "]
-            Percent "%" @ 16..17 trailing=[Whitespace " "]
+                        Minus "-" @ 10..11 trailing=[Whitespace " "]
+                        UnaryExpression
+                          Bang "!" @ 12..13 trailing=[Whitespace " "]
+                          ErrorNode
+                            Slash "/" @ 14..15 trailing=[Whitespace " "]
+              Percent "%" @ 16..17 trailing=[Whitespace " "]
+              ErrorNode
+                Lt "<" @ 18..19 trailing=[Whitespace " "]
+            Gt ">" @ 20..21 trailing=[Whitespace " "]
             ErrorNode
-              Lt "<" @ 18..19 trailing=[Whitespace " "]
-          Gt ">" @ 20..21 trailing=[Whitespace " "]
+              LtEq "<=" @ 22..24 trailing=[Whitespace " "]
+          GtEq ">=" @ 25..27 trailing=[Whitespace " "]
           ErrorNode
-            LtEq "<=" @ 22..24 trailing=[Whitespace " "]
-        GtEq ">=" @ 25..27 trailing=[Whitespace " "]
+            EqEqEq "===" @ 28..31 trailing=[Whitespace " "]
         ErrorNode
-          EqEqEq "===" @ 28..31 trailing=[Whitespace " "]
-      ErrorNode
-        Arrow "->" @ 32..34 trailing=[Whitespace " "]
-      ErrorNode
-        DoubleArrow "=>" @ 35..37 trailing=[Whitespace " "]
-      ErrorNode
-        BangEqEqEq "!==" @ 38..41 trailing=[Whitespace " "]
-      ErrorNode
-        EqEq "==" @ 42..44 trailing=[Whitespace " "]
-      ErrorNode
-        BangEq "!=" @ 45..47 trailing=[Whitespace " "]
-      ErrorNode
-        BangBang "!!" @ 48..50 trailing=[Whitespace " "]
-      ErrorNode
-        AndAnd "&&" @ 51..53 trailing=[Whitespace " "]
-      ErrorNode
-        Amp "&" @ 54..55 trailing=[Whitespace " "]
-      ErrorNode
-        OrOr "||" @ 56..58 trailing=[Whitespace " "]
-      ErrorNode
-        Question "?" @ 59..60
-      ErrorNode
-        Dot "." @ 60..61 trailing=[Whitespace " "]
-      ErrorNode
-        Elvis "?:" @ 62..64 trailing=[Whitespace " "]
-      ErrorNode
-        StarEq "*=" @ 65..67 trailing=[Whitespace " "]
-      ErrorNode
-        SlashEq "/=" @ 68..70 trailing=[Whitespace " "]
-      ErrorNode
-        PercentEq "%=" @ 71..73 trailing=[Whitespace " "]
-      ErrorNode
-        PlusEq "+=" @ 74..76 trailing=[Whitespace " "]
-      ErrorNode
-        MinusEq "-=" @ 77..79 trailing=[Whitespace " "]
-      ErrorNode
-        NotIn "!in" @ 80..83 trailing=[Whitespace " "]
-      ErrorNode
-        NotIs "!is" @ 84..87
+          Arrow "->" @ 32..34 trailing=[Whitespace " "]
+        ErrorNode
+          DoubleArrow "=>" @ 35..37 trailing=[Whitespace " "]
+        ErrorNode
+          BangEqEqEq "!==" @ 38..41 trailing=[Whitespace " "]
+        ErrorNode
+          EqEq "==" @ 42..44 trailing=[Whitespace " "]
+        ErrorNode
+          BangEq "!=" @ 45..47 trailing=[Whitespace " "]
+        ErrorNode
+          BangBang "!!" @ 48..50 trailing=[Whitespace " "]
+        ErrorNode
+          AndAnd "&&" @ 51..53 trailing=[Whitespace " "]
+        ErrorNode
+          Amp "&" @ 54..55 trailing=[Whitespace " "]
+        ErrorNode
+          OrOr "||" @ 56..58 trailing=[Whitespace " "]
+        ErrorNode
+          Question "?" @ 59..60
+        ErrorNode
+          Dot "." @ 60..61 trailing=[Whitespace " "]
+        ErrorNode
+          Elvis "?:" @ 62..64 trailing=[Whitespace " "]
+        ErrorNode
+          StarEq "*=" @ 65..67 trailing=[Whitespace " "]
+        ErrorNode
+          SlashEq "/=" @ 68..70 trailing=[Whitespace " "]
+        ErrorNode
+          PercentEq "%=" @ 71..73 trailing=[Whitespace " "]
+        ErrorNode
+          PlusEq "+=" @ 74..76 trailing=[Whitespace " "]
+        ErrorNode
+          MinusEq "-=" @ 77..79 trailing=[Whitespace " "]
+        ErrorNode
+          NotIn "!in" @ 80..83 trailing=[Whitespace " "]
+        ErrorNode
+          NotIs "!is" @ 84..87
+      TerminatorList
   Eof "" @ 88..88 leading=[Newline "\n"]
 
 diagnostics:

@@ -480,6 +480,19 @@ construction path beside it.
 Phase 9 applies the settled uniform architecture atomically to Kotlin. It may
 begin only after Java Phase 8 is accepted.
 
+The implementation now exists and validates the architectural model: Kotlin uses
+physical generated fields and lists throughout, all clean audited shapes are
+exact, malformed output is syntax-owned and tracked, canonical valid output is
+retained, realistic corpora are idempotent, and the handwritten accessor layer
+is deleted. The phase is not yet accepted because the recorded Kotlin parse and
+tree-size deltas exceed the roadmap's incremental budgets. Relative to Phase 8,
+parse is +27.1%, end-to-end is +17.0%, parse allocated bytes are +15.9%, and
+reserved tree bytes/token are +13.5%. Unchanged Java timing drifted about 6-8%
+in the original run; the final report's Java parse drift is 3.6%, which still
+does not account for the Kotlin-specific parse and tree growth. The next
+decision is therefore a storage/construction optimization or an explicit gate
+amendment, not formatter-local recovery code.
+
 ## Rejected Designs
 
 - **Formatter-facing parts tree:** duplicates syntax and invites divergence.

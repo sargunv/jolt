@@ -14,62 +14,83 @@ fun safeChain(node: Node?): String {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "safeChain" @ 4..13
-    ValueParameterList
-      LParen "(" @ 13..14
-      ValueParameter
-        Name
-          Identifier "node" @ 14..18
-        Colon ":" @ 18..19 trailing=[Whitespace " "]
-        TypeReference
-          NullableType
-            UserType
-              Identifier "Node" @ 20..24
-            Question "?" @ 24..25
-      RParen ")" @ 25..26
-    Colon ":" @ 26..27 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "String" @ 28..34 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 35..36
-      Statement
-        ExpressionStatement
-          JumpExpression
-            ReturnKw "return" @ 41..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            PostfixExpression
-              NavigationExpression
-                CallExpression
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "safeChain" @ 4..13
+      ValueParameterList
+        LParen "(" @ 13..14
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "node" @ 14..18
+            Colon ":" @ 18..19 trailing=[Whitespace " "]
+            TypeReference
+              NullableType
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Node" @ 20..24
+                Question "?" @ 24..25
+        RParen ")" @ 25..26
+      Colon ":" @ 26..27 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "String" @ 28..34 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 35..36
+        BlockItemList
+          Statement
+            ExpressionStatement
+              JumpExpression
+                ReturnKw "return" @ 41..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                PostfixExpression
                   NavigationExpression
-                    NavigationExpression
+                    CallExpression
                       NavigationExpression
-                        NameExpression
-                          Identifier "node" @ 48..52
-                        Question "?" @ 61..62 leading=[Newline "\n", Whitespace "        "]
-                        Dot "." @ 62..63
-                        Identifier "parent" @ 63..69
-                      Question "?" @ 78..79 leading=[Newline "\n", Whitespace "        "]
-                      Dot "." @ 79..80
-                      Identifier "children" @ 80..88
-                    Question "?" @ 97..98 leading=[Newline "\n", Whitespace "        "]
-                    Dot "." @ 98..99
-                    Identifier "get" @ 99..102
-                  ValueArgumentList
-                    LParen "(" @ 102..103
-                    ValueArgument
-                      LiteralExpression
-                        IntegerLiteral "0" @ 103..104
-                    RParen ")" @ 104..105
-                Question "?" @ 114..115 leading=[Newline "\n", Whitespace "        "]
-                Dot "." @ 115..116
-                Identifier "name" @ 116..120
-              BangBang "!!" @ 120..122
-      RBrace "}" @ 123..124 leading=[Newline "\n"]
+                        NavigationExpression
+                          NavigationExpression
+                            NameExpression
+                              Identifier "node" @ 48..52
+                            SplitSafeNavigationOperator
+                              Question "?" @ 61..62 leading=[Newline "\n", Whitespace "        "]
+                              Dot "." @ 62..63
+                            Identifier "parent" @ 63..69
+                          SplitSafeNavigationOperator
+                            Question "?" @ 78..79 leading=[Newline "\n", Whitespace "        "]
+                            Dot "." @ 79..80
+                          Identifier "children" @ 80..88
+                        SplitSafeNavigationOperator
+                          Question "?" @ 97..98 leading=[Newline "\n", Whitespace "        "]
+                          Dot "." @ 98..99
+                        Identifier "get" @ 99..102
+                      TypeArgumentListList
+                      ValueArgumentList
+                        LParen "(" @ 102..103
+                        ValueArgumentEntryList
+                          ValueArgument
+                            ValueArgumentPrefixList
+                            LiteralExpression
+                              IntegerLiteral "0" @ 103..104
+                        RParen ")" @ 104..105
+                      LambdaExpressionList
+                    SplitSafeNavigationOperator
+                      Question "?" @ 114..115 leading=[Newline "\n", Whitespace "        "]
+                      Dot "." @ 115..116
+                    Identifier "name" @ 116..120
+                  BangBang "!!" @ 120..122
+            TerminatorList
+        RBrace "}" @ 123..124 leading=[Newline "\n"]
   Eof "" @ 125..125 leading=[Newline "\n"]
 
 diagnostics:

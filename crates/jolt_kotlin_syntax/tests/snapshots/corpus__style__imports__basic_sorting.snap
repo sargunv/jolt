@@ -14,88 +14,111 @@ class ImportSorting(val alpha: Alpha, val zed: Zed, val names: List<String>)
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "imports" @ 20..27
+      QualifiedNameSegmentList
+        Name
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "imports" @ 20..27
+    TerminatorList
   ImportList
-    ImportDirective
-      Identifier "import" @ 29..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        Name
-          Identifier "zeta" @ 36..40
-        Dot "." @ 40..41
-        Name
-          Identifier "Zed" @ 41..44
-    ImportDirective
-      Identifier "import" @ 45..51 leading=[Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        Name
-          Identifier "kotlin" @ 52..58
-        Dot "." @ 58..59
-        Name
-          Identifier "collections" @ 59..70
-        Dot "." @ 70..71
-        Name
-          Identifier "List" @ 71..75
-    ImportDirective
-      Identifier "import" @ 76..82 leading=[Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        Name
-          Identifier "alpha" @ 83..88
-        Dot "." @ 88..89
-        Name
-          Identifier "Alpha" @ 89..94
-  ClassDeclaration
-    ClassKw "class" @ 96..101 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "ImportSorting" @ 102..115
-    PrimaryConstructor
-      ValueParameterList
-        LParen "(" @ 115..116
-        ValueParameter
-          ValKw "val" @ 116..119 trailing=[Whitespace " "]
-          Name
-            Identifier "alpha" @ 120..125
-          Colon ":" @ 125..126 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Alpha" @ 127..132
-        Comma "," @ 132..133 trailing=[Whitespace " "]
-        ValueParameter
-          ValKw "val" @ 134..137 trailing=[Whitespace " "]
-          Name
-            Identifier "zed" @ 138..141
-          Colon ":" @ 141..142 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Zed" @ 143..146
-        Comma "," @ 146..147 trailing=[Whitespace " "]
-        ValueParameter
-          ValKw "val" @ 148..151 trailing=[Whitespace " "]
-          Name
-            Identifier "names" @ 152..157
-          Colon ":" @ 157..158 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "List" @ 159..163
-              TypeArgumentList
-                Lt "<" @ 163..164
-                TypeProjectionList
-                  TypeArgument
-                    TypeProjection
-                      TypeReference
-                        UserType
-                          Identifier "String" @ 164..170
-                Gt ">" @ 170..171
-        RParen ")" @ 171..172
+    ImportDirectiveList
+      ImportDirective
+        Identifier "import" @ 29..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "zeta" @ 36..40
+            Dot "." @ 40..41
+            Name
+              Identifier "Zed" @ 41..44
+        TerminatorList
+      ImportDirective
+        Identifier "import" @ 45..51 leading=[Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "kotlin" @ 52..58
+            Dot "." @ 58..59
+            Name
+              Identifier "collections" @ 59..70
+            Dot "." @ 70..71
+            Name
+              Identifier "List" @ 71..75
+        TerminatorList
+      ImportDirective
+        Identifier "import" @ 76..82 leading=[Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "alpha" @ 83..88
+            Dot "." @ 88..89
+            Name
+              Identifier "Alpha" @ 89..94
+        TerminatorList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 96..101 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "ImportSorting" @ 102..115
+      PrimaryConstructor
+        ModifierListSequence
+        ValueParameterList
+          LParen "(" @ 115..116
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierListSequence
+              ValKw "val" @ 116..119 trailing=[Whitespace " "]
+              Name
+                Identifier "alpha" @ 120..125
+              Colon ":" @ 125..126 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Alpha" @ 127..132
+            Comma "," @ 132..133 trailing=[Whitespace " "]
+            ValueParameter
+              ModifierListSequence
+              ValKw "val" @ 134..137 trailing=[Whitespace " "]
+              Name
+                Identifier "zed" @ 138..141
+              Colon ":" @ 141..142 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Zed" @ 143..146
+            Comma "," @ 146..147 trailing=[Whitespace " "]
+            ValueParameter
+              ModifierListSequence
+              ValKw "val" @ 148..151 trailing=[Whitespace " "]
+              Name
+                Identifier "names" @ 152..157
+              Colon ":" @ 157..158 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "List" @ 159..163
+                    TypeArgumentList
+                      Lt "<" @ 163..164
+                      TypeProjectionList
+                        TypeProjectionSeparatedList
+                          TypeArgument
+                            TypeProjection
+                              TypeReference
+                                UserType
+                                  UserTypeSegmentList
+                                    Identifier "String" @ 164..170
+                      Gt ">" @ 170..171
+          RParen ")" @ 171..172
   Eof "" @ 173..173 leading=[Newline "\n"]
 
 diagnostics:

@@ -18,134 +18,161 @@ fun jumps(values: List<Int>): Int {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "jumps" @ 4..9
-    ValueParameterList
-      LParen "(" @ 9..10
-      ValueParameter
-        Name
-          Identifier "values" @ 10..16
-        Colon ":" @ 16..17 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "List" @ 18..22
-            TypeArgumentList
-              Lt "<" @ 22..23
-              TypeProjectionList
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "Int" @ 23..26
-              Gt ">" @ 26..27
-      RParen ")" @ 27..28
-    Colon ":" @ 28..29 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "Int" @ 30..33 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 34..35
-      Statement
-        ExpressionStatement
-          NameExpression
-            Identifier "loop" @ 40..44 leading=[Newline "\n", Whitespace "    "]
-            At "@" @ 44..45 trailing=[Whitespace " "]
-            ForStatement
-              ForKw "for" @ 46..49 trailing=[Whitespace " "]
-              LParen "(" @ 50..51
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "jumps" @ 4..9
+      ValueParameterList
+        LParen "(" @ 9..10
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "values" @ 10..16
+            Colon ":" @ 16..17 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "List" @ 18..22
+                  TypeArgumentList
+                    Lt "<" @ 22..23
+                    TypeProjectionList
+                      TypeProjectionSeparatedList
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "Int" @ 23..26
+                    Gt ">" @ 26..27
+        RParen ")" @ 27..28
+      Colon ":" @ 28..29 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "Int" @ 30..33 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 34..35
+        BlockItemList
+          Statement
+            ExpressionStatement
               NameExpression
-                Identifier "value" @ 51..56 trailing=[Whitespace " "]
-              InKw "in" @ 57..59 trailing=[Whitespace " "]
-              NameExpression
-                Identifier "values" @ 60..66
-              RParen ")" @ 66..67 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 68..69
-                Statement
-                  ExpressionStatement
-                    IfExpression
-                      IfKw "if" @ 78..80 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      ParenthesizedExpression
-                        LParen "(" @ 81..82
-                        BinaryExpression
-                          NameExpression
-                            Identifier "value" @ 82..87 trailing=[Whitespace " "]
-                          Lt "<" @ 88..89 trailing=[Whitespace " "]
-                          LiteralExpression
-                            IntegerLiteral "0" @ 90..91
-                        RParen ")" @ 91..92 trailing=[Whitespace " "]
-                      JumpExpression
-                        ContinueKw "continue" @ 93..101
-                        At "@" @ 101..102
-                        Identifier "loop" @ 102..106
-                Statement
-                  ExpressionStatement
-                    IfExpression
-                      IfKw "if" @ 115..117 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      ParenthesizedExpression
-                        LParen "(" @ 118..119
-                        BinaryExpression
-                          NameExpression
-                            Identifier "value" @ 119..124 trailing=[Whitespace " "]
-                          EqEq "==" @ 125..127 trailing=[Whitespace " "]
-                          LiteralExpression
-                            IntegerLiteral "0" @ 128..129
-                        RParen ")" @ 129..130 trailing=[Whitespace " "]
-                      JumpExpression
-                        BreakKw "break" @ 131..136
-                        At "@" @ 136..137
-                        Identifier "loop" @ 137..141
-                Statement
-                  ExpressionStatement
-                    CallExpression
-                      NavigationExpression
-                        NameExpression
-                          Identifier "values" @ 150..156 leading=[Newline "\n", Whitespace "        "]
-                        Dot "." @ 156..157
-                        Identifier "forEach" @ 157..164 trailing=[Whitespace " "]
-                      LambdaExpression
-                        Identifier "inner" @ 165..170
-                        At "@" @ 170..171
-                        LambdaExpression
-                          LBrace "{" @ 171..172
-                          Statement
-                            ExpressionStatement
-                              IfExpression
-                                IfKw "if" @ 185..187 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                ParenthesizedExpression
-                                  LParen "(" @ 188..189
-                                  BinaryExpression
-                                    NameExpression
-                                      Identifier "it" @ 189..191 trailing=[Whitespace " "]
-                                    EqEq "==" @ 192..194 trailing=[Whitespace " "]
-                                    NameExpression
-                                      Identifier "value" @ 195..200
-                                  RParen ")" @ 200..201 trailing=[Whitespace " "]
-                                JumpExpression
-                                  ReturnKw "return" @ 202..208
-                                  At "@" @ 208..209
-                                  Identifier "inner" @ 209..214
-                          RBrace "}" @ 223..224 leading=[Newline "\n", Whitespace "        "]
-                Statement
-                  ExpressionStatement
-                    JumpExpression
-                      ReturnKw "return" @ 233..239 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      NameExpression
-                        Identifier "value" @ 240..245
-                RBrace "}" @ 250..251 leading=[Newline "\n", Whitespace "    "]
-      Statement
-        ExpressionStatement
-          JumpExpression
-            ReturnKw "return" @ 256..262 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            UnaryExpression
-              Minus "-" @ 263..264
-              LiteralExpression
-                IntegerLiteral "1" @ 264..265
-      RBrace "}" @ 266..267 leading=[Newline "\n"]
+                Identifier "loop" @ 40..44 leading=[Newline "\n", Whitespace "    "]
+                At "@" @ 44..45 trailing=[Whitespace " "]
+                ForStatement
+                  ForKw "for" @ 46..49 trailing=[Whitespace " "]
+                  LParen "(" @ 50..51
+                  NameExpression
+                    Identifier "value" @ 51..56 trailing=[Whitespace " "]
+                  InKw "in" @ 57..59 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "values" @ 60..66
+                  RParen ")" @ 66..67 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 68..69
+                    BlockItemList
+                      Statement
+                        ExpressionStatement
+                          IfExpression
+                            IfKw "if" @ 78..80 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                            ParenthesizedExpression
+                              LParen "(" @ 81..82
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "value" @ 82..87 trailing=[Whitespace " "]
+                                Lt "<" @ 88..89 trailing=[Whitespace " "]
+                                LiteralExpression
+                                  IntegerLiteral "0" @ 90..91
+                              RParen ")" @ 91..92 trailing=[Whitespace " "]
+                            JumpExpression
+                              ContinueKw "continue" @ 93..101
+                              At "@" @ 101..102
+                              Identifier "loop" @ 102..106
+                        TerminatorList
+                      Statement
+                        ExpressionStatement
+                          IfExpression
+                            IfKw "if" @ 115..117 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                            ParenthesizedExpression
+                              LParen "(" @ 118..119
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "value" @ 119..124 trailing=[Whitespace " "]
+                                EqEq "==" @ 125..127 trailing=[Whitespace " "]
+                                LiteralExpression
+                                  IntegerLiteral "0" @ 128..129
+                              RParen ")" @ 129..130 trailing=[Whitespace " "]
+                            JumpExpression
+                              BreakKw "break" @ 131..136
+                              At "@" @ 136..137
+                              Identifier "loop" @ 137..141
+                        TerminatorList
+                      Statement
+                        ExpressionStatement
+                          CallExpression
+                            NavigationExpression
+                              NameExpression
+                                Identifier "values" @ 150..156 leading=[Newline "\n", Whitespace "        "]
+                              Dot "." @ 156..157
+                              Identifier "forEach" @ 157..164 trailing=[Whitespace " "]
+                            TypeArgumentListList
+                            LambdaExpressionList
+                              LambdaExpression
+                                LabeledLambdaExpression
+                                  Identifier "inner" @ 165..170
+                                  At "@" @ 170..171
+                                  LambdaExpression
+                                    LambdaBody
+                                      LBrace "{" @ 171..172
+                                      LambdaBodyItemList
+                                        Statement
+                                          ExpressionStatement
+                                            IfExpression
+                                              IfKw "if" @ 185..187 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                                              ParenthesizedExpression
+                                                LParen "(" @ 188..189
+                                                BinaryExpression
+                                                  NameExpression
+                                                    Identifier "it" @ 189..191 trailing=[Whitespace " "]
+                                                  EqEq "==" @ 192..194 trailing=[Whitespace " "]
+                                                  NameExpression
+                                                    Identifier "value" @ 195..200
+                                                RParen ")" @ 200..201 trailing=[Whitespace " "]
+                                              JumpExpression
+                                                ReturnKw "return" @ 202..208
+                                                At "@" @ 208..209
+                                                Identifier "inner" @ 209..214
+                                          TerminatorList
+                                      RBrace "}" @ 223..224 leading=[Newline "\n", Whitespace "        "]
+                        TerminatorList
+                      Statement
+                        ExpressionStatement
+                          JumpExpression
+                            ReturnKw "return" @ 233..239 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "value" @ 240..245
+                        TerminatorList
+                    RBrace "}" @ 250..251 leading=[Newline "\n", Whitespace "    "]
+            TerminatorList
+          Statement
+            ExpressionStatement
+              JumpExpression
+                ReturnKw "return" @ 256..262 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                UnaryExpression
+                  Minus "-" @ 263..264
+                  LiteralExpression
+                    IntegerLiteral "1" @ 264..265
+            TerminatorList
+        RBrace "}" @ 266..267 leading=[Newline "\n"]
   Eof "" @ 268..268 leading=[Newline "\n"]
 
 diagnostics:

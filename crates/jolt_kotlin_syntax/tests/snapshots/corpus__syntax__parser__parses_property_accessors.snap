@@ -14,80 +14,109 @@ class Accessors {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Name
-      Identifier "Accessors" @ 6..15 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 16..17
-      ClassMemberDeclaration
-        PropertyDeclaration
-          VarKw "var" @ 22..25 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "name" @ 26..30
-          Colon ":" @ 30..31 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 32..38 trailing=[Whitespace " "]
-          Assign "=" @ 39..40 trailing=[Whitespace " "]
-          StringTemplateExpression
-            StringTemplateEntry
-              OpenQuote "\"" @ 41..42
-            ClosingQuote "\"" @ 42..43
-          PropertyAccessor
-            Identifier "get" @ 52..55 leading=[Newline "\n", Whitespace "        "]
-            ValueParameterList
-              LParen "(" @ 55..56
-              RParen ")" @ 56..57 trailing=[Whitespace " "]
-            Assign "=" @ 58..59 trailing=[Whitespace " "]
-            CallExpression
-              NavigationExpression
-                NameExpression
-                  Identifier "field" @ 60..65
-                Dot "." @ 65..66
-                Identifier "ifBlank" @ 66..73 trailing=[Whitespace " "]
-              LambdaExpression
-                LBrace "{" @ 74..75 trailing=[Whitespace " "]
-                Statement
-                  ExpressionStatement
-                    StringTemplateExpression
-                      StringTemplateEntry
-                        OpenQuote "\"" @ 76..77
-                      StringTemplateEntry
-                        RegularStringPart "unknown" @ 77..84
-                      ClosingQuote "\"" @ 84..85 trailing=[Whitespace " "]
-                RBrace "}" @ 86..87
-          PropertyAccessor
-            ModifierList
-              Identifier "private" @ 96..103 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-            Identifier "set" @ 104..107
-            ValueParameterList
-              LParen "(" @ 107..108
-              ValueParameter
-                Name
-                  Identifier "value" @ 108..113
-              RParen ")" @ 113..114 trailing=[Whitespace " "]
-            Block
-              LBrace "{" @ 115..116
-              Statement
-                ExpressionStatement
-                  AssignmentExpression
-                    NameExpression
-                      Identifier "field" @ 129..134 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                    Assign "=" @ 135..136 trailing=[Whitespace " "]
-                    CallExpression
-                      NavigationExpression
-                        NameExpression
-                          Identifier "value" @ 137..142
-                        Dot "." @ 142..143
-                        Identifier "trim" @ 143..147
-                      ValueArgumentList
-                        LParen "(" @ 147..148
-                        RParen ")" @ 148..149
-              RBrace "}" @ 158..159 leading=[Newline "\n", Whitespace "        "]
-      RBrace "}" @ 160..161 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "Accessors" @ 6..15 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 16..17
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              VarKw "var" @ 22..25 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "name" @ 26..30
+              Colon ":" @ 30..31 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 32..38 trailing=[Whitespace " "]
+              Assign "=" @ 39..40 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 41..42
+                ClosingQuote "\"" @ 42..43
+              PropertyBodyMemberList
+                PropertyAccessor
+                  ModifierListSequence
+                  Identifier "get" @ 52..55 leading=[Newline "\n", Whitespace "        "]
+                  ValueParameterList
+                    LParen "(" @ 55..56
+                    ValueParameterSeparatedList
+                    RParen ")" @ 56..57 trailing=[Whitespace " "]
+                  Assign "=" @ 58..59 trailing=[Whitespace " "]
+                  CallExpression
+                    NavigationExpression
+                      NameExpression
+                        Identifier "field" @ 60..65
+                      Dot "." @ 65..66
+                      Identifier "ifBlank" @ 66..73 trailing=[Whitespace " "]
+                    TypeArgumentListList
+                    LambdaExpressionList
+                      LambdaExpression
+                        LambdaBody
+                          LBrace "{" @ 74..75 trailing=[Whitespace " "]
+                          LambdaBodyItemList
+                            Statement
+                              ExpressionStatement
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 76..77
+                                    StringTemplateEntry
+                                      RegularStringPart "unknown" @ 77..84
+                                  ClosingQuote "\"" @ 84..85 trailing=[Whitespace " "]
+                              TerminatorList
+                          RBrace "}" @ 86..87
+                PropertyAccessor
+                  ModifierListSequence
+                    ModifierList
+                      ModifierItemList
+                        Identifier "private" @ 96..103 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  Identifier "set" @ 104..107
+                  ValueParameterList
+                    LParen "(" @ 107..108
+                    ValueParameterSeparatedList
+                      ValueParameter
+                        ModifierListSequence
+                        Name
+                          Identifier "value" @ 108..113
+                    RParen ")" @ 113..114 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 115..116
+                    BlockItemList
+                      Statement
+                        ExpressionStatement
+                          AssignmentExpression
+                            NameExpression
+                              Identifier "field" @ 129..134 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                            Assign "=" @ 135..136 trailing=[Whitespace " "]
+                            CallExpression
+                              NavigationExpression
+                                NameExpression
+                                  Identifier "value" @ 137..142
+                                Dot "." @ 142..143
+                                Identifier "trim" @ 143..147
+                              TypeArgumentListList
+                              ValueArgumentList
+                                LParen "(" @ 147..148
+                                ValueArgumentEntryList
+                                RParen ")" @ 148..149
+                              LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 158..159 leading=[Newline "\n", Whitespace "        "]
+        RBrace "}" @ 160..161 leading=[Newline "\n"]
   Eof "" @ 162..162 leading=[Newline "\n"]
 
 diagnostics:

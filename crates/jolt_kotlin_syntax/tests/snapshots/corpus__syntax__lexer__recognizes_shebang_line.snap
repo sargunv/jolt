@@ -9,15 +9,22 @@ val x = 1
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  PropertyDeclaration
-    ValKw "val" @ 22..25 leading=[ShebangComment "#!/usr/bin/env kotlin", Newline "\n"] trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "x" @ 26..27 trailing=[Whitespace " "]
-    Assign "=" @ 28..29 trailing=[Whitespace " "]
-    LiteralExpression
-      IntegerLiteral "1" @ 30..31
+    ImportDirectiveList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 22..25 leading=[ShebangComment "#!/usr/bin/env kotlin", Newline "\n"] trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "x" @ 26..27 trailing=[Whitespace " "]
+      Assign "=" @ 28..29 trailing=[Whitespace " "]
+      LiteralExpression
+        IntegerLiteral "1" @ 30..31
+      PropertyBodyMemberList
   Eof "" @ 32..32 leading=[Newline "\n"]
 
 diagnostics:

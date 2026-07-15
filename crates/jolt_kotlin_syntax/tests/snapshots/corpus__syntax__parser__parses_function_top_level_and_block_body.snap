@@ -14,68 +14,91 @@ fun value(): Int {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "sum" @ 4..7
-    ValueParameterList
-      LParen "(" @ 7..8
-      ValueParameter
-        Name
-          Identifier "left" @ 8..12
-        Colon ":" @ 12..13 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Int" @ 14..17
-      Comma "," @ 17..18 trailing=[Whitespace " "]
-      ValueParameter
-        Name
-          Identifier "right" @ 19..24
-        Colon ":" @ 24..25 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Int" @ 26..29
-      RParen ")" @ 29..30
-    Colon ":" @ 30..31 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "Int" @ 32..35 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 36..37
-      Statement
-        ExpressionStatement
-          JumpExpression
-            ReturnKw "return" @ 42..48 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            BinaryExpression
-              NameExpression
-                Identifier "left" @ 49..53 trailing=[Whitespace " "]
-              Plus "+" @ 54..55 trailing=[Whitespace " "]
-              NameExpression
-                Identifier "right" @ 56..61
-      RBrace "}" @ 62..63 leading=[Newline "\n"]
-  FunctionDeclaration
-    FunKw "fun" @ 65..68 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "value" @ 69..74
-    ValueParameterList
-      LParen "(" @ 74..75
-      RParen ")" @ 75..76
-    Colon ":" @ 76..77 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "Int" @ 78..81 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 82..83
-      Statement
-        ExpressionStatement
-          JumpExpression
-            ReturnKw "return" @ 88..94 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            LiteralExpression
-              IntegerLiteral "0" @ 95..96
-      RBrace "}" @ 97..98 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "sum" @ 4..7
+      ValueParameterList
+        LParen "(" @ 7..8
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "left" @ 8..12
+            Colon ":" @ 12..13 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Int" @ 14..17
+          Comma "," @ 17..18 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "right" @ 19..24
+            Colon ":" @ 24..25 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Int" @ 26..29
+        RParen ")" @ 29..30
+      Colon ":" @ 30..31 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "Int" @ 32..35 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 36..37
+        BlockItemList
+          Statement
+            ExpressionStatement
+              JumpExpression
+                ReturnKw "return" @ 42..48 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                BinaryExpression
+                  NameExpression
+                    Identifier "left" @ 49..53 trailing=[Whitespace " "]
+                  Plus "+" @ 54..55 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "right" @ 56..61
+            TerminatorList
+        RBrace "}" @ 62..63 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 65..68 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "value" @ 69..74
+      ValueParameterList
+        LParen "(" @ 74..75
+        ValueParameterSeparatedList
+        RParen ")" @ 75..76
+      Colon ":" @ 76..77 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "Int" @ 78..81 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 82..83
+        BlockItemList
+          Statement
+            ExpressionStatement
+              JumpExpression
+                ReturnKw "return" @ 88..94 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "0" @ 95..96
+            TerminatorList
+        RBrace "}" @ 97..98 leading=[Newline "\n"]
   Eof "" @ 99..99 leading=[Newline "\n"]
 
 diagnostics:

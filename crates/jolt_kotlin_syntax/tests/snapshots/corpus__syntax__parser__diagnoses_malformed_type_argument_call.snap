@@ -14,151 +14,199 @@ fun malformedTypeArgumentCall(value: String) {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "malformedTypeArgumentCall" @ 4..29
-    ValueParameterList
-      LParen "(" @ 29..30
-      ValueParameter
-        Name
-          Identifier "value" @ 30..35
-        Colon ":" @ 35..36 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "String" @ 37..43
-      RParen ")" @ 43..44 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 45..46
-      PropertyDeclaration
-        ValKw "val" @ 51..54 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
           Name
-            Identifier "broken" @ 55..61 trailing=[Whitespace " "]
-        Assign "=" @ 62..63 trailing=[Whitespace " "]
-        CallExpression
-          NavigationExpression
-            NameExpression
-              Identifier "factory" @ 64..71
-            Dot "." @ 71..72
-            Identifier "create" @ 72..78
-          TypeArgumentList
-            Lt "<" @ 78..79
-            TypeProjectionList
-              TypeArgument
-                TypeProjection
-                  TypeReference
-                    UserType
-                      Identifier "String" @ 79..85
-              Comma "," @ 85..86
-              Comma "," @ 86..87 trailing=[Whitespace " "]
+            Identifier "malformedTypeArgumentCall" @ 4..29
+      ValueParameterList
+        LParen "(" @ 29..30
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "value" @ 30..35
+            Colon ":" @ 35..36 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "String" @ 37..43
+        RParen ")" @ 43..44 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 45..46
+        BlockItemList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 51..54 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "broken" @ 55..61 trailing=[Whitespace " "]
+            Assign "=" @ 62..63 trailing=[Whitespace " "]
+            CallExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "factory" @ 64..71
+                Dot "." @ 71..72
+                Identifier "create" @ 72..78
+              TypeArgumentListList
+                TypeArgumentList
+                  Lt "<" @ 78..79
+                  TypeProjectionList
+                    TypeProjectionSeparatedList
+                      TypeArgument
+                        TypeProjection
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                Identifier "String" @ 79..85
+                      Comma "," @ 85..86
+                      Comma "," @ 86..87 trailing=[Whitespace " "]
+                      ErrorNode
+                      TypeArgument
+                        TypeProjection
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                Identifier "Int" @ 88..91
+                  Gt ">" @ 91..92
+              ValueArgumentList
+                LParen "(" @ 92..93
+                ValueArgumentEntryList
+                  ValueArgument
+                    ValueArgumentPrefixList
+                    NameExpression
+                      Identifier "value" @ 93..98
+                RParen ")" @ 98..99
+              LambdaExpressionList
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 104..107 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "missing" @ 108..115 trailing=[Whitespace " "]
+            Assign "=" @ 116..117 trailing=[Whitespace " "]
+            BinaryExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "factory" @ 118..125
+                Dot "." @ 125..126
+                Identifier "create" @ 126..132
               ErrorNode
-              TypeArgument
-                TypeProjection
-                  TypeReference
-                    UserType
-                      Identifier "Int" @ 88..91
-            Gt ">" @ 91..92
-          ValueArgumentList
-            LParen "(" @ 92..93
-            ValueArgument
-              NameExpression
-                Identifier "value" @ 93..98
-            RParen ")" @ 98..99
-      PropertyDeclaration
-        ValKw "val" @ 104..107 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "missing" @ 108..115 trailing=[Whitespace " "]
-        Assign "=" @ 116..117 trailing=[Whitespace " "]
-        BinaryExpression
-          NavigationExpression
-            NameExpression
-              Identifier "factory" @ 118..125
-            Dot "." @ 125..126
-            Identifier "create" @ 126..132
-          ErrorNode
-          Lt "<" @ 132..133
-          CallExpression
-            NameExpression
-              Identifier "List" @ 133..137
-            TypeArgumentList
-              Lt "<" @ 137..138
-              TypeProjectionList
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "String" @ 138..144
-              Gt ">" @ 144..145
-            ValueArgumentList
-              LParen "(" @ 145..146
-              ValueArgument
+              Lt "<" @ 132..133
+              CallExpression
                 NameExpression
-                  Identifier "value" @ 146..151
-              RParen ")" @ 151..152
-      PropertyDeclaration
-        ValKw "val" @ 157..160 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "spacedSafeCall" @ 161..175 trailing=[Whitespace " "]
-        Assign "=" @ 176..177 trailing=[Whitespace " "]
-        NameExpression
-          Identifier "value" @ 178..183
-        ErrorNode
-          Question "?" @ 183..184 trailing=[Whitespace " ", BlockComment "/* gap */", Whitespace " "]
-        ErrorNode
-          Dot "." @ 195..196
-        ErrorNode
-          Identifier "length" @ 196..202
-      PropertyDeclaration
-        ValKw "val" @ 207..210 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "spacedTypeArgumentSafeCall" @ 211..237 trailing=[Whitespace " "]
-        Assign "=" @ 238..239 trailing=[Whitespace " "]
-        BinaryExpression
-          BinaryExpression
-            NavigationExpression
-              NameExpression
-                Identifier "factory" @ 240..247
-              Dot "." @ 247..248
-              Identifier "create" @ 248..254
-            Lt "<" @ 254..255
+                  Identifier "List" @ 133..137
+                TypeArgumentListList
+                  TypeArgumentList
+                    Lt "<" @ 137..138
+                    TypeProjectionList
+                      TypeProjectionSeparatedList
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "String" @ 138..144
+                    Gt ">" @ 144..145
+                ValueArgumentList
+                  LParen "(" @ 145..146
+                  ValueArgumentEntryList
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      NameExpression
+                        Identifier "value" @ 146..151
+                  RParen ")" @ 151..152
+                LambdaExpressionList
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 157..160 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "spacedSafeCall" @ 161..175 trailing=[Whitespace " "]
+            Assign "=" @ 176..177 trailing=[Whitespace " "]
             NameExpression
-              Identifier "Result" @ 255..261
-          Gt ">" @ 261..262
-          NavigationExpression
+              Identifier "value" @ 178..183
             ErrorNode
-              Question "?" @ 262..263 trailing=[Whitespace " ", BlockComment "/* gap */", Whitespace " "]
-            Dot "." @ 274..275
-            Identifier "value" @ 275..280
-      Statement
-        ExpressionStatement
-          CallExpression
-            NameExpression
-              Identifier "consume" @ 285..292 leading=[Newline "\n", Whitespace "    "]
-            ValueArgumentList
-              LParen "(" @ 292..293
-              ValueArgument
+              Question "?" @ 183..184 trailing=[Whitespace " ", BlockComment "/* gap */", Whitespace " "]
+            ErrorNode
+              Dot "." @ 195..196
+            ErrorNode
+              Identifier "length" @ 196..202
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 207..210 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "spacedTypeArgumentSafeCall" @ 211..237 trailing=[Whitespace " "]
+            Assign "=" @ 238..239 trailing=[Whitespace " "]
+            BinaryExpression
+              BinaryExpression
+                NavigationExpression
+                  NameExpression
+                    Identifier "factory" @ 240..247
+                  Dot "." @ 247..248
+                  Identifier "create" @ 248..254
+                Lt "<" @ 254..255
                 NameExpression
-                  Identifier "broken" @ 293..299
-              Comma "," @ 299..300 trailing=[Whitespace " "]
-              ValueArgument
+                  Identifier "Result" @ 255..261
+              Gt ">" @ 261..262
+              NavigationExpression
+                ErrorNode
+                  Question "?" @ 262..263 trailing=[Whitespace " ", BlockComment "/* gap */", Whitespace " "]
+                Dot "." @ 274..275
+                Identifier "value" @ 275..280
+            PropertyBodyMemberList
+          Statement
+            ExpressionStatement
+              CallExpression
                 NameExpression
-                  Identifier "missing" @ 301..308
-              Comma "," @ 308..309 trailing=[Whitespace " "]
-              ValueArgument
-                NameExpression
-                  Identifier "spacedSafeCall" @ 310..324
-              Comma "," @ 324..325 trailing=[Whitespace " "]
-              ValueArgument
-                NameExpression
-                  Identifier "spacedTypeArgumentSafeCall" @ 326..352
-              RParen ")" @ 352..353
-      RBrace "}" @ 354..355 leading=[Newline "\n"]
+                  Identifier "consume" @ 285..292 leading=[Newline "\n", Whitespace "    "]
+                TypeArgumentListList
+                ValueArgumentList
+                  LParen "(" @ 292..293
+                  ValueArgumentEntryList
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      NameExpression
+                        Identifier "broken" @ 293..299
+                    Comma "," @ 299..300 trailing=[Whitespace " "]
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      NameExpression
+                        Identifier "missing" @ 301..308
+                    Comma "," @ 308..309 trailing=[Whitespace " "]
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      NameExpression
+                        Identifier "spacedSafeCall" @ 310..324
+                    Comma "," @ 324..325 trailing=[Whitespace " "]
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      NameExpression
+                        Identifier "spacedTypeArgumentSafeCall" @ 326..352
+                  RParen ")" @ 352..353
+                LambdaExpressionList
+            TerminatorList
+        RBrace "}" @ 354..355 leading=[Newline "\n"]
   Eof "" @ 356..356 leading=[Newline "\n"]
 
 diagnostics:

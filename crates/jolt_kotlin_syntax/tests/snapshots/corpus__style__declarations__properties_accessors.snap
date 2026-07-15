@@ -18,91 +18,121 @@ class Counter {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "declarations" @ 20..32
+      QualifiedNameSegmentList
+        Name
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "declarations" @ 20..32
+    TerminatorList
   ImportList
-  ClassDeclaration
-    ClassKw "class" @ 34..39 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Counter" @ 40..47 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 48..49
-      ClassMemberDeclaration
-        PropertyDeclaration
-          VarKw "var" @ 54..57 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "count" @ 58..63
-          Colon ":" @ 63..64 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Int" @ 65..68 trailing=[Whitespace " "]
-          Assign "=" @ 69..70 trailing=[Whitespace " "]
-          LiteralExpression
-            IntegerLiteral "0" @ 71..72
-          PropertyAccessor
-            ModifierList
-              Identifier "private" @ 81..88 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-            Identifier "set" @ 89..92
-            ValueParameterList
-              LParen "(" @ 92..93
-              ValueParameter
-                Name
-                  Identifier "value" @ 93..98
-              RParen ")" @ 98..99 trailing=[Whitespace " "]
-            Block
-              LBrace "{" @ 100..101
-              Statement
-                ExpressionStatement
-                  AssignmentExpression
-                    NameExpression
-                      Identifier "field" @ 114..119 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                    Assign "=" @ 120..121 trailing=[Whitespace " "]
-                    CallExpression
-                      NavigationExpression
-                        NameExpression
-                          Identifier "value" @ 122..127
-                        Dot "." @ 127..128
-                        Identifier "coerceAtLeast" @ 128..141
-                      ValueArgumentList
-                        LParen "(" @ 141..142
-                        ValueArgument
-                          LiteralExpression
-                            IntegerLiteral "0" @ 142..143
-                        RParen ")" @ 143..144
-              RBrace "}" @ 153..154 leading=[Newline "\n", Whitespace "        "]
-      ClassMemberDeclaration
-        PropertyDeclaration
-          ValKw "val" @ 160..163 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "empty" @ 164..169
-          Colon ":" @ 169..170 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Boolean" @ 171..178
-          PropertyAccessor
-            Identifier "get" @ 187..190 leading=[Newline "\n", Whitespace "        "]
-            ValueParameterList
-              LParen "(" @ 190..191
-              RParen ")" @ 191..192 trailing=[Whitespace " "]
-            Assign "=" @ 193..194 trailing=[Whitespace " "]
-            BinaryExpression
-              NameExpression
-                Identifier "count" @ 195..200 trailing=[Whitespace " "]
-              EqEq "==" @ 201..203 trailing=[Whitespace " "]
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 34..39 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Counter" @ 40..47 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 48..49
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              VarKw "var" @ 54..57 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "count" @ 58..63
+              Colon ":" @ 63..64 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Int" @ 65..68 trailing=[Whitespace " "]
+              Assign "=" @ 69..70 trailing=[Whitespace " "]
               LiteralExpression
-                IntegerLiteral "0" @ 204..205
-      RBrace "}" @ 206..207 leading=[Newline "\n"]
+                IntegerLiteral "0" @ 71..72
+              PropertyBodyMemberList
+                PropertyAccessor
+                  ModifierListSequence
+                    ModifierList
+                      ModifierItemList
+                        Identifier "private" @ 81..88 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  Identifier "set" @ 89..92
+                  ValueParameterList
+                    LParen "(" @ 92..93
+                    ValueParameterSeparatedList
+                      ValueParameter
+                        ModifierListSequence
+                        Name
+                          Identifier "value" @ 93..98
+                    RParen ")" @ 98..99 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 100..101
+                    BlockItemList
+                      Statement
+                        ExpressionStatement
+                          AssignmentExpression
+                            NameExpression
+                              Identifier "field" @ 114..119 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                            Assign "=" @ 120..121 trailing=[Whitespace " "]
+                            CallExpression
+                              NavigationExpression
+                                NameExpression
+                                  Identifier "value" @ 122..127
+                                Dot "." @ 127..128
+                                Identifier "coerceAtLeast" @ 128..141
+                              TypeArgumentListList
+                              ValueArgumentList
+                                LParen "(" @ 141..142
+                                ValueArgumentEntryList
+                                  ValueArgument
+                                    ValueArgumentPrefixList
+                                    LiteralExpression
+                                      IntegerLiteral "0" @ 142..143
+                                RParen ")" @ 143..144
+                              LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 153..154 leading=[Newline "\n", Whitespace "        "]
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              ValKw "val" @ 160..163 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "empty" @ 164..169
+              Colon ":" @ 169..170 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Boolean" @ 171..178
+              PropertyBodyMemberList
+                PropertyAccessor
+                  ModifierListSequence
+                  Identifier "get" @ 187..190 leading=[Newline "\n", Whitespace "        "]
+                  ValueParameterList
+                    LParen "(" @ 190..191
+                    ValueParameterSeparatedList
+                    RParen ")" @ 191..192 trailing=[Whitespace " "]
+                  Assign "=" @ 193..194 trailing=[Whitespace " "]
+                  BinaryExpression
+                    NameExpression
+                      Identifier "count" @ 195..200 trailing=[Whitespace " "]
+                    EqEq "==" @ 201..203 trailing=[Whitespace " "]
+                    LiteralExpression
+                      IntegerLiteral "0" @ 204..205
+        RBrace "}" @ 206..207 leading=[Newline "\n"]
   Eof "" @ 208..208 leading=[Newline "\n"]
 
 diagnostics:

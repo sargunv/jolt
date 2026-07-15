@@ -9,6 +9,7 @@ impl Parser<'_> {
         self.parse_package_header();
         self.parse_import_list();
 
+        let items = self.start();
         while !self.at_eof() {
             if self.eat_optional_separators() && self.at(K::RBrace) {
                 self.unexpected_here("unexpected closing brace at top level");
@@ -22,6 +23,7 @@ impl Parser<'_> {
             self.parse_declaration_or_statement();
             self.ensure_progress(before, "expected declaration or statement");
         }
+        self.complete(items, K::KotlinFileItemList);
 
         self.expect(K::Eof, "expected end of file");
         self.complete(file, K::KotlinFile);
@@ -29,11 +31,13 @@ impl Parser<'_> {
     }
 
     fn parse_file_annotations(&mut self) {
+        let annotations = self.start();
         while self.at(K::At) || self.at(K::Hash) {
             let before = self.position();
             self.parse_annotation();
             self.ensure_progress(before, "expected file annotation");
         }
+        self.complete(annotations, K::AnnotationList);
     }
 
     fn parse_package_header(&mut self) {
@@ -44,17 +48,21 @@ impl Parser<'_> {
         let marker = self.start();
         self.bump();
         self.parse_qualified_name();
+        let terminators = self.start();
         self.eat_optional_separators();
+        self.complete(terminators, K::TerminatorList);
         self.complete(marker, K::PackageHeader);
     }
 
     fn parse_import_list(&mut self) {
         let marker = self.start();
+        let directives = self.start();
         while self.at_soft_keyword("import") {
             let before = self.position();
             self.parse_import_directive();
             self.ensure_progress(before, "expected import directive");
         }
+        self.complete(directives, K::ImportDirectiveList);
         self.complete(marker, K::ImportList);
     }
 
@@ -73,28 +81,9 @@ impl Parser<'_> {
             self.parse_name();
             self.complete(alias, K::ImportAlias);
         }
+        let terminators = self.start();
         self.eat_optional_separators();
+        self.complete(terminators, K::TerminatorList);
         self.complete(marker, K::ImportDirective);
-    }
-
-    pub(super) fn parse_comma_separated_until(&mut self, close: K, item_kind: K) {
-        let mut expect_item = true;
-        while !matches!(self.current_kind(), K::Eof) && !self.at(close) {
-            let before = self.position();
-            if self.eat(K::Comma) {
-                if expect_item && !matches!(self.current_kind(), K::Eof) && !self.at(close) {
-                    let missing = self.start();
-                    self.expected_here("expected list item");
-                    self.complete(missing, K::ErrorNode);
-                }
-                expect_item = true;
-                continue;
-            }
-            let item = self.start();
-            self.parse_expression_until(&[K::Comma, close]);
-            self.complete(item, item_kind);
-            expect_item = false;
-            self.ensure_progress(before, "expected list item");
-        }
     }
 }

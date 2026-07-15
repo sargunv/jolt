@@ -7,7 +7,7 @@ val value: Int field = /* backing */ compute()
 
 formatted:
 val value: Int
-  field = /* backing */  compute()
+  field = /* backing */ compute()
 
 diagnostics:
 (none)

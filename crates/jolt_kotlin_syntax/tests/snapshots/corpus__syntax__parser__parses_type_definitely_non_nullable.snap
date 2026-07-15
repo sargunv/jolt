@@ -8,43 +8,60 @@ fun <T> requireValue(value: T & Any): T & Any = value
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    TypeParameterList
-      Lt "<" @ 4..5
-      TypeParameter
-        Name
-          Identifier "T" @ 5..6
-      Gt ">" @ 6..7 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "requireValue" @ 8..20
-    ValueParameterList
-      LParen "(" @ 20..21
-      ValueParameter
-        Name
-          Identifier "value" @ 21..26
-        Colon ":" @ 26..27 trailing=[Whitespace " "]
-        TypeReference
-          DefinitelyNonNullableType
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      TypeParameterList
+        Lt "<" @ 4..5
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierListSequence
+            Name
+              Identifier "T" @ 5..6
+        Gt ">" @ 6..7 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "requireValue" @ 8..20
+      ValueParameterList
+        LParen "(" @ 20..21
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "value" @ 21..26
+            Colon ":" @ 26..27 trailing=[Whitespace " "]
+            TypeReference
+              DefinitelyNonNullableType
+                IntersectionDefinitelyNonNullableType
+                  UserType
+                    UserTypeSegmentList
+                      Identifier "T" @ 28..29 trailing=[Whitespace " "]
+                  Amp "&" @ 30..31 trailing=[Whitespace " "]
+                  UserType
+                    UserTypeSegmentList
+                      Identifier "Any" @ 32..35
+        RParen ")" @ 35..36
+      Colon ":" @ 36..37 trailing=[Whitespace " "]
+      TypeReference
+        DefinitelyNonNullableType
+          IntersectionDefinitelyNonNullableType
             UserType
-              Identifier "T" @ 28..29 trailing=[Whitespace " "]
-            Amp "&" @ 30..31 trailing=[Whitespace " "]
+              UserTypeSegmentList
+                Identifier "T" @ 38..39 trailing=[Whitespace " "]
+            Amp "&" @ 40..41 trailing=[Whitespace " "]
             UserType
-              Identifier "Any" @ 32..35
-      RParen ")" @ 35..36
-    Colon ":" @ 36..37 trailing=[Whitespace " "]
-    TypeReference
-      DefinitelyNonNullableType
-        UserType
-          Identifier "T" @ 38..39 trailing=[Whitespace " "]
-        Amp "&" @ 40..41 trailing=[Whitespace " "]
-        UserType
-          Identifier "Any" @ 42..45 trailing=[Whitespace " "]
-    Assign "=" @ 46..47 trailing=[Whitespace " "]
-    NameExpression
-      Identifier "value" @ 48..53
+              UserTypeSegmentList
+                Identifier "Any" @ 42..45 trailing=[Whitespace " "]
+      Assign "=" @ 46..47 trailing=[Whitespace " "]
+      NameExpression
+        Identifier "value" @ 48..53
   Eof "" @ 54..54 leading=[Newline "\n"]
 
 diagnostics:

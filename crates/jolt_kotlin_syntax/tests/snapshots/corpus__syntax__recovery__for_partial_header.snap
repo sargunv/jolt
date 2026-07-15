@@ -8,52 +8,66 @@ fun demo(items: List<String>) { for (item in items print(item) }
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "demo" @ 4..8
-    ValueParameterList
-      LParen "(" @ 8..9
-      ValueParameter
-        Name
-          Identifier "items" @ 9..14
-        Colon ":" @ 14..15 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "List" @ 16..20
-            TypeArgumentList
-              Lt "<" @ 20..21
-              TypeProjectionList
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "String" @ 21..27
-              Gt ">" @ 27..28
-      RParen ")" @ 28..29 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 30..31 trailing=[Whitespace " "]
-      Statement
-        ExpressionStatement
-          ForStatement
-            ForKw "for" @ 32..35 trailing=[Whitespace " "]
-            LParen "(" @ 36..37
-            NameExpression
-              Identifier "item" @ 37..41 trailing=[Whitespace " "]
-            InKw "in" @ 42..44 trailing=[Whitespace " "]
-            BinaryExpression
-              NameExpression
-                Identifier "items" @ 45..50 trailing=[Whitespace " "]
-              Identifier "print" @ 51..56
-              ParenthesizedExpression
-                LParen "(" @ 56..57
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "demo" @ 4..8
+      ValueParameterList
+        LParen "(" @ 8..9
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "items" @ 9..14
+            Colon ":" @ 14..15 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "List" @ 16..20
+                  TypeArgumentList
+                    Lt "<" @ 20..21
+                    TypeProjectionList
+                      TypeProjectionSeparatedList
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "String" @ 21..27
+                    Gt ">" @ 27..28
+        RParen ")" @ 28..29 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 30..31 trailing=[Whitespace " "]
+        BlockItemList
+          Statement
+            ExpressionStatement
+              ForStatement
+                ForKw "for" @ 32..35 trailing=[Whitespace " "]
+                LParen "(" @ 36..37
                 NameExpression
-                  Identifier "item" @ 57..61
-                RParen ")" @ 61..62 trailing=[Whitespace " "]
-            ErrorNode
-      RBrace "}" @ 63..64
+                  Identifier "item" @ 37..41 trailing=[Whitespace " "]
+                InKw "in" @ 42..44 trailing=[Whitespace " "]
+                BinaryExpression
+                  NameExpression
+                    Identifier "items" @ 45..50 trailing=[Whitespace " "]
+                  Identifier "print" @ 51..56
+                  ParenthesizedExpression
+                    LParen "(" @ 56..57
+                    NameExpression
+                      Identifier "item" @ 57..61
+                    RParen ")" @ 61..62 trailing=[Whitespace " "]
+                ErrorNode
+            TerminatorList
+        RBrace "}" @ 63..64
   Eof "" @ 65..65 leading=[Newline "\n"]
 
 diagnostics:

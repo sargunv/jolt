@@ -8,15 +8,22 @@ val x = 1 // /* not block */
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  PropertyDeclaration
-    ValKw "val" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "x" @ 4..5 trailing=[Whitespace " "]
-    Assign "=" @ 6..7 trailing=[Whitespace " "]
-    LiteralExpression
-      IntegerLiteral "1" @ 8..9 trailing=[Whitespace " ", LineComment "// /* not block */"]
+    ImportDirectiveList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "x" @ 4..5 trailing=[Whitespace " "]
+      Assign "=" @ 6..7 trailing=[Whitespace " "]
+      LiteralExpression
+        IntegerLiteral "1" @ 8..9 trailing=[Whitespace " ", LineComment "// /* not block */"]
+      PropertyBodyMemberList
   Eof "" @ 29..29 leading=[Newline "\n"]
 
 diagnostics:

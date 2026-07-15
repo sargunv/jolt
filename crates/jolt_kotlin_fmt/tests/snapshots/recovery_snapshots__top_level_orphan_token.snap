@@ -7,7 +7,8 @@ fun topLevelOrphanToken() = Unit
 }
 
 formatted:
-fun topLevelOrphanToken() = Unit}
+fun topLevelOrphanToken() = Unit
+}
 
 diagnostics:
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(33), end: TextSize(34) }) message=unexpected closing brace at top level

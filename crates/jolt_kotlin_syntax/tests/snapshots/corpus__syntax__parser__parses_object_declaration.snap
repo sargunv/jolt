@@ -10,29 +10,41 @@ object Settings {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  ObjectDeclaration
-    ObjectKw "object" @ 0..6 trailing=[Whitespace " "]
-    Name
-      Identifier "Settings" @ 7..15 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 16..17
-      ClassMemberDeclaration
-        PropertyDeclaration
-          ModifierList
-            Identifier "const" @ 22..27 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          ValKw "val" @ 28..31 trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "Name" @ 32..36 trailing=[Whitespace " "]
-          Assign "=" @ 37..38 trailing=[Whitespace " "]
-          StringTemplateExpression
-            StringTemplateEntry
-              OpenQuote "\"" @ 39..40
-            StringTemplateEntry
-              RegularStringPart "jolt" @ 40..44
-            ClosingQuote "\"" @ 44..45
-      RBrace "}" @ 46..47 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    ObjectDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ObjectKw "object" @ 0..6 trailing=[Whitespace " "]
+      Name
+        Identifier "Settings" @ 7..15 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 16..17
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "const" @ 22..27 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              ValKw "val" @ 28..31 trailing=[Whitespace " "]
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "Name" @ 32..36 trailing=[Whitespace " "]
+              Assign "=" @ 37..38 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 39..40
+                  StringTemplateEntry
+                    RegularStringPart "jolt" @ 40..44
+                ClosingQuote "\"" @ 44..45
+              PropertyBodyMemberList
+        RBrace "}" @ 46..47 leading=[Newline "\n"]
   Eof "" @ 48..48 leading=[Newline "\n"]
 
 diagnostics:

@@ -13,110 +13,145 @@ fun ranges(limit: Int): List<Int> {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "ranges" @ 4..10
-    ValueParameterList
-      LParen "(" @ 10..11
-      ValueParameter
-        Name
-          Identifier "limit" @ 11..16
-        Colon ":" @ 16..17 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Int" @ 18..21
-      RParen ")" @ 21..22
-    Colon ":" @ 22..23 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "List" @ 24..28
-        TypeArgumentList
-          Lt "<" @ 28..29
-          TypeProjectionList
-            TypeArgument
-              TypeProjection
-                TypeReference
-                  UserType
-                    Identifier "Int" @ 29..32
-          Gt ">" @ 32..33 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 34..35
-      PropertyDeclaration
-        ValKw "val" @ 40..43 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
           Name
-            Identifier "closed" @ 44..50 trailing=[Whitespace " "]
-        Assign "=" @ 51..52 trailing=[Whitespace " "]
-        BinaryExpression
-          LiteralExpression
-            IntegerLiteral "0" @ 53..54
-          Range ".." @ 54..56
-          NameExpression
-            Identifier "limit" @ 56..61
-      PropertyDeclaration
-        ValKw "val" @ 66..69 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "open" @ 70..74 trailing=[Whitespace " "]
-        Assign "=" @ 75..76 trailing=[Whitespace " "]
-        BinaryExpression
-          LiteralExpression
-            IntegerLiteral "0" @ 77..78
-          RangeUntil "..<" @ 78..81
-          NameExpression
-            Identifier "limit" @ 81..86
-      PropertyDeclaration
-        ValKw "val" @ 91..94 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "stepped" @ 95..102 trailing=[Whitespace " "]
-        Assign "=" @ 103..104 trailing=[Whitespace " "]
-        BinaryExpression
-          BinaryExpression
-            LiteralExpression
-              IntegerLiteral "10" @ 105..107 trailing=[Whitespace " "]
-            Identifier "downTo" @ 108..114 trailing=[Whitespace " "]
-            LiteralExpression
-              IntegerLiteral "0" @ 115..116 trailing=[Whitespace " "]
-          Identifier "step" @ 117..121 trailing=[Whitespace " "]
-          LiteralExpression
-            IntegerLiteral "2" @ 122..123
-      Statement
-        ExpressionStatement
-          JumpExpression
-            ReturnKw "return" @ 128..134 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "ranges" @ 4..10
+      ValueParameterList
+        LParen "(" @ 10..11
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "limit" @ 11..16
+            Colon ":" @ 16..17 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Int" @ 18..21
+        RParen ")" @ 21..22
+      Colon ":" @ 22..23 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "List" @ 24..28
+            TypeArgumentList
+              Lt "<" @ 28..29
+              TypeProjectionList
+                TypeProjectionSeparatedList
+                  TypeArgument
+                    TypeProjection
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            Identifier "Int" @ 29..32
+              Gt ">" @ 32..33 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 34..35
+        BlockItemList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 40..43 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "closed" @ 44..50 trailing=[Whitespace " "]
+            Assign "=" @ 51..52 trailing=[Whitespace " "]
             BinaryExpression
-              CallExpression
-                NavigationExpression
-                  NameExpression
-                    Identifier "closed" @ 135..141
-                  Dot "." @ 141..142
-                  Identifier "filter" @ 142..148 trailing=[Whitespace " "]
-                LambdaExpression
-                  LBrace "{" @ 149..150 trailing=[Whitespace " "]
-                  Statement
-                    ExpressionStatement
-                      BinaryExpression
-                        NameExpression
-                          Identifier "it" @ 151..153 trailing=[Whitespace " "]
-                        InKw "in" @ 154..156 trailing=[Whitespace " "]
-                        NameExpression
-                          Identifier "open" @ 157..161 trailing=[Whitespace " "]
-                  RBrace "}" @ 162..163 trailing=[Whitespace " "]
-              Plus "+" @ 164..165 trailing=[Whitespace " "]
-              CallExpression
-                NavigationExpression
-                  NameExpression
-                    Identifier "stepped" @ 166..173
-                  Dot "." @ 173..174
-                  Identifier "toList" @ 174..180
-                ValueArgumentList
-                  LParen "(" @ 180..181
-                  RParen ")" @ 181..182
-      RBrace "}" @ 183..184 leading=[Newline "\n"]
+              LiteralExpression
+                IntegerLiteral "0" @ 53..54
+              Range ".." @ 54..56
+              NameExpression
+                Identifier "limit" @ 56..61
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 66..69 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "open" @ 70..74 trailing=[Whitespace " "]
+            Assign "=" @ 75..76 trailing=[Whitespace " "]
+            BinaryExpression
+              LiteralExpression
+                IntegerLiteral "0" @ 77..78
+              RangeUntil "..<" @ 78..81
+              NameExpression
+                Identifier "limit" @ 81..86
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 91..94 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "stepped" @ 95..102 trailing=[Whitespace " "]
+            Assign "=" @ 103..104 trailing=[Whitespace " "]
+            BinaryExpression
+              BinaryExpression
+                LiteralExpression
+                  IntegerLiteral "10" @ 105..107 trailing=[Whitespace " "]
+                Identifier "downTo" @ 108..114 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "0" @ 115..116 trailing=[Whitespace " "]
+              Identifier "step" @ 117..121 trailing=[Whitespace " "]
+              LiteralExpression
+                IntegerLiteral "2" @ 122..123
+            PropertyBodyMemberList
+          Statement
+            ExpressionStatement
+              JumpExpression
+                ReturnKw "return" @ 128..134 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                BinaryExpression
+                  CallExpression
+                    NavigationExpression
+                      NameExpression
+                        Identifier "closed" @ 135..141
+                      Dot "." @ 141..142
+                      Identifier "filter" @ 142..148 trailing=[Whitespace " "]
+                    TypeArgumentListList
+                    LambdaExpressionList
+                      LambdaExpression
+                        LambdaBody
+                          LBrace "{" @ 149..150 trailing=[Whitespace " "]
+                          LambdaBodyItemList
+                            Statement
+                              ExpressionStatement
+                                BinaryExpression
+                                  NameExpression
+                                    Identifier "it" @ 151..153 trailing=[Whitespace " "]
+                                  InKw "in" @ 154..156 trailing=[Whitespace " "]
+                                  NameExpression
+                                    Identifier "open" @ 157..161 trailing=[Whitespace " "]
+                              TerminatorList
+                          RBrace "}" @ 162..163 trailing=[Whitespace " "]
+                  Plus "+" @ 164..165 trailing=[Whitespace " "]
+                  CallExpression
+                    NavigationExpression
+                      NameExpression
+                        Identifier "stepped" @ 166..173
+                      Dot "." @ 173..174
+                      Identifier "toList" @ 174..180
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 180..181
+                      ValueArgumentEntryList
+                      RParen ")" @ 181..182
+                    LambdaExpressionList
+            TerminatorList
+        RBrace "}" @ 183..184 leading=[Newline "\n"]
   Eof "" @ 185..185 leading=[Newline "\n"]
 
 diagnostics:

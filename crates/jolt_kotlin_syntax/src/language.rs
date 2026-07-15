@@ -12,6 +12,9 @@ pub enum KotlinLanguage {}
 #[derive(Clone, Copy)]
 pub struct KotlinNormalizationAuthority(pub(crate) ());
 
+pub(crate) const NORMALIZATION_AUTHORITY: KotlinNormalizationAuthority =
+    KotlinNormalizationAuthority(());
+
 impl Language for KotlinLanguage {
     type Kind = KotlinSyntaxKind;
 

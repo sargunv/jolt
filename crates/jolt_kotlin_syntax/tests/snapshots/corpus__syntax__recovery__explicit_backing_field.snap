@@ -8,25 +8,36 @@ val value: Int field = /* backing */ compute()
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  PropertyDeclaration
-    ValKw "val" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "value" @ 4..9
-    Colon ":" @ 9..10 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "Int" @ 11..14 trailing=[Whitespace " "]
-    ExplicitBackingField
-      Identifier "field" @ 15..20 trailing=[Whitespace " "]
-      Assign "=" @ 21..22 trailing=[Whitespace " ", BlockComment "/* backing */", Whitespace " "]
-      CallExpression
-        NameExpression
-          Identifier "compute" @ 37..44
-        ValueArgumentList
-          LParen "(" @ 44..45
-          RParen ")" @ 45..46
+    ImportDirectiveList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "value" @ 4..9
+      Colon ":" @ 9..10 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "Int" @ 11..14 trailing=[Whitespace " "]
+      PropertyBodyMemberList
+        ExplicitBackingField
+          Identifier "field" @ 15..20 trailing=[Whitespace " "]
+          Assign "=" @ 21..22 trailing=[Whitespace " ", BlockComment "/* backing */", Whitespace " "]
+          CallExpression
+            NameExpression
+              Identifier "compute" @ 37..44
+            TypeArgumentListList
+            ValueArgumentList
+              LParen "(" @ 44..45
+              ValueArgumentEntryList
+              RParen ")" @ 45..46
+            LambdaExpressionList
   Eof "" @ 47..47 leading=[Newline "\n"]
 
 diagnostics:

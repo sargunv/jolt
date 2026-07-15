@@ -8,15 +8,22 @@ val/**/x=1
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  PropertyDeclaration
-    ValKw "val" @ 0..3 trailing=[BlockComment "/**/"]
-    CallableName
-      Name
-        Identifier "x" @ 7..8
-    Assign "=" @ 8..9
-    LiteralExpression
-      IntegerLiteral "1" @ 9..10
+    ImportDirectiveList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 0..3 trailing=[BlockComment "/**/"]
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "x" @ 7..8
+      Assign "=" @ 8..9
+      LiteralExpression
+        IntegerLiteral "1" @ 9..10
+      PropertyBodyMemberList
   Eof "" @ 11..11 leading=[Newline "\n"]
 
 diagnostics:

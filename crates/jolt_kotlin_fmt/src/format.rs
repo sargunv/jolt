@@ -1,9 +1,9 @@
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
 use jolt_fmt_ir::{
-    DocBuilder, FormatOptions, FormatSinkResult, IndentStyle, RenderOptions, RenderSink, TextWidth,
-    render_to,
+    DocBuilder, FormatOptions, FormatSinkResult, IndentStyle, RenderOptions, RenderProof,
+    RenderSink, TextWidth, render_to_tracked,
 };
-use jolt_kotlin_syntax::{KotlinFile, parse_kotlin_file};
+use jolt_kotlin_syntax::{KotlinFile, KotlinSyntaxView, parse_kotlin_file};
 
 use crate::rules::program::format_file;
 
@@ -53,8 +53,17 @@ fn format_syntax_to_sink<S: RenderSink + ?Sized>(
     let arena = builder.into_arena();
     #[cfg(feature = "bench")]
     let metrics = arena.benchmark_metrics();
-    let result = match render_to(&arena, doc, render_options, sink) {
-        Ok(outcome) if outcome.halted => FormatSinkResult::Halted,
+    let Some(root) = syntax.syntax_node() else {
+        return (
+            FormatSinkResult::Blocked {
+                diagnostics: vec![no_syntax_tree_diagnostic()],
+            },
+            DocBuilderMetrics::default(),
+        );
+    };
+    let proof = RenderProof::new(root.conservation_tracker());
+    let result = match render_to_tracked(&arena, doc, render_options, sink, proof) {
+        Ok(outcome) if outcome.halted() => FormatSinkResult::Halted,
         Ok(_) => FormatSinkResult::Complete,
         Err(error) => FormatSinkResult::Blocked {
             diagnostics: vec![render_error_diagnostic(&error)],
@@ -128,7 +137,7 @@ mod tests {
             &mut sink,
         );
 
-        assert!(matches!(result, FormatSinkResult::Complete));
+        assert!(matches!(result, FormatSinkResult::Complete), "{result:#?}");
         let formatted = sink.into_string();
         assert!(formatted.contains("value"), "{formatted}");
         assert!(formatted.contains('='), "{formatted}");

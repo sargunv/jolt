@@ -14,41 +14,58 @@ fun main() {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 23..30 leading=[ShebangComment "#!/usr/bin/env kotlin", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "samples" @ 31..38
-      Dot "." @ 38..39
-      Name
-        Identifier "scriptlike" @ 39..49
+      QualifiedNameSegmentList
+        Name
+          Identifier "samples" @ 31..38
+        Dot "." @ 38..39
+        Name
+          Identifier "scriptlike" @ 39..49
+    TerminatorList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 51..54 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "main" @ 55..59
-    ValueParameterList
-      LParen "(" @ 59..60
-      RParen ")" @ 60..61 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 62..63
-      Statement
-        ExpressionStatement
-          CallExpression
-            NameExpression
-              Identifier "println" @ 68..75 leading=[Newline "\n", Whitespace "    "]
-            ValueArgumentList
-              LParen "(" @ 75..76
-              ValueArgument
-                StringTemplateExpression
-                  StringTemplateEntry
-                    OpenQuote "\"" @ 76..77
-                  StringTemplateEntry
-                    RegularStringPart "ready" @ 77..82
-                  ClosingQuote "\"" @ 82..83
-              RParen ")" @ 83..84
-      RBrace "}" @ 85..86 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 51..54 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "main" @ 55..59
+      ValueParameterList
+        LParen "(" @ 59..60
+        ValueParameterSeparatedList
+        RParen ")" @ 60..61 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 62..63
+        BlockItemList
+          Statement
+            ExpressionStatement
+              CallExpression
+                NameExpression
+                  Identifier "println" @ 68..75 leading=[Newline "\n", Whitespace "    "]
+                TypeArgumentListList
+                ValueArgumentList
+                  LParen "(" @ 75..76
+                  ValueArgumentEntryList
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      StringTemplateExpression
+                        StringTemplateEntryList
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 76..77
+                          StringTemplateEntry
+                            RegularStringPart "ready" @ 77..82
+                        ClosingQuote "\"" @ 82..83
+                  RParen ")" @ 83..84
+                LambdaExpressionList
+            TerminatorList
+        RBrace "}" @ 85..86 leading=[Newline "\n"]
   Eof "" @ 87..87 leading=[Newline "\n"]
 
 diagnostics:

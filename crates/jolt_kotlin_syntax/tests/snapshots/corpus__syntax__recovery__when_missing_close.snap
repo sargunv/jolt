@@ -8,45 +8,62 @@ fun demo(value: Int) { when (value) { 1 -> one()
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "demo" @ 4..8
-    ValueParameterList
-      LParen "(" @ 8..9
-      ValueParameter
-        Name
-          Identifier "value" @ 9..14
-        Colon ":" @ 14..15 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Int" @ 16..19
-      RParen ")" @ 19..20 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 21..22 trailing=[Whitespace " "]
-      Statement
-        ExpressionStatement
-          WhenExpression
-            WhenKw "when" @ 23..27 trailing=[Whitespace " "]
-            WhenSubject
-              LParen "(" @ 28..29
-              NameExpression
-                Identifier "value" @ 29..34
-              RParen ")" @ 34..35 trailing=[Whitespace " "]
-            LBrace "{" @ 36..37 trailing=[Whitespace " "]
-            WhenEntry
-              WhenCondition
-                LiteralExpression
-                  IntegerLiteral "1" @ 38..39 trailing=[Whitespace " "]
-              Arrow "->" @ 40..42 trailing=[Whitespace " "]
-              CallExpression
-                NameExpression
-                  Identifier "one" @ 43..46
-                ValueArgumentList
-                  LParen "(" @ 46..47
-                  RParen ")" @ 47..48
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "demo" @ 4..8
+      ValueParameterList
+        LParen "(" @ 8..9
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "value" @ 9..14
+            Colon ":" @ 14..15 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Int" @ 16..19
+        RParen ")" @ 19..20 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 21..22 trailing=[Whitespace " "]
+        BlockItemList
+          Statement
+            ExpressionStatement
+              WhenExpression
+                WhenKw "when" @ 23..27 trailing=[Whitespace " "]
+                WhenSubject
+                  LParen "(" @ 28..29
+                  NameExpression
+                    Identifier "value" @ 29..34
+                  RParen ")" @ 34..35 trailing=[Whitespace " "]
+                LBrace "{" @ 36..37 trailing=[Whitespace " "]
+                WhenEntryList
+                  WhenEntry
+                    WhenConditionSeparatedList
+                      WhenCondition
+                        LiteralExpression
+                          IntegerLiteral "1" @ 38..39 trailing=[Whitespace " "]
+                    Arrow "->" @ 40..42 trailing=[Whitespace " "]
+                    CallExpression
+                      NameExpression
+                        Identifier "one" @ 43..46
+                      TypeArgumentListList
+                      ValueArgumentList
+                        LParen "(" @ 46..47
+                        ValueArgumentEntryList
+                        RParen ")" @ 47..48
+                      LambdaExpressionList
+            TerminatorList
   Eof "" @ 49..49 leading=[Newline "\n"]
 
 diagnostics:

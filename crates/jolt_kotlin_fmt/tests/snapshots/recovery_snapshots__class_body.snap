@@ -13,7 +13,7 @@ class Demo {
 
   /* orphan */
   +
-  val value = 1
+val value = 1
 }
 
 diagnostics:

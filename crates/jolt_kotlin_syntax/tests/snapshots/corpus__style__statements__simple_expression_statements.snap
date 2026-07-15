@@ -14,77 +14,101 @@ fun compute(value: Int): Int {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "statements" @ 20..30
-  ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "compute" @ 36..43
-    ValueParameterList
-      LParen "(" @ 43..44
-      ValueParameter
+      QualifiedNameSegmentList
         Name
-          Identifier "value" @ 44..49
-        Colon ":" @ 49..50 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Int" @ 51..54
-      RParen ")" @ 54..55
-    Colon ":" @ 55..56 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "Int" @ 57..60 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 61..62
-      PropertyDeclaration
-        ValKw "val" @ 67..70 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "statements" @ 20..30
+    TerminatorList
+  ImportList
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
           Name
-            Identifier "doubled" @ 71..78
-        Assign "=" @ 78..79
-        BinaryExpression
-          NameExpression
-            Identifier "value" @ 79..84
-          Star "*" @ 84..85
-          LiteralExpression
-            IntegerLiteral "2" @ 85..86
-      Statement
-        ExpressionStatement
-          CallExpression
-            NameExpression
-              Identifier "println" @ 91..98 leading=[Newline "\n", Whitespace "    "]
-            ValueArgumentList
-              LParen "(" @ 98..99
-              ValueArgument
-                BinaryExpression
-                  NameExpression
-                    Identifier "doubled" @ 99..106
-                  Plus "+" @ 106..107
-                  LiteralExpression
-                    IntegerLiteral "1" @ 107..108
-              RParen ")" @ 108..109
-      Statement
-        ExpressionStatement
-          JumpExpression
-            ReturnKw "return" @ 114..120 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "compute" @ 36..43
+      ValueParameterList
+        LParen "(" @ 43..44
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "value" @ 44..49
+            Colon ":" @ 49..50 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Int" @ 51..54
+        RParen ")" @ 54..55
+      Colon ":" @ 55..56 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "Int" @ 57..60 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 61..62
+        BlockItemList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 67..70 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "doubled" @ 71..78
+            Assign "=" @ 78..79
             BinaryExpression
               NameExpression
-                Identifier "doubled" @ 121..128
-              Plus "+" @ 128..129
+                Identifier "value" @ 79..84
+              Star "*" @ 84..85
               LiteralExpression
-                IntegerLiteral "1" @ 129..130
-      RBrace "}" @ 131..132 leading=[Newline "\n"]
+                IntegerLiteral "2" @ 85..86
+            PropertyBodyMemberList
+          Statement
+            ExpressionStatement
+              CallExpression
+                NameExpression
+                  Identifier "println" @ 91..98 leading=[Newline "\n", Whitespace "    "]
+                TypeArgumentListList
+                ValueArgumentList
+                  LParen "(" @ 98..99
+                  ValueArgumentEntryList
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      BinaryExpression
+                        NameExpression
+                          Identifier "doubled" @ 99..106
+                        Plus "+" @ 106..107
+                        LiteralExpression
+                          IntegerLiteral "1" @ 107..108
+                  RParen ")" @ 108..109
+                LambdaExpressionList
+            TerminatorList
+          Statement
+            ExpressionStatement
+              JumpExpression
+                ReturnKw "return" @ 114..120 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                BinaryExpression
+                  NameExpression
+                    Identifier "doubled" @ 121..128
+                  Plus "+" @ 128..129
+                  LiteralExpression
+                    IntegerLiteral "1" @ 129..130
+            TerminatorList
+        RBrace "}" @ 131..132 leading=[Newline "\n"]
   Eof "" @ 133..133 leading=[Newline "\n"]
 
 diagnostics:

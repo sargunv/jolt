@@ -10,29 +10,41 @@ val delegated by
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "value" @ 4..9
-    ValueParameterList
-      LParen "(" @ 9..10
-      RParen ")" @ 10..11 trailing=[Whitespace " "]
-    Assign "=" @ 12..13
-    ErrorNode
-      ValKw "val" @ 14..17 leading=[Newline "\n"] trailing=[Whitespace " "]
-    ErrorNode
-      Identifier "answer" @ 18..24 trailing=[Whitespace " "]
-    ErrorNode
-      Assign "=" @ 25..26
-  PropertyDeclaration
-    ValKw "val" @ 27..30 leading=[Newline "\n"] trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "delegated" @ 31..40 trailing=[Whitespace " "]
-    Identifier "by" @ 41..43
-    ErrorNode
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "value" @ 4..9
+      ValueParameterList
+        LParen "(" @ 9..10
+        ValueParameterSeparatedList
+        RParen ")" @ 10..11 trailing=[Whitespace " "]
+      Assign "=" @ 12..13
+      ErrorNode
+        ValKw "val" @ 14..17 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ErrorNode
+        Identifier "answer" @ 18..24 trailing=[Whitespace " "]
+      ErrorNode
+        Assign "=" @ 25..26
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 27..30 leading=[Newline "\n"] trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "delegated" @ 31..40 trailing=[Whitespace " "]
+      Identifier "by" @ 41..43
+      ErrorNode
+      PropertyBodyMemberList
   Eof "" @ 44..44 leading=[Newline "\n"]
 
 diagnostics:

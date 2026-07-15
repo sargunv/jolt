@@ -67,6 +67,7 @@ impl Parser<'_> {
         self.parse_type_constraint_list();
         if self.eat(K::Assign) || self.eat_soft_keyword("by") {
             self.parse_expression_until(&[
+                K::WhereKw,
                 K::Semicolon,
                 K::DoubleSemicolon,
                 K::RBrace,
@@ -74,6 +75,7 @@ impl Parser<'_> {
                 K::SetKw,
             ]);
         }
+        let body_members = self.start();
         if self.at_soft_keyword("field") && self.nth_kind(1) == K::Assign {
             let field = self.start();
             self.bump();
@@ -92,6 +94,7 @@ impl Parser<'_> {
             self.parse_property_accessor();
             self.ensure_progress(before, "expected property accessor");
         }
+        self.complete(body_members, K::PropertyBodyMemberList);
     }
 
     pub(in crate::parser::grammar) fn parse_type_alias_tail(&mut self) {
@@ -110,9 +113,17 @@ impl Parser<'_> {
     pub(in crate::parser::grammar) fn parse_type_parameter_list(&mut self) {
         let marker = self.start();
         self.expect(K::Lt, "expected type parameter list");
+        let entries = self.start();
+        let mut expect_parameter = true;
         while !matches!(self.current_kind(), K::Gt | K::Eof) {
             let before = self.position();
             if self.eat(K::Comma) {
+                if expect_parameter && !matches!(self.current_kind(), K::Gt | K::Eof) {
+                    self.unexpected_here("expected type parameter between commas");
+                    let error = self.start();
+                    self.complete(error, K::ErrorNode);
+                }
+                expect_parameter = true;
                 continue;
             }
             let parameter = self.start();
@@ -125,8 +136,10 @@ impl Parser<'_> {
                 self.parse_type_reference_until(&[K::Comma, K::Gt]);
             }
             self.complete(parameter, K::TypeParameter);
+            expect_parameter = false;
             self.ensure_progress(before, "expected type parameter");
         }
+        self.complete(entries, K::TypeParameterSeparatedList);
         self.expect(K::Gt, "expected '>' after type parameters");
         self.complete(marker, K::TypeParameterList);
     }
@@ -137,6 +150,7 @@ impl Parser<'_> {
         }
         let marker = self.start();
         self.bump();
+        let entries = self.start();
         loop {
             let before = self.position();
             let constraint = self.start();
@@ -160,6 +174,7 @@ impl Parser<'_> {
                 break;
             }
         }
+        self.complete(entries, K::TypeConstraintSeparatedList);
         self.complete(marker, K::TypeConstraintList);
     }
 
@@ -167,6 +182,7 @@ impl Parser<'_> {
         let marker = self.start();
         self.expect_soft_keyword("context", "expected context");
         self.expect(K::LParen, "expected '(' after context");
+        let entries = self.start();
         while !matches!(self.current_kind(), K::RParen | K::Eof) {
             let before = self.position();
             if self.eat(K::Comma) {
@@ -180,12 +196,14 @@ impl Parser<'_> {
             self.complete(parameter, K::ContextParameter);
             self.ensure_progress(before, "expected context parameter");
         }
+        self.complete(entries, K::ContextParameterSeparatedList);
         self.expect(K::RParen, "expected ')' after context parameters");
         self.complete(marker, K::ContextParameterClause);
     }
 
     pub(in crate::parser::grammar) fn parse_delegation_specifier_list(&mut self) {
         let marker = self.start();
+        let entries = self.start();
         loop {
             let before = self.position();
             let specifier = self.start();
@@ -196,6 +214,7 @@ impl Parser<'_> {
                 break;
             }
         }
+        self.complete(entries, K::DelegationSpecifierSeparatedList);
         self.complete(marker, K::DelegationSpecifierList);
     }
 
@@ -229,9 +248,17 @@ impl Parser<'_> {
     pub(in crate::parser::grammar) fn parse_value_parameter_list(&mut self) {
         let marker = self.start();
         self.expect(K::LParen, "expected value parameter list");
+        let entries = self.start();
+        let mut expect_parameter = true;
         while !matches!(self.current_kind(), K::RParen | K::Eof) {
             let before = self.position();
             if self.eat(K::Comma) {
+                if expect_parameter && !matches!(self.current_kind(), K::RParen | K::Eof) {
+                    self.unexpected_here("expected value parameter between commas");
+                    let error = self.start();
+                    self.complete(error, K::ErrorNode);
+                }
+                expect_parameter = true;
                 continue;
             }
             let parameter = self.start();
@@ -247,8 +274,10 @@ impl Parser<'_> {
                 self.parse_expression_until(&[K::Comma, K::RParen]);
             }
             self.complete(parameter, K::ValueParameter);
+            expect_parameter = false;
             self.ensure_progress(before, "expected value parameter");
         }
+        self.complete(entries, K::ValueParameterSeparatedList);
         self.expect(K::RParen, "expected ')' after value parameters");
         self.complete(marker, K::ValueParameterList);
     }
@@ -271,9 +300,17 @@ impl Parser<'_> {
         };
         let marker = self.start();
         self.expect(open, "expected destructuring declaration");
+        let entries = self.start();
+        let mut expect_entry = true;
         while !matches!(self.current_kind(), K::Eof) && !self.at(close) {
             let before = self.position();
             if self.eat(K::Comma) {
+                if expect_entry && !self.at(close) && !self.at(K::Eof) {
+                    self.unexpected_here("expected destructuring entry between commas");
+                    let error = self.start();
+                    self.complete(error, K::ErrorNode);
+                }
+                expect_entry = true;
                 continue;
             }
             let entry = self.start();
@@ -288,8 +325,10 @@ impl Parser<'_> {
                 self.parse_type_reference_until(&[K::Comma, close]);
             }
             self.complete(entry, K::DestructuringEntry);
+            expect_entry = false;
             self.ensure_progress(before, "expected destructuring entry");
         }
+        self.complete(entries, K::DestructuringEntrySeparatedList);
         self.expect(
             close,
             "expected closing delimiter after destructuring declaration",
@@ -335,12 +374,16 @@ impl Parser<'_> {
         let marker = self.start();
 
         if let Some(separator_position) = self.callable_receiver_separator_position() {
+            let parts = self.start();
             self.parse_type_reference_until_position(separator_position);
             self.expect(K::Dot, "expected receiver separator");
             self.parse_name();
+            self.complete(parts, K::CallableNamePartList);
             self.complete(marker, K::CallableName);
         } else if self.at_identifier_like() {
+            let parts = self.start();
             self.parse_name();
+            self.complete(parts, K::CallableNamePartList);
             self.complete(marker, K::CallableName);
         } else {
             self.abandon(marker);

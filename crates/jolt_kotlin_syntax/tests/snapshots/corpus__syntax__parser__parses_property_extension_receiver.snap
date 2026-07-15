@@ -15,104 +15,138 @@ val MutableMap<String, Expression<*>>.entryCount: Int
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  PropertyDeclaration
-    ValKw "val" @ 0..3 trailing=[Whitespace " "]
-    CallableName
+    ImportDirectiveList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          TypeReference
+            UserType
+              UserTypeSegmentList
+                Identifier "String" @ 4..10
+          Dot "." @ 10..11
+          Name
+            Identifier "lastIndexOrZero" @ 11..26
+      Colon ":" @ 26..27 trailing=[Whitespace " "]
       TypeReference
         UserType
-          Identifier "String" @ 4..10
-      Dot "." @ 10..11
-      Name
-        Identifier "lastIndexOrZero" @ 11..26
-    Colon ":" @ 26..27 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "Int" @ 28..31
-    PropertyAccessor
-      Identifier "get" @ 36..39 leading=[Newline "\n", Whitespace "    "]
-      ValueParameterList
-        LParen "(" @ 39..40
-        RParen ")" @ 40..41 trailing=[Whitespace " "]
-      Assign "=" @ 42..43 trailing=[Whitespace " "]
-      BinaryExpression
-        NameExpression
-          Identifier "length" @ 44..50 trailing=[Whitespace " "]
-        Minus "-" @ 51..52 trailing=[Whitespace " "]
-        LiteralExpression
-          IntegerLiteral "1" @ 53..54
-  PropertyDeclaration
-    ValKw "val" @ 56..59 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    CallableName
+          UserTypeSegmentList
+            Identifier "Int" @ 28..31
+      PropertyBodyMemberList
+        PropertyAccessor
+          ModifierListSequence
+          Identifier "get" @ 36..39 leading=[Newline "\n", Whitespace "    "]
+          ValueParameterList
+            LParen "(" @ 39..40
+            ValueParameterSeparatedList
+            RParen ")" @ 40..41 trailing=[Whitespace " "]
+          Assign "=" @ 42..43 trailing=[Whitespace " "]
+          BinaryExpression
+            NameExpression
+              Identifier "length" @ 44..50 trailing=[Whitespace " "]
+            Minus "-" @ 51..52 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "1" @ 53..54
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 56..59 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          TypeReference
+            UserType
+              UserTypeSegmentList
+                Identifier "com" @ 60..63
+                Dot "." @ 63..64
+                Identifier "example" @ 64..71
+                Dot "." @ 71..72
+                Identifier "Scope" @ 72..77
+          Dot "." @ 77..78
+          Name
+            Identifier "qualifiedTitle" @ 78..92
+      Colon ":" @ 92..93 trailing=[Whitespace " "]
       TypeReference
         UserType
-          Identifier "com" @ 60..63
-          Dot "." @ 63..64
-          Identifier "example" @ 64..71
-          Dot "." @ 71..72
-          Identifier "Scope" @ 72..77
-      Dot "." @ 77..78
-      Name
-        Identifier "qualifiedTitle" @ 78..92
-    Colon ":" @ 92..93 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "String" @ 94..100
-    PropertyAccessor
-      Identifier "get" @ 105..108 leading=[Newline "\n", Whitespace "    "]
-      ValueParameterList
-        LParen "(" @ 108..109
-        RParen ")" @ 109..110 trailing=[Whitespace " "]
-      Assign "=" @ 111..112 trailing=[Whitespace " "]
-      CallExpression
-        NameExpression
-          Identifier "toString" @ 113..121
-        ValueArgumentList
-          LParen "(" @ 121..122
-          RParen ")" @ 122..123
-  PropertyDeclaration
-    ValKw "val" @ 125..128 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    CallableName
+          UserTypeSegmentList
+            Identifier "String" @ 94..100
+      PropertyBodyMemberList
+        PropertyAccessor
+          ModifierListSequence
+          Identifier "get" @ 105..108 leading=[Newline "\n", Whitespace "    "]
+          ValueParameterList
+            LParen "(" @ 108..109
+            ValueParameterSeparatedList
+            RParen ")" @ 109..110 trailing=[Whitespace " "]
+          Assign "=" @ 111..112 trailing=[Whitespace " "]
+          CallExpression
+            NameExpression
+              Identifier "toString" @ 113..121
+            TypeArgumentListList
+            ValueArgumentList
+              LParen "(" @ 121..122
+              ValueArgumentEntryList
+              RParen ")" @ 122..123
+            LambdaExpressionList
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 125..128 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          TypeReference
+            UserType
+              UserTypeSegmentList
+                Identifier "MutableMap" @ 129..139
+                TypeArgumentList
+                  Lt "<" @ 139..140
+                  TypeProjectionList
+                    TypeProjectionSeparatedList
+                      TypeArgument
+                        TypeProjection
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                Identifier "String" @ 140..146
+                      Comma "," @ 146..147 trailing=[Whitespace " "]
+                      TypeArgument
+                        TypeProjection
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                Identifier "Expression" @ 148..158
+                                TypeArgumentList
+                                  Lt "<" @ 158..159
+                                  TypeProjectionList
+                                    TypeProjectionSeparatedList
+                                      TypeArgument
+                                        TypeProjection
+                                          Star "*" @ 159..160
+                                  Gt ">" @ 160..161
+                  Gt ">" @ 161..162
+          Dot "." @ 162..163
+          Name
+            Identifier "entryCount" @ 163..173
+      Colon ":" @ 173..174 trailing=[Whitespace " "]
       TypeReference
         UserType
-          Identifier "MutableMap" @ 129..139
-          TypeArgumentList
-            Lt "<" @ 139..140
-            TypeProjectionList
-              TypeArgument
-                TypeProjection
-                  TypeReference
-                    UserType
-                      Identifier "String" @ 140..146
-              Comma "," @ 146..147 trailing=[Whitespace " "]
-              TypeArgument
-                TypeProjection
-                  TypeReference
-                    UserType
-                      Identifier "Expression" @ 148..158
-                      TypeArgumentList
-                        Lt "<" @ 158..159
-                        TypeProjectionList
-                          TypeArgument
-                            TypeProjection
-                              Star "*" @ 159..160
-                        Gt ">" @ 160..161
-            Gt ">" @ 161..162
-      Dot "." @ 162..163
-      Name
-        Identifier "entryCount" @ 163..173
-    Colon ":" @ 173..174 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "Int" @ 175..178
-    PropertyAccessor
-      Identifier "get" @ 183..186 leading=[Newline "\n", Whitespace "    "]
-      ValueParameterList
-        LParen "(" @ 186..187
-        RParen ")" @ 187..188 trailing=[Whitespace " "]
-      Assign "=" @ 189..190 trailing=[Whitespace " "]
-      NameExpression
-        Identifier "size" @ 191..195
+          UserTypeSegmentList
+            Identifier "Int" @ 175..178
+      PropertyBodyMemberList
+        PropertyAccessor
+          ModifierListSequence
+          Identifier "get" @ 183..186 leading=[Newline "\n", Whitespace "    "]
+          ValueParameterList
+            LParen "(" @ 186..187
+            ValueParameterSeparatedList
+            RParen ")" @ 187..188 trailing=[Whitespace " "]
+          Assign "=" @ 189..190 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "size" @ 191..195
   Eof "" @ 196..196 leading=[Newline "\n"]
 
 diagnostics:

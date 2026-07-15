@@ -8,13 +8,19 @@ data object EndOfStream
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  ObjectDeclaration
-    ModifierList
-      Identifier "data" @ 0..4 trailing=[Whitespace " "]
-    ObjectKw "object" @ 5..11 trailing=[Whitespace " "]
-    Name
-      Identifier "EndOfStream" @ 12..23
+    ImportDirectiveList
+  KotlinFileItemList
+    ObjectDeclaration
+      ModifierListSequence
+        ModifierList
+          ModifierItemList
+            Identifier "data" @ 0..4 trailing=[Whitespace " "]
+      ModifierListSequence
+      ObjectKw "object" @ 5..11 trailing=[Whitespace " "]
+      Name
+        Identifier "EndOfStream" @ 12..23
   Eof "" @ 24..24 leading=[Newline "\n"]
 
 diagnostics:

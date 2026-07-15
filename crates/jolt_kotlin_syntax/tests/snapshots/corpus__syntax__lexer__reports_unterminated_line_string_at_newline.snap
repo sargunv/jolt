@@ -9,24 +9,29 @@ val x = 1
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  Statement
-    ExpressionStatement
-      StringTemplateExpression
-        StringTemplateEntry
-          OpenQuote "\"" @ 0..1
-        StringTemplateEntry
-          RegularStringPart "abc" @ 1..4
-        StringTemplateEntry
-          DanglingNewline "" @ 4..4
-        StringTemplateEntry
-          ValKw "val" @ 5..8 leading=[Newline "\n"] trailing=[Whitespace " "]
-        StringTemplateEntry
-          Identifier "x" @ 9..10 trailing=[Whitespace " "]
-        StringTemplateEntry
-          Assign "=" @ 11..12 trailing=[Whitespace " "]
-        StringTemplateEntry
-          IntegerLiteral "1" @ 13..14
+    ImportDirectiveList
+  KotlinFileItemList
+    Statement
+      ExpressionStatement
+        StringTemplateExpression
+          StringTemplateEntryList
+            StringTemplateEntry
+              OpenQuote "\"" @ 0..1
+            StringTemplateEntry
+              RegularStringPart "abc" @ 1..4
+            StringTemplateEntry
+              DanglingNewline "" @ 4..4
+            StringTemplateEntry
+              ValKw "val" @ 5..8 leading=[Newline "\n"] trailing=[Whitespace " "]
+            StringTemplateEntry
+              Identifier "x" @ 9..10 trailing=[Whitespace " "]
+            StringTemplateEntry
+              Assign "=" @ 11..12 trailing=[Whitespace " "]
+            StringTemplateEntry
+              IntegerLiteral "1" @ 13..14
+      TerminatorList
   Eof "" @ 15..15 leading=[Newline "\n"]
 
 diagnostics:

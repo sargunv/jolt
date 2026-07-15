@@ -12,69 +12,87 @@ class TypeProjections(
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Name
-      Identifier "TypeProjections" @ 6..21
-    PrimaryConstructor
-      ValueParameterList
-        LParen "(" @ 21..22
-        ValueParameter
-          ValKw "val" @ 27..30 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Name
-            Identifier "input" @ 31..36
-          Colon ":" @ 36..37 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "List" @ 38..42
-              TypeArgumentList
-                Lt "<" @ 42..43
-                TypeProjectionList
-                  TypeArgument
-                    TypeProjection
-                      Identifier "out" @ 43..46 trailing=[Whitespace " "]
-                      TypeReference
-                        UserType
-                          Identifier "Number" @ 47..53
-                Gt ">" @ 53..54
-        Comma "," @ 54..55
-        ValueParameter
-          ValKw "val" @ 60..63 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Name
-            Identifier "output" @ 64..70
-          Colon ":" @ 70..71 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "MutableList" @ 72..83
-              TypeArgumentList
-                Lt "<" @ 83..84
-                TypeProjectionList
-                  TypeArgument
-                    TypeProjection
-                      InKw "in" @ 84..86 trailing=[Whitespace " "]
-                      TypeReference
-                        UserType
-                          Identifier "Int" @ 87..90
-                Gt ">" @ 90..91
-        Comma "," @ 91..92
-        ValueParameter
-          ValKw "val" @ 97..100 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Name
-            Identifier "unknown" @ 101..108
-          Colon ":" @ 108..109 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "List" @ 110..114
-              TypeArgumentList
-                Lt "<" @ 114..115
-                TypeProjectionList
-                  TypeArgument
-                    TypeProjection
-                      Star "*" @ 115..116
-                Gt ">" @ 116..117
-        Comma "," @ 117..118
-        RParen ")" @ 119..120 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "TypeProjections" @ 6..21
+      PrimaryConstructor
+        ModifierListSequence
+        ValueParameterList
+          LParen "(" @ 21..22
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierListSequence
+              ValKw "val" @ 27..30 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "input" @ 31..36
+              Colon ":" @ 36..37 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "List" @ 38..42
+                    TypeArgumentList
+                      Lt "<" @ 42..43
+                      TypeProjectionList
+                        TypeProjectionSeparatedList
+                          TypeArgument
+                            TypeProjection
+                              Identifier "out" @ 43..46 trailing=[Whitespace " "]
+                              TypeReference
+                                UserType
+                                  UserTypeSegmentList
+                                    Identifier "Number" @ 47..53
+                      Gt ">" @ 53..54
+            Comma "," @ 54..55
+            ValueParameter
+              ModifierListSequence
+              ValKw "val" @ 60..63 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "output" @ 64..70
+              Colon ":" @ 70..71 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "MutableList" @ 72..83
+                    TypeArgumentList
+                      Lt "<" @ 83..84
+                      TypeProjectionList
+                        TypeProjectionSeparatedList
+                          TypeArgument
+                            TypeProjection
+                              InKw "in" @ 84..86 trailing=[Whitespace " "]
+                              TypeReference
+                                UserType
+                                  UserTypeSegmentList
+                                    Identifier "Int" @ 87..90
+                      Gt ">" @ 90..91
+            Comma "," @ 91..92
+            ValueParameter
+              ModifierListSequence
+              ValKw "val" @ 97..100 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "unknown" @ 101..108
+              Colon ":" @ 108..109 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "List" @ 110..114
+                    TypeArgumentList
+                      Lt "<" @ 114..115
+                      TypeProjectionList
+                        TypeProjectionSeparatedList
+                          TypeArgument
+                            TypeProjection
+                              Star "*" @ 115..116
+                      Gt ">" @ 116..117
+            Comma "," @ 117..118
+          RParen ")" @ 119..120 leading=[Newline "\n"]
   Eof "" @ 121..121 leading=[Newline "\n"]
 
 diagnostics:

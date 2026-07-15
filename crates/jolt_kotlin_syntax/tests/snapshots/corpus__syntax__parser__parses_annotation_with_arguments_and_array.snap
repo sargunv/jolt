@@ -14,91 +14,115 @@ annotation class Route(
 syntax:
 syntax:
 KotlinFile
-  Annotation
-    At "@" @ 0..1
-    QualifiedName
-      Name
-        Identifier "Route" @ 1..6
-    AnnotationArgumentList
-      LParen "(" @ 6..7
-      ValueArgument
-        AssignmentExpression
-          NameExpression
-            Identifier "path" @ 7..11 trailing=[Whitespace " "]
-          Assign "=" @ 12..13 trailing=[Whitespace " "]
-          StringTemplateExpression
-            StringTemplateEntry
-              OpenQuote "\"" @ 14..15
-            StringTemplateEntry
-              RegularStringPart "/items" @ 15..21
-            ClosingQuote "\"" @ 21..22
-      Comma "," @ 22..23 trailing=[Whitespace " "]
-      ValueArgument
-        AssignmentExpression
-          NameExpression
-            Identifier "methods" @ 24..31 trailing=[Whitespace " "]
-          Assign "=" @ 32..33 trailing=[Whitespace " "]
-          CollectionLiteralExpression
-            LBracket "[" @ 34..35
-            ValueArgument
-              StringTemplateExpression
+  AnnotationList
+    Annotation
+      At "@" @ 0..1
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "Route" @ 1..6
+      AnnotationArgumentList
+        LParen "(" @ 6..7
+        ValueArgumentSeparatedList
+          ValueArgument
+            ValueArgumentPrefixList
+            Name
+              Identifier "path" @ 7..11 trailing=[Whitespace " "]
+            Assign "=" @ 12..13 trailing=[Whitespace " "]
+            StringTemplateExpression
+              StringTemplateEntryList
                 StringTemplateEntry
-                  OpenQuote "\"" @ 35..36
+                  OpenQuote "\"" @ 14..15
                 StringTemplateEntry
-                  RegularStringPart "GET" @ 36..39
-                ClosingQuote "\"" @ 39..40
-            Comma "," @ 40..41 trailing=[Whitespace " "]
-            ValueArgument
-              StringTemplateExpression
-                StringTemplateEntry
-                  OpenQuote "\"" @ 42..43
-                StringTemplateEntry
-                  RegularStringPart "POST" @ 43..47
-                ClosingQuote "\"" @ 47..48
-            RBracket "]" @ 48..49
-      RParen ")" @ 49..50
+                  RegularStringPart "/items" @ 15..21
+              ClosingQuote "\"" @ 21..22
+          Comma "," @ 22..23 trailing=[Whitespace " "]
+          ValueArgument
+            ValueArgumentPrefixList
+            Name
+              Identifier "methods" @ 24..31 trailing=[Whitespace " "]
+            Assign "=" @ 32..33 trailing=[Whitespace " "]
+            CollectionLiteralExpression
+              LBracket "[" @ 34..35
+              ValueArgumentSeparatedList
+                ValueArgument
+                  ValueArgumentPrefixList
+                  StringTemplateExpression
+                    StringTemplateEntryList
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 35..36
+                      StringTemplateEntry
+                        RegularStringPart "GET" @ 36..39
+                    ClosingQuote "\"" @ 39..40
+                Comma "," @ 40..41 trailing=[Whitespace " "]
+                ValueArgument
+                  ValueArgumentPrefixList
+                  StringTemplateExpression
+                    StringTemplateEntryList
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 42..43
+                      StringTemplateEntry
+                        RegularStringPart "POST" @ 43..47
+                    ClosingQuote "\"" @ 47..48
+              RBracket "]" @ 48..49
+        RParen ")" @ 49..50
   ImportList
-  ClassDeclaration
-    ClassKw "class" @ 51..56 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "AnnotatedRoute" @ 57..71
-  ClassDeclaration
-    ModifierList
-      Identifier "annotation" @ 73..83 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    ClassKw "class" @ 84..89 trailing=[Whitespace " "]
-    Name
-      Identifier "Route" @ 90..95
-    PrimaryConstructor
-      ValueParameterList
-        LParen "(" @ 95..96
-        ValueParameter
-          ValKw "val" @ 101..104 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Name
-            Identifier "path" @ 105..109
-          Colon ":" @ 109..110 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 111..117
-        Comma "," @ 117..118
-        ValueParameter
-          ValKw "val" @ 123..126 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Name
-            Identifier "methods" @ 127..134
-          Colon ":" @ 134..135 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Array" @ 136..141
-              TypeArgumentList
-                Lt "<" @ 141..142
-                TypeProjectionList
-                  TypeArgument
-                    TypeProjection
-                      TypeReference
-                        UserType
-                          Identifier "String" @ 142..148
-                Gt ">" @ 148..149
-        Comma "," @ 149..150
-        RParen ")" @ 151..152 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 51..56 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "AnnotatedRoute" @ 57..71
+    ClassDeclaration
+      ModifierListSequence
+        ModifierList
+          ModifierItemList
+            Identifier "annotation" @ 73..83 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierListSequence
+      ClassKw "class" @ 84..89 trailing=[Whitespace " "]
+      Name
+        Identifier "Route" @ 90..95
+      PrimaryConstructor
+        ModifierListSequence
+        ValueParameterList
+          LParen "(" @ 95..96
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierListSequence
+              ValKw "val" @ 101..104 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "path" @ 105..109
+              Colon ":" @ 109..110 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 111..117
+            Comma "," @ 117..118
+            ValueParameter
+              ModifierListSequence
+              ValKw "val" @ 123..126 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "methods" @ 127..134
+              Colon ":" @ 134..135 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Array" @ 136..141
+                    TypeArgumentList
+                      Lt "<" @ 141..142
+                      TypeProjectionList
+                        TypeProjectionSeparatedList
+                          TypeArgument
+                            TypeProjection
+                              TypeReference
+                                UserType
+                                  UserTypeSegmentList
+                                    Identifier "String" @ 142..148
+                      Gt ">" @ 148..149
+            Comma "," @ 149..150
+          RParen ")" @ 151..152 leading=[Newline "\n"]
   Eof "" @ 153..153 leading=[Newline "\n"]
 
 diagnostics:

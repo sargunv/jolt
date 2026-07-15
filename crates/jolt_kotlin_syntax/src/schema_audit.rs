@@ -3,16 +3,14 @@ use jolt_test_support::{
     kotlin_fixture_root, read_to_string,
 };
 
-use crate::{parse_kotlin_file, shape::SCHEMA};
+use crate::{KotlinSyntaxView, parse_kotlin_file, shape::SCHEMA};
 
 #[test]
 fn declared_schema_matches_represented_corpus() {
     assert_schema_deterministic(&SCHEMA);
     let root = kotlin_fixture_root(env!("CARGO_MANIFEST_DIR"));
     let paths = collect_kotlin_files(&root);
-    // Kotlin keeps its Phase 7 raw child representation until its typed syntax
-    // conversion. Constructed and list fields are therefore audited inline.
-    let mut audit = SchemaAudit::new_raw("kotlin");
+    let mut audit = SchemaAudit::new("kotlin");
 
     for path in paths {
         let source = read_to_string(&path);
@@ -23,7 +21,9 @@ fn declared_schema_matches_represented_corpus() {
         audit.visit(
             &SCHEMA,
             &fixture_snapshot_name(&root, &path),
-            *syntax.syntax(),
+            syntax
+                .syntax_node()
+                .expect("typed Kotlin root must have a physical syntax node"),
             !parse.diagnostics().is_empty(),
         );
     }

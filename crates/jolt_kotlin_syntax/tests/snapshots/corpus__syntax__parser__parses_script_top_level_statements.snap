@@ -14,75 +14,102 @@ if (scriptName.isNotEmpty()) {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  PropertyDeclaration
-    ValKw "val" @ 23..26 leading=[ShebangComment "#!/usr/bin/env kotlin", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "scriptName" @ 27..37 trailing=[Whitespace " "]
-    Assign "=" @ 38..39 trailing=[Whitespace " "]
-    StringTemplateExpression
-      StringTemplateEntry
-        OpenQuote "\"" @ 40..41
-      StringTemplateEntry
-        RegularStringPart "jolt" @ 41..45
-      ClosingQuote "\"" @ 45..46
-  Statement
-    ExpressionStatement
-      CallExpression
-        NameExpression
-          Identifier "println" @ 47..54 leading=[Newline "\n"]
-        ValueArgumentList
-          LParen "(" @ 54..55
-          ValueArgument
-            StringTemplateExpression
-              StringTemplateEntry
-                OpenQuote "\"" @ 55..56
-              StringTemplateEntry
-                RegularStringPart "running " @ 56..64
-              StringTemplateEntry
-                ShortTemplateEntryStart "$" @ 64..65
-              StringTemplateEntry
-                Identifier "scriptName" @ 65..75
-              ClosingQuote "\"" @ 75..76
-          RParen ")" @ 76..77
-  Statement
-    ExpressionStatement
-      IfExpression
-        IfKw "if" @ 78..80 leading=[Newline "\n"] trailing=[Whitespace " "]
-        ParenthesizedExpression
-          LParen "(" @ 81..82
-          CallExpression
-            NavigationExpression
-              NameExpression
-                Identifier "scriptName" @ 82..92
-              Dot "." @ 92..93
-              Identifier "isNotEmpty" @ 93..103
-            ValueArgumentList
-              LParen "(" @ 103..104
-              RParen ")" @ 104..105
-          RParen ")" @ 105..106 trailing=[Whitespace " "]
-        LambdaExpression
-          LBrace "{" @ 107..108
-          Statement
-            ExpressionStatement
-              CallExpression
+    ImportDirectiveList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 23..26 leading=[ShebangComment "#!/usr/bin/env kotlin", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "scriptName" @ 27..37 trailing=[Whitespace " "]
+      Assign "=" @ 38..39 trailing=[Whitespace " "]
+      StringTemplateExpression
+        StringTemplateEntryList
+          StringTemplateEntry
+            OpenQuote "\"" @ 40..41
+          StringTemplateEntry
+            RegularStringPart "jolt" @ 41..45
+        ClosingQuote "\"" @ 45..46
+      PropertyBodyMemberList
+    Statement
+      ExpressionStatement
+        CallExpression
+          NameExpression
+            Identifier "println" @ 47..54 leading=[Newline "\n"]
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 54..55
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 55..56
+                    StringTemplateEntry
+                      RegularStringPart "running " @ 56..64
+                    StringTemplateEntry
+                      ShortTemplateEntryStart "$" @ 64..65
+                    StringTemplateEntry
+                      Identifier "scriptName" @ 65..75
+                  ClosingQuote "\"" @ 75..76
+            RParen ")" @ 76..77
+          LambdaExpressionList
+      TerminatorList
+    Statement
+      ExpressionStatement
+        IfExpression
+          IfKw "if" @ 78..80 leading=[Newline "\n"] trailing=[Whitespace " "]
+          ParenthesizedExpression
+            LParen "(" @ 81..82
+            CallExpression
+              NavigationExpression
                 NameExpression
-                  Identifier "println" @ 113..120 leading=[Newline "\n", Whitespace "    "]
-                ValueArgumentList
-                  LParen "(" @ 120..121
-                  ValueArgument
-                    CallExpression
-                      NavigationExpression
-                        NameExpression
-                          Identifier "scriptName" @ 121..131
-                        Dot "." @ 131..132
-                        Identifier "uppercase" @ 132..141
-                      ValueArgumentList
-                        LParen "(" @ 141..142
-                        RParen ")" @ 142..143
-                  RParen ")" @ 143..144
-          RBrace "}" @ 145..146 leading=[Newline "\n"]
+                  Identifier "scriptName" @ 82..92
+                Dot "." @ 92..93
+                Identifier "isNotEmpty" @ 93..103
+              TypeArgumentListList
+              ValueArgumentList
+                LParen "(" @ 103..104
+                ValueArgumentEntryList
+                RParen ")" @ 104..105
+              LambdaExpressionList
+            RParen ")" @ 105..106 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 107..108
+            BlockItemList
+              Statement
+                ExpressionStatement
+                  CallExpression
+                    NameExpression
+                      Identifier "println" @ 113..120 leading=[Newline "\n", Whitespace "    "]
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 120..121
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          CallExpression
+                            NavigationExpression
+                              NameExpression
+                                Identifier "scriptName" @ 121..131
+                              Dot "." @ 131..132
+                              Identifier "uppercase" @ 132..141
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 141..142
+                              ValueArgumentEntryList
+                              RParen ")" @ 142..143
+                            LambdaExpressionList
+                      RParen ")" @ 143..144
+                    LambdaExpressionList
+                TerminatorList
+            RBrace "}" @ 145..146 leading=[Newline "\n"]
+      TerminatorList
   Eof "" @ 147..147 leading=[Newline "\n"]
 
 diagnostics:

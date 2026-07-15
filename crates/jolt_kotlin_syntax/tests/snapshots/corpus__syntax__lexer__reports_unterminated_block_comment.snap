@@ -8,15 +8,22 @@ val x = 1 /* nope
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  PropertyDeclaration
-    ValKw "val" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "x" @ 4..5 trailing=[Whitespace " "]
-    Assign "=" @ 6..7 trailing=[Whitespace " "]
-    LiteralExpression
-      IntegerLiteral "1" @ 8..9 trailing=[Whitespace " "]
+    ImportDirectiveList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "x" @ 4..5 trailing=[Whitespace " "]
+      Assign "=" @ 6..7 trailing=[Whitespace " "]
+      LiteralExpression
+        IntegerLiteral "1" @ 8..9 trailing=[Whitespace " "]
+      PropertyBodyMemberList
   Eof "" @ 18..18 leading=[BlockComment "/* nope\n"]
 
 diagnostics:

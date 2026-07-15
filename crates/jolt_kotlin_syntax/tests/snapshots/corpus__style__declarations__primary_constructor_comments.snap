@@ -15,44 +15,57 @@ class Account(
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "declarations" @ 20..32
+      QualifiedNameSegmentList
+        Name
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "declarations" @ 20..32
+    TerminatorList
   ImportList
-  ClassDeclaration
-    ClassKw "class" @ 34..39 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Account" @ 40..47
-    PrimaryConstructor
-      ValueParameterList
-        LParen "(" @ 47..48
-        ValueParameter
-          ValKw "val" @ 92..95 leading=[Newline "\n", Whitespace "    ", LineComment "// Stable identifier from storage.", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Name
-            Identifier "id" @ 96..98
-          Colon ":" @ 98..99 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 100..106
-        Comma "," @ 106..107
-        ValueParameter
-          VarKw "var" @ 142..145 leading=[Newline "\n", Whitespace "    ", BlockComment "/* Displayed to users. */", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Name
-            Identifier "label" @ 146..151
-          Colon ":" @ 151..152 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 153..159
-        Comma "," @ 159..160
-        RParen ")" @ 161..162 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 34..39 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Account" @ 40..47
+      PrimaryConstructor
+        ModifierListSequence
+        ValueParameterList
+          LParen "(" @ 47..48
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierListSequence
+              ValKw "val" @ 92..95 leading=[Newline "\n", Whitespace "    ", LineComment "// Stable identifier from storage.", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "id" @ 96..98
+              Colon ":" @ 98..99 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 100..106
+            Comma "," @ 106..107
+            ValueParameter
+              ModifierListSequence
+              VarKw "var" @ 142..145 leading=[Newline "\n", Whitespace "    ", BlockComment "/* Displayed to users. */", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "label" @ 146..151
+              Colon ":" @ 151..152 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 153..159
+            Comma "," @ 159..160
+          RParen ")" @ 161..162 leading=[Newline "\n"]
   Eof "" @ 163..163 leading=[Newline "\n"]
 
 diagnostics:

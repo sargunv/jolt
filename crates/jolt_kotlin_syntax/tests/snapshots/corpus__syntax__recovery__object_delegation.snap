@@ -8,31 +8,42 @@ val value = object : First, /* orphan */ , Second {}
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  PropertyDeclaration
-    ValKw "val" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "value" @ 4..9 trailing=[Whitespace " "]
-    Assign "=" @ 10..11 trailing=[Whitespace " "]
-    BinaryExpression
-      ObjectExpression
-        ObjectKw "object" @ 12..18 trailing=[Whitespace " "]
-        Colon ":" @ 19..20 trailing=[Whitespace " "]
-        DelegationSpecifierList
-          DelegationSpecifier
-            TypeReference
-              UserType
-                Identifier "First" @ 21..26
-          Comma "," @ 26..27 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
-          DelegationSpecifier
-            TypeReference
-              ErrorNode
-          Comma "," @ 41..42 trailing=[Whitespace " "]
-      Identifier "Second" @ 43..49 trailing=[Whitespace " "]
-      LambdaExpression
-        LBrace "{" @ 50..51
-        RBrace "}" @ 51..52
+    ImportDirectiveList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "value" @ 4..9 trailing=[Whitespace " "]
+      Assign "=" @ 10..11 trailing=[Whitespace " "]
+      BinaryExpression
+        ObjectExpression
+          ObjectKw "object" @ 12..18 trailing=[Whitespace " "]
+          Colon ":" @ 19..20 trailing=[Whitespace " "]
+          DelegationSpecifierList
+            DelegationSpecifierSeparatedList
+              DelegationSpecifier
+                TypeReference
+                  UserType
+                    UserTypeSegmentList
+                      Identifier "First" @ 21..26
+              Comma "," @ 26..27 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
+              DelegationSpecifier
+                TypeReference
+                  ErrorNode
+              Comma "," @ 41..42 trailing=[Whitespace " "]
+        Identifier "Second" @ 43..49 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 50..51
+            LambdaBodyItemList
+            RBrace "}" @ 51..52
+      PropertyBodyMemberList
   Eof "" @ 53..53 leading=[Newline "\n"]
 
 diagnostics:

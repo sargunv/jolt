@@ -459,9 +459,9 @@ macro_rules! kotlin_syntax_schema {
                     binding: required (node_set [CallableName, Name, DestructuringDeclaration]);
                     type_colon: optional (token Colon);
                     r#type: optional (node TypeReference);
+                    constraints: optional (node TypeConstraintList);
                     initializer_operator: optional (choice [(token Assign), (contextual "by")]);
                     initializer: optional (category Expression);
-                    constraints: optional (node TypeConstraintList);
                     body_members: required (list PropertyBodyMemberList);
                 }
                 PropertyAccessor => PropertyAccessor [property_accessor valid] {
@@ -686,9 +686,9 @@ macro_rules! kotlin_syntax_schema {
                 IfExpression => IfExpression [if_expression valid] {
                     if_token: required (token IfKw);
                     condition: required (node ParenthesizedExpression);
-                    then_branch: required (category Expression);
+                    then_branch: required (choice [(category Expression), (node Block)]);
                     else_token: optional (token ElseKw);
-                    else_branch: optional (category Expression);
+                    else_branch: optional (choice [(category Expression), (node Block)]);
                 }
                 WhenExpression => WhenExpression [when_expression valid] {
                     when_token: required (token WhenKw);
@@ -969,7 +969,7 @@ macro_rules! kotlin_syntax_schema {
                     entries: many (node_set [Annotation, ModifierList]);
                 }
                 WhenEntryList => WhenEntryList [when_entry_list list] {
-                    entries: many (node WhenEntry);
+                    entries: many (choice [(node WhenEntry), (token_set [EolOrSemicolon, Semicolon, DoubleSemicolon])]);
                 }
                 WhenConditionSeparatedList => WhenConditionSeparatedList [when_condition_separated_list list] {
                     conditions: many (node WhenCondition) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];

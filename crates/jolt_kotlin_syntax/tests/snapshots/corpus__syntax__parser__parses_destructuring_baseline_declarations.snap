@@ -14,155 +14,197 @@ fun destructuring(pair: Pair<String, Int>, entries: List<Pair<String, Int>>) {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "destructuring" @ 4..17
-    ValueParameterList
-      LParen "(" @ 17..18
-      ValueParameter
-        Name
-          Identifier "pair" @ 18..22
-        Colon ":" @ 22..23 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Pair" @ 24..28
-            TypeArgumentList
-              Lt "<" @ 28..29
-              TypeProjectionList
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "String" @ 29..35
-                Comma "," @ 35..36 trailing=[Whitespace " "]
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "Int" @ 37..40
-              Gt ">" @ 40..41
-      Comma "," @ 41..42 trailing=[Whitespace " "]
-      ValueParameter
-        Name
-          Identifier "entries" @ 43..50
-        Colon ":" @ 50..51 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "List" @ 52..56
-            TypeArgumentList
-              Lt "<" @ 56..57
-              TypeProjectionList
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "Pair" @ 57..61
-                        TypeArgumentList
-                          Lt "<" @ 61..62
-                          TypeProjectionList
-                            TypeArgument
-                              TypeProjection
-                                TypeReference
-                                  UserType
-                                    Identifier "String" @ 62..68
-                            Comma "," @ 68..69 trailing=[Whitespace " "]
-                            TypeArgument
-                              TypeProjection
-                                TypeReference
-                                  UserType
-                                    Identifier "Int" @ 70..73
-                          Gt ">" @ 73..74
-              Gt ">" @ 74..75
-      RParen ")" @ 75..76 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 77..78
-      PropertyDeclaration
-        ValKw "val" @ 83..86 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        DestructuringDeclaration
-          LParen "(" @ 87..88
-          DestructuringEntry
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "destructuring" @ 4..17
+      ValueParameterList
+        LParen "(" @ 17..18
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
             Name
-              Identifier "name" @ 88..92
-          Comma "," @ 92..93 trailing=[Whitespace " "]
-          DestructuringEntry
+              Identifier "pair" @ 18..22
+            Colon ":" @ 22..23 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Pair" @ 24..28
+                  TypeArgumentList
+                    Lt "<" @ 28..29
+                    TypeProjectionList
+                      TypeProjectionSeparatedList
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "String" @ 29..35
+                        Comma "," @ 35..36 trailing=[Whitespace " "]
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "Int" @ 37..40
+                    Gt ">" @ 40..41
+          Comma "," @ 41..42 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierListSequence
             Name
-              Identifier "count" @ 94..99
-          RParen ")" @ 99..100 trailing=[Whitespace " "]
-        Assign "=" @ 101..102 trailing=[Whitespace " "]
-        NameExpression
-          Identifier "pair" @ 103..107
-      PropertyDeclaration
-        VarKw "var" @ 112..115 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        DestructuringDeclaration
-          LParen "(" @ 116..117
-          DestructuringEntry
-            Name
-              Identifier "mutableName" @ 117..128
-          Comma "," @ 128..129 trailing=[Whitespace " "]
-          DestructuringEntry
-            Name
-              Identifier "mutableCount" @ 130..142
-          RParen ")" @ 142..143 trailing=[Whitespace " "]
-        Assign "=" @ 144..145 trailing=[Whitespace " "]
-        NameExpression
-          Identifier "pair" @ 146..150
-      Statement
-        ExpressionStatement
-          ForStatement
-            ForKw "for" @ 155..158 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            LParen "(" @ 159..160
+              Identifier "entries" @ 43..50
+            Colon ":" @ 50..51 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "List" @ 52..56
+                  TypeArgumentList
+                    Lt "<" @ 56..57
+                    TypeProjectionList
+                      TypeProjectionSeparatedList
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "Pair" @ 57..61
+                                  TypeArgumentList
+                                    Lt "<" @ 61..62
+                                    TypeProjectionList
+                                      TypeProjectionSeparatedList
+                                        TypeArgument
+                                          TypeProjection
+                                            TypeReference
+                                              UserType
+                                                UserTypeSegmentList
+                                                  Identifier "String" @ 62..68
+                                        Comma "," @ 68..69 trailing=[Whitespace " "]
+                                        TypeArgument
+                                          TypeProjection
+                                            TypeReference
+                                              UserType
+                                                UserTypeSegmentList
+                                                  Identifier "Int" @ 70..73
+                                    Gt ">" @ 73..74
+                    Gt ">" @ 74..75
+        RParen ")" @ 75..76 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 77..78
+        BlockItemList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 83..86 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             DestructuringDeclaration
-              LParen "(" @ 160..161
-              DestructuringEntry
-                Name
-                  Identifier "key" @ 161..164
-              Comma "," @ 164..165 trailing=[Whitespace " "]
-              DestructuringEntry
-                Name
-                  Identifier "value" @ 166..171
-              RParen ")" @ 171..172 trailing=[Whitespace " "]
-            InKw "in" @ 173..175 trailing=[Whitespace " "]
+              LParen "(" @ 87..88
+              DestructuringEntrySeparatedList
+                DestructuringEntry
+                  Name
+                    Identifier "name" @ 88..92
+                Comma "," @ 92..93 trailing=[Whitespace " "]
+                DestructuringEntry
+                  Name
+                    Identifier "count" @ 94..99
+              RParen ")" @ 99..100 trailing=[Whitespace " "]
+            Assign "=" @ 101..102 trailing=[Whitespace " "]
             NameExpression
-              Identifier "entries" @ 176..183
-            RParen ")" @ 183..184 trailing=[Whitespace " "]
-            Block
-              LBrace "{" @ 185..186
-              Statement
-                ExpressionStatement
-                  CallExpression
-                    NameExpression
-                      Identifier "consume" @ 195..202 leading=[Newline "\n", Whitespace "        "]
-                    ValueArgumentList
-                      LParen "(" @ 202..203
-                      ValueArgument
-                        NameExpression
-                          Identifier "key" @ 203..206
-                      Comma "," @ 206..207 trailing=[Whitespace " "]
-                      ValueArgument
-                        NameExpression
-                          Identifier "value" @ 208..213
-                      Comma "," @ 213..214 trailing=[Whitespace " "]
-                      ValueArgument
-                        NameExpression
-                          Identifier "name" @ 215..219
-                      Comma "," @ 219..220 trailing=[Whitespace " "]
-                      ValueArgument
-                        NameExpression
-                          Identifier "count" @ 221..226
-                      Comma "," @ 226..227 trailing=[Whitespace " "]
-                      ValueArgument
-                        NameExpression
-                          Identifier "mutableName" @ 228..239
-                      Comma "," @ 239..240 trailing=[Whitespace " "]
-                      ValueArgument
-                        NameExpression
-                          Identifier "mutableCount" @ 241..253
-                      RParen ")" @ 253..254
-              RBrace "}" @ 259..260 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 261..262 leading=[Newline "\n"]
+              Identifier "pair" @ 103..107
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            VarKw "var" @ 112..115 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            DestructuringDeclaration
+              LParen "(" @ 116..117
+              DestructuringEntrySeparatedList
+                DestructuringEntry
+                  Name
+                    Identifier "mutableName" @ 117..128
+                Comma "," @ 128..129 trailing=[Whitespace " "]
+                DestructuringEntry
+                  Name
+                    Identifier "mutableCount" @ 130..142
+              RParen ")" @ 142..143 trailing=[Whitespace " "]
+            Assign "=" @ 144..145 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "pair" @ 146..150
+            PropertyBodyMemberList
+          Statement
+            ExpressionStatement
+              ForStatement
+                ForKw "for" @ 155..158 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                LParen "(" @ 159..160
+                DestructuringDeclaration
+                  LParen "(" @ 160..161
+                  DestructuringEntrySeparatedList
+                    DestructuringEntry
+                      Name
+                        Identifier "key" @ 161..164
+                    Comma "," @ 164..165 trailing=[Whitespace " "]
+                    DestructuringEntry
+                      Name
+                        Identifier "value" @ 166..171
+                  RParen ")" @ 171..172 trailing=[Whitespace " "]
+                InKw "in" @ 173..175 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "entries" @ 176..183
+                RParen ")" @ 183..184 trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 185..186
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "consume" @ 195..202 leading=[Newline "\n", Whitespace "        "]
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 202..203
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "key" @ 203..206
+                              Comma "," @ 206..207 trailing=[Whitespace " "]
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "value" @ 208..213
+                              Comma "," @ 213..214 trailing=[Whitespace " "]
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "name" @ 215..219
+                              Comma "," @ 219..220 trailing=[Whitespace " "]
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "count" @ 221..226
+                              Comma "," @ 226..227 trailing=[Whitespace " "]
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "mutableName" @ 228..239
+                              Comma "," @ 239..240 trailing=[Whitespace " "]
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "mutableCount" @ 241..253
+                            RParen ")" @ 253..254
+                          LambdaExpressionList
+                      TerminatorList
+                  RBrace "}" @ 259..260 leading=[Newline "\n", Whitespace "    "]
+            TerminatorList
+        RBrace "}" @ 261..262 leading=[Newline "\n"]
   Eof "" @ 263..263 leading=[Newline "\n"]
 
 diagnostics:

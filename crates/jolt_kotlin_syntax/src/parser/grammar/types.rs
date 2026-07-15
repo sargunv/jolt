@@ -56,14 +56,18 @@ impl Parser<'_> {
                     ty = self.complete(nullable, K::NullableType);
                 }
                 K::Amp => {
-                    let definitely_non_nullable = self.precede(ty);
+                    let form = self.precede(ty);
                     self.bump();
                     self.parse_type_atom(stops, stop_position);
+                    let form = self.complete(form, K::IntersectionDefinitelyNonNullableType);
+                    let definitely_non_nullable = self.precede(form);
                     ty = self.complete(definitely_non_nullable, K::DefinitelyNonNullableType);
                 }
                 K::BangBang => {
-                    let definitely_non_nullable = self.precede(ty);
+                    let form = self.precede(ty);
                     self.bump();
+                    let form = self.complete(form, K::BangDefinitelyNonNullableType);
+                    let definitely_non_nullable = self.precede(form);
                     ty = self.complete(definitely_non_nullable, K::DefinitelyNonNullableType);
                 }
                 K::Dot if self.nth_kind(1) == K::LParen => {
@@ -73,9 +77,11 @@ impl Parser<'_> {
                     ty = self.complete(receiver, K::ReceiverType);
                 }
                 K::Arrow => {
-                    let function = self.precede(ty);
+                    let form = self.precede(ty);
                     self.bump();
                     self.parse_type_until(stops, stop_position);
+                    let form = self.complete(form, K::ArrowFunctionType);
+                    let function = self.precede(form);
                     ty = self.complete(function, K::FunctionType);
                 }
                 _ => break,
@@ -87,31 +93,39 @@ impl Parser<'_> {
 
     fn parse_type_atom(&mut self, stops: &[K], stop_position: Option<usize>) -> CompletedMarker {
         let marker = self.start();
+        let prefix = self.start();
         self.parse_type_prefix_annotations();
 
         match self.current_kind() {
             _ if self.at_soft_keyword("suspend") => {
+                self.abandon(prefix);
+                let form = self.start();
                 self.bump();
                 self.parse_type_until(stops, stop_position);
+                self.complete(form, K::SuspendedFunctionType);
                 self.complete(marker, K::FunctionType)
             }
             _ if self.at_soft_keyword("context") && self.nth_kind(1) == K::LParen => {
+                self.abandon(prefix);
                 self.bump();
-                self.parse_parenthesized_type_contents();
+                self.parse_parenthesized_type_contents(K::FunctionTypeParameterSeparatedList);
                 if !self.at_type_stop(stops, stop_position) && !self.at_eof() {
                     self.parse_type_until(stops, stop_position);
                 }
                 self.complete(marker, K::ContextFunctionType)
             }
             K::LParen => {
-                self.parse_parenthesized_type_contents();
+                self.complete(prefix, K::AnnotationList);
+                self.parse_parenthesized_type_contents(K::ParenthesizedTypeEntryList);
                 self.complete(marker, K::ParenthesizedType)
             }
             kind if self.at_identifier_like() || is_literal_kind(kind) => {
                 self.parse_user_type_tail(stop_position);
+                self.complete(prefix, K::UserTypeSegmentList);
                 self.complete(marker, K::UserType)
             }
             _ => {
+                self.abandon(prefix);
                 self.expected_here("expected type");
                 if !self.at_type_stop(stops, stop_position) && !self.at_eof() {
                     self.bump();
@@ -176,16 +190,26 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_parenthesized_type_contents(&mut self) {
+    fn parse_parenthesized_type_contents(&mut self, entries_kind: K) {
         self.expect(K::LParen, "expected '(' in type");
+        let entries = self.start();
+        let mut expect_parameter = true;
         while !matches!(self.current_kind(), K::RParen | K::Eof) {
             let before = self.position();
             if self.eat(K::Comma) {
+                if expect_parameter && !matches!(self.current_kind(), K::RParen | K::Eof) {
+                    self.unexpected_here("expected function type parameter between commas");
+                    let error = self.start();
+                    self.complete(error, K::ErrorNode);
+                }
+                expect_parameter = true;
                 continue;
             }
             self.parse_function_type_parameter();
+            expect_parameter = false;
             self.ensure_progress(before, "expected type");
         }
+        self.complete(entries, entries_kind);
         self.expect(K::RParen, "expected ')' in type");
     }
 
@@ -218,6 +242,7 @@ impl Parser<'_> {
         let marker = self.start();
         self.expect(K::Lt, "expected type argument list");
         let projections = self.start();
+        let entries = self.start();
         let mut expect_argument = true;
         while !matches!(self.current_kind(), K::Gt | K::Eof) {
             let before = self.position();
@@ -248,6 +273,7 @@ impl Parser<'_> {
             expect_argument = false;
             self.ensure_progress(before, "expected type argument");
         }
+        self.complete(entries, K::TypeProjectionSeparatedList);
         self.complete(projections, K::TypeProjectionList);
         self.expect(K::Gt, "expected '>' after type arguments");
         self.complete(marker, K::TypeArgumentList);

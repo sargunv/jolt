@@ -14,83 +14,106 @@ annotation class Marker
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Name
-      Identifier "UseSiteTargets" @ 6..20
-    PrimaryConstructor
-      ValueParameterList
-        LParen "(" @ 20..21
-        ValueParameter
-          ModifierList
-            Annotation
-              At "@" @ 26..27 leading=[Newline "\n", Whitespace "    "]
-              AnnotationUseSiteTarget
-                Identifier "param" @ 27..32
-                Colon ":" @ 32..33
-              QualifiedName
-                Name
-                  Identifier "Marker" @ 33..39 trailing=[Whitespace " "]
-          ValKw "val" @ 40..43 trailing=[Whitespace " "]
-          Name
-            Identifier "id" @ 44..46
-          Colon ":" @ 46..47 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 48..54
-        Comma "," @ 54..55
-        ValueParameter
-          ModifierList
-            Annotation
-              At "@" @ 60..61 leading=[Newline "\n", Whitespace "    "]
-              AnnotationUseSiteTarget
-                Identifier "field" @ 61..66
-                Colon ":" @ 66..67
-              QualifiedName
-                Name
-                  Identifier "Marker" @ 67..73 trailing=[Whitespace " "]
-            Annotation
-              At "@" @ 74..75
-              AnnotationUseSiteTarget
-                Identifier "get" @ 75..78
-                Colon ":" @ 78..79
-              QualifiedName
-                Name
-                  Identifier "Marker" @ 79..85 trailing=[Whitespace " "]
-          ValKw "val" @ 86..89 trailing=[Whitespace " "]
-          Name
-            Identifier "name" @ 90..94
-          Colon ":" @ 94..95 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "String" @ 96..102
-        Comma "," @ 102..103
-        ValueParameter
-          ModifierList
-            Annotation
-              At "@" @ 108..109 leading=[Newline "\n", Whitespace "    "]
-              AnnotationUseSiteTarget
-                Identifier "property" @ 109..117
-                Colon ":" @ 117..118
-              QualifiedName
-                Name
-                  Identifier "Marker" @ 118..124 trailing=[Whitespace " "]
-          VarKw "var" @ 125..128 trailing=[Whitespace " "]
-          Name
-            Identifier "enabled" @ 129..136
-          Colon ":" @ 136..137 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Boolean" @ 138..145
-        Comma "," @ 145..146
-        RParen ")" @ 147..148 leading=[Newline "\n"]
-  ClassDeclaration
-    ModifierList
-      Identifier "annotation" @ 150..160 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    ClassKw "class" @ 161..166 trailing=[Whitespace " "]
-    Name
-      Identifier "Marker" @ 167..173
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "UseSiteTargets" @ 6..20
+      PrimaryConstructor
+        ModifierListSequence
+        ValueParameterList
+          LParen "(" @ 20..21
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Annotation
+                      At "@" @ 26..27 leading=[Newline "\n", Whitespace "    "]
+                      AnnotationUseSiteTarget
+                        Identifier "param" @ 27..32
+                        Colon ":" @ 32..33
+                      QualifiedName
+                        QualifiedNameSegmentList
+                          Name
+                            Identifier "Marker" @ 33..39 trailing=[Whitespace " "]
+              ValKw "val" @ 40..43 trailing=[Whitespace " "]
+              Name
+                Identifier "id" @ 44..46
+              Colon ":" @ 46..47 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 48..54
+            Comma "," @ 54..55
+            ValueParameter
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Annotation
+                      At "@" @ 60..61 leading=[Newline "\n", Whitespace "    "]
+                      AnnotationUseSiteTarget
+                        Identifier "field" @ 61..66
+                        Colon ":" @ 66..67
+                      QualifiedName
+                        QualifiedNameSegmentList
+                          Name
+                            Identifier "Marker" @ 67..73 trailing=[Whitespace " "]
+                    Annotation
+                      At "@" @ 74..75
+                      AnnotationUseSiteTarget
+                        Identifier "get" @ 75..78
+                        Colon ":" @ 78..79
+                      QualifiedName
+                        QualifiedNameSegmentList
+                          Name
+                            Identifier "Marker" @ 79..85 trailing=[Whitespace " "]
+              ValKw "val" @ 86..89 trailing=[Whitespace " "]
+              Name
+                Identifier "name" @ 90..94
+              Colon ":" @ 94..95 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 96..102
+            Comma "," @ 102..103
+            ValueParameter
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Annotation
+                      At "@" @ 108..109 leading=[Newline "\n", Whitespace "    "]
+                      AnnotationUseSiteTarget
+                        Identifier "property" @ 109..117
+                        Colon ":" @ 117..118
+                      QualifiedName
+                        QualifiedNameSegmentList
+                          Name
+                            Identifier "Marker" @ 118..124 trailing=[Whitespace " "]
+              VarKw "var" @ 125..128 trailing=[Whitespace " "]
+              Name
+                Identifier "enabled" @ 129..136
+              Colon ":" @ 136..137 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Boolean" @ 138..145
+            Comma "," @ 145..146
+          RParen ")" @ 147..148 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierListSequence
+        ModifierList
+          ModifierItemList
+            Identifier "annotation" @ 150..160 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierListSequence
+      ClassKw "class" @ 161..166 trailing=[Whitespace " "]
+      Name
+        Identifier "Marker" @ 167..173
   Eof "" @ 174..174 leading=[Newline "\n"]
 
 diagnostics:

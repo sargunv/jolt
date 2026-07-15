@@ -7,7 +7,7 @@ fun demo() { call<First, /* orphan */ , Second>() }
 
 formatted:
 fun demo() {
-  call<First, /* orphan */ ,  Second>()
+  call<First, /* orphan */ ,   Second>()
 }
 
 diagnostics:

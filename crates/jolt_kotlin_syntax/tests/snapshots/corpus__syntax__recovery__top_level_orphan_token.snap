@@ -9,19 +9,27 @@ fun topLevelOrphanToken() = Unit
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "topLevelOrphanToken" @ 4..23
-    ValueParameterList
-      LParen "(" @ 23..24
-      RParen ")" @ 24..25 trailing=[Whitespace " "]
-    Assign "=" @ 26..27 trailing=[Whitespace " "]
-    NameExpression
-      Identifier "Unit" @ 28..32
-  RBrace "}" @ 33..34 leading=[Newline "\n"]
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "topLevelOrphanToken" @ 4..23
+      ValueParameterList
+        LParen "(" @ 23..24
+        ValueParameterSeparatedList
+        RParen ")" @ 24..25 trailing=[Whitespace " "]
+      Assign "=" @ 26..27 trailing=[Whitespace " "]
+      NameExpression
+        Identifier "Unit" @ 28..32
+    RBrace "}" @ 33..34 leading=[Newline "\n"]
   Eof "" @ 35..35 leading=[Newline "\n"]
 
 diagnostics:

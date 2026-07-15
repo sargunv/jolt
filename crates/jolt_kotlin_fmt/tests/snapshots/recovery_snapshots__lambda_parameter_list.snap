@@ -7,8 +7,8 @@ fun demo() { { first, /* orphan */ , second -> first } }
 
 formatted:
 fun demo() {
-  { first, /* orphan */ , second -> first }
+  { first, /* orphan */ ,   second -> first }
 }
 
 diagnostics:
-(none)
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(37), end: TextSize(43) }) message=expected lambda parameter between commas

@@ -9,7 +9,10 @@ input:
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
+    ImportDirectiveList
+  KotlinFileItemList
   Eof "" @ 78..78 leading=[LineComment "// Copyright 2026 Example", Newline "\n", LineComment "// A comment-only Kotlin file with a final newline.", Newline "\n"]
 
 diagnostics:

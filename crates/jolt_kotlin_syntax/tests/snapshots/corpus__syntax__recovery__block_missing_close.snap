@@ -8,25 +8,38 @@ fun demo() { val answer = 42
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "demo" @ 4..8
-    ValueParameterList
-      LParen "(" @ 8..9
-      RParen ")" @ 9..10 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 11..12 trailing=[Whitespace " "]
-      PropertyDeclaration
-        ValKw "val" @ 13..16 trailing=[Whitespace " "]
-        CallableName
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
           Name
-            Identifier "answer" @ 17..23 trailing=[Whitespace " "]
-        Assign "=" @ 24..25 trailing=[Whitespace " "]
-        LiteralExpression
-          IntegerLiteral "42" @ 26..28
+            Identifier "demo" @ 4..8
+      ValueParameterList
+        LParen "(" @ 8..9
+        ValueParameterSeparatedList
+        RParen ")" @ 9..10 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 11..12 trailing=[Whitespace " "]
+        BlockItemList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 13..16 trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "answer" @ 17..23 trailing=[Whitespace " "]
+            Assign "=" @ 24..25 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "42" @ 26..28
+            PropertyBodyMemberList
   Eof "" @ 29..29 leading=[Newline "\n"]
 
 diagnostics:

@@ -8,32 +8,38 @@ $$"""raw $amount $$name $${expr}"""
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  Statement
-    ExpressionStatement
-      StringTemplateExpression
-        StringTemplateEntry
-          InterpolationPrefix "$$" @ 0..2
-        StringTemplateEntry
-          OpenQuote "\"\"\"" @ 2..5
-        StringTemplateEntry
-          RegularStringPart "raw " @ 5..9
-        StringTemplateEntry
-          RegularStringPart "$" @ 9..10
-        StringTemplateEntry
-          RegularStringPart "amount " @ 10..17
-        StringTemplateEntry
-          ShortTemplateEntryStart "$$" @ 17..19
-        StringTemplateEntry
-          Identifier "name" @ 19..23
-        StringTemplateEntry
-          RegularStringPart " " @ 23..24
-        StringTemplateEntry
-          LongTemplateEntryStart "$${" @ 24..27
-          NameExpression
-            Identifier "expr" @ 27..31
-          LongTemplateEntryEnd "}" @ 31..32
-        ClosingQuote "\"\"\"" @ 32..35
+    ImportDirectiveList
+  KotlinFileItemList
+    Statement
+      ExpressionStatement
+        StringTemplateExpression
+          StringTemplateEntryList
+            StringTemplateEntry
+              InterpolationPrefix "$$" @ 0..2
+            StringTemplateEntry
+              OpenQuote "\"\"\"" @ 2..5
+            StringTemplateEntry
+              RegularStringPart "raw " @ 5..9
+            StringTemplateEntry
+              RegularStringPart "$" @ 9..10
+            StringTemplateEntry
+              RegularStringPart "amount " @ 10..17
+            StringTemplateEntry
+              ShortTemplateEntryStart "$$" @ 17..19
+            StringTemplateEntry
+              Identifier "name" @ 19..23
+            StringTemplateEntry
+              RegularStringPart " " @ 23..24
+            StringTemplateEntry
+              LongStringTemplateEntry
+                LongTemplateEntryStart "$${" @ 24..27
+                NameExpression
+                  Identifier "expr" @ 27..31
+                LongTemplateEntryEnd "}" @ 31..32
+          ClosingQuote "\"\"\"" @ 32..35
+      TerminatorList
   Eof "" @ 36..36 leading=[Newline "\n"]
 
 diagnostics:

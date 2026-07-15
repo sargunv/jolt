@@ -18,106 +18,142 @@ fun parseOrZero(text: String): Int {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "statements" @ 20..30
-  ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "parseOrZero" @ 36..47
-    ValueParameterList
-      LParen "(" @ 47..48
-      ValueParameter
+      QualifiedNameSegmentList
         Name
-          Identifier "text" @ 48..52
-        Colon ":" @ 52..53 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "String" @ 54..60
-      RParen ")" @ 60..61
-    Colon ":" @ 61..62 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "Int" @ 63..66 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 67..68
-      Statement
-        ExpressionStatement
-          JumpExpression
-            ReturnKw "return" @ 73..79 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            TryExpression
-              TryKw "try" @ 80..83 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 84..85
-                Statement
-                  ExpressionStatement
-                    CallExpression
-                      NavigationExpression
-                        CallExpression
-                          NavigationExpression
-                            NameExpression
-                              Identifier "text" @ 94..98 leading=[Newline "\n", Whitespace "        "]
-                            Dot "." @ 98..99
-                            Identifier "trim" @ 99..103
-                          ValueArgumentList
-                            LParen "(" @ 103..104
-                            RParen ")" @ 104..105
-                        Dot "." @ 105..106
-                        Identifier "toInt" @ 106..111
-                      ValueArgumentList
-                        LParen "(" @ 111..112
-                        RParen ")" @ 112..113
-                RBrace "}" @ 118..119 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              CatchClause
-                Identifier "catch" @ 120..125 trailing=[Whitespace " "]
-                ValueParameterList
-                  LParen "(" @ 126..127
-                  ValueParameter
-                    Name
-                      Identifier "error" @ 127..132
-                    Colon ":" @ 132..133 trailing=[Whitespace " "]
-                    TypeReference
-                      UserType
-                        Identifier "NumberFormatException" @ 134..155
-                  RParen ")" @ 155..156 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 157..158
-                  Statement
-                    ExpressionStatement
-                      LiteralExpression
-                        IntegerLiteral "0" @ 167..168 leading=[Newline "\n", Whitespace "        "]
-                  RBrace "}" @ 173..174 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              FinallyClause
-                Identifier "finally" @ 175..182 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 183..184
-                  Statement
-                    ExpressionStatement
-                      CallExpression
-                        NameExpression
-                          Identifier "println" @ 193..200 leading=[Newline "\n", Whitespace "        "]
-                        ValueArgumentList
-                          LParen "(" @ 200..201
-                          ValueArgument
-                            StringTemplateExpression
-                              StringTemplateEntry
-                                OpenQuote "\"" @ 201..202
-                              StringTemplateEntry
-                                RegularStringPart "parsed" @ 202..208
-                              ClosingQuote "\"" @ 208..209
-                          RParen ")" @ 209..210
-                  RBrace "}" @ 215..216 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 217..218 leading=[Newline "\n"]
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "statements" @ 20..30
+    TerminatorList
+  ImportList
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "parseOrZero" @ 36..47
+      ValueParameterList
+        LParen "(" @ 47..48
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "text" @ 48..52
+            Colon ":" @ 52..53 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "String" @ 54..60
+        RParen ")" @ 60..61
+      Colon ":" @ 61..62 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "Int" @ 63..66 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 67..68
+        BlockItemList
+          Statement
+            ExpressionStatement
+              JumpExpression
+                ReturnKw "return" @ 73..79 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                TryExpression
+                  TryKw "try" @ 80..83 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 84..85
+                    BlockItemList
+                      Statement
+                        ExpressionStatement
+                          CallExpression
+                            NavigationExpression
+                              CallExpression
+                                NavigationExpression
+                                  NameExpression
+                                    Identifier "text" @ 94..98 leading=[Newline "\n", Whitespace "        "]
+                                  Dot "." @ 98..99
+                                  Identifier "trim" @ 99..103
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 103..104
+                                  ValueArgumentEntryList
+                                  RParen ")" @ 104..105
+                                LambdaExpressionList
+                              Dot "." @ 105..106
+                              Identifier "toInt" @ 106..111
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 111..112
+                              ValueArgumentEntryList
+                              RParen ")" @ 112..113
+                            LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 118..119 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  CatchClauseList
+                    CatchClause
+                      Identifier "catch" @ 120..125 trailing=[Whitespace " "]
+                      ValueParameterList
+                        LParen "(" @ 126..127
+                        ValueParameterSeparatedList
+                          ValueParameter
+                            ModifierListSequence
+                            Name
+                              Identifier "error" @ 127..132
+                            Colon ":" @ 132..133 trailing=[Whitespace " "]
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "NumberFormatException" @ 134..155
+                        RParen ")" @ 155..156 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 157..158
+                        BlockItemList
+                          Statement
+                            ExpressionStatement
+                              LiteralExpression
+                                IntegerLiteral "0" @ 167..168 leading=[Newline "\n", Whitespace "        "]
+                            TerminatorList
+                        RBrace "}" @ 173..174 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  FinallyClause
+                    Identifier "finally" @ 175..182 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 183..184
+                      BlockItemList
+                        Statement
+                          ExpressionStatement
+                            CallExpression
+                              NameExpression
+                                Identifier "println" @ 193..200 leading=[Newline "\n", Whitespace "        "]
+                              TypeArgumentListList
+                              ValueArgumentList
+                                LParen "(" @ 200..201
+                                ValueArgumentEntryList
+                                  ValueArgument
+                                    ValueArgumentPrefixList
+                                    StringTemplateExpression
+                                      StringTemplateEntryList
+                                        StringTemplateEntry
+                                          OpenQuote "\"" @ 201..202
+                                        StringTemplateEntry
+                                          RegularStringPart "parsed" @ 202..208
+                                      ClosingQuote "\"" @ 208..209
+                                RParen ")" @ 209..210
+                              LambdaExpressionList
+                          TerminatorList
+                      RBrace "}" @ 215..216 leading=[Newline "\n", Whitespace "    "]
+            TerminatorList
+        RBrace "}" @ 217..218 leading=[Newline "\n"]
   Eof "" @ 219..219 leading=[Newline "\n"]
 
 diagnostics:

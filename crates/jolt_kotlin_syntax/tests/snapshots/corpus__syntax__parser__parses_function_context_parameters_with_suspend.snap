@@ -35,320 +35,428 @@ class UserId
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    ContextParameterClause
-      Identifier "context" @ 0..7
-      LParen "(" @ 7..8
-      ContextParameter
-        Name
-          Identifier "logger" @ 8..14
-        Colon ":" @ 14..15 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Logger" @ 16..22
-      RParen ")" @ 22..23
-    ModifierList
-      Identifier "suspend" @ 24..31 leading=[Newline "\n"] trailing=[Whitespace " "]
-      Identifier "inline" @ 32..38 trailing=[Whitespace " "]
-    FunKw "fun" @ 39..42 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "logLater" @ 43..51
-    ValueParameterList
-      LParen "(" @ 51..52
-      ValueParameter
-        Name
-          Identifier "message" @ 52..59
-        Colon ":" @ 59..60 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "String" @ 61..67
-      RParen ")" @ 67..68 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 69..70
-      Statement
-        ExpressionStatement
-          CallExpression
-            NavigationExpression
-              NameExpression
-                Identifier "logger" @ 75..81 leading=[Newline "\n", Whitespace "    "]
-              Dot "." @ 81..82
-              Identifier "write" @ 82..87
-            ValueArgumentList
-              LParen "(" @ 87..88
-              ValueArgument
-                NameExpression
-                  Identifier "message" @ 88..95
-              RParen ")" @ 95..96
-      RBrace "}" @ 97..98 leading=[Newline "\n"]
-  FunctionDeclaration
-    ModifierList
-      Annotation
-        At "@" @ 100..101 leading=[Newline "\n", Newline "\n"]
-        QualifiedName
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ContextParameterClause
+        Identifier "context" @ 0..7
+        LParen "(" @ 7..8
+        ContextParameterSeparatedList
+          ContextParameter
+            Name
+              Identifier "logger" @ 8..14
+            Colon ":" @ 14..15 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Logger" @ 16..22
+        RParen ")" @ 22..23
+      ModifierListSequence
+        ModifierList
+          ModifierItemList
+            Identifier "suspend" @ 24..31 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "inline" @ 32..38 trailing=[Whitespace " "]
+      FunKw "fun" @ 39..42 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
           Name
-            Identifier "PublishedApi" @ 101..113
-      Identifier "internal" @ 114..122 leading=[Newline "\n"]
-    ContextParameterClause
-      Identifier "context" @ 123..130 leading=[Newline "\n"]
-      LParen "(" @ 130..131
-      ContextParameter
-        Name
-          Identifier "logger" @ 131..137
-        Colon ":" @ 137..138 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Logger" @ 139..145
-      RParen ")" @ 145..146
-    ModifierList
-      Identifier "tailrec" @ 147..154 leading=[Newline "\n"] trailing=[Whitespace " "]
-      Identifier "suspend" @ 155..162 trailing=[Whitespace " "]
-    FunKw "fun" @ 163..166 trailing=[Whitespace " "]
-    TypeParameterList
-      Lt "<" @ 167..168
-      TypeParameter
-        Name
-          Identifier "T" @ 168..169 trailing=[Whitespace " "]
-        Colon ":" @ 170..171 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "CharSequence" @ 172..184
-      Gt ">" @ 184..185 trailing=[Whitespace " "]
-    CallableName
+            Identifier "logLater" @ 43..51
+      ValueParameterList
+        LParen "(" @ 51..52
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "message" @ 52..59
+            Colon ":" @ 59..60 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "String" @ 61..67
+        RParen ")" @ 67..68 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 69..70
+        BlockItemList
+          Statement
+            ExpressionStatement
+              CallExpression
+                NavigationExpression
+                  NameExpression
+                    Identifier "logger" @ 75..81 leading=[Newline "\n", Whitespace "    "]
+                  Dot "." @ 81..82
+                  Identifier "write" @ 82..87
+                TypeArgumentListList
+                ValueArgumentList
+                  LParen "(" @ 87..88
+                  ValueArgumentEntryList
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      NameExpression
+                        Identifier "message" @ 88..95
+                  RParen ")" @ 95..96
+                LambdaExpressionList
+            TerminatorList
+        RBrace "}" @ 97..98 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierListSequence
+        ModifierList
+          ModifierItemList
+            Annotation
+              At "@" @ 100..101 leading=[Newline "\n", Newline "\n"]
+              QualifiedName
+                QualifiedNameSegmentList
+                  Name
+                    Identifier "PublishedApi" @ 101..113
+            Identifier "internal" @ 114..122 leading=[Newline "\n"]
+      ContextParameterClause
+        Identifier "context" @ 123..130 leading=[Newline "\n"]
+        LParen "(" @ 130..131
+        ContextParameterSeparatedList
+          ContextParameter
+            Name
+              Identifier "logger" @ 131..137
+            Colon ":" @ 137..138 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Logger" @ 139..145
+        RParen ")" @ 145..146
+      ModifierListSequence
+        ModifierList
+          ModifierItemList
+            Identifier "tailrec" @ 147..154 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "suspend" @ 155..162 trailing=[Whitespace " "]
+      FunKw "fun" @ 163..166 trailing=[Whitespace " "]
+      TypeParameterList
+        Lt "<" @ 167..168
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierListSequence
+            Name
+              Identifier "T" @ 168..169 trailing=[Whitespace " "]
+            Colon ":" @ 170..171 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "CharSequence" @ 172..184
+        Gt ">" @ 184..185 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          TypeReference
+            UserType
+              UserTypeSegmentList
+                Identifier "Repository" @ 186..196
+                TypeArgumentList
+                  Lt "<" @ 196..197
+                  TypeProjectionList
+                    TypeProjectionSeparatedList
+                      TypeArgument
+                        TypeProjection
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                Identifier "UserId" @ 197..203
+                  Gt ">" @ 203..204
+          Dot "." @ 204..205
+          Name
+            Identifier "loadLater" @ 205..214
+      ValueParameterList
+        LParen "(" @ 214..215
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "id" @ 215..217
+            Colon ":" @ 217..218 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "UserId" @ 219..225
+        RParen ")" @ 225..226
+      Colon ":" @ 226..227 trailing=[Whitespace " "]
       TypeReference
         UserType
-          Identifier "Repository" @ 186..196
-          TypeArgumentList
-            Lt "<" @ 196..197
-            TypeProjectionList
-              TypeArgument
-                TypeProjection
-                  TypeReference
-                    UserType
-                      Identifier "UserId" @ 197..203
-            Gt ">" @ 203..204
-      Dot "." @ 204..205
+          UserTypeSegmentList
+            Identifier "T" @ 228..229
+      TypeConstraintList
+        Identifier "where" @ 234..239 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        TypeConstraintSeparatedList
+          TypeConstraint
+            Name
+              Identifier "T" @ 240..241 trailing=[Whitespace " "]
+            Colon ":" @ 242..243 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Comparable" @ 244..254
+                  TypeArgumentList
+                    Lt "<" @ 254..255
+                    TypeProjectionList
+                      TypeProjectionSeparatedList
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "T" @ 255..256
+                    Gt ">" @ 256..257 trailing=[Whitespace " "]
+      Assign "=" @ 258..259 trailing=[Whitespace " "]
+      CallExpression
+        NameExpression
+          Identifier "fetch" @ 260..265
+        TypeArgumentListList
+        ValueArgumentList
+          LParen "(" @ 265..266
+          ValueArgumentEntryList
+            ValueArgument
+              ValueArgumentPrefixList
+              NameExpression
+                Identifier "id" @ 266..268
+          RParen ")" @ 268..269
+        LambdaExpressionList
+    FunctionDeclaration
+      ModifierListSequence
+      ContextParameterClause
+        Identifier "context" @ 271..278 leading=[Newline "\n", Newline "\n"]
+        LParen "(" @ 278..279
+        ContextParameterSeparatedList
+          ContextParameter
+            Name
+              Identifier "left" @ 279..283
+            Colon ":" @ 283..284 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Counter" @ 285..292
+        RParen ")" @ 292..293
+      ModifierListSequence
+        ModifierList
+          ModifierItemList
+            Identifier "operator" @ 294..302 leading=[Newline "\n"] trailing=[Whitespace " "]
+      FunKw "fun" @ 303..306 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          TypeReference
+            UserType
+              UserTypeSegmentList
+                Identifier "Counter" @ 307..314
+          Dot "." @ 314..315
+          Name
+            Identifier "plus" @ 315..319
+      ValueParameterList
+        LParen "(" @ 319..320
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "right" @ 320..325
+            Colon ":" @ 325..326 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Counter" @ 327..334
+        RParen ")" @ 334..335
+      Colon ":" @ 335..336 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "Counter" @ 337..344 trailing=[Whitespace " "]
+      Assign "=" @ 345..346 trailing=[Whitespace " "]
+      CallExpression
+        NameExpression
+          Identifier "Counter" @ 347..354
+        TypeArgumentListList
+        ValueArgumentList
+          LParen "(" @ 354..355
+          ValueArgumentEntryList
+            ValueArgument
+              ValueArgumentPrefixList
+              BinaryExpression
+                NameExpression
+                  Identifier "value" @ 355..360 trailing=[Whitespace " "]
+                Plus "+" @ 361..362 trailing=[Whitespace " "]
+                NavigationExpression
+                  NameExpression
+                    Identifier "right" @ 363..368
+                  Dot "." @ 368..369
+                  Identifier "value" @ 369..374
+          RParen ")" @ 374..375
+        LambdaExpressionList
+    FunctionDeclaration
+      ModifierListSequence
+      ContextParameterClause
+        Identifier "context" @ 377..384 leading=[Newline "\n", Newline "\n"]
+        LParen "(" @ 384..385
+        ContextParameterSeparatedList
+          ContextParameter
+            Name
+              Identifier "logger" @ 385..391
+            Colon ":" @ 391..392 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Logger" @ 393..399
+        RParen ")" @ 399..400
+      ModifierListSequence
+        ModifierList
+          ModifierItemList
+            Identifier "infix" @ 401..406 leading=[Newline "\n"] trailing=[Whitespace " "]
+      FunKw "fun" @ 407..410 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          TypeReference
+            UserType
+              UserTypeSegmentList
+                Identifier "Logger" @ 411..417
+          Dot "." @ 417..418
+          Name
+            Identifier "then" @ 418..422
+      ValueParameterList
+        LParen "(" @ 422..423
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "message" @ 423..430
+            Colon ":" @ 430..431 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "String" @ 432..438
+        RParen ")" @ 438..439
+      Colon ":" @ 439..440 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "Logger" @ 441..447 trailing=[Whitespace " "]
+      Assign "=" @ 448..449 trailing=[Whitespace " "]
+      ThisExpression
+        ThisKw "this" @ 450..454
+    InterfaceDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      InterfaceKw "interface" @ 456..465 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
-        Identifier "loadLater" @ 205..214
-    ValueParameterList
-      LParen "(" @ 214..215
-      ValueParameter
-        Name
-          Identifier "id" @ 215..217
-        Colon ":" @ 217..218 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "UserId" @ 219..225
-      RParen ")" @ 225..226
-    Colon ":" @ 226..227 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "T" @ 228..229
-    TypeConstraintList
-      Identifier "where" @ 234..239 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-      TypeConstraint
-        Name
-          Identifier "T" @ 240..241 trailing=[Whitespace " "]
-        Colon ":" @ 242..243 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Comparable" @ 244..254
-            TypeArgumentList
-              Lt "<" @ 254..255
-              TypeProjectionList
-                TypeArgument
-                  TypeProjection
+        Identifier "Logger" @ 466..472 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 473..474
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              FunKw "fun" @ 479..482 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "write" @ 483..488
+              ValueParameterList
+                LParen "(" @ 488..489
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierListSequence
+                    Name
+                      Identifier "message" @ 489..496
+                    Colon ":" @ 496..497 trailing=[Whitespace " "]
                     TypeReference
                       UserType
-                        Identifier "T" @ 255..256
-              Gt ">" @ 256..257 trailing=[Whitespace " "]
-    Assign "=" @ 258..259 trailing=[Whitespace " "]
-    CallExpression
-      NameExpression
-        Identifier "fetch" @ 260..265
-      ValueArgumentList
-        LParen "(" @ 265..266
-        ValueArgument
-          NameExpression
-            Identifier "id" @ 266..268
-        RParen ")" @ 268..269
-  FunctionDeclaration
-    ContextParameterClause
-      Identifier "context" @ 271..278 leading=[Newline "\n", Newline "\n"]
-      LParen "(" @ 278..279
-      ContextParameter
-        Name
-          Identifier "left" @ 279..283
-        Colon ":" @ 283..284 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Counter" @ 285..292
-      RParen ")" @ 292..293
-    ModifierList
-      Identifier "operator" @ 294..302 leading=[Newline "\n"] trailing=[Whitespace " "]
-    FunKw "fun" @ 303..306 trailing=[Whitespace " "]
-    CallableName
-      TypeReference
-        UserType
-          Identifier "Counter" @ 307..314
-      Dot "." @ 314..315
+                        UserTypeSegmentList
+                          Identifier "String" @ 498..504
+                RParen ")" @ 504..505
+        RBrace "}" @ 506..507 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 509..514 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
-        Identifier "plus" @ 315..319
-    ValueParameterList
-      LParen "(" @ 319..320
-      ValueParameter
-        Name
-          Identifier "right" @ 320..325
-        Colon ":" @ 325..326 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Counter" @ 327..334
-      RParen ")" @ 334..335
-    Colon ":" @ 335..336 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "Counter" @ 337..344 trailing=[Whitespace " "]
-    Assign "=" @ 345..346 trailing=[Whitespace " "]
-    CallExpression
-      NameExpression
-        Identifier "Counter" @ 347..354
-      ValueArgumentList
-        LParen "(" @ 354..355
-        ValueArgument
-          BinaryExpression
-            NameExpression
-              Identifier "value" @ 355..360 trailing=[Whitespace " "]
-            Plus "+" @ 361..362 trailing=[Whitespace " "]
-            NavigationExpression
-              NameExpression
-                Identifier "right" @ 363..368
-              Dot "." @ 368..369
-              Identifier "value" @ 369..374
-        RParen ")" @ 374..375
-  FunctionDeclaration
-    ContextParameterClause
-      Identifier "context" @ 377..384 leading=[Newline "\n", Newline "\n"]
-      LParen "(" @ 384..385
-      ContextParameter
-        Name
-          Identifier "logger" @ 385..391
-        Colon ":" @ 391..392 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Logger" @ 393..399
-      RParen ")" @ 399..400
-    ModifierList
-      Identifier "infix" @ 401..406 leading=[Newline "\n"] trailing=[Whitespace " "]
-    FunKw "fun" @ 407..410 trailing=[Whitespace " "]
-    CallableName
-      TypeReference
-        UserType
-          Identifier "Logger" @ 411..417
-      Dot "." @ 417..418
-      Name
-        Identifier "then" @ 418..422
-    ValueParameterList
-      LParen "(" @ 422..423
-      ValueParameter
-        Name
-          Identifier "message" @ 423..430
-        Colon ":" @ 430..431 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "String" @ 432..438
-      RParen ")" @ 438..439
-    Colon ":" @ 439..440 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "Logger" @ 441..447 trailing=[Whitespace " "]
-    Assign "=" @ 448..449 trailing=[Whitespace " "]
-    ThisExpression
-      ThisKw "this" @ 450..454
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 456..465 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Logger" @ 466..472 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 473..474
-      ClassMemberDeclaration
-        FunctionDeclaration
-          FunKw "fun" @ 479..482 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "write" @ 483..488
-          ValueParameterList
-            LParen "(" @ 488..489
+        Identifier "Counter" @ 515..522
+      PrimaryConstructor
+        ModifierListSequence
+        ValueParameterList
+          LParen "(" @ 522..523
+          ValueParameterSeparatedList
             ValueParameter
+              ModifierListSequence
+              ValKw "val" @ 523..526 trailing=[Whitespace " "]
               Name
-                Identifier "message" @ 489..496
-              Colon ":" @ 496..497 trailing=[Whitespace " "]
+                Identifier "value" @ 527..532
+              Colon ":" @ 532..533 trailing=[Whitespace " "]
               TypeReference
                 UserType
-                  Identifier "String" @ 498..504
-            RParen ")" @ 504..505
-      RBrace "}" @ 506..507 leading=[Newline "\n"]
-  ClassDeclaration
-    ClassKw "class" @ 509..514 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Counter" @ 515..522
-    PrimaryConstructor
-      ValueParameterList
-        LParen "(" @ 522..523
-        ValueParameter
-          ValKw "val" @ 523..526 trailing=[Whitespace " "]
-          Name
-            Identifier "value" @ 527..532
-          Colon ":" @ 532..533 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "Int" @ 534..537
-        RParen ")" @ 537..538
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 540..549 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Repository" @ 550..560
-    TypeParameterList
-      Lt "<" @ 560..561
-      TypeParameter
-        Name
-          Identifier "K" @ 561..562
-      Gt ">" @ 562..563 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 564..565
-      ClassMemberDeclaration
-        FunctionDeclaration
-          ModifierList
-            Identifier "suspend" @ 570..577 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          FunKw "fun" @ 578..581 trailing=[Whitespace " "]
-          TypeParameterList
-            Lt "<" @ 582..583
-            TypeParameter
-              Name
-                Identifier "T" @ 583..584
-            Gt ">" @ 584..585 trailing=[Whitespace " "]
-          CallableName
+                  UserTypeSegmentList
+                    Identifier "Int" @ 534..537
+          RParen ")" @ 537..538
+    InterfaceDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      InterfaceKw "interface" @ 540..549 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Repository" @ 550..560
+      TypeParameterList
+        Lt "<" @ 560..561
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierListSequence
             Name
-              Identifier "fetch" @ 586..591
-          ValueParameterList
-            LParen "(" @ 591..592
-            ValueParameter
-              Name
-                Identifier "id" @ 592..594
-              Colon ":" @ 594..595 trailing=[Whitespace " "]
+              Identifier "K" @ 561..562
+        Gt ">" @ 562..563 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 564..565
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+                ModifierList
+                  ModifierItemList
+                    Identifier "suspend" @ 570..577 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              FunKw "fun" @ 578..581 trailing=[Whitespace " "]
+              TypeParameterList
+                Lt "<" @ 582..583
+                TypeParameterSeparatedList
+                  TypeParameter
+                    ModifierListSequence
+                    Name
+                      Identifier "T" @ 583..584
+                Gt ">" @ 584..585 trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "fetch" @ 586..591
+              ValueParameterList
+                LParen "(" @ 591..592
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierListSequence
+                    Name
+                      Identifier "id" @ 592..594
+                    Colon ":" @ 594..595 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          Identifier "K" @ 596..597
+                RParen ")" @ 597..598
+              Colon ":" @ 598..599 trailing=[Whitespace " "]
               TypeReference
                 UserType
-                  Identifier "K" @ 596..597
-            RParen ")" @ 597..598
-          Colon ":" @ 598..599 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "T" @ 600..601
-      RBrace "}" @ 602..603 leading=[Newline "\n"]
-  ClassDeclaration
-    ClassKw "class" @ 605..610 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "UserId" @ 611..617
+                  UserTypeSegmentList
+                    Identifier "T" @ 600..601
+        RBrace "}" @ 602..603 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 605..610 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "UserId" @ 611..617
   Eof "" @ 618..618 leading=[Newline "\n"]
 
 diagnostics:

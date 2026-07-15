@@ -10,39 +10,52 @@ val value = 1 }
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Name
-      Identifier "Demo" @ 6..10 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 11..12 trailing=[Whitespace " "]
-      ClassMemberDeclaration
-        FunctionDeclaration
-          FunKw "fun" @ 13..16 trailing=[Whitespace " "]
-          CallableName
-            Name
-              Identifier "ok" @ 17..19
-          ValueParameterList
-            LParen "(" @ 19..20
-            RParen ")" @ 20..21 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 22..23
-            RBrace "}" @ 23..24
-      ClassMemberDeclaration
-        Statement
-          ExpressionStatement
-            UnaryExpression
-              Plus "+" @ 38..39 leading=[Newline "\n", BlockComment "/* orphan */", Whitespace " "]
-              ErrorNode
-                ValKw "val" @ 40..43 leading=[Newline "\n"] trailing=[Whitespace " "]
-            ErrorNode
-              Identifier "value" @ 44..49 trailing=[Whitespace " "]
-            ErrorNode
-              Assign "=" @ 50..51 trailing=[Whitespace " "]
-            ErrorNode
-              IntegerLiteral "1" @ 52..53 trailing=[Whitespace " "]
-      RBrace "}" @ 54..55
+    ImportDirectiveList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "Demo" @ 6..10 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 11..12 trailing=[Whitespace " "]
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              FunKw "fun" @ 13..16 trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "ok" @ 17..19
+              ValueParameterList
+                LParen "(" @ 19..20
+                ValueParameterSeparatedList
+                RParen ")" @ 20..21 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 22..23
+                BlockItemList
+                RBrace "}" @ 23..24
+          ClassMemberDeclaration
+            Statement
+              ExpressionStatement
+                UnaryExpression
+                  Plus "+" @ 38..39 leading=[Newline "\n", BlockComment "/* orphan */", Whitespace " "]
+                  ErrorNode
+                    ValKw "val" @ 40..43 leading=[Newline "\n"] trailing=[Whitespace " "]
+                ErrorNode
+                  Identifier "value" @ 44..49 trailing=[Whitespace " "]
+                ErrorNode
+                  Assign "=" @ 50..51 trailing=[Whitespace " "]
+                ErrorNode
+                  IntegerLiteral "1" @ 52..53 trailing=[Whitespace " "]
+              TerminatorList
+        RBrace "}" @ 54..55
   Eof "" @ 56..56 leading=[Newline "\n"]
 
 diagnostics:

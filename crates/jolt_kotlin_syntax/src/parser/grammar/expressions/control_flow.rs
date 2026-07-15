@@ -2,35 +2,28 @@ use jolt_syntax::CompletedMarker;
 
 use crate::KotlinSyntaxKind as K;
 
-use super::super::Parser;
+use super::super::{Parser, StopSet};
 
 const MAX_ANONYMOUS_FUNCTION_RECEIVER_LOOKAHEAD: usize = 128;
 
 impl Parser<'_> {
-    pub(super) fn parse_if_expression(&mut self) -> CompletedMarker {
+    pub(super) fn parse_if_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
         let marker = self.start();
         self.expect(K::IfKw, "expected if");
         if self.at(K::LParen) {
             self.parse_parenthesized_expression();
         }
-        self.parse_expression_until(&[
-            K::ElseKw,
-            K::Semicolon,
-            K::DoubleSemicolon,
-            K::RBrace,
-            K::RParen,
-            K::Comma,
-            K::LongTemplateEntryEnd,
-        ]);
+        if self.at(K::LBrace) {
+            self.parse_block();
+        } else {
+            self.parse_expression_until(stops.with_extra(K::ElseKw));
+        }
         if self.eat(K::ElseKw) {
-            self.parse_expression_until(&[
-                K::Semicolon,
-                K::DoubleSemicolon,
-                K::RBrace,
-                K::RParen,
-                K::Comma,
-                K::LongTemplateEntryEnd,
-            ]);
+            if self.at(K::LBrace) {
+                self.parse_block();
+            } else {
+                self.parse_expression_until(stops);
+            }
         }
         self.complete(marker, K::IfExpression)
     }
@@ -43,12 +36,19 @@ impl Parser<'_> {
             self.parse_when_subject();
         }
         if self.eat(K::LBrace) {
+            let entries = self.start();
             while !matches!(self.current_kind(), K::RBrace | K::Eof) {
                 let before = self.position();
                 self.parse_when_entry(has_subject);
+                self.eat_semicolon_boundary();
                 self.ensure_progress(before, "expected when entry");
             }
+            self.complete(entries, K::WhenEntryList);
             self.expect(K::RBrace, "expected '}' after when");
+        } else {
+            self.expected_here("expected '{' after when subject");
+            let entries = self.start();
+            self.complete(entries, K::WhenEntryList);
         }
         self.complete(marker, K::WhenExpression)
     }
@@ -56,8 +56,11 @@ impl Parser<'_> {
     fn parse_when_entry(&mut self, has_subject: bool) {
         let marker = self.start();
         if self.eat(K::ElseKw) {
+            let conditions = self.start();
+            self.complete(conditions, K::WhenConditionSeparatedList);
             self.expect(K::Arrow, "expected '->' after else");
         } else {
+            let conditions = self.start();
             loop {
                 let condition = self.start();
                 self.parse_when_condition();
@@ -67,6 +70,7 @@ impl Parser<'_> {
                 }
                 break;
             }
+            self.complete(conditions, K::WhenConditionSeparatedList);
             if self.at(K::IfKw) {
                 let guard = self.start();
                 if !has_subject {
@@ -79,7 +83,6 @@ impl Parser<'_> {
             self.expect(K::Arrow, "expected '->' in when entry");
         }
         self.parse_expression_until(&[K::Semicolon, K::DoubleSemicolon, K::RBrace]);
-        self.eat_semicolon_boundary();
         self.complete(marker, K::WhenEntry);
     }
 
@@ -121,6 +124,7 @@ impl Parser<'_> {
         if self.at(K::LBrace) {
             self.parse_block();
         }
+        let catches = self.start();
         while self.at_soft_keyword("catch") {
             let catch = self.start();
             self.bump();
@@ -132,6 +136,7 @@ impl Parser<'_> {
             }
             self.complete(catch, K::CatchClause);
         }
+        self.complete(catches, K::CatchClauseList);
         if self.at_soft_keyword("finally") {
             let finally = self.start();
             self.bump();
@@ -157,8 +162,16 @@ impl Parser<'_> {
         } else {
             self.parse_expression_until(&[K::WhileKw, K::Semicolon, K::DoubleSemicolon, K::RBrace]);
         }
-        if loop_kind == K::DoKw && self.eat(K::WhileKw) && self.at(K::LParen) {
-            self.parse_parenthesized_expression();
+        if loop_kind == K::DoKw {
+            if self.eat(K::WhileKw) {
+                if self.at(K::LParen) {
+                    self.parse_parenthesized_expression();
+                } else {
+                    self.expected_here("expected condition after 'while'");
+                }
+            } else {
+                self.expected_here("expected 'while' after do body");
+            }
         }
         let kind = match loop_kind {
             K::ForKw => K::ForStatement,

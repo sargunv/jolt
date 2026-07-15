@@ -20,222 +20,276 @@ fun parenthesized(flag: Boolean, value: String?): String {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "parenthesized" @ 4..17
-    ValueParameterList
-      LParen "(" @ 17..18
-      ValueParameter
-        Name
-          Identifier "flag" @ 18..22
-        Colon ":" @ 22..23 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Boolean" @ 24..31
-      Comma "," @ 31..32 trailing=[Whitespace " "]
-      ValueParameter
-        Name
-          Identifier "value" @ 33..38
-        Colon ":" @ 38..39 trailing=[Whitespace " "]
-        TypeReference
-          NullableType
-            UserType
-              Identifier "String" @ 40..46
-            Question "?" @ 46..47
-      RParen ")" @ 47..48
-    Colon ":" @ 48..49 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "String" @ 50..56 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 57..58
-      PropertyDeclaration
-        ValKw "val" @ 63..66 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
           Name
-            Identifier "chosen" @ 67..73 trailing=[Whitespace " "]
-        Assign "=" @ 74..75 trailing=[Whitespace " "]
-        BinaryExpression
-          ParenthesizedExpression
-            LParen "(" @ 76..77
-            IfExpression
-              IfKw "if" @ 77..79 trailing=[Whitespace " "]
+            Identifier "parenthesized" @ 4..17
+      ValueParameterList
+        LParen "(" @ 17..18
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "flag" @ 18..22
+            Colon ":" @ 22..23 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Boolean" @ 24..31
+          Comma "," @ 31..32 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "value" @ 33..38
+            Colon ":" @ 38..39 trailing=[Whitespace " "]
+            TypeReference
+              NullableType
+                UserType
+                  UserTypeSegmentList
+                    Identifier "String" @ 40..46
+                Question "?" @ 46..47
+        RParen ")" @ 47..48
+      Colon ":" @ 48..49 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "String" @ 50..56 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 57..58
+        BlockItemList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 63..66 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "chosen" @ 67..73 trailing=[Whitespace " "]
+            Assign "=" @ 74..75 trailing=[Whitespace " "]
+            BinaryExpression
               ParenthesizedExpression
-                LParen "(" @ 80..81
-                NameExpression
-                  Identifier "flag" @ 81..85
-                RParen ")" @ 85..86 trailing=[Whitespace " "]
-              NameExpression
-                Identifier "value" @ 87..92 trailing=[Whitespace " "]
-              ElseKw "else" @ 93..97 trailing=[Whitespace " "]
-              StringTemplateExpression
-                StringTemplateEntry
-                  OpenQuote "\"" @ 98..99
-                StringTemplateEntry
-                  RegularStringPart "fallback" @ 99..107
-                ClosingQuote "\"" @ 107..108
-            RParen ")" @ 108..109 trailing=[Whitespace " "]
-          Elvis "?:" @ 110..112 trailing=[Whitespace " "]
-          StringTemplateExpression
-            StringTemplateEntry
-              OpenQuote "\"" @ 113..114
-            StringTemplateEntry
-              RegularStringPart "empty" @ 114..119
-            ClosingQuote "\"" @ 119..120
-      PropertyDeclaration
-        ValKw "val" @ 125..128 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "selected" @ 129..137 trailing=[Whitespace " "]
-        Assign "=" @ 138..139 trailing=[Whitespace " "]
-        CallExpression
-          NavigationExpression
-            ParenthesizedExpression
-              LParen "(" @ 140..141
-              IfExpression
-                IfKw "if" @ 141..143 trailing=[Whitespace " "]
-                ParenthesizedExpression
-                  LParen "(" @ 144..145
-                  NameExpression
-                    Identifier "flag" @ 145..149
-                  RParen ")" @ 149..150 trailing=[Whitespace " "]
-                ParenthesizedExpression
-                  LParen "(" @ 151..152
-                  BinaryExpression
-                    LiteralExpression
-                      IntegerLiteral "0" @ 152..153 trailing=[Whitespace " "]
-                    Identifier "until" @ 154..159 trailing=[Whitespace " "]
-                    LiteralExpression
-                      IntegerLiteral "10" @ 160..162
-                  RParen ")" @ 162..163 trailing=[Whitespace " "]
-                ElseKw "else" @ 164..168 trailing=[Whitespace " "]
-                ParenthesizedExpression
-                  LParen "(" @ 169..170
-                  BinaryExpression
-                    LiteralExpression
-                      IntegerLiteral "10" @ 170..172 trailing=[Whitespace " "]
-                    Identifier "downTo" @ 173..179 trailing=[Whitespace " "]
-                    LiteralExpression
-                      IntegerLiteral "0" @ 180..181
-                  RParen ")" @ 181..182
-              RParen ")" @ 182..183
-            Dot "." @ 183..184
-            Identifier "toList" @ 184..190
-          ValueArgumentList
-            LParen "(" @ 190..191
-            RParen ")" @ 191..192
-      Statement
-        ExpressionStatement
-          CallExpression
-            NavigationExpression
-              ParenthesizedExpression
-                LParen "(" @ 197..198 leading=[Newline "\n", Whitespace "    "]
+                LParen "(" @ 76..77
                 IfExpression
-                  IfKw "if" @ 198..200 trailing=[Whitespace " "]
+                  IfKw "if" @ 77..79 trailing=[Whitespace " "]
                   ParenthesizedExpression
-                    LParen "(" @ 201..202
+                    LParen "(" @ 80..81
                     NameExpression
-                      Identifier "flag" @ 202..206
-                    RParen ")" @ 206..207 trailing=[Whitespace " "]
-                  ParenthesizedExpression
-                    LParen "(" @ 208..209
-                    BinaryExpression
-                      LiteralExpression
-                        IntegerLiteral "0" @ 209..210 trailing=[Whitespace " "]
-                      Identifier "until" @ 211..216 trailing=[Whitespace " "]
-                      LiteralExpression
-                        IntegerLiteral "10" @ 217..219
-                    RParen ")" @ 219..220 trailing=[Whitespace " "]
-                  ElseKw "else" @ 221..225 trailing=[Whitespace " "]
-                  ParenthesizedExpression
-                    LParen "(" @ 226..227
-                    BinaryExpression
-                      LiteralExpression
-                        IntegerLiteral "10" @ 227..229 trailing=[Whitespace " "]
-                      Identifier "downTo" @ 230..236 trailing=[Whitespace " "]
-                      LiteralExpression
-                        IntegerLiteral "0" @ 237..238
-                    RParen ")" @ 238..239
-                RParen ")" @ 239..240
-              Dot "." @ 240..241
-              Identifier "forEach" @ 241..248 trailing=[Whitespace " "]
-            LambdaExpression
-              LBrace "{" @ 249..250 trailing=[Whitespace " "]
-              LambdaParameterList
-                LambdaParameter
-                  Name
-                    Identifier "index" @ 251..256 trailing=[Whitespace " "]
-                Arrow "->" @ 257..259
-              Statement
-                ExpressionStatement
-                  CallExpression
-                    NavigationExpression
-                      NameExpression
-                        Identifier "index" @ 268..273 leading=[Newline "\n", Whitespace "        "]
-                      Dot "." @ 273..274
-                      Identifier "toString" @ 274..282
-                    ValueArgumentList
-                      LParen "(" @ 282..283
-                      RParen ")" @ 283..284
-              RBrace "}" @ 289..290 leading=[Newline "\n", Whitespace "    "]
-      PropertyDeclaration
-        ValKw "val" @ 295..298 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
-          Name
-            Identifier "recovered" @ 299..308 trailing=[Whitespace " "]
-        Assign "=" @ 309..310 trailing=[Whitespace " "]
-        ParenthesizedExpression
-          LParen "(" @ 311..312
-          TryExpression
-            TryKw "try" @ 312..315 trailing=[Whitespace " "]
-            Block
-              LBrace "{" @ 316..317
-              Statement
-                ExpressionStatement
-                  CallExpression
-                    NavigationExpression
-                      NameExpression
-                        Identifier "chosen" @ 326..332 leading=[Newline "\n", Whitespace "        "]
-                      Dot "." @ 332..333
-                      Identifier "trim" @ 333..337
-                    ValueArgumentList
-                      LParen "(" @ 337..338
-                      RParen ")" @ 338..339
-              RBrace "}" @ 344..345 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CatchClause
-              Identifier "catch" @ 346..351 trailing=[Whitespace " "]
-              ValueParameterList
-                LParen "(" @ 352..353
-                ValueParameter
-                  Name
-                    Identifier "error" @ 353..358
-                  Colon ":" @ 358..359 trailing=[Whitespace " "]
-                  TypeReference
-                    UserType
-                      Identifier "Throwable" @ 360..369
-                RParen ")" @ 369..370 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 371..372
-                Statement
-                  ExpressionStatement
-                    StringTemplateExpression
+                      Identifier "flag" @ 81..85
+                    RParen ")" @ 85..86 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "value" @ 87..92 trailing=[Whitespace " "]
+                  ElseKw "else" @ 93..97 trailing=[Whitespace " "]
+                  StringTemplateExpression
+                    StringTemplateEntryList
                       StringTemplateEntry
-                        OpenQuote "\"" @ 381..382 leading=[Newline "\n", Whitespace "        "]
+                        OpenQuote "\"" @ 98..99
                       StringTemplateEntry
-                        RegularStringPart "error" @ 382..387
-                      ClosingQuote "\"" @ 387..388
-                RBrace "}" @ 393..394 leading=[Newline "\n", Whitespace "    "]
-          RParen ")" @ 394..395
-      Statement
-        ExpressionStatement
-          JumpExpression
-            ReturnKw "return" @ 400..406 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            NameExpression
-              Identifier "recovered" @ 407..416
-      RBrace "}" @ 417..418 leading=[Newline "\n"]
+                        RegularStringPart "fallback" @ 99..107
+                    ClosingQuote "\"" @ 107..108
+                RParen ")" @ 108..109 trailing=[Whitespace " "]
+              Elvis "?:" @ 110..112 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 113..114
+                  StringTemplateEntry
+                    RegularStringPart "empty" @ 114..119
+                ClosingQuote "\"" @ 119..120
+            PropertyBodyMemberList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 125..128 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "selected" @ 129..137 trailing=[Whitespace " "]
+            Assign "=" @ 138..139 trailing=[Whitespace " "]
+            CallExpression
+              NavigationExpression
+                ParenthesizedExpression
+                  LParen "(" @ 140..141
+                  IfExpression
+                    IfKw "if" @ 141..143 trailing=[Whitespace " "]
+                    ParenthesizedExpression
+                      LParen "(" @ 144..145
+                      NameExpression
+                        Identifier "flag" @ 145..149
+                      RParen ")" @ 149..150 trailing=[Whitespace " "]
+                    ParenthesizedExpression
+                      LParen "(" @ 151..152
+                      BinaryExpression
+                        LiteralExpression
+                          IntegerLiteral "0" @ 152..153 trailing=[Whitespace " "]
+                        Identifier "until" @ 154..159 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "10" @ 160..162
+                      RParen ")" @ 162..163 trailing=[Whitespace " "]
+                    ElseKw "else" @ 164..168 trailing=[Whitespace " "]
+                    ParenthesizedExpression
+                      LParen "(" @ 169..170
+                      BinaryExpression
+                        LiteralExpression
+                          IntegerLiteral "10" @ 170..172 trailing=[Whitespace " "]
+                        Identifier "downTo" @ 173..179 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "0" @ 180..181
+                      RParen ")" @ 181..182
+                  RParen ")" @ 182..183
+                Dot "." @ 183..184
+                Identifier "toList" @ 184..190
+              TypeArgumentListList
+              ValueArgumentList
+                LParen "(" @ 190..191
+                ValueArgumentEntryList
+                RParen ")" @ 191..192
+              LambdaExpressionList
+            PropertyBodyMemberList
+          Statement
+            ExpressionStatement
+              CallExpression
+                NavigationExpression
+                  ParenthesizedExpression
+                    LParen "(" @ 197..198 leading=[Newline "\n", Whitespace "    "]
+                    IfExpression
+                      IfKw "if" @ 198..200 trailing=[Whitespace " "]
+                      ParenthesizedExpression
+                        LParen "(" @ 201..202
+                        NameExpression
+                          Identifier "flag" @ 202..206
+                        RParen ")" @ 206..207 trailing=[Whitespace " "]
+                      ParenthesizedExpression
+                        LParen "(" @ 208..209
+                        BinaryExpression
+                          LiteralExpression
+                            IntegerLiteral "0" @ 209..210 trailing=[Whitespace " "]
+                          Identifier "until" @ 211..216 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "10" @ 217..219
+                        RParen ")" @ 219..220 trailing=[Whitespace " "]
+                      ElseKw "else" @ 221..225 trailing=[Whitespace " "]
+                      ParenthesizedExpression
+                        LParen "(" @ 226..227
+                        BinaryExpression
+                          LiteralExpression
+                            IntegerLiteral "10" @ 227..229 trailing=[Whitespace " "]
+                          Identifier "downTo" @ 230..236 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "0" @ 237..238
+                        RParen ")" @ 238..239
+                    RParen ")" @ 239..240
+                  Dot "." @ 240..241
+                  Identifier "forEach" @ 241..248 trailing=[Whitespace " "]
+                TypeArgumentListList
+                LambdaExpressionList
+                  LambdaExpression
+                    LambdaBody
+                      LBrace "{" @ 249..250 trailing=[Whitespace " "]
+                      LambdaParameterList
+                        LambdaParameterSeparatedList
+                          LambdaParameter
+                            Name
+                              Identifier "index" @ 251..256 trailing=[Whitespace " "]
+                        Arrow "->" @ 257..259
+                      LambdaBodyItemList
+                        Statement
+                          ExpressionStatement
+                            CallExpression
+                              NavigationExpression
+                                NameExpression
+                                  Identifier "index" @ 268..273 leading=[Newline "\n", Whitespace "        "]
+                                Dot "." @ 273..274
+                                Identifier "toString" @ 274..282
+                              TypeArgumentListList
+                              ValueArgumentList
+                                LParen "(" @ 282..283
+                                ValueArgumentEntryList
+                                RParen ")" @ 283..284
+                              LambdaExpressionList
+                          TerminatorList
+                      RBrace "}" @ 289..290 leading=[Newline "\n", Whitespace "    "]
+            TerminatorList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 295..298 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
+                Name
+                  Identifier "recovered" @ 299..308 trailing=[Whitespace " "]
+            Assign "=" @ 309..310 trailing=[Whitespace " "]
+            ParenthesizedExpression
+              LParen "(" @ 311..312
+              TryExpression
+                TryKw "try" @ 312..315 trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 316..317
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NavigationExpression
+                            NameExpression
+                              Identifier "chosen" @ 326..332 leading=[Newline "\n", Whitespace "        "]
+                            Dot "." @ 332..333
+                            Identifier "trim" @ 333..337
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 337..338
+                            ValueArgumentEntryList
+                            RParen ")" @ 338..339
+                          LambdaExpressionList
+                      TerminatorList
+                  RBrace "}" @ 344..345 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                CatchClauseList
+                  CatchClause
+                    Identifier "catch" @ 346..351 trailing=[Whitespace " "]
+                    ValueParameterList
+                      LParen "(" @ 352..353
+                      ValueParameterSeparatedList
+                        ValueParameter
+                          ModifierListSequence
+                          Name
+                            Identifier "error" @ 353..358
+                          Colon ":" @ 358..359 trailing=[Whitespace " "]
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                Identifier "Throwable" @ 360..369
+                      RParen ")" @ 369..370 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 371..372
+                      BlockItemList
+                        Statement
+                          ExpressionStatement
+                            StringTemplateExpression
+                              StringTemplateEntryList
+                                StringTemplateEntry
+                                  OpenQuote "\"" @ 381..382 leading=[Newline "\n", Whitespace "        "]
+                                StringTemplateEntry
+                                  RegularStringPart "error" @ 382..387
+                              ClosingQuote "\"" @ 387..388
+                          TerminatorList
+                      RBrace "}" @ 393..394 leading=[Newline "\n", Whitespace "    "]
+              RParen ")" @ 394..395
+            PropertyBodyMemberList
+          Statement
+            ExpressionStatement
+              JumpExpression
+                ReturnKw "return" @ 400..406 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "recovered" @ 407..416
+            TerminatorList
+        RBrace "}" @ 417..418 leading=[Newline "\n"]
   Eof "" @ 419..419 leading=[Newline "\n"]
 
 diagnostics:

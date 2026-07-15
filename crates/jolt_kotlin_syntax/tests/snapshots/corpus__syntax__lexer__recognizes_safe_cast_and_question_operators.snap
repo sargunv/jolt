@@ -8,33 +8,37 @@ as? a?.b a ?: b T? ::ref
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  Statement
-    ExpressionStatement
-      ErrorNode
-        AsSafe "as?" @ 0..3 trailing=[Whitespace " "]
-      ErrorNode
-        Identifier "a" @ 4..5
-      ErrorNode
-        Question "?" @ 5..6
-      ErrorNode
-        Dot "." @ 6..7
-      ErrorNode
-        Identifier "b" @ 7..8 trailing=[Whitespace " "]
-      ErrorNode
-        Identifier "a" @ 9..10 trailing=[Whitespace " "]
-      ErrorNode
-        Elvis "?:" @ 11..13 trailing=[Whitespace " "]
-      ErrorNode
-        Identifier "b" @ 14..15 trailing=[Whitespace " "]
-      ErrorNode
-        Identifier "T" @ 16..17
-      ErrorNode
-        Question "?" @ 17..18 trailing=[Whitespace " "]
-      ErrorNode
-        ColonColon "::" @ 19..21
-      ErrorNode
-        Identifier "ref" @ 21..24
+    ImportDirectiveList
+  KotlinFileItemList
+    Statement
+      ExpressionStatement
+        ErrorNode
+          AsSafe "as?" @ 0..3 trailing=[Whitespace " "]
+        ErrorNode
+          Identifier "a" @ 4..5
+        ErrorNode
+          Question "?" @ 5..6
+        ErrorNode
+          Dot "." @ 6..7
+        ErrorNode
+          Identifier "b" @ 7..8 trailing=[Whitespace " "]
+        ErrorNode
+          Identifier "a" @ 9..10 trailing=[Whitespace " "]
+        ErrorNode
+          Elvis "?:" @ 11..13 trailing=[Whitespace " "]
+        ErrorNode
+          Identifier "b" @ 14..15 trailing=[Whitespace " "]
+        ErrorNode
+          Identifier "T" @ 16..17
+        ErrorNode
+          Question "?" @ 17..18 trailing=[Whitespace " "]
+        ErrorNode
+          ColonColon "::" @ 19..21
+        ErrorNode
+          Identifier "ref" @ 21..24
+      TerminatorList
   Eof "" @ 25..25 leading=[Newline "\n"]
 
 diagnostics:

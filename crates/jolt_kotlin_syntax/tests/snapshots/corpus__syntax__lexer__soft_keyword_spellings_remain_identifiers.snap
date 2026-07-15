@@ -8,10 +8,12 @@ all file field property receiver param setparam delegate import where by get set
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  Statement
-    ExpressionStatement
-      BinaryExpression
+    ImportDirectiveList
+  KotlinFileItemList
+    Statement
+      ExpressionStatement
         BinaryExpression
           BinaryExpression
             BinaryExpression
@@ -20,35 +22,37 @@ KotlinFile
                   BinaryExpression
                     BinaryExpression
                       BinaryExpression
+                        BinaryExpression
+                          NameExpression
+                            Identifier "all" @ 0..3 trailing=[Whitespace " "]
+                          Identifier "file" @ 4..8 trailing=[Whitespace " "]
+                          NameExpression
+                            Identifier "field" @ 9..14 trailing=[Whitespace " "]
+                        Identifier "property" @ 15..23 trailing=[Whitespace " "]
                         NameExpression
-                          Identifier "all" @ 0..3 trailing=[Whitespace " "]
-                        Identifier "file" @ 4..8 trailing=[Whitespace " "]
-                        NameExpression
-                          Identifier "field" @ 9..14 trailing=[Whitespace " "]
-                      Identifier "property" @ 15..23 trailing=[Whitespace " "]
+                          Identifier "receiver" @ 24..32 trailing=[Whitespace " "]
+                      Identifier "param" @ 33..38 trailing=[Whitespace " "]
                       NameExpression
-                        Identifier "receiver" @ 24..32 trailing=[Whitespace " "]
-                    Identifier "param" @ 33..38 trailing=[Whitespace " "]
+                        Identifier "setparam" @ 39..47 trailing=[Whitespace " "]
+                    Identifier "delegate" @ 48..56 trailing=[Whitespace " "]
                     NameExpression
-                      Identifier "setparam" @ 39..47 trailing=[Whitespace " "]
-                  Identifier "delegate" @ 48..56 trailing=[Whitespace " "]
+                      Identifier "import" @ 57..63 trailing=[Whitespace " "]
+                  Identifier "where" @ 64..69 trailing=[Whitespace " "]
                   NameExpression
-                    Identifier "import" @ 57..63 trailing=[Whitespace " "]
-                Identifier "where" @ 64..69 trailing=[Whitespace " "]
+                    Identifier "by" @ 70..72 trailing=[Whitespace " "]
+                Identifier "get" @ 73..76 trailing=[Whitespace " "]
                 NameExpression
-                  Identifier "by" @ 70..72 trailing=[Whitespace " "]
-              Identifier "get" @ 73..76 trailing=[Whitespace " "]
+                  Identifier "set" @ 77..80 trailing=[Whitespace " "]
+              Identifier "constructor" @ 81..92 trailing=[Whitespace " "]
               NameExpression
-                Identifier "set" @ 77..80 trailing=[Whitespace " "]
-            Identifier "constructor" @ 81..92 trailing=[Whitespace " "]
+                Identifier "init" @ 93..97 trailing=[Whitespace " "]
+            Identifier "context" @ 98..105 trailing=[Whitespace " "]
             NameExpression
-              Identifier "init" @ 93..97 trailing=[Whitespace " "]
-          Identifier "context" @ 98..105 trailing=[Whitespace " "]
+              Identifier "catch" @ 106..111 trailing=[Whitespace " "]
+          Identifier "dynamic" @ 112..119 trailing=[Whitespace " "]
           NameExpression
-            Identifier "catch" @ 106..111 trailing=[Whitespace " "]
-        Identifier "dynamic" @ 112..119 trailing=[Whitespace " "]
-        NameExpression
-          Identifier "finally" @ 120..127
+            Identifier "finally" @ 120..127
+      TerminatorList
   Eof "" @ 128..128 leading=[Newline "\n"]
 
 diagnostics:

@@ -1,22 +1,24 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    ClassBody, ClassMemberDeclaration, ClassMemberDeclarationEntry, Declaration, KotlinSyntaxToken,
-    RecoveredSeparatedListEntry,
+    ClassBody, ClassMember, ClassMemberDeclaration, ClassMemberList, Declaration,
+    KotlinRoleElement, KotlinSyntaxInvariantError, KotlinSyntaxListPart, KotlinSyntaxToken,
+    KotlinSyntaxView, StatementSyntax,
 };
 
-use crate::helpers::blocks::source_braced_body;
-use crate::helpers::comments::{
-    LeadingTrivia, comments_from_tokens, format_removed_comments, format_token_sequence,
-};
+use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     relative_token_range_between,
 };
+use crate::helpers::recovery::{
+    KotlinFormatDelimiter, KotlinFormatField, format_malformed, format_missing, format_or_verbatim,
+    resolve_optional_field, resolve_required_delimiter, resolve_required_field,
+};
 
 use super::{
-    format_declaration, format_enum_entry_with_separator, format_function_declaration,
-    format_initializer_block, format_property_declaration, format_secondary_constructor,
-    format_type_alias_declaration,
+    format_declaration, format_enum_entry_with_separator, format_explicit_backing_field,
+    format_function_declaration, format_initializer_block, format_property_accessor,
+    format_property_declaration, format_secondary_constructor, format_type_alias_declaration,
 };
 
 pub(super) fn format_class_body<'source>(
@@ -26,61 +28,194 @@ pub(super) fn format_class_body<'source>(
     let Some(body) = body else {
         return doc.nil();
     };
-    let body_doc = format_class_body_contents(doc, &body);
-    let space = doc.space();
-    let body = source_braced_body(
-        doc,
-        body.open_brace().as_ref(),
-        body.close_brace().as_ref(),
-        body_doc,
-    );
-    doc.concat([space, body])
+    format_or_verbatim(&body, doc, |doc| {
+        let open = resolve_required_delimiter(body.open_brace(), doc);
+        let close = resolve_required_delimiter(body.close_brace(), doc);
+        let contents = format_class_body_contents(doc, &body);
+        let space = doc.space();
+        let body = format_class_braced_body(doc, open, close, contents);
+        doc.concat([space, body])
+    })
 }
 
 fn format_class_body_contents<'source>(
     doc: &mut DocBuilder<'source>,
     body: &ClassBody<'source>,
 ) -> Option<Doc<'source>> {
+    let members = match resolve_required_field(body.members(), doc) {
+        KotlinFormatField::Present(members) => members,
+        KotlinFormatField::Malformed(malformed) => return Some(malformed),
+    };
+    let parts = collect_class_body_parts(doc, &members);
+    if parts.is_empty() {
+        return None;
+    }
+
     let ignored_ranges = formatter_ignore_ranges(
         body.source_text(),
         body.text_range().start().get(),
         body.token_iter(),
     );
-    if !ignored_ranges.is_empty() {
-        return format_class_body_contents_with_ignored(doc, body, &ignored_ranges);
-    }
-
-    let sections = class_body_sections_with_recovered_entries(doc, body);
-
+    let sections = if ignored_ranges.is_empty() {
+        class_body_sections(doc, &parts)
+    } else {
+        class_body_sections_with_ignored(doc, body, &parts, &ignored_ranges)
+    };
     (!sections.is_empty()).then(|| join_class_body_sections(doc, sections))
 }
 
-fn format_class_body_contents_with_ignored<'source>(
-    doc: &mut DocBuilder<'source>,
-    body: &ClassBody<'source>,
-    ignored_ranges: &[FormatterIgnoreRange<'source>],
-) -> Option<Doc<'source>> {
-    let body_start = body.text_range().start().get();
-    let entries = body
-        .member_declaration_entries_with_recovered()
-        .collect::<Vec<_>>();
-    let entry_ranges = entries
-        .iter()
-        .map(|entry| recovered_class_member_token_range(doc, entry, body_start))
-        .collect::<Vec<_>>();
-    let ignored_runs = formatter_ignore_runs(ignored_ranges, &entry_ranges);
-    if ignored_runs.is_empty() {
-        let sections = class_body_sections_from_recovered_entries(doc, entries);
-        return (!sections.is_empty()).then(|| join_class_body_sections(doc, sections));
+enum ClassBodyPart<'source> {
+    Member(ClassMember<'source>),
+    Token(KotlinSyntaxToken<'source>),
+    Recovery {
+        doc: Doc<'source>,
+        first: Option<KotlinSyntaxToken<'source>>,
+        last: Option<KotlinSyntaxToken<'source>>,
+    },
+}
+
+impl<'source> ClassBodyPart<'source> {
+    fn first_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        match self {
+            Self::Member(member) => member.first_token(),
+            Self::Token(token) => Some(*token),
+            Self::Recovery { first, .. } => *first,
+        }
     }
 
-    let mut sections = Vec::with_capacity(entries.len().saturating_add(ignored_runs.len()));
+    fn last_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        match self {
+            Self::Member(member) => member.last_token(),
+            Self::Token(token) => Some(*token),
+            Self::Recovery { last, .. } => *last,
+        }
+    }
+}
+
+fn collect_class_body_parts<'source>(
+    doc: &mut DocBuilder<'source>,
+    members: &ClassMemberList<'source>,
+) -> Vec<ClassBodyPart<'source>> {
+    members
+        .parts()
+        .map(|part| match part {
+            Ok(KotlinSyntaxListPart::Item(element)) => class_body_element(doc, element),
+            Ok(KotlinSyntaxListPart::Separator(token)) => ClassBodyPart::Token(token),
+            Ok(KotlinSyntaxListPart::Missing(missing)) => ClassBodyPart::Recovery {
+                doc: format_missing(&missing, doc),
+                first: None,
+                last: None,
+            },
+            Ok(KotlinSyntaxListPart::Malformed(malformed)) => {
+                let first = malformed.first_token();
+                let last = malformed
+                    .syntax_node()
+                    .and_then(|syntax| syntax.last_token());
+                ClassBodyPart::Recovery {
+                    doc: format_malformed(&malformed, doc),
+                    first,
+                    last,
+                }
+            }
+            Err(error) => invariant_class_body_part(doc, error),
+        })
+        .collect()
+}
+
+fn class_body_element<'source>(
+    doc: &mut DocBuilder<'source>,
+    element: KotlinRoleElement<'source>,
+) -> ClassBodyPart<'source> {
+    if let Some(member) = element.cast_family::<ClassMember<'source>>() {
+        ClassBodyPart::Member(member)
+    } else if let Some(token) = element.token() {
+        ClassBodyPart::Token(token)
+    } else {
+        doc.block_on_invariant("Kotlin class member list contained an unsupported element");
+        ClassBodyPart::Recovery {
+            doc: Doc::nil(),
+            first: None,
+            last: None,
+        }
+    }
+}
+
+fn invariant_class_body_part<'source>(
+    doc: &mut DocBuilder<'source>,
+    error: KotlinSyntaxInvariantError,
+) -> ClassBodyPart<'source> {
+    doc.block_on_invariant(error.to_string());
+    ClassBodyPart::Recovery {
+        doc: Doc::nil(),
+        first: None,
+        last: None,
+    }
+}
+
+fn class_body_sections<'source>(
+    doc: &mut DocBuilder<'source>,
+    parts: &[ClassBodyPart<'source>],
+) -> Vec<ClassBodySection<'source>> {
+    let mut sections = Vec::with_capacity(parts.len());
+    let mut previous_had_comments = false;
+    for part in parts {
+        push_class_body_part(doc, &mut sections, part, &mut previous_had_comments);
+    }
+    sections
+}
+
+fn push_class_body_part<'source>(
+    doc: &mut DocBuilder<'source>,
+    sections: &mut Vec<ClassBodySection<'source>>,
+    part: &ClassBodyPart<'source>,
+    previous_had_comments: &mut bool,
+) {
+    if let ClassBodyPart::Member(member) = part {
+        *previous_had_comments = member
+            .last_token()
+            .is_some_and(|token| !token.trailing_comments().is_empty());
+        sections.push(ClassBodySection {
+            doc: format_class_member(doc, member),
+            hard_line_after: false,
+        });
+        return;
+    }
+    let physical = match part {
+        ClassBodyPart::Token(token) => format_token(
+            doc,
+            token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        ),
+        ClassBodyPart::Recovery { doc, .. } => *doc,
+        ClassBodyPart::Member(_) => unreachable!("handled above"),
+    };
+    push_class_body_physical_doc(doc, sections, physical, *previous_had_comments);
+}
+
+fn class_body_sections_with_ignored<'source>(
+    doc: &mut DocBuilder<'source>,
+    body: &ClassBody<'source>,
+    parts: &[ClassBodyPart<'source>],
+    ignored_ranges: &[FormatterIgnoreRange<'source>],
+) -> Vec<ClassBodySection<'source>> {
+    let body_start = body.text_range().start().get();
+    let ranges = parts
+        .iter()
+        .map(|part| class_body_part_range(part, body_start))
+        .collect::<Vec<_>>();
+    let ignored_runs = formatter_ignore_runs(ignored_ranges, &ranges);
+    if ignored_runs.is_empty() {
+        return class_body_sections(doc, parts);
+    }
+
+    let mut sections = Vec::with_capacity(parts.len().saturating_add(ignored_runs.len()));
     let mut ignored_index = 0;
     let mut skip_index = 0;
-    let mut previous_member_had_trailing_comments = false;
-    for (entry_index, entry) in entries.into_iter().enumerate() {
+    let mut previous_had_comments = false;
+    for (part_index, part) in parts.iter().enumerate() {
         while ignored_index < ignored_runs.len()
-            && ignored_runs[ignored_index].insert_index == entry_index
+            && ignored_runs[ignored_index].insert_index == part_index
         {
             let run = &ignored_runs[ignored_index];
             sections.push(ClassBodySection {
@@ -89,29 +224,17 @@ fn format_class_body_contents_with_ignored<'source>(
             });
             ignored_index += 1;
         }
-
-        while skip_index < ignored_runs.len() && ignored_runs[skip_index].skip_end <= entry_index {
+        while skip_index < ignored_runs.len() && ignored_runs[skip_index].skip_end <= part_index {
             skip_index += 1;
         }
-
-        if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(entry_index) {
-            if let RecoveredSeparatedListEntry::Entry(member) = &entry {
-                previous_member_had_trailing_comments = member
-                    .comma
-                    .map_or_else(|| member.member.last_token(), Some)
-                    .is_some_and(|token| !token.trailing_comments().is_empty());
-            }
+        if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(part_index) {
+            previous_had_comments = part
+                .last_token()
+                .is_some_and(|token| !token.trailing_comments().is_empty());
             continue;
         }
-
-        push_class_body_recovered_entry(
-            doc,
-            &mut sections,
-            entry,
-            &mut previous_member_had_trailing_comments,
-        );
+        push_class_body_part(doc, &mut sections, part, &mut previous_had_comments);
     }
-
     while ignored_index < ignored_runs.len() {
         let run = &ignored_runs[ignored_index];
         sections.push(ClassBodySection {
@@ -120,196 +243,149 @@ fn format_class_body_contents_with_ignored<'source>(
         });
         ignored_index += 1;
     }
-
-    (!sections.is_empty()).then(|| join_class_body_sections(doc, sections))
-}
-
-fn class_body_sections_with_recovered_entries<'source>(
-    doc: &mut DocBuilder<'source>,
-    body: &ClassBody<'source>,
-) -> Vec<ClassBodySection<'source>> {
-    class_body_sections_from_recovered_entries(
-        doc,
-        body.member_declaration_entries_with_recovered(),
-    )
-}
-
-fn class_body_sections_from_recovered_entries<'source>(
-    doc: &mut DocBuilder<'source>,
-    entries: impl IntoIterator<
-        Item = RecoveredSeparatedListEntry<'source, ClassMemberDeclarationEntry<'source>>,
-    >,
-) -> Vec<ClassBodySection<'source>> {
-    let entries = entries.into_iter();
-    let (lower, _) = entries.size_hint();
-    let mut sections = Vec::with_capacity(lower);
-    let mut previous_member_had_trailing_comments = false;
-
-    for entry in entries {
-        push_class_body_recovered_entry(
-            doc,
-            &mut sections,
-            entry,
-            &mut previous_member_had_trailing_comments,
-        );
-    }
-
     sections
 }
 
-fn push_class_body_recovered_entry<'source>(
+fn push_class_body_physical_doc<'source>(
     doc: &mut DocBuilder<'source>,
     sections: &mut Vec<ClassBodySection<'source>>,
-    entry: RecoveredSeparatedListEntry<'source, ClassMemberDeclarationEntry<'source>>,
-    previous_member_had_trailing_comments: &mut bool,
+    physical: Doc<'source>,
+    previous_had_comments: bool,
 ) {
-    match entry {
-        RecoveredSeparatedListEntry::Entry(member) => {
-            *previous_member_had_trailing_comments = member
-                .comma
-                .map_or_else(|| member.member.last_token(), Some)
-                .is_some_and(|token| !token.trailing_comments().is_empty());
-            sections.push(ClassBodySection {
-                doc: format_class_member_entry(doc, &member),
-                hard_line_after: false,
-            });
-        }
-        RecoveredSeparatedListEntry::Token(token) => {
-            let recovered =
-                format_token_sequence(doc, std::iter::once(token), LeadingTrivia::Preserve);
-            push_recovered_class_body_doc(
-                doc,
-                sections,
-                recovered,
-                *previous_member_had_trailing_comments,
-            );
-        }
-        RecoveredSeparatedListEntry::Error(error) => {
-            let recovered = format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve);
-            push_recovered_class_body_doc(
-                doc,
-                sections,
-                recovered,
-                *previous_member_had_trailing_comments,
-            );
-        }
-        RecoveredSeparatedListEntry::Node(node) => {
-            let recovered = format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve);
-            push_recovered_class_body_doc(
-                doc,
-                sections,
-                recovered,
-                *previous_member_had_trailing_comments,
-            );
-        }
-    }
-}
-
-fn push_recovered_class_body_doc<'source>(
-    doc: &mut DocBuilder<'source>,
-    sections: &mut Vec<ClassBodySection<'source>>,
-    recovered_doc: Doc<'source>,
-    previous_member_had_trailing_comments: bool,
-) {
-    if previous_member_had_trailing_comments {
+    if previous_had_comments {
         let line = doc.hard_line();
         sections.push(ClassBodySection {
-            doc: doc.concat([line, recovered_doc]),
+            doc: doc.concat([line, physical]),
             hard_line_after: false,
         });
     } else if let Some(previous) = sections.last_mut() {
-        previous.doc = doc.concat([
-            std::mem::replace(&mut previous.doc, doc.nil()),
-            recovered_doc,
-        ]);
+        previous.doc = doc.concat([std::mem::replace(&mut previous.doc, Doc::nil()), physical]);
     } else {
         sections.push(ClassBodySection {
-            doc: recovered_doc,
+            doc: physical,
             hard_line_after: false,
         });
     }
 }
 
-fn format_class_member_entry<'source>(
+fn format_class_member<'source>(
     doc: &mut DocBuilder<'source>,
-    entry: &ClassMemberDeclarationEntry<'source>,
+    member: &ClassMember<'source>,
 ) -> Doc<'source> {
-    format_class_member_declaration(doc, &entry.member, entry.comma)
+    match member {
+        ClassMember::ClassMemberDeclaration(member) => format_class_member_declaration(doc, member),
+        ClassMember::ClassDeclaration(value) => {
+            format_declaration(doc, &Declaration::ClassDeclaration(*value))
+        }
+        ClassMember::InterfaceDeclaration(value) => {
+            format_declaration(doc, &Declaration::InterfaceDeclaration(*value))
+        }
+        ClassMember::ObjectDeclaration(value) => {
+            format_declaration(doc, &Declaration::ObjectDeclaration(*value))
+        }
+        ClassMember::CompanionObject(value) => {
+            format_declaration(doc, &Declaration::CompanionObject(*value))
+        }
+        ClassMember::EnumEntry(value) => format_declaration(doc, &Declaration::EnumEntry(*value)),
+        ClassMember::FunctionDeclaration(value) => format_function_declaration(doc, value),
+        ClassMember::PropertyDeclaration(value) => format_property_declaration(doc, value),
+        ClassMember::TypeAliasDeclaration(value) => format_type_alias_declaration(doc, value),
+        ClassMember::SecondaryConstructor(value) => format_secondary_constructor(doc, value),
+        ClassMember::InitializerBlock(value) => format_initializer_block(doc, value),
+        ClassMember::PropertyAccessor(value) => format_property_accessor(doc, value),
+        ClassMember::ExplicitBackingField(value) => format_explicit_backing_field(doc, value),
+        ClassMember::Statement(value) => format_class_statement(doc, value),
+        ClassMember::BogusClassMember(value) => format_malformed(value, doc),
+    }
 }
 
 fn format_class_member_declaration<'source>(
     doc: &mut DocBuilder<'source>,
     member: &ClassMemberDeclaration<'source>,
+) -> Doc<'source> {
+    format_or_verbatim(member, doc, |doc| {
+        let comma = resolve_optional_field(member.comma(), doc);
+        let (comma, comma_recovery) = match comma {
+            KotlinFormatField::Present(comma) => (comma, Doc::nil()),
+            KotlinFormatField::Malformed(recovery) => (None, recovery),
+        };
+        let contents = match resolve_required_field(member.member(), doc) {
+            KotlinFormatField::Present(element) => format_class_member_element(doc, element, comma),
+            KotlinFormatField::Malformed(recovery) => recovery,
+        };
+        doc.concat([contents, comma_recovery])
+    })
+}
+
+fn format_class_member_element<'source>(
+    doc: &mut DocBuilder<'source>,
+    element: KotlinRoleElement<'source>,
     comma: Option<KotlinSyntaxToken<'source>>,
 ) -> Doc<'source> {
-    if let Some(declaration) = member.declaration() {
+    if let Some(declaration) = element.cast_family::<Declaration<'source>>() {
         return match declaration {
             Declaration::EnumEntry(entry) => format_enum_entry_with_separator(doc, &entry, comma),
-            Declaration::FunctionDeclaration(declaration) => {
-                format_function_declaration(doc, &declaration)
-            }
-            Declaration::PropertyDeclaration(declaration) => {
-                format_property_declaration(doc, &declaration)
-            }
-            Declaration::TypeAliasDeclaration(declaration) => {
-                format_type_alias_declaration(doc, &declaration)
-            }
-            Declaration::SecondaryConstructor(constructor) => {
-                format_secondary_constructor(doc, &constructor)
-            }
-            Declaration::InitializerBlock(block) => format_initializer_block(doc, &block),
             _ => format_declaration(doc, &declaration),
         };
     }
-
-    if let Some(statement) = member.statement() {
-        return crate::rules::statements::format_statement_syntax_with_leading(doc, &statement);
+    if let Some(statement) = element.cast_node::<jolt_kotlin_syntax::Statement<'source>>() {
+        return format_class_statement(doc, &statement);
     }
-
-    let comments = comments_from_tokens(member.token_iter());
-    if let Some(comments) = format_removed_comments(doc, comments) {
-        return comments;
-    }
-
-    format_token_sequence(doc, member.token_iter(), LeadingTrivia::Preserve)
+    doc.block_on_invariant("Kotlin class member wrapper contained an unsupported element");
+    Doc::nil()
 }
 
-fn class_member_token_range(
-    _doc: &mut DocBuilder<'_>,
-    entry: &ClassMemberDeclarationEntry<'_>,
+fn format_class_statement<'source>(
+    doc: &mut DocBuilder<'source>,
+    statement: &jolt_kotlin_syntax::Statement<'source>,
+) -> Doc<'source> {
+    crate::rules::statements::format_statement_syntax_with_leading(
+        doc,
+        &StatementSyntax::Statement(*statement),
+    )
+}
+
+fn class_body_part_range(
+    part: &ClassBodyPart<'_>,
     body_start: usize,
 ) -> Option<std::ops::Range<usize>> {
-    let last_token = entry.comma.or_else(|| entry.member.last_token())?;
     Some(relative_token_range_between(
-        &entry.member.first_token()?,
-        &last_token,
+        &part.first_token()?,
+        &part.last_token()?,
         body_start,
     ))
 }
 
-fn recovered_class_member_token_range(
-    doc: &mut DocBuilder<'_>,
-    entry: &RecoveredSeparatedListEntry<'_, ClassMemberDeclarationEntry<'_>>,
-    body_start: usize,
-) -> Option<std::ops::Range<usize>> {
-    match entry {
-        RecoveredSeparatedListEntry::Entry(entry) => {
-            class_member_token_range(doc, entry, body_start)
+fn format_class_braced_body<'source>(
+    doc: &mut DocBuilder<'source>,
+    open: KotlinFormatDelimiter<'source>,
+    close: KotlinFormatDelimiter<'source>,
+    body: Option<Doc<'source>>,
+) -> Doc<'source> {
+    let open = format_delimiter(doc, open, LeadingTrivia::Preserve);
+    let contents = if let Some(body) = body {
+        let line = doc.hard_line();
+        let body = doc.concat([line, body]);
+        let body = doc.indent(body);
+        let line = doc.hard_line();
+        doc.concat([body, line])
+    } else {
+        doc.hard_line()
+    };
+    let close = format_delimiter(doc, close, LeadingTrivia::Preserve);
+    doc.concat([open, contents, close])
+}
+
+fn format_delimiter<'source>(
+    doc: &mut DocBuilder<'source>,
+    delimiter: KotlinFormatDelimiter<'source>,
+    leading: LeadingTrivia,
+) -> Doc<'source> {
+    match delimiter {
+        KotlinFormatDelimiter::Source(token) => {
+            format_token(doc, &token, leading, TrailingTrivia::Preserve)
         }
-        RecoveredSeparatedListEntry::Token(token) => {
-            let range = token.token_text_range();
-            Some(range.start().get() - body_start..range.end().get() - body_start)
-        }
-        RecoveredSeparatedListEntry::Error(error) => Some(relative_token_range_between(
-            &error.first_token()?,
-            &error.last_token()?,
-            body_start,
-        )),
-        RecoveredSeparatedListEntry::Node(node) => Some(relative_token_range_between(
-            &node.first_token()?,
-            &node.last_token()?,
-            body_start,
-        )),
+        KotlinFormatDelimiter::Recovery(recovery) => recovery,
     }
 }
 

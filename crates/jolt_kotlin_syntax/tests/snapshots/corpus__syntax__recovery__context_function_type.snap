@@ -8,38 +8,51 @@ typealias Handler = context(First, /* orphan */ , Second) () -> Unit
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  TypeAliasDeclaration
-    TypeAliasKw "typealias" @ 0..9 trailing=[Whitespace " "]
-    Name
-      Identifier "Handler" @ 10..17 trailing=[Whitespace " "]
-    Assign "=" @ 18..19 trailing=[Whitespace " "]
-    TypeReference
-      ContextFunctionType
-        Identifier "context" @ 20..27
-        LParen "(" @ 27..28
-        FunctionTypeParameter
-          TypeReference
-            UserType
-              Identifier "First" @ 28..33
-        Comma "," @ 33..34 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
-        Comma "," @ 48..49 trailing=[Whitespace " "]
-        FunctionTypeParameter
-          TypeReference
-            UserType
-              Identifier "Second" @ 50..56
-        RParen ")" @ 56..57 trailing=[Whitespace " "]
-        FunctionType
-          ParenthesizedType
-            LParen "(" @ 58..59
-            RParen ")" @ 59..60 trailing=[Whitespace " "]
-          Arrow "->" @ 61..63 trailing=[Whitespace " "]
-          UserType
-            Identifier "Unit" @ 64..68
+    ImportDirectiveList
+  KotlinFileItemList
+    TypeAliasDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      TypeAliasKw "typealias" @ 0..9 trailing=[Whitespace " "]
+      Name
+        Identifier "Handler" @ 10..17 trailing=[Whitespace " "]
+      Assign "=" @ 18..19 trailing=[Whitespace " "]
+      TypeReference
+        ContextFunctionType
+          Identifier "context" @ 20..27
+          LParen "(" @ 27..28
+          FunctionTypeParameterSeparatedList
+            FunctionTypeParameter
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "First" @ 28..33
+            Comma "," @ 33..34 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
+            Comma "," @ 48..49 trailing=[Whitespace " "]
+            ErrorNode
+            FunctionTypeParameter
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    Identifier "Second" @ 50..56
+          RParen ")" @ 56..57 trailing=[Whitespace " "]
+          FunctionType
+            ArrowFunctionType
+              ParenthesizedType
+                AnnotationList
+                LParen "(" @ 58..59
+                ParenthesizedTypeEntryList
+                RParen ")" @ 59..60 trailing=[Whitespace " "]
+              Arrow "->" @ 61..63 trailing=[Whitespace " "]
+              UserType
+                UserTypeSegmentList
+                  Identifier "Unit" @ 64..68
   Eof "" @ 69..69 leading=[Newline "\n"]
 
 diagnostics:
-  (none)
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=50..56 message="expected function type parameter between commas"
 
 diagnostics:
-(none)
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(50), end: TextSize(56) }) message=expected function type parameter between commas

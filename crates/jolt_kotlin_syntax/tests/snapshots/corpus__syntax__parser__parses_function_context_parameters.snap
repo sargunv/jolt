@@ -15,73 +15,101 @@ interface Logger {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    ContextParameterClause
-      Identifier "context" @ 0..7
-      LParen "(" @ 7..8
-      ContextParameter
-        Name
-          Identifier "logger" @ 8..14
-        Colon ":" @ 14..15 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Logger" @ 16..22
-      RParen ")" @ 22..23
-    FunKw "fun" @ 24..27 leading=[Newline "\n"] trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "logMessage" @ 28..38
-    ValueParameterList
-      LParen "(" @ 38..39
-      ValueParameter
-        Name
-          Identifier "message" @ 39..46
-        Colon ":" @ 46..47 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "String" @ 48..54
-      RParen ")" @ 54..55 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 56..57
-      Statement
-        ExpressionStatement
-          CallExpression
-            NavigationExpression
-              NameExpression
-                Identifier "logger" @ 62..68 leading=[Newline "\n", Whitespace "    "]
-              Dot "." @ 68..69
-              Identifier "write" @ 69..74
-            ValueArgumentList
-              LParen "(" @ 74..75
-              ValueArgument
-                NameExpression
-                  Identifier "message" @ 75..82
-              RParen ")" @ 82..83
-      RBrace "}" @ 84..85 leading=[Newline "\n"]
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 87..96 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "Logger" @ 97..103 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 104..105
-      ClassMemberDeclaration
-        FunctionDeclaration
-          FunKw "fun" @ 110..113 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ContextParameterClause
+        Identifier "context" @ 0..7
+        LParen "(" @ 7..8
+        ContextParameterSeparatedList
+          ContextParameter
             Name
-              Identifier "write" @ 114..119
-          ValueParameterList
-            LParen "(" @ 119..120
-            ValueParameter
-              Name
-                Identifier "message" @ 120..127
-              Colon ":" @ 127..128 trailing=[Whitespace " "]
-              TypeReference
-                UserType
-                  Identifier "String" @ 129..135
-            RParen ")" @ 135..136
-      RBrace "}" @ 137..138 leading=[Newline "\n"]
+              Identifier "logger" @ 8..14
+            Colon ":" @ 14..15 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Logger" @ 16..22
+        RParen ")" @ 22..23
+      ModifierListSequence
+      FunKw "fun" @ 24..27 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "logMessage" @ 28..38
+      ValueParameterList
+        LParen "(" @ 38..39
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "message" @ 39..46
+            Colon ":" @ 46..47 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "String" @ 48..54
+        RParen ")" @ 54..55 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 56..57
+        BlockItemList
+          Statement
+            ExpressionStatement
+              CallExpression
+                NavigationExpression
+                  NameExpression
+                    Identifier "logger" @ 62..68 leading=[Newline "\n", Whitespace "    "]
+                  Dot "." @ 68..69
+                  Identifier "write" @ 69..74
+                TypeArgumentListList
+                ValueArgumentList
+                  LParen "(" @ 74..75
+                  ValueArgumentEntryList
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      NameExpression
+                        Identifier "message" @ 75..82
+                  RParen ")" @ 82..83
+                LambdaExpressionList
+            TerminatorList
+        RBrace "}" @ 84..85 leading=[Newline "\n"]
+    InterfaceDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      InterfaceKw "interface" @ 87..96 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Logger" @ 97..103 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 104..105
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              FunKw "fun" @ 110..113 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "write" @ 114..119
+              ValueParameterList
+                LParen "(" @ 119..120
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierListSequence
+                    Name
+                      Identifier "message" @ 120..127
+                    Colon ":" @ 127..128 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          Identifier "String" @ 129..135
+                RParen ")" @ 135..136
+        RBrace "}" @ 137..138 leading=[Newline "\n"]
   Eof "" @ 139..139 leading=[Newline "\n"]
 
 diagnostics:

@@ -12,48 +12,70 @@ sealed interface Node
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 4..13 trailing=[Whitespace " "]
-    Name
-      Identifier "Decoder" @ 14..21
-    TypeParameterList
-      Lt "<" @ 21..22
-      TypeParameter
-        Name
-          Identifier "T" @ 22..23
-      Gt ">" @ 23..24 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 25..26
-      ClassMemberDeclaration
-        FunctionDeclaration
-          FunKw "fun" @ 31..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          CallableName
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+    InterfaceDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      InterfaceKw "interface" @ 4..13 trailing=[Whitespace " "]
+      Name
+        Identifier "Decoder" @ 14..21
+      TypeParameterList
+        Lt "<" @ 21..22
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierListSequence
             Name
-              Identifier "decode" @ 35..41
-          ValueParameterList
-            LParen "(" @ 41..42
-            ValueParameter
-              Name
-                Identifier "text" @ 42..46
-              Colon ":" @ 46..47 trailing=[Whitespace " "]
+              Identifier "T" @ 22..23
+        Gt ">" @ 23..24 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 25..26
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierListSequence
+              ModifierListSequence
+              FunKw "fun" @ 31..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierListSequence
+              CallableName
+                CallableNamePartList
+                  Name
+                    Identifier "decode" @ 35..41
+              ValueParameterList
+                LParen "(" @ 41..42
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierListSequence
+                    Name
+                      Identifier "text" @ 42..46
+                    Colon ":" @ 46..47 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          Identifier "String" @ 48..54
+                RParen ")" @ 54..55
+              Colon ":" @ 55..56 trailing=[Whitespace " "]
               TypeReference
                 UserType
-                  Identifier "String" @ 48..54
-            RParen ")" @ 54..55
-          Colon ":" @ 55..56 trailing=[Whitespace " "]
-          TypeReference
-            UserType
-              Identifier "T" @ 57..58
-      RBrace "}" @ 59..60 leading=[Newline "\n"]
-  InterfaceDeclaration
-    ModifierList
-      Identifier "sealed" @ 62..68 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    InterfaceKw "interface" @ 69..78 trailing=[Whitespace " "]
-    Name
-      Identifier "Node" @ 79..83
+                  UserTypeSegmentList
+                    Identifier "T" @ 57..58
+        RBrace "}" @ 59..60 leading=[Newline "\n"]
+    InterfaceDeclaration
+      ModifierListSequence
+        ModifierList
+          ModifierItemList
+            Identifier "sealed" @ 62..68 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierListSequence
+      InterfaceKw "interface" @ 69..78 trailing=[Whitespace " "]
+      Name
+        Identifier "Node" @ 79..83
   Eof "" @ 84..84 leading=[Newline "\n"]
 
 diagnostics:

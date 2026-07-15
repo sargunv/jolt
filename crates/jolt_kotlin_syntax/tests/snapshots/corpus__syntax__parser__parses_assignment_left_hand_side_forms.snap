@@ -13,102 +13,125 @@ fun assignmentTargets(target: Target, index: Int, value: String) {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "assignmentTargets" @ 4..21
-    ValueParameterList
-      LParen "(" @ 21..22
-      ValueParameter
-        Name
-          Identifier "target" @ 22..28
-        Colon ":" @ 28..29 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Target" @ 30..36
-      Comma "," @ 36..37 trailing=[Whitespace " "]
-      ValueParameter
-        Name
-          Identifier "index" @ 38..43
-        Colon ":" @ 43..44 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Int" @ 45..48
-      Comma "," @ 48..49 trailing=[Whitespace " "]
-      ValueParameter
-        Name
-          Identifier "value" @ 50..55
-        Colon ":" @ 55..56 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "String" @ 57..63
-      RParen ")" @ 63..64 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 65..66
-      Statement
-        ExpressionStatement
-          AssignmentExpression
-            NavigationExpression
-              NameExpression
-                Identifier "target" @ 71..77 leading=[Newline "\n", Whitespace "    "]
-              Dot "." @ 77..78
-              Identifier "name" @ 78..82 trailing=[Whitespace " "]
-            Assign "=" @ 83..84 trailing=[Whitespace " "]
-            NameExpression
-              Identifier "value" @ 85..90
-      Statement
-        ExpressionStatement
-          AssignmentExpression
-            IndexExpression
-              NameExpression
-                Identifier "target" @ 95..101 leading=[Newline "\n", Whitespace "    "]
-              LBracket "[" @ 101..102
-              ValueArgument
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "assignmentTargets" @ 4..21
+      ValueParameterList
+        LParen "(" @ 21..22
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "target" @ 22..28
+            Colon ":" @ 28..29 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Target" @ 30..36
+          Comma "," @ 36..37 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "index" @ 38..43
+            Colon ":" @ 43..44 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Int" @ 45..48
+          Comma "," @ 48..49 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "value" @ 50..55
+            Colon ":" @ 55..56 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "String" @ 57..63
+        RParen ")" @ 63..64 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 65..66
+        BlockItemList
+          Statement
+            ExpressionStatement
+              AssignmentExpression
+                NavigationExpression
+                  NameExpression
+                    Identifier "target" @ 71..77 leading=[Newline "\n", Whitespace "    "]
+                  Dot "." @ 77..78
+                  Identifier "name" @ 78..82 trailing=[Whitespace " "]
+                Assign "=" @ 83..84 trailing=[Whitespace " "]
                 NameExpression
-                  Identifier "index" @ 102..107
-              RBracket "]" @ 107..108 trailing=[Whitespace " "]
-            Assign "=" @ 109..110 trailing=[Whitespace " "]
-            NameExpression
-              Identifier "value" @ 111..116
-      Statement
-        ExpressionStatement
-          AssignmentExpression
-            NavigationExpression
-              PostfixExpression
+                  Identifier "value" @ 85..90
+            TerminatorList
+          Statement
+            ExpressionStatement
+              AssignmentExpression
+                IndexExpression
+                  NameExpression
+                    Identifier "target" @ 95..101 leading=[Newline "\n", Whitespace "    "]
+                  LBracket "[" @ 101..102
+                  ValueArgumentSeparatedList
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      NameExpression
+                        Identifier "index" @ 102..107
+                  RBracket "]" @ 107..108 trailing=[Whitespace " "]
+                Assign "=" @ 109..110 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "value" @ 111..116
+            TerminatorList
+          Statement
+            ExpressionStatement
+              AssignmentExpression
                 NavigationExpression
-                  NameExpression
-                    Identifier "target" @ 121..127 leading=[Newline "\n", Whitespace "    "]
-                  Dot "." @ 127..128
-                  Identifier "child" @ 128..133
-                BangBang "!!" @ 133..135
-              Dot "." @ 135..136
-              Identifier "name" @ 136..140 trailing=[Whitespace " "]
-            Assign "=" @ 141..142 trailing=[Whitespace " "]
-            NameExpression
-              Identifier "value" @ 143..148
-      Statement
-        ExpressionStatement
-          AssignmentExpression
-            NavigationExpression
-              IndexExpression
+                  PostfixExpression
+                    NavigationExpression
+                      NameExpression
+                        Identifier "target" @ 121..127 leading=[Newline "\n", Whitespace "    "]
+                      Dot "." @ 127..128
+                      Identifier "child" @ 128..133
+                    BangBang "!!" @ 133..135
+                  Dot "." @ 135..136
+                  Identifier "name" @ 136..140 trailing=[Whitespace " "]
+                Assign "=" @ 141..142 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "value" @ 143..148
+            TerminatorList
+          Statement
+            ExpressionStatement
+              AssignmentExpression
                 NavigationExpression
-                  NameExpression
-                    Identifier "target" @ 153..159 leading=[Newline "\n", Whitespace "    "]
-                  Dot "." @ 159..160
-                  Identifier "items" @ 160..165
-                LBracket "[" @ 165..166
-                ValueArgument
-                  NameExpression
-                    Identifier "index" @ 166..171
-                RBracket "]" @ 171..172
-              Dot "." @ 172..173
-              Identifier "label" @ 173..178 trailing=[Whitespace " "]
-            Assign "=" @ 179..180 trailing=[Whitespace " "]
-            NameExpression
-              Identifier "value" @ 181..186
-      RBrace "}" @ 187..188 leading=[Newline "\n"]
+                  IndexExpression
+                    NavigationExpression
+                      NameExpression
+                        Identifier "target" @ 153..159 leading=[Newline "\n", Whitespace "    "]
+                      Dot "." @ 159..160
+                      Identifier "items" @ 160..165
+                    LBracket "[" @ 165..166
+                    ValueArgumentSeparatedList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "index" @ 166..171
+                    RBracket "]" @ 171..172
+                  Dot "." @ 172..173
+                  Identifier "label" @ 173..178 trailing=[Whitespace " "]
+                Assign "=" @ 179..180 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "value" @ 181..186
+            TerminatorList
+        RBrace "}" @ 187..188 leading=[Newline "\n"]
   Eof "" @ 189..189 leading=[Newline "\n"]
 
 diagnostics:

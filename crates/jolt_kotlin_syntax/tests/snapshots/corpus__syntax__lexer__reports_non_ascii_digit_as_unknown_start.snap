@@ -8,13 +8,17 @@ input:
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  Statement
-    ExpressionStatement
-      ErrorNode
-        Unknown "١" @ 0..2
-      ErrorNode
-        Identifier "abc" @ 2..5
+    ImportDirectiveList
+  KotlinFileItemList
+    Statement
+      ExpressionStatement
+        ErrorNode
+          Unknown "١" @ 0..2
+        ErrorNode
+          Identifier "abc" @ 2..5
+      TerminatorList
   Eof "" @ 6..6 leading=[Newline "\n"]
 
 diagnostics:

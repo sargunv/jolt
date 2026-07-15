@@ -14,7 +14,9 @@ fun demo(flag: Boolean) {
     work()
   }
   when (flag)
+
 }
 
 diagnostics:
-(none)
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(51) }) message=expected 'while' after do body
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(59), end: TextSize(60) }) message=expected '{' after when subject

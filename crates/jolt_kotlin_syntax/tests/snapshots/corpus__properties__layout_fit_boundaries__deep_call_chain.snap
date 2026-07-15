@@ -16,94 +16,127 @@ val normalized =
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "properties" @ 20..30
+      QualifiedNameSegmentList
+        Name
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "properties" @ 20..30
+    TerminatorList
   ImportList
-  PropertyDeclaration
-    ValKw "val" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "normalized" @ 36..46 trailing=[Whitespace " "]
-    Assign "=" @ 47..48
-    CallExpression
-      NavigationExpression
-        CallExpression
-          NavigationExpression
-            CallExpression
-              NavigationExpression
-                CallExpression
-                  NavigationExpression
-                    CallExpression
-                      NavigationExpression
-                        StringTemplateExpression
+    ImportDirectiveList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      ValKw "val" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "normalized" @ 36..46 trailing=[Whitespace " "]
+      Assign "=" @ 47..48
+      CallExpression
+        NavigationExpression
+          CallExpression
+            NavigationExpression
+              CallExpression
+                NavigationExpression
+                  CallExpression
+                    NavigationExpression
+                      CallExpression
+                        NavigationExpression
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                OpenQuote "\"" @ 53..54 leading=[Newline "\n", Whitespace "    "]
+                              StringTemplateEntry
+                                RegularStringPart " Alpha-Beta Gamma " @ 54..72
+                            ClosingQuote "\"" @ 72..73
+                          Dot "." @ 82..83 leading=[Newline "\n", Whitespace "        "]
+                          Identifier "trim" @ 83..87
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 87..88
+                          ValueArgumentEntryList
+                          RParen ")" @ 88..89
+                        LambdaExpressionList
+                      Dot "." @ 98..99 leading=[Newline "\n", Whitespace "        "]
+                      Identifier "lowercase" @ 99..108
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 108..109
+                      ValueArgumentEntryList
+                      RParen ")" @ 109..110
+                    LambdaExpressionList
+                  Dot "." @ 119..120 leading=[Newline "\n", Whitespace "        "]
+                  Identifier "replace" @ 120..127
+                TypeArgumentListList
+                ValueArgumentList
+                  LParen "(" @ 127..128
+                  ValueArgumentEntryList
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      StringTemplateExpression
+                        StringTemplateEntryList
                           StringTemplateEntry
-                            OpenQuote "\"" @ 53..54 leading=[Newline "\n", Whitespace "    "]
+                            OpenQuote "\"" @ 128..129
                           StringTemplateEntry
-                            RegularStringPart " Alpha-Beta Gamma " @ 54..72
-                          ClosingQuote "\"" @ 72..73
-                        Dot "." @ 82..83 leading=[Newline "\n", Whitespace "        "]
-                        Identifier "trim" @ 83..87
-                      ValueArgumentList
-                        LParen "(" @ 87..88
-                        RParen ")" @ 88..89
-                    Dot "." @ 98..99 leading=[Newline "\n", Whitespace "        "]
-                    Identifier "lowercase" @ 99..108
-                  ValueArgumentList
-                    LParen "(" @ 108..109
-                    RParen ")" @ 109..110
-                Dot "." @ 119..120 leading=[Newline "\n", Whitespace "        "]
-                Identifier "replace" @ 120..127
-              ValueArgumentList
-                LParen "(" @ 127..128
+                            RegularStringPart " " @ 129..130
+                        ClosingQuote "\"" @ 130..131
+                    Comma "," @ 131..132 trailing=[Whitespace " "]
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      StringTemplateExpression
+                        StringTemplateEntryList
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 133..134
+                          StringTemplateEntry
+                            RegularStringPart "_" @ 134..135
+                        ClosingQuote "\"" @ 135..136
+                  RParen ")" @ 136..137
+                LambdaExpressionList
+              Dot "." @ 146..147 leading=[Newline "\n", Whitespace "        "]
+              Identifier "removePrefix" @ 147..159
+            TypeArgumentListList
+            ValueArgumentList
+              LParen "(" @ 159..160
+              ValueArgumentEntryList
                 ValueArgument
+                  ValueArgumentPrefixList
                   StringTemplateExpression
-                    StringTemplateEntry
-                      OpenQuote "\"" @ 128..129
-                    StringTemplateEntry
-                      RegularStringPart " " @ 129..130
-                    ClosingQuote "\"" @ 130..131
-                Comma "," @ 131..132 trailing=[Whitespace " "]
-                ValueArgument
-                  StringTemplateExpression
-                    StringTemplateEntry
-                      OpenQuote "\"" @ 133..134
-                    StringTemplateEntry
-                      RegularStringPart "_" @ 134..135
-                    ClosingQuote "\"" @ 135..136
-                RParen ")" @ 136..137
-            Dot "." @ 146..147 leading=[Newline "\n", Whitespace "        "]
-            Identifier "removePrefix" @ 147..159
-          ValueArgumentList
-            LParen "(" @ 159..160
+                    StringTemplateEntryList
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 160..161
+                      StringTemplateEntry
+                        RegularStringPart "tmp_" @ 161..165
+                    ClosingQuote "\"" @ 165..166
+              RParen ")" @ 166..167
+            LambdaExpressionList
+          Dot "." @ 176..177 leading=[Newline "\n", Whitespace "        "]
+          Identifier "removeSuffix" @ 177..189
+        TypeArgumentListList
+        ValueArgumentList
+          LParen "(" @ 189..190
+          ValueArgumentEntryList
             ValueArgument
+              ValueArgumentPrefixList
               StringTemplateExpression
-                StringTemplateEntry
-                  OpenQuote "\"" @ 160..161
-                StringTemplateEntry
-                  RegularStringPart "tmp_" @ 161..165
-                ClosingQuote "\"" @ 165..166
-            RParen ")" @ 166..167
-        Dot "." @ 176..177 leading=[Newline "\n", Whitespace "        "]
-        Identifier "removeSuffix" @ 177..189
-      ValueArgumentList
-        LParen "(" @ 189..190
-        ValueArgument
-          StringTemplateExpression
-            StringTemplateEntry
-              OpenQuote "\"" @ 190..191
-            StringTemplateEntry
-              RegularStringPart "_old" @ 191..195
-            ClosingQuote "\"" @ 195..196
-        RParen ")" @ 196..197
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 190..191
+                  StringTemplateEntry
+                    RegularStringPart "_old" @ 191..195
+                ClosingQuote "\"" @ 195..196
+          RParen ")" @ 196..197
+        LambdaExpressionList
+      PropertyBodyMemberList
   Eof "" @ 198..198 leading=[Newline "\n"]
 
 diagnostics:

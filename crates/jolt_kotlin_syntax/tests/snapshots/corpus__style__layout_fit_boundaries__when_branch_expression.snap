@@ -15,104 +15,133 @@ fun branch(value: Int): String =
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "boundaries" @ 20..30
-  ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "branch" @ 36..42
-    ValueParameterList
-      LParen "(" @ 42..43
-      ValueParameter
+      QualifiedNameSegmentList
         Name
-          Identifier "value" @ 43..48
-        Colon ":" @ 48..49 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "Int" @ 50..53
-      RParen ")" @ 53..54
-    Colon ":" @ 54..55 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "String" @ 56..62 trailing=[Whitespace " "]
-    Assign "=" @ 63..64
-    WhenExpression
-      WhenKw "when" @ 69..73 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-      WhenSubject
-        LParen "(" @ 74..75
-        NameExpression
-          Identifier "value" @ 75..80
-        RParen ")" @ 80..81 trailing=[Whitespace " "]
-      LBrace "{" @ 82..83
-      WhenEntry
-        WhenCondition
-          LiteralExpression
-            IntegerLiteral "0" @ 92..93 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-        Arrow "->" @ 94..96 trailing=[Whitespace " "]
-        StringTemplateExpression
-          StringTemplateEntry
-            OpenQuote "\"" @ 97..98
-          StringTemplateEntry
-            RegularStringPart "zero" @ 98..102
-          ClosingQuote "\"" @ 102..103
-      WhenEntry
-        WhenCondition
-          LiteralExpression
-            IntegerLiteral "1" @ 112..113 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-        Arrow "->" @ 114..116 trailing=[Whitespace " "]
-        StringTemplateExpression
-          StringTemplateEntry
-            OpenQuote "\"" @ 117..118
-          StringTemplateEntry
-            RegularStringPart "one" @ 118..121
-          ClosingQuote "\"" @ 121..122
-      WhenEntry
-        ElseKw "else" @ 131..135 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-        Arrow "->" @ 136..138 trailing=[Whitespace " "]
-        StringTemplateExpression
-          StringTemplateEntry
-            OpenQuote "\"" @ 139..140
-          StringTemplateEntry
-            RegularStringPart "value-" @ 140..146
-          StringTemplateEntry
-            LongTemplateEntryStart "${" @ 146..148
-            CallExpression
-              NavigationExpression
-                CallExpression
-                  NavigationExpression
-                    NameExpression
-                      Identifier "value" @ 148..153
-                    Dot "." @ 153..154
-                    Identifier "toString" @ 154..162
-                  ValueArgumentList
-                    LParen "(" @ 162..163
-                    RParen ")" @ 163..164
-                Dot "." @ 164..165
-                Identifier "padStart" @ 165..173
-              ValueArgumentList
-                LParen "(" @ 173..174
-                ValueArgument
-                  LiteralExpression
-                    IntegerLiteral "4" @ 174..175
-                Comma "," @ 175..176 trailing=[Whitespace " "]
-                ValueArgument
-                  LiteralExpression
-                    CharacterLiteral "'0'" @ 177..180
-                RParen ")" @ 180..181
-            LongTemplateEntryEnd "}" @ 181..182
-          ClosingQuote "\"" @ 182..183
-      RBrace "}" @ 188..189 leading=[Newline "\n", Whitespace "    "]
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "boundaries" @ 20..30
+    TerminatorList
+  ImportList
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "branch" @ 36..42
+      ValueParameterList
+        LParen "(" @ 42..43
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "value" @ 43..48
+            Colon ":" @ 48..49 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "Int" @ 50..53
+        RParen ")" @ 53..54
+      Colon ":" @ 54..55 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "String" @ 56..62 trailing=[Whitespace " "]
+      Assign "=" @ 63..64
+      WhenExpression
+        WhenKw "when" @ 69..73 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        WhenSubject
+          LParen "(" @ 74..75
+          NameExpression
+            Identifier "value" @ 75..80
+          RParen ")" @ 80..81 trailing=[Whitespace " "]
+        LBrace "{" @ 82..83
+        WhenEntryList
+          WhenEntry
+            WhenConditionSeparatedList
+              WhenCondition
+                LiteralExpression
+                  IntegerLiteral "0" @ 92..93 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+            Arrow "->" @ 94..96 trailing=[Whitespace " "]
+            StringTemplateExpression
+              StringTemplateEntryList
+                StringTemplateEntry
+                  OpenQuote "\"" @ 97..98
+                StringTemplateEntry
+                  RegularStringPart "zero" @ 98..102
+              ClosingQuote "\"" @ 102..103
+          WhenEntry
+            WhenConditionSeparatedList
+              WhenCondition
+                LiteralExpression
+                  IntegerLiteral "1" @ 112..113 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+            Arrow "->" @ 114..116 trailing=[Whitespace " "]
+            StringTemplateExpression
+              StringTemplateEntryList
+                StringTemplateEntry
+                  OpenQuote "\"" @ 117..118
+                StringTemplateEntry
+                  RegularStringPart "one" @ 118..121
+              ClosingQuote "\"" @ 121..122
+          WhenEntry
+            ElseKw "else" @ 131..135 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+            WhenConditionSeparatedList
+            Arrow "->" @ 136..138 trailing=[Whitespace " "]
+            StringTemplateExpression
+              StringTemplateEntryList
+                StringTemplateEntry
+                  OpenQuote "\"" @ 139..140
+                StringTemplateEntry
+                  RegularStringPart "value-" @ 140..146
+                StringTemplateEntry
+                  LongStringTemplateEntry
+                    LongTemplateEntryStart "${" @ 146..148
+                    CallExpression
+                      NavigationExpression
+                        CallExpression
+                          NavigationExpression
+                            NameExpression
+                              Identifier "value" @ 148..153
+                            Dot "." @ 153..154
+                            Identifier "toString" @ 154..162
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 162..163
+                            ValueArgumentEntryList
+                            RParen ")" @ 163..164
+                          LambdaExpressionList
+                        Dot "." @ 164..165
+                        Identifier "padStart" @ 165..173
+                      TypeArgumentListList
+                      ValueArgumentList
+                        LParen "(" @ 173..174
+                        ValueArgumentEntryList
+                          ValueArgument
+                            ValueArgumentPrefixList
+                            LiteralExpression
+                              IntegerLiteral "4" @ 174..175
+                          Comma "," @ 175..176 trailing=[Whitespace " "]
+                          ValueArgument
+                            ValueArgumentPrefixList
+                            LiteralExpression
+                              CharacterLiteral "'0'" @ 177..180
+                        RParen ")" @ 180..181
+                      LambdaExpressionList
+                    LongTemplateEntryEnd "}" @ 181..182
+              ClosingQuote "\"" @ 182..183
+        RBrace "}" @ 188..189 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 190..190 leading=[Newline "\n"]
 
 diagnostics:

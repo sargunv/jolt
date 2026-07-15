@@ -8,17 +8,21 @@ café Δelta 名称 _привет
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   ImportList
-  Statement
-    ExpressionStatement
-      BinaryExpression
-        NameExpression
-          Identifier "café" @ 0..5 trailing=[Whitespace " "]
-        Identifier "Δelta" @ 6..12 trailing=[Whitespace " "]
-        NameExpression
-          Identifier "名称" @ 13..19 trailing=[Whitespace " "]
-      ErrorNode
-        Identifier "_привет" @ 20..33
+    ImportDirectiveList
+  KotlinFileItemList
+    Statement
+      ExpressionStatement
+        BinaryExpression
+          NameExpression
+            Identifier "café" @ 0..5 trailing=[Whitespace " "]
+          Identifier "Δelta" @ 6..12 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "名称" @ 13..19 trailing=[Whitespace " "]
+        ErrorNode
+          Identifier "_привет" @ 20..33
+      TerminatorList
   Eof "" @ 34..34 leading=[Newline "\n"]
 
 diagnostics:

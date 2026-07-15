@@ -16,165 +16,206 @@ fun totals(entries: List<Pair<String, Int>>): Map<String, Int> {
 syntax:
 syntax:
 KotlinFile
+  AnnotationList
   PackageHeader
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Name
-        Identifier "com" @ 8..11
-      Dot "." @ 11..12
-      Name
-        Identifier "example" @ 12..19
-      Dot "." @ 19..20
-      Name
-        Identifier "expressions" @ 20..31
-  ImportList
-  FunctionDeclaration
-    FunKw "fun" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    CallableName
-      Name
-        Identifier "totals" @ 37..43
-    ValueParameterList
-      LParen "(" @ 43..44
-      ValueParameter
+      QualifiedNameSegmentList
         Name
-          Identifier "entries" @ 44..51
-        Colon ":" @ 51..52 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "List" @ 53..57
-            TypeArgumentList
-              Lt "<" @ 57..58
-              TypeProjectionList
-                TypeArgument
-                  TypeProjection
-                    TypeReference
-                      UserType
-                        Identifier "Pair" @ 58..62
-                        TypeArgumentList
-                          Lt "<" @ 62..63
-                          TypeProjectionList
-                            TypeArgument
-                              TypeProjection
-                                TypeReference
-                                  UserType
-                                    Identifier "String" @ 63..69
-                            Comma "," @ 69..70 trailing=[Whitespace " "]
-                            TypeArgument
-                              TypeProjection
-                                TypeReference
-                                  UserType
-                                    Identifier "Int" @ 71..74
-                          Gt ">" @ 74..75
-              Gt ">" @ 75..76
-      RParen ")" @ 76..77
-    Colon ":" @ 77..78 trailing=[Whitespace " "]
-    TypeReference
-      UserType
-        Identifier "Map" @ 79..82
-        TypeArgumentList
-          Lt "<" @ 82..83
-          TypeProjectionList
-            TypeArgument
-              TypeProjection
-                TypeReference
-                  UserType
-                    Identifier "String" @ 83..89
-            Comma "," @ 89..90 trailing=[Whitespace " "]
-            TypeArgument
-              TypeProjection
-                TypeReference
-                  UserType
-                    Identifier "Int" @ 91..94
-          Gt ">" @ 94..95 trailing=[Whitespace " "]
-    Block
-      LBrace "{" @ 96..97
-      PropertyDeclaration
-        ValKw "val" @ 102..105 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        CallableName
+          Identifier "com" @ 8..11
+        Dot "." @ 11..12
+        Name
+          Identifier "example" @ 12..19
+        Dot "." @ 19..20
+        Name
+          Identifier "expressions" @ 20..31
+    TerminatorList
+  ImportList
+    ImportDirectiveList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierListSequence
+      ModifierListSequence
+      FunKw "fun" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierListSequence
+      CallableName
+        CallableNamePartList
           Name
-            Identifier "result" @ 106..112 trailing=[Whitespace " "]
-        Assign "=" @ 113..114 trailing=[Whitespace " "]
-        CallExpression
-          NameExpression
-            Identifier "mutableMapOf" @ 115..127
-          TypeArgumentList
-            Lt "<" @ 127..128
-            TypeProjectionList
-              TypeArgument
-                TypeProjection
-                  TypeReference
-                    UserType
-                      Identifier "String" @ 128..134
-              Comma "," @ 134..135 trailing=[Whitespace " "]
-              TypeArgument
-                TypeProjection
-                  TypeReference
-                    UserType
-                      Identifier "Int" @ 136..139
-            Gt ">" @ 139..140
-          ValueArgumentList
-            LParen "(" @ 140..141
-            RParen ")" @ 141..142
-      Statement
-        ExpressionStatement
-          ForStatement
-            ForKw "for" @ 147..150 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            LParen "(" @ 151..152
-            DestructuringDeclaration
-              LParen "(" @ 152..153
-              DestructuringEntry
+            Identifier "totals" @ 37..43
+      ValueParameterList
+        LParen "(" @ 43..44
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierListSequence
+            Name
+              Identifier "entries" @ 44..51
+            Colon ":" @ 51..52 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  Identifier "List" @ 53..57
+                  TypeArgumentList
+                    Lt "<" @ 57..58
+                    TypeProjectionList
+                      TypeProjectionSeparatedList
+                        TypeArgument
+                          TypeProjection
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  Identifier "Pair" @ 58..62
+                                  TypeArgumentList
+                                    Lt "<" @ 62..63
+                                    TypeProjectionList
+                                      TypeProjectionSeparatedList
+                                        TypeArgument
+                                          TypeProjection
+                                            TypeReference
+                                              UserType
+                                                UserTypeSegmentList
+                                                  Identifier "String" @ 63..69
+                                        Comma "," @ 69..70 trailing=[Whitespace " "]
+                                        TypeArgument
+                                          TypeProjection
+                                            TypeReference
+                                              UserType
+                                                UserTypeSegmentList
+                                                  Identifier "Int" @ 71..74
+                                    Gt ">" @ 74..75
+                    Gt ">" @ 75..76
+        RParen ")" @ 76..77
+      Colon ":" @ 77..78 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            Identifier "Map" @ 79..82
+            TypeArgumentList
+              Lt "<" @ 82..83
+              TypeProjectionList
+                TypeProjectionSeparatedList
+                  TypeArgument
+                    TypeProjection
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            Identifier "String" @ 83..89
+                  Comma "," @ 89..90 trailing=[Whitespace " "]
+                  TypeArgument
+                    TypeProjection
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            Identifier "Int" @ 91..94
+              Gt ">" @ 94..95 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 96..97
+        BlockItemList
+          PropertyDeclaration
+            ModifierListSequence
+            ModifierListSequence
+            ValKw "val" @ 102..105 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallableName
+              CallableNamePartList
                 Name
-                  Identifier "name" @ 153..157
-              Comma "," @ 157..158 trailing=[Whitespace " "]
-              DestructuringEntry
-                Name
-                  Identifier "count" @ 159..164
-              RParen ")" @ 164..165 trailing=[Whitespace " "]
-            InKw "in" @ 166..168 trailing=[Whitespace " "]
-            NameExpression
-              Identifier "entries" @ 169..176
-            RParen ")" @ 176..177 trailing=[Whitespace " "]
-            Block
-              LBrace "{" @ 178..179
-              Statement
-                ExpressionStatement
-                  AssignmentExpression
-                    IndexExpression
-                      NameExpression
-                        Identifier "result" @ 188..194 leading=[Newline "\n", Whitespace "        "]
-                      LBracket "[" @ 194..195
-                      ValueArgument
-                        NameExpression
-                          Identifier "name" @ 195..199
-                      RBracket "]" @ 199..200 trailing=[Whitespace " "]
-                    Assign "=" @ 201..202 trailing=[Whitespace " "]
-                    BinaryExpression
-                      ParenthesizedExpression
-                        LParen "(" @ 203..204
-                        BinaryExpression
+                  Identifier "result" @ 106..112 trailing=[Whitespace " "]
+            Assign "=" @ 113..114 trailing=[Whitespace " "]
+            CallExpression
+              NameExpression
+                Identifier "mutableMapOf" @ 115..127
+              TypeArgumentListList
+                TypeArgumentList
+                  Lt "<" @ 127..128
+                  TypeProjectionList
+                    TypeProjectionSeparatedList
+                      TypeArgument
+                        TypeProjection
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                Identifier "String" @ 128..134
+                      Comma "," @ 134..135 trailing=[Whitespace " "]
+                      TypeArgument
+                        TypeProjection
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                Identifier "Int" @ 136..139
+                  Gt ">" @ 139..140
+              ValueArgumentList
+                LParen "(" @ 140..141
+                ValueArgumentEntryList
+                RParen ")" @ 141..142
+              LambdaExpressionList
+            PropertyBodyMemberList
+          Statement
+            ExpressionStatement
+              ForStatement
+                ForKw "for" @ 147..150 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                LParen "(" @ 151..152
+                DestructuringDeclaration
+                  LParen "(" @ 152..153
+                  DestructuringEntrySeparatedList
+                    DestructuringEntry
+                      Name
+                        Identifier "name" @ 153..157
+                    Comma "," @ 157..158 trailing=[Whitespace " "]
+                    DestructuringEntry
+                      Name
+                        Identifier "count" @ 159..164
+                  RParen ")" @ 164..165 trailing=[Whitespace " "]
+                InKw "in" @ 166..168 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "entries" @ 169..176
+                RParen ")" @ 176..177 trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 178..179
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        AssignmentExpression
                           IndexExpression
                             NameExpression
-                              Identifier "result" @ 204..210
-                            LBracket "[" @ 210..211
-                            ValueArgument
-                              NameExpression
-                                Identifier "name" @ 211..215
-                            RBracket "]" @ 215..216 trailing=[Whitespace " "]
-                          Elvis "?:" @ 217..219 trailing=[Whitespace " "]
-                          LiteralExpression
-                            IntegerLiteral "0" @ 220..221
-                        RParen ")" @ 221..222 trailing=[Whitespace " "]
-                      Plus "+" @ 223..224 trailing=[Whitespace " "]
-                      NameExpression
-                        Identifier "count" @ 225..230
-              RBrace "}" @ 235..236 leading=[Newline "\n", Whitespace "    "]
-      Statement
-        ExpressionStatement
-          JumpExpression
-            ReturnKw "return" @ 241..247 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            NameExpression
-              Identifier "result" @ 248..254
-      RBrace "}" @ 255..256 leading=[Newline "\n"]
+                              Identifier "result" @ 188..194 leading=[Newline "\n", Whitespace "        "]
+                            LBracket "[" @ 194..195
+                            ValueArgumentSeparatedList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "name" @ 195..199
+                            RBracket "]" @ 199..200 trailing=[Whitespace " "]
+                          Assign "=" @ 201..202 trailing=[Whitespace " "]
+                          BinaryExpression
+                            ParenthesizedExpression
+                              LParen "(" @ 203..204
+                              BinaryExpression
+                                IndexExpression
+                                  NameExpression
+                                    Identifier "result" @ 204..210
+                                  LBracket "[" @ 210..211
+                                  ValueArgumentSeparatedList
+                                    ValueArgument
+                                      ValueArgumentPrefixList
+                                      NameExpression
+                                        Identifier "name" @ 211..215
+                                  RBracket "]" @ 215..216 trailing=[Whitespace " "]
+                                Elvis "?:" @ 217..219 trailing=[Whitespace " "]
+                                LiteralExpression
+                                  IntegerLiteral "0" @ 220..221
+                              RParen ")" @ 221..222 trailing=[Whitespace " "]
+                            Plus "+" @ 223..224 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "count" @ 225..230
+                      TerminatorList
+                  RBrace "}" @ 235..236 leading=[Newline "\n", Whitespace "    "]
+            TerminatorList
+          Statement
+            ExpressionStatement
+              JumpExpression
+                ReturnKw "return" @ 241..247 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "result" @ 248..254
+            TerminatorList
+        RBrace "}" @ 255..256 leading=[Newline "\n"]
   Eof "" @ 257..257 leading=[Newline "\n"]
 
 diagnostics:
