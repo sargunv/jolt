@@ -3,10 +3,10 @@ use jolt_kotlin_syntax::{
     Annotation, ArrowFunctionType, BangDefinitelyNonNullableType, ContextFunctionType,
     DefinitelyNonNullableType, FunctionType, FunctionTypeParameter,
     IntersectionDefinitelyNonNullableType, KotlinRoleElement, KotlinSyntaxField,
-    KotlinSyntaxInvariantError, KotlinSyntaxToken, ModifierList, ModifierListSequence,
-    NullableType, ParenthesizedType, ReceiverType, SuspendedFunctionType, TypeArgument,
-    TypeArgumentList, TypeConstraint, TypeConstraintList, TypeParameter, TypeParameterList,
-    TypeProjection, TypeReference, TypeSyntax, UserType,
+    KotlinSyntaxInvariantError, KotlinSyntaxToken, ModifierList, NullableType, ParenthesizedType,
+    ReceiverType, SuspendedFunctionType, TypeArgument, TypeArgumentList, TypeConstraint,
+    TypeConstraintList, TypeParameter, TypeParameterList, TypeProjection, TypeReference,
+    TypeSyntax, UserType,
 };
 
 use crate::helpers::comments::{
@@ -629,63 +629,40 @@ fn format_bang_dnn<'source>(
 
 pub(crate) fn format_modifier_sequence<'source>(
     doc: &mut DocBuilder<'source>,
-    sequence: &ModifierListSequence<'source>,
-) -> Doc<'source> {
-    doc.concat_list(|docs| {
-        for part in sequence.parts() {
-            match resolve_list_part(part, docs) {
-                KotlinFormatListPart::Item(modifiers) => {
-                    let formatted = format_modifier_list(docs, &modifiers);
-                    docs.push(formatted);
-                }
-                KotlinFormatListPart::Separator(separator) => docs.block_on_invariant(format!(
-                    "unexpected modifier-list separator: {:?}",
-                    separator.kind()
-                )),
-                KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
-            }
-        }
-    })
-}
-
-fn format_modifier_list<'source>(
-    doc: &mut DocBuilder<'source>,
     modifiers: &ModifierList<'source>,
 ) -> Doc<'source> {
     format_or_verbatim(modifiers, doc, |doc| {
-        match resolve_required_field(modifiers.modifiers(), doc) {
-            KotlinFormatField::Present(items) => doc.concat_list(|docs| {
-                for part in items.parts() {
-                    match resolve_list_part(part, docs) {
-                        KotlinFormatListPart::Item(role) => {
-                            if let Some(annotation) = role.cast_node::<Annotation<'source>>() {
-                                let annotation = format_annotation(docs, &annotation);
-                                docs.push(annotation);
-                                let line = docs.hard_line();
-                                docs.push(line);
-                            } else if let Some(token) = role.token() {
-                                let token = format_token(
-                                    docs,
-                                    &token,
-                                    LeadingTrivia::Preserve,
-                                    TrailingTrivia::Preserve,
-                                );
-                                docs.push(token);
-                                let space = docs.space();
-                                docs.push(space);
-                            } else {
-                                docs.block_on_invariant("invalid modifier-list item");
-                            }
+        doc.concat_list(|docs| {
+            for part in modifiers.parts() {
+                match resolve_list_part(part, docs) {
+                    KotlinFormatListPart::Item(role) => {
+                        if let Some(annotation) = role.cast_node::<Annotation<'source>>() {
+                            let annotation = format_annotation(docs, &annotation);
+                            docs.push(annotation);
+                            let line = docs.hard_line();
+                            docs.push(line);
+                        } else if let Some(token) = role.token() {
+                            let token = format_token(
+                                docs,
+                                &token,
+                                LeadingTrivia::Preserve,
+                                TrailingTrivia::Preserve,
+                            );
+                            docs.push(token);
+                            let space = docs.space();
+                            docs.push(space);
+                        } else {
+                            docs.block_on_invariant("invalid modifier-list item");
                         }
-                        KotlinFormatListPart::Separator(separator) => docs.block_on_invariant(
-                            format!("unexpected modifier separator: {:?}", separator.kind()),
-                        ),
-                        KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
                     }
+                    KotlinFormatListPart::Separator(separator) => docs.block_on_invariant(format!(
+                        "unexpected modifier separator: {:?}",
+                        separator.kind()
+                    )),
+                    KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
                 }
-            }),
-            KotlinFormatField::Malformed(recovery) => recovery,
-        }
+            }
+        })
     })
 }
 

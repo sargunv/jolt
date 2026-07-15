@@ -11,12 +11,11 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Name
         Identifier "Demo" @ 6..10 trailing=[Whitespace " "]
@@ -25,10 +24,10 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               FunKw "fun" @ 13..16 trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name

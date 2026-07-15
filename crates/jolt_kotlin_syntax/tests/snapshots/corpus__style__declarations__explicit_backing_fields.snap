@@ -34,12 +34,11 @@ KotlinFile
         Name
           Identifier "declarations" @ 20..32
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 34..39 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Location" @ 40..48 trailing=[Whitespace " "]
@@ -48,8 +47,8 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             PropertyDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               ValKw "val" @ 55..58 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               CallableName
                 CallableNamePartList
@@ -73,8 +72,8 @@ KotlinFile
                     ClosingQuote "\"" @ 94..95
           ClassMemberDeclaration
             PropertyDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               VarKw "var" @ 101..104 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               CallableName
                 CallableNamePartList
@@ -97,7 +96,7 @@ KotlinFile
                         RegularStringPart "FR" @ 138..140
                     ClosingQuote "\"" @ 140..141
                 PropertyAccessor
-                  ModifierListSequence
+                  ModifierList
                   Identifier "get" @ 150..153 leading=[Newline "\n", Whitespace "        "]
                   ValueParameterList
                     LParen "(" @ 153..154
@@ -117,13 +116,13 @@ KotlinFile
                       RParen ")" @ 174..175
                     LambdaExpressionList
                 PropertyAccessor
-                  ModifierListSequence
+                  ModifierList
                   Identifier "set" @ 184..187 leading=[Newline "\n", Whitespace "        "]
                   ValueParameterList
                     LParen "(" @ 187..188
                     ValueParameterSeparatedList
                       ValueParameter
-                        ModifierListSequence
+                        ModifierList
                         Name
                           Identifier "value" @ 188..193
                     RParen ")" @ 193..194 trailing=[Whitespace " "]

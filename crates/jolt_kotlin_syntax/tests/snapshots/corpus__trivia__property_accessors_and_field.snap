@@ -33,12 +33,11 @@ KotlinFile
         Name
           Identifier "trivia" @ 20..26
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 28..33 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Accessors" @ 34..43 trailing=[Whitespace " "]
@@ -47,8 +46,8 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             PropertyDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               VarKw "var" @ 50..53 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               CallableName
                 CallableNamePartList
@@ -64,7 +63,7 @@ KotlinFile
                 IntegerLiteral "0" @ 67..68
               PropertyBodyMemberList
                 PropertyAccessor
-                  ModifierListSequence
+                  ModifierList
                   Identifier "get" @ 77..80 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:get-keyword */", Whitespace " "]
                   ValueParameterList
                     LParen "(" @ 111..112
@@ -74,16 +73,14 @@ KotlinFile
                   NameExpression
                     Identifier "field" @ 116..121 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:get-field */"]
                 PropertyAccessor
-                  ModifierListSequence
-                    ModifierList
-                      ModifierItemList
-                        Identifier "private" @ 158..165 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  ModifierList
+                    Identifier "private" @ 158..165 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                   Identifier "set" @ 166..169 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:set-modifier */", Whitespace " "]
                   ValueParameterList
                     LParen "(" @ 201..202
                     ValueParameterSeparatedList
                       ValueParameter
-                        ModifierListSequence
+                        ModifierList
                         Name
                           Identifier "value" @ 202..207
                     RParen ")" @ 207..208 trailing=[Whitespace " "]
@@ -116,8 +113,8 @@ KotlinFile
                     RBrace "}" @ 290..291 leading=[Newline "\n", Whitespace "        "]
           ClassMemberDeclaration
             PropertyDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               ValKw "val" @ 297..300 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               CallableName
                 CallableNamePartList
@@ -130,7 +127,7 @@ KotlinFile
                     Identifier "Boolean" @ 308..315
               PropertyBodyMemberList
                 PropertyAccessor
-                  ModifierListSequence
+                  ModifierList
                   Identifier "get" @ 324..327 leading=[Newline "\n", Whitespace "        "]
                   ValueParameterList
                     LParen "(" @ 327..328

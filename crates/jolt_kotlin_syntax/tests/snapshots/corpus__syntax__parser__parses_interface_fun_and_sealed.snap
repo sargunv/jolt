@@ -13,17 +13,16 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
     InterfaceDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       InterfaceKw "interface" @ 4..13 trailing=[Whitespace " "]
       Name
         Identifier "Decoder" @ 14..21
@@ -31,7 +30,7 @@ KotlinFile
         Lt "<" @ 21..22
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "T" @ 22..23
         Gt ">" @ 23..24 trailing=[Whitespace " "]
@@ -40,10 +39,10 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               FunKw "fun" @ 31..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -52,7 +51,7 @@ KotlinFile
                 LParen "(" @ 41..42
                 ValueParameterSeparatedList
                   ValueParameter
-                    ModifierListSequence
+                    ModifierList
                     Name
                       Identifier "text" @ 42..46
                     Colon ":" @ 46..47 trailing=[Whitespace " "]
@@ -68,11 +67,9 @@ KotlinFile
                     Identifier "T" @ 57..58
         RBrace "}" @ 59..60 leading=[Newline "\n"]
     InterfaceDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "sealed" @ 62..68 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "sealed" @ 62..68 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
       InterfaceKw "interface" @ 69..78 trailing=[Whitespace " "]
       Name
         Identifier "Node" @ 79..83

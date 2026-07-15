@@ -9,12 +9,11 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     TypeAliasDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       TypeAliasKw "typealias" @ 0..9 trailing=[Whitespace " "]
       Name
         Identifier "Handler" @ 10..17 trailing=[Whitespace " "]

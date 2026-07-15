@@ -33,12 +33,11 @@ KotlinFile
         Name
           Identifier "expressions" @ 20..31
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       CallableName
         CallableNamePartList
@@ -86,8 +85,8 @@ KotlinFile
         LambdaExpressionList
       PropertyBodyMemberList
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 94..97 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       CallableName
         CallableNamePartList

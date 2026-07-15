@@ -16,11 +16,10 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
+      ModifierList
       ContextParameterClause
         Identifier "context" @ 0..7
         LParen "(" @ 7..8
@@ -34,9 +33,9 @@ KotlinFile
                 UserTypeSegmentList
                   Identifier "Logger" @ 16..22
         RParen ")" @ 22..23
-      ModifierListSequence
+      ModifierList
       FunKw "fun" @ 24..27 leading=[Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -45,7 +44,7 @@ KotlinFile
         LParen "(" @ 38..39
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "message" @ 39..46
             Colon ":" @ 46..47 trailing=[Whitespace " "]
@@ -78,8 +77,8 @@ KotlinFile
             TerminatorList
         RBrace "}" @ 84..85 leading=[Newline "\n"]
     InterfaceDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       InterfaceKw "interface" @ 87..96 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Logger" @ 97..103 trailing=[Whitespace " "]
@@ -88,10 +87,10 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               FunKw "fun" @ 110..113 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -100,7 +99,7 @@ KotlinFile
                 LParen "(" @ 119..120
                 ValueParameterSeparatedList
                   ValueParameter
-                    ModifierListSequence
+                    ModifierList
                     Name
                       Identifier "message" @ 120..127
                     Colon ":" @ 127..128 trailing=[Whitespace " "]

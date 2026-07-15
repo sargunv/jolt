@@ -735,8 +735,8 @@ pub(crate) fn source_trivia_pieces(
 ) -> SourceTriviaPieces<'_> {
     let data = token.tree.token(token.id);
     let offset = match side {
-        SourceTriviaSide::Leading => data.full_text_range.start(),
-        SourceTriviaSide::Trailing => data.token_text_range.end(),
+        SourceTriviaSide::Leading => data.full_text_range().start(),
+        SourceTriviaSide::Trailing => data.token_text_range().end(),
     };
     SourceTriviaPieces::new(token, side, token.tree.trivia(&range), offset)
 }
@@ -873,7 +873,7 @@ mod tests {
             Event::Token,
             Event::Finish,
         ];
-        let tree = build_syntax_tree(&events, tokens, trivia).expect("valid tree");
+        let tree = build_syntax_tree(events, tokens, trivia).expect("valid tree");
         (source, tree)
     }
 

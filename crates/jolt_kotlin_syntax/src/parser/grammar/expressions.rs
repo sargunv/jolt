@@ -297,16 +297,12 @@ impl Parser<'_> {
             if self.at(K::At) || self.at(K::Hash) {
                 self.parse_annotation();
             } else {
-                let modifier = self.start();
-                let items = self.start();
                 while self.at_modifier_or_annotation() && !self.at(K::At) && !self.at(K::Hash) {
                     self.bump();
                 }
-                self.complete(items, K::ModifierItemList);
-                self.complete(modifier, K::ModifierList);
             }
         }
-        self.complete(prefix, K::AnnotationModifierList);
+        self.complete(prefix, K::ModifierList);
         if self.at_expression_boundary(stops) {
             let error = self.start();
             self.expected_here("expected expression");

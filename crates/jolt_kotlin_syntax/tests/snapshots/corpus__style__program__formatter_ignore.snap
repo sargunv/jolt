@@ -43,12 +43,11 @@ KotlinFile
         Name
           Identifier "sample" @ 8..14
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 34..39 leading=[Newline "\n", Newline "\n", LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace "   "]
       Name
         Identifier "KeepUgly" @ 42..50 trailing=[Whitespace "   "]
@@ -57,10 +56,10 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               FunKw "fun" @ 57..60 trailing=[Whitespace "   "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -91,8 +90,8 @@ KotlinFile
                 RBrace "}" @ 86..87 trailing=[Whitespace " "]
         RBrace "}" @ 88..89
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 107..112 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "FormatMe" @ 113..121 trailing=[Whitespace " "]
@@ -101,10 +100,10 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               FunKw "fun" @ 126..129 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -135,8 +134,8 @@ KotlinFile
                 RBrace "}" @ 154..155 leading=[Newline "\n", Whitespace "  "]
         RBrace "}" @ 156..157 leading=[Newline "\n"]
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 159..164 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Body" @ 165..169 trailing=[Whitespace " "]
@@ -145,8 +144,8 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             PropertyDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               ValKw "val" @ 194..197 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "    "]
               CallableName
                 CallableNamePartList
@@ -158,10 +157,10 @@ KotlinFile
               PropertyBodyMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               FunKw "fun" @ 210..213 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace "    "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -192,10 +191,10 @@ KotlinFile
                 RBrace "}" @ 240..241
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               FunKw "fun" @ 263..266 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -226,10 +225,10 @@ KotlinFile
                 RBrace "}" @ 293..294 leading=[Newline "\n", Whitespace "  "]
         RBrace "}" @ 295..296 leading=[Newline "\n"]
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 298..301 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name

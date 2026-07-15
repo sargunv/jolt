@@ -28,14 +28,13 @@ KotlinFile
         Name
           Identifier "statements" @ 20..30
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -44,7 +43,7 @@ KotlinFile
         LParen "(" @ 48..49
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "prefix" @ 49..55
             Colon ":" @ 55..56 trailing=[Whitespace " "]
@@ -70,21 +69,19 @@ KotlinFile
         LBrace "{" @ 79..80
         BlockItemList
           ClassDeclaration
-            ModifierListSequence
-              ModifierList
-                ModifierItemList
-                  Identifier "data" @ 85..89 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            ModifierListSequence
+            ModifierList
+              Identifier "data" @ 85..89 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            ModifierList
             ClassKw "class" @ 90..95 trailing=[Whitespace " "]
             Name
               Identifier "Local" @ 96..101
             PrimaryConstructor
-              ModifierListSequence
+              ModifierList
               ValueParameterList
                 LParen "(" @ 101..102
                 ValueParameterSeparatedList
                   ValueParameter
-                    ModifierListSequence
+                    ModifierList
                     ValKw "val" @ 102..105 trailing=[Whitespace " "]
                     Name
                       Identifier "value" @ 106..111
@@ -95,8 +92,8 @@ KotlinFile
                           Identifier "String" @ 113..119
                 RParen ")" @ 119..120
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 125..128 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList

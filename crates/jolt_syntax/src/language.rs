@@ -15,6 +15,27 @@ pub trait Language: 'static {
     /// authorize formatter normalizations.
     type NormalizationAuthority: Copy;
 
+    /// Estimates the parser event capacity from source length.
+    ///
+    /// Languages whose physical grammar produces denser event streams should
+    /// override this so realistic files do not cross a `Vec` growth boundary.
+    #[must_use]
+    fn initial_event_capacity(source_len: usize) -> usize {
+        source_len.div_ceil(2).max(8)
+    }
+
+    /// Estimates the syntax-token capacity from source length.
+    #[must_use]
+    fn initial_token_capacity(source_len: usize) -> usize {
+        source_len.div_ceil(8).max(8)
+    }
+
+    /// Estimates the trivia-piece capacity from source length.
+    #[must_use]
+    fn initial_trivia_capacity(source_len: usize) -> usize {
+        source_len.div_ceil(12).max(8)
+    }
+
     /// Converts a raw kind stored in shared syntax data to a language kind.
     fn kind_from_raw(raw: RawSyntaxKind) -> Self::Kind;
 

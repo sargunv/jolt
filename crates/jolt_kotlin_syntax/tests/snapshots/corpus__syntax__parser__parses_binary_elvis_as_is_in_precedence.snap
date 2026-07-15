@@ -16,14 +16,13 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -32,7 +31,7 @@ KotlinFile
         LParen "(" @ 15..16
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "input" @ 16..21
             Colon ":" @ 21..22 trailing=[Whitespace " "]
@@ -44,7 +43,7 @@ KotlinFile
                 Question "?" @ 26..27
           Comma "," @ 27..28 trailing=[Whitespace " "]
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "names" @ 29..34
             Colon ":" @ 34..35 trailing=[Whitespace " "]
@@ -73,8 +72,8 @@ KotlinFile
         LBrace "{" @ 58..59
         BlockItemList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 64..67 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -100,8 +99,8 @@ KotlinFile
                 ClosingQuote "\"" @ 101..102
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 107..110 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -129,8 +128,8 @@ KotlinFile
                       Gt ">" @ 143..144
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 149..152 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -176,8 +175,8 @@ KotlinFile
                 LambdaExpressionList
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 212..215 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -192,8 +191,8 @@ KotlinFile
                 Identifier "names" @ 234..239
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 244..247 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList

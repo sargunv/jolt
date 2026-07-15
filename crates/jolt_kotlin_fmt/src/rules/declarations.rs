@@ -3,9 +3,8 @@ use jolt_kotlin_syntax::{
     CallableName, ContextParameter, ContextParameterClause, Declaration, DestructuringDeclaration,
     DestructuringEntry, EnumEntry, ExplicitBackingField, FunctionDeclaration, InitializerBlock,
     KotlinFileItem, KotlinNode, KotlinRoleElement, KotlinSyntaxField, KotlinSyntaxListPart,
-    KotlinSyntaxToken, KotlinSyntaxView, ModifierList, ModifierListSequence, Name,
-    PropertyAccessor, PropertyDeclaration, SecondaryConstructor, TypeAliasDeclaration,
-    TypeReference,
+    KotlinSyntaxToken, KotlinSyntaxView, ModifierList, Name, PropertyAccessor, PropertyDeclaration,
+    SecondaryConstructor, TypeAliasDeclaration, TypeReference,
 };
 
 use crate::helpers::comments::{
@@ -42,7 +41,7 @@ pub(crate) fn format_file_item<'source>(
     item: &KotlinFileItem<'source>,
 ) -> Doc<'source> {
     match item {
-        KotlinFileItem::PackageHeader(_) | KotlinFileItem::ImportList(_) => Doc::nil(),
+        KotlinFileItem::PackageHeader(_) => Doc::nil(),
         KotlinFileItem::ClassDeclaration(node) => format_class_declaration(doc, node),
         KotlinFileItem::InterfaceDeclaration(node) => format_interface_declaration(doc, node),
         KotlinFileItem::ObjectDeclaration(node) => format_object_declaration(doc, node),
@@ -728,7 +727,7 @@ pub(super) fn format_type_alias_declaration<'source>(
 pub(super) fn format_declaration_prefix<'source>(
     doc: &mut DocBuilder<'source>,
     leading: Result<
-        KotlinSyntaxField<'source, ModifierListSequence<'source>>,
+        KotlinSyntaxField<'source, ModifierList<'source>>,
         jolt_kotlin_syntax::KotlinSyntaxInvariantError,
     >,
     context: Result<
@@ -736,7 +735,7 @@ pub(super) fn format_declaration_prefix<'source>(
         jolt_kotlin_syntax::KotlinSyntaxInvariantError,
     >,
     trailing: Result<
-        KotlinSyntaxField<'source, ModifierListSequence<'source>>,
+        KotlinSyntaxField<'source, ModifierList<'source>>,
         jolt_kotlin_syntax::KotlinSyntaxInvariantError,
     >,
 ) -> Doc<'source> {
@@ -801,7 +800,7 @@ fn format_context_parameter<'source>(
 pub(super) fn format_modifier_prefix<'source>(
     doc: &mut DocBuilder<'source>,
     lists: Result<
-        KotlinSyntaxField<'source, ModifierListSequence<'source>>,
+        KotlinSyntaxField<'source, ModifierList<'source>>,
         jolt_kotlin_syntax::KotlinSyntaxInvariantError,
     >,
 ) -> Doc<'source> {
@@ -811,7 +810,7 @@ pub(super) fn format_modifier_prefix<'source>(
 pub(super) fn format_inline_modifier_prefix<'source>(
     doc: &mut DocBuilder<'source>,
     lists: Result<
-        KotlinSyntaxField<'source, ModifierListSequence<'source>>,
+        KotlinSyntaxField<'source, ModifierList<'source>>,
         jolt_kotlin_syntax::KotlinSyntaxInvariantError,
     >,
 ) -> Doc<'source> {
@@ -821,24 +820,13 @@ pub(super) fn format_inline_modifier_prefix<'source>(
 fn format_modifier_prefix_with_annotation_break<'source>(
     doc: &mut DocBuilder<'source>,
     lists: Result<
-        KotlinSyntaxField<'source, ModifierListSequence<'source>>,
+        KotlinSyntaxField<'source, ModifierList<'source>>,
         jolt_kotlin_syntax::KotlinSyntaxInvariantError,
     >,
     annotations_break: bool,
 ) -> Doc<'source> {
     match resolve_required_field(lists, doc) {
-        KotlinFormatField::Present(lists) => doc.concat_list(|docs| {
-            for part in lists.parts() {
-                match resolve_list_part(part, docs) {
-                    KotlinFormatListPart::Item(list) => {
-                        let formatted = format_modifier_list(docs, &list, annotations_break);
-                        docs.push(formatted);
-                    }
-                    KotlinFormatListPart::Separator(_) => {}
-                    KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
-                }
-            }
-        }),
+        KotlinFormatField::Present(list) => format_modifier_list(doc, &list, annotations_break),
         KotlinFormatField::Malformed(recovery) => recovery,
     }
 }
@@ -849,42 +837,39 @@ fn format_modifier_list<'source>(
     annotations_break: bool,
 ) -> Doc<'source> {
     format_or_verbatim(list, doc, |doc| {
-        match resolve_required_field(list.modifiers(), doc) {
-            KotlinFormatField::Present(items) => doc.concat_list(|docs| {
-                for part in items.parts() {
-                    match resolve_list_part(part, docs) {
-                        KotlinFormatListPart::Item(KotlinRoleElement::Node(node)) => {
-                            if let Some(annotation) = jolt_kotlin_syntax::Annotation::cast(node) {
-                                let annotation = format_annotation(docs, &annotation);
-                                docs.push(annotation);
-                                let separator = if annotations_break {
-                                    docs.hard_line()
-                                } else {
-                                    docs.space()
-                                };
-                                docs.push(separator);
+        doc.concat_list(|docs| {
+            for part in list.parts() {
+                match resolve_list_part(part, docs) {
+                    KotlinFormatListPart::Item(KotlinRoleElement::Node(node)) => {
+                        if let Some(annotation) = jolt_kotlin_syntax::Annotation::cast(node) {
+                            let annotation = format_annotation(docs, &annotation);
+                            docs.push(annotation);
+                            let separator = if annotations_break {
+                                docs.hard_line()
                             } else {
-                                docs.block_on_invariant("invalid modifier node");
-                            }
+                                docs.space()
+                            };
+                            docs.push(separator);
+                        } else {
+                            docs.block_on_invariant("invalid modifier node");
                         }
-                        KotlinFormatListPart::Item(KotlinRoleElement::Token(token)) => {
-                            let token = format_token(
-                                docs,
-                                &token,
-                                LeadingTrivia::Preserve,
-                                TrailingTrivia::Preserve,
-                            );
-                            docs.push(token);
-                            let space = docs.space();
-                            docs.push(space);
-                        }
-                        KotlinFormatListPart::Separator(_) => {}
-                        KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
                     }
+                    KotlinFormatListPart::Item(KotlinRoleElement::Token(token)) => {
+                        let token = format_token(
+                            docs,
+                            &token,
+                            LeadingTrivia::Preserve,
+                            TrailingTrivia::Preserve,
+                        );
+                        docs.push(token);
+                        let space = docs.space();
+                        docs.push(space);
+                    }
+                    KotlinFormatListPart::Separator(_) => {}
+                    KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
                 }
-            }),
-            KotlinFormatField::Malformed(recovery) => recovery,
-        }
+            }
+        })
     })
 }
 

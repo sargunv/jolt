@@ -32,25 +32,22 @@ KotlinFile
         Name
           Identifier "trivia" @ 20..26
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "annotation" @ 28..38 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "annotation" @ 28..38 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 39..44 trailing=[Whitespace " "]
       Name
         Identifier "Tags" @ 45..49
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 49..50
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 50..53 trailing=[Whitespace " "]
               Name
                 Identifier "names" @ 54..59
@@ -72,45 +69,43 @@ KotlinFile
                       Gt ">" @ 73..74
           RParen ")" @ 74..75
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Annotation
-              At "@" @ 77..78 leading=[Newline "\n", Newline "\n"]
-              QualifiedName
-                QualifiedNameSegmentList
-                  Name
-                    Identifier "Tags" @ 78..82
-              AnnotationArgumentList
-                LParen "(" @ 82..83
-                ValueArgumentSeparatedList
-                  ValueArgument
-                    ValueArgumentPrefixList
-                    CollectionLiteralExpression
-                      LBracket "[" @ 83..84 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:collection-literal-open */", Whitespace " "]
-                      ValueArgumentSeparatedList
-                        ValueArgument
-                          ValueArgumentPrefixList
-                          StringTemplateExpression
-                            StringTemplateEntryList
-                              StringTemplateEntry
-                                OpenQuote "\"" @ 127..128
-                              StringTemplateEntry
-                                RegularStringPart "alpha" @ 128..133
-                            ClosingQuote "\"" @ 133..134
-                        Comma "," @ 134..135 trailing=[Whitespace " "]
-                        ValueArgument
-                          ValueArgumentPrefixList
-                          StringTemplateExpression
-                            StringTemplateEntryList
-                              StringTemplateEntry
-                                OpenQuote "\"" @ 136..137
-                              StringTemplateEntry
-                                RegularStringPart "beta" @ 137..141
-                            ClosingQuote "\"" @ 141..142 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:collection-literal-close */", Whitespace " "]
-                      RBracket "]" @ 186..187
-                RParen ")" @ 187..188
-      ModifierListSequence
+      ModifierList
+        Annotation
+          At "@" @ 77..78 leading=[Newline "\n", Newline "\n"]
+          QualifiedName
+            QualifiedNameSegmentList
+              Name
+                Identifier "Tags" @ 78..82
+          AnnotationArgumentList
+            LParen "(" @ 82..83
+            ValueArgumentSeparatedList
+              ValueArgument
+                ValueArgumentPrefixList
+                CollectionLiteralExpression
+                  LBracket "[" @ 83..84 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:collection-literal-open */", Whitespace " "]
+                  ValueArgumentSeparatedList
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      StringTemplateExpression
+                        StringTemplateEntryList
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 127..128
+                          StringTemplateEntry
+                            RegularStringPart "alpha" @ 128..133
+                        ClosingQuote "\"" @ 133..134
+                    Comma "," @ 134..135 trailing=[Whitespace " "]
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      StringTemplateExpression
+                        StringTemplateEntryList
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 136..137
+                          StringTemplateEntry
+                            RegularStringPart "beta" @ 137..141
+                        ClosingQuote "\"" @ 141..142 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:collection-literal-close */", Whitespace " "]
+                  RBracket "]" @ 186..187
+            RParen ")" @ 187..188
+      ModifierList
       ClassKw "class" @ 189..194 leading=[Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "CollectionUse" @ 195..208 trailing=[Whitespace " "]
@@ -119,8 +114,8 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             PropertyDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               ValKw "val" @ 215..218 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               CallableName
                 CallableNamePartList

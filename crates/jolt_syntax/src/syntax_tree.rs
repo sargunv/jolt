@@ -117,13 +117,22 @@ pub enum TriviaKind {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct SyntaxTrivia {
     kind: TriviaKind,
-    text_len: TextSize,
+    text_len: u32,
 }
 
 impl SyntaxTrivia {
+    /// Creates one compact trivia record.
+    ///
+    /// # Panics
+    ///
+    /// Panics when one trivia piece exceeds the tree's four-gibibyte source
+    /// range limit.
     #[must_use]
-    pub const fn new(kind: TriviaKind, text_len: TextSize) -> Self {
-        Self { kind, text_len }
+    pub fn new(kind: TriviaKind, text_len: TextSize) -> Self {
+        Self {
+            kind,
+            text_len: u32::try_from(text_len.get()).expect("trivia text length fits u32"),
+        }
     }
 
     #[must_use]
@@ -132,8 +141,8 @@ impl SyntaxTrivia {
     }
 
     #[must_use]
-    pub const fn text_len(self) -> TextSize {
-        self.text_len
+    pub fn text_len(self) -> TextSize {
+        TextSize::new(self.text_len as usize)
     }
 }
 
@@ -141,13 +150,19 @@ impl SyntaxTrivia {
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub struct SyntaxTokenData {
     pub(crate) kind: RawSyntaxKind,
-    pub(crate) full_text_range: TextRange,
-    pub(crate) token_text_range: TextRange,
+    full_text_range: CompactRange,
+    token_text_range: CompactRange,
     leading: CompactRange,
     trailing: CompactRange,
 }
 
 impl SyntaxTokenData {
+    /// Creates compact metadata for one represented source token.
+    ///
+    /// # Panics
+    ///
+    /// Panics when either source range exceeds the tree's four-gibibyte source
+    /// range limit or either trivia range exceeds its `u32` index limit.
     #[must_use]
     pub fn new(
         kind: RawSyntaxKind,
@@ -158,8 +173,8 @@ impl SyntaxTokenData {
     ) -> Self {
         Self {
             kind,
-            full_text_range,
-            token_text_range,
+            full_text_range: CompactRange::from_text_range(full_text_range, "full token range"),
+            token_text_range: CompactRange::from_text_range(token_text_range, "token text range"),
             leading: CompactRange::from_usize(leading, "leading trivia range"),
             trailing: CompactRange::from_usize(trailing, "trailing trivia range"),
         }
@@ -171,13 +186,13 @@ impl SyntaxTokenData {
     }
 
     #[must_use]
-    pub const fn token_text_range(&self) -> TextRange {
-        self.token_text_range
+    pub fn token_text_range(&self) -> TextRange {
+        self.token_text_range.as_text_range()
     }
 
     #[must_use]
-    pub const fn full_text_range(&self) -> TextRange {
-        self.full_text_range
+    pub fn full_text_range(&self) -> TextRange {
+        self.full_text_range.as_text_range()
     }
 
     #[must_use]
@@ -218,13 +233,30 @@ impl CompactRange {
     fn as_usize(self) -> Range<usize> {
         self.start as usize..self.end as usize
     }
+
+    fn from_text_range(range: TextRange, label: &str) -> Self {
+        Self {
+            start: u32::try_from(range.start().get())
+                .unwrap_or_else(|_| panic!("{label} start fits u32")),
+            end: u32::try_from(range.end().get())
+                .unwrap_or_else(|_| panic!("{label} end fits u32")),
+        }
+    }
+
+    fn as_text_range(self) -> TextRange {
+        TextRange::new(
+            TextSize::new(self.start as usize),
+            TextSize::new(self.end as usize),
+        )
+    }
 }
 
 const _: () = {
     assert!(std::mem::size_of::<PackedSlot>() == 4);
     assert!(std::mem::size_of::<CompactRange>() == 8);
     assert!(std::mem::size_of::<TreeNode>() <= 28);
-    assert!(std::mem::size_of::<SyntaxTokenData>() <= 56);
+    assert!(std::mem::size_of::<SyntaxTokenData>() == 36);
+    assert!(std::mem::size_of::<SyntaxTrivia>() == 8);
 };
 
 /// A flat, lossless syntax tree containing one uniform physical node model.
@@ -338,7 +370,7 @@ impl SyntaxTree {
     }
 
     pub(crate) fn token_offset(&self, id: TokenId) -> TextSize {
-        self.token(id).full_text_range.start()
+        self.token(id).full_text_range().start()
     }
 
     pub(crate) fn node_offset(&self, id: NodeId) -> TextSize {
@@ -351,7 +383,7 @@ impl SyntaxTree {
         if range.start == range.end {
             return TextSize::new(0);
         }
-        self.tokens[range.end - 1].full_text_range.end() - self.token_anchor(range.start)
+        self.tokens[range.end - 1].full_text_range().end() - self.token_anchor(range.start)
     }
 
     fn token_anchor(&self, index: usize) -> TextSize {
@@ -359,9 +391,9 @@ impl SyntaxTree {
             || {
                 self.tokens
                     .last()
-                    .map_or(TextSize::new(0), |token| token.full_text_range.end())
+                    .map_or(TextSize::new(0), |token| token.full_text_range().end())
             },
-            |token| token.full_text_range.start(),
+            |token| token.full_text_range().start(),
         )
     }
 
@@ -394,6 +426,7 @@ pub enum BuildSyntaxTreeError {
     MissingRoot,
     UnconsumedTokens { first_unconsumed: usize },
     UnresolvedMarker { position: usize },
+    UnexpectedConsumedEvent { position: usize },
     InvalidForwardParent { position: usize, target: usize },
     FactoryMismatch { kind: RawSyntaxKind },
 }
@@ -499,7 +532,7 @@ impl ParsedChildren<'_> {
         let TreeElement::Token(id) = child.element() else {
             return false;
         };
-        let range = self.tokens[id.index()].token_text_range;
+        let range = self.tokens[id.index()].token_text_range();
         &self.source[range.start().get()..range.end().get()] == expected
     }
 }
@@ -648,7 +681,7 @@ impl SyntaxFactory for RawFactory {
 /// Returns an error when parser events are structurally inconsistent with
 /// their represented tokens.
 pub fn build_syntax_tree(
-    events: &[Event],
+    events: Vec<Event>,
     tokens: Vec<SyntaxTokenData>,
     trivia: Vec<SyntaxTrivia>,
 ) -> Result<SyntaxTree, BuildSyntaxTreeError> {
@@ -658,7 +691,7 @@ pub fn build_syntax_tree(
 #[doc(hidden)]
 pub fn build_syntax_tree_with_factory(
     source: &str,
-    events: &[Event],
+    events: Vec<Event>,
     tokens: Vec<SyntaxTokenData>,
     trivia: Vec<SyntaxTrivia>,
     factory: &impl SyntaxFactory,
@@ -675,36 +708,46 @@ struct SyntaxTreeBuilder {
     stack: Vec<PartialNode>,
     root: Option<NodeId>,
     token_index: usize,
-    skip_events: Vec<bool>,
 }
 
 impl SyntaxTreeBuilder {
     fn new(tokens: Vec<SyntaxTokenData>, trivia: Vec<SyntaxTrivia>, event_count: usize) -> Self {
         let token_count = tokens.len();
+        // Every completed physical node contributes one start and one finish
+        // event, while every represented token contributes one token event.
+        // Reserve the exact valid-stream node count without scanning events.
+        let node_count = event_count.saturating_sub(token_count) / 2;
         Self {
-            nodes: Vec::with_capacity(event_count / 2),
+            nodes: Vec::with_capacity(node_count),
             slots: Vec::with_capacity(event_count),
-            pending: Vec::with_capacity(token_count),
+            pending: Vec::with_capacity(64),
             tokens,
             trivia,
             stack: Vec::with_capacity(64),
             root: None,
             token_index: 0,
-            skip_events: vec![false; event_count],
         }
     }
 
     fn build(
         mut self,
         source: &str,
-        events: &[Event],
+        mut events: Vec<Event>,
         factory: &impl SyntaxFactory,
     ) -> Result<SyntaxTree, BuildSyntaxTreeError> {
         for (position, event) in events.iter().enumerate() {
-            if self.skip_events[position] {
-                continue;
+            match event {
+                Event::Tombstone => {
+                    return Err(BuildSyntaxTreeError::UnresolvedMarker { position });
+                }
+                Event::Consumed => {
+                    return Err(BuildSyntaxTreeError::UnexpectedConsumedEvent { position });
+                }
+                Event::Start { .. } | Event::Token | Event::Finish => {}
             }
-            match *event {
+        }
+        for position in 0..events.len() {
+            match events[position] {
                 Event::Start {
                     kind,
                     forward_parent,
@@ -712,7 +755,7 @@ impl SyntaxTreeBuilder {
                     if forward_parent == NO_FORWARD_PARENT {
                         self.start_node(kind);
                     } else {
-                        self.start_forward_parents(events, position)?;
+                        self.start_forward_parents(&mut events, position)?;
                     }
                 }
                 Event::Token => self.push_token()?,
@@ -720,6 +763,7 @@ impl SyntaxTreeBuilder {
                 Event::Tombstone => {
                     return Err(BuildSyntaxTreeError::UnresolvedMarker { position });
                 }
+                Event::Consumed => {}
             }
         }
         if !self.stack.is_empty() {
@@ -751,7 +795,7 @@ impl SyntaxTreeBuilder {
 
     fn start_forward_parents(
         &mut self,
-        events: &[Event],
+        events: &mut [Event],
         position: usize,
     ) -> Result<(), BuildSyntaxTreeError> {
         let stack_start = self.stack.len();
@@ -767,6 +811,9 @@ impl SyntaxTreeBuilder {
                     target: current,
                 });
             };
+            if current != position {
+                events[current] = Event::Consumed;
+            }
             self.start_node(kind);
             if forward_parent == NO_FORWARD_PARENT {
                 break;
@@ -777,13 +824,12 @@ impl SyntaxTreeBuilder {
                     target: usize::MAX,
                 },
             )?;
-            if target <= current || target >= events.len() || self.skip_events[target] {
+            if target <= current || target >= events.len() {
                 return Err(BuildSyntaxTreeError::InvalidForwardParent {
                     position: current,
                     target,
                 });
             }
-            self.skip_events[target] = true;
             current = target;
         }
         // Forward parents are encountered from the innermost node outwards,
@@ -858,7 +904,26 @@ struct PartialNode {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Event, RawSyntaxKind, build_syntax_tree};
+    use crate::{BuildSyntaxTreeError, Event, RawSyntaxKind, build_syntax_tree};
+
+    #[test]
+    fn construction_only_consumed_event_is_rejected_from_input() {
+        let events = vec![
+            Event::Start {
+                kind: RawSyntaxKind::new(1),
+                forward_parent: 0,
+            },
+            Event::Consumed,
+            Event::Finish,
+        ];
+
+        let error = build_syntax_tree(events, Vec::new(), Vec::new())
+            .expect_err("caller-provided consumed event must be rejected");
+        assert_eq!(
+            error,
+            BuildSyntaxTreeError::UnexpectedConsumedEvent { position: 1 }
+        );
+    }
 
     #[test]
     fn deep_forward_parent_chain_builds_iteratively() {
@@ -872,7 +937,7 @@ mod tests {
         }
         events.extend(std::iter::repeat_n(Event::Finish, DEPTH));
 
-        let tree = build_syntax_tree(&events, Vec::new(), Vec::new())
+        let tree = build_syntax_tree(events, Vec::new(), Vec::new())
             .expect("deep forward-parent chain is a valid tree");
 
         assert_eq!(tree.nodes.len(), DEPTH);

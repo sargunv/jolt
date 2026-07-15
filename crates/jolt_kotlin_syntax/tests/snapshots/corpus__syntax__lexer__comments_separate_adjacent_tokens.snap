@@ -9,12 +9,11 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 0..3 trailing=[BlockComment "/**/"]
       CallableName
         CallableNamePartList

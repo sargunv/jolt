@@ -12,26 +12,23 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Name
         Identifier "User" @ 6..10 trailing=[Whitespace " "]
       PrimaryConstructor
-        ModifierListSequence
-          ModifierList
-            ModifierItemList
-              Identifier "private" @ 11..18 trailing=[Whitespace " "]
+        ModifierList
+          Identifier "private" @ 11..18 trailing=[Whitespace " "]
         Identifier "constructor" @ 19..30
         ValueParameterList
           LParen "(" @ 30..31
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 36..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "id" @ 40..42
@@ -42,7 +39,7 @@ KotlinFile
                     Identifier "String" @ 44..50
             Comma "," @ 50..51
             ValueParameter
-              ModifierListSequence
+              ModifierList
               VarKw "var" @ 56..59 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "displayName" @ 60..71

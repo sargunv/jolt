@@ -31,15 +31,12 @@ KotlinFile
         Name
           Identifier "demo" @ 20..24
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     PropertyDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "const" @ 27..32 leading=[Newline "\n", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "const" @ 27..32 leading=[Newline "\n", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
       ValKw "val" @ 33..36 trailing=[Whitespace " "]
       CallableName
         CallableNamePartList
@@ -55,10 +52,10 @@ KotlinFile
         ClosingQuote "\"" @ 47..48
       PropertyBodyMemberList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 51..54 leading=[Newline "\n", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -76,8 +73,8 @@ KotlinFile
             RegularStringPart "hello" @ 66..71
         ClosingQuote "\"" @ 71..72
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 75..80 leading=[Newline "\n", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Holder" @ 81..87

@@ -13,14 +13,13 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -33,8 +32,8 @@ KotlinFile
         LBrace "{" @ 35..36
         BlockItemList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 41..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -65,8 +64,8 @@ KotlinFile
               LambdaExpressionList
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 82..85 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList

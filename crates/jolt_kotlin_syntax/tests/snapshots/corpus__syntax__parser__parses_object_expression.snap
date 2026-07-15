@@ -13,12 +13,11 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 0..3 trailing=[Whitespace " "]
       CallableName
         CallableNamePartList
@@ -40,13 +39,11 @@ KotlinFile
           ClassMemberList
             ClassMemberDeclaration
               FunctionDeclaration
-                ModifierListSequence
-                  ModifierList
-                    ModifierItemList
-                      Identifier "override" @ 39..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                ModifierListSequence
+                ModifierList
+                  Identifier "override" @ 39..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                ModifierList
                 FunKw "fun" @ 48..51 trailing=[Whitespace " "]
-                ModifierListSequence
+                ModifierList
                 CallableName
                   CallableNamePartList
                     Name

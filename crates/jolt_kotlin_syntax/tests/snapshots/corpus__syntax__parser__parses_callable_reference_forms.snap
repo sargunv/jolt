@@ -15,14 +15,13 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -35,8 +34,8 @@ KotlinFile
         LBrace "{" @ 25..26
         BlockItemList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 31..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -49,8 +48,8 @@ KotlinFile
               TypeArgumentListList
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 56..59 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -65,8 +64,8 @@ KotlinFile
               TypeArgumentListList
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 86..89 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -86,8 +85,8 @@ KotlinFile
               TypeArgumentListList
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 118..121 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList

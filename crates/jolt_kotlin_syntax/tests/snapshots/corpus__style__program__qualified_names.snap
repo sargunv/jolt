@@ -36,14 +36,13 @@ KotlinFile
         Name
           Identifier "withManySegments" @ 42..58
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 60..63 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -56,8 +55,8 @@ KotlinFile
         LBrace "{" @ 83..84
         BlockItemList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 89..92 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList

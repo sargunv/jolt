@@ -9,12 +9,11 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Name
         Identifier "Box" @ 6..9
@@ -22,14 +21,14 @@ KotlinFile
         Lt "<" @ 9..10
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "First" @ 10..15
           Comma "," @ 15..16 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
           Comma "," @ 30..31 trailing=[Whitespace " "]
           ErrorNode
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "Second" @ 32..38
         Gt ">" @ 38..39

@@ -126,7 +126,7 @@ fn finish_parse(source: &str, parse: source::ParseEvents) -> KotlinParse<'_> {
     let mut diagnostics = parse.diagnostics;
     let tree = match build_syntax_tree_with_factory(
         source,
-        &parse.events,
+        parse.events,
         parse.tokens,
         parse.trivia,
         &KotlinSyntaxFactory,

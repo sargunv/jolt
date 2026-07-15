@@ -124,25 +124,22 @@ KotlinFile
         Name
           Identifier "trivia" @ 353..359
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "annotation" @ 361..371 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "annotation" @ 361..371 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 372..377 trailing=[Whitespace " "]
       Name
         Identifier "Crevice" @ 378..385 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:annotation-class-name */", Whitespace " "]
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 426..427
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 432..435 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "value" @ 436..441 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:annotation-param-name */", Whitespace " "]
@@ -160,8 +157,8 @@ KotlinFile
             Comma "," @ 579..580
           RParen ")" @ 581..582 leading=[Newline "\n"]
     InterfaceDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       InterfaceKw "interface" @ 584..593 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Scope" @ 594..599 trailing=[Whitespace " "]
@@ -170,10 +167,10 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               FunKw "fun" @ 606..609 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -182,7 +179,7 @@ KotlinFile
                 LParen "(" @ 645..646
                 ValueParameterSeparatedList
                   ValueParameter
-                    ModifierListSequence
+                    ModifierList
                     Name
                       Identifier "value" @ 655..660 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:member-param-name */", Whitespace " "]
                     Colon ":" @ 697..698 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:member-param-colon */", Whitespace " "]
@@ -194,8 +191,8 @@ KotlinFile
                 RParen ")" @ 748..749 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 750..751 leading=[Newline "\n"]
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 753..758 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Holder" @ 759..765 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:class-before-type-params */", Whitespace " "]
@@ -203,7 +200,7 @@ KotlinFile
         Lt "<" @ 809..810 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:type-param-open */", Whitespace " "]
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "T" @ 845..846 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:type-param-name */", Whitespace " "]
             Colon ":" @ 881..882 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:type-param-bound */", Whitespace " "]
@@ -213,13 +210,13 @@ KotlinFile
                   Identifier "Any" @ 918..921 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:type-param-close */", Whitespace " "]
         Gt ">" @ 957..958 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:class-before-constructor */", Whitespace " "]
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         Identifier "constructor" @ 1002..1013 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:constructor-keyword */", Whitespace " "]
         ValueParameterList
           LParen "(" @ 1052..1053
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 1058..1061 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "payload" @ 1062..1069 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-param-name */", Whitespace " "]
@@ -257,8 +254,8 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             PropertyDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               ValKw "val" @ 1275..1278 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               CallableName
                 CallableNamePartList
@@ -297,13 +294,11 @@ KotlinFile
               PropertyBodyMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "operator" @ 1519..1527 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "operator" @ 1519..1527 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
               FunKw "fun" @ 1528..1531 trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -322,10 +317,10 @@ KotlinFile
                 Identifier "payload" @ 1627..1634
         RBrace "}" @ 1635..1636 leading=[Newline "\n"]
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 1638..1641 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           TypeReference
@@ -339,7 +334,7 @@ KotlinFile
         LParen "(" @ 1761..1762
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "input" @ 1767..1772 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:param-name */", Whitespace " "]
             Colon ":" @ 1802..1803 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:param-colon */", Whitespace " "]
@@ -360,7 +355,7 @@ KotlinFile
                     Gt ">" @ 1845..1846
           Comma "," @ 1846..1847
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "transform" @ 1852..1861 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:function-param-name */", Whitespace " "]
             Colon ":" @ 1900..1901 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:function-param-colon */", Whitespace " "]
@@ -383,7 +378,7 @@ KotlinFile
                       Identifier "String" @ 2113..2119
           Comma "," @ 2119..2120
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "fallback" @ 2125..2133 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:default-param-name */", Whitespace " "]
             Colon ":" @ 2171..2172 trailing=[Whitespace " "]
@@ -410,8 +405,8 @@ KotlinFile
         LBrace "{" @ 2309..2310
         BlockItemList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 2315..2318 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -452,8 +447,8 @@ KotlinFile
               LambdaExpressionList
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 2652..2655 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             DestructuringDeclaration
               LParen "(" @ 2656..2657
@@ -491,8 +486,8 @@ KotlinFile
                 RBracket "]" @ 2879..2880
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 2885..2888 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -564,8 +559,8 @@ KotlinFile
                 Identifier "fallback" @ 3408..3416
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 3421..3424 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -596,8 +591,8 @@ KotlinFile
               ClosingQuote "\"" @ 3526..3527
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 3532..3535 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -614,8 +609,8 @@ KotlinFile
                     Identifier "String" @ 3614..3620
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 3625..3628 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -906,8 +901,8 @@ KotlinFile
                             Arrow "->" @ 5050..5052
                           LambdaBodyItemList
                             PropertyDeclaration
-                              ModifierListSequence
-                              ModifierListSequence
+                              ModifierList
+                              ModifierList
                               ValKw "val" @ 5061..5064 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                               CallableName
                                 CallableNamePartList

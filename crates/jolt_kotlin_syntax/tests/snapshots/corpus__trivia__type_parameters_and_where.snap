@@ -34,12 +34,11 @@ KotlinFile
         Name
           Identifier "trivia" @ 20..26
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     InterfaceDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       InterfaceKw "interface" @ 28..37 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Source" @ 38..44
@@ -47,13 +46,13 @@ KotlinFile
         Lt "<" @ 44..45
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "T" @ 45..46
         Gt ">" @ 46..47
     InterfaceDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       InterfaceKw "interface" @ 48..57 leading=[Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Sink" @ 58..62
@@ -61,13 +60,13 @@ KotlinFile
         Lt "<" @ 62..63
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "T" @ 63..64
         Gt ">" @ 64..65
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 67..72 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Pipe" @ 73..77
@@ -75,7 +74,7 @@ KotlinFile
         Lt "<" @ 77..78
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "T" @ 120..121 leading=[Newline "\n", Whitespace "    ", BlockComment "/* JOLT-TRIVIA:type-param-leading */", Whitespace " "] trailing=[Whitespace " "]
             Colon ":" @ 122..123 trailing=[Whitespace " "]
@@ -85,7 +84,7 @@ KotlinFile
                   Identifier "Any" @ 124..127
           Comma "," @ 127..128
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "R" @ 133..134 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:type-param-name */", Whitespace " "]
           Comma "," @ 169..170
@@ -133,18 +132,18 @@ KotlinFile
                                   Identifier "R" @ 242..243
                     Gt ">" @ 243..244 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:where-second */"]
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 277..280 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       TypeParameterList
         Lt "<" @ 281..282
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "T" @ 282..283 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:function-type-param */"]
         Gt ">" @ 321..322 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -153,7 +152,7 @@ KotlinFile
         LParen "(" @ 327..328
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "value" @ 328..333
             Colon ":" @ 333..334 trailing=[Whitespace " "]

@@ -23,31 +23,30 @@ KotlinFile
         Name
           Identifier "imports" @ 16..23
     TerminatorList
-  ImportList
-    ImportDirectiveList
-      ImportDirective
-        Identifier "import" @ 25..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-        QualifiedName
-          QualifiedNameSegmentList
-            Name
-              Identifier "kotlin" @ 32..38
-            Dot "." @ 38..39
-            Name
-              Identifier "time" @ 39..43
-            Dot "." @ 43..44
-            Name
-              Identifier "Duration" @ 44..52
-            Dot "." @ 52..53
-            Name
-              Identifier "Companion" @ 53..62
-            Dot "." @ 62..63
-            Name
-              Identifier "seconds" @ 63..70
-        TerminatorList
+  ImportDirectiveList
+    ImportDirective
+      Identifier "import" @ 25..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "kotlin" @ 32..38
+          Dot "." @ 38..39
+          Name
+            Identifier "time" @ 39..43
+          Dot "." @ 43..44
+          Name
+            Identifier "Duration" @ 44..52
+          Dot "." @ 52..53
+          Name
+            Identifier "Companion" @ 53..62
+          Dot "." @ 62..63
+          Name
+            Identifier "seconds" @ 63..70
+      TerminatorList
   KotlinFileItemList
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 72..75 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       CallableName
         CallableNamePartList

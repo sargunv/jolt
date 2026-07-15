@@ -32,12 +32,11 @@ KotlinFile
         Name
           Identifier "declarations" @ 20..32
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 34..39 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Counter" @ 40..47 trailing=[Whitespace " "]
@@ -46,8 +45,8 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             PropertyDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               VarKw "var" @ 54..57 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               CallableName
                 CallableNamePartList
@@ -63,16 +62,14 @@ KotlinFile
                 IntegerLiteral "0" @ 71..72
               PropertyBodyMemberList
                 PropertyAccessor
-                  ModifierListSequence
-                    ModifierList
-                      ModifierItemList
-                        Identifier "private" @ 81..88 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  ModifierList
+                    Identifier "private" @ 81..88 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                   Identifier "set" @ 89..92
                   ValueParameterList
                     LParen "(" @ 92..93
                     ValueParameterSeparatedList
                       ValueParameter
-                        ModifierListSequence
+                        ModifierList
                         Name
                           Identifier "value" @ 93..98
                     RParen ")" @ 98..99 trailing=[Whitespace " "]
@@ -105,8 +102,8 @@ KotlinFile
                     RBrace "}" @ 153..154 leading=[Newline "\n", Whitespace "        "]
           ClassMemberDeclaration
             PropertyDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               ValKw "val" @ 160..163 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               CallableName
                 CallableNamePartList
@@ -119,7 +116,7 @@ KotlinFile
                     Identifier "Boolean" @ 171..178
               PropertyBodyMemberList
                 PropertyAccessor
-                  ModifierListSequence
+                  ModifierList
                   Identifier "get" @ 187..190 leading=[Newline "\n", Whitespace "        "]
                   ValueParameterList
                     LParen "(" @ 190..191

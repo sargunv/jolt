@@ -148,7 +148,7 @@ fn finish_parse<'source>(
     diagnostics.extend(parse.diagnostics);
     let tree = match build_syntax_tree_with_factory(
         &source,
-        &parse.events,
+        parse.events,
         parse.tokens,
         parse.trivia,
         &JavaSyntaxFactory,

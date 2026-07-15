@@ -15,8 +15,7 @@ KotlinFile
       QualifiedNameSegmentList
         Name
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     Statement
       ExpressionStatement

@@ -15,12 +15,11 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 23..26 leading=[ShebangComment "#!/usr/bin/env kotlin", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       CallableName
         CallableNamePartList

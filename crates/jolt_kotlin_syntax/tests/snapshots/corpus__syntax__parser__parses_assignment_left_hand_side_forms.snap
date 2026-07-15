@@ -14,14 +14,13 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -30,7 +29,7 @@ KotlinFile
         LParen "(" @ 21..22
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "target" @ 22..28
             Colon ":" @ 28..29 trailing=[Whitespace " "]
@@ -40,7 +39,7 @@ KotlinFile
                   Identifier "Target" @ 30..36
           Comma "," @ 36..37 trailing=[Whitespace " "]
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "index" @ 38..43
             Colon ":" @ 43..44 trailing=[Whitespace " "]
@@ -50,7 +49,7 @@ KotlinFile
                   Identifier "Int" @ 45..48
           Comma "," @ 48..49 trailing=[Whitespace " "]
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "value" @ 50..55
             Colon ":" @ 55..56 trailing=[Whitespace " "]

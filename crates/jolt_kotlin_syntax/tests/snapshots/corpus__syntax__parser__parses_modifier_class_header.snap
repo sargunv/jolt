@@ -13,36 +13,31 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "public" @ 0..6 trailing=[Whitespace " "]
-            Identifier "sealed" @ 7..13 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "public" @ 0..6 trailing=[Whitespace " "]
+        Identifier "sealed" @ 7..13 trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 14..19 trailing=[Whitespace " "]
       Name
         Identifier "ModifiedHeader" @ 20..34
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "private" @ 36..43 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-            Identifier "data" @ 44..48 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "private" @ 36..43 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+        Identifier "data" @ 44..48 trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 49..54 trailing=[Whitespace " "]
       Name
         Identifier "HiddenValue" @ 55..66
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 66..67
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 67..70 trailing=[Whitespace " "]
               Name
                 Identifier "value" @ 71..76
@@ -53,12 +48,10 @@ KotlinFile
                     Identifier "String" @ 78..84
           RParen ")" @ 84..85
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "internal" @ 87..95 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-            Identifier "open" @ 96..100 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "internal" @ 87..95 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+        Identifier "open" @ 96..100 trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 101..106 trailing=[Whitespace " "]
       Name
         Identifier "OpenForTests" @ 107..119

@@ -83,7 +83,7 @@ impl<'tree, L: Language> SyntaxToken<'tree, L> {
     /// Returns the byte length covered by this token, including attached trivia.
     #[must_use]
     pub(crate) fn text_len(&self) -> TextSize {
-        self.tree.token(self.id).full_text_range.len()
+        self.tree.token(self.id).full_text_range().len()
     }
 
     /// Returns the full source range covered by this token, including attached trivia.
@@ -95,7 +95,7 @@ impl<'tree, L: Language> SyntaxToken<'tree, L> {
     /// Returns the source range covered by the token text without attached trivia.
     #[must_use]
     pub fn token_text_range(&self) -> TextRange {
-        self.tree.token(self.id).token_text_range
+        self.tree.token(self.id).token_text_range()
     }
 
     /// Returns trivia attached before this token.

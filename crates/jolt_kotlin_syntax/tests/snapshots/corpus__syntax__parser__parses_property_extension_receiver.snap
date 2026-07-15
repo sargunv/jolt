@@ -16,12 +16,11 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 0..3 trailing=[Whitespace " "]
       CallableName
         CallableNamePartList
@@ -39,7 +38,7 @@ KotlinFile
             Identifier "Int" @ 28..31
       PropertyBodyMemberList
         PropertyAccessor
-          ModifierListSequence
+          ModifierList
           Identifier "get" @ 36..39 leading=[Newline "\n", Whitespace "    "]
           ValueParameterList
             LParen "(" @ 39..40
@@ -53,8 +52,8 @@ KotlinFile
             LiteralExpression
               IntegerLiteral "1" @ 53..54
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 56..59 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       CallableName
         CallableNamePartList
@@ -76,7 +75,7 @@ KotlinFile
             Identifier "String" @ 94..100
       PropertyBodyMemberList
         PropertyAccessor
-          ModifierListSequence
+          ModifierList
           Identifier "get" @ 105..108 leading=[Newline "\n", Whitespace "    "]
           ValueParameterList
             LParen "(" @ 108..109
@@ -93,8 +92,8 @@ KotlinFile
               RParen ")" @ 122..123
             LambdaExpressionList
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 125..128 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       CallableName
         CallableNamePartList
@@ -138,7 +137,7 @@ KotlinFile
             Identifier "Int" @ 175..178
       PropertyBodyMemberList
         PropertyAccessor
-          ModifierListSequence
+          ModifierList
           Identifier "get" @ 183..186 leading=[Newline "\n", Whitespace "    "]
           ValueParameterList
             LParen "(" @ 186..187

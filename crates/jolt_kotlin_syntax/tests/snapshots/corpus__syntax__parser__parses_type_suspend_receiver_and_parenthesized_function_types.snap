@@ -15,12 +15,11 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     TypeAliasDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       TypeAliasKw "typealias" @ 0..9 trailing=[Whitespace " "]
       Name
         Identifier "Suspended" @ 10..19 trailing=[Whitespace " "]
@@ -46,8 +45,8 @@ KotlinFile
                   UserTypeSegmentList
                     Identifier "Int" @ 42..45
     TypeAliasDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       TypeAliasKw "typealias" @ 47..56 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "ReceiverBlock" @ 57..70 trailing=[Whitespace " "]
@@ -75,8 +74,8 @@ KotlinFile
               UserTypeSegmentList
                 Identifier "Unit" @ 89..93
     TypeAliasDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       TypeAliasKw "typealias" @ 95..104 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "NullableCallback" @ 105..121 trailing=[Whitespace " "]
@@ -110,8 +109,8 @@ KotlinFile
             RParen ")" @ 142..143
           Question "?" @ 143..144
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 146..149 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       CallableName
         CallableNamePartList

@@ -16,11 +16,10 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
+      ModifierList
       ContextParameterClause
         Identifier "context" @ 0..7
         LParen "(" @ 7..8
@@ -34,9 +33,9 @@ KotlinFile
                 UserTypeSegmentList
                   Identifier "Logger" @ 16..22
         RParen ")" @ 22..23
-      ModifierListSequence
+      ModifierList
       FunKw "fun" @ 24..27 leading=[Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -45,7 +44,7 @@ KotlinFile
         LParen "(" @ 48..49
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "value" @ 49..54
             Colon ":" @ 54..55 trailing=[Whitespace " "]
@@ -77,8 +76,8 @@ KotlinFile
           RParen ")" @ 89..90
         LambdaExpressionList
     TypeAliasDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       TypeAliasKw "typealias" @ 92..101 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Handler" @ 102..109 trailing=[Whitespace " "]
@@ -111,10 +110,10 @@ KotlinFile
                 UserTypeSegmentList
                   Identifier "Unit" @ 141..145
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 147..150 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -123,7 +122,7 @@ KotlinFile
         LParen "(" @ 163..164
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "handler" @ 164..171
             Colon ":" @ 171..172 trailing=[Whitespace " "]

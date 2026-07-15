@@ -29,22 +29,21 @@ KotlinFile
         Name
           Identifier "declarations" @ 20..32
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 34..39 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Account" @ 40..47
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 47..48
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 92..95 leading=[Newline "\n", Whitespace "    ", LineComment "// Stable identifier from storage.", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "id" @ 96..98
@@ -55,7 +54,7 @@ KotlinFile
                     Identifier "String" @ 100..106
             Comma "," @ 106..107
             ValueParameter
-              ModifierListSequence
+              ModifierList
               VarKw "var" @ 142..145 leading=[Newline "\n", Whitespace "    ", BlockComment "/* Displayed to users. */", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "label" @ 146..151

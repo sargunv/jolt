@@ -30,66 +30,65 @@ KotlinFile
         Name
           Identifier "imports" @ 20..27
     TerminatorList
-  ImportList
-    ImportDirectiveList
-      ImportDirective
-        Identifier "import" @ 29..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-        QualifiedName
-          QualifiedNameSegmentList
-            Name
-              Identifier "com" @ 36..39
-            Dot "." @ 39..40
-            Name
-              Identifier "example" @ 40..47
-            Dot "." @ 47..48
-            Name
-              Identifier "tools" @ 48..53
-            Dot "." @ 53..54
-            Name
-              Identifier "Factory" @ 54..61 trailing=[Whitespace " "]
-        ImportAlias
-          AsKw "as" @ 62..64 trailing=[Whitespace " "]
+  ImportDirectiveList
+    ImportDirective
+      Identifier "import" @ 29..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
           Name
-            Identifier "ToolFactory" @ 65..76
-        TerminatorList
-      ImportDirective
-        Identifier "import" @ 77..83 leading=[Newline "\n"] trailing=[Whitespace " "]
-        QualifiedName
-          QualifiedNameSegmentList
-            Name
-              Identifier "com" @ 84..87
-            Dot "." @ 87..88
-            Name
-              Identifier "example" @ 88..95
-            Dot "." @ 95..96
-            Name
-              Identifier "tools" @ 96..101
-            Dot "." @ 101..102
-        Star "*" @ 102..103
-        TerminatorList
-      ImportDirective
-        Identifier "import" @ 104..110 leading=[Newline "\n"] trailing=[Whitespace " "]
-        QualifiedName
-          QualifiedNameSegmentList
-            Name
-              Identifier "kotlin" @ 111..117
-            Dot "." @ 117..118
-            Name
-              Identifier "io" @ 118..120
-            Dot "." @ 120..121
-            Name
-              Identifier "println" @ 121..128 trailing=[Whitespace " "]
-        ImportAlias
-          AsKw "as" @ 129..131 trailing=[Whitespace " "]
+            Identifier "com" @ 36..39
+          Dot "." @ 39..40
           Name
-            Identifier "say" @ 132..135
-        TerminatorList
+            Identifier "example" @ 40..47
+          Dot "." @ 47..48
+          Name
+            Identifier "tools" @ 48..53
+          Dot "." @ 53..54
+          Name
+            Identifier "Factory" @ 54..61 trailing=[Whitespace " "]
+      ImportAlias
+        AsKw "as" @ 62..64 trailing=[Whitespace " "]
+        Name
+          Identifier "ToolFactory" @ 65..76
+      TerminatorList
+    ImportDirective
+      Identifier "import" @ 77..83 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "com" @ 84..87
+          Dot "." @ 87..88
+          Name
+            Identifier "example" @ 88..95
+          Dot "." @ 95..96
+          Name
+            Identifier "tools" @ 96..101
+          Dot "." @ 101..102
+      Star "*" @ 102..103
+      TerminatorList
+    ImportDirective
+      Identifier "import" @ 104..110 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "kotlin" @ 111..117
+          Dot "." @ 117..118
+          Name
+            Identifier "io" @ 118..120
+          Dot "." @ 120..121
+          Name
+            Identifier "println" @ 121..128 trailing=[Whitespace " "]
+      ImportAlias
+        AsKw "as" @ 129..131 trailing=[Whitespace " "]
+        Name
+          Identifier "say" @ 132..135
+      TerminatorList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 137..140 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -98,7 +97,7 @@ KotlinFile
         LParen "(" @ 148..149
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "factory" @ 149..156
             Colon ":" @ 156..157 trailing=[Whitespace " "]

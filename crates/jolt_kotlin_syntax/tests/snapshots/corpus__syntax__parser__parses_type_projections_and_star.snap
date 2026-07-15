@@ -13,22 +13,21 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Name
         Identifier "TypeProjections" @ 6..21
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 21..22
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 27..30 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "input" @ 31..36
@@ -51,7 +50,7 @@ KotlinFile
                       Gt ">" @ 53..54
             Comma "," @ 54..55
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 60..63 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "output" @ 64..70
@@ -74,7 +73,7 @@ KotlinFile
                       Gt ">" @ 90..91
             Comma "," @ 91..92
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 97..100 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "unknown" @ 101..108

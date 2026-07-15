@@ -42,22 +42,21 @@ KotlinFile
         Name
           Identifier "expressions" @ 20..31
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 33..38 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "User" @ 39..43
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 43..44
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 44..47 trailing=[Whitespace " "]
               Name
                 Identifier "profile" @ 48..55
@@ -70,18 +69,18 @@ KotlinFile
                   Question "?" @ 64..65
           RParen ")" @ 65..66
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 67..72 leading=[Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Profile" @ 73..80
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 80..81
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 81..84 trailing=[Whitespace " "]
               Name
                 Identifier "email" @ 85..90
@@ -94,10 +93,10 @@ KotlinFile
                   Question "?" @ 98..99
           RParen ")" @ 99..100
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 102..105 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -106,7 +105,7 @@ KotlinFile
         LParen "(" @ 111..112
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "user" @ 112..116
             Colon ":" @ 116..117 trailing=[Whitespace " "]
@@ -145,18 +144,18 @@ KotlinFile
               RegularStringPart "missing@example.com" @ 172..191
           ClosingQuote "\"" @ 191..192
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 194..199 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Pack" @ 200..204
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 204..205
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 205..208 trailing=[Whitespace " "]
               Name
                 Identifier "progress" @ 209..217
@@ -167,24 +166,24 @@ KotlinFile
                     Identifier "Progress" @ 219..227
           RParen ")" @ 227..228
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 229..234 leading=[Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Progress" @ 235..243
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 244..249 leading=[Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Healthy" @ 250..257
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 257..258
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 258..261 trailing=[Whitespace " "]
               Name
                 Identifier "status" @ 262..268
@@ -207,11 +206,9 @@ KotlinFile
               ValueArgumentEntryList
               RParen ")" @ 289..290
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "enum" @ 291..295 leading=[Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "enum" @ 291..295 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 296..301 trailing=[Whitespace " "]
       Name
         Identifier "Status" @ 302..308 trailing=[Whitespace " "]
@@ -225,10 +222,10 @@ KotlinFile
             Comma "," @ 322..323
         RBrace "}" @ 324..325 leading=[Newline "\n"]
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 327..330 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -237,7 +234,7 @@ KotlinFile
         LParen "(" @ 337..338
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "pack" @ 338..342
             Colon ":" @ 342..343 trailing=[Whitespace " "]
@@ -255,8 +252,8 @@ KotlinFile
         LBrace "{" @ 358..359
         BlockItemList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 364..367 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList

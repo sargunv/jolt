@@ -13,26 +13,23 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Name
         Identifier "SecondaryConstructor" @ 6..26 trailing=[Whitespace " "]
       PrimaryConstructor
-        ModifierListSequence
-          ModifierList
-            ModifierItemList
-              Identifier "private" @ 27..34 trailing=[Whitespace " "]
+        ModifierList
+          Identifier "private" @ 27..34 trailing=[Whitespace " "]
         Identifier "constructor" @ 35..46
         ValueParameterList
           LParen "(" @ 46..47
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 47..50 trailing=[Whitespace " "]
               Name
                 Identifier "name" @ 51..55
@@ -47,8 +44,8 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             SecondaryConstructor
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               Identifier "constructor" @ 71..82 leading=[Newline "\n", Whitespace "    "]
               ValueParameterList
                 LParen "(" @ 82..83
@@ -76,14 +73,14 @@ KotlinFile
                   LambdaExpressionList
           ClassMemberDeclaration
             SecondaryConstructor
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               Identifier "constructor" @ 108..119 leading=[Newline "\n", Newline "\n", Whitespace "    "]
               ValueParameterList
                 LParen "(" @ 119..120
                 ValueParameterSeparatedList
                   ValueParameter
-                    ModifierListSequence
+                    ModifierList
                     Name
                       Identifier "id" @ 120..122
                     Colon ":" @ 122..123 trailing=[Whitespace " "]

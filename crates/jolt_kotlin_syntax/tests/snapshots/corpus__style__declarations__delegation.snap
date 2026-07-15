@@ -32,12 +32,11 @@ KotlinFile
         Name
           Identifier "declarations" @ 20..32
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     InterfaceDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       InterfaceKw "interface" @ 34..43 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Store" @ 44..49 trailing=[Whitespace " "]
@@ -46,10 +45,10 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               FunKw "fun" @ 56..59 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -58,7 +57,7 @@ KotlinFile
                 LParen "(" @ 64..65
                 ValueParameterSeparatedList
                   ValueParameter
-                    ModifierListSequence
+                    ModifierList
                     Name
                       Identifier "value" @ 65..70
                     Colon ":" @ 70..71 trailing=[Whitespace " "]
@@ -69,8 +68,8 @@ KotlinFile
                 RParen ")" @ 78..79
         RBrace "}" @ 80..81 leading=[Newline "\n"]
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 83..88 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "MemoryStore" @ 89..100 trailing=[Whitespace " "]
@@ -87,13 +86,11 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "override" @ 115..123 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "override" @ 115..123 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
               FunKw "fun" @ 124..127 trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -102,7 +99,7 @@ KotlinFile
                 LParen "(" @ 132..133
                 ValueParameterSeparatedList
                   ValueParameter
-                    ModifierListSequence
+                    ModifierList
                     Name
                       Identifier "value" @ 133..138
                     Colon ":" @ 138..139 trailing=[Whitespace " "]
@@ -117,21 +114,19 @@ KotlinFile
                 RBrace "}" @ 149..150
         RBrace "}" @ 151..152 leading=[Newline "\n"]
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 154..159 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "AuditedStore" @ 160..172
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 172..173
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "private" @ 173..180 trailing=[Whitespace " "]
+              ModifierList
+                Identifier "private" @ 173..180 trailing=[Whitespace " "]
               ValKw "val" @ 181..184 trailing=[Whitespace " "]
               Name
                 Identifier "delegate" @ 185..193

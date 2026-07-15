@@ -12,22 +12,21 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       TypeParameterList
         Lt "<" @ 4..5
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "T" @ 5..6
         Gt ">" @ 6..7 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -36,7 +35,7 @@ KotlinFile
         LParen "(" @ 16..17
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "value" @ 17..22
             Colon ":" @ 22..23 trailing=[Whitespace " "]
@@ -54,14 +53,14 @@ KotlinFile
       NameExpression
         Identifier "value" @ 32..37
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 39..42 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       TypeParameterList
         Lt "<" @ 43..44
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "T" @ 44..45 trailing=[Whitespace " "]
             Colon ":" @ 46..47 trailing=[Whitespace " "]
@@ -81,7 +80,7 @@ KotlinFile
                                   Identifier "T" @ 59..60
                     Gt ">" @ 60..61
         Gt ">" @ 61..62 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -90,7 +89,7 @@ KotlinFile
         LParen "(" @ 68..69
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "left" @ 69..73
             Colon ":" @ 73..74 trailing=[Whitespace " "]
@@ -100,7 +99,7 @@ KotlinFile
                   Identifier "T" @ 75..76
           Comma "," @ 76..77 trailing=[Whitespace " "]
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "right" @ 78..83
             Colon ":" @ 83..84 trailing=[Whitespace " "]

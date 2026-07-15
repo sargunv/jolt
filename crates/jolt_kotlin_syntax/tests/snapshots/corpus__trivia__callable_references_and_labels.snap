@@ -30,14 +30,13 @@ KotlinFile
         Name
           Identifier "trivia" @ 20..26
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 28..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -46,7 +45,7 @@ KotlinFile
         LParen "(" @ 42..43
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "values" @ 43..49
             Colon ":" @ 49..50 trailing=[Whitespace " "]
@@ -70,8 +69,8 @@ KotlinFile
         LBrace "{" @ 65..66
         BlockItemList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 71..74 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList

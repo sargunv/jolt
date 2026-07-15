@@ -40,11 +40,7 @@ impl<'source, L: Language> Parser<'source, L> {
             source,
             buffer: TokenBuffer::new(source),
             cursor: TokenCursor::new(),
-            // The uniform physical tree averages just under one parser event
-            // per two source bytes on the realistic corpora. Reserve that
-            // measured shape once so growing the stream does not copy it.
-            // The small floor also covers the root of empty and tiny files.
-            events: Vec::with_capacity(source.len().div_ceil(2).max(8)),
+            events: Vec::with_capacity(L::initial_event_capacity(source.len())),
             diagnostics: Vec::new(),
         }
     }
@@ -240,8 +236,8 @@ impl<'source, L: Language> TokenBuffer<'source, L> {
     fn new(source: &'source str) -> Self {
         Self {
             lexer: L::Lexer::new(source),
-            tokens: Vec::with_capacity(source.len().div_ceil(8)),
-            trivia: Vec::new(),
+            tokens: Vec::with_capacity(L::initial_token_capacity(source.len())),
+            trivia: Vec::with_capacity(L::initial_trivia_capacity(source.len())),
         }
     }
 

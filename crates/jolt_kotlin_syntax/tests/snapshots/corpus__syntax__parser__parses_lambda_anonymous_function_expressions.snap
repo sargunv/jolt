@@ -18,14 +18,13 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -34,7 +33,7 @@ KotlinFile
         LParen "(" @ 13..14
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "values" @ 14..20
             Colon ":" @ 20..21 trailing=[Whitespace " "]
@@ -58,8 +57,8 @@ KotlinFile
         LBrace "{" @ 33..34
         BlockItemList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 39..42 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -72,7 +71,7 @@ KotlinFile
                 LParen "(" @ 54..55
                 ValueParameterSeparatedList
                   ValueParameter
-                    ModifierListSequence
+                    ModifierList
                     Name
                       Identifier "value" @ 55..60
                     Colon ":" @ 60..61 trailing=[Whitespace " "]
@@ -103,8 +102,8 @@ KotlinFile
                 RBrace "}" @ 103..104 leading=[Newline "\n", Whitespace "    "]
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 109..112 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -117,7 +116,7 @@ KotlinFile
                 LParen "(" @ 129..130
                 ValueParameterSeparatedList
                   ValueParameter
-                    ModifierListSequence
+                    ModifierList
                     Name
                       Identifier "value" @ 130..135
                     Colon ":" @ 135..136 trailing=[Whitespace " "]
@@ -140,8 +139,8 @@ KotlinFile
                   IntegerLiteral "1" @ 157..158
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 163..166 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList

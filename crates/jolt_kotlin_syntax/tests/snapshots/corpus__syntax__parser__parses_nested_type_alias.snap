@@ -13,12 +13,11 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Name
         Identifier "Aliases" @ 6..13 trailing=[Whitespace " "]
@@ -27,8 +26,8 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             TypeAliasDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               TypeAliasKw "typealias" @ 20..29 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "Names" @ 30..35 trailing=[Whitespace " "]
@@ -50,8 +49,8 @@ KotlinFile
                       Gt ">" @ 49..50
           ClassMemberDeclaration
             PropertyDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               ValKw "val" @ 56..59 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               CallableName
                 CallableNamePartList

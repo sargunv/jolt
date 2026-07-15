@@ -33,12 +33,11 @@ KotlinFile
         Name
           Identifier "declarations" @ 20..32
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     InterfaceDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       InterfaceKw "interface" @ 34..43 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Source" @ 44..50
@@ -46,13 +45,13 @@ KotlinFile
         Lt "<" @ 50..51
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "T" @ 51..52
         Gt ">" @ 52..53
     InterfaceDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       InterfaceKw "interface" @ 54..63 leading=[Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Sink" @ 64..68
@@ -60,19 +59,19 @@ KotlinFile
         Lt "<" @ 68..69
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "T" @ 69..70
         Gt ">" @ 70..71
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 73..76 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       TypeParameterList
         Lt "<" @ 77..78
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "T" @ 78..79
         Gt ">" @ 79..80 trailing=[Whitespace " "]
@@ -119,23 +118,23 @@ KotlinFile
               RBrace "}" @ 122..123
       PropertyBodyMemberList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 125..128 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       TypeParameterList
         Lt "<" @ 129..130
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "T" @ 130..131
           Comma "," @ 131..132 trailing=[Whitespace " "]
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "R" @ 133..134
         Gt ">" @ 134..135 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -144,7 +143,7 @@ KotlinFile
         LParen "(" @ 143..144
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "source" @ 144..150
             Colon ":" @ 150..151 trailing=[Whitespace " "]
@@ -154,7 +153,7 @@ KotlinFile
                   Identifier "T" @ 152..153
           Comma "," @ 153..154 trailing=[Whitespace " "]
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "value" @ 155..160
             Colon ":" @ 160..161 trailing=[Whitespace " "]

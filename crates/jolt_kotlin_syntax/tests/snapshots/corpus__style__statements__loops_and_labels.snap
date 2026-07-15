@@ -31,14 +31,13 @@ KotlinFile
         Name
           Identifier "statements" @ 20..30
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -47,7 +46,7 @@ KotlinFile
         LParen "(" @ 46..47
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "rows" @ 47..51
             Colon ":" @ 51..52 trailing=[Whitespace " "]
@@ -79,7 +78,7 @@ KotlinFile
                     Gt ">" @ 70..71
           Comma "," @ 71..72 trailing=[Whitespace " "]
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "needle" @ 73..79
             Colon ":" @ 79..80 trailing=[Whitespace " "]

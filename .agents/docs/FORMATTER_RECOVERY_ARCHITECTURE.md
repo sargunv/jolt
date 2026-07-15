@@ -493,6 +493,21 @@ does not account for the Kotlin-specific parse and tree growth. The next
 decision is therefore a storage/construction optimization or an explicit gate
 amendment, not formatter-local recovery code.
 
+The immediate follow-up applies every straightforward storage/construction
+optimization found by audit. Exact node reservation, language-owned buffer
+capacities, compact token/trivia records, in-place event consumption, bounded
+pending scratch, and removal of redundant Kotlin wrapper nodes reduce the
+realistic Kotlin tree to 121.18 reserved bytes/token and parse allocations to
+32.79 MB. Both improve past Phase 8. Parse timing remains about 9.6 ms versus
+Phase 8's 7.613 ms; simultaneous unchanged Java runs vary around 7% slower,
+leaving roughly 16-18% Kotlin-specific regression after drift adjustment.
+
+The remaining candidates are deliberate architecture experiments: moving
+parent/index navigation from green storage into red views, packing events under
+an explicit bound, or generating exact slot-capacity metadata. They require a
+separate design and measurement decision. Eliding intentional physical lists or
+constructed syntax is not an optimization path.
+
 ## Rejected Designs
 
 - **Formatter-facing parts tree:** duplicates syntax and invites divergence.

@@ -23,34 +23,33 @@ KotlinFile
         Name
           Identifier "imports" @ 16..23
     TerminatorList
-  ImportList
-    ImportDirectiveList
-      ImportDirective
-        Identifier "import" @ 25..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-        QualifiedName
-          QualifiedNameSegmentList
-            Name
-              Identifier "kotlin" @ 32..38
-            Dot "." @ 38..39
-            Name
-              Identifier "collections" @ 39..50
-            Dot "." @ 50..51
-        Star "*" @ 51..52
-        TerminatorList
+  ImportDirectiveList
+    ImportDirective
+      Identifier "import" @ 25..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "kotlin" @ 32..38
+          Dot "." @ 38..39
+          Name
+            Identifier "collections" @ 39..50
+          Dot "." @ 50..51
+      Star "*" @ 51..52
+      TerminatorList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 54..59 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "StarImport" @ 60..70
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 70..71
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 71..74 trailing=[Whitespace " "]
               Name
                 Identifier "names" @ 75..80

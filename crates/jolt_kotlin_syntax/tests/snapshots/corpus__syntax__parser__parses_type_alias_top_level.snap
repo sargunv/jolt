@@ -11,12 +11,11 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     TypeAliasDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       TypeAliasKw "typealias" @ 0..9 trailing=[Whitespace " "]
       Name
         Identifier "NameMap" @ 10..17
@@ -24,7 +23,7 @@ KotlinFile
         Lt "<" @ 17..18
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "T" @ 18..19
         Gt ">" @ 19..20 trailing=[Whitespace " "]
@@ -52,8 +51,8 @@ KotlinFile
                             Identifier "T" @ 35..36
               Gt ">" @ 36..37
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 39..42 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       CallableName
         CallableNamePartList

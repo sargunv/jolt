@@ -29,50 +29,47 @@ KotlinFile
         Name
           Identifier "declarations" @ 20..32
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Annotation
-              At "@" @ 34..35 leading=[Newline "\n", Newline "\n"]
-              QualifiedName
-                QualifiedNameSegmentList
-                  Name
-                    Identifier "Target" @ 35..41
-              AnnotationArgumentList
-                LParen "(" @ 41..42
-                ValueArgumentSeparatedList
-                  ValueArgument
-                    ValueArgumentPrefixList
-                    NavigationExpression
-                      NameExpression
-                        Identifier "AnnotationTarget" @ 42..58
-                      Dot "." @ 58..59
-                      Identifier "CLASS" @ 59..64
-                  Comma "," @ 64..65 trailing=[Whitespace " "]
-                  ValueArgument
-                    ValueArgumentPrefixList
-                    NavigationExpression
-                      NameExpression
-                        Identifier "AnnotationTarget" @ 66..82
-                      Dot "." @ 82..83
-                      Identifier "FUNCTION" @ 83..91
-                RParen ")" @ 91..92
-            Identifier "annotation" @ 93..103 leading=[Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Annotation
+          At "@" @ 34..35 leading=[Newline "\n", Newline "\n"]
+          QualifiedName
+            QualifiedNameSegmentList
+              Name
+                Identifier "Target" @ 35..41
+          AnnotationArgumentList
+            LParen "(" @ 41..42
+            ValueArgumentSeparatedList
+              ValueArgument
+                ValueArgumentPrefixList
+                NavigationExpression
+                  NameExpression
+                    Identifier "AnnotationTarget" @ 42..58
+                  Dot "." @ 58..59
+                  Identifier "CLASS" @ 59..64
+              Comma "," @ 64..65 trailing=[Whitespace " "]
+              ValueArgument
+                ValueArgumentPrefixList
+                NavigationExpression
+                  NameExpression
+                    Identifier "AnnotationTarget" @ 66..82
+                  Dot "." @ 82..83
+                  Identifier "FUNCTION" @ 83..91
+            RParen ")" @ 91..92
+        Identifier "annotation" @ 93..103 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 104..109 trailing=[Whitespace " "]
       Name
         Identifier "Generated" @ 110..119
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 119..120
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 120..123 trailing=[Whitespace " "]
               Name
                 Identifier "by" @ 124..126
@@ -83,49 +80,45 @@ KotlinFile
                     Identifier "String" @ 128..134
           RParen ")" @ 134..135
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Annotation
-              At "@" @ 137..138 leading=[Newline "\n", Newline "\n"]
-              QualifiedName
-                QualifiedNameSegmentList
-                  Name
-                    Identifier "Generated" @ 138..147
-              AnnotationArgumentList
-                LParen "(" @ 147..148
-                ValueArgumentSeparatedList
-                  ValueArgument
-                    ValueArgumentPrefixList
-                    StringTemplateExpression
-                      StringTemplateEntryList
-                        StringTemplateEntry
-                          OpenQuote "\"" @ 148..149
-                        StringTemplateEntry
-                          RegularStringPart "fixture" @ 149..156
-                      ClosingQuote "\"" @ 156..157
-                RParen ")" @ 157..158 trailing=[Whitespace " "]
-            Identifier "sealed" @ 159..165 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Annotation
+          At "@" @ 137..138 leading=[Newline "\n", Newline "\n"]
+          QualifiedName
+            QualifiedNameSegmentList
+              Name
+                Identifier "Generated" @ 138..147
+          AnnotationArgumentList
+            LParen "(" @ 147..148
+            ValueArgumentSeparatedList
+              ValueArgument
+                ValueArgumentPrefixList
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 148..149
+                    StringTemplateEntry
+                      RegularStringPart "fixture" @ 149..156
+                  ClosingQuote "\"" @ 156..157
+            RParen ")" @ 157..158 trailing=[Whitespace " "]
+        Identifier "sealed" @ 159..165 trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 166..171 trailing=[Whitespace " "]
       Name
         Identifier "Result" @ 172..178
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "data" @ 180..184 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "data" @ 180..184 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 185..190 trailing=[Whitespace " "]
       Name
         Identifier "Success" @ 191..198
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 198..199
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 199..202 trailing=[Whitespace " "]
               Name
                 Identifier "value" @ 203..208

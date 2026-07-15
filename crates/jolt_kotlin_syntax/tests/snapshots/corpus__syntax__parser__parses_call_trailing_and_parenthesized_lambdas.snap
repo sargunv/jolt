@@ -23,14 +23,13 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -39,7 +38,7 @@ KotlinFile
         LParen "(" @ 12..13
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "values" @ 13..19
             Colon ":" @ 19..20 trailing=[Whitespace " "]
@@ -159,8 +158,8 @@ KotlinFile
             TerminatorList
         RBrace "}" @ 167..168 leading=[Newline "\n"]
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 170..175 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Cached" @ 176..182
@@ -168,20 +167,18 @@ KotlinFile
         Lt "<" @ 182..183
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "T" @ 183..184
         Gt ">" @ 184..185
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 185..186
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "private" @ 186..193 trailing=[Whitespace " "]
+              ModifierList
+                Identifier "private" @ 186..193 trailing=[Whitespace " "]
               ValKw "val" @ 194..197 trailing=[Whitespace " "]
               Name
                 Identifier "init" @ 198..202
@@ -232,11 +229,9 @@ KotlinFile
                 RBrace "}" @ 255..256 leading=[Newline "\n", Whitespace "    "]
           ClassMemberDeclaration
             PropertyDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "private" @ 262..269 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "private" @ 262..269 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
               ValKw "val" @ 270..273 trailing=[Whitespace " "]
               CallableName
                 CallableNamePartList

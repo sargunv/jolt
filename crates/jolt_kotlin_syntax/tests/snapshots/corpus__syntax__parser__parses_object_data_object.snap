@@ -9,15 +9,12 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ObjectDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "data" @ 0..4 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "data" @ 0..4 trailing=[Whitespace " "]
+      ModifierList
       ObjectKw "object" @ 5..11 trailing=[Whitespace " "]
       Name
         Identifier "EndOfStream" @ 12..23

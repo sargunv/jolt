@@ -34,16 +34,13 @@ KotlinFile
         Name
           Identifier "trivia" @ 20..26
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "public" @ 28..34 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:public-modifier */", Whitespace " "]
-            Identifier "sealed" @ 69..75 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "public" @ 28..34 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:public-modifier */", Whitespace " "]
+        Identifier "sealed" @ 69..75 trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 76..81 trailing=[Whitespace " "]
       Name
         Identifier "Node" @ 82..86 trailing=[Whitespace " "]
@@ -52,24 +49,20 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             ClassDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "data" @ 93..97 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:data-modifier */", Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "data" @ 93..97 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:data-modifier */", Whitespace " "]
+              ModifierList
               ClassKw "class" @ 130..135 trailing=[Whitespace " "]
               Name
                 Identifier "Leaf" @ 136..140
               PrimaryConstructor
-                ModifierListSequence
+                ModifierList
                 ValueParameterList
                   LParen "(" @ 140..141
                   ValueParameterSeparatedList
                     ValueParameter
-                      ModifierListSequence
-                        ModifierList
-                          ModifierItemList
-                            Identifier "private" @ 150..157 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:private-modifier */", Whitespace " "]
+                      ModifierList
+                        Identifier "private" @ 150..157 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:private-modifier */", Whitespace " "]
                       ValKw "val" @ 193..196 trailing=[Whitespace " "]
                       Name
                         Identifier "value" @ 197..202
@@ -94,12 +87,10 @@ KotlinFile
                       RParen ")" @ 225..226
           ClassMemberDeclaration
             ClassDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "protected" @ 232..241 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:protected-modifier */", Whitespace " "]
-                    Identifier "abstract" @ 279..287 trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "protected" @ 232..241 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:protected-modifier */", Whitespace " "]
+                Identifier "abstract" @ 279..287 trailing=[Whitespace " "]
+              ModifierList
               ClassKw "class" @ 288..293 trailing=[Whitespace " "]
               Name
                 Identifier "Branch" @ 294..300 trailing=[Whitespace " "]
@@ -117,11 +108,9 @@ KotlinFile
                       RParen ")" @ 308..309
         RBrace "}" @ 310..311 leading=[Newline "\n"]
     ObjectDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "internal" @ 313..321 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:internal-modifier */", Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "internal" @ 313..321 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:internal-modifier */", Whitespace " "]
+      ModifierList
       ObjectKw "object" @ 358..364 trailing=[Whitespace " "]
       Name
         Identifier "Registry" @ 365..373 trailing=[Whitespace " "]
@@ -130,11 +119,9 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             PropertyDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "lateinit" @ 380..388 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lateinit-modifier */", Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "lateinit" @ 380..388 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lateinit-modifier */", Whitespace " "]
+              ModifierList
               VarKw "var" @ 425..428 trailing=[Whitespace " "]
               CallableName
                 CallableNamePartList

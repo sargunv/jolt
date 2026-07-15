@@ -15,12 +15,11 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Name
         Identifier "Accessors" @ 6..15 trailing=[Whitespace " "]
@@ -29,8 +28,8 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             PropertyDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               VarKw "var" @ 22..25 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               CallableName
                 CallableNamePartList
@@ -49,7 +48,7 @@ KotlinFile
                 ClosingQuote "\"" @ 42..43
               PropertyBodyMemberList
                 PropertyAccessor
-                  ModifierListSequence
+                  ModifierList
                   Identifier "get" @ 52..55 leading=[Newline "\n", Whitespace "        "]
                   ValueParameterList
                     LParen "(" @ 55..56
@@ -80,16 +79,14 @@ KotlinFile
                               TerminatorList
                           RBrace "}" @ 86..87
                 PropertyAccessor
-                  ModifierListSequence
-                    ModifierList
-                      ModifierItemList
-                        Identifier "private" @ 96..103 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  ModifierList
+                    Identifier "private" @ 96..103 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                   Identifier "set" @ 104..107
                   ValueParameterList
                     LParen "(" @ 107..108
                     ValueParameterSeparatedList
                       ValueParameter
-                        ModifierListSequence
+                        ModifierList
                         Name
                           Identifier "value" @ 108..113
                     RParen ")" @ 113..114 trailing=[Whitespace " "]

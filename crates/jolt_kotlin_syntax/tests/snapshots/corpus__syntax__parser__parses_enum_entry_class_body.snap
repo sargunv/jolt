@@ -18,15 +18,12 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "enum" @ 0..4 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "enum" @ 0..4 trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 5..10 trailing=[Whitespace " "]
       Name
         Identifier "Token" @ 11..16 trailing=[Whitespace " "]
@@ -45,13 +42,11 @@ KotlinFile
                       LBrace "{" @ 28..29
                       LambdaBodyItemList
                         FunctionDeclaration
-                          ModifierListSequence
-                            ModifierList
-                              ModifierItemList
-                                Identifier "override" @ 38..46 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                          ModifierListSequence
+                          ModifierList
+                            Identifier "override" @ 38..46 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                          ModifierList
                           FunKw "fun" @ 47..50 trailing=[Whitespace " "]
-                          ModifierListSequence
+                          ModifierList
                           CallableName
                             CallableNamePartList
                               Name
@@ -87,13 +82,11 @@ KotlinFile
                       LBrace "{" @ 93..94
                       LambdaBodyItemList
                         FunctionDeclaration
-                          ModifierListSequence
-                            ModifierList
-                              ModifierItemList
-                                Identifier "override" @ 103..111 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                          ModifierListSequence
+                          ModifierList
+                            Identifier "override" @ 103..111 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                          ModifierList
                           FunKw "fun" @ 112..115 trailing=[Whitespace " "]
-                          ModifierListSequence
+                          ModifierList
                           CallableName
                             CallableNamePartList
                               Name
@@ -119,13 +112,11 @@ KotlinFile
           Semicolon ";" @ 147..148
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "abstract" @ 154..162 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "abstract" @ 154..162 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
               FunKw "fun" @ 163..166 trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name

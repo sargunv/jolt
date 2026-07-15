@@ -28,12 +28,11 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     InterfaceDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
       Name
         Identifier "Service" @ 10..17 trailing=[Whitespace " "]
@@ -42,10 +41,10 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               FunKw "fun" @ 24..27 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -61,8 +60,8 @@ KotlinFile
                     Identifier "String" @ 36..42
         RBrace "}" @ 43..44 leading=[Newline "\n"]
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 46..51 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "ServiceImpl" @ 52..63 trailing=[Whitespace " "]
@@ -79,13 +78,11 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "override" @ 80..88 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "override" @ 80..88 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
               FunKw "fun" @ 89..92 trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -109,21 +106,19 @@ KotlinFile
                 ClosingQuote "\"" @ 113..114
         RBrace "}" @ 115..116 leading=[Newline "\n"]
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 118..123 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "DelegatingService" @ 124..141
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 141..142
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "private" @ 142..149 trailing=[Whitespace " "]
+              ModifierList
+                Identifier "private" @ 142..149 trailing=[Whitespace " "]
               ValKw "val" @ 150..153 trailing=[Whitespace " "]
               Name
                 Identifier "service" @ 154..161
@@ -145,14 +140,14 @@ KotlinFile
             NameExpression
               Identifier "service" @ 185..192
     InterfaceDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       InterfaceKw "interface" @ 194..203 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "ExpressionValue" @ 204..219
     InterfaceDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       InterfaceKw "interface" @ 221..230 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "NumberValue" @ 231..242
@@ -160,7 +155,7 @@ KotlinFile
         Lt "<" @ 242..243
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "U" @ 243..244
         Gt ">" @ 244..245 trailing=[Whitespace " "]
@@ -218,14 +213,14 @@ KotlinFile
                                     Gt ">" @ 330..331
                     Gt ">" @ 331..332
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 334..339 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "MapNode" @ 340..347
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 349..354 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "LayerNode" @ 355..364 trailing=[Whitespace " "]

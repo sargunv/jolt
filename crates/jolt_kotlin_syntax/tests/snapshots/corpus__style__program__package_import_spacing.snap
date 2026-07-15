@@ -49,32 +49,31 @@ KotlinFile
         Name
           Identifier "demo" @ 47..51
     TerminatorList
-  ImportList
-    ImportDirectiveList
-      ImportDirective
-        Identifier "import" @ 52..58 leading=[Newline "\n"] trailing=[Whitespace " "]
-        QualifiedName
-          QualifiedNameSegmentList
-            Name
-              Identifier "zeta" @ 59..63
-            Dot "." @ 63..64
-            Name
-              Identifier "Zed" @ 64..67
-        TerminatorList
-      ImportDirective
-        Identifier "import" @ 68..74 leading=[Newline "\n"] trailing=[Whitespace " "]
-        QualifiedName
-          QualifiedNameSegmentList
-            Name
-              Identifier "alpha" @ 75..80
-            Dot "." @ 80..81
-            Name
-              Identifier "Alpha" @ 81..86
-        TerminatorList
+  ImportDirectiveList
+    ImportDirective
+      Identifier "import" @ 52..58 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "zeta" @ 59..63
+          Dot "." @ 63..64
+          Name
+            Identifier "Zed" @ 64..67
+      TerminatorList
+    ImportDirective
+      Identifier "import" @ 68..74 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "alpha" @ 75..80
+          Dot "." @ 80..81
+          Name
+            Identifier "Alpha" @ 81..86
+      TerminatorList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 88..93 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "PackageSpacing" @ 94..108

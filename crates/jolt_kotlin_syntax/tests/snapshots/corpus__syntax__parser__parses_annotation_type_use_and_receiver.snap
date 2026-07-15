@@ -12,25 +12,22 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Annotation
-              At "@" @ 4..5
-              AnnotationUseSiteTarget
-                Identifier "receiver" @ 5..13
-                Colon ":" @ 13..14
-              QualifiedName
-                QualifiedNameSegmentList
-                  Name
-                    Identifier "ReceiverMark" @ 14..26 trailing=[Whitespace " "]
+      ModifierList
+        Annotation
+          At "@" @ 4..5
+          AnnotationUseSiteTarget
+            Identifier "receiver" @ 5..13
+            Colon ":" @ 13..14
+          QualifiedName
+            QualifiedNameSegmentList
+              Name
+                Identifier "ReceiverMark" @ 14..26 trailing=[Whitespace " "]
       CallableName
         CallableNamePartList
           TypeReference
@@ -66,20 +63,16 @@ KotlinFile
           RParen ")" @ 69..70
         LambdaExpressionList
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "annotation" @ 72..82 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "annotation" @ 72..82 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 83..88 trailing=[Whitespace " "]
       Name
         Identifier "ReceiverMark" @ 89..101
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "annotation" @ 102..112 leading=[Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "annotation" @ 102..112 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 113..118 trailing=[Whitespace " "]
       Name
         Identifier "TypeMark" @ 119..127

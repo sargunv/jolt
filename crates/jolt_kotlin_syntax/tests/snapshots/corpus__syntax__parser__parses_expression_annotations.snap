@@ -27,14 +27,13 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -43,7 +42,7 @@ KotlinFile
         LParen "(" @ 24..25
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "flag" @ 25..29
             Colon ":" @ 29..30 trailing=[Whitespace " "]
@@ -56,8 +55,8 @@ KotlinFile
         LBrace "{" @ 40..41
         BlockItemList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 46..49 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -65,7 +64,7 @@ KotlinFile
                   Identifier "environment" @ 50..61 trailing=[Whitespace " "]
             Assign "=" @ 62..63
             AnnotatedExpression
-              AnnotationModifierList
+              ModifierList
                 Annotation
                   At "@" @ 72..73 leading=[Newline "\n", Whitespace "        "]
                   QualifiedName
@@ -96,8 +95,8 @@ KotlinFile
                 LambdaExpressionList
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 184..187 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -105,7 +104,7 @@ KotlinFile
                   Identifier "choice" @ 188..194 trailing=[Whitespace " "]
             Assign "=" @ 195..196
             AnnotatedExpression
-              AnnotationModifierList
+              ModifierList
                 Annotation
                   At "@" @ 205..206 leading=[Newline "\n", Whitespace "        "]
                   QualifiedName
@@ -163,8 +162,8 @@ KotlinFile
                 RBrace "}" @ 312..313 leading=[Newline "\n", Whitespace "        "]
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 319..322 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -172,7 +171,7 @@ KotlinFile
                   Identifier "length" @ 323..329 trailing=[Whitespace " "]
             Assign "=" @ 330..331
             AnnotatedExpression
-              AnnotationModifierList
+              ModifierList
                 Annotation
                   At "@" @ 340..341 leading=[Newline "\n", Whitespace "        "]
                   QualifiedName

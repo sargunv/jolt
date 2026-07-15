@@ -14,25 +14,22 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "enum" @ 0..4 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "enum" @ 0..4 trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 5..10 trailing=[Whitespace " "]
       Name
         Identifier "Direction" @ 11..20
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 20..21
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 21..24 trailing=[Whitespace " "]
               Name
                 Identifier "dx" @ 25..27
@@ -43,7 +40,7 @@ KotlinFile
                     Identifier "Int" @ 29..32
             Comma "," @ 32..33 trailing=[Whitespace " "]
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 34..37 trailing=[Whitespace " "]
               Name
                 Identifier "dy" @ 38..40
@@ -102,10 +99,10 @@ KotlinFile
           Semicolon ";" @ 82..83
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               FunKw "fun" @ 89..92 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name

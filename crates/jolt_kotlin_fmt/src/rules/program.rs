@@ -89,14 +89,7 @@ fn collect_imports<'source>(
     doc: &mut DocBuilder<'source>,
     entries: &mut Vec<FileEntry<'source>>,
 ) {
-    let import_list = match resolve_required_field(file.import_list(), doc) {
-        KotlinFormatField::Present(import_list) => import_list,
-        KotlinFormatField::Malformed(recovery) => {
-            entries.push(FileEntry::Raw(recovery, None));
-            return;
-        }
-    };
-    let directives = match resolve_required_field(import_list.directives(), doc) {
+    let directives = match resolve_required_field(file.import_list(), doc) {
         KotlinFormatField::Present(directives) => directives,
         KotlinFormatField::Malformed(recovery) => {
             entries.push(FileEntry::Raw(recovery, None));

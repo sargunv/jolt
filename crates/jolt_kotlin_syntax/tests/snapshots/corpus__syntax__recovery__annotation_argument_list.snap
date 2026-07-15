@@ -26,12 +26,11 @@ KotlinFile
             NameExpression
               Identifier "value" @ 21..26
         RParen ")" @ 26..27
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 28..33 leading=[Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Demo" @ 34..38

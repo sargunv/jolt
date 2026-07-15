@@ -14,46 +14,43 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Name
         Identifier "AllTarget" @ 6..15
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 15..16
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Annotation
-                      At "@" @ 21..22 leading=[Newline "\n", Whitespace "    "]
-                      AnnotationUseSiteTarget
-                        Identifier "all" @ 22..25
-                        Colon ":" @ 25..26
-                      QualifiedName
-                        QualifiedNameSegmentList
-                          Name
-                            Identifier "Label" @ 26..31
-                      AnnotationArgumentList
-                        LParen "(" @ 31..32
-                        ValueArgumentSeparatedList
-                          ValueArgument
-                            ValueArgumentPrefixList
-                            StringTemplateExpression
-                              StringTemplateEntryList
-                                StringTemplateEntry
-                                  OpenQuote "\"" @ 32..33
-                                StringTemplateEntry
-                                  RegularStringPart "user" @ 33..37
-                              ClosingQuote "\"" @ 37..38
-                        RParen ")" @ 38..39
+              ModifierList
+                Annotation
+                  At "@" @ 21..22 leading=[Newline "\n", Whitespace "    "]
+                  AnnotationUseSiteTarget
+                    Identifier "all" @ 22..25
+                    Colon ":" @ 25..26
+                  QualifiedName
+                    QualifiedNameSegmentList
+                      Name
+                        Identifier "Label" @ 26..31
+                  AnnotationArgumentList
+                    LParen "(" @ 31..32
+                    ValueArgumentSeparatedList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 32..33
+                            StringTemplateEntry
+                              RegularStringPart "user" @ 33..37
+                          ClosingQuote "\"" @ 37..38
+                    RParen ")" @ 38..39
               ValKw "val" @ 44..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "name" @ 48..52
@@ -65,21 +62,19 @@ KotlinFile
             Comma "," @ 60..61
           RParen ")" @ 62..63 leading=[Newline "\n"]
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "annotation" @ 65..75 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "annotation" @ 65..75 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 76..81 trailing=[Whitespace " "]
       Name
         Identifier "Label" @ 82..87
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 87..88
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 88..91 trailing=[Whitespace " "]
               Name
                 Identifier "value" @ 92..97

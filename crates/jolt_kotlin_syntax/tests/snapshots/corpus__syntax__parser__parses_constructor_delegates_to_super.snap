@@ -13,25 +13,22 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "open" @ 0..4 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "open" @ 0..4 trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 5..10 trailing=[Whitespace " "]
       Name
         Identifier "Base" @ 11..15
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 15..16
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 16..19 trailing=[Whitespace " "]
               Name
                 Identifier "name" @ 20..24
@@ -42,8 +39,8 @@ KotlinFile
                     Identifier "String" @ 26..32
           RParen ")" @ 32..33
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 35..40 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Child" @ 41..46 trailing=[Whitespace " "]
@@ -60,14 +57,14 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             SecondaryConstructor
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               Identifier "constructor" @ 60..71 leading=[Newline "\n", Whitespace "    "]
               ValueParameterList
                 LParen "(" @ 71..72
                 ValueParameterSeparatedList
                   ValueParameter
-                    ModifierListSequence
+                    ModifierList
                     Name
                       Identifier "name" @ 72..76
                     Colon ":" @ 76..77 trailing=[Whitespace " "]

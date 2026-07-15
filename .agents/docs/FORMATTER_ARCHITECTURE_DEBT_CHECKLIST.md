@@ -641,10 +641,38 @@ Java's unchanged parse path measured 3.6% slower in the same run, which
 indicates machine drift, but drift-adjusted Kotlin parse remains about 23%
 slower. The physical Kotlin tree grows from 156,227 to 242,680 nodes as list and
 constructed roles become real nodes; per-node reserve improves from 147.08 to
-107.51 bytes, but total tree reserve still exceeds the incremental budget. Do
-not accept Phase 9 until this construction/storage cost is reduced or the
-incremental gate is explicitly amended. Phase 10 may not silently inherit the
-regression.
+107.51 bytes, but total tree reserve still exceeds the incremental budget. The
+Phase 9 architecture checkpoint is committed, but its roadmap performance
+acceptance remains open. Phase 10 may not silently inherit the regression.
+
+#### Post-Phase 9 straightforward optimization record
+
+The direct follow-up exhausts the architecture-preserving construction and
+storage cleanup identified by review:
+
+- reserve the exact physical-node count from `events = 2 * nodes + tokens`;
+- use measured language-owned event, token, and trivia capacity estimates;
+- store source ranges and trivia lengths in the tree's existing `u32` domain,
+  reducing `SyntaxTokenData` from 56 to 36 bytes and `SyntaxTrivia` from 16 to 8
+  bytes;
+- consume forward-parent events in place, reject caller-supplied consumed
+  markers, and bound the pending-child scratch reservation; and
+- remove Kotlin's redundant import, modifier-sequence, modifier-item, and
+  annotation-modifier wrappers while retaining delimiter/recovery-owning list
+  containers.
+
+The realistic Kotlin tree falls from 242,680 nodes and 166.69 reserved
+bytes/token to 235,153 nodes and 121.18 bytes/token. Parse allocated bytes fall
+from 46.90 MB to 32.79 MB. The final timing report remains noisy but red against
+Phase 8: Kotlin parse remains about 9.6 ms (+26%) while unchanged Java parse
+varies around 420 ms (+7%); drift-adjusted Kotlin parse remains roughly 16-18%
+slower. Storage and allocation gates now pass; the strict timing gate does not.
+
+Further changes are architecture experiments rather than straightforward
+cleanup: parentless green nodes with ancestry-bearing red views, packed bounded
+events, and schema/factory-provided exact slot counts. Do not disguise those as
+capacity tuning or delete intentional physical list/constructed nodes to chase
+the gate.
 
 ### New Phase 10: Shared Uniform-Tree Architecture Closeout
 

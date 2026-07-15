@@ -15,12 +15,11 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Name
         Identifier "Outer" @ 6..11 trailing=[Whitespace " "]
@@ -29,24 +28,24 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             ClassDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               ClassKw "class" @ 18..23 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "Inner" @ 24..29
           ClassMemberDeclaration
             ObjectDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               ObjectKw "object" @ 35..41 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "NestedObject" @ 42..54
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               FunKw "fun" @ 60..63 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name

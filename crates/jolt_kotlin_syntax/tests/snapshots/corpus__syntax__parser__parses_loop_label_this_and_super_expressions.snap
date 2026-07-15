@@ -23,15 +23,12 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "open" @ 0..4 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "open" @ 0..4 trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 5..10 trailing=[Whitespace " "]
       Name
         Identifier "Parent" @ 11..17 trailing=[Whitespace " "]
@@ -40,13 +37,11 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "open" @ 24..28 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "open" @ 24..28 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
               FunKw "fun" @ 29..32 trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -61,8 +56,8 @@ KotlinFile
                 RBrace "}" @ 42..43
         RBrace "}" @ 44..45 leading=[Newline "\n"]
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 47..52 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Child" @ 53..58 trailing=[Whitespace " "]
@@ -83,11 +78,9 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             ClassDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "inner" @ 76..81 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "inner" @ 76..81 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
               ClassKw "class" @ 82..87 trailing=[Whitespace " "]
               Name
                 Identifier "Walker" @ 88..94 trailing=[Whitespace " "]
@@ -96,10 +89,10 @@ KotlinFile
                 ClassMemberList
                   ClassMemberDeclaration
                     FunctionDeclaration
-                      ModifierListSequence
-                      ModifierListSequence
+                      ModifierList
+                      ModifierList
                       FunKw "fun" @ 105..108 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      ModifierListSequence
+                      ModifierList
                       CallableName
                         CallableNamePartList
                           Name
@@ -108,7 +101,7 @@ KotlinFile
                         LParen "(" @ 113..114
                         ValueParameterSeparatedList
                           ValueParameter
-                            ModifierListSequence
+                            ModifierList
                             Name
                               Identifier "items" @ 114..119
                             Colon ":" @ 119..120 trailing=[Whitespace " "]

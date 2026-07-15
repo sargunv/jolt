@@ -36,11 +36,10 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
+      ModifierList
       ContextParameterClause
         Identifier "context" @ 0..7
         LParen "(" @ 7..8
@@ -54,13 +53,11 @@ KotlinFile
                 UserTypeSegmentList
                   Identifier "Logger" @ 16..22
         RParen ")" @ 22..23
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "suspend" @ 24..31 leading=[Newline "\n"] trailing=[Whitespace " "]
-            Identifier "inline" @ 32..38 trailing=[Whitespace " "]
+      ModifierList
+        Identifier "suspend" @ 24..31 leading=[Newline "\n"] trailing=[Whitespace " "]
+        Identifier "inline" @ 32..38 trailing=[Whitespace " "]
       FunKw "fun" @ 39..42 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -69,7 +66,7 @@ KotlinFile
         LParen "(" @ 51..52
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "message" @ 52..59
             Colon ":" @ 59..60 trailing=[Whitespace " "]
@@ -102,16 +99,14 @@ KotlinFile
             TerminatorList
         RBrace "}" @ 97..98 leading=[Newline "\n"]
     FunctionDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Annotation
-              At "@" @ 100..101 leading=[Newline "\n", Newline "\n"]
-              QualifiedName
-                QualifiedNameSegmentList
-                  Name
-                    Identifier "PublishedApi" @ 101..113
-            Identifier "internal" @ 114..122 leading=[Newline "\n"]
+      ModifierList
+        Annotation
+          At "@" @ 100..101 leading=[Newline "\n", Newline "\n"]
+          QualifiedName
+            QualifiedNameSegmentList
+              Name
+                Identifier "PublishedApi" @ 101..113
+        Identifier "internal" @ 114..122 leading=[Newline "\n"]
       ContextParameterClause
         Identifier "context" @ 123..130 leading=[Newline "\n"]
         LParen "(" @ 130..131
@@ -125,17 +120,15 @@ KotlinFile
                 UserTypeSegmentList
                   Identifier "Logger" @ 139..145
         RParen ")" @ 145..146
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "tailrec" @ 147..154 leading=[Newline "\n"] trailing=[Whitespace " "]
-            Identifier "suspend" @ 155..162 trailing=[Whitespace " "]
+      ModifierList
+        Identifier "tailrec" @ 147..154 leading=[Newline "\n"] trailing=[Whitespace " "]
+        Identifier "suspend" @ 155..162 trailing=[Whitespace " "]
       FunKw "fun" @ 163..166 trailing=[Whitespace " "]
       TypeParameterList
         Lt "<" @ 167..168
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "T" @ 168..169 trailing=[Whitespace " "]
             Colon ":" @ 170..171 trailing=[Whitespace " "]
@@ -144,7 +137,7 @@ KotlinFile
                 UserTypeSegmentList
                   Identifier "CharSequence" @ 172..184
         Gt ">" @ 184..185 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           TypeReference
@@ -169,7 +162,7 @@ KotlinFile
         LParen "(" @ 214..215
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "id" @ 215..217
             Colon ":" @ 217..218 trailing=[Whitespace " "]
@@ -220,7 +213,7 @@ KotlinFile
           RParen ")" @ 268..269
         LambdaExpressionList
     FunctionDeclaration
-      ModifierListSequence
+      ModifierList
       ContextParameterClause
         Identifier "context" @ 271..278 leading=[Newline "\n", Newline "\n"]
         LParen "(" @ 278..279
@@ -234,12 +227,10 @@ KotlinFile
                 UserTypeSegmentList
                   Identifier "Counter" @ 285..292
         RParen ")" @ 292..293
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "operator" @ 294..302 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+        Identifier "operator" @ 294..302 leading=[Newline "\n"] trailing=[Whitespace " "]
       FunKw "fun" @ 303..306 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           TypeReference
@@ -253,7 +244,7 @@ KotlinFile
         LParen "(" @ 319..320
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "right" @ 320..325
             Colon ":" @ 325..326 trailing=[Whitespace " "]
@@ -289,7 +280,7 @@ KotlinFile
           RParen ")" @ 374..375
         LambdaExpressionList
     FunctionDeclaration
-      ModifierListSequence
+      ModifierList
       ContextParameterClause
         Identifier "context" @ 377..384 leading=[Newline "\n", Newline "\n"]
         LParen "(" @ 384..385
@@ -303,12 +294,10 @@ KotlinFile
                 UserTypeSegmentList
                   Identifier "Logger" @ 393..399
         RParen ")" @ 399..400
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "infix" @ 401..406 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+        Identifier "infix" @ 401..406 leading=[Newline "\n"] trailing=[Whitespace " "]
       FunKw "fun" @ 407..410 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           TypeReference
@@ -322,7 +311,7 @@ KotlinFile
         LParen "(" @ 422..423
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "message" @ 423..430
             Colon ":" @ 430..431 trailing=[Whitespace " "]
@@ -340,8 +329,8 @@ KotlinFile
       ThisExpression
         ThisKw "this" @ 450..454
     InterfaceDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       InterfaceKw "interface" @ 456..465 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Logger" @ 466..472 trailing=[Whitespace " "]
@@ -350,10 +339,10 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               FunKw "fun" @ 479..482 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -362,7 +351,7 @@ KotlinFile
                 LParen "(" @ 488..489
                 ValueParameterSeparatedList
                   ValueParameter
-                    ModifierListSequence
+                    ModifierList
                     Name
                       Identifier "message" @ 489..496
                     Colon ":" @ 496..497 trailing=[Whitespace " "]
@@ -373,18 +362,18 @@ KotlinFile
                 RParen ")" @ 504..505
         RBrace "}" @ 506..507 leading=[Newline "\n"]
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 509..514 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Counter" @ 515..522
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 522..523
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 523..526 trailing=[Whitespace " "]
               Name
                 Identifier "value" @ 527..532
@@ -395,8 +384,8 @@ KotlinFile
                     Identifier "Int" @ 534..537
           RParen ")" @ 537..538
     InterfaceDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       InterfaceKw "interface" @ 540..549 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Repository" @ 550..560
@@ -404,7 +393,7 @@ KotlinFile
         Lt "<" @ 560..561
         TypeParameterSeparatedList
           TypeParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "K" @ 561..562
         Gt ">" @ 562..563 trailing=[Whitespace " "]
@@ -413,21 +402,19 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "suspend" @ 570..577 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "suspend" @ 570..577 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
               FunKw "fun" @ 578..581 trailing=[Whitespace " "]
               TypeParameterList
                 Lt "<" @ 582..583
                 TypeParameterSeparatedList
                   TypeParameter
-                    ModifierListSequence
+                    ModifierList
                     Name
                       Identifier "T" @ 583..584
                 Gt ">" @ 584..585 trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -436,7 +423,7 @@ KotlinFile
                 LParen "(" @ 591..592
                 ValueParameterSeparatedList
                   ValueParameter
-                    ModifierListSequence
+                    ModifierList
                     Name
                       Identifier "id" @ 592..594
                     Colon ":" @ 594..595 trailing=[Whitespace " "]
@@ -452,8 +439,8 @@ KotlinFile
                     Identifier "T" @ 600..601
         RBrace "}" @ 602..603 leading=[Newline "\n"]
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 605..610 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "UserId" @ 611..617

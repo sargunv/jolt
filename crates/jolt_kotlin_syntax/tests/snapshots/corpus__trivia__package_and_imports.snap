@@ -56,59 +56,58 @@ KotlinFile
         Name
           Identifier "trivia" @ 140..146 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:package-tail"]
     TerminatorList
-  ImportList
-    ImportDirectiveList
-      ImportDirective
-        Identifier "import" @ 206..212 leading=[Newline "\n", Newline "\n", LineComment "// JOLT-TRIVIA:before-imports", Newline "\n"] trailing=[Whitespace " "]
-        QualifiedName
-          QualifiedNameSegmentList
-            Name
-              Identifier "kotlin" @ 213..219
-            Dot "." @ 219..220
-            Name
-              Identifier "collections" @ 220..231 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:import-dot */", Whitespace " "]
-            Dot "." @ 261..262
-            Name
-              Identifier "List" @ 262..266
-        TerminatorList
-      ImportDirective
-        Identifier "import" @ 267..273 leading=[Newline "\n"] trailing=[Whitespace " "]
-        QualifiedName
-          QualifiedNameSegmentList
-            Name
-              Identifier "kotlin" @ 274..280
-            Dot "." @ 280..281
-            Name
-              Identifier "io" @ 281..283
-            Dot "." @ 283..284
-            Name
-              Identifier "println" @ 284..291 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:import-alias-source */", Whitespace " "]
-        ImportAlias
-          AsKw "as" @ 330..332 trailing=[Whitespace " "]
+  ImportDirectiveList
+    ImportDirective
+      Identifier "import" @ 206..212 leading=[Newline "\n", Newline "\n", LineComment "// JOLT-TRIVIA:before-imports", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
           Name
-            Identifier "say" @ 333..336
-        TerminatorList
-      ImportDirective
-        Identifier "import" @ 337..343 leading=[Newline "\n"] trailing=[Whitespace " "]
-        QualifiedName
-          QualifiedNameSegmentList
-            Name
-              Identifier "com" @ 344..347
-            Dot "." @ 347..348
-            Name
-              Identifier "example" @ 348..355 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:star-prefix */", Whitespace " "]
-            Dot "." @ 386..387
-            Name
-              Identifier "tools" @ 387..392
-            Dot "." @ 392..393
-        Star "*" @ 393..394
-        TerminatorList
+            Identifier "kotlin" @ 213..219
+          Dot "." @ 219..220
+          Name
+            Identifier "collections" @ 220..231 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:import-dot */", Whitespace " "]
+          Dot "." @ 261..262
+          Name
+            Identifier "List" @ 262..266
+      TerminatorList
+    ImportDirective
+      Identifier "import" @ 267..273 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "kotlin" @ 274..280
+          Dot "." @ 280..281
+          Name
+            Identifier "io" @ 281..283
+          Dot "." @ 283..284
+          Name
+            Identifier "println" @ 284..291 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:import-alias-source */", Whitespace " "]
+      ImportAlias
+        AsKw "as" @ 330..332 trailing=[Whitespace " "]
+        Name
+          Identifier "say" @ 333..336
+      TerminatorList
+    ImportDirective
+      Identifier "import" @ 337..343 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "com" @ 344..347
+          Dot "." @ 347..348
+          Name
+            Identifier "example" @ 348..355 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:star-prefix */", Whitespace " "]
+          Dot "." @ 386..387
+          Name
+            Identifier "tools" @ 387..392
+          Dot "." @ 392..393
+      Star "*" @ 393..394
+      TerminatorList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 425..428 leading=[Newline "\n", LineComment "// JOLT-TRIVIA:after-imports", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -117,7 +116,7 @@ KotlinFile
         LParen "(" @ 442..443
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "names" @ 443..448
             Colon ":" @ 448..449 trailing=[Whitespace " "]

@@ -22,32 +22,31 @@ KotlinFile
         Name
           Identifier "example" @ 14..21
     TerminatorList
-  ImportList
-    ImportDirectiveList
-      ImportDirective
-        Identifier "import" @ 22..28 leading=[Newline "\n"] trailing=[Whitespace " "]
-        QualifiedName
-          QualifiedNameSegmentList
-            Name
-              Identifier "z" @ 29..30
-            Dot "." @ 30..31
-            Name
-              Identifier "Z" @ 31..32
-        TerminatorList
-      ImportDirective
-        Identifier "import" @ 33..39 leading=[Newline "\n"] trailing=[Whitespace " "]
-        QualifiedName
-          QualifiedNameSegmentList
-            Name
-              Identifier "a" @ 40..41
-            Dot "." @ 41..42
-            Name
-              Identifier "A" @ 42..43
-        TerminatorList
+  ImportDirectiveList
+    ImportDirective
+      Identifier "import" @ 22..28 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "z" @ 29..30
+          Dot "." @ 30..31
+          Name
+            Identifier "Z" @ 31..32
+      TerminatorList
+    ImportDirective
+      Identifier "import" @ 33..39 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "a" @ 40..41
+          Dot "." @ 41..42
+          Name
+            Identifier "A" @ 42..43
+      TerminatorList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 44..49 leading=[Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Demo" @ 50..54

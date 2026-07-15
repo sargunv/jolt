@@ -28,12 +28,11 @@ KotlinFile
         Name
           Identifier "expressions" @ 20..31
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       CallableName
         CallableNamePartList
@@ -52,10 +51,10 @@ KotlinFile
             IntegerLiteral "3" @ 48..49
       PropertyBodyMemberList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 51..54 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -64,7 +63,7 @@ KotlinFile
         LParen "(" @ 62..63
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "value" @ 63..68
             Colon ":" @ 68..69 trailing=[Whitespace " "]
@@ -86,10 +85,10 @@ KotlinFile
         LiteralExpression
           IntegerLiteral "2" @ 86..87
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 89..92 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -98,7 +97,7 @@ KotlinFile
         LParen "(" @ 98..99
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "input" @ 99..104
             Colon ":" @ 104..105 trailing=[Whitespace " "]

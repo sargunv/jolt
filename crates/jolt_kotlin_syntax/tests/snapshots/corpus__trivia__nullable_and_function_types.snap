@@ -27,12 +27,11 @@ KotlinFile
         Name
           Identifier "trivia" @ 20..26
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     TypeAliasDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       TypeAliasKw "typealias" @ 28..37 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Callback" @ 38..46 trailing=[Whitespace " "]
@@ -67,8 +66,8 @@ KotlinFile
                 UserTypeSegmentList
                   Identifier "Unit" @ 192..196
     InterfaceDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       InterfaceKw "interface" @ 198..207 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Logger" @ 208..214

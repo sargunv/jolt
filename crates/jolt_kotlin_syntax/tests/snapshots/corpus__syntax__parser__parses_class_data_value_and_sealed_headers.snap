@@ -14,25 +14,22 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "data" @ 0..4 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "data" @ 0..4 trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 5..10 trailing=[Whitespace " "]
       Name
         Identifier "Payload" @ 11..18
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 18..19
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 19..22 trailing=[Whitespace " "]
               Name
                 Identifier "bytes" @ 23..28
@@ -43,27 +40,25 @@ KotlinFile
                     Identifier "ByteArray" @ 30..39
           RParen ")" @ 39..40
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Annotation
-              At "@" @ 42..43 leading=[Newline "\n", Newline "\n"]
-              QualifiedName
-                QualifiedNameSegmentList
-                  Name
-                    Identifier "JvmInline" @ 43..52
-            Identifier "value" @ 53..58 leading=[Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Annotation
+          At "@" @ 42..43 leading=[Newline "\n", Newline "\n"]
+          QualifiedName
+            QualifiedNameSegmentList
+              Name
+                Identifier "JvmInline" @ 43..52
+        Identifier "value" @ 53..58 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 59..64 trailing=[Whitespace " "]
       Name
         Identifier "UserId" @ 65..71
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 71..72
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 72..75 trailing=[Whitespace " "]
               Name
                 Identifier "value" @ 76..81
@@ -74,11 +69,9 @@ KotlinFile
                     Identifier "String" @ 83..89
           RParen ")" @ 89..90
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "sealed" @ 92..98 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "sealed" @ 92..98 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 99..104 trailing=[Whitespace " "]
       Name
         Identifier "Result" @ 105..111

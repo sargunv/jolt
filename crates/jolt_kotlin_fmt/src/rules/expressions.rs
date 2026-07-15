@@ -1,7 +1,5 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_kotlin_syntax::{
-    AnnotatedExpression, Annotation, Expression, KotlinRoleElement, ModifierList,
-};
+use jolt_kotlin_syntax::{AnnotatedExpression, Annotation, Expression, KotlinRoleElement};
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
 use crate::helpers::recovery::{
@@ -177,21 +175,50 @@ fn format_annotated_expression<'source>(
         let prefix = match resolve_required_field(expression.prefix(), doc) {
             KotlinFormatField::Present(prefix) => doc.concat_list(|docs| {
                 let mut first = true;
-                for part in prefix.parts() {
+                let mut parts = prefix.parts().peekable();
+                while let Some(part) = parts.next() {
+                    let next_is_modifier = matches!(
+                        parts.peek(),
+                        Some(Ok(jolt_kotlin_syntax::KotlinSyntaxListPart::Item(
+                            KotlinRoleElement::Token(_)
+                        )))
+                    );
                     match resolve_list_part(part, docs) {
                         KotlinFormatListPart::Item(element) => {
-                            let formatted = format_annotation_prefix_element(
-                                docs,
-                                element,
-                                if first {
-                                    leading
-                                } else {
-                                    LeadingTrivia::Preserve
-                                },
-                            );
-                            docs.push(formatted);
-                            let hard_line = docs.hard_line();
-                            docs.push(hard_line);
+                            let item_leading = if first {
+                                leading
+                            } else {
+                                LeadingTrivia::Preserve
+                            };
+                            let is_modifier = element.token().is_some();
+                            if let Some(annotation) =
+                                element.cast_node::<Annotation<'source>>()
+                            {
+                                let annotation = format_annotation_with_leading(
+                                    docs,
+                                    &annotation,
+                                    item_leading,
+                                );
+                                docs.push(annotation);
+                            } else if let Some(token) = element.token() {
+                                let token = format_token(
+                                    docs,
+                                    &token,
+                                    item_leading,
+                                    TrailingTrivia::Preserve,
+                                );
+                                docs.push(token);
+                            } else {
+                                docs.block_on_invariant(
+                                    "Kotlin annotated expression prefix contained an unsupported element",
+                                );
+                            }
+                            let separator = if is_modifier && next_is_modifier {
+                                docs.space()
+                            } else {
+                                docs.hard_line()
+                            };
+                            docs.push(separator);
                             first = false;
                         }
                         KotlinFormatListPart::Separator(token) => {
@@ -200,7 +227,11 @@ fn format_annotated_expression<'source>(
                                 token.kind()
                             ));
                         }
-                        KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
+                        KotlinFormatListPart::Malformed(recovery) => {
+                            docs.push(recovery);
+                            let hard_line = docs.hard_line();
+                            docs.push(hard_line);
+                        }
                     }
                 }
             }),
@@ -226,70 +257,4 @@ fn format_expression_body_role<'source>(
         doc.block_on_invariant("Kotlin loop body contained an unsupported generated element");
         Doc::nil()
     }
-}
-
-fn format_annotation_prefix_element<'source>(
-    doc: &mut DocBuilder<'source>,
-    element: KotlinRoleElement<'source>,
-    leading: LeadingTrivia,
-) -> Doc<'source> {
-    if let Some(annotation) = element.cast_node::<Annotation<'source>>() {
-        return format_annotation_with_leading(doc, &annotation, leading);
-    }
-    if let Some(modifiers) = element.cast_node::<ModifierList<'source>>() {
-        return format_annotated_modifier_list(doc, &modifiers, leading);
-    }
-    doc.block_on_invariant("Kotlin annotated expression prefix contained an unsupported element");
-    Doc::nil()
-}
-
-fn format_annotated_modifier_list<'source>(
-    doc: &mut DocBuilder<'source>,
-    modifiers: &ModifierList<'source>,
-    leading: LeadingTrivia,
-) -> Doc<'source> {
-    format_or_verbatim(modifiers, doc, |doc| {
-        match resolve_required_field(modifiers.modifiers(), doc) {
-            KotlinFormatField::Present(items) => doc.concat_list(|docs| {
-                let mut first = true;
-                for part in items.parts() {
-                    match resolve_list_part(part, docs) {
-                        KotlinFormatListPart::Item(element) => {
-                            let item_leading = if first {
-                                leading
-                            } else {
-                                LeadingTrivia::Preserve
-                            };
-                            if let Some(annotation) = element.cast_node::<Annotation<'source>>() {
-                                let annotation =
-                                    format_annotation_with_leading(docs, &annotation, item_leading);
-                                docs.push(annotation);
-                            } else if let Some(token) = element.token() {
-                                let token = format_token(
-                                    docs,
-                                    &token,
-                                    item_leading,
-                                    TrailingTrivia::Preserve,
-                                );
-                                docs.push(token);
-                            } else {
-                                docs.block_on_invariant(
-                                    "Kotlin modifier list contained an unsupported element",
-                                );
-                            }
-                            let space = docs.space();
-                            docs.push(space);
-                            first = false;
-                        }
-                        KotlinFormatListPart::Separator(token) => docs.block_on_invariant(format!(
-                            "unexpected modifier separator: {:?}",
-                            token.kind()
-                        )),
-                        KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
-                    }
-                }
-            }),
-            KotlinFormatField::Malformed(recovery) => recovery,
-        }
-    })
 }

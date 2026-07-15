@@ -18,14 +18,13 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           TypeReference
@@ -39,7 +38,7 @@ KotlinFile
         LParen "(" @ 21..22
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "prefix" @ 22..28
             Colon ":" @ 28..29 trailing=[Whitespace " "]
@@ -49,7 +48,7 @@ KotlinFile
                   Identifier "String" @ 30..36
           Comma "," @ 36..37 trailing=[Whitespace " "]
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "suffix" @ 38..44
             Colon ":" @ 44..45 trailing=[Whitespace " "]
@@ -75,10 +74,10 @@ KotlinFile
         NameExpression
           Identifier "suffix" @ 84..90
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 92..95 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           TypeReference
@@ -114,10 +113,10 @@ KotlinFile
           RParen ")" @ 154..155
         LambdaExpressionList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 157..160 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           TypeReference
@@ -151,10 +150,10 @@ KotlinFile
           RParen ")" @ 216..217
         LambdaExpressionList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 219..222 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           TypeReference
@@ -194,7 +193,7 @@ KotlinFile
         LParen "(" @ 263..264
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "key" @ 264..267
             Colon ":" @ 267..268 trailing=[Whitespace " "]
@@ -204,7 +203,7 @@ KotlinFile
                   Identifier "String" @ 269..275
           Comma "," @ 275..276 trailing=[Whitespace " "]
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "value" @ 277..282
             Colon ":" @ 282..283 trailing=[Whitespace " "]

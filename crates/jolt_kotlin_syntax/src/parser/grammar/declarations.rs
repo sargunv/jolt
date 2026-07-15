@@ -206,13 +206,6 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_modifier_list(&mut self) {
-        let sequence = self.start();
-        if !self.at_modifier_or_annotation() {
-            self.complete(sequence, K::ModifierListSequence);
-            return;
-        }
-
-        let marker = self.start();
         let modifiers = self.start();
         while self.at_modifier_or_annotation() {
             let before = self.position();
@@ -223,9 +216,7 @@ impl Parser<'_> {
             }
             self.ensure_progress(before, "expected modifier or annotation");
         }
-        self.complete(modifiers, K::ModifierItemList);
-        self.complete(marker, K::ModifierList);
-        self.complete(sequence, K::ModifierListSequence);
+        self.complete(modifiers, K::ModifierList);
     }
 
     pub(super) fn parse_annotation(&mut self) {

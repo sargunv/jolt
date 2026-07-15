@@ -25,14 +25,13 @@ KotlinFile
         Name
           Identifier "boundaries" @ 20..30
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -41,7 +40,7 @@ KotlinFile
         LParen "(" @ 44..45
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "source" @ 45..51
             Colon ":" @ 51..52 trailing=[Whitespace " "]

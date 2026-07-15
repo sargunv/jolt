@@ -38,12 +38,11 @@ KotlinFile
         Name
           Identifier "trivia" @ 20..26
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     InterfaceDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       InterfaceKw "interface" @ 28..37 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Logger" @ 38..44 trailing=[Whitespace " "]
@@ -52,10 +51,10 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               FunKw "fun" @ 51..54 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -64,7 +63,7 @@ KotlinFile
                 LParen "(" @ 58..59
                 ValueParameterSeparatedList
                   ValueParameter
-                    ModifierListSequence
+                    ModifierList
                     Name
                       Identifier "message" @ 59..66
                     Colon ":" @ 66..67 trailing=[Whitespace " "]
@@ -75,8 +74,8 @@ KotlinFile
                 RParen ")" @ 74..75
         RBrace "}" @ 76..77 leading=[Newline "\n"]
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 79..84 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "ConsoleLogger" @ 85..98 trailing=[Whitespace " "]
@@ -93,13 +92,11 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "override" @ 114..122 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "override" @ 114..122 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
               FunKw "fun" @ 123..126 trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -108,7 +105,7 @@ KotlinFile
                 LParen "(" @ 130..131
                 ValueParameterSeparatedList
                   ValueParameter
-                    ModifierListSequence
+                    ModifierList
                     Name
                       Identifier "message" @ 131..138
                     Colon ":" @ 138..139 trailing=[Whitespace " "]
@@ -123,21 +120,19 @@ KotlinFile
                 RBrace "}" @ 149..150
         RBrace "}" @ 151..152 leading=[Newline "\n"]
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 154..159 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Service" @ 160..167
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 167..168
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "private" @ 173..180 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
+                Identifier "private" @ 173..180 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ValKw "val" @ 181..184 trailing=[Whitespace " "]
               Name
                 Identifier "logger" @ 185..191
@@ -160,8 +155,8 @@ KotlinFile
             NameExpression
               Identifier "logger" @ 281..287
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 289..292 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       CallableName
         CallableNamePartList

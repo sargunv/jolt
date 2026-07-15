@@ -14,12 +14,11 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     TypeAliasDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       TypeAliasKw "typealias" @ 0..9 trailing=[Whitespace " "]
       Name
         Identifier "Callback" @ 10..18 trailing=[Whitespace " "]
@@ -54,8 +53,8 @@ KotlinFile
                 UserTypeSegmentList
                   Identifier "Unit" @ 50..54
     TypeAliasDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       TypeAliasKw "typealias" @ 55..64 leading=[Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "NamedCallback" @ 65..78 trailing=[Whitespace " "]
@@ -92,8 +91,8 @@ KotlinFile
               UserTypeSegmentList
                 Identifier "Unit" @ 113..117
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 119..122 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       CallableName
         CallableNamePartList
@@ -134,8 +133,8 @@ KotlinFile
           RBrace "}" @ 170..171
       PropertyBodyMemberList
     InterfaceDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       InterfaceKw "interface" @ 173..182 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Logger" @ 183..189

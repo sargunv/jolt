@@ -18,12 +18,11 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Name
         Identifier "Container" @ 6..15 trailing=[Whitespace " "]
@@ -32,8 +31,8 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             InterfaceDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               InterfaceKw "interface" @ 22..31 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "Entry" @ 32..37 trailing=[Whitespace " "]
@@ -42,8 +41,8 @@ KotlinFile
                 ClassMemberList
                   ClassMemberDeclaration
                     PropertyDeclaration
-                      ModifierListSequence
-                      ModifierListSequence
+                      ModifierList
+                      ModifierList
                       ValKw "val" @ 48..51 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                       CallableName
                         CallableNamePartList
@@ -58,11 +57,9 @@ KotlinFile
                 RBrace "}" @ 68..69 leading=[Newline "\n", Whitespace "    "]
           ClassMemberDeclaration
             ClassDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "enum" @ 75..79 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "enum" @ 75..79 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
               ClassKw "class" @ 80..85 trailing=[Whitespace " "]
               Name
                 Identifier "Kind" @ 86..90 trailing=[Whitespace " "]

@@ -55,7 +55,6 @@ impl Parser<'_> {
     }
 
     fn parse_import_list(&mut self) {
-        let marker = self.start();
         let directives = self.start();
         while self.at_soft_keyword("import") {
             let before = self.position();
@@ -63,7 +62,6 @@ impl Parser<'_> {
             self.ensure_progress(before, "expected import directive");
         }
         self.complete(directives, K::ImportDirectiveList);
-        self.complete(marker, K::ImportList);
     }
 
     fn parse_import_directive(&mut self) {

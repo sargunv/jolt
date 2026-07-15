@@ -36,12 +36,11 @@ KotlinFile
         Name
           Identifier "declarations" @ 20..32
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ObjectDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ObjectKw "object" @ 34..40 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Registry" @ 41..49 trailing=[Whitespace " "]
@@ -50,11 +49,9 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             PropertyDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "private" @ 56..63 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "private" @ 56..63 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
               ValKw "val" @ 64..67 trailing=[Whitespace " "]
               CallableName
                 CallableNamePartList
@@ -91,10 +88,10 @@ KotlinFile
               PropertyBodyMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-              ModifierListSequence
+              ModifierList
+              ModifierList
               FunKw "fun" @ 113..116 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name
@@ -103,7 +100,7 @@ KotlinFile
                 LParen "(" @ 120..121
                 ValueParameterSeparatedList
                   ValueParameter
-                    ModifierListSequence
+                    ModifierList
                     Name
                       Identifier "key" @ 121..124
                     Colon ":" @ 124..125 trailing=[Whitespace " "]
@@ -113,7 +110,7 @@ KotlinFile
                           Identifier "String" @ 126..132
                   Comma "," @ 132..133 trailing=[Whitespace " "]
                   ValueParameter
-                    ModifierListSequence
+                    ModifierList
                     Name
                       Identifier "value" @ 134..139
                     Colon ":" @ 139..140 trailing=[Whitespace " "]
@@ -145,8 +142,8 @@ KotlinFile
                 RBrace "}" @ 183..184 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 185..186 leading=[Newline "\n"]
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 188..193 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "WithCompanion" @ 194..207 trailing=[Whitespace " "]
@@ -155,22 +152,18 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             ObjectDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "companion" @ 214..223 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "companion" @ 214..223 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
               ObjectKw "object" @ 224..230 trailing=[Whitespace " "]
               ClassBody
                 LBrace "{" @ 231..232
                 ClassMemberList
                   ClassMemberDeclaration
                     PropertyDeclaration
-                      ModifierListSequence
-                        ModifierList
-                          ModifierItemList
-                            Identifier "const" @ 241..246 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      ModifierListSequence
+                      ModifierList
+                        Identifier "const" @ 241..246 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      ModifierList
                       ValKw "val" @ 247..250 trailing=[Whitespace " "]
                       CallableName
                         CallableNamePartList

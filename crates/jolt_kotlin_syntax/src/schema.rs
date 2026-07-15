@@ -154,7 +154,6 @@ macro_rules! kotlin_syntax_schema {
             categories {
                 KotlinFileItem => BogusKotlinFileItem {
                     PackageHeader,
-                    ImportList,
                     ClassDeclaration,
                     InterfaceDeclaration,
                     ObjectDeclaration,
@@ -279,7 +278,7 @@ macro_rules! kotlin_syntax_schema {
                 KotlinFile => KotlinFile [kotlin_file valid] {
                     annotations: required (list AnnotationList);
                     package_header: optional (node PackageHeader);
-                    import_list: required (node ImportList);
+                    import_list: required (list ImportDirectiveList);
                     items: required (list KotlinFileItemList);
                     eof: required (token Eof);
                 }
@@ -287,9 +286,6 @@ macro_rules! kotlin_syntax_schema {
                     package_token: required (token PackageKw);
                     name: required (node QualifiedName);
                     terminators: required (list TerminatorList);
-                }
-                ImportList => ImportList [import_list valid] {
-                    directives: required (list ImportDirectiveList);
                 }
                 ImportDirective => ImportDirective [import_directive valid] {
                     import_token: required (contextual "import");
@@ -302,9 +298,6 @@ macro_rules! kotlin_syntax_schema {
                 ImportAlias => ImportAlias [import_alias valid] {
                     alias_keyword: required (token_set [AsKw, Identifier]);
                     name: required (node Name);
-                }
-                ModifierList => ModifierList [modifier_list valid] {
-                    modifiers: required (list ModifierItemList);
                 }
                 Annotation => Annotation [annotation valid] {
                     sigil: required (token_set [At, Hash]);
@@ -355,9 +348,9 @@ macro_rules! kotlin_syntax_schema {
                     projection: required (node_set [TypeProjection, TypeReference]);
                 }
                 ClassDeclaration => ClassDeclaration [class_declaration valid] {
-                    leading_modifiers: required (list ModifierListSequence) [disambiguate leftmost_longest];
+                    leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
                     context: optional (node ContextParameterClause);
-                    post_context_modifiers: required (list ModifierListSequence);
+                    post_context_modifiers: required (list ModifierList);
                     class_token: required (token ClassKw);
                     name: required (node Name);
                     type_parameters: optional (node TypeParameterList);
@@ -368,9 +361,9 @@ macro_rules! kotlin_syntax_schema {
                     body: optional (node ClassBody);
                 }
                 InterfaceDeclaration => InterfaceDeclaration [interface_declaration valid] {
-                    leading_modifiers: required (list ModifierListSequence) [disambiguate leftmost_longest];
+                    leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
                     context: optional (node ContextParameterClause);
-                    post_context_modifiers: required (list ModifierListSequence);
+                    post_context_modifiers: required (list ModifierList);
                     interface_token: required (token InterfaceKw);
                     name: required (node Name);
                     type_parameters: optional (node TypeParameterList);
@@ -380,9 +373,9 @@ macro_rules! kotlin_syntax_schema {
                     body: optional (node ClassBody);
                 }
                 ObjectDeclaration => ObjectDeclaration [object_declaration valid] {
-                    leading_modifiers: required (list ModifierListSequence) [disambiguate leftmost_longest];
+                    leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
                     context: optional (node ContextParameterClause);
-                    post_context_modifiers: required (list ModifierListSequence);
+                    post_context_modifiers: required (list ModifierList);
                     object_token: required (token ObjectKw);
                     name: optional (node Name);
                     colon: optional (token Colon);
@@ -390,9 +383,9 @@ macro_rules! kotlin_syntax_schema {
                     body: optional (node ClassBody);
                 }
                 CompanionObject => CompanionObject [companion_object valid] {
-                    leading_modifiers: required (list ModifierListSequence) [disambiguate leftmost_longest];
+                    leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
                     context: optional (node ContextParameterClause);
-                    post_context_modifiers: required (list ModifierListSequence);
+                    post_context_modifiers: required (list ModifierList);
                     companion_token: required (contextual "companion");
                     object_token: optional (token ObjectKw);
                     name: optional (node Name);
@@ -414,14 +407,14 @@ macro_rules! kotlin_syntax_schema {
                     comma: optional (token Comma);
                 }
                 PrimaryConstructor => PrimaryConstructor [primary_constructor valid] {
-                    modifiers: required (list ModifierListSequence);
+                    modifiers: required (list ModifierList);
                     constructor_token: optional (contextual "constructor");
                     parameters: required (node ValueParameterList);
                 }
                 SecondaryConstructor => SecondaryConstructor [secondary_constructor valid] {
-                    leading_modifiers: required (list ModifierListSequence) [disambiguate leftmost_longest];
+                    leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
                     context: optional (node ContextParameterClause);
-                    post_context_modifiers: required (list ModifierListSequence);
+                    post_context_modifiers: required (list ModifierList);
                     constructor_token: required (contextual "constructor");
                     parameters: required (node ValueParameterList);
                     colon: optional (token Colon);
@@ -436,12 +429,12 @@ macro_rules! kotlin_syntax_schema {
                     block: required (node Block);
                 }
                 FunctionDeclaration => FunctionDeclaration [function_declaration valid] {
-                    leading_modifiers: required (list ModifierListSequence) [disambiguate leftmost_longest];
+                    leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
                     context: optional (node ContextParameterClause);
-                    post_context_modifiers: required (list ModifierListSequence);
+                    post_context_modifiers: required (list ModifierList);
                     fun_token: required (token FunKw);
                     type_parameters: optional (node TypeParameterList);
-                    receiver_modifiers: required (list ModifierListSequence);
+                    receiver_modifiers: required (list ModifierList);
                     name: optional (node_set [CallableName, Name]);
                     parameters: optional (node ValueParameterList);
                     return_colon: optional (token Colon);
@@ -451,9 +444,9 @@ macro_rules! kotlin_syntax_schema {
                     body: optional (choice [(node Block), (category Expression)]);
                 }
                 PropertyDeclaration => PropertyDeclaration [property_declaration valid] {
-                    leading_modifiers: required (list ModifierListSequence) [disambiguate leftmost_longest];
+                    leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
                     context: optional (node ContextParameterClause);
-                    post_context_modifiers: required (list ModifierListSequence);
+                    post_context_modifiers: required (list ModifierList);
                     binding_keyword: required (token_set [ValKw, VarKw]);
                     type_parameters: optional (node TypeParameterList);
                     binding: required (node_set [CallableName, Name, DestructuringDeclaration]);
@@ -465,7 +458,7 @@ macro_rules! kotlin_syntax_schema {
                     body_members: required (list PropertyBodyMemberList);
                 }
                 PropertyAccessor => PropertyAccessor [property_accessor valid] {
-                    modifiers: required (list ModifierListSequence);
+                    modifiers: required (list ModifierList);
                     keyword: required (choice [(contextual "get"), (contextual "set")]);
                     parameters: optional (node ValueParameterList);
                     return_colon: optional (token Colon);
@@ -479,9 +472,9 @@ macro_rules! kotlin_syntax_schema {
                     expression: required (category Expression);
                 }
                 TypeAliasDeclaration => TypeAliasDeclaration [type_alias_declaration valid] {
-                    leading_modifiers: required (list ModifierListSequence) [disambiguate leftmost_longest];
+                    leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
                     context: optional (node ContextParameterClause);
-                    post_context_modifiers: required (list ModifierListSequence);
+                    post_context_modifiers: required (list ModifierList);
                     typealias_token: required (token TypeAliasKw);
                     name: required (node Name);
                     type_parameters: optional (node TypeParameterList);
@@ -494,7 +487,7 @@ macro_rules! kotlin_syntax_schema {
                     close_angle: required (token Gt);
                 }
                 TypeParameter => TypeParameter [type_parameter valid] {
-                    modifiers: required (list ModifierListSequence);
+                    modifiers: required (list ModifierList);
                     variance: optional (choice [(token InKw), (contextual "out")]);
                     name: required (node Name);
                     colon: optional (token Colon);
@@ -680,7 +673,7 @@ macro_rules! kotlin_syntax_schema {
                     close_paren: required (token RParen);
                 }
                 AnnotatedExpression => AnnotatedExpression [annotated_expression valid] {
-                    prefix: required (list AnnotationModifierList);
+                    prefix: required (list ModifierList);
                     expression: required (category Expression);
                 }
                 IfExpression => IfExpression [if_expression valid] {
@@ -820,7 +813,7 @@ macro_rules! kotlin_syntax_schema {
                     close_paren: required (token RParen);
                 }
                 ValueParameter => ValueParameter [value_parameter valid] {
-                    modifiers: required (list ModifierListSequence);
+                    modifiers: required (list ModifierList);
                     property_keyword: optional (token_set [ValKw, VarKw]);
                     name: required (node Name);
                     colon: optional (token Colon);
@@ -884,7 +877,7 @@ macro_rules! kotlin_syntax_schema {
                 ImportDirectiveList => ImportDirectiveList [import_directive_list list] {
                     directives: many (node ImportDirective);
                 }
-                ModifierItemList => ModifierItemList [modifier_item_list list] {
+                ModifierList => ModifierList [modifier_list list] {
                     modifiers: many (choice [
                         (node Annotation),
                         (contextual "abstract"), (contextual "enum"),
@@ -919,9 +912,6 @@ macro_rules! kotlin_syntax_schema {
                 }
                 CallableNamePartList => CallableNamePartList [callable_name_part_list list] {
                     parts: many (choice [(node_set [Name, TypeReference]), (token Dot)]);
-                }
-                ModifierListSequence => ModifierListSequence [modifier_list_sequence list] {
-                    lists: many (node ModifierList);
                 }
                 ClassMemberList => ClassMemberList [class_member_list list] {
                     members: many (choice [(category ClassMember), (token_set [Comma, EolOrSemicolon, Semicolon, DoubleSemicolon])]);
@@ -964,9 +954,6 @@ macro_rules! kotlin_syntax_schema {
                 }
                 StringTemplateEntryList => StringTemplateEntryList [string_template_entry_list list] {
                     entries: one_or_more (node StringTemplateEntry);
-                }
-                AnnotationModifierList => AnnotationModifierList [annotation_modifier_list list] {
-                    entries: many (node_set [Annotation, ModifierList]);
                 }
                 WhenEntryList => WhenEntryList [when_entry_list list] {
                     entries: many (choice [(node WhenEntry), (token_set [EolOrSemicolon, Semicolon, DoubleSemicolon])]);

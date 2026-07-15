@@ -66,31 +66,28 @@ KotlinFile
                     ClosingQuote "\"" @ 47..48
               RBracket "]" @ 48..49
         RParen ")" @ 49..50
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 51..56 leading=[Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "AnnotatedRoute" @ 57..71
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "annotation" @ 73..83 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "annotation" @ 73..83 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 84..89 trailing=[Whitespace " "]
       Name
         Identifier "Route" @ 90..95
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 95..96
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 101..104 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "path" @ 105..109
@@ -101,7 +98,7 @@ KotlinFile
                     Identifier "String" @ 111..117
             Comma "," @ 117..118
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 123..126 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "methods" @ 127..134

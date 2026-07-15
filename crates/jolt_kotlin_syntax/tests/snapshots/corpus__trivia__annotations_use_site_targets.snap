@@ -35,25 +35,22 @@ KotlinFile
         Name
           Identifier "trivia" @ 20..26
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "annotation" @ 28..38 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "annotation" @ 28..38 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 39..44 trailing=[Whitespace " "]
       Name
         Identifier "Mark" @ 45..49
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 49..50
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 50..53 trailing=[Whitespace " "]
               Name
                 Identifier "name" @ 54..58
@@ -70,86 +67,84 @@ KotlinFile
                 ClosingQuote "\"" @ 70..71
           RParen ")" @ 71..72
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 74..79 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "AnnotationTargets" @ 80..97
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 97..98
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Annotation
-                      At "@" @ 103..104 leading=[Newline "\n", Whitespace "    "]
-                      AnnotationUseSiteTarget
-                        Identifier "param" @ 104..109
-                        Colon ":" @ 109..110
-                      QualifiedName
-                        QualifiedNameSegmentList
-                          Name
-                            Identifier "Mark" @ 110..114 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:param-target */", Whitespace " "]
-                      AnnotationArgumentList
-                        LParen "(" @ 146..147
-                        ValueArgumentSeparatedList
-                          ValueArgument
-                            ValueArgumentPrefixList
-                            StringTemplateExpression
-                              StringTemplateEntryList
-                                StringTemplateEntry
-                                  OpenQuote "\"" @ 147..148
-                                StringTemplateEntry
-                                  RegularStringPart "id" @ 148..150
-                              ClosingQuote "\"" @ 150..151
-                        RParen ")" @ 151..152
-                    Annotation
-                      At "@" @ 157..158 leading=[Newline "\n", Whitespace "    "]
-                      AnnotationUseSiteTarget
-                        Identifier "field" @ 158..163
-                        Colon ":" @ 163..164
-                      QualifiedName
-                        QualifiedNameSegmentList
-                          Name
-                            Identifier "Mark" @ 164..168 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:field-target */", Whitespace " "]
-                      AnnotationArgumentList
-                        LParen "(" @ 200..201
-                        ValueArgumentSeparatedList
-                          ValueArgument
-                            ValueArgumentPrefixList
-                            StringTemplateExpression
-                              StringTemplateEntryList
-                                StringTemplateEntry
-                                  OpenQuote "\"" @ 201..202
-                                StringTemplateEntry
-                                  RegularStringPart "field" @ 202..207
-                              ClosingQuote "\"" @ 207..208
-                        RParen ")" @ 208..209
-                    Annotation
-                      At "@" @ 214..215 leading=[Newline "\n", Whitespace "    "]
-                      AnnotationUseSiteTarget
-                        Identifier "get" @ 215..218
-                        Colon ":" @ 218..219
-                      QualifiedName
-                        QualifiedNameSegmentList
-                          Name
-                            Identifier "Mark" @ 219..223 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:get-target */", Whitespace " "]
-                      AnnotationArgumentList
-                        LParen "(" @ 253..254
-                        ValueArgumentSeparatedList
-                          ValueArgument
-                            ValueArgumentPrefixList
-                            StringTemplateExpression
-                              StringTemplateEntryList
-                                StringTemplateEntry
-                                  OpenQuote "\"" @ 254..255
-                                StringTemplateEntry
-                                  RegularStringPart "getter" @ 255..261
-                              ClosingQuote "\"" @ 261..262
-                        RParen ")" @ 262..263
+              ModifierList
+                Annotation
+                  At "@" @ 103..104 leading=[Newline "\n", Whitespace "    "]
+                  AnnotationUseSiteTarget
+                    Identifier "param" @ 104..109
+                    Colon ":" @ 109..110
+                  QualifiedName
+                    QualifiedNameSegmentList
+                      Name
+                        Identifier "Mark" @ 110..114 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:param-target */", Whitespace " "]
+                  AnnotationArgumentList
+                    LParen "(" @ 146..147
+                    ValueArgumentSeparatedList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 147..148
+                            StringTemplateEntry
+                              RegularStringPart "id" @ 148..150
+                          ClosingQuote "\"" @ 150..151
+                    RParen ")" @ 151..152
+                Annotation
+                  At "@" @ 157..158 leading=[Newline "\n", Whitespace "    "]
+                  AnnotationUseSiteTarget
+                    Identifier "field" @ 158..163
+                    Colon ":" @ 163..164
+                  QualifiedName
+                    QualifiedNameSegmentList
+                      Name
+                        Identifier "Mark" @ 164..168 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:field-target */", Whitespace " "]
+                  AnnotationArgumentList
+                    LParen "(" @ 200..201
+                    ValueArgumentSeparatedList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 201..202
+                            StringTemplateEntry
+                              RegularStringPart "field" @ 202..207
+                          ClosingQuote "\"" @ 207..208
+                    RParen ")" @ 208..209
+                Annotation
+                  At "@" @ 214..215 leading=[Newline "\n", Whitespace "    "]
+                  AnnotationUseSiteTarget
+                    Identifier "get" @ 215..218
+                    Colon ":" @ 218..219
+                  QualifiedName
+                    QualifiedNameSegmentList
+                      Name
+                        Identifier "Mark" @ 219..223 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:get-target */", Whitespace " "]
+                  AnnotationArgumentList
+                    LParen "(" @ 253..254
+                    ValueArgumentSeparatedList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 254..255
+                            StringTemplateEntry
+                              RegularStringPart "getter" @ 255..261
+                          ClosingQuote "\"" @ 261..262
+                    RParen ")" @ 262..263
               ValKw "val" @ 268..271 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
                 Identifier "id" @ 272..274
@@ -165,54 +160,52 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             PropertyDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Annotation
-                      At "@" @ 292..293 leading=[Newline "\n", Whitespace "    "]
-                      AnnotationUseSiteTarget
-                        Identifier "set" @ 293..296
-                        Colon ":" @ 296..297
-                      QualifiedName
-                        QualifiedNameSegmentList
-                          Name
-                            Identifier "Mark" @ 297..301 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:set-target */", Whitespace " "]
-                      AnnotationArgumentList
-                        LParen "(" @ 331..332
-                        ValueArgumentSeparatedList
-                          ValueArgument
-                            ValueArgumentPrefixList
-                            StringTemplateExpression
-                              StringTemplateEntryList
-                                StringTemplateEntry
-                                  OpenQuote "\"" @ 332..333
-                                StringTemplateEntry
-                                  RegularStringPart "setter" @ 333..339
-                              ClosingQuote "\"" @ 339..340
-                        RParen ")" @ 340..341
-                    Annotation
-                      At "@" @ 346..347 leading=[Newline "\n", Whitespace "    "]
-                      AnnotationUseSiteTarget
-                        Identifier "setparam" @ 347..355
-                        Colon ":" @ 355..356
-                      QualifiedName
-                        QualifiedNameSegmentList
-                          Name
-                            Identifier "Mark" @ 356..360 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:setparam-target */", Whitespace " "]
-                      AnnotationArgumentList
-                        LParen "(" @ 395..396
-                        ValueArgumentSeparatedList
-                          ValueArgument
-                            ValueArgumentPrefixList
-                            StringTemplateExpression
-                              StringTemplateEntryList
-                                StringTemplateEntry
-                                  OpenQuote "\"" @ 396..397
-                                StringTemplateEntry
-                                  RegularStringPart "value" @ 397..402
-                              ClosingQuote "\"" @ 402..403
-                        RParen ")" @ 403..404
-              ModifierListSequence
+              ModifierList
+                Annotation
+                  At "@" @ 292..293 leading=[Newline "\n", Whitespace "    "]
+                  AnnotationUseSiteTarget
+                    Identifier "set" @ 293..296
+                    Colon ":" @ 296..297
+                  QualifiedName
+                    QualifiedNameSegmentList
+                      Name
+                        Identifier "Mark" @ 297..301 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:set-target */", Whitespace " "]
+                  AnnotationArgumentList
+                    LParen "(" @ 331..332
+                    ValueArgumentSeparatedList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 332..333
+                            StringTemplateEntry
+                              RegularStringPart "setter" @ 333..339
+                          ClosingQuote "\"" @ 339..340
+                    RParen ")" @ 340..341
+                Annotation
+                  At "@" @ 346..347 leading=[Newline "\n", Whitespace "    "]
+                  AnnotationUseSiteTarget
+                    Identifier "setparam" @ 347..355
+                    Colon ":" @ 355..356
+                  QualifiedName
+                    QualifiedNameSegmentList
+                      Name
+                        Identifier "Mark" @ 356..360 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:setparam-target */", Whitespace " "]
+                  AnnotationArgumentList
+                    LParen "(" @ 395..396
+                    ValueArgumentSeparatedList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 396..397
+                            StringTemplateEntry
+                              RegularStringPart "value" @ 397..402
+                          ClosingQuote "\"" @ 402..403
+                    RParen ")" @ 403..404
+              ModifierList
               VarKw "var" @ 409..412 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               CallableName
                 CallableNamePartList

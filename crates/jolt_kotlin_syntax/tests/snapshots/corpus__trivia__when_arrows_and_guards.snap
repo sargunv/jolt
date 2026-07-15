@@ -33,15 +33,12 @@ KotlinFile
         Name
           Identifier "trivia" @ 20..26
     TerminatorList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     InterfaceDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "sealed" @ 28..34 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "sealed" @ 28..34 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
       InterfaceKw "interface" @ 35..44 trailing=[Whitespace " "]
       Name
         Identifier "Event" @ 45..50 trailing=[Whitespace " "]
@@ -50,21 +47,19 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             ClassDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "data" @ 57..61 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "data" @ 57..61 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
               ClassKw "class" @ 62..67 trailing=[Whitespace " "]
               Name
                 Identifier "Click" @ 68..73
               PrimaryConstructor
-                ModifierListSequence
+                ModifierList
                 ValueParameterList
                   LParen "(" @ 73..74
                   ValueParameterSeparatedList
                     ValueParameter
-                      ModifierListSequence
+                      ModifierList
                       ValKw "val" @ 74..77 trailing=[Whitespace " "]
                       Name
                         Identifier "button" @ 78..84
@@ -84,11 +79,9 @@ KotlinFile
                           Identifier "Event" @ 93..98
           ClassMemberDeclaration
             ObjectDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "data" @ 103..107 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "data" @ 103..107 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
               ObjectKw "object" @ 108..114 trailing=[Whitespace " "]
               Name
                 Identifier "Idle" @ 115..119 trailing=[Whitespace " "]
@@ -102,10 +95,10 @@ KotlinFile
                           Identifier "Event" @ 122..127
         RBrace "}" @ 128..129 leading=[Newline "\n"]
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 131..134 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -114,7 +107,7 @@ KotlinFile
         LParen "(" @ 143..144
         ValueParameterSeparatedList
           ValueParameter
-            ModifierListSequence
+            ModifierList
             Name
               Identifier "event" @ 144..149
             Colon ":" @ 149..150 trailing=[Whitespace " "]

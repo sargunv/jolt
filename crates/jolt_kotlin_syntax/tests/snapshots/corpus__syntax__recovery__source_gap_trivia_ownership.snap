@@ -24,14 +24,13 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
       CallableName
         CallableNamePartList
           Name
@@ -44,8 +43,8 @@ KotlinFile
         LBrace "{" @ 27..28
         BlockItemList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 31..34 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -56,8 +55,8 @@ KotlinFile
               IntegerLiteral "1" @ 43..44
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 94..97 leading=[Newline "\n", Newline "\n", Whitespace "  ", BlockComment "/* JOLT-TRIVIA:blank-line-before-comment */", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -68,8 +67,8 @@ KotlinFile
               IntegerLiteral "2" @ 107..108
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 158..161 leading=[Newline "\n", Whitespace "  ", BlockComment "/* JOLT-TRIVIA:comment-resets-newline-run */", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -80,8 +79,8 @@ KotlinFile
               IntegerLiteral "3" @ 170..171 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:line-comment-no-blank"]
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 211..214 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -92,8 +91,8 @@ KotlinFile
               IntegerLiteral "4" @ 224..225 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:line-comment-before-blank"]
             PropertyBodyMemberList
           PropertyDeclaration
-            ModifierListSequence
-            ModifierListSequence
+            ModifierList
+            ModifierList
             ValKw "val" @ 270..273 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
             CallableName
               CallableNamePartList
@@ -105,8 +104,8 @@ KotlinFile
             PropertyBodyMemberList
         RBrace "}" @ 284..285 leading=[Newline "\n"]
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 287..290 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       CallableName
         CallableNamePartList
@@ -117,8 +116,8 @@ KotlinFile
         IntegerLiteral "1" @ 307..308 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:top-level-line-comment-no-blank"]
       PropertyBodyMemberList
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 356..359 leading=[Newline "\n"] trailing=[Whitespace " "]
       CallableName
         CallableNamePartList
@@ -129,8 +128,8 @@ KotlinFile
         IntegerLiteral "2" @ 377..378 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:top-level-line-comment-before-blank"]
       PropertyBodyMemberList
     PropertyDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ValKw "val" @ 431..434 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       CallableName
         CallableNamePartList

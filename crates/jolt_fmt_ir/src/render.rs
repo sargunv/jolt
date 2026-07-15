@@ -956,7 +956,7 @@ mod tests {
         });
         events.extend((0..tokens.len()).map(|_| Event::Token));
         events.push(Event::Finish);
-        build_syntax_tree(&events, tokens, Vec::new()).expect("test syntax tree builds")
+        build_syntax_tree(events, tokens, Vec::new()).expect("test syntax tree builds")
     }
 
     fn syntax_tree(source: &str) -> jolt_syntax::SyntaxTree {
@@ -996,7 +996,7 @@ mod tests {
             Event::Finish,
             Event::Finish,
         ];
-        build_syntax_tree(&events, tokens, Vec::new()).expect("mixed test syntax tree builds")
+        build_syntax_tree(events, tokens, Vec::new()).expect("mixed test syntax tree builds")
     }
 
     fn syntax_tree_with_line_comment() -> jolt_syntax::SyntaxTree {
@@ -1019,7 +1019,7 @@ mod tests {
             Event::Token,
             Event::Finish,
         ];
-        build_syntax_tree(&events, vec![token], trivia).expect("comment test syntax tree builds")
+        build_syntax_tree(events, vec![token], trivia).expect("comment test syntax tree builds")
     }
 
     #[test]

@@ -21,6 +21,9 @@ pub enum Event {
     Finish,
     /// A placeholder event reserved by parser marker APIs.
     Tombstone,
+    /// A forward-parent start already consumed by tree construction.
+    #[doc(hidden)]
+    Consumed,
 }
 
 /// A placeholder for a syntax node whose kind is not known yet.

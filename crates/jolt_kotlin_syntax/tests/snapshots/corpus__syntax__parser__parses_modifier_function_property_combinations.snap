@@ -13,15 +13,12 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportList
-    ImportDirectiveList
+  ImportDirectiveList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-        ModifierList
-          ModifierItemList
-            Identifier "abstract" @ 0..8 trailing=[Whitespace " "]
-      ModifierListSequence
+      ModifierList
+        Identifier "abstract" @ 0..8 trailing=[Whitespace " "]
+      ModifierList
       ClassKw "class" @ 9..14 trailing=[Whitespace " "]
       Name
         Identifier "ModifiedMembers" @ 15..30 trailing=[Whitespace " "]
@@ -30,12 +27,10 @@ KotlinFile
         ClassMemberList
           ClassMemberDeclaration
             PropertyDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "protected" @ 37..46 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                    Identifier "abstract" @ 47..55 trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "protected" @ 37..46 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                Identifier "abstract" @ 47..55 trailing=[Whitespace " "]
+              ModifierList
               ValKw "val" @ 56..59 trailing=[Whitespace " "]
               CallableName
                 CallableNamePartList
@@ -49,14 +44,12 @@ KotlinFile
               PropertyBodyMemberList
           ClassMemberDeclaration
             FunctionDeclaration
-              ModifierListSequence
-                ModifierList
-                  ModifierItemList
-                    Identifier "public" @ 75..81 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                    Identifier "final" @ 82..87 trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
+                Identifier "public" @ 75..81 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                Identifier "final" @ 82..87 trailing=[Whitespace " "]
+              ModifierList
               FunKw "fun" @ 88..91 trailing=[Whitespace " "]
-              ModifierListSequence
+              ModifierList
               CallableName
                 CallableNamePartList
                   Name

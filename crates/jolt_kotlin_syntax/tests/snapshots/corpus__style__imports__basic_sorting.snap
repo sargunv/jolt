@@ -28,55 +28,54 @@ KotlinFile
         Name
           Identifier "imports" @ 20..27
     TerminatorList
-  ImportList
-    ImportDirectiveList
-      ImportDirective
-        Identifier "import" @ 29..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-        QualifiedName
-          QualifiedNameSegmentList
-            Name
-              Identifier "zeta" @ 36..40
-            Dot "." @ 40..41
-            Name
-              Identifier "Zed" @ 41..44
-        TerminatorList
-      ImportDirective
-        Identifier "import" @ 45..51 leading=[Newline "\n"] trailing=[Whitespace " "]
-        QualifiedName
-          QualifiedNameSegmentList
-            Name
-              Identifier "kotlin" @ 52..58
-            Dot "." @ 58..59
-            Name
-              Identifier "collections" @ 59..70
-            Dot "." @ 70..71
-            Name
-              Identifier "List" @ 71..75
-        TerminatorList
-      ImportDirective
-        Identifier "import" @ 76..82 leading=[Newline "\n"] trailing=[Whitespace " "]
-        QualifiedName
-          QualifiedNameSegmentList
-            Name
-              Identifier "alpha" @ 83..88
-            Dot "." @ 88..89
-            Name
-              Identifier "Alpha" @ 89..94
-        TerminatorList
+  ImportDirectiveList
+    ImportDirective
+      Identifier "import" @ 29..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "zeta" @ 36..40
+          Dot "." @ 40..41
+          Name
+            Identifier "Zed" @ 41..44
+      TerminatorList
+    ImportDirective
+      Identifier "import" @ 45..51 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "kotlin" @ 52..58
+          Dot "." @ 58..59
+          Name
+            Identifier "collections" @ 59..70
+          Dot "." @ 70..71
+          Name
+            Identifier "List" @ 71..75
+      TerminatorList
+    ImportDirective
+      Identifier "import" @ 76..82 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "alpha" @ 83..88
+          Dot "." @ 88..89
+          Name
+            Identifier "Alpha" @ 89..94
+      TerminatorList
   KotlinFileItemList
     ClassDeclaration
-      ModifierListSequence
-      ModifierListSequence
+      ModifierList
+      ModifierList
       ClassKw "class" @ 96..101 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "ImportSorting" @ 102..115
       PrimaryConstructor
-        ModifierListSequence
+        ModifierList
         ValueParameterList
           LParen "(" @ 115..116
           ValueParameterSeparatedList
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 116..119 trailing=[Whitespace " "]
               Name
                 Identifier "alpha" @ 120..125
@@ -87,7 +86,7 @@ KotlinFile
                     Identifier "Alpha" @ 127..132
             Comma "," @ 132..133 trailing=[Whitespace " "]
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 134..137 trailing=[Whitespace " "]
               Name
                 Identifier "zed" @ 138..141
@@ -98,7 +97,7 @@ KotlinFile
                     Identifier "Zed" @ 143..146
             Comma "," @ 146..147 trailing=[Whitespace " "]
             ValueParameter
-              ModifierListSequence
+              ModifierList
               ValKw "val" @ 148..151 trailing=[Whitespace " "]
               Name
                 Identifier "names" @ 152..157
