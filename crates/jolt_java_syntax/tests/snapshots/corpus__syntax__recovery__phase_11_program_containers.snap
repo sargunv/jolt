@@ -1,0 +1,59 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package alpha;
+package beta;
+
+module first {}
+module second {}
+
+class AfterModules {}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    PackageDeclaration
+      AnnotationList
+      PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+      Name
+        Identifier "alpha" @ 8..13
+      Semicolon ";" @ 13..14
+    PackageDeclaration
+      AnnotationList
+      PackageKw "package" @ 15..22 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "beta" @ 23..27
+      Semicolon ";" @ 27..28
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 30..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "first" @ 37..42 trailing=[Whitespace " "]
+      LBrace "{" @ 43..44
+      ModuleDirectiveList
+      RBrace "}" @ 44..45
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 46..52 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "second" @ 53..59 trailing=[Whitespace " "]
+      LBrace "{" @ 60..61
+      ModuleDirectiveList
+      RBrace "}" @ 61..62
+    ClassDeclaration
+      ClassKw "class" @ 64..69 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "AfterModules" @ 70..82 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 83..84
+        ClassBodyMemberList
+        RBrace "}" @ 84..85
+  Eof "" @ 86..86 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

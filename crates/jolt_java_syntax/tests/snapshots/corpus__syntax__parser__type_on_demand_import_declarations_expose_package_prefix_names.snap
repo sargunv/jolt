@@ -10,7 +10,7 @@ class OnDemandImport {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
+  CompilationUnitItemList
     ImportDeclaration
       ImportKw "import" @ 0..6 trailing=[Whitespace " "]
       QualifiedName
@@ -25,7 +25,6 @@ CompilationUnit
       Dot "." @ 16..17
       Star "*" @ 17..18
       Semicolon ";" @ 18..19
-  CompilationUnitDeclarationList
     ClassDeclaration
       ClassKw "class" @ 21..26 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Identifier "OnDemandImport" @ 27..41 trailing=[Whitespace " "]

@@ -8,9 +8,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       StringLiteral "\"\\q\"" @ 0..4 trailing=[Whitespace " "]
       CharacterLiteral "'\\q'" @ 5..9 trailing=[Whitespace " "]
       StringLiteral "\"\\8\"" @ 10..14 trailing=[Whitespace " "]

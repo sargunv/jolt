@@ -8,9 +8,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       LParen "(" @ 0..1 trailing=[Whitespace " "]
       RParen ")" @ 2..3 trailing=[Whitespace " "]
       LBrace "{" @ 4..5 trailing=[Whitespace " "]
@@ -18,7 +17,7 @@ CompilationUnit
       LBracket "[" @ 8..9 trailing=[Whitespace " "]
       RBracket "]" @ 10..11 trailing=[Whitespace " "]
       Semicolon ";" @ 12..13 trailing=[Whitespace " "]
-    BogusTypeDeclaration
+    BogusCompilationUnitItem
       Comma "," @ 14..15 trailing=[Whitespace " "]
       Dot "." @ 16..17 trailing=[Whitespace " "]
       Ellipsis "..." @ 18..21 trailing=[Whitespace " "]

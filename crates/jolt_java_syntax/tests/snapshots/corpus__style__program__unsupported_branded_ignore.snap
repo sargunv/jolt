@@ -10,8 +10,7 @@ class Raw {int x=1+2;}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 34..39 leading=[LineComment "// prettier-ignore", Newline "\n", LineComment "// jolt-ignore", Newline "\n"] trailing=[Whitespace " "]
       Identifier "Raw" @ 40..43 trailing=[Whitespace " "]

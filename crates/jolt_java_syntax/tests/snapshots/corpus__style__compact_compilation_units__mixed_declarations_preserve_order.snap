@@ -17,7 +17,7 @@ final class Tail{}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
+  CompilationUnitItemList
     ImportDeclaration
       ImportKw "import" @ 0..6 trailing=[Whitespace " "]
       QualifiedName
@@ -34,7 +34,6 @@ CompilationUnit
             AnnotationList
             Identifier "List" @ 17..21
       Semicolon ";" @ 21..22
-  CompilationUnitDeclarationList
     EmptyDeclaration
       Semicolon ";" @ 23..24 leading=[Newline "\n"]
     ClassDeclaration

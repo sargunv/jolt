@@ -2,7 +2,32 @@ use std::{num::NonZeroU32, ops::Range};
 
 use jolt_text::{TextRange, TextSize};
 
-use crate::{Event, RawSyntaxKind, event::NO_FORWARD_PARENT};
+use crate::{Event, RawSyntaxKind, UnresolvedDiagnosticOwner, event::NO_FORWARD_PARENT};
+
+/// Stable identity of a node in one parse-owned syntax tree.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct SyntaxNodeId(pub(crate) u32);
+
+/// Exact resolved syntax owner of one structural parser diagnostic.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SyntaxDiagnosticOwner {
+    node: SyntaxNodeId,
+    slot: Option<u16>,
+}
+
+impl SyntaxDiagnosticOwner {
+    /// Returns the owning node identity.
+    #[must_use]
+    pub const fn node(self) -> SyntaxNodeId {
+        self.node
+    }
+
+    /// Returns the generated slot index when this diagnostic owns an empty slot.
+    #[must_use]
+    pub const fn slot(self) -> Option<u16> {
+        self.slot
+    }
+}
 
 const MAX_PACKED_INDEX: u32 = (1 << 30) - 1;
 const DIRECT_MALFORMED: u16 = 1 << 0;
@@ -20,6 +45,10 @@ impl NodeId {
 
     pub(crate) fn index(self) -> usize {
         self.0.get() as usize - 1
+    }
+
+    pub(crate) const fn index_u32(self) -> u32 {
+        self.0.get() - 1
     }
 }
 
@@ -428,6 +457,7 @@ pub enum BuildSyntaxTreeError {
     UnresolvedMarker { position: usize },
     UnexpectedConsumedEvent { position: usize },
     InvalidForwardParent { position: usize, target: usize },
+    UnresolvedDiagnosticOwner { diagnostic: usize, anchor: usize },
     FactoryMismatch { kind: RawSyntaxKind },
 }
 
@@ -669,7 +699,44 @@ pub fn build_syntax_tree_with_factory(
     trivia: Vec<SyntaxTrivia>,
     factory: &impl SyntaxFactory,
 ) -> Result<SyntaxTree, BuildSyntaxTreeError> {
-    SyntaxTreeBuilder::new(tokens, trivia, events.len()).build(source, events, factory)
+    SyntaxTreeBuilder::new(tokens, trivia, events.len(), false)
+        .build(source, events, factory)
+        .map(|(tree, _)| tree)
+}
+
+#[doc(hidden)]
+pub fn build_syntax_tree_with_factory_and_diagnostic_owners(
+    source: &str,
+    events: Vec<Event>,
+    tokens: Vec<SyntaxTokenData>,
+    trivia: Vec<SyntaxTrivia>,
+    owners: &[Option<UnresolvedDiagnosticOwner>],
+    factory: &impl SyntaxFactory,
+) -> Result<(SyntaxTree, Vec<Option<SyntaxDiagnosticOwner>>), BuildSyntaxTreeError> {
+    let resolve = owners.iter().any(Option::is_some);
+    let (tree, event_nodes) = SyntaxTreeBuilder::new(tokens, trivia, events.len(), resolve)
+        .build(source, events, factory)?;
+    let mut resolved = Vec::with_capacity(owners.len());
+    for (diagnostic, owner) in owners.iter().enumerate() {
+        let Some(owner) = *owner else {
+            resolved.push(None);
+            continue;
+        };
+        let node = event_nodes
+            .as_ref()
+            .and_then(|nodes| nodes.get(owner.node.0))
+            .copied()
+            .flatten()
+            .ok_or(BuildSyntaxTreeError::UnresolvedDiagnosticOwner {
+                diagnostic,
+                anchor: owner.node.0,
+            })?;
+        resolved.push(Some(SyntaxDiagnosticOwner {
+            node: SyntaxNodeId(u32::try_from(node.index()).expect("syntax node index fits u32")),
+            slot: owner.slot,
+        }));
+    }
+    Ok((tree, resolved))
 }
 
 struct SyntaxTreeBuilder {
@@ -681,10 +748,18 @@ struct SyntaxTreeBuilder {
     stack: Vec<PartialNode>,
     root: Option<NodeId>,
     token_index: usize,
+    event_nodes: Option<Vec<Option<NodeId>>>,
 }
 
+type BuiltSyntaxTree = (SyntaxTree, Option<Vec<Option<NodeId>>>);
+
 impl SyntaxTreeBuilder {
-    fn new(tokens: Vec<SyntaxTokenData>, trivia: Vec<SyntaxTrivia>, event_count: usize) -> Self {
+    fn new(
+        tokens: Vec<SyntaxTokenData>,
+        trivia: Vec<SyntaxTrivia>,
+        event_count: usize,
+        resolve_diagnostic_owners: bool,
+    ) -> Self {
         let token_count = tokens.len();
         // Every completed physical node contributes one start and one finish
         // event, while every represented token contributes one token event.
@@ -699,6 +774,7 @@ impl SyntaxTreeBuilder {
             stack: Vec::with_capacity(64),
             root: None,
             token_index: 0,
+            event_nodes: resolve_diagnostic_owners.then(|| vec![None; event_count]),
         }
     }
 
@@ -707,7 +783,7 @@ impl SyntaxTreeBuilder {
         source: &str,
         mut events: Vec<Event>,
         factory: &impl SyntaxFactory,
-    ) -> Result<SyntaxTree, BuildSyntaxTreeError> {
+    ) -> Result<BuiltSyntaxTree, BuildSyntaxTreeError> {
         for (position, event) in events.iter().enumerate() {
             match event {
                 Event::Tombstone => {
@@ -726,7 +802,7 @@ impl SyntaxTreeBuilder {
                     forward_parent,
                 } => {
                     if forward_parent == NO_FORWARD_PARENT {
-                        self.start_node(kind);
+                        self.start_node(kind, position);
                     } else {
                         self.start_forward_parents(&mut events, position)?;
                     }
@@ -749,20 +825,22 @@ impl SyntaxTreeBuilder {
                 first_unconsumed: self.token_index,
             });
         }
-        Ok(SyntaxTree {
+        let tree = SyntaxTree {
             root: self.root.ok_or(BuildSyntaxTreeError::MissingRoot)?,
             nodes: self.nodes,
             slots: self.slots,
             tokens: self.tokens,
             trivia: self.trivia,
-        })
+        };
+        Ok((tree, self.event_nodes))
     }
 
-    fn start_node(&mut self, kind: RawSyntaxKind) {
+    fn start_node(&mut self, kind: RawSyntaxKind, anchor: usize) {
         self.stack.push(PartialNode {
             kind,
             children_start: self.pending.len(),
             tokens_start: self.token_index,
+            anchor,
         });
     }
 
@@ -787,7 +865,7 @@ impl SyntaxTreeBuilder {
             if current != position {
                 events[current] = Event::Consumed;
             }
-            self.start_node(kind);
+            self.start_node(kind, current);
             if forward_parent == NO_FORWARD_PARENT {
                 break;
             }
@@ -853,6 +931,9 @@ impl SyntaxTreeBuilder {
             parser_tokens: partial.tokens_start..self.token_index,
         };
         let FactoryNode(node) = factory.make_syntax(partial.kind, input, &mut sink)?;
+        if let Some(event_nodes) = &mut self.event_nodes {
+            event_nodes[partial.anchor] = Some(node);
+        }
         self.pending.truncate(partial.children_start);
         if self.stack.is_empty() {
             if self.root.replace(node).is_some() {
@@ -873,6 +954,7 @@ struct PartialNode {
     kind: RawSyntaxKind,
     children_start: usize,
     tokens_start: usize,
+    anchor: usize,
 }
 
 #[cfg(test)]

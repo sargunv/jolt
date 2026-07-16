@@ -8,9 +8,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       Unknown "\\" @ 0..1
       Identifier "x" @ 1..2 trailing=[Whitespace " "]
       Unknown "\\" @ 3..4

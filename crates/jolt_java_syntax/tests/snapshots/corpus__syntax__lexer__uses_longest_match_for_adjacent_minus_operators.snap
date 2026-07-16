@@ -8,8 +8,7 @@ a--b a- -b a -> b
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     FieldDeclaration
       ClassType
         ClassTypeSegmentList
@@ -19,7 +18,7 @@ CompilationUnit
               Identifier "a" @ 0..1
       VariableDeclaratorList
         VariableDeclarator
-    BogusTypeDeclaration
+    BogusCompilationUnitItem
       MinusMinus "--" @ 1..3
       Identifier "b" @ 3..4 trailing=[Whitespace " "]
       Identifier "a" @ 5..6

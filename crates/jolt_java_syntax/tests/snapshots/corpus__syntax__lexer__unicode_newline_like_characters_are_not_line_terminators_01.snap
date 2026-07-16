@@ -8,8 +8,7 @@ int x; // comment  int y;
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     FieldDeclaration
       PrimitiveType
         AnnotationList

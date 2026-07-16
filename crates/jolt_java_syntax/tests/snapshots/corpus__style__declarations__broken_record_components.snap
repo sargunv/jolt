@@ -8,8 +8,7 @@ record CustomerProfile(String displayName, CustomerIdentifier primaryIdentifier,
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     RecordDeclaration
       Identifier "record" @ 0..6 trailing=[Whitespace " "]
       Identifier "CustomerProfile" @ 7..22

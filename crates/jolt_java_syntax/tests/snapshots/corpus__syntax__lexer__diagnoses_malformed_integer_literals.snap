@@ -8,9 +8,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       IntegerLiteral "0x_1" @ 0..4 trailing=[Whitespace " "]
       IntegerLiteral "1_" @ 5..7 trailing=[Whitespace " "]
       IntegerLiteral "0x" @ 8..10 trailing=[Whitespace " "]

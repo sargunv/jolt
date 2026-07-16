@@ -9,9 +9,8 @@ text """ tail
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       TextBlockLiteral "\"\"\"\ntext \"\"\"" @ 0..12 trailing=[Whitespace " "]
       Identifier "tail" @ 13..17
   Eof "" @ 17..17

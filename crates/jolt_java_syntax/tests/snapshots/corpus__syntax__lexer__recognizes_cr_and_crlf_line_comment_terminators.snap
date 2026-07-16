@@ -9,8 +9,7 @@ int c;
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     FieldDeclaration
       PrimitiveType
         AnnotationList

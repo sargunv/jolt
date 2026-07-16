@@ -8,8 +8,7 @@ enum Color { RED, GREEN, BLUE; private final int code; public int code() {} }
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     EnumDeclaration
       EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
       Identifier "Color" @ 5..10 trailing=[Whitespace " "]

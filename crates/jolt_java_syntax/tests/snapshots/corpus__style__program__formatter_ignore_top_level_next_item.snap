@@ -11,8 +11,7 @@ class After {int y=3;}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 18..23 leading=[LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace " "]
       Identifier "Raw" @ 24..27 trailing=[Whitespace " "]

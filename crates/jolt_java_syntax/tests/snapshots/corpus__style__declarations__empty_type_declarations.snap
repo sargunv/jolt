@@ -11,8 +11,7 @@ enum Color {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     InterfaceDeclaration
       InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
       Identifier "Api" @ 10..13 trailing=[Whitespace " "]

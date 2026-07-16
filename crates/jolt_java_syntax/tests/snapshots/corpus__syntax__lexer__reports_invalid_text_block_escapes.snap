@@ -10,9 +10,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       TextBlockLiteral "\"\"\"\n\\q\n\"\"\"" @ 0..10
   Eof "" @ 10..10
 

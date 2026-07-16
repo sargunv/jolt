@@ -12,8 +12,7 @@ class AnonymousCreation {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "AnonymousCreation" @ 6..23 trailing=[Whitespace " "]

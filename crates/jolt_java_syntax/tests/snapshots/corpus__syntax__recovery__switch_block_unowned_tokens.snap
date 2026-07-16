@@ -8,8 +8,7 @@ class C { void m(int value) { switch (value) { /* block */ + ; case 1 -> use(); 
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "C" @ 6..7 trailing=[Whitespace " "]

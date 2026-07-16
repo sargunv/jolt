@@ -17,8 +17,7 @@ abstract class TrailingMethodPerDimensionDims {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ModifierList
         AbstractKw "abstract" @ 0..8 trailing=[Whitespace " "]

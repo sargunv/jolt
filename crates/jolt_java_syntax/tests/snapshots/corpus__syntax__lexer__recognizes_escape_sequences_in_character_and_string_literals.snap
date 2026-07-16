@@ -8,9 +8,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       CharacterLiteral "'\\b'" @ 0..4 trailing=[Whitespace " "]
       CharacterLiteral "'\\s'" @ 5..9 trailing=[Whitespace " "]
       CharacterLiteral "'\\t'" @ 10..14 trailing=[Whitespace " "]

@@ -8,9 +8,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       CharacterLiteral "''" @ 0..2 trailing=[Whitespace " "]
       CharacterLiteral "'ab'" @ 3..7
   Eof "" @ 7..7

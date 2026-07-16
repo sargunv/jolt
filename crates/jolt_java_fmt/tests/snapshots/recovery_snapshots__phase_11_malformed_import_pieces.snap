@@ -1,0 +1,12 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+import /* JOLT-TRIVIA:import-pieces */ ;
+
+formatted:
+import /* JOLT-TRIVIA:import-pieces */ ;
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(39), end: TextSize(40) }) message=expected identifier

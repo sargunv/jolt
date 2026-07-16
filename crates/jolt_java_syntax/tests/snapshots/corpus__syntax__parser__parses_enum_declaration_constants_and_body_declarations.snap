@@ -21,8 +21,7 @@ enum Planet {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     EnumDeclaration
       EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
       Identifier "Planet" @ 5..11 trailing=[Whitespace " "]

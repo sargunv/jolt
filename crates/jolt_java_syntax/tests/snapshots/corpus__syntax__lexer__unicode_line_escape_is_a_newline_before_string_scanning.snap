@@ -8,9 +8,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       StringLiteral "\"a" @ 0..2
       Identifier "b" @ 3..4 leading=[Newline "\n"]
       StringLiteral "\"" @ 4..5

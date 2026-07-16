@@ -10,8 +10,7 @@ record AnnotatedRecordComponents(@Marker int x, String @Marker ... labels) {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     RecordDeclaration
       Identifier "record" @ 0..6 trailing=[Whitespace " "]
       Identifier "AnnotatedRecordComponents" @ 7..32

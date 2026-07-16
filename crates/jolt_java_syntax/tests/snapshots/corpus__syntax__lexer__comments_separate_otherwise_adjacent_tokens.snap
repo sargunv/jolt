@@ -8,9 +8,8 @@ static/**/void a-/*x*/=b
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       StaticKw "static" @ 0..6 trailing=[BlockComment "/**/"]
       VoidKw "void" @ 10..14 trailing=[Whitespace " "]
       Identifier "a" @ 15..16

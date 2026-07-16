@@ -8,9 +8,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       IntegerLiteral "0x" @ 0..2
       Identifier "Ａ" @ 2..5
   Eof "" @ 5..5

@@ -4,15 +4,44 @@ use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
 use jolt_text::{TextRange, TextSize};
 
 use crate::{
-    CompletedMarker, Event, Language, LanguageLexer, LexedToken, Marker, SyntaxTokenData,
-    SyntaxTrivia,
+    CompletedMarker, Event, Language, LanguageLexer, LexedToken, Marker, NodeAnchor,
+    SyntaxTokenData, SyntaxTrivia,
 };
+
+/// Parser-time identity of the syntax location responsible for a diagnostic.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct UnresolvedDiagnosticOwner {
+    pub(crate) node: NodeAnchor,
+    pub(crate) slot: Option<u16>,
+}
+
+impl UnresolvedDiagnosticOwner {
+    /// Owns a diagnostic with an entire represented node.
+    #[must_use]
+    pub const fn node(node: NodeAnchor) -> Self {
+        Self { node, slot: None }
+    }
+
+    /// Owns a diagnostic with one generated physical slot on a represented node.
+    #[must_use]
+    pub const fn missing_slot(node: NodeAnchor, slot: u16) -> Self {
+        Self {
+            node,
+            slot: Some(slot),
+        }
+    }
+}
+
+/// Handle used to assign structural ownership after emitting a diagnostic.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct DiagnosticMarker(usize);
 
 pub struct ParseEvents {
     pub events: Vec<Event>,
     pub tokens: Vec<SyntaxTokenData>,
     pub trivia: Vec<SyntaxTrivia>,
     pub diagnostics: Vec<Diagnostic>,
+    pub diagnostic_owners: Vec<Option<UnresolvedDiagnosticOwner>>,
 }
 
 pub struct Parser<'source, L: Language> {
@@ -21,6 +50,7 @@ pub struct Parser<'source, L: Language> {
     cursor: TokenCursor,
     events: Vec<Event>,
     diagnostics: Vec<Diagnostic>,
+    diagnostic_owners: Vec<Option<UnresolvedDiagnosticOwner>>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -42,20 +72,25 @@ impl<'source, L: Language> Parser<'source, L> {
             cursor: TokenCursor::new(),
             events: Vec::with_capacity(L::initial_event_capacity(source.len())),
             diagnostics: Vec::new(),
+            diagnostic_owners: Vec::new(),
         }
     }
 
     pub fn finish(self) -> ParseEvents {
         let events = self.events;
         let mut parser_diagnostics = self.diagnostics;
+        let parser_diagnostic_owners = self.diagnostic_owners;
         let committed_len = self.cursor.position();
         let (tokens, trivia, mut diagnostics) = self.buffer.finish(committed_len);
+        let mut diagnostic_owners = vec![None; diagnostics.len()];
         diagnostics.append(&mut parser_diagnostics);
+        diagnostic_owners.extend(parser_diagnostic_owners);
         ParseEvents {
             events,
             tokens,
             trivia,
             diagnostics,
+            diagnostic_owners,
         }
     }
 
@@ -119,12 +154,12 @@ impl<'source, L: Language> Parser<'source, L> {
         self.cursor.fork()
     }
 
-    pub fn expected_here(&mut self, message: &str) {
-        self.error_here(L::expected_diagnostic_code(), message);
+    pub fn expected_here(&mut self, message: &str) -> DiagnosticMarker {
+        self.error_here(L::expected_diagnostic_code(), message)
     }
 
-    pub fn unexpected_here(&mut self, message: &str) {
-        self.error_here(L::unexpected_diagnostic_code(), message);
+    pub fn unexpected_here(&mut self, message: &str) -> DiagnosticMarker {
+        self.error_here(L::unexpected_diagnostic_code(), message)
     }
 
     /// Adds a parser error at the current token, or at the last token if the cursor is past EOF.
@@ -132,7 +167,7 @@ impl<'source, L: Language> Parser<'source, L> {
     /// # Panics
     ///
     /// Panics if the parser token stream does not contain EOF.
-    pub fn error_here(&mut self, code: DiagnosticCodeId, message: &str) {
+    pub fn error_here(&mut self, code: DiagnosticCodeId, message: &str) -> DiagnosticMarker {
         let range = self
             .cursor
             .range(&mut self.buffer)
@@ -145,6 +180,29 @@ impl<'source, L: Language> Parser<'source, L> {
             message: message.to_owned(),
             range: Some(range),
         });
+        self.diagnostic_owners.push(None);
+        DiagnosticMarker(self.diagnostics.len() - 1)
+    }
+
+    /// Assigns exact structural ownership to a parser diagnostic.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the marker came from another parser or ownership was already
+    /// assigned to the diagnostic.
+    pub fn own_diagnostic(
+        &mut self,
+        diagnostic: DiagnosticMarker,
+        owner: UnresolvedDiagnosticOwner,
+    ) {
+        let slot = self
+            .diagnostic_owners
+            .get_mut(diagnostic.0)
+            .expect("diagnostic marker must belong to this parser");
+        assert!(
+            slot.replace(owner).is_none(),
+            "diagnostic owner assigned twice"
+        );
     }
 
     pub fn start(&mut self) -> Marker {

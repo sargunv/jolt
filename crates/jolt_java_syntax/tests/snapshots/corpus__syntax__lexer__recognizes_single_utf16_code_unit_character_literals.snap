@@ -8,9 +8,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       CharacterLiteral "'\u{ffff}'" @ 0..5 trailing=[Whitespace " "]
       CharacterLiteral "'�'" @ 6..11
   Eof "" @ 11..11

@@ -8,8 +8,7 @@ class MissingTypeBody;
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "MissingTypeBody" @ 6..21

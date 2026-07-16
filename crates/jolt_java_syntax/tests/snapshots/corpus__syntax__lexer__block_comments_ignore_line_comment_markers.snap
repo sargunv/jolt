@@ -8,8 +8,7 @@ int a; /* // not a line comment */ int b;
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     FieldDeclaration
       PrimitiveType
         AnnotationList

@@ -13,8 +13,7 @@ non-sealed interface OpenInterface extends SealedInterface {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ModifierList
         Identifier "sealed" @ 0..6 trailing=[Whitespace " "]

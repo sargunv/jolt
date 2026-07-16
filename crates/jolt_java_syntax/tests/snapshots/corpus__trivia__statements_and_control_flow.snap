@@ -27,8 +27,7 @@ class StatementTrivia {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "StatementTrivia" @ 6..21 trailing=[Whitespace " "]

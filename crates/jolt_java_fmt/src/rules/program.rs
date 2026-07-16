@@ -2,9 +2,8 @@ use std::ops::Range;
 
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
-    CompilationUnit, CompilationUnitDeclaration, EmptyDeclaration, FieldDeclaration,
-    ImportDeclaration, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxView, MethodDeclaration,
-    ModuleDeclaration, PackageDeclaration, TypeDeclaration,
+    CompilationUnit, CompilationUnitItem, ImportDeclaration, JavaMalformedSyntax,
+    JavaMissingSyntax, JavaSyntaxListPart, JavaSyntaxToken, JavaSyntaxView, PackageDeclaration,
 };
 
 use crate::helpers::comments::{
@@ -16,8 +15,8 @@ use crate::helpers::formatter_ignore::{
     token_range_between,
 };
 use crate::helpers::recovery::{
-    JavaFormatField, JavaFormatListPart, format_malformed, format_or_verbatim,
-    format_required_field, resolve_list_part,
+    JavaFormatField, JavaFormatListPart, format_malformed, format_missing, format_required_field,
+    resolve_list_part,
 };
 use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::{format_method_declaration, format_type_declaration};
@@ -30,27 +29,35 @@ pub(crate) fn format_compilation_unit<'source>(
     unit: &CompilationUnit<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(unit, doc, |doc| format_valid_compilation_unit(unit, doc))
-}
-
-fn format_valid_compilation_unit<'source>(
-    unit: &CompilationUnit<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
     let mut entries = Vec::new();
-
-    match crate::helpers::recovery::resolve_optional_field(unit.package(), doc) {
-        JavaFormatField::Present(Some(package)) => entries.push(ProgramEntry::Package(package)),
-        JavaFormatField::Present(None) => {}
-        JavaFormatField::Malformed(malformed) => entries.push(ProgramEntry::Raw(malformed, None)),
+    match unit.items() {
+        Ok(jolt_java_syntax::JavaSyntaxField::Present(items)) => {
+            let parts = items.parts();
+            entries.reserve(parts.size_hint().0);
+            for part in parts {
+                match part {
+                    Ok(JavaSyntaxListPart::Item(item)) => entries.push(ProgramEntry::Item(item)),
+                    Ok(JavaSyntaxListPart::Separator(token)) => {
+                        entries.push(ProgramEntry::Token(token));
+                    }
+                    Ok(JavaSyntaxListPart::Malformed(malformed)) => {
+                        entries.push(ProgramEntry::Malformed(malformed));
+                    }
+                    Ok(JavaSyntaxListPart::Missing(missing)) => {
+                        entries.push(ProgramEntry::Missing(missing));
+                    }
+                    Err(error) => doc.block_on_invariant(error.to_string()),
+                }
+            }
+        }
+        Ok(jolt_java_syntax::JavaSyntaxField::Malformed(malformed)) => {
+            entries.push(ProgramEntry::Malformed(malformed));
+        }
+        Ok(jolt_java_syntax::JavaSyntaxField::Missing(missing)) => {
+            entries.push(ProgramEntry::Missing(missing));
+        }
+        Err(error) => doc.block_on_invariant(error.to_string()),
     }
-    collect_imports(unit.imports(), &mut entries, doc);
-    match crate::helpers::recovery::resolve_optional_field(unit.module(), doc) {
-        JavaFormatField::Present(Some(module)) => entries.push(ProgramEntry::Module(module)),
-        JavaFormatField::Present(None) => {}
-        JavaFormatField::Malformed(malformed) => entries.push(ProgramEntry::Raw(malformed, None)),
-    }
-    collect_declarations(unit.declarations(), &mut entries, doc);
 
     let ignored_ranges = formatter_ignore_ranges(
         unit.source_text(),
@@ -104,110 +111,24 @@ fn format_valid_compilation_unit<'source>(
     doc_concat!(doc, [contents, eof, doc.hard_line()])
 }
 
-fn collect_imports<'source>(
-    field: Result<
-        JavaSyntaxField<'source, jolt_java_syntax::ImportDeclarationList<'source>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
-    entries: &mut Vec<ProgramEntry<'source>>,
-    doc: &mut DocBuilder<'source>,
-) {
-    match crate::helpers::recovery::resolve_required_field(field, doc) {
-        JavaFormatField::Present(list) => {
-            let parts = list.parts();
-            let (lower, _) = parts.size_hint();
-            if lower != 0 {
-                entries.reserve(lower);
-            }
-            for part in parts {
-                match part {
-                    Ok(JavaSyntaxListPart::Item(import)) => {
-                        entries.push(ProgramEntry::Import(import));
-                    }
-                    Ok(JavaSyntaxListPart::Separator(separator)) => {
-                        entries.push(ProgramEntry::Raw(
-                            crate::helpers::comments::format_token_with_comments(doc, &separator),
-                            Some(token_range_between(&separator, &separator)),
-                        ));
-                    }
-                    Ok(JavaSyntaxListPart::Malformed(malformed)) => {
-                        let range = token_range(&malformed);
-                        entries.push(ProgramEntry::Raw(format_malformed(&malformed, doc), range));
-                    }
-                    Ok(JavaSyntaxListPart::Missing(missing)) => entries.push(ProgramEntry::Raw(
-                        crate::helpers::recovery::format_missing(&missing, doc),
-                        None,
-                    )),
-                    Err(error) => doc.block_on_invariant(error.to_string()),
-                }
-            }
-        }
-        JavaFormatField::Malformed(malformed) => entries.push(ProgramEntry::Raw(malformed, None)),
-    }
-}
-
-fn collect_declarations<'source>(
-    field: Result<
-        JavaSyntaxField<'source, jolt_java_syntax::CompilationUnitDeclarationList<'source>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
-    entries: &mut Vec<ProgramEntry<'source>>,
-    doc: &mut DocBuilder<'source>,
-) {
-    match crate::helpers::recovery::resolve_required_field(field, doc) {
-        JavaFormatField::Present(list) => {
-            let parts = list.parts();
-            let (lower, _) = parts.size_hint();
-            if lower != 0 {
-                entries.reserve(lower);
-            }
-            for part in parts {
-                match part {
-                    Ok(JavaSyntaxListPart::Item(item)) => {
-                        entries.push(ProgramEntry::Declaration(item));
-                    }
-                    Ok(JavaSyntaxListPart::Separator(separator)) => {
-                        entries.push(ProgramEntry::Raw(
-                            crate::helpers::comments::format_token_with_comments(doc, &separator),
-                            Some(token_range_between(&separator, &separator)),
-                        ));
-                    }
-                    Ok(JavaSyntaxListPart::Malformed(malformed)) => {
-                        let range = token_range(&malformed);
-                        entries.push(ProgramEntry::Raw(format_malformed(&malformed, doc), range));
-                    }
-                    Ok(JavaSyntaxListPart::Missing(missing)) => entries.push(ProgramEntry::Raw(
-                        crate::helpers::recovery::format_missing(&missing, doc),
-                        None,
-                    )),
-                    Err(error) => doc.block_on_invariant(error.to_string()),
-                }
-            }
-        }
-        JavaFormatField::Malformed(malformed) => entries.push(ProgramEntry::Raw(malformed, None)),
-    }
-}
-
 enum ProgramEntry<'source> {
-    Package(PackageDeclaration<'source>),
-    Import(ImportDeclaration<'source>),
-    Module(ModuleDeclaration<'source>),
-    Declaration(CompilationUnitDeclaration<'source>),
-    Raw(Doc<'source>, Option<Range<usize>>),
+    Item(CompilationUnitItem<'source>),
+    Token(JavaSyntaxToken<'source>),
+    Malformed(JavaMalformedSyntax<'source>),
+    Missing(JavaMissingSyntax<'source>),
 }
 
 impl ProgramEntry<'_> {
     fn token_range(&self) -> Option<Range<usize>> {
         match self {
-            Self::Package(item) => token_range(item),
-            Self::Import(item) => token_range(item),
-            Self::Module(item) => token_range(item),
-            Self::Declaration(item) => {
+            Self::Item(item) => {
                 let first = item.first_token()?;
                 let last = item.last_token()?;
                 Some(token_range_between(&first, &last))
             }
-            Self::Raw(_, range) => range.clone(),
+            Self::Token(token) => Some(token_range_between(token, token)),
+            Self::Malformed(item) => token_range(item),
+            Self::Missing(_) => None,
         }
     }
 }
@@ -228,36 +149,41 @@ fn format_program_entries<'source>(
     let mut imports = Vec::new();
     for entry in entries {
         let section = match entry {
-            ProgramEntry::Import(import) => {
+            ProgramEntry::Item(CompilationUnitItem::ImportDeclaration(import)) => {
                 imports.push(import);
                 continue;
             }
-            ProgramEntry::Package(package) => {
-                flush_imports(&mut imports, &mut sections, doc);
-                (format_package_declaration(&package, doc), true, false)
+            ProgramEntry::Item(CompilationUnitItem::EmptyDeclaration(empty))
+                if !has_removed_comments(comments_from_tokens(empty.token_iter())) =>
+            {
+                // A commentless top-level semicolon is canonically removed, so
+                // it is transparent to the surrounding import sorting run.
+                // Keep its removed-source claim without making layout depend
+                // on a token that produces no output.
+                sections.push((
+                    format_program_item(CompilationUnitItem::EmptyDeclaration(empty), doc),
+                    false,
+                    false,
+                ));
+                continue;
             }
-            ProgramEntry::Module(module) => {
+            ProgramEntry::Item(item) => {
                 flush_imports(&mut imports, &mut sections, doc);
-                (format_module_declaration(&module, doc), true, false)
+                let visible = program_item_is_visible(&item);
+                let comment_only = program_item_is_comment_only(&item);
+                (format_program_item(item, doc), visible, comment_only)
             }
-            ProgramEntry::Declaration(declaration) => {
+            ProgramEntry::Token(token) => {
                 flush_imports(&mut imports, &mut sections, doc);
-                let visible = declaration_is_visible(declaration);
-                let comment_only =
-                    declaration
-                        .cast_node::<EmptyDeclaration<'_>>()
-                        .is_some_and(|empty| {
-                            has_removed_comments(comments_from_tokens(empty.token_iter()))
-                        });
-                (
-                    format_compilation_unit_declaration(declaration, doc),
-                    visible,
-                    comment_only,
-                )
+                (format_token_with_comments(doc, &token), true, false)
             }
-            ProgramEntry::Raw(raw, _) => {
+            ProgramEntry::Malformed(malformed) => {
                 flush_imports(&mut imports, &mut sections, doc);
-                (raw, true, false)
+                (format_malformed(&malformed, doc), true, false)
+            }
+            ProgramEntry::Missing(missing) => {
+                flush_imports(&mut imports, &mut sections, doc);
+                (format_missing(&missing, doc), false, false)
             }
         };
         sections.push(section);
@@ -266,19 +192,24 @@ fn format_program_entries<'source>(
     join_program_sections(doc, sections)
 }
 
-fn declaration_is_visible(declaration: CompilationUnitDeclaration<'_>) -> bool {
-    declaration
-        .cast_node::<EmptyDeclaration<'_>>()
-        .is_none_or(|empty| has_removed_comments(comments_from_tokens(empty.token_iter())))
+fn program_item_is_visible(item: &CompilationUnitItem<'_>) -> bool {
+    match item {
+        CompilationUnitItem::EmptyDeclaration(empty) => {
+            has_removed_comments(comments_from_tokens(empty.token_iter()))
+        }
+        _ => true,
+    }
+}
+
+fn program_item_is_comment_only(item: &CompilationUnitItem<'_>) -> bool {
+    matches!(item, CompilationUnitItem::EmptyDeclaration(empty) if has_removed_comments(comments_from_tokens(empty.token_iter())))
 }
 
 fn program_entries_are_visible(entries: &[ProgramEntry<'_>]) -> bool {
     entries.iter().any(|entry| match entry {
-        ProgramEntry::Declaration(declaration) => declaration_is_visible(*declaration),
-        ProgramEntry::Package(_)
-        | ProgramEntry::Import(_)
-        | ProgramEntry::Module(_)
-        | ProgramEntry::Raw(_, _) => true,
+        ProgramEntry::Item(item) => program_item_is_visible(item),
+        ProgramEntry::Token(_) | ProgramEntry::Malformed(_) => true,
+        ProgramEntry::Missing(_) => false,
     })
 }
 
@@ -380,43 +311,65 @@ fn format_program_entries_with_ignored<'source>(
     })
 }
 
-fn format_compilation_unit_declaration<'source>(
-    declaration: CompilationUnitDeclaration<'source>,
+fn format_program_item<'source>(
+    item: CompilationUnitItem<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    if let Some(declaration) = declaration.cast_family::<TypeDeclaration<'source>>() {
-        return format_type_declaration(&declaration, doc);
-    }
-    if let Some(declaration) = declaration.cast_node::<FieldDeclaration<'source>>() {
-        return format_field_declaration(&declaration, doc);
-    }
-    if let Some(declaration) = declaration.cast_node::<MethodDeclaration<'source>>() {
-        return format_method_declaration(&declaration, doc);
-    }
-    if let Some(declaration) = declaration.cast_node::<EmptyDeclaration<'source>>() {
-        return match crate::helpers::recovery::resolve_required_field(declaration.semicolon(), doc)
-        {
-            JavaFormatField::Present(_) => {
-                let removed = declaration
-                    .separator_removal_claim()
-                    .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
-                let comments =
-                    format_removed_comments(doc, comments_from_tokens(declaration.token_iter()))
-                        .unwrap_or_else(Doc::nil);
-                doc_concat!(doc, [removed, comments])
+    match item {
+        CompilationUnitItem::PackageDeclaration(package) => {
+            format_package_declaration(&package, doc)
+        }
+        CompilationUnitItem::ImportDeclaration(import) => {
+            doc.block_on_invariant("import bypassed its compilation-unit sorting run");
+            crate::rules::imports::format_imports(vec![import], doc).unwrap_or_else(Doc::nil)
+        }
+        CompilationUnitItem::ModuleDeclaration(module) => format_module_declaration(&module, doc),
+        CompilationUnitItem::ClassDeclaration(declaration) => {
+            format_type_declaration(&declaration.into(), doc)
+        }
+        CompilationUnitItem::RecordDeclaration(declaration) => {
+            format_type_declaration(&declaration.into(), doc)
+        }
+        CompilationUnitItem::EnumDeclaration(declaration) => {
+            format_type_declaration(&declaration.into(), doc)
+        }
+        CompilationUnitItem::InterfaceDeclaration(declaration) => {
+            format_type_declaration(&declaration.into(), doc)
+        }
+        CompilationUnitItem::AnnotationInterfaceDeclaration(declaration) => {
+            format_type_declaration(&declaration.into(), doc)
+        }
+        CompilationUnitItem::FieldDeclaration(declaration) => {
+            format_field_declaration(&declaration, doc)
+        }
+        CompilationUnitItem::MethodDeclaration(declaration) => {
+            format_method_declaration(&declaration, doc)
+        }
+        CompilationUnitItem::EmptyDeclaration(declaration) => {
+            match crate::helpers::recovery::resolve_required_field(declaration.semicolon(), doc) {
+                JavaFormatField::Present(_) => {
+                    let removed = declaration
+                        .separator_removal_claim()
+                        .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
+                    let comments = format_removed_comments(
+                        doc,
+                        comments_from_tokens(declaration.token_iter()),
+                    )
+                    .unwrap_or_else(Doc::nil);
+                    doc_concat!(doc, [removed, comments])
+                }
+                JavaFormatField::Malformed(recovery) => recovery,
             }
-            JavaFormatField::Malformed(recovery) => recovery,
-        };
+        }
+        CompilationUnitItem::BogusCompilationUnitItem(bogus) => format_malformed(&bogus, doc),
     }
-    doc.block_on_invariant("compilation-unit declaration contradicted its declared role");
-    Doc::nil()
 }
 
 fn format_package_declaration<'source>(
     package: &PackageDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(package, doc, |doc| {
+    {
         let annotations = format_required_field(package.annotations(), doc, |list, doc| {
             doc.concat_list(|docs| {
                 for part in list.parts() {
@@ -451,5 +404,5 @@ fn format_package_declaration<'source>(
         } else {
             doc_concat!(doc, [annotations, doc.hard_line(), declaration])
         }
-    })
+    }
 }

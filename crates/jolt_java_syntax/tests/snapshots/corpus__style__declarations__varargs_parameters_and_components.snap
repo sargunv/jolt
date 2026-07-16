@@ -16,8 +16,7 @@ record AnnotatedValues(@Nonnull String name, String @Marker ... labels) {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "Args" @ 6..10 trailing=[Whitespace " "]

@@ -7,8 +7,8 @@ use crate::helpers::comments::{
     format_token_before_relocated_trailing_comments, format_token_with_comments,
 };
 use crate::helpers::recovery::{
-    JavaFormatField, format_optional_field, format_or_verbatim, format_required_field,
-    resolve_optional_field, resolve_required_field,
+    JavaFormatField, format_optional_field, format_required_field, resolve_optional_field,
+    resolve_required_field,
 };
 use crate::rules::names::{NameSortKey, format_name};
 
@@ -37,9 +37,7 @@ pub(crate) fn format_imports<'source>(
             sortable.push(FormattedImport::new(import, doc));
         } else {
             flush_sortable(&mut sortable, &mut sections, doc);
-            sections.push(format_or_verbatim(&import, doc, |doc| {
-                format_import_body(&import, doc)
-            }));
+            sections.push(format_import(&import, doc));
         }
     }
     flush_sortable(&mut sortable, &mut sections, doc);
@@ -96,8 +94,9 @@ fn flush_sortable<'source>(
             normal.push(import);
         }
     }
-    // Bounded stable sorts over borrowed name keys. No source buffers or syntax
-    // nodes are cloned and no layout alternatives are searched.
+    // Each recovery- and comment-delimited run has `r <= represented tokens`.
+    // Stable sorting therefore costs O(r log r) time and O(r) scratch, with no
+    // layout search or cloning of parser-owned source or syntax buffers.
     normal.sort_by(|left, right| left.key.cmp(&right.key));
     static_.sort_by(|left, right| left.key.cmp(&right.key));
     if !normal.is_empty() {
@@ -153,34 +152,43 @@ impl<'source> FormattedImport<'source> {
 
     #[allow(clippy::redundant_closure_for_method_calls)]
     fn into_doc(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
-        format_or_verbatim(&self.import, doc, |doc| {
-            let first = self.import.first_token();
-            let last = self.import.last_token();
-            let leading = doc.concat_list(|comments| {
-                for comment in first.iter().flat_map(|token| token.leading_comments()) {
-                    if !comments.is_empty() {
-                        let line = comments.hard_line();
-                        comments.push(line);
-                    }
-                    let formatted = format_comment(comments, &comment);
-                    comments.push(formatted);
-                }
-            });
-            let body = format_import_body(&self.import, doc);
-            let trailing = doc.concat_list(|comments| {
-                for comment in last.iter().flat_map(|token| token.trailing_comments()) {
-                    let space = comments.space();
-                    comments.push(space);
-                    let formatted = format_comment(comments, &comment);
-                    comments.push(formatted);
-                }
-            });
-            if first.is_some_and(|token| !token.leading_comments().is_empty()) {
-                doc_concat!(doc, [leading, doc.hard_line(), body, trailing])
-            } else {
-                doc_concat!(doc, [body, trailing])
+        format_import(&self.import, doc)
+    }
+}
+
+/// Formats import boundary comments in one place regardless of whether the
+/// import participates in a sortable run. The body deliberately suppresses
+/// those boundary comments because moving a valid import must move them too.
+#[allow(clippy::redundant_closure_for_method_calls)]
+fn format_import<'source>(
+    import: &ImportDeclaration<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let first = import.first_token();
+    let last = import.last_token();
+    let leading = doc.concat_list(|comments| {
+        for comment in first.iter().flat_map(|token| token.leading_comments()) {
+            if !comments.is_empty() {
+                let line = comments.hard_line();
+                comments.push(line);
             }
-        })
+            let formatted = format_comment(comments, &comment);
+            comments.push(formatted);
+        }
+    });
+    let body = format_import_body(import, doc);
+    let trailing = doc.concat_list(|comments| {
+        for comment in last.iter().flat_map(|token| token.trailing_comments()) {
+            let space = comments.space();
+            comments.push(space);
+            let formatted = format_comment(comments, &comment);
+            comments.push(formatted);
+        }
+    });
+    if first.is_some_and(|token| !token.leading_comments().is_empty()) {
+        doc_concat!(doc, [leading, doc.hard_line(), body, trailing])
+    } else {
+        doc_concat!(doc, [body, trailing])
     }
 }
 
@@ -216,8 +224,14 @@ fn format_import_body<'source>(
     let star = format_optional_field(import.star(), doc, |token, doc| {
         format_token_with_comments(doc, &token)
     });
+    let suffix = format_optional_field(import.suffix(), doc, |suffix, doc| {
+        crate::helpers::recovery::format_malformed(&suffix, doc)
+    });
     let semicolon = format_required_field(import.semicolon(), doc, |token, doc| {
         format_token_before_relocated_trailing_comments(doc, &token, LeadingTrivia::Preserve)
     });
-    doc_concat!(doc, [keyword, module, static_, name, dot, star, semicolon])
+    doc_concat!(
+        doc,
+        [keyword, module, static_, name, dot, star, suffix, semicolon]
+    )
 }

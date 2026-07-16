@@ -13,7 +13,7 @@ class Imports {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
+  CompilationUnitItemList
     ImportDeclaration
       ImportKw "import" @ 0..6 trailing=[Whitespace " "]
       QualifiedName
@@ -84,7 +84,6 @@ CompilationUnit
       Dot "." @ 125..126
       Star "*" @ 126..127
       Semicolon ";" @ 127..128
-  CompilationUnitDeclarationList
     ClassDeclaration
       ClassKw "class" @ 130..135 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Identifier "Imports" @ 136..143 trailing=[Whitespace " "]

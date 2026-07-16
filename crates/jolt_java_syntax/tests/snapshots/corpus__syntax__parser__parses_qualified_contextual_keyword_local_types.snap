@@ -13,8 +13,7 @@ class QualifiedContextualKeywordLocalTypes {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "QualifiedContextualKeywordLocalTypes" @ 6..42 trailing=[Whitespace " "]

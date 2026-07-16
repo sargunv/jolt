@@ -29,8 +29,7 @@ interface Resource extends AutoCloseable {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "TryTrivia" @ 6..15 trailing=[Whitespace " "]

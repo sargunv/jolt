@@ -10,8 +10,7 @@ enum StructuredEnumArguments {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     EnumDeclaration
       EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
       Identifier "StructuredEnumArguments" @ 5..28 trailing=[Whitespace " "]

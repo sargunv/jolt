@@ -12,8 +12,7 @@ class MixedGenericCloseAndGreaterThan {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "MixedGenericCloseAndGreaterThan" @ 6..37 trailing=[Whitespace " "]

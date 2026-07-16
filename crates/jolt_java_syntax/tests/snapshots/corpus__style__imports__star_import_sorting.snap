@@ -11,7 +11,7 @@ class A {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
+  CompilationUnitItemList
     ImportDeclaration
       ImportKw "import" @ 0..6 trailing=[Whitespace " "]
       QualifiedName
@@ -58,7 +58,6 @@ CompilationUnit
             AnnotationList
             Identifier "List" @ 59..63
       Semicolon ";" @ 63..64
-  CompilationUnitDeclarationList
     ClassDeclaration
       ClassKw "class" @ 65..70 leading=[Newline "\n"] trailing=[Whitespace " "]
       Identifier "A" @ 71..72 trailing=[Whitespace " "]

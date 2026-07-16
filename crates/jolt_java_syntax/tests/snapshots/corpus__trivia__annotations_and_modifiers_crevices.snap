@@ -22,8 +22,7 @@ public /* JOLT-TRIVIA:public-final-gap */ final /* JOLT-TRIVIA:final-class-gap *
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ModifierList
         Annotation

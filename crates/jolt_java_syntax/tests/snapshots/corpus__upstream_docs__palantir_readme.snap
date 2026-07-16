@@ -83,8 +83,7 @@ var foo = SomeType.builder()
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 83..88 leading=[LineComment "// Origin: https://github.com/palantir/palantir-java-format/blob/develop/README.md", Newline "\n"] trailing=[Whitespace " "]
       Identifier "PalantirReadmeSnippets" @ 89..111 trailing=[Whitespace " "]

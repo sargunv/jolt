@@ -289,7 +289,7 @@ pub fn assert_deferred_import_manifest(
             entry.path
         );
         assert!(
-            (8..=19).contains(&entry.owner_phase),
+            (8..=20).contains(&entry.owner_phase),
             "invalid owner phase {} for {}/{}",
             entry.owner_phase,
             entry.suite,

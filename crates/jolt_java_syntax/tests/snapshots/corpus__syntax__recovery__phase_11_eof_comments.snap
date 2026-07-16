@@ -1,0 +1,19 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+// JOLT-TRIVIA:eof-leading
+/* JOLT-TRIVIA:eof-trailing */
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+  Eof "" @ 58..58 leading=[LineComment "// JOLT-TRIVIA:eof-leading", Newline "\n", BlockComment "/* JOLT-TRIVIA:eof-trailing */", Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

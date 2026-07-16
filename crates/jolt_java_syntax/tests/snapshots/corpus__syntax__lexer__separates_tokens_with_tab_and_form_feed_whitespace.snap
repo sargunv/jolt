@@ -8,9 +8,8 @@ static	voidform
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       StaticKw "static" @ 0..6 trailing=[Whitespace "\t"]
       VoidKw "void" @ 7..11 trailing=[Whitespace "\u{c}"]
       Identifier "form" @ 12..16

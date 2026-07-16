@@ -18,8 +18,7 @@ interface Named {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     RecordDeclaration
       Identifier "record" @ 0..6 trailing=[Whitespace " "]
       Identifier "Point" @ 7..12

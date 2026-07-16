@@ -8,9 +8,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       TextBlockLiteral "\"\"\" \t\u{c}hello\"\"\"" @ 0..14
   Eof "" @ 14..14
 

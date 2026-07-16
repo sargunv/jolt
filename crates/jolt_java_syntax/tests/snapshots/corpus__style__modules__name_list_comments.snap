@@ -15,15 +15,14 @@ module demo {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  ModuleDeclaration
-    AnnotationList
-    Identifier "module" @ 0..6 trailing=[Whitespace " "]
-    Name
-      Identifier "demo" @ 7..11 trailing=[Whitespace " "]
-    LBrace "{" @ 12..13
-    ModuleDirectiveList
-      ModuleDirective
+  CompilationUnitItemList
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 0..6 trailing=[Whitespace " "]
+      Name
+        Identifier "demo" @ 7..11 trailing=[Whitespace " "]
+      LBrace "{" @ 12..13
+      ModuleDirectiveList
         ProvidesDirective
           Identifier "provides" @ 16..24 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
           QualifiedName
@@ -39,45 +38,45 @@ CompilationUnit
               QualifiedNameSegmentNode
                 AnnotationList
                 Identifier "Plugin" @ 37..43 trailing=[Whitespace " "]
-          Identifier "with" @ 44..48 trailing=[Whitespace " "]
-          NameList
-            QualifiedName
-              QualifiedNameSegmentNode
-                AnnotationList
-                Identifier "com" @ 49..52
-              Dot "." @ 52..53
-              NameSegmentDotList
+          ModuleImplementationClause
+            Identifier "with" @ 44..48 trailing=[Whitespace " "]
+            ModuleNameList
+              QualifiedName
                 QualifiedNameSegmentNode
                   AnnotationList
-                  Identifier "example" @ 53..60
-                Dot "." @ 60..61
+                  Identifier "com" @ 49..52
+                Dot "." @ 52..53
+                NameSegmentDotList
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "example" @ 53..60
+                  Dot "." @ 60..61
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "impl" @ 61..65
+                  Dot "." @ 65..66
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "PluginImpl" @ 66..76
+              Comma "," @ 76..77 trailing=[Whitespace " ", LineComment "// first impl"]
+              QualifiedName
                 QualifiedNameSegmentNode
                   AnnotationList
-                  Identifier "impl" @ 61..65
-                Dot "." @ 65..66
-                QualifiedNameSegmentNode
-                  AnnotationList
-                  Identifier "PluginImpl" @ 66..76
-            Comma "," @ 76..77 trailing=[Whitespace " ", LineComment "// first impl"]
-            QualifiedName
-              QualifiedNameSegmentNode
-                AnnotationList
-                Identifier "com" @ 94..97 leading=[Newline "\n", Whitespace "  "]
-              Dot "." @ 97..98
-              NameSegmentDotList
-                QualifiedNameSegmentNode
-                  AnnotationList
-                  Identifier "example" @ 98..105
-                Dot "." @ 105..106
-                QualifiedNameSegmentNode
-                  AnnotationList
-                  Identifier "impl" @ 106..110
-                Dot "." @ 110..111
-                QualifiedNameSegmentNode
-                  AnnotationList
-                  Identifier "PluginFallback" @ 111..125
+                  Identifier "com" @ 94..97 leading=[Newline "\n", Whitespace "  "]
+                Dot "." @ 97..98
+                NameSegmentDotList
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "example" @ 98..105
+                  Dot "." @ 105..106
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "impl" @ 106..110
+                  Dot "." @ 110..111
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "PluginFallback" @ 111..125
           Semicolon ";" @ 125..126
-      ModuleDirective
         OpensDirective
           Identifier "opens" @ 129..134 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
           QualifiedName
@@ -93,29 +92,29 @@ CompilationUnit
               QualifiedNameSegmentNode
                 AnnotationList
                 Identifier "internal" @ 147..155 trailing=[Whitespace " "]
-          Identifier "to" @ 156..158 trailing=[Whitespace " "]
-          NameList
-            QualifiedName
-              QualifiedNameSegmentNode
-                AnnotationList
-                Identifier "friend" @ 159..165
-              Dot "." @ 165..166
-              NameSegmentDotList
+          ModuleTargetClause
+            Identifier "to" @ 156..158 trailing=[Whitespace " "]
+            ModuleNameList
+              QualifiedName
                 QualifiedNameSegmentNode
                   AnnotationList
-                  Identifier "one" @ 166..169
-            Comma "," @ 169..170 trailing=[Whitespace " ", LineComment "// first open"]
-            QualifiedName
-              QualifiedNameSegmentNode
-                AnnotationList
-                Identifier "friend" @ 187..193 leading=[Newline "\n", Whitespace "  "]
-              Dot "." @ 193..194
-              NameSegmentDotList
+                  Identifier "friend" @ 159..165
+                Dot "." @ 165..166
+                NameSegmentDotList
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "one" @ 166..169
+              Comma "," @ 169..170 trailing=[Whitespace " ", LineComment "// first open"]
+              QualifiedName
                 QualifiedNameSegmentNode
                   AnnotationList
-                  Identifier "two" @ 194..197
+                  Identifier "friend" @ 187..193 leading=[Newline "\n", Whitespace "  "]
+                Dot "." @ 193..194
+                NameSegmentDotList
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "two" @ 194..197
           Semicolon ";" @ 197..198
-      ModuleDirective
         ExportsDirective
           Identifier "exports" @ 201..208 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
           QualifiedName
@@ -131,30 +130,30 @@ CompilationUnit
               QualifiedNameSegmentNode
                 AnnotationList
                 Identifier "api" @ 221..224 trailing=[Whitespace " "]
-          Identifier "to" @ 225..227 trailing=[Whitespace " "]
-          NameList
-            QualifiedName
-              QualifiedNameSegmentNode
-                AnnotationList
-                Identifier "partner" @ 228..235
-              Dot "." @ 235..236
-              NameSegmentDotList
+          ModuleTargetClause
+            Identifier "to" @ 225..227 trailing=[Whitespace " "]
+            ModuleNameList
+              QualifiedName
                 QualifiedNameSegmentNode
                   AnnotationList
-                  Identifier "one" @ 236..239
-            Comma "," @ 239..240 trailing=[Whitespace " ", LineComment "// first export"]
-            QualifiedName
-              QualifiedNameSegmentNode
-                AnnotationList
-                Identifier "partner" @ 259..266 leading=[Newline "\n", Whitespace "  "]
-              Dot "." @ 266..267
-              NameSegmentDotList
+                  Identifier "partner" @ 228..235
+                Dot "." @ 235..236
+                NameSegmentDotList
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "one" @ 236..239
+              Comma "," @ 239..240 trailing=[Whitespace " ", LineComment "// first export"]
+              QualifiedName
                 QualifiedNameSegmentNode
                   AnnotationList
-                  Identifier "two" @ 267..270
+                  Identifier "partner" @ 259..266 leading=[Newline "\n", Whitespace "  "]
+                Dot "." @ 266..267
+                NameSegmentDotList
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "two" @ 267..270
           Semicolon ";" @ 270..271
-    RBrace "}" @ 272..273 leading=[Newline "\n"]
-  CompilationUnitDeclarationList
+      RBrace "}" @ 272..273 leading=[Newline "\n"]
   Eof "" @ 274..274 leading=[Newline "\n"]
 
 diagnostics:

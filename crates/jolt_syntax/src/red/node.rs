@@ -4,7 +4,7 @@ use jolt_text::{TextRange, TextSize};
 
 use crate::{
     Language, RawSyntaxKind, SyntaxConservationTracker, SyntaxVerbatimCore,
-    syntax_tree::{NodeId, SyntaxTree, TokenId, TreeElement, TreeSlot},
+    syntax_tree::{NodeId, SyntaxNodeId, SyntaxTree, TokenId, TreeElement, TreeSlot},
 };
 
 use super::{SyntaxElement, SyntaxSlot, SyntaxToken};
@@ -60,6 +60,12 @@ impl<'tree, L: Language> SyntaxNode<'tree, L> {
     #[must_use]
     pub const fn source(&self) -> &'tree str {
         self.source
+    }
+
+    /// Returns this node's stable identity within its parse-owned tree.
+    #[must_use]
+    pub fn id(&self) -> SyntaxNodeId {
+        SyntaxNodeId(self.id.index_u32())
     }
 
     /// Creates root-level dense source conservation accounting for this tree.

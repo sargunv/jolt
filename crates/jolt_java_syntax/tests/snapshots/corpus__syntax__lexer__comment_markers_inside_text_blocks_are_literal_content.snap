@@ -11,9 +11,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       TextBlockLiteral "\"\"\"\n/* text */\n// text\n\"\"\"" @ 0..26
   Eof "" @ 26..26
 

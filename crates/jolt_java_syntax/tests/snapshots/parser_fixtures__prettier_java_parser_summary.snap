@@ -11,5 +11,5 @@ diagnostics:
   Lexer:java.lex.unterminated_string_literal: 2
   Parser:java.parse.expected_syntax: 50
   Parser:java.parse.invalid_statement_expression: 76
-  Parser:java.parse.unexpected_syntax: 100
+  Parser:java.parse.unexpected_syntax: 70
   Parser:java.parse.unqualified_yield_method_invocation: 2

@@ -19,8 +19,7 @@ class DanglingElse {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "DanglingElse" @ 6..18 trailing=[Whitespace " "]

@@ -15,12 +15,11 @@ class InvalidIdentifiers {
 syntax:
 syntax:
 CompilationUnit
-  PackageDeclaration
-    AnnotationList
-    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    PackageDeclaration
+      AnnotationList
+      PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    BogusCompilationUnitItem
       BooleanLiteral "true" @ 8..12
       Semicolon ";" @ 12..13
     ClassDeclaration

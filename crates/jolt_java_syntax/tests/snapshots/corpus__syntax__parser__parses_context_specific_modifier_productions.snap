@@ -24,8 +24,7 @@ interface ModifiedInterface {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     EnumDeclaration
       EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
       Identifier "ModifiedEnum" @ 5..17 trailing=[Whitespace " "]

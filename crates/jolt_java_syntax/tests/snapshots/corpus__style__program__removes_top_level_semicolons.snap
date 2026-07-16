@@ -11,8 +11,7 @@ class A {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     EmptyDeclaration
       Semicolon ";" @ 0..1
     ClassDeclaration

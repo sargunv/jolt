@@ -14,8 +14,7 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     AnnotationInterfaceDeclaration
       At "@" @ 0..1
       InterfaceKw "interface" @ 1..10 trailing=[Whitespace " "]

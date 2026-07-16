@@ -9,9 +9,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       Plus "+" @ 10..11 leading=[BlockComment "/* top */", Whitespace " "] trailing=[Whitespace " "]
       Semicolon ";" @ 12..13 trailing=[Whitespace " "]
     ClassDeclaration

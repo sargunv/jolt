@@ -17,8 +17,7 @@ class SwitchGroups {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "SwitchGroups" @ 6..18 trailing=[Whitespace " "]

@@ -17,8 +17,7 @@ class SelectorRelationalExpressions {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "SelectorRelationalExpressions" @ 6..35 trailing=[Whitespace " "]

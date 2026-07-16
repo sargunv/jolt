@@ -10,7 +10,7 @@ class ModuleImportName {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
+  CompilationUnitItemList
     ImportDeclaration
       ImportKw "import" @ 0..6 trailing=[Whitespace " "]
       Identifier "module" @ 7..13 trailing=[Whitespace " "]
@@ -24,7 +24,6 @@ CompilationUnit
             AnnotationList
             Identifier "base" @ 19..23
       Semicolon ";" @ 23..24
-  CompilationUnitDeclarationList
     ClassDeclaration
       ClassKw "class" @ 26..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Identifier "ModuleImportName" @ 32..48 trailing=[Whitespace " "]

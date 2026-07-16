@@ -151,8 +151,7 @@ void block17() {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 80..85 leading=[LineComment "// Origin: https://github.com/google/google-java-format/wiki/The-Rectangle-Rule", Newline "\n"] trailing=[Whitespace " "]
       Identifier "GoogleJavaFormatRectangleRuleSnippets" @ 86..123 trailing=[Whitespace " "]

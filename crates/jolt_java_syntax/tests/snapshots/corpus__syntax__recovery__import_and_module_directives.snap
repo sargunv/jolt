@@ -9,24 +9,22 @@ module m { requires ; }
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
+  CompilationUnitItemList
     ImportDeclaration
       ImportKw "import" @ 0..6 trailing=[Whitespace " "]
       Semicolon ";" @ 7..8
-  ModuleDeclaration
-    AnnotationList
-    Identifier "module" @ 9..15 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Name
-      Identifier "m" @ 16..17 trailing=[Whitespace " "]
-    LBrace "{" @ 18..19 trailing=[Whitespace " "]
-    ModuleDirectiveList
-      ModuleDirective
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 9..15 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "m" @ 16..17 trailing=[Whitespace " "]
+      LBrace "{" @ 18..19 trailing=[Whitespace " "]
+      ModuleDirectiveList
         RequiresDirective
           Identifier "requires" @ 20..28 trailing=[Whitespace " "]
           RequiresModifierList
           Semicolon ";" @ 29..30 trailing=[Whitespace " "]
-    RBrace "}" @ 31..32
-  CompilationUnitDeclarationList
+      RBrace "}" @ 31..32
   Eof "" @ 33..33 leading=[Newline "\n"]
 
 diagnostics:

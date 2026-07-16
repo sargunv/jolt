@@ -4,7 +4,9 @@ mod source;
 use std::{borrow::Cow, fmt};
 
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
-use jolt_syntax::{SyntaxTree, build_syntax_tree_with_factory};
+use jolt_syntax::{
+    SyntaxDiagnosticOwner, SyntaxTree, build_syntax_tree_with_factory_and_diagnostic_owners,
+};
 
 use crate::{
     CompilationUnit,
@@ -70,6 +72,7 @@ pub struct JavaParse<'source> {
     source: Cow<'source, str>,
     tree: Option<SyntaxTree>,
     diagnostics: Vec<Diagnostic>,
+    diagnostic_owners: Vec<Option<SyntaxDiagnosticOwner>>,
 }
 
 impl JavaParse<'_> {
@@ -92,6 +95,13 @@ impl JavaParse<'_> {
     #[must_use]
     pub fn diagnostics(&self) -> &[Diagnostic] {
         &self.diagnostics
+    }
+
+    /// Returns structural syntax owners parallel to [`Self::diagnostics`].
+    /// Lexer and non-structural diagnostics have no owner.
+    #[must_use]
+    pub fn structural_diagnostic_owners(&self) -> &[Option<SyntaxDiagnosticOwner>] {
+        &self.diagnostic_owners
     }
 }
 
@@ -145,28 +155,35 @@ fn finish_parse<'source>(
     parse: source::ParseEvents,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> JavaParse<'source> {
+    let unicode_diagnostic_count = diagnostics.len();
     diagnostics.extend(parse.diagnostics);
-    let tree = match build_syntax_tree_with_factory(
+    let (tree, parse_diagnostic_owners) = match build_syntax_tree_with_factory_and_diagnostic_owners(
         &source,
         parse.events,
         parse.tokens,
         parse.trivia,
+        &parse.diagnostic_owners,
         &JavaSyntaxFactory,
     ) {
         Ok(tree) => tree,
         Err(error) => {
             diagnostics.push(invalid_event_stream_diagnostic(&error));
+            let diagnostic_owners = vec![None; diagnostics.len()];
             return JavaParse {
                 source,
                 tree: None,
                 diagnostics: std::mem::take(diagnostics),
+                diagnostic_owners,
             };
         }
     };
+    let mut diagnostic_owners = vec![None; unicode_diagnostic_count];
+    diagnostic_owners.extend(parse_diagnostic_owners);
     JavaParse {
         source,
         tree: Some(tree),
         diagnostics: std::mem::take(diagnostics),
+        diagnostic_owners,
     }
 }
 
@@ -177,5 +194,66 @@ fn invalid_event_stream_diagnostic(error: &jolt_syntax::BuildSyntaxTreeError) ->
         stage: DiagnosticStage::Parser,
         message: format!("Jolt parser produced an invalid event stream: {error:?}"),
         range: None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use jolt_diagnostics::DiagnosticStage;
+    use jolt_syntax::SyntaxSlot;
+
+    use crate::{JavaSyntaxKind, parse_compilation_unit};
+
+    #[test]
+    fn phase_eleven_structural_diagnostics_have_exact_syntax_owners() {
+        for source in [
+            "package ;\nimport foo + lost;\nmodule m { +; requires ; exports p to ; opens p target; uses ; provides s with ; }\n+;",
+            "module missing requires dependency; class After {}",
+        ] {
+            let parse = parse_compilation_unit(source);
+            let root = parse.syntax().expect("represented compilation unit");
+            let mut nodes = vec![*root.syntax()];
+            let mut cursor = 0;
+            while let Some(node) = nodes.get(cursor).copied() {
+                nodes.extend(node.children());
+                cursor += 1;
+            }
+            let owners = parse.structural_diagnostic_owners();
+            assert_eq!(owners.len(), parse.diagnostics().len());
+            let mut owned_nodes = Vec::new();
+            for (diagnostic, owner) in parse.diagnostics().iter().zip(owners) {
+                if diagnostic.stage != DiagnosticStage::Parser {
+                    continue;
+                }
+                let owner = owner.unwrap_or_else(|| panic!("unowned diagnostic: {diagnostic:?}"));
+                let node = nodes
+                    .iter()
+                    .copied()
+                    .find(|node| node.id() == owner.node())
+                    .unwrap_or_else(|| panic!("owner node is not reachable: {diagnostic:?}"));
+                if let Some(slot) = owner.slot() {
+                    assert!(
+                        matches!(node.slot_at(slot as usize), Some(SyntaxSlot::Empty)),
+                        "diagnostic does not own an empty slot: {diagnostic:?}"
+                    );
+                }
+                owned_nodes.push(owner.node());
+            }
+            for node in nodes {
+                if matches!(
+                    node.kind(),
+                    JavaSyntaxKind::BogusCompilationUnitItem
+                        | JavaSyntaxKind::BogusImportSuffix
+                        | JavaSyntaxKind::BogusModuleDirective
+                ) {
+                    assert!(node.is_directly_malformed());
+                    assert!(
+                        owned_nodes.contains(&node.id()),
+                        "direct malformed Phase 11 owner has no diagnostic: {:?}",
+                        node.kind()
+                    );
+                }
+            }
+        }
     }
 }

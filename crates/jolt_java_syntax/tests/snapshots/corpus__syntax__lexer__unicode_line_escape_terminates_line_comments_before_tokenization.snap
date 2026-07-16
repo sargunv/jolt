@@ -8,8 +8,7 @@ int a; // comment \u000a int b;
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     FieldDeclaration
       PrimitiveType
         AnnotationList

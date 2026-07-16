@@ -12,8 +12,7 @@ class PrimitiveArrayMethodReference {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "PrimitiveArrayMethodReference" @ 6..35 trailing=[Whitespace " "]

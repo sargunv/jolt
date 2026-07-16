@@ -8,7 +8,7 @@ import com.example + lost;
 class ImportTrailingTokens {}
 
 formatted:
-import com.example + lost;
+import com.example+ lost;
 
 class ImportTrailingTokens {
 }

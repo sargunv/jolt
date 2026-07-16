@@ -11,8 +11,7 @@ module m { exports p to /* target */ ; provides S with /* impl */ ; }
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "Base" @ 6..10 trailing=[Whitespace " "]
@@ -51,31 +50,30 @@ CompilationUnit
                 BlockStatementList
                 RBrace "}" @ 84..85 trailing=[Whitespace " "]
         RBrace "}" @ 86..87
-    BogusTypeDeclaration
-      ModuleDeclaration
-        AnnotationList
-        Identifier "module" @ 88..94 leading=[Newline "\n"] trailing=[Whitespace " "]
-        Name
-          Identifier "m" @ 95..96 trailing=[Whitespace " "]
-        LBrace "{" @ 97..98 trailing=[Whitespace " "]
-        ModuleDirectiveList
-          ModuleDirective
-            ExportsDirective
-              Identifier "exports" @ 99..106 trailing=[Whitespace " "]
-              Name
-                Identifier "p" @ 107..108 trailing=[Whitespace " "]
-              Identifier "to" @ 109..111 trailing=[Whitespace " ", BlockComment "/* target */", Whitespace " "]
-              NameList
-              Semicolon ";" @ 125..126 trailing=[Whitespace " "]
-          ModuleDirective
-            ProvidesDirective
-              Identifier "provides" @ 127..135 trailing=[Whitespace " "]
-              Name
-                Identifier "S" @ 136..137 trailing=[Whitespace " "]
-              Identifier "with" @ 138..142 trailing=[Whitespace " ", BlockComment "/* impl */", Whitespace " "]
-              NameList
-              Semicolon ";" @ 154..155 trailing=[Whitespace " "]
-        RBrace "}" @ 156..157
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 88..94 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "m" @ 95..96 trailing=[Whitespace " "]
+      LBrace "{" @ 97..98 trailing=[Whitespace " "]
+      ModuleDirectiveList
+        ExportsDirective
+          Identifier "exports" @ 99..106 trailing=[Whitespace " "]
+          Name
+            Identifier "p" @ 107..108 trailing=[Whitespace " "]
+          ModuleTargetClause
+            Identifier "to" @ 109..111 trailing=[Whitespace " ", BlockComment "/* target */", Whitespace " "]
+            ModuleNameList
+          Semicolon ";" @ 125..126 trailing=[Whitespace " "]
+        ProvidesDirective
+          Identifier "provides" @ 127..135 trailing=[Whitespace " "]
+          Name
+            Identifier "S" @ 136..137 trailing=[Whitespace " "]
+          ModuleImplementationClause
+            Identifier "with" @ 138..142 trailing=[Whitespace " ", BlockComment "/* impl */", Whitespace " "]
+            ModuleNameList
+          Semicolon ";" @ 154..155 trailing=[Whitespace " "]
+      RBrace "}" @ 156..157
   Eof "" @ 158..158 leading=[Newline "\n"]
 
 diagnostics:

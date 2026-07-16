@@ -59,79 +59,43 @@
       "suite": "prettier-java/input",
       "path": "lambda/arrow-parens-always/arrow-parens-always.java",
       "reasons": ["parser-diagnostics"],
-      "owner_phase": 13
+      "owner_phase": 14
     },
     {
       "suite": "prettier-java/input",
       "path": "lambda/arrow-parens-avoid/arrow-parens-avoid.java",
       "reasons": ["parser-diagnostics"],
-      "owner_phase": 13
+      "owner_phase": 14
     },
     {
       "suite": "prettier-java/input",
       "path": "member_chain/member_chain.java",
       "reasons": ["parser-diagnostics"],
-      "owner_phase": 13
-    },
-    {
-      "suite": "prettier-java/input",
-      "path": "package_and_imports/classWithMixedImports/classWithMixedImports.java",
-      "reasons": ["parser-diagnostics"],
-      "owner_phase": 10
-    },
-    {
-      "suite": "prettier-java/input",
-      "path": "package_and_imports/classWithOnlyNonStaticImports/classWithOnlyNonStaticImports.java",
-      "reasons": ["parser-diagnostics"],
-      "owner_phase": 10
-    },
-    {
-      "suite": "prettier-java/input",
-      "path": "package_and_imports/classWithOnlyStaticImports/classWithOnlyStaticImports.java",
-      "reasons": ["parser-diagnostics"],
-      "owner_phase": 10
-    },
-    {
-      "suite": "prettier-java/input",
-      "path": "package_and_imports/moduleWithMixedImports/moduleWithMixedImports.java",
-      "reasons": ["parser-diagnostics"],
-      "owner_phase": 10
-    },
-    {
-      "suite": "prettier-java/input",
-      "path": "package_and_imports/moduleWithOnlyNonStaticImports/moduleWithOnlyNonStaticImports.java",
-      "reasons": ["parser-diagnostics"],
-      "owner_phase": 10
-    },
-    {
-      "suite": "prettier-java/input",
-      "path": "package_and_imports/moduleWithOnlyStaticImports/moduleWithOnlyStaticImports.java",
-      "reasons": ["parser-diagnostics"],
-      "owner_phase": 10
+      "owner_phase": 14
     },
     {
       "suite": "prettier-java/input",
       "path": "template-expression/template-expression.java",
       "reasons": ["parser-diagnostics"],
-      "owner_phase": 13
+      "owner_phase": 14
     },
     {
       "suite": "prettier-java/input",
       "path": "text-blocks/text-blocks.java",
       "reasons": ["syntax-reconstruction-mismatch"],
-      "owner_phase": 13
+      "owner_phase": 14
     },
     {
       "suite": "prettier-java/input",
       "path": "try_catch/try_catch.java",
       "reasons": ["parser-diagnostics"],
-      "owner_phase": 14
+      "owner_phase": 15
     },
     {
       "suite": "prettier-java/input",
       "path": "yield-statement/yield-statement.java",
       "reasons": ["parser-diagnostics"],
-      "owner_phase": 14
+      "owner_phase": 15
     }
   ]
 }

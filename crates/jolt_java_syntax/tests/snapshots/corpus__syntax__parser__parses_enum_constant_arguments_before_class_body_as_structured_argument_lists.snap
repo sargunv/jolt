@@ -12,8 +12,7 @@ enum StructuredEnumClassBodyArguments {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     EnumDeclaration
       EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
       Identifier "StructuredEnumClassBodyArguments" @ 5..37 trailing=[Whitespace " "]

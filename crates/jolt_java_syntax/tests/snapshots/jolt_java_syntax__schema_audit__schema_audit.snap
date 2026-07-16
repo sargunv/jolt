@@ -3,16 +3,16 @@ source: crates/jolt_java_syntax/src/schema_audit.rs
 expression: audit.render()
 ---
 language = java
-fixture_files = 398
-diagnostic_fixture_files = 148
-audited_nodes = 24656
-exact_valid_shapes = 24360
-malformed_nodes = 201
+fixture_files = 403
+diagnostic_fixture_files = 151
+audited_nodes = 24352
+exact_valid_shapes = 24049
+malformed_nodes = 200
 clean_missing_required_shapes = 0
-diagnostic_missing_required_shapes = 83
+diagnostic_missing_required_shapes = 92
 clean_unexpected_shapes = 0
-diagnostic_unexpected_shapes = 12
-error_node_owners = 95
+diagnostic_unexpected_shapes = 11
+error_node_owners = 94
 
 [clean_missing_required]
 
@@ -37,10 +37,12 @@ syntax__lexer__recognizes_all_reserved_keywords: ClassDeclaration occurrence 1 (
 syntax__lexer__recognizes_all_reserved_keywords: ClassBody occurrence 1 (ClassBodyMemberList)
 syntax__lexer__recognizes_all_reserved_keywords: EnumDeclaration occurrence 1 (EnumKw("enum") EnumBody)
 syntax__lexer__recognizes_all_reserved_keywords: EnumBody occurrence 1 (ClassBodyMemberList)
+syntax__lexer__recognizes_all_reserved_keywords: ImportDeclaration occurrence 1 (ImportKw("import") BogusImportSuffix)
 syntax__lexer__recognizes_all_reserved_keywords: InterfaceDeclaration occurrence 1 (InterfaceKw("interface") InterfaceBody)
 syntax__lexer__recognizes_all_reserved_keywords: InterfaceBody occurrence 1 (InterfaceBodyMemberList)
 syntax__lexer__recognizes_all_reserved_keywords: FieldDeclaration occurrence 1 (PrimitiveType VariableDeclaratorList)
 syntax__lexer__recognizes_all_reserved_keywords: VariableDeclarator occurrence 1 ()
+syntax__lexer__recognizes_all_reserved_keywords: PackageDeclaration occurrence 1 (AnnotationList PackageKw("package"))
 syntax__lexer__recognizes_dollar_and_digits_in_identifiers: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
 syntax__lexer__recognizes_dollar_and_digits_in_identifiers: FieldDeclaration occurrence 2 (ClassType VariableDeclaratorList)
 syntax__lexer__recognizes_dollar_and_digits_in_identifiers: VariableDeclarator occurrence 2 ()
@@ -89,15 +91,22 @@ syntax__parser__recovers_missing_declaration_names: ConstructorDeclaration occur
 syntax__parser__recovers_missing_declaration_names: MethodDeclaration occurrence 1 (VoidType LParen("(") RParen(")") Block)
 syntax__parser__recovers_missing_declaration_names: AnnotationElementDeclaration occurrence 1 (PrimitiveType LParen("(") RParen(")") Semicolon(";"))
 syntax__parser__recovers_missing_declaration_names: EnumConstant occurrence 1 (AnnotationList)
+syntax__recovery__empty_clauses: ModuleNameList occurrence 1 ()
+syntax__recovery__empty_clauses: ModuleNameList occurrence 2 ()
 syntax__recovery__enum_pattern_and_for_lists: EnumConstant occurrence 2 (AnnotationList)
 syntax__recovery__enum_pattern_and_for_lists: VariableDeclarator occurrence 2 ()
 syntax__recovery__header_clauses: NameList occurrence 1 (Name Comma(",") Comma(",") Name)
 syntax__recovery__import_and_module_directives: ImportDeclaration occurrence 1 (ImportKw("import") Semicolon(";"))
 syntax__recovery__import_and_module_directives: RequiresDirective occurrence 1 (Identifier("requires") RequiresModifierList Semicolon(";"))
 syntax__recovery__method_invocation_without_name: QualifiedMethodInvocation occurrence 1 (NameExpression Dot(".") ArgumentList)
+syntax__recovery__module_recovery_barriers: ModuleTargetClause occurrence 1 (ModuleNameList)
+syntax__recovery__module_recovery_barriers: ModuleTargetClause occurrence 3 (ModuleNameList)
+syntax__recovery__module_recovery_barriers: ModuleImplementationClause occurrence 1 (ModuleNameList)
+syntax__recovery__phase_11_incomplete_module_directive: RequiresDirective occurrence 1 (Identifier("requires") RequiresModifierList Semicolon(";"))
+syntax__recovery__phase_11_malformed_import_pieces: ImportDeclaration occurrence 1 (ImportKw("import") Semicolon(";"))
 syntax__recovery__qualifier_dots_without_qualifiers: ConstructorInvocation occurrence 1 (TypeArgumentList ErrorNode Semicolon(";"))
 syntax__recovery__switch_and_module_lists: SwitchLabelItemList occurrence 1 (CaseConstant Comma(",") Comma(",") CaseConstant)
-syntax__recovery__switch_and_module_lists: NameList occurrence 1 (Name Comma(",") Comma(",") Name)
+syntax__recovery__switch_and_module_lists: ModuleNameList occurrence 1 (Name Comma(",") Comma(",") Name)
 syntax__recovery__type_annotation_and_parameter_lists: TypeParameter occurrence 2 (AnnotationList)
 syntax__recovery__type_annotation_and_parameter_lists: FormalParameter occurrence 2 (ParameterModifierList ErrorNode AnnotationList)
 
@@ -110,7 +119,6 @@ syntax__parser__diagnoses_invalid_expression_forms: ExpressionStatement occurren
 syntax__parser__diagnoses_invalid_expression_forms: ExpressionStatement occurrence 3 has valid kind with direct malformed ownership [bytes=19, tokens=7, children=4] (ObjectCreationExpression ErrorNode ErrorNode Semicolon(";"))
 syntax__parser__diagnoses_invalid_expression_forms: ArrayCreationExpression occurrence 2 has valid kind with direct malformed ownership [bytes=17, tokens=10, children=4] (NewKw("new") PrimitiveType DimExpressionList ErrorNode)
 syntax__parser__diagnoses_missing_class_body: ClassBody occurrence 1 has valid kind with direct malformed ownership [bytes=1, tokens=1, children=2] (Semicolon(";") ClassBodyMemberList)
-syntax__recovery__import_trailing_tokens: ImportDeclaration occurrence 1 has valid kind with direct malformed ownership [bytes=26, tokens=7, children=4] (ImportKw("import") QualifiedName ErrorNode Semicolon(";"))
 syntax__recovery__missing_type_body_token: ClassBody occurrence 1 has valid kind with direct malformed ownership [bytes=1, tokens=1, children=2] (Semicolon(";") ClassBodyMemberList)
 syntax__recovery__qualifier_dots_without_qualifiers: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=15, tokens=6, children=6] (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode Semicolon(";"))
 syntax__recovery__qualifier_dots_without_qualifiers: ExpressionStatement occurrence 2 has valid kind with direct malformed ownership [bytes=7, tokens=3, children=3] (ErrorNode ErrorNode Semicolon(";"))
@@ -185,7 +193,6 @@ syntax__recovery__enum_pattern_and_for_lists: ErrorNode occurrence 3 owned by St
 syntax__recovery__header_clauses: ErrorNode occurrence 1 owned by TypeList
 syntax__recovery__header_clauses: ErrorNode occurrence 2 owned by TypeList
 syntax__recovery__header_clauses: ErrorNode occurrence 3 owned by TypeList
-syntax__recovery__import_trailing_tokens: ErrorNode occurrence 1 owned by ImportDeclaration
 syntax__recovery__member_body_unowned_tokens: ErrorNode occurrence 1 owned by ClassBodyDeclaration
 syntax__recovery__member_body_with_formatter_ignore: ErrorNode occurrence 1 owned by ClassBodyDeclaration
 syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 1 owned by ConstructorInvocation

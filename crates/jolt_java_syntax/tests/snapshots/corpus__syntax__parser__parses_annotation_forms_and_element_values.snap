@@ -11,8 +11,7 @@ class Annotated {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ModifierList
         Annotation

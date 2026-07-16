@@ -8,8 +8,7 @@ a；b a＋b
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     FieldDeclaration
       ClassType
         ClassTypeSegmentList
@@ -19,7 +18,7 @@ CompilationUnit
               Identifier "a" @ 0..1
       VariableDeclaratorList
         VariableDeclarator
-    BogusTypeDeclaration
+    BogusCompilationUnitItem
       Unknown "；" @ 1..4
       Identifier "b" @ 4..5 trailing=[Whitespace " "]
       Identifier "a" @ 6..7

@@ -12,8 +12,7 @@ final /* stable */ public class CommentedModifier { volatile /* shared */ public
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ModifierList
         Annotation

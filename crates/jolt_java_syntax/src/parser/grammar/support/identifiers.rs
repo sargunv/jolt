@@ -1,5 +1,6 @@
 // Handles Java identifier roles that depend on parser context.
 use super::{JavaParserExt, JavaSyntaxKind, Parser};
+use jolt_syntax::UnresolvedDiagnosticOwner;
 
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn expect_type_identifier(&mut self, message: &str) {
@@ -40,8 +41,25 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn consume_qualified_name(&mut self) -> bool {
+        self.consume_qualified_name_with_owner(None)
+    }
+
+    pub(in crate::parser::grammar) fn consume_qualified_name_owned(
+        &mut self,
+        owner: UnresolvedDiagnosticOwner,
+    ) -> bool {
+        self.consume_qualified_name_with_owner(Some(owner))
+    }
+
+    fn consume_qualified_name_with_owner(
+        &mut self,
+        owner: Option<UnresolvedDiagnosticOwner>,
+    ) -> bool {
         if !self.at_name_segment() {
-            self.expected_here("expected identifier");
+            let diagnostic = self.expected_here("expected identifier");
+            if let Some(owner) = owner {
+                self.own_diagnostic(diagnostic, owner);
+            }
             return false;
         }
 

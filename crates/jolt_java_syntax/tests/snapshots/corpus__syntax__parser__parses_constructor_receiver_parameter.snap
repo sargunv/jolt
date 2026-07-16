@@ -12,8 +12,7 @@ class ConstructorReceiverOuter {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "ConstructorReceiverOuter" @ 6..30 trailing=[Whitespace " "]

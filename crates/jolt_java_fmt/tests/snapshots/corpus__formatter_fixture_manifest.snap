@@ -371,7 +371,12 @@ skip syntax/recovery/method-invocation-without-name.java
 skip syntax/recovery/missing-type-body-token.java
 skip syntax/recovery/module-annotation.java
 skip syntax/recovery/module-body.java
+skip syntax/recovery/module-recovery-barriers.java
 skip syntax/recovery/module-repeated-requires-modifiers.java
+skip syntax/recovery/phase-11-eof-comments.java
+skip syntax/recovery/phase-11-incomplete-module-directive.java
+skip syntax/recovery/phase-11-malformed-import-pieces.java
+skip syntax/recovery/phase-11-program-containers.java
 skip syntax/recovery/qualifier-dots-without-qualifiers.java
 skip syntax/recovery/recovered-declaration-names-and-modifiers.java
 skip syntax/recovery/resource-and-catch-lists.java

@@ -14,24 +14,24 @@ class Names {}
 syntax:
 syntax:
 CompilationUnit
-  PackageDeclaration
-    AnnotationList
-    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
-    QualifiedName
-      QualifiedNameSegmentNode
-        AnnotationList
-        Identifier "com" @ 8..11 trailing=[Whitespace " "]
-      Dot "." @ 12..13 trailing=[Whitespace " "]
-      NameSegmentDotList
+  CompilationUnitItemList
+    PackageDeclaration
+      AnnotationList
+      PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+      QualifiedName
         QualifiedNameSegmentNode
           AnnotationList
-          Identifier "example" @ 14..21 trailing=[Whitespace " "]
-        Dot "." @ 22..23 trailing=[Whitespace " "]
-        QualifiedNameSegmentNode
-          AnnotationList
-          Identifier "app" @ 24..27
-    Semicolon ";" @ 27..28
-  ImportDeclarationList
+          Identifier "com" @ 8..11 trailing=[Whitespace " "]
+        Dot "." @ 12..13 trailing=[Whitespace " "]
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "example" @ 14..21 trailing=[Whitespace " "]
+          Dot "." @ 22..23 trailing=[Whitespace " "]
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "app" @ 24..27
+      Semicolon ";" @ 27..28
     ImportDeclaration
       ImportKw "import" @ 30..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       QualifiedName
@@ -75,7 +75,6 @@ CompilationUnit
             AnnotationList
             Identifier "A" @ 86..87
       Semicolon ";" @ 87..88
-  CompilationUnitDeclarationList
     ClassDeclaration
       ClassKw "class" @ 90..95 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Identifier "Names" @ 96..101 trailing=[Whitespace " "]

@@ -10,9 +10,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       TextBlockLiteral "\"\"\"\n\\b\\s\\t\\n\\f\\r\\\"\\'\\\\\\0\\77\\377\n\"\"\"" @ 0..35
   Eof "" @ 35..35
 

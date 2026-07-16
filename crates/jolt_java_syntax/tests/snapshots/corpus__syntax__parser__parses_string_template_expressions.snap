@@ -12,8 +12,7 @@ class StringTemplates {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "StringTemplates" @ 6..21 trailing=[Whitespace " "]

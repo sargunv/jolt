@@ -15,15 +15,14 @@ module demo {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  ModuleDeclaration
-    AnnotationList
-    Identifier "module" @ 0..6 trailing=[Whitespace " "]
-    Name
-      Identifier "demo" @ 7..11 trailing=[Whitespace " "]
-    LBrace "{" @ 12..13
-    ModuleDirectiveList
-      ModuleDirective
+  CompilationUnitItemList
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 0..6 trailing=[Whitespace " "]
+      Name
+        Identifier "demo" @ 7..11 trailing=[Whitespace " "]
+      LBrace "{" @ 12..13
+      ModuleDirectiveList
         RequiresDirective
           Identifier "requires" @ 16..24 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
           RequiresModifierList
@@ -37,7 +36,6 @@ CompilationUnit
                 AnnotationList
                 Identifier "lib" @ 27..30
           Semicolon ";" @ 30..31
-      ModuleDirective
         RequiresDirective
           Identifier "requires" @ 61..69 leading=[Newline "\n", Whitespace "  ", LineComment "// keep requires barrier", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
           RequiresModifierList
@@ -51,7 +49,6 @@ CompilationUnit
                 AnnotationList
                 Identifier "lib" @ 72..75
           Semicolon ";" @ 75..76
-      ModuleDirective
         ExportsDirective
           Identifier "exports" @ 79..86 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
           QualifiedName
@@ -63,9 +60,7 @@ CompilationUnit
               QualifiedNameSegmentNode
                 AnnotationList
                 Identifier "api" @ 89..92
-          NameList
           Semicolon ";" @ 92..93
-      ModuleDirective
         ExportsDirective
           Identifier "exports" @ 122..129 leading=[Newline "\n", Whitespace "  ", LineComment "// keep exports barrier", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
           QualifiedName
@@ -77,10 +72,8 @@ CompilationUnit
               QualifiedNameSegmentNode
                 AnnotationList
                 Identifier "api" @ 132..135
-          NameList
           Semicolon ";" @ 135..136
-    RBrace "}" @ 137..138 leading=[Newline "\n"]
-  CompilationUnitDeclarationList
+      RBrace "}" @ 137..138 leading=[Newline "\n"]
   Eof "" @ 139..139 leading=[Newline "\n"]
 
 diagnostics:

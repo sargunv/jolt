@@ -20,8 +20,7 @@ Inner(Example outer){outer.<String>super("x"); // qualified base
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "Example" @ 6..13 trailing=[Whitespace " "]

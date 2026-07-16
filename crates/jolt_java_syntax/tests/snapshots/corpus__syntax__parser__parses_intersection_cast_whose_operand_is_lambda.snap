@@ -14,8 +14,7 @@ class IntersectionCastLambda {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     InterfaceDeclaration
       InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
       Identifier "CloseRunnable" @ 10..23 trailing=[Whitespace " "]

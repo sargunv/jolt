@@ -164,8 +164,7 @@ ExpectedException
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 93..98 leading=[LineComment "// Origin: https://jqno.nl/post/2024/08/24/why-are-there-no-decent-code-formatters-for-java/", Newline "\n"] trailing=[Whitespace " "]
       Identifier "JqnoCodeFormattersArticleSnippets" @ 99..132 trailing=[Whitespace " "]

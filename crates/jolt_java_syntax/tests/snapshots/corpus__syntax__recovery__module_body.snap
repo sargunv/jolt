@@ -8,34 +8,29 @@ module m { requires a; /* module */ + ; exports p; }
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  ModuleDeclaration
-    AnnotationList
-    Identifier "module" @ 0..6 trailing=[Whitespace " "]
-    Name
-      Identifier "m" @ 7..8 trailing=[Whitespace " "]
-    LBrace "{" @ 9..10 trailing=[Whitespace " "]
-    ModuleDirectiveList
-      ModuleDirective
+  CompilationUnitItemList
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 0..6 trailing=[Whitespace " "]
+      Name
+        Identifier "m" @ 7..8 trailing=[Whitespace " "]
+      LBrace "{" @ 9..10 trailing=[Whitespace " "]
+      ModuleDirectiveList
         RequiresDirective
           Identifier "requires" @ 11..19 trailing=[Whitespace " "]
           RequiresModifierList
           Name
             Identifier "a" @ 20..21
           Semicolon ";" @ 21..22 trailing=[Whitespace " ", BlockComment "/* module */", Whitespace " "]
-      ModuleDirective
         BogusModuleDirective
           Plus "+" @ 36..37 trailing=[Whitespace " "]
           Semicolon ";" @ 38..39 trailing=[Whitespace " "]
-      ModuleDirective
         ExportsDirective
           Identifier "exports" @ 40..47 trailing=[Whitespace " "]
           Name
             Identifier "p" @ 48..49
-          NameList
           Semicolon ";" @ 49..50 trailing=[Whitespace " "]
-    RBrace "}" @ 51..52
-  CompilationUnitDeclarationList
+      RBrace "}" @ 51..52
   Eof "" @ 53..53 leading=[Newline "\n"]
 
 diagnostics:

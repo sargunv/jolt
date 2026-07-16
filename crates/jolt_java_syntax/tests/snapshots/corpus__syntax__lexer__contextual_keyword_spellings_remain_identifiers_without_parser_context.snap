@@ -8,8 +8,7 @@ exports opens requires uses yield module permits sealed var non-sealed provides 
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     FieldDeclaration
       ClassType
         ClassTypeSegmentList
@@ -60,7 +59,7 @@ CompilationUnit
       VariableDeclaratorList
         VariableDeclarator
           Identifier "non" @ 60..63
-    BogusTypeDeclaration
+    BogusCompilationUnitItem
       Minus "-" @ 63..64
       Identifier "sealed" @ 64..70 trailing=[Whitespace " "]
       Identifier "provides" @ 71..79 trailing=[Whitespace " "]
@@ -92,7 +91,7 @@ CompilationUnit
       VariableDeclaratorList
         VariableDeclarator
           Identifier "non" @ 135..138
-    BogusTypeDeclaration
+    BogusCompilationUnitItem
       Minus "-" @ 138..139
       Identifier "sealedclass" @ 139..150
   Eof "" @ 150..150

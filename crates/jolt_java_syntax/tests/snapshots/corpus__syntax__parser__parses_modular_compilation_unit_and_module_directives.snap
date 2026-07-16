@@ -17,7 +17,7 @@ open module example.module {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
+  CompilationUnitItemList
     ImportDeclaration
       ImportKw "import" @ 0..6 trailing=[Whitespace " "]
       QualifiedName
@@ -38,26 +38,25 @@ CompilationUnit
             AnnotationList
             Identifier "Native" @ 28..34
       Semicolon ";" @ 34..35
-  ModuleDeclaration
-    AnnotationList
-      Annotation
-        At "@" @ 37..38 leading=[Newline "\n", Newline "\n"]
-        Name
-          Identifier "Deprecated" @ 38..48
-    Identifier "open" @ 49..53 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "module" @ 54..60 trailing=[Whitespace " "]
-    QualifiedName
-      QualifiedNameSegmentNode
-        AnnotationList
-        Identifier "example" @ 61..68
-      Dot "." @ 68..69
-      NameSegmentDotList
+    ModuleDeclaration
+      AnnotationList
+        Annotation
+          At "@" @ 37..38 leading=[Newline "\n", Newline "\n"]
+          Name
+            Identifier "Deprecated" @ 38..48
+      Identifier "open" @ 49..53 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "module" @ 54..60 trailing=[Whitespace " "]
+      QualifiedName
         QualifiedNameSegmentNode
           AnnotationList
-          Identifier "module" @ 69..75 trailing=[Whitespace " "]
-    LBrace "{" @ 76..77
-    ModuleDirectiveList
-      ModuleDirective
+          Identifier "example" @ 61..68
+        Dot "." @ 68..69
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "module" @ 69..75 trailing=[Whitespace " "]
+      LBrace "{" @ 76..77
+      ModuleDirectiveList
         RequiresDirective
           Identifier "requires" @ 82..90 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           RequiresModifierList
@@ -73,7 +72,6 @@ CompilationUnit
                 AnnotationList
                 Identifier "sql" @ 114..117
           Semicolon ";" @ 117..118
-      ModuleDirective
         ExportsDirective
           Identifier "exports" @ 123..130 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           QualifiedName
@@ -85,19 +83,19 @@ CompilationUnit
               QualifiedNameSegmentNode
                 AnnotationList
                 Identifier "api" @ 139..142 trailing=[Whitespace " "]
-          Identifier "to" @ 143..145 trailing=[Whitespace " "]
-          NameList
-            QualifiedName
-              QualifiedNameSegmentNode
-                AnnotationList
-                Identifier "friend" @ 146..152
-              Dot "." @ 152..153
-              NameSegmentDotList
+          ModuleTargetClause
+            Identifier "to" @ 143..145 trailing=[Whitespace " "]
+            ModuleNameList
+              QualifiedName
                 QualifiedNameSegmentNode
                   AnnotationList
-                  Identifier "module" @ 153..159
+                  Identifier "friend" @ 146..152
+                Dot "." @ 152..153
+                NameSegmentDotList
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "module" @ 153..159
           Semicolon ";" @ 159..160
-      ModuleDirective
         OpensDirective
           Identifier "opens" @ 165..170 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           QualifiedName
@@ -109,19 +107,19 @@ CompilationUnit
               QualifiedNameSegmentNode
                 AnnotationList
                 Identifier "internal" @ 179..187 trailing=[Whitespace " "]
-          Identifier "to" @ 188..190 trailing=[Whitespace " "]
-          NameList
-            QualifiedName
-              QualifiedNameSegmentNode
-                AnnotationList
-                Identifier "friend" @ 191..197
-              Dot "." @ 197..198
-              NameSegmentDotList
+          ModuleTargetClause
+            Identifier "to" @ 188..190 trailing=[Whitespace " "]
+            ModuleNameList
+              QualifiedName
                 QualifiedNameSegmentNode
                   AnnotationList
-                  Identifier "module" @ 198..204
+                  Identifier "friend" @ 191..197
+                Dot "." @ 197..198
+                NameSegmentDotList
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "module" @ 198..204
           Semicolon ";" @ 204..205
-      ModuleDirective
         UsesDirective
           Identifier "uses" @ 210..214 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           QualifiedName
@@ -134,7 +132,6 @@ CompilationUnit
                 AnnotationList
                 Identifier "Service" @ 223..230
           Semicolon ";" @ 230..231
-      ModuleDirective
         ProvidesDirective
           Identifier "provides" @ 236..244 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           QualifiedName
@@ -146,20 +143,20 @@ CompilationUnit
               QualifiedNameSegmentNode
                 AnnotationList
                 Identifier "Service" @ 253..260 trailing=[Whitespace " "]
-          Identifier "with" @ 261..265 trailing=[Whitespace " "]
-          NameList
-            QualifiedName
-              QualifiedNameSegmentNode
-                AnnotationList
-                Identifier "example" @ 266..273
-              Dot "." @ 273..274
-              NameSegmentDotList
+          ModuleImplementationClause
+            Identifier "with" @ 261..265 trailing=[Whitespace " "]
+            ModuleNameList
+              QualifiedName
                 QualifiedNameSegmentNode
                   AnnotationList
-                  Identifier "ServiceImpl" @ 274..285
+                  Identifier "example" @ 266..273
+                Dot "." @ 273..274
+                NameSegmentDotList
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "ServiceImpl" @ 274..285
           Semicolon ";" @ 285..286
-    RBrace "}" @ 287..288 leading=[Newline "\n"]
-  CompilationUnitDeclarationList
+      RBrace "}" @ 287..288 leading=[Newline "\n"]
   Eof "" @ 289..289 leading=[Newline "\n"]
 
 diagnostics:

@@ -8,9 +8,8 @@ abstract assert boolean break byte case catch char class const continue default 
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       AbstractKw "abstract" @ 0..8 trailing=[Whitespace " "]
       AssertKw "assert" @ 9..15 trailing=[Whitespace " "]
       BooleanKw "boolean" @ 16..23 trailing=[Whitespace " "]
@@ -23,7 +22,7 @@ CompilationUnit
       ClassKw "class" @ 51..56 trailing=[Whitespace " "]
       ClassBody
         ClassBodyMemberList
-    BogusTypeDeclaration
+    BogusCompilationUnitItem
       ConstKw "const" @ 57..62 trailing=[Whitespace " "]
       ContinueKw "continue" @ 63..71 trailing=[Whitespace " "]
       DefaultKw "default" @ 72..79 trailing=[Whitespace " "]
@@ -34,7 +33,7 @@ CompilationUnit
       EnumKw "enum" @ 95..99 trailing=[Whitespace " "]
       EnumBody
         ClassBodyMemberList
-    BogusTypeDeclaration
+    BogusCompilationUnitItem
       ExtendsKw "extends" @ 100..107 trailing=[Whitespace " "]
       FinalKw "final" @ 108..113 trailing=[Whitespace " "]
       FinallyKw "finally" @ 114..121 trailing=[Whitespace " "]
@@ -43,10 +42,11 @@ CompilationUnit
       GotoKw "goto" @ 132..136 trailing=[Whitespace " "]
       IfKw "if" @ 137..139 trailing=[Whitespace " "]
       ImplementsKw "implements" @ 140..150 trailing=[Whitespace " "]
-    BogusTypeDeclaration
+    ImportDeclaration
       ImportKw "import" @ 151..157 trailing=[Whitespace " "]
-      InstanceofKw "instanceof" @ 158..168 trailing=[Whitespace " "]
-      IntKw "int" @ 169..172 trailing=[Whitespace " "]
+      BogusImportSuffix
+        InstanceofKw "instanceof" @ 158..168 trailing=[Whitespace " "]
+        IntKw "int" @ 169..172 trailing=[Whitespace " "]
     InterfaceDeclaration
       InterfaceKw "interface" @ 173..182 trailing=[Whitespace " "]
       InterfaceBody
@@ -57,10 +57,13 @@ CompilationUnit
         LongKw "long" @ 183..187 trailing=[Whitespace " "]
       VariableDeclaratorList
         VariableDeclarator
-    BogusTypeDeclaration
+    BogusCompilationUnitItem
       NativeKw "native" @ 188..194 trailing=[Whitespace " "]
       NewKw "new" @ 195..198 trailing=[Whitespace " "]
+    PackageDeclaration
+      AnnotationList
       PackageKw "package" @ 199..206 trailing=[Whitespace " "]
+    BogusCompilationUnitItem
       PrivateKw "private" @ 207..214 trailing=[Whitespace " "]
       ProtectedKw "protected" @ 215..224 trailing=[Whitespace " "]
       PublicKw "public" @ 225..231 trailing=[Whitespace " "]
@@ -90,12 +93,17 @@ diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=100..107 message="expected type name"
   code=java.parse.expected_syntax severity=Error stage=Parser range=100..107 message="expected type body"
   code=java.parse.unexpected_syntax severity=Error stage=Parser range=100..107 message="unexpected token at top level"
-  code=java.parse.unexpected_syntax severity=Error stage=Parser range=151..157 message="unexpected token at top level"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=158..168 message="expected identifier"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=158..168 message="unexpected token in import declaration"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=173..182 message="expected `;` after import declaration"
   code=java.parse.expected_syntax severity=Error stage=Parser range=183..187 message="expected type name"
   code=java.parse.expected_syntax severity=Error stage=Parser range=183..187 message="expected type body"
   code=java.parse.expected_syntax severity=Error stage=Parser range=188..194 message="expected variable name"
   code=java.parse.expected_syntax severity=Error stage=Parser range=188..194 message="expected `;` after field declaration"
   code=java.parse.unexpected_syntax severity=Error stage=Parser range=188..194 message="unexpected token at top level"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=207..214 message="expected identifier"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=207..214 message="expected `;` after package declaration"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=207..214 message="unexpected token at top level"
 
 diagnostics:
 code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(8) }) message=unexpected token at top level
@@ -105,9 +113,14 @@ code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRan
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(100), end: TextSize(107) }) message=expected type name
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(100), end: TextSize(107) }) message=expected type body
 code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(100), end: TextSize(107) }) message=unexpected token at top level
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(151), end: TextSize(157) }) message=unexpected token at top level
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(158), end: TextSize(168) }) message=expected identifier
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(158), end: TextSize(168) }) message=unexpected token in import declaration
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(173), end: TextSize(182) }) message=expected `;` after import declaration
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(183), end: TextSize(187) }) message=expected type name
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(183), end: TextSize(187) }) message=expected type body
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(188), end: TextSize(194) }) message=expected variable name
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(188), end: TextSize(194) }) message=expected `;` after field declaration
 code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(188), end: TextSize(194) }) message=unexpected token at top level
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(207), end: TextSize(214) }) message=expected identifier
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(207), end: TextSize(214) }) message=expected `;` after package declaration
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(207), end: TextSize(214) }) message=unexpected token at top level

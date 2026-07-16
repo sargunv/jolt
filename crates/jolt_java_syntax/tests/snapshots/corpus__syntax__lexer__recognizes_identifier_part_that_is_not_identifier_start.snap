@@ -8,8 +8,7 @@ á
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     FieldDeclaration
       ClassType
         ClassTypeSegmentList

@@ -8,8 +8,7 @@ enum Mode { BASIC, @Marker SPECIAL(helper(1), new Box()) { void run() {} } }
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     EnumDeclaration
       EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
       Identifier "Mode" @ 5..9 trailing=[Whitespace " "]

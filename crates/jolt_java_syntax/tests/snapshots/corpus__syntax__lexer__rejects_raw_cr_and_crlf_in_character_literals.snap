@@ -9,9 +9,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       CharacterLiteral "'" @ 0..1
       CharacterLiteral "' '" @ 2..5 leading=[Newline "\r"]
       CharacterLiteral "'" @ 7..8 leading=[Newline "\r\n"]

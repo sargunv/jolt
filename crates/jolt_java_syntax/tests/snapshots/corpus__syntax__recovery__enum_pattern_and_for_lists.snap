@@ -10,8 +10,7 @@ class C { void m(Object value) { if (value instanceof Point(int x, /* pattern */
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     EnumDeclaration
       EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
       Identifier "E" @ 5..6 trailing=[Whitespace " "]

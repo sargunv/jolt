@@ -789,20 +789,6 @@ macro_rules! java_field_accessor {
         java_field_accessor!($module $field optional (token __schema_contextual));
     };
 
-    ($module:ident $field:ident required (node ModuleDirective)) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> JavaSyntaxResult<JavaSyntaxField<'source, ModuleDirectiveNode<'source>>> {
-            required_node(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
-        }
-    };
-    ($module:ident $field:ident optional (node ModuleDirective)) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> JavaSyntaxResult<JavaSyntaxField<'source, ModuleDirectiveNode<'source>>> {
-            optional_node(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
-        }
-    };
     ($module:ident $field:ident required (node $target:ident)) => {
         #[inline]
         #[allow(clippy::missing_errors_doc)]
@@ -934,7 +920,6 @@ macro_rules! define_java_role {
 
 macro_rules! java_list_item_type {
     ($source:lifetime; $matcher:tt => $role:ident) => { $role<$source> };
-    ($source:lifetime; (node ModuleDirective)) => { ModuleDirectiveNode<$source> };
     ($source:lifetime; (node $target:ident)) => { $target<$source> };
     ($source:lifetime; (constructed $target:ident)) => { $target<$source> };
     ($source:lifetime; (category $target:ident)) => { $target<$source> };
@@ -1416,45 +1401,6 @@ pub struct AnnotationArrayInitializerEntry<'source> {
 pub struct AnnotationArgumentListEntry<'source> {
     pub argument: AnnotationArgument<'source>,
     pub comma: Option<JavaSyntaxToken<'source>>,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum CompilationUnitItem<'source> {
-    Package(PackageDeclaration<'source>),
-    Import(ImportDeclaration<'source>),
-    Module(ModuleDeclaration<'source>),
-    Type(TypeDeclaration<'source>),
-    Field(FieldDeclaration<'source>),
-    Method(MethodDeclaration<'source>),
-    EmptyDeclaration(EmptyDeclaration<'source>),
-}
-
-impl<'source> CompilationUnitItem<'source> {
-    #[must_use]
-    pub fn first_token(&self) -> Option<JavaSyntaxToken<'source>> {
-        match self {
-            Self::Package(item) => item.first_token(),
-            Self::Import(item) => item.first_token(),
-            Self::Module(item) => item.first_token(),
-            Self::Type(item) => item.first_token(),
-            Self::Field(item) => item.first_token(),
-            Self::Method(item) => item.first_token(),
-            Self::EmptyDeclaration(item) => item.first_token(),
-        }
-    }
-
-    #[must_use]
-    pub fn last_token(&self) -> Option<JavaSyntaxToken<'source>> {
-        match self {
-            Self::Package(item) => item.last_token(),
-            Self::Import(item) => item.last_token(),
-            Self::Module(item) => item.last_token(),
-            Self::Type(item) => item.last_token(),
-            Self::Field(item) => item.last_token(),
-            Self::Method(item) => item.last_token(),
-            Self::EmptyDeclaration(item) => item.last_token(),
-        }
-    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]

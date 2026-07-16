@@ -10,9 +10,8 @@ hello
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       TextBlockLiteral "\"\"\" \t\u{c}\r\nhello\r\n\"\"\"" @ 0..18
   Eof "" @ 18..18
 

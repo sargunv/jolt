@@ -31,8 +31,7 @@ enum EmptyEnum {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "A" @ 6..7 trailing=[Whitespace " "]

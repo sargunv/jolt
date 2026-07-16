@@ -12,8 +12,7 @@ class InstanceofExpressionShape {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "InstanceofExpressionShape" @ 6..31 trailing=[Whitespace " "]

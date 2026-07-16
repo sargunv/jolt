@@ -8,8 +8,7 @@ a;  b;
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     FieldDeclaration
       ClassType
         ClassTypeSegmentList
@@ -20,7 +19,7 @@ CompilationUnit
       VariableDeclaratorList
         VariableDeclarator
       Semicolon ";" @ 1..2 trailing=[Whitespace " "]
-    BogusTypeDeclaration
+    BogusCompilationUnitItem
       Unknown "\u{1a}" @ 3..4 trailing=[Whitespace " "]
       Identifier "b" @ 5..6
       Semicolon ";" @ 6..7

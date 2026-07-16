@@ -1,0 +1,29 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+package alpha;
+package beta;
+
+module first {}
+module second {}
+
+class AfterModules {}
+
+formatted:
+package alpha;
+
+package beta;
+
+module first {
+}
+
+module second {
+}
+
+class AfterModules {
+}
+
+diagnostics:
+(none)

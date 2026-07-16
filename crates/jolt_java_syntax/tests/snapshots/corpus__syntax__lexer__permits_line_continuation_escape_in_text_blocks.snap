@@ -12,9 +12,8 @@ d
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       TextBlockLiteral "\"\"\"\na\\\nb\\\rc\\\r\nd\n\"\"\"" @ 0..19
   Eof "" @ 19..19
 

@@ -13,8 +13,7 @@ class VarargsLambdaParameter {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "VarargsLambdaParameter" @ 6..28 trailing=[Whitespace " "]

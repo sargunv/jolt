@@ -10,9 +10,8 @@ enum	assertwhile
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       StaticKw "static" @ 0..6 trailing=[Whitespace " "]
       VoidKw "void" @ 7..11
     ClassDeclaration
@@ -27,7 +26,7 @@ CompilationUnit
       EnumKw "enum" @ 29..33 leading=[Newline "\r\n"] trailing=[Whitespace "\t"]
       EnumBody
         ClassBodyMemberList
-    BogusTypeDeclaration
+    BogusCompilationUnitItem
       AssertKw "assert" @ 34..40 trailing=[Whitespace "\u{c}"]
       WhileKw "while" @ 41..46
   Eof "" @ 46..46

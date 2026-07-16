@@ -1,0 +1,39 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+module phase.thirteen {
+  requires /* JOLT-TRIVIA:module-directive */ ;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 0..6 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "phase" @ 7..12
+        Dot "." @ 12..13
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "thirteen" @ 13..21 trailing=[Whitespace " "]
+      LBrace "{" @ 22..23
+      ModuleDirectiveList
+        RequiresDirective
+          Identifier "requires" @ 26..34 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:module-directive */", Whitespace " "]
+          RequiresModifierList
+          Semicolon ";" @ 70..71
+      RBrace "}" @ 72..73 leading=[Newline "\n"]
+  Eof "" @ 74..74 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=70..71 message="expected identifier"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(70), end: TextSize(71) }) message=expected identifier

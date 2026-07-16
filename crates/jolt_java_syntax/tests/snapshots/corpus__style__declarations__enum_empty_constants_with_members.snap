@@ -8,8 +8,7 @@ enum Values { ; public static final String ONE = "ONE"; }
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     EnumDeclaration
       EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
       Identifier "Values" @ 5..11 trailing=[Whitespace " "]

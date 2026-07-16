@@ -8,9 +8,8 @@ true false
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       BooleanLiteral "true" @ 0..4 trailing=[Whitespace " "]
       BooleanLiteral "false" @ 5..10
   Eof "" @ 10..10

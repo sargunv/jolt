@@ -10,8 +10,7 @@ public <T extends FirstBound & SecondBound & ThirdBound & FourthBound> void run(
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "Bounds" @ 6..12 trailing=[Whitespace " "]

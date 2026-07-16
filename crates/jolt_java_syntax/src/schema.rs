@@ -117,6 +117,19 @@ macro_rules! java_syntax_schema {
                 UnsignedRShiftEq,
             }
             categories {
+                CompilationUnitItem => BogusCompilationUnitItem {
+                    PackageDeclaration,
+                    ImportDeclaration,
+                    ModuleDeclaration,
+                    ClassDeclaration,
+                    RecordDeclaration,
+                    EnumDeclaration,
+                    InterfaceDeclaration,
+                    AnnotationInterfaceDeclaration,
+                    FieldDeclaration,
+                    MethodDeclaration,
+                    EmptyDeclaration,
+                }
                 TypeDeclaration => BogusTypeDeclaration {
                     ClassDeclaration,
                     RecordDeclaration,
@@ -282,10 +295,7 @@ macro_rules! java_syntax_schema {
                     elements: many (any_element) => ErrorElement;
                 }
                 CompilationUnit => CompilationUnit [compilation_unit valid] {
-                    package: optional (node PackageDeclaration);
-                    imports: required (list ImportDeclarationList);
-                    module: optional (node ModuleDeclaration);
-                    declarations: required (list CompilationUnitDeclarationList);
+                    items: required (list CompilationUnitItemList);
                     eof: required (token Eof);
                 }
                 PackageDeclaration => PackageDeclaration [package_declaration valid] {
@@ -301,6 +311,7 @@ macro_rules! java_syntax_schema {
                     name: required (category NameSyntax);
                     on_demand_dot: optional (token Dot);
                     star: optional (token Star);
+                    suffix: optional (node BogusImportSuffix);
                     semicolon: required (token Semicolon);
                 }
                 ModuleDeclaration => ModuleDeclaration [module_declaration valid] {
@@ -312,8 +323,8 @@ macro_rules! java_syntax_schema {
                     directives: required (list ModuleDirectiveList);
                     close_brace: required (token RBrace);
                 }
-                ModuleDirective => ModuleDirectiveNode [module_directive valid] {
-                    directive: required (category ModuleDirective);
+                BogusImportSuffix => BogusImportSuffix [bogus_import_suffix malformed] {
+                    elements: many (any_element) => BogusImportSuffixElement;
                 }
                 RequiresDirective => RequiresDirective [requires_directive valid] {
                     requires_keyword: required (contextual "requires");
@@ -324,15 +335,13 @@ macro_rules! java_syntax_schema {
                 ExportsDirective => ExportsDirective [exports_directive valid] {
                     exports_keyword: required (contextual "exports");
                     package: required (category NameSyntax);
-                    to_keyword: optional (contextual "to");
-                    targets: required (list NameList);
+                    targets: optional (node ModuleTargetClause);
                     semicolon: required (token Semicolon);
                 }
                 OpensDirective => OpensDirective [opens_directive valid] {
                     opens_keyword: required (contextual "opens");
                     package: required (category NameSyntax);
-                    to_keyword: optional (contextual "to");
-                    targets: required (list NameList);
+                    targets: optional (node ModuleTargetClause);
                     semicolon: required (token Semicolon);
                 }
                 UsesDirective => UsesDirective [uses_directive valid] {
@@ -343,9 +352,16 @@ macro_rules! java_syntax_schema {
                 ProvidesDirective => ProvidesDirective [provides_directive valid] {
                     provides_keyword: required (contextual "provides");
                     service: required (category NameSyntax);
-                    with_keyword: required (contextual "with");
-                    implementations: required (list NameList);
+                    implementation: required (node ModuleImplementationClause);
                     semicolon: required (token Semicolon);
+                }
+                ModuleTargetClause => ModuleTargetClause [module_target_clause valid] {
+                    to_keyword: required (contextual "to");
+                    targets: required (list ModuleNameList);
+                }
+                ModuleImplementationClause => ModuleImplementationClause [module_implementation_clause valid] {
+                    with_keyword: required (contextual "with");
+                    implementations: required (list ModuleNameList);
                 }
                 ModifierList => ModifierList [modifier_list list] {
                     modifiers: one_or_more (choice [
@@ -1108,23 +1124,23 @@ macro_rules! java_syntax_schema {
                     third_greater_than: required (token Gt);
                     assign: required (token Assign);
                 }
-                ImportDeclarationList => ImportDeclarationList [import_declaration_list list] {
-                    elements: many (node ImportDeclaration);
-                }
-                CompilationUnitDeclarationList => CompilationUnitDeclarationList [compilation_unit_declaration_list list] {
-                    elements: many (choice [(category TypeDeclaration), (node_set [FieldDeclaration, MethodDeclaration, EmptyDeclaration])]) => CompilationUnitDeclaration;
+                CompilationUnitItemList => CompilationUnitItemList [compilation_unit_item_list list] {
+                    elements: many (category CompilationUnitItem);
                 }
                 AnnotationList => AnnotationList [annotation_list list] {
                     elements: many (node Annotation);
                 }
                 ModuleDirectiveList => ModuleDirectiveList [module_directive_list list] {
-                    elements: many (node ModuleDirective);
+                    elements: many (category ModuleDirective);
                 }
                 RequiresModifierList => RequiresModifierList [requires_modifier_list list] {
                     elements: many (choice [(token StaticKw), (contextual "transitive")]) => RequiresModifier;
                 }
                 NameList => NameList [name_list list] {
                     elements: many (category NameSyntax) [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];
+                }
+                ModuleNameList => ModuleNameList [module_name_list list] {
+                    elements: one_or_more (category NameSyntax) [separated (token Comma), minimum 1, trailing forbidden, recovery bogus_owner];
                 }
                 AnnotationElementArgumentList => AnnotationElementArgumentList [annotation_element_argument_list list] {
                     elements: many (node_set [AnnotationElementValue, AnnotationElementValuePair]) => AnnotationArgumentElement [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];

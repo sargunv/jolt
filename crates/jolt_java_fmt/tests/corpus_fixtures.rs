@@ -1,11 +1,23 @@
 use std::path::PathBuf;
 
 use jolt_java_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
-use jolt_java_syntax::parse_compilation_unit;
+use jolt_java_syntax::{EmptyDeclaration, JavaNode, JavaSyntaxView, parse_compilation_unit};
 use jolt_test_support::{
-    DeferredReason, ImportedFormatterSummary, ObservedDeferredPath, StringSink,
-    assert_deferred_import_manifest, collect_java_files, read_to_string, workspace_root,
+    DeferredReason, ImportedFormatterSummary, ObservedDeferredPath, RepresentedTokenRemoval,
+    StringSink, assert_deferred_import_manifest, collect_java_files, read_to_string,
+    represented_comment_inventory, represented_token_loss_report, workspace_root,
 };
+
+// Paths leave the deferred queue only after entering this permanent
+// conservation gate. Later vertical phases extend the list with their paths.
+const PHASE_11_CONSERVATION_PATHS: &[&str] = &[
+    "package_and_imports/classWithMixedImports/classWithMixedImports.java",
+    "package_and_imports/classWithOnlyNonStaticImports/classWithOnlyNonStaticImports.java",
+    "package_and_imports/classWithOnlyStaticImports/classWithOnlyStaticImports.java",
+    "package_and_imports/moduleWithMixedImports/moduleWithMixedImports.java",
+    "package_and_imports/moduleWithOnlyNonStaticImports/moduleWithOnlyNonStaticImports.java",
+    "package_and_imports/moduleWithOnlyStaticImports/moduleWithOnlyStaticImports.java",
+];
 
 #[test]
 fn imported_fixture_inputs_format_idempotently_and_parse() {
@@ -49,6 +61,13 @@ fn assert_corpus(
     let options = FormatOptions::default();
 
     for path in files {
+        let relative = path
+            .strip_prefix(&root)
+            .unwrap_or_else(|error| {
+                panic!("{} is outside {}: {error}", path.display(), root.display())
+            })
+            .to_string_lossy()
+            .replace('\\', "/");
         let source = read_to_string(&path);
         let parse = parse_compilation_unit(&source);
         let syntax = parse.syntax();
@@ -73,7 +92,7 @@ fn assert_corpus(
             ));
             continue;
         }
-        let _syntax = syntax.expect("active imported path has syntax");
+        let syntax = syntax.expect("active imported path has syntax");
 
         let formatted = match format_source(&source, options) {
             Ok(formatted) => formatted,
@@ -104,6 +123,26 @@ fn assert_corpus(
             "formatted output did not reconstruct exactly for {}",
             path.display()
         );
+        if suite == "prettier-java" && PHASE_11_CONSERVATION_PATHS.contains(&relative.as_str()) {
+            let removals = syntax_authorized_removals(syntax);
+            let token_loss = represented_token_loss_report(
+                syntax.token_iter(),
+                formatted_syntax.token_iter(),
+                &removals,
+            );
+            assert!(
+                token_loss.is_empty(),
+                "formatter lost represented tokens for {}:\n{}",
+                path.display(),
+                token_loss
+            );
+            assert_eq!(
+                represented_comment_inventory(syntax.token_iter()),
+                represented_comment_inventory(formatted_syntax.token_iter()),
+                "formatter changed represented comments for {}",
+                path.display()
+            );
+        }
 
         let formatted_again = format_source(&formatted, options).unwrap_or_else(|diagnostics| {
             panic!(
@@ -133,6 +172,31 @@ fn assert_corpus(
     }
 
     summary
+}
+
+fn syntax_authorized_removals(
+    syntax: jolt_java_syntax::CompilationUnit<'_>,
+) -> Vec<RepresentedTokenRemoval> {
+    let Some(root) = syntax.syntax_node() else {
+        return Vec::new();
+    };
+    let mut stack = vec![root];
+    let mut redundant_semicolons = 0usize;
+    while let Some(node) = stack.pop() {
+        stack.extend(node.children());
+        if EmptyDeclaration::cast(node)
+            .is_some_and(|empty| empty.separator_removal_claim().is_some())
+        {
+            redundant_semicolons += 1;
+        }
+    }
+    (redundant_semicolons != 0)
+        .then_some(RepresentedTokenRemoval {
+            source: ";",
+            count: redundant_semicolons,
+        })
+        .into_iter()
+        .collect()
 }
 
 fn format_source(

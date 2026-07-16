@@ -2,4 +2,7 @@ mod lexer;
 mod source;
 
 pub use lexer::{LanguageLexer, LexedToken};
-pub use source::{CursorCheckpoint, ParseEvents, Parser, TokenBuffer, TokenCursor};
+pub use source::{
+    CursorCheckpoint, DiagnosticMarker, ParseEvents, Parser, TokenBuffer, TokenCursor,
+    UnresolvedDiagnosticOwner,
+};

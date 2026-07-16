@@ -12,15 +12,14 @@ module demo {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  ModuleDeclaration
-    AnnotationList
-    Identifier "module" @ 0..6 trailing=[Whitespace " "]
-    Name
-      Identifier "demo" @ 7..11 trailing=[Whitespace " "]
-    LBrace "{" @ 12..13
-    ModuleDirectiveList
-      ModuleDirective
+  CompilationUnitItemList
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 0..6 trailing=[Whitespace " "]
+      Name
+        Identifier "demo" @ 7..11 trailing=[Whitespace " "]
+      LBrace "{" @ 12..13
+      ModuleDirectiveList
         RequiresDirective
           Identifier "requires" @ 16..24 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
           RequiresModifierList
@@ -34,7 +33,6 @@ CompilationUnit
                 AnnotationList
                 Identifier "lib" @ 27..30
           Semicolon ";" @ 30..31
-      ModuleDirective
         RequiresDirective
           Identifier "requires" @ 34..42 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
           RequiresModifierList
@@ -48,7 +46,6 @@ CompilationUnit
                 AnnotationList
                 Identifier "lib" @ 45..48
           Semicolon ";" @ 48..49
-      ModuleDirective
         RequiresDirective
           Identifier "requires" @ 52..60 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
           RequiresModifierList
@@ -62,8 +59,7 @@ CompilationUnit
                 AnnotationList
                 Identifier "lib" @ 63..66
           Semicolon ";" @ 66..67
-    RBrace "}" @ 68..69 leading=[Newline "\n"]
-  CompilationUnitDeclarationList
+      RBrace "}" @ 68..69 leading=[Newline "\n"]
   Eof "" @ 70..70 leading=[Newline "\n"]
 
 diagnostics:

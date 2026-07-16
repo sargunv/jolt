@@ -25,8 +25,7 @@ class InvalidExpressions {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "InvalidExpressions" @ 6..24 trailing=[Whitespace " "]

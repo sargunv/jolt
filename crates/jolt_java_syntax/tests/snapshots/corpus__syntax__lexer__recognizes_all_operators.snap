@@ -8,9 +8,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       Assign "=" @ 0..1 trailing=[Whitespace " "]
       Gt ">" @ 2..3 trailing=[Whitespace " "]
       Lt "<" @ 4..5 trailing=[Whitespace " "]

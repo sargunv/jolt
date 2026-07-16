@@ -8,9 +8,8 @@ non-sealedclass MissingSpace {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       Identifier "non" @ 0..3
       Minus "-" @ 3..4
       Identifier "sealedclass" @ 4..15 trailing=[Whitespace " "]

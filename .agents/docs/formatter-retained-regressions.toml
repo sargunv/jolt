@@ -8,8 +8,8 @@
 schema = 1
 baseline_commit = "2197128"
 verified_date = "2026-07-12"
-fixture_count = 47
-inline_regression_count = 1
+fixture_count = 48
+inline_regression_count = 2
 parser_fix_count = 27
 corpus_gate_count = 1
 
@@ -35,7 +35,7 @@ path = "fixtures/java/syntax/recovery/array-creation-trailing-dimensions.java"
 location = "current"
 old_phase = 1
 old_commit = "86b178b"
-owners = [{ phase = 13, scope = "trailing annotated array dimensions" }]
+owners = [{ phase = 14, scope = "trailing annotated array dimensions" }]
 
 [[fixture]]
 id = "java-module-annotation"
@@ -44,7 +44,7 @@ path = "fixtures/java/syntax/recovery/module-annotation.java"
 location = "current"
 old_phase = 1
 old_commit = "86b178b"
-owners = [{ phase = 10, scope = "module annotations" }]
+owners = [{ phase = 11, scope = "module annotations" }]
 
 [[fixture]]
 id = "java-import-trailing-tokens"
@@ -53,7 +53,7 @@ path = "fixtures/java/syntax/recovery/import-trailing-tokens.java"
 location = "current"
 old_phase = 1
 old_commit = "86b178b"
-owners = [{ phase = 10, scope = "malformed import suffixes" }]
+owners = [{ phase = 11, scope = "malformed import suffixes" }]
 
 [[fixture]]
 id = "java-missing-type-body-token"
@@ -62,7 +62,7 @@ path = "fixtures/java/syntax/recovery/missing-type-body-token.java"
 location = "current"
 old_phase = 1
 old_commit = "86b178b"
-owners = [{ phase = 12, scope = "recovered missing-type-body semicolon" }]
+owners = [{ phase = 13, scope = "recovered missing-type-body semicolon" }]
 
 [[fixture]]
 id = "java-recovered-declaration-names-and-modifiers"
@@ -72,7 +72,7 @@ location = "current"
 old_phase = 1
 old_commit = "86b178b"
 owners = [
-  { phase = 11, scope = "restricted declaration names and invalid modifiers" },
+  { phase = 12, scope = "restricted declaration names and invalid modifiers" },
 ]
 
 [[fixture]]
@@ -82,7 +82,7 @@ path = "fixtures/java/syntax/recovery/module-repeated-requires-modifiers.java"
 location = "current"
 old_phase = 1
 old_commit = "86b178b"
-owners = [{ phase = 10, scope = "repeated requires modifiers" }]
+owners = [{ phase = 11, scope = "repeated requires modifiers" }]
 
 [[fixture]]
 id = "kotlin-assignment-invalid-targets"
@@ -92,7 +92,7 @@ location = "current"
 old_phase = 1
 old_commit = "86b178b"
 owners = [
-  { phase = 18, scope = "invalid assignment targets and dangling operators" },
+  { phase = 19, scope = "invalid assignment targets and dangling operators" },
 ]
 
 [[fixture]]
@@ -104,7 +104,7 @@ old_phase = 1
 old_commit = "86b178b"
 owners = [
   { phase = 9, scope = "comments after opening block braces" },
-  { phase = 17, scope = "comments after opening class-body braces" },
+  { phase = 18, scope = "comments after opening class-body braces" },
 ]
 
 [[fixture]]
@@ -115,7 +115,7 @@ location = "current"
 old_phase = 1
 old_commit = "86b178b"
 owners = [
-  { phase = 18, scope = "pre-target callable-reference type arguments" },
+  { phase = 19, scope = "pre-target callable-reference type arguments" },
 ]
 
 [[fixture]]
@@ -126,7 +126,7 @@ location = "current"
 old_phase = 1
 old_commit = "86b178b"
 owners = [
-  { phase = 16, scope = "represented definitely-non-nullable bang tokens" },
+  { phase = 17, scope = "represented definitely-non-nullable bang tokens" },
 ]
 
 [[fixture]]
@@ -136,7 +136,7 @@ path = "fixtures/kotlin/syntax/recovery/nested-recovered-when-condition.kt"
 location = "current"
 old_phase = 1
 old_commit = "86b178b"
-owners = [{ phase = 19, scope = "nested recovered when content" }]
+owners = [{ phase = 20, scope = "nested recovered when content" }]
 
 [[fixture]]
 id = "kotlin-property-body-recovered-gap"
@@ -156,7 +156,7 @@ path = "fixtures/kotlin/syntax/recovery/top-level-orphan-token.kt"
 location = "current"
 old_phase = 1
 old_commit = "86b178b"
-owners = [{ phase = 15, scope = "top-level orphan tokens" }]
+owners = [{ phase = 16, scope = "top-level orphan tokens" }]
 
 [[fixture]]
 id = "kotlin-trailing-user-type-dot"
@@ -165,7 +165,7 @@ path = "fixtures/kotlin/syntax/recovery/trailing-user-type-dot.kt"
 location = "current"
 old_phase = 1
 old_commit = "86b178b"
-owners = [{ phase = 16, scope = "trailing user-type dots" }]
+owners = [{ phase = 17, scope = "trailing user-type dots" }]
 
 [[fixture]]
 id = "kotlin-type-constraints"
@@ -175,7 +175,7 @@ location = "current"
 old_phase = 1
 old_commit = "86b178b"
 owners = [
-  { phase = 16, scope = "constraint recovery and enclosing close-brace conservation" },
+  { phase = 17, scope = "constraint recovery and enclosing close-brace conservation" },
 ]
 
 # Parser-diagnostic fixtures exposed to formatter gates by old Phase 1.
@@ -188,9 +188,9 @@ location = "current"
 old_phase = 1
 old_commit = "86b178b"
 owners = [
-  { phase = 11, scope = "invalid modifiers, names, type bounds, throws clauses, and declarators" },
-  { phase = 12, scope = "enclosing field, method, and constructor declarations" },
-  { phase = 14, scope = "enhanced-for declarations, resources, and catch parameters" },
+  { phase = 12, scope = "invalid modifiers, names, type bounds, throws clauses, and declarators" },
+  { phase = 13, scope = "enclosing field, method, and constructor declarations" },
+  { phase = 15, scope = "enhanced-for declarations, resources, and catch parameters" },
 ]
 
 [[fixture]]
@@ -202,7 +202,7 @@ old_phase = 1
 old_commit = "86b178b"
 owners = [
   { phase = 8, scope = "assignment, binary expression statements, and primitive instanceof" },
-  { phase = 13, scope = "object creation, calls, arrays, and remaining expression pieces" },
+  { phase = 14, scope = "object creation, calls, arrays, and remaining expression pieces" },
 ]
 
 [[fixture]]
@@ -213,7 +213,7 @@ location = "current"
 old_phase = 1
 old_commit = "86b178b"
 owners = [
-  { phase = 13, scope = "duplicate and recovered lambda parameter names" },
+  { phase = 14, scope = "duplicate and recovered lambda parameter names" },
 ]
 
 [[fixture]]
@@ -223,7 +223,7 @@ path = "fixtures/java/syntax/parser/diagnoses-missing-class-body.java"
 location = "current"
 old_phase = 1
 old_commit = "86b178b"
-owners = [{ phase = 12, scope = "missing class body and recovered semicolon" }]
+owners = [{ phase = 13, scope = "missing class body and recovered semicolon" }]
 
 [[fixture]]
 id = "java-recovers-restricted-type-identifiers"
@@ -232,7 +232,7 @@ path = "fixtures/java/syntax/parser/recovers-restricted-type-identifiers.java"
 location = "current"
 old_phase = 1
 old_commit = "86b178b"
-owners = [{ phase = 11, scope = "restricted recovered type names" }]
+owners = [{ phase = 12, scope = "restricted recovered type names" }]
 
 [[fixture]]
 id = "java-parses-annotated-dim-expression"
@@ -241,7 +241,7 @@ path = "fixtures/java/syntax/parser/parses-annotated-dim-expression.java"
 location = "current"
 old_phase = 1
 old_commit = "86b178b"
-owners = [{ phase = 13, scope = "annotated dimension expressions" }]
+owners = [{ phase = 14, scope = "annotated dimension expressions" }]
 
 [[fixture]]
 id = "java-parses-modular-compilation-unit"
@@ -250,7 +250,7 @@ path = "fixtures/java/syntax/parser/parses-modular-compilation-unit-and-module-d
 location = "current"
 old_phase = 1
 old_commit = "86b178b"
-owners = [{ phase = 10, scope = "module annotations and directives" }]
+owners = [{ phase = 11, scope = "module annotations and directives" }]
 
 [[fixture]]
 id = "java-parses-trailing-declarator-dimensions"
@@ -260,7 +260,7 @@ location = "current"
 old_phase = 1
 old_commit = "86b178b"
 owners = [
-  { phase = 11, scope = "trailing method and annotation-element dimensions" },
+  { phase = 12, scope = "trailing method and annotation-element dimensions" },
 ]
 
 [[fixture]]
@@ -270,7 +270,7 @@ path = "fixtures/java/syntax/parser/trailing-method-and-annotation-element-dims-
 location = "current"
 old_phase = 1
 old_commit = "86b178b"
-owners = [{ phase = 11, scope = "per-dimension annotation ownership" }]
+owners = [{ phase = 12, scope = "per-dimension annotation ownership" }]
 
 [[fixture]]
 id = "kotlin-diagnoses-invalid-assignment-targets"
@@ -279,7 +279,7 @@ path = "fixtures/kotlin/syntax/parser/diagnoses-invalid-assignment-targets.kt"
 location = "current"
 old_phase = 1
 old_commit = "86b178b"
-owners = [{ phase = 18, scope = "invalid assignment targets and operators" }]
+owners = [{ phase = 19, scope = "invalid assignment targets and operators" }]
 
 [[fixture]]
 id = "kotlin-diagnoses-malformed-type-argument-call"
@@ -290,7 +290,7 @@ old_phase = 1
 old_commit = "86b178b"
 owners = [
   { phase = 9, scope = "malformed type-argument calls, missing delimiters, and safe-call navigation" },
-  { phase = 16, scope = "nested type-argument list structure" },
+  { phase = 17, scope = "nested type-argument list structure" },
 ]
 
 [[fixture]]
@@ -300,7 +300,7 @@ path = "fixtures/kotlin/syntax/parser/recovers-missing-expression-after-elvis.kt
 location = "current"
 old_phase = 1
 old_commit = "86b178b"
-owners = [{ phase = 18, scope = "dangling Elvis operator" }]
+owners = [{ phase = 19, scope = "dangling Elvis operator" }]
 
 [[fixture]]
 id = "kotlin-recovers-missing-when-arrow-and-body"
@@ -310,7 +310,7 @@ location = "current"
 old_phase = 1
 old_commit = "86b178b"
 owners = [
-  { phase = 19, scope = "missing when arrow and body with preserved condition tokens" },
+  { phase = 20, scope = "missing when arrow and body with preserved condition tokens" },
 ]
 
 [[fixture]]
@@ -320,7 +320,7 @@ path = "fixtures/kotlin/syntax/parser/parses-destructuring-name-based-preview.kt
 location = "current"
 old_phase = 1
 old_commit = "86b178b"
-owners = [{ phase = 17, scope = "destructuring defaults and modifiers" }]
+owners = [{ phase = 18, scope = "destructuring defaults and modifiers" }]
 
 # Fixtures added, expanded, or directly exercised by old Phases 3-15.
 
@@ -332,8 +332,8 @@ location = "historical"
 old_phase = 3
 old_commit = "d1783cf"
 owners = [
-  { phase = 15, scope = "duplicate package and import containers" },
-  { phase = 17, scope = "declaration pieces and recovered class members" },
+  { phase = 16, scope = "duplicate package and import containers" },
+  { phase = 18, scope = "declaration pieces and recovered class members" },
 ]
 
 [[fixture]]
@@ -345,10 +345,10 @@ old_phase = 4
 old_commit = "d5d2fc8"
 owners = [
   { phase = 9, scope = "calls, navigation, and malformed call suffixes" },
-  { phase = 16, scope = "malformed type structure" },
-  { phase = 17, scope = "malformed destructuring declarations" },
-  { phase = 18, scope = "lambdas, strings, and remaining expressions" },
-  { phase = 19, scope = "if, for, when, and try control flow" },
+  { phase = 17, scope = "malformed type structure" },
+  { phase = 18, scope = "malformed destructuring declarations" },
+  { phase = 19, scope = "lambdas, strings, and remaining expressions" },
+  { phase = 20, scope = "if, for, when, and try control flow" },
 ]
 
 [[fixture]]
@@ -360,7 +360,7 @@ old_phase = 5
 old_commit = "bb3fa8d"
 owners = [
   { phase = 9, scope = "function types and value parameters in the Kotlin vertical slice" },
-  { phase = 16, scope = "user types, projections, bounds, and constraints" },
+  { phase = 17, scope = "user types, projections, bounds, and constraints" },
 ]
 
 [[fixture]]
@@ -372,8 +372,8 @@ old_phase = 6
 old_commit = "35e2e6e"
 owners = [
   { phase = 9, scope = "property body and accessor recovery in the Kotlin vertical slice" },
-  { phase = 16, scope = "context parameter defaults" },
-  { phase = 17, scope = "constructors, aliases, classes, delegation, enums, and member islands" },
+  { phase = 17, scope = "context parameter defaults" },
+  { phase = 18, scope = "constructors, aliases, classes, delegation, enums, and member islands" },
 ]
 
 [[fixture]]
@@ -383,7 +383,7 @@ path = "fixtures/kotlin/syntax/recovery/destructuring-callable-missing-close.kt"
 location = "historical"
 old_phase = 6
 old_commit = "35e2e6e"
-owners = [{ phase = 17, scope = "unclosed destructuring callable name" }]
+owners = [{ phase = 18, scope = "unclosed destructuring callable name" }]
 
 [[fixture]]
 id = "old-p07-kotlin-collection-and-index-lists"
@@ -403,7 +403,7 @@ path = "fixtures/kotlin/syntax/recovery/control-flow-missing-children.kt"
 location = "historical"
 old_phase = 7
 old_commit = "c2f7a66"
-owners = [{ phase = 19, scope = "missing do and when children" }]
+owners = [{ phase = 20, scope = "missing do and when children" }]
 
 [[fixture]]
 id = "old-p08-kotlin-fun-interface-fixture"
@@ -413,7 +413,7 @@ location = "current"
 old_phase = 8
 old_commit = "598e535"
 owners = [
-  { phase = 17, scope = "fun interface forms one interface declaration" },
+  { phase = 18, scope = "fun interface forms one interface declaration" },
 ]
 
 [[fixture]]
@@ -436,26 +436,26 @@ old_phase = 10
 old_commit = "4d52772"
 owners = [
   { phase = 9, scope = "malformed block child and navigation expression in the Kotlin vertical slice" },
-  { phase = 18, scope = "malformed lambda expressions" },
+  { phase = 19, scope = "malformed lambda expressions" },
 ]
 
 [[fixture]]
 id = "old-p11-java-eof-comments"
 language = "java"
 path = "fixtures/java/syntax/recovery/phase-11-eof-comments.java"
-location = "historical"
+location = "current"
 old_phase = 11
 old_commit = "95d158c"
-owners = [{ phase = 10, scope = "comment-only EOF ownership" }]
+owners = [{ phase = 11, scope = "comment-only EOF ownership" }]
 
 [[fixture]]
 id = "old-p11-java-program-containers"
 language = "java"
 path = "fixtures/java/syntax/recovery/phase-11-program-containers.java"
-location = "historical"
+location = "current"
 old_phase = 11
 old_commit = "95d158c"
-owners = [{ phase = 10, scope = "duplicate package and module containers" }]
+owners = [{ phase = 11, scope = "duplicate package and module containers" }]
 
 [[fixture]]
 id = "old-p11-java-singletons"
@@ -465,10 +465,10 @@ location = "historical"
 old_phase = 11
 old_commit = "95d158c"
 owners = [
-  { phase = 11, scope = "variable declarators hidden by singleton assumptions" },
-  { phase = 12, scope = "recovered enum entry pieces" },
-  { phase = 13, scope = "lambda and array-creation siblings and dimensions" },
-  { phase = 14, scope = "recovered switch labels" },
+  { phase = 12, scope = "variable declarators hidden by singleton assumptions" },
+  { phase = 13, scope = "recovered enum entry pieces" },
+  { phase = 14, scope = "lambda and array-creation siblings and dimensions" },
+  { phase = 15, scope = "recovered switch labels" },
 ]
 
 [[fixture]]
@@ -480,18 +480,18 @@ old_phase = 12
 old_commit = "e4db005"
 owners = [
   { phase = 8, scope = "instanceof pattern vertical slice" },
-  { phase = 13, scope = "malformed method-reference receivers" },
-  { phase = 14, scope = "loops, switches, resources, and catches" },
+  { phase = 14, scope = "malformed method-reference receivers" },
+  { phase = 15, scope = "loops, switches, resources, and catches" },
 ]
 
 [[fixture]]
 id = "old-p13-java-module-replay"
 language = "java"
-path = "fixtures/java/syntax/recovery/phase-13-module-replay.java"
-location = "historical"
+path = "fixtures/java/syntax/recovery/phase-11-incomplete-module-directive.java"
+location = "current"
 old_phase = 13
 old_commit = "e47c982"
-owners = [{ phase = 10, scope = "incomplete module directives" }]
+owners = [{ phase = 11, scope = "incomplete module directives" }]
 
 [[fixture]]
 id = "old-p13-java-partial-replay"
@@ -502,10 +502,18 @@ old_phase = 13
 old_commit = "e47c982"
 owners = [
   { phase = 8, scope = "binary expression and block-statement vertical slice" },
-  { phase = 10, scope = "malformed import pieces" },
-  { phase = 12, scope = "enum separators and body pieces" },
-  { phase = 14, scope = "resources and switch statements" },
+  { phase = 13, scope = "enum separators and body pieces" },
+  { phase = 15, scope = "resources and switch statements" },
 ]
+
+[[fixture]]
+id = "old-p13-java-partial-replay-import"
+language = "java"
+path = "fixtures/java/syntax/recovery/phase-11-malformed-import-pieces.java"
+location = "current"
+old_phase = 13
+old_commit = "e47c982"
+owners = [{ phase = 11, scope = "malformed import pieces" }]
 
 [[fixture]]
 id = "old-p14-java-missing-bodies"
@@ -514,7 +522,7 @@ path = "fixtures/java/syntax/recovery/phase-14-missing-bodies.java"
 location = "historical"
 old_phase = 14
 old_commit = "c272352"
-owners = [{ phase = 14, scope = "missing statement and block-body boundaries" }]
+owners = [{ phase = 15, scope = "missing statement and block-body boundaries" }]
 
 [[fixture]]
 id = "old-p15-java-recovered-token-trivia-gaps"
@@ -523,10 +531,24 @@ path = "fixtures/java/syntax/recovery/recovered-token-trivia-gaps.java"
 location = "historical"
 old_phase = 15
 old_commit = "fa6055d"
-owners = [{ phase = 12, scope = "trivia around malformed class-body tokens" }]
+owners = [{ phase = 13, scope = "trivia around malformed class-body tokens" }]
+
+# Phase 11's imported-corpus conservation gate exposed this clean expression
+# regression outside that phase's program/import ownership.
+
+[[inline_regression]]
+id = "java-adjacent-unary-operator-fusion"
+language = "java"
+source = "class C { int negative = - -1; int positive = + +1; }"
+current_output = "class C {\n  int negative = --1;\n  int positive = ++1;\n}\n"
+status = "active"
+owner_phase = 14
+imported_path = "google-java-format/input/B183431894.java"
+parser_behavior = "Both adjacent unary operators are represented as distinct tokens in clean syntax."
+regression = "Formatting removes lexical separation and changes two unary operators into decrement and increment tokens."
 
 # This case was discovered while rejecting old Phase 17. It intentionally stays
-# data-only here: adding it to the active fixture corpus before Phase 18 would
+# data-only here: adding it to the active fixture corpus before Phase 19 would
 # make the Phase 4 test suite fail for a known formatter loss.
 
 [[inline_regression]]
@@ -535,7 +557,7 @@ language = "kotlin"
 source = "class Unexpected + (val value: Int)"
 current_output = "class Unexpected\n+()"
 status = "active"
-owner_phase = 18
+owner_phase = 19
 parser_behavior = "The class ends correctly before plus. Plus and the parenthesized expression are a separately recovered top-level expression; this is not a class-constructor gap."
 regression = "Formatting the recovered expression loses the error-node contents `val value: Int`."
 
@@ -548,7 +570,7 @@ language = "java"
 old_phase = 2
 old_commit = "2aff426"
 path = "crates/jolt_java_syntax/src/parser/grammar/compilation_unit.rs"
-owner_phase = 10
+owner_phase = 11
 behavior = "Continue parsing module directives after a missing module body."
 
 [[parser_fix]]
@@ -557,7 +579,7 @@ language = "java"
 old_phase = 2
 old_commit = "2aff426"
 path = "crates/jolt_java_syntax/src/parser/grammar/compilation_unit.rs"
-owner_phase = 10
+owner_phase = 11
 behavior = "Recover provides targets when `with` or a provider name is missing."
 
 [[parser_fix]]
@@ -566,7 +588,7 @@ language = "java"
 old_phase = 2
 old_commit = "2aff426"
 path = "crates/jolt_java_syntax/src/parser/grammar/compilation_unit.rs"
-owner_phase = 10
+owner_phase = 11
 behavior = "Recover exports and opens targets when `to` or a target name is missing."
 
 [[parser_fix]]
@@ -575,7 +597,7 @@ language = "kotlin"
 old_phase = 3
 old_commit = "d1783cf"
 path = "crates/jolt_kotlin_syntax/src/parser/grammar/file.rs"
-owner_phase = 15
+owner_phase = 16
 behavior = "Preserve repeated package headers and import lists as file containers instead of generic statements."
 
 [[parser_fix]]
@@ -584,7 +606,7 @@ language = "kotlin"
 old_phase = 5
 old_commit = "bb3fa8d"
 path = "crates/jolt_kotlin_syntax/src/parser/grammar/declarations/callables.rs"
-owner_phase = 16
+owner_phase = 17
 behavior = "Parse type-parameter bounds when the colon is missing."
 
 [[parser_fix]]
@@ -593,7 +615,7 @@ language = "kotlin"
 old_phase = 5
 old_commit = "bb3fa8d"
 path = "crates/jolt_kotlin_syntax/src/parser/grammar/declarations/callables.rs"
-owner_phase = 16
+owner_phase = 17
 behavior = "Parse type constraints when `where` or the constraint colon is missing."
 
 [[parser_fix]]
@@ -611,7 +633,7 @@ language = "kotlin"
 old_phase = 5
 old_commit = "bb3fa8d"
 path = "crates/jolt_kotlin_syntax/src/parser/grammar/types.rs"
-owner_phase = 16
+owner_phase = 17
 behavior = "Retain extra user-type dots and type arguments that lack a preceding segment."
 
 [[parser_fix]]
@@ -620,7 +642,7 @@ language = "kotlin"
 old_phase = 5
 old_commit = "bb3fa8d"
 path = "crates/jolt_kotlin_syntax/src/parser/grammar/types.rs"
-owner_phase = 16
+owner_phase = 17
 behavior = "Retain a type that appears together with a star projection."
 
 [[parser_fix]]
@@ -629,7 +651,7 @@ language = "kotlin"
 old_phase = 6
 old_commit = "35e2e6e"
 path = "crates/jolt_kotlin_syntax/src/parser/grammar/declarations/callables.rs"
-owner_phase = 17
+owner_phase = 18
 behavior = "Parse constructor delegation when the colon is missing."
 
 [[parser_fix]]
@@ -656,7 +678,7 @@ language = "kotlin"
 old_phase = 6
 old_commit = "35e2e6e"
 path = "crates/jolt_kotlin_syntax/src/parser/grammar/declarations/callables.rs"
-owner_phase = 17
+owner_phase = 18
 behavior = "Materialize a stray close bracket after a function or accessor as an error node."
 
 [[parser_fix]]
@@ -665,7 +687,7 @@ language = "kotlin"
 old_phase = 6
 old_commit = "35e2e6e"
 path = "crates/jolt_kotlin_syntax/src/parser/grammar/declarations/callables.rs"
-owner_phase = 17
+owner_phase = 18
 behavior = "Parse a type-alias target when the equals token is missing."
 
 [[parser_fix]]
@@ -674,7 +696,7 @@ language = "kotlin"
 old_phase = 6
 old_commit = "35e2e6e"
 path = "crates/jolt_kotlin_syntax/src/parser/grammar/declarations/callables.rs"
-owner_phase = 16
+owner_phase = 17
 behavior = "Parse context-parameter defaults, including a missing equals token."
 
 [[parser_fix]]
@@ -692,7 +714,7 @@ language = "kotlin"
 old_phase = 6
 old_commit = "35e2e6e"
 path = "crates/jolt_kotlin_syntax/src/parser/grammar/declarations/callables.rs"
-owner_phase = 17
+owner_phase = 18
 behavior = "Preserve a callable receiver and separator when the final callable name is absent."
 
 [[parser_fix]]
@@ -701,7 +723,7 @@ language = "kotlin"
 old_phase = 6
 old_commit = "35e2e6e"
 path = "crates/jolt_kotlin_syntax/src/parser/grammar/declarations/classes.rs"
-owner_phase = 17
+owner_phase = 18
 behavior = "Parse class and object delegation when the colon is missing."
 
 [[parser_fix]]
@@ -710,7 +732,7 @@ language = "kotlin"
 old_phase = 6
 old_commit = "35e2e6e"
 path = "crates/jolt_kotlin_syntax/src/parser/grammar/declarations/classes.rs"
-owner_phase = 17
+owner_phase = 18
 behavior = "Diagnose a primary constructor without a parameter list without consuming the class body."
 
 [[parser_fix]]
@@ -719,7 +741,7 @@ language = "kotlin"
 old_phase = 6
 old_commit = "35e2e6e"
 path = "crates/jolt_kotlin_syntax/src/parser/grammar/declarations/classes.rs"
-owner_phase = 17
+owner_phase = 18
 behavior = "Recognize a malformed enum entry ending with close-parenthesis and comma."
 
 [[parser_fix]]
@@ -728,7 +750,7 @@ language = "kotlin"
 old_phase = 8
 old_commit = "598e535"
 path = "crates/jolt_kotlin_syntax/src/parser/grammar/declarations.rs"
-owner_phase = 17
+owner_phase = 18
 behavior = "Parse `fun interface` as one interface declaration."
 
 [[parser_fix]]
@@ -737,7 +759,7 @@ language = "java"
 old_phase = 11
 old_commit = "95d158c"
 path = "crates/jolt_java_syntax/src/parser/grammar/compilation_unit.rs"
-owner_phase = 10
+owner_phase = 11
 behavior = "Parse duplicate package declarations as represented compilation-unit containers."
 
 [[parser_fix]]
@@ -746,7 +768,7 @@ language = "java"
 old_phase = 11
 old_commit = "95d158c"
 path = "crates/jolt_java_syntax/src/parser/grammar/expressions.rs"
-owner_phase = 13
+owner_phase = 14
 behavior = "Wrap unexpected tokens before a concise lambda arrow in an error node."
 
 [[parser_fix]]
@@ -755,7 +777,7 @@ language = "java"
 old_phase = 11
 old_commit = "95d158c"
 path = "crates/jolt_java_syntax/src/parser/grammar/statements.rs"
-owner_phase = 14
+owner_phase = 15
 behavior = "Wrap orphan tokens between switch labels in an error node."
 
 [[parser_fix]]
@@ -764,7 +786,7 @@ language = "java"
 old_phase = 11
 old_commit = "95d158c"
 path = "crates/jolt_java_syntax/src/parser/grammar/support/expression_predicates.rs"
-owner_phase = 13
+owner_phase = 14
 behavior = "Extend concise-lambda lookahead through one recovered token to the arrow."
 
 [[parser_fix]]
@@ -773,7 +795,7 @@ language = "java"
 old_phase = 14
 old_commit = "c272352"
 path = "crates/jolt_java_syntax/src/parser/grammar/statements.rs"
-owner_phase = 14
+owner_phase = 15
 behavior = "Do not consume else, while, close-brace, or EOF as a missing if, loop, or for body."
 
 [[parser_fix]]
@@ -782,7 +804,7 @@ language = "java"
 old_phase = 14
 old_commit = "c272352"
 path = "crates/jolt_java_syntax/src/parser/grammar/statements.rs"
-owner_phase = 14
+owner_phase = 15
 behavior = "Do not manufacture or parse a block when a synchronized, try, resource-try, catch, finally, or switch body is absent."
 
 # An explicit phase ledger makes phases with no parser or fixture additions

@@ -10,9 +10,8 @@ text
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       TextBlockLiteral "\"\"\"\ntext\n\"\"\"" @ 0..12
       StringLiteral "\"" @ 12..13
   Eof "" @ 13..13

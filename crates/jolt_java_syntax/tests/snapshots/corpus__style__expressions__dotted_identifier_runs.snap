@@ -15,8 +15,7 @@ return com.example.deep.config.ConflictResolutionFactory.newBuilder().build();
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "DottedIdentifierRuns" @ 6..26 trailing=[Whitespace " "]

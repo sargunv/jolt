@@ -1,0 +1,171 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+module recovery.barriers {
+  exports z.api target;
+  exports a.api to alpha.target;
+  opens z.internal target;
+  opens a.internal to alpha.target;
+  provides z.Service implementation.Type;
+  provides a.Service with alpha.Implementation;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 0..6 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "recovery" @ 7..15
+        Dot "." @ 15..16
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "barriers" @ 16..24 trailing=[Whitespace " "]
+      LBrace "{" @ 25..26
+      ModuleDirectiveList
+        ExportsDirective
+          Identifier "exports" @ 29..36 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "z" @ 37..38
+            Dot "." @ 38..39
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "api" @ 39..42 trailing=[Whitespace " "]
+          ModuleTargetClause
+            ModuleNameList
+              Name
+                Identifier "target" @ 43..49
+          Semicolon ";" @ 49..50
+        ExportsDirective
+          Identifier "exports" @ 53..60 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "a" @ 61..62
+            Dot "." @ 62..63
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "api" @ 63..66 trailing=[Whitespace " "]
+          ModuleTargetClause
+            Identifier "to" @ 67..69 trailing=[Whitespace " "]
+            ModuleNameList
+              QualifiedName
+                QualifiedNameSegmentNode
+                  AnnotationList
+                  Identifier "alpha" @ 70..75
+                Dot "." @ 75..76
+                NameSegmentDotList
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "target" @ 76..82
+          Semicolon ";" @ 82..83
+        OpensDirective
+          Identifier "opens" @ 86..91 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "z" @ 92..93
+            Dot "." @ 93..94
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "internal" @ 94..102 trailing=[Whitespace " "]
+          ModuleTargetClause
+            ModuleNameList
+              Name
+                Identifier "target" @ 103..109
+          Semicolon ";" @ 109..110
+        OpensDirective
+          Identifier "opens" @ 113..118 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "a" @ 119..120
+            Dot "." @ 120..121
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "internal" @ 121..129 trailing=[Whitespace " "]
+          ModuleTargetClause
+            Identifier "to" @ 130..132 trailing=[Whitespace " "]
+            ModuleNameList
+              QualifiedName
+                QualifiedNameSegmentNode
+                  AnnotationList
+                  Identifier "alpha" @ 133..138
+                Dot "." @ 138..139
+                NameSegmentDotList
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "target" @ 139..145
+          Semicolon ";" @ 145..146
+        ProvidesDirective
+          Identifier "provides" @ 149..157 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "z" @ 158..159
+            Dot "." @ 159..160
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "Service" @ 160..167 trailing=[Whitespace " "]
+          ModuleImplementationClause
+            ModuleNameList
+              QualifiedName
+                QualifiedNameSegmentNode
+                  AnnotationList
+                  Identifier "implementation" @ 168..182
+                Dot "." @ 182..183
+                NameSegmentDotList
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "Type" @ 183..187
+          Semicolon ";" @ 187..188
+        ProvidesDirective
+          Identifier "provides" @ 191..199 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "a" @ 200..201
+            Dot "." @ 201..202
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "Service" @ 202..209 trailing=[Whitespace " "]
+          ModuleImplementationClause
+            Identifier "with" @ 210..214 trailing=[Whitespace " "]
+            ModuleNameList
+              QualifiedName
+                QualifiedNameSegmentNode
+                  AnnotationList
+                  Identifier "alpha" @ 215..220
+                Dot "." @ 220..221
+                NameSegmentDotList
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "Implementation" @ 221..235
+          Semicolon ";" @ 235..236
+      RBrace "}" @ 237..238 leading=[Newline "\n"]
+  Eof "" @ 239..239 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=43..49 message="expected `to` before module target list"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=103..109 message="expected `to` before module target list"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=168..182 message="expected `with` in provides directive"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(49) }) message=expected `to` before module target list
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(103), end: TextSize(109) }) message=expected `to` before module target list
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(168), end: TextSize(182) }) message=expected `with` in provides directive

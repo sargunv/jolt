@@ -9,9 +9,8 @@ world"
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       StringLiteral "\"hello\\" @ 0..7
       Identifier "world" @ 8..13 leading=[Newline "\n"]
       StringLiteral "\"" @ 13..14

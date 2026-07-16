@@ -23,8 +23,7 @@ class Ambiguities<T extends java.util.Map<String, java.util.List<Integer>>> {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     RecordDeclaration
       Identifier "record" @ 0..6 trailing=[Whitespace " "]
       Identifier "Box" @ 7..10

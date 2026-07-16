@@ -15,8 +15,7 @@ int after=2;
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     InterfaceDeclaration
       InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
       Identifier "Example" @ 10..17 trailing=[Whitespace " "]

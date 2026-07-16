@@ -12,8 +12,7 @@ class IntersectionCast {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "IntersectionCast" @ 6..22 trailing=[Whitespace " "]

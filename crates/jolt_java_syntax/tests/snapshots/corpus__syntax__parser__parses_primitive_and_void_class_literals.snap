@@ -14,8 +14,7 @@ class PrimitiveClassLiterals {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "PrimitiveClassLiterals" @ 6..28 trailing=[Whitespace " "]

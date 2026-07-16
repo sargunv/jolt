@@ -8,9 +8,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       StringLiteral "\"/* not a comment */\"" @ 0..21 trailing=[Whitespace " "]
       StringLiteral "\"// not a comment\"" @ 22..40
   Eof "" @ 40..40

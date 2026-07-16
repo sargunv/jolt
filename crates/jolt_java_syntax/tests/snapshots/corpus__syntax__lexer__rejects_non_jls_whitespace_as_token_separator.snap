@@ -8,9 +8,8 @@ staticvoid static void
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       StaticKw "static" @ 0..6
       Unknown "\u{b}" @ 6..7
       VoidKw "void" @ 7..11 trailing=[Whitespace " "]

@@ -1,0 +1,14 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+// JOLT-TRIVIA:eof-leading
+/* JOLT-TRIVIA:eof-trailing */
+
+formatted:
+// JOLT-TRIVIA:eof-leading
+/* JOLT-TRIVIA:eof-trailing */
+
+diagnostics:
+(none)

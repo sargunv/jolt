@@ -15,8 +15,7 @@ class IntersectionTypeShapes<T extends A & B> {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     InterfaceDeclaration
       InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
       Identifier "A" @ 10..11 trailing=[Whitespace " "]

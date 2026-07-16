@@ -139,8 +139,7 @@ static class Block18JavadocOutput {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 65..70 leading=[LineComment "// Origin: https://github.com/google/google-java-format/wiki/FAQ", Newline "\n"] trailing=[Whitespace " "]
       Identifier "GoogleJavaFormatFaqSnippets" @ 71..98 trailing=[Whitespace " "]

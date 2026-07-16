@@ -29,8 +29,7 @@ enum Mode {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     RecordDeclaration
       Identifier "record" @ 30..36 leading=[DocComment "/** JOLT-TRIVIA:record-doc */", Newline "\n"] trailing=[Whitespace " "]
       Identifier "Box" @ 37..40

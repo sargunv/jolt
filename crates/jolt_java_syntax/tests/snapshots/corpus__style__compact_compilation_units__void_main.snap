@@ -10,8 +10,7 @@ void main() {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     MethodDeclaration
       VoidType
         VoidKw "void" @ 0..4 trailing=[Whitespace " "]

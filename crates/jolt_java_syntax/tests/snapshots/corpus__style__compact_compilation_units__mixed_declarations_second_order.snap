@@ -17,13 +17,13 @@ enum Status{READY}
 syntax:
 syntax:
 CompilationUnit
-  PackageDeclaration
-    AnnotationList
-    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
-    Name
-      Identifier "demo" @ 8..12
-    Semicolon ";" @ 12..13
-  ImportDeclarationList
+  CompilationUnitItemList
+    PackageDeclaration
+      AnnotationList
+      PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+      Name
+        Identifier "demo" @ 8..12
+      Semicolon ";" @ 12..13
     ImportDeclaration
       ImportKw "import" @ 14..20 leading=[Newline "\n"] trailing=[Whitespace " "]
       QualifiedName
@@ -40,7 +40,6 @@ CompilationUnit
             AnnotationList
             Identifier "Map" @ 31..34
       Semicolon ";" @ 34..35
-  CompilationUnitDeclarationList
     EmptyDeclaration
       Semicolon ";" @ 36..37 leading=[Newline "\n"]
     MethodDeclaration

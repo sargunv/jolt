@@ -18,14 +18,15 @@ pub use conservation::{
     ConservationError, SourceIdentity, SourceTokenId, SourceTriviaId, SourceTriviaPiece,
     SourceTriviaSide, SyntaxConservationTracker, SyntaxVerbatimCore,
 };
-pub use event::{CompletedMarker, Event, Marker};
+pub use event::{CompletedMarker, Event, Marker, NodeAnchor};
 pub use kind::RawSyntaxKind;
 pub use language::Language;
 pub use normalization::{
     NormalizedToken, RemovalClaim, RemovalReason, ReplacementClaim, SynthesisClaim,
 };
 pub use parser::{
-    CursorCheckpoint, LanguageLexer, LexedToken, ParseEvents, Parser, TokenBuffer, TokenCursor,
+    CursorCheckpoint, DiagnosticMarker, LanguageLexer, LexedToken, ParseEvents, Parser,
+    TokenBuffer, TokenCursor, UnresolvedDiagnosticOwner,
 };
 pub use red::{
     SyntaxElement, SyntaxNode, SyntaxSlot, SyntaxToken, represented_range_is_trivia,
@@ -34,10 +35,11 @@ pub use red::{
 #[cfg(feature = "bench")]
 pub use syntax_tree::SyntaxTreeMetrics;
 pub use syntax_tree::{
-    BuildSyntaxTreeError, SyntaxTokenData, SyntaxTree, SyntaxTrivia, TriviaKind,
+    BuildSyntaxTreeError, SyntaxDiagnosticOwner, SyntaxNodeId, SyntaxTokenData, SyntaxTree,
+    SyntaxTrivia, TriviaKind,
 };
 #[doc(hidden)]
 pub use syntax_tree::{
     FactoryNode, FactorySlot, ParsedChildren, SyntaxFactory, SyntaxTreeSink,
-    build_syntax_tree_with_factory,
+    build_syntax_tree_with_factory, build_syntax_tree_with_factory_and_diagnostic_owners,
 };

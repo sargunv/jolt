@@ -8,8 +8,7 @@ class C<T, /* type */ , U> { @A(x = 1, /* ann */ , y = 2) void m(int a, /* param
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "C" @ 6..7

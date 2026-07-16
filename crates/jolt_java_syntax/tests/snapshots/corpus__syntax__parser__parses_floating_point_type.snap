@@ -11,8 +11,7 @@ class FloatingPointTypes {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "FloatingPointTypes" @ 6..24 trailing=[Whitespace " "]

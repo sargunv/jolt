@@ -18,24 +18,24 @@ class ImportTrivia {
 syntax:
 syntax:
 CompilationUnit
-  PackageDeclaration
-    AnnotationList
-    PackageKw "package" @ 30..37 leading=[BlockComment "/* JOLT-TRIVIA:file-header */", Newline "\n"] trailing=[Whitespace " "]
-    QualifiedName
-      QualifiedNameSegmentNode
-        AnnotationList
-        Identifier "com" @ 38..41 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:package-mid */", Whitespace " "]
-      Dot "." @ 72..73
-      NameSegmentDotList
+  CompilationUnitItemList
+    PackageDeclaration
+      AnnotationList
+      PackageKw "package" @ 30..37 leading=[BlockComment "/* JOLT-TRIVIA:file-header */", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
         QualifiedNameSegmentNode
           AnnotationList
-          Identifier "example" @ 73..80
-        Dot "." @ 80..81
-        QualifiedNameSegmentNode
-          AnnotationList
-          Identifier "trivia" @ 81..87
-    Semicolon ";" @ 87..88 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:package-tail"]
-  ImportDeclarationList
+          Identifier "com" @ 38..41 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:package-mid */", Whitespace " "]
+        Dot "." @ 72..73
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "example" @ 73..80
+          Dot "." @ 80..81
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "trivia" @ 81..87
+      Semicolon ";" @ 87..88 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:package-tail"]
     ImportDeclaration
       ImportKw "import" @ 148..154 leading=[Newline "\n", Newline "\n", LineComment "// JOLT-TRIVIA:before-imports", Newline "\n"] trailing=[Whitespace " "]
       QualifiedName
@@ -73,7 +73,6 @@ CompilationUnit
             AnnotationList
             Identifier "emptyList" @ 274..283
       Semicolon ";" @ 283..284
-  CompilationUnitDeclarationList
     ClassDeclaration
       ClassKw "class" @ 315..320 leading=[Newline "\n", LineComment "// JOLT-TRIVIA:after-imports", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Identifier "ImportTrivia" @ 321..333 trailing=[Whitespace " "]

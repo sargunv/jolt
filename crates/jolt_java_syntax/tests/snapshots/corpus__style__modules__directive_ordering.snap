@@ -15,15 +15,14 @@ module demo {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  ModuleDeclaration
-    AnnotationList
-    Identifier "module" @ 0..6 trailing=[Whitespace " "]
-    Name
-      Identifier "demo" @ 7..11 trailing=[Whitespace " "]
-    LBrace "{" @ 12..13
-    ModuleDirectiveList
-      ModuleDirective
+  CompilationUnitItemList
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 0..6 trailing=[Whitespace " "]
+      Name
+        Identifier "demo" @ 7..11 trailing=[Whitespace " "]
+      LBrace "{" @ 12..13
+      ModuleDirectiveList
         ProvidesDirective
           Identifier "provides" @ 16..24 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
           QualifiedName
@@ -39,27 +38,27 @@ CompilationUnit
               QualifiedNameSegmentNode
                 AnnotationList
                 Identifier "Plugin" @ 37..43 trailing=[Whitespace " "]
-          Identifier "with" @ 44..48 trailing=[Whitespace " "]
-          NameList
-            QualifiedName
-              QualifiedNameSegmentNode
-                AnnotationList
-                Identifier "com" @ 49..52
-              Dot "." @ 52..53
-              NameSegmentDotList
+          ModuleImplementationClause
+            Identifier "with" @ 44..48 trailing=[Whitespace " "]
+            ModuleNameList
+              QualifiedName
                 QualifiedNameSegmentNode
                   AnnotationList
-                  Identifier "example" @ 53..60
-                Dot "." @ 60..61
-                QualifiedNameSegmentNode
-                  AnnotationList
-                  Identifier "impl" @ 61..65
-                Dot "." @ 65..66
-                QualifiedNameSegmentNode
-                  AnnotationList
-                  Identifier "PluginImpl" @ 66..76
+                  Identifier "com" @ 49..52
+                Dot "." @ 52..53
+                NameSegmentDotList
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "example" @ 53..60
+                  Dot "." @ 60..61
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "impl" @ 61..65
+                  Dot "." @ 65..66
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "PluginImpl" @ 66..76
           Semicolon ";" @ 76..77
-      ModuleDirective
         OpensDirective
           Identifier "opens" @ 80..85 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
           QualifiedName
@@ -75,9 +74,7 @@ CompilationUnit
               QualifiedNameSegmentNode
                 AnnotationList
                 Identifier "internal" @ 98..106
-          NameList
           Semicolon ";" @ 106..107
-      ModuleDirective
         RequiresDirective
           Identifier "requires" @ 110..118 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
           RequiresModifierList
@@ -97,7 +94,6 @@ CompilationUnit
                 AnnotationList
                 Identifier "lib" @ 149..152
           Semicolon ";" @ 152..153
-      ModuleDirective
         ExportsDirective
           Identifier "exports" @ 156..163 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
           QualifiedName
@@ -113,9 +109,7 @@ CompilationUnit
               QualifiedNameSegmentNode
                 AnnotationList
                 Identifier "api" @ 176..179
-          NameList
           Semicolon ";" @ 179..180
-      ModuleDirective
         UsesDirective
           Identifier "uses" @ 183..187 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
           QualifiedName
@@ -132,7 +126,6 @@ CompilationUnit
                 AnnotationList
                 Identifier "Plugin" @ 200..206
           Semicolon ";" @ 206..207
-      ModuleDirective
         RequiresDirective
           Identifier "requires" @ 210..218 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
           RequiresModifierList
@@ -146,8 +139,7 @@ CompilationUnit
                 AnnotationList
                 Identifier "sql" @ 224..227
           Semicolon ";" @ 227..228
-    RBrace "}" @ 229..230 leading=[Newline "\n"]
-  CompilationUnitDeclarationList
+      RBrace "}" @ 229..230 leading=[Newline "\n"]
   Eof "" @ 231..231 leading=[Newline "\n"]
 
 diagnostics:

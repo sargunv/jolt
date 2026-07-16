@@ -8,9 +8,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       FloatingPointLiteral "0x1.fffffeP+127f" @ 0..16 trailing=[Whitespace " "]
       FloatingPointLiteral "0x1.0P-149f" @ 17..28 trailing=[Whitespace " "]
       FloatingPointLiteral "0x1.f_ffff_ffff_ffffP+1023" @ 29..55 trailing=[Whitespace " "]

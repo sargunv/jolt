@@ -706,15 +706,16 @@ identity. Each vertical phase must introduce exact node or missing-slot
 ownership for the structural diagnostics it migrates; Phase 24 enables the
 workspace-wide bidirectional proof after that inventory is complete.
 
-Implementation status: **implemented, gate-green, and uncommitted**. The public
-raw tree builder and red-node generic-error fallback are gone. The 1,188-line
-generic schema interpreter is replaced by a small physical-tree inventory plus
-language-local test expansion of the production schema; the expansion checks
-slot count, exact token/node/category kinds, required empties, list alternation,
-parent/index links, and malformed ownership without retaining a second runtime
-shape model. Ten Java and twelve Kotlin diagnostic list shapes are now correctly
-reported as missing required physical slots instead of unexpected reconstructed
-child sequences; clean/exact/malformed counts are unchanged.
+Implementation status: **implemented, gate-green, committed, and pushed**. The
+public raw tree builder and red-node generic-error fallback are gone. The
+1,188-line generic schema interpreter is replaced by a small physical-tree
+inventory plus language-local test expansion of the production schema; the
+expansion checks slot count, exact token/node/category kinds, required empties,
+list alternation, parent/index links, and malformed ownership without retaining
+a second runtime shape model. Ten Java and twelve Kotlin diagnostic list shapes
+are now correctly reported as missing required physical slots instead of
+unexpected reconstructed child sequences; clean/exact/malformed counts are
+unchanged.
 
 Debug/test recovery-free render completion now rejects every malformed-verbatim
 ledger entry. The architecture test freezes generic `ErrorNode` use by grammar
@@ -743,6 +744,39 @@ a red test or snapshots a nonempty failure list.
 Vertically migrate compilation units, packages, imports, modules/directives, EOF
 comments, and sorting barriers. Valid nodes remain structured; malformed spans
 use the narrowest category-compatible bogus owner.
+
+Implementation status: **implemented, focused-gate-green, and uncommitted for
+review**. `CompilationUnit` now owns one ordered `CompilationUnitItemList`;
+packages, imports, modules, declarations, removable empty declarations, and
+`BogusCompilationUnitItem` share that source-order-preserving category. Module
+directive lists directly contain the generated `ModuleDirective` category
+instead of a redundant wrapper node. Import recovery owns only a
+`BogusImportSuffix`, and the scoped parser no longer constructs `ErrorNode`.
+
+The parser now attaches each migrated structural diagnostic to either an exact
+node identity or an exact generated missing-slot index. Parser event anchors are
+resolved while the physical tree is built; clean parses do not allocate that
+temporary resolver. Focused proof tests check reachable owners, empty owned
+slots, and both directions for the three scoped bogus kinds. Formatters consume
+the ordered typed views, treat malformed/commented items as sorting barriers,
+allow commentless syntax-authorized empty declarations to disappear inside an
+import run, and retain explicit O(r log r) time/O(r) scratch bounds per bounded
+run. The old program/module raw-document recovery streams, broad scoped verbatim
+wrappers, and dead comment helper module are deleted.
+
+Four historical fixture scopes are restored, and the six deferred prettier
+package/import paths now pass reconstruction, exact authorized-removal-aware
+token conservation, represented-comment conservation, reparse, determinism, and
+idempotence gates. The imported corpus also exposed adjacent unary operator
+fusion (`- -1` to `--1`, `+ +1` to `++1`); that valid-expression lexical-safety
+regression is recorded for Phase 14 rather than hidden by Phase 11's scoped
+gate.
+
+The Phase 11 review point is +26,461/-24,368 implementation lines, net +2,093
+from `2197128`: 361 lines above Phase 10 because this first vertical phase adds
+the reusable exact diagnostic-owner identity/proof path. Fixtures, snapshots,
+reports, and documentation are excluded; tests and test support are included.
+The final roadmap remains responsible for crossing below zero.
 
 ### New Phase 12: Java Names, Types, And Declaration Prefixes
 

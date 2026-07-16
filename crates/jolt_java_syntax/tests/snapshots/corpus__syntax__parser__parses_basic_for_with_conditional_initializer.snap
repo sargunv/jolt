@@ -13,8 +13,7 @@ class BasicForConditionalInitializer {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "BasicForConditionalInitializer" @ 6..36 trailing=[Whitespace " "]

@@ -8,8 +8,7 @@ sealed class C extends Base, /* extends */ , Other implements A, /* implements *
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ModifierList
         Identifier "sealed" @ 0..6 trailing=[Whitespace " "]

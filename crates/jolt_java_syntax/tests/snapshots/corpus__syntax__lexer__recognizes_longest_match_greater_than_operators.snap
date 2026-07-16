@@ -8,8 +8,7 @@ a >>>= b >>> c >>= d >> e >= f > g
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     FieldDeclaration
       ClassType
         ClassTypeSegmentList
@@ -19,7 +18,7 @@ CompilationUnit
               Identifier "a" @ 0..1 trailing=[Whitespace " "]
       VariableDeclaratorList
         VariableDeclarator
-    BogusTypeDeclaration
+    BogusCompilationUnitItem
       Gt ">" @ 2..3
       Gt ">" @ 3..4
       Gt ">" @ 4..5

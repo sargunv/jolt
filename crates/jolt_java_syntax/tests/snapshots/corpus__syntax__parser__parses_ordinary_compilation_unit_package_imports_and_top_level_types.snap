@@ -18,24 +18,24 @@ interface B {}
 syntax:
 syntax:
 CompilationUnit
-  PackageDeclaration
-    AnnotationList
-      Annotation
-        At "@" @ 0..1
-        Name
-          Identifier "Deprecated" @ 1..11
-    PackageKw "package" @ 12..19 leading=[Newline "\n"] trailing=[Whitespace " "]
-    QualifiedName
-      QualifiedNameSegmentNode
-        AnnotationList
-        Identifier "example" @ 20..27
-      Dot "." @ 27..28
-      NameSegmentDotList
+  CompilationUnitItemList
+    PackageDeclaration
+      AnnotationList
+        Annotation
+          At "@" @ 0..1
+          Name
+            Identifier "Deprecated" @ 1..11
+      PackageKw "package" @ 12..19 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
         QualifiedNameSegmentNode
           AnnotationList
-          Identifier "parser" @ 28..34
-    Semicolon ";" @ 34..35
-  ImportDeclarationList
+          Identifier "example" @ 20..27
+        Dot "." @ 27..28
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "parser" @ 28..34
+      Semicolon ";" @ 34..35
     ImportDeclaration
       ImportKw "import" @ 37..43 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       QualifiedName
@@ -119,7 +119,6 @@ CompilationUnit
             AnnotationList
             Identifier "base" @ 185..189
       Semicolon ";" @ 189..190
-  CompilationUnitDeclarationList
     ClassDeclaration
       ClassKw "class" @ 192..197 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Identifier "A" @ 198..199 trailing=[Whitespace " "]

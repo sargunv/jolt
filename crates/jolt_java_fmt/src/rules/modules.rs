@@ -2,8 +2,10 @@ use std::ops::Range;
 
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
-    ExportsDirective, JavaSyntaxView, ModuleDeclaration, ModuleDirective, ModuleDirectiveNode,
-    NameList, NameSyntax, OpensDirective, ProvidesDirective, RequiresDirective, UsesDirective,
+    ExportsDirective, JavaMalformedSyntax, JavaMissingSyntax, JavaSyntaxToken, JavaSyntaxView,
+    ModuleDeclaration, ModuleDirective, ModuleImplementationClause, ModuleNameList,
+    ModuleTargetClause, NameSyntax, OpensDirective, ProvidesDirective, RequiresDirective,
+    UsesDirective,
 };
 
 use crate::helpers::blocks::join_empty_lines;
@@ -18,8 +20,8 @@ use crate::helpers::formatter_ignore::{
     relative_token_range_between,
 };
 use crate::helpers::recovery::{
-    JavaFormatListPart, format_malformed, format_optional_field, format_or_verbatim,
-    format_required_field, resolve_list_part,
+    JavaFormatListPart, format_malformed, format_optional_field, format_required_field,
+    resolve_list_part,
 };
 use crate::rules::annotations::format_annotation;
 use crate::rules::names::{NameSortKey, format_name};
@@ -28,28 +30,26 @@ pub(crate) fn format_module_declaration<'source>(
     module: &ModuleDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(module, doc, |doc| {
+    {
         let annotations = format_required_field(module.annotations(), doc, |list, doc| {
-            format_or_verbatim(&list, doc, |doc| {
-                doc.concat_list(|docs| {
-                    for part in list.parts() {
-                        match resolve_list_part(part, docs) {
-                            JavaFormatListPart::Item(annotation) => {
-                                if !docs.is_empty() {
-                                    let line = docs.hard_line();
-                                    docs.push(line);
-                                }
-                                let annotation = format_annotation(&annotation, docs);
-                                docs.push(annotation);
+            doc.concat_list(|docs| {
+                for part in list.parts() {
+                    match resolve_list_part(part, docs) {
+                        JavaFormatListPart::Item(annotation) => {
+                            if !docs.is_empty() {
+                                let line = docs.hard_line();
+                                docs.push(line);
                             }
-                            JavaFormatListPart::Separator(separator) => {
-                                let separator = format_token_with_comments(docs, &separator);
-                                docs.push(separator);
-                            }
-                            JavaFormatListPart::Malformed(malformed) => docs.push(malformed),
+                            let annotation = format_annotation(&annotation, docs);
+                            docs.push(annotation);
                         }
+                        JavaFormatListPart::Separator(separator) => {
+                            let separator = format_token_with_comments(docs, &separator);
+                            docs.push(separator);
+                        }
+                        JavaFormatListPart::Malformed(malformed) => docs.push(malformed),
                     }
-                })
+                }
             })
         });
         let open = format_optional_field(module.open_keyword(), doc, |token, doc| {
@@ -80,7 +80,7 @@ pub(crate) fn format_module_declaration<'source>(
         } else {
             doc_concat!(doc, [annotations, doc.hard_line(), declaration])
         }
-    })
+    }
 }
 
 fn format_module_directives<'source>(
@@ -88,7 +88,7 @@ fn format_module_directives<'source>(
     list: &jolt_java_syntax::ModuleDirectiveList<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(list, doc, |doc| {
+    {
         let parts = list.parts();
         let mut entries = Vec::with_capacity(parts.size_hint().0);
         for part in parts {
@@ -97,38 +97,13 @@ fn format_module_directives<'source>(
                     entries.push(DirectiveEntry::Node(item));
                 }
                 Ok(jolt_java_syntax::JavaSyntaxListPart::Separator(token)) => {
-                    entries.push(DirectiveEntry::Raw(
-                        format_token_with_comments(doc, &token),
-                        Some(relative_token_range_between(
-                            &token,
-                            &token,
-                            module.text_range().start().get(),
-                        )),
-                    ));
+                    entries.push(DirectiveEntry::Token(token));
                 }
                 Ok(jolt_java_syntax::JavaSyntaxListPart::Malformed(malformed)) => {
-                    let range = malformed.syntax_node().and_then(|syntax| {
-                        syntax
-                            .first_token()
-                            .zip(syntax.last_token())
-                            .map(|(first, last)| {
-                                relative_token_range_between(
-                                    &first,
-                                    &last,
-                                    module.text_range().start().get(),
-                                )
-                            })
-                    });
-                    entries.push(DirectiveEntry::Raw(
-                        format_malformed(&malformed, doc),
-                        range,
-                    ));
+                    entries.push(DirectiveEntry::Malformed(malformed));
                 }
                 Ok(jolt_java_syntax::JavaSyntaxListPart::Missing(missing)) => {
-                    entries.push(DirectiveEntry::Raw(
-                        crate::helpers::recovery::format_missing(&missing, doc),
-                        None,
-                    ));
+                    entries.push(DirectiveEntry::Missing(missing));
                 }
                 Err(error) => doc.block_on_invariant(error.to_string()),
             }
@@ -147,12 +122,14 @@ fn format_module_directives<'source>(
             .collect::<Vec<_>>();
         let runs = formatter_ignore_runs(&ignored, &ranges);
         format_directive_entries_with_ignored(entries, &runs, doc)
-    })
+    }
 }
 
 enum DirectiveEntry<'source> {
-    Node(ModuleDirectiveNode<'source>),
-    Raw(Doc<'source>, Option<Range<usize>>),
+    Node(ModuleDirective<'source>),
+    Token(JavaSyntaxToken<'source>),
+    Malformed(JavaMalformedSyntax<'source>),
+    Missing(JavaMissingSyntax<'source>),
 }
 
 impl DirectiveEntry<'_> {
@@ -163,7 +140,16 @@ impl DirectiveEntry<'_> {
                 &node.last_token()?,
                 module_start,
             )),
-            Self::Raw(_, range) => range.clone(),
+            Self::Token(token) => Some(relative_token_range_between(token, token, module_start)),
+            Self::Malformed(malformed) => {
+                let syntax = malformed.syntax_node()?;
+                Some(relative_token_range_between(
+                    &syntax.first_token()?,
+                    &syntax.last_token()?,
+                    module_start,
+                ))
+            }
+            Self::Missing(_) => None,
         }
     }
 }
@@ -252,12 +238,26 @@ fn format_directive_entries<'source>(
                     sections.push(format_directive_node(&node, doc));
                 }
             }
-            DirectiveEntry::Raw(raw, _) => {
+            DirectiveEntry::Token(token) => {
                 if sections.capacity() == 0 {
                     sections.reserve_exact(entry_count);
                 }
                 flush_directives(&mut sortable, &mut sections, doc);
-                sections.push(raw);
+                sections.push(format_token_with_comments(doc, &token));
+            }
+            DirectiveEntry::Malformed(malformed) => {
+                if sections.capacity() == 0 {
+                    sections.reserve_exact(entry_count);
+                }
+                flush_directives(&mut sortable, &mut sections, doc);
+                sections.push(format_malformed(&malformed, doc));
+            }
+            DirectiveEntry::Missing(missing) => {
+                if sections.capacity() == 0 {
+                    sections.reserve_exact(entry_count);
+                }
+                flush_directives(&mut sortable, &mut sections, doc);
+                sections.push(crate::helpers::recovery::format_missing(&missing, doc));
             }
         }
     }
@@ -285,6 +285,8 @@ fn flush_directives<'source>(
 }
 
 fn sort_directives_if_needed(directives: &mut [FormattedDirective<'_>]) {
+    // Each recovery-, ignore-, and comment-delimited run has
+    // `r <= represented tokens`; sorting is O(r log r) time and O(r) scratch.
     let compare = |left: &FormattedDirective<'_>, right: &FormattedDirective<'_>| {
         left.kind
             .cmp(&right.kind)
@@ -330,35 +332,30 @@ enum DirectiveKind {
 }
 
 struct FormattedDirective<'source> {
-    node: ModuleDirectiveNode<'source>,
+    node: ModuleDirective<'source>,
     kind: DirectiveKind,
     key: NameSortKey<'source>,
 }
 
 impl<'source> FormattedDirective<'source> {
-    fn new(node: ModuleDirectiveNode<'source>) -> Option<Self> {
+    fn new(node: ModuleDirective<'source>) -> Option<Self> {
         if !node.is_recovery_free() {
             return None;
         }
-        let directive = match node.directive().ok()? {
-            jolt_java_syntax::JavaSyntaxField::Present(directive) => directive,
-            jolt_java_syntax::JavaSyntaxField::Missing(_)
-            | jolt_java_syntax::JavaSyntaxField::Malformed(_) => return None,
-        };
-        let (kind, key) = match directive {
-            ModuleDirective::RequiresDirective(value) if requires_is_sortable(&value) => {
+        let (kind, key) = match &node {
+            ModuleDirective::RequiresDirective(value) if requires_is_sortable(value) => {
                 (DirectiveKind::Requires, name_key(value.module())?)
             }
-            ModuleDirective::ExportsDirective(value) if exports_is_sortable(&value) => {
+            ModuleDirective::ExportsDirective(value) if exports_is_sortable(value) => {
                 (DirectiveKind::Exports, name_key(value.package())?)
             }
-            ModuleDirective::OpensDirective(value) if opens_is_sortable(&value) => {
+            ModuleDirective::OpensDirective(value) if opens_is_sortable(value) => {
                 (DirectiveKind::Opens, name_key(value.package())?)
             }
-            ModuleDirective::UsesDirective(value) if uses_is_sortable(&value) => {
+            ModuleDirective::UsesDirective(value) if uses_is_sortable(value) => {
                 (DirectiveKind::Uses, name_key(value.service())?)
             }
-            ModuleDirective::ProvidesDirective(value) if provides_is_sortable(&value) => {
+            ModuleDirective::ProvidesDirective(value) if provides_is_sortable(value) => {
                 (DirectiveKind::Provides, name_key(value.service())?)
             }
             _ => return None,
@@ -392,20 +389,6 @@ fn required<T>(
     matches!(field, Ok(jolt_java_syntax::JavaSyntaxField::Present(_)))
 }
 
-#[allow(clippy::needless_pass_by_value)]
-fn optional<T>(
-    field: Result<
-        jolt_java_syntax::JavaSyntaxField<'_, T>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
-) -> bool {
-    matches!(
-        field,
-        Ok(jolt_java_syntax::JavaSyntaxField::Present(_)
-            | jolt_java_syntax::JavaSyntaxField::Missing(_))
-    )
-}
-
 fn requires_is_sortable(value: &RequiresDirective<'_>) -> bool {
     required(value.requires_keyword())
         && matches!(value.modifiers(), Ok(jolt_java_syntax::JavaSyntaxField::Present(ref list)) if list.is_recovery_free())
@@ -416,16 +399,14 @@ fn requires_is_sortable(value: &RequiresDirective<'_>) -> bool {
 fn exports_is_sortable(value: &ExportsDirective<'_>) -> bool {
     required(value.exports_keyword())
         && name_key(value.package()).is_some()
-        && optional(value.to_keyword())
-        && matches!(value.targets(), Ok(jolt_java_syntax::JavaSyntaxField::Present(ref list)) if list.is_recovery_free())
+        && optional_target_is_sortable(value.targets())
         && required(value.semicolon())
 }
 
 fn opens_is_sortable(value: &OpensDirective<'_>) -> bool {
     required(value.opens_keyword())
         && name_key(value.package()).is_some()
-        && optional(value.to_keyword())
-        && matches!(value.targets(), Ok(jolt_java_syntax::JavaSyntaxField::Present(ref list)) if list.is_recovery_free())
+        && optional_target_is_sortable(value.targets())
         && required(value.semicolon())
 }
 
@@ -438,26 +419,42 @@ fn uses_is_sortable(value: &UsesDirective<'_>) -> bool {
 fn provides_is_sortable(value: &ProvidesDirective<'_>) -> bool {
     required(value.provides_keyword())
         && name_key(value.service()).is_some()
-        && required(value.with_keyword())
-        && matches!(value.implementations(), Ok(jolt_java_syntax::JavaSyntaxField::Present(ref list)) if list.is_recovery_free())
+        && matches!(value.implementation(), Ok(jolt_java_syntax::JavaSyntaxField::Present(ref clause)) if clause.is_recovery_free())
         && required(value.semicolon())
 }
 
+#[allow(clippy::needless_pass_by_value)]
+fn optional_target_is_sortable(
+    field: Result<
+        jolt_java_syntax::JavaSyntaxField<'_, ModuleTargetClause<'_>>,
+        jolt_java_syntax::JavaSyntaxInvariantError,
+    >,
+) -> bool {
+    match field {
+        Ok(jolt_java_syntax::JavaSyntaxField::Present(value)) => value.is_recovery_free(),
+        Ok(jolt_java_syntax::JavaSyntaxField::Missing(_)) => true,
+        Ok(jolt_java_syntax::JavaSyntaxField::Malformed(_)) | Err(_) => false,
+    }
+}
+
 fn format_directive_node<'source>(
-    node: &ModuleDirectiveNode<'source>,
+    node: &ModuleDirective<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(node, doc, |doc| {
+    if let ModuleDirective::BogusModuleDirective(bogus) = node {
+        return format_malformed(bogus, doc);
+    }
+    {
         let first = node.first_token();
         let last = node.last_token();
-        let body = format_required_field(node.directive(), doc, |directive, doc| match directive {
-            ModuleDirective::RequiresDirective(value) => format_requires(&value, doc),
-            ModuleDirective::ExportsDirective(value) => format_exports(&value, doc),
-            ModuleDirective::OpensDirective(value) => format_opens(&value, doc),
-            ModuleDirective::UsesDirective(value) => format_uses(&value, doc),
-            ModuleDirective::ProvidesDirective(value) => format_provides(&value, doc),
-            ModuleDirective::BogusModuleDirective(value) => format_malformed(&value, doc),
-        });
+        let body = match node {
+            ModuleDirective::RequiresDirective(value) => format_requires(value, doc),
+            ModuleDirective::ExportsDirective(value) => format_exports(value, doc),
+            ModuleDirective::OpensDirective(value) => format_opens(value, doc),
+            ModuleDirective::UsesDirective(value) => format_uses(value, doc),
+            ModuleDirective::ProvidesDirective(value) => format_provides(value, doc),
+            ModuleDirective::BogusModuleDirective(_) => unreachable!(),
+        };
         let trailing = last.map_or_else(Doc::nil, |token| {
             format_inline_trailing_comment_list(doc, token.trailing_comments())
         });
@@ -479,7 +476,7 @@ fn format_directive_node<'source>(
         } else {
             doc_concat!(doc, [body, trailing])
         }
-    })
+    }
 }
 
 fn keyword<'source>(
@@ -520,35 +517,33 @@ fn format_requires<'source>(
     value: &RequiresDirective<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(value, doc, |doc| {
+    {
         let modifiers = format_required_field(value.modifiers(), doc, |list, doc| {
-            format_or_verbatim(&list, doc, |doc| {
-                let mut modifiers = list
-                    .parts()
-                    .map(|part| resolve_list_part(part, doc))
-                    .collect::<Vec<_>>();
-                sort_requires_modifier_runs(&mut modifiers);
-                doc.concat_list(|parts| {
-                    for part in modifiers {
-                        match part {
-                            JavaFormatListPart::Item(item) => {
-                                let Some(token) = item.token() else {
-                                    parts.block_on_invariant("requires modifier was not a token");
-                                    continue;
-                                };
-                                let token = format_token_with_comments(parts, &token);
-                                parts.push(token);
-                                let space = parts.space();
-                                parts.push(space);
-                            }
-                            JavaFormatListPart::Separator(token) => {
-                                let token = format_token_with_comments(parts, &token);
-                                parts.push(token);
-                            }
-                            JavaFormatListPart::Malformed(raw) => parts.push(raw),
+            let mut modifiers = list
+                .parts()
+                .map(|part| resolve_list_part(part, doc))
+                .collect::<Vec<_>>();
+            sort_requires_modifier_runs(&mut modifiers);
+            doc.concat_list(|parts| {
+                for part in modifiers {
+                    match part {
+                        JavaFormatListPart::Item(item) => {
+                            let Some(token) = item.token() else {
+                                parts.block_on_invariant("requires modifier was not a token");
+                                continue;
+                            };
+                            let token = format_token_with_comments(parts, &token);
+                            parts.push(token);
+                            let space = parts.space();
+                            parts.push(space);
                         }
+                        JavaFormatListPart::Separator(token) => {
+                            let token = format_token_with_comments(parts, &token);
+                            parts.push(token);
+                        }
+                        JavaFormatListPart::Malformed(raw) => parts.push(raw),
                     }
-                })
+                }
             })
         });
         let module =
@@ -562,12 +557,14 @@ fn format_requires<'source>(
                 semicolon(value.semicolon(), doc)
             ]
         )
-    })
+    }
 }
 
 fn sort_requires_modifier_runs<'source>(
     parts: &mut [JavaFormatListPart<'source, jolt_java_syntax::RequiresModifier<'source>>],
 ) {
+    // Each malformed- or comment-delimited run has `r <= represented tokens`;
+    // sorting is O(r log r) time and O(r) scratch.
     let is_barrier = |part: &JavaFormatListPart<
         'source,
         jolt_java_syntax::RequiresModifier<'source>,
@@ -597,9 +594,9 @@ fn requires_modifier_order(
 ) -> u8 {
     match part {
         JavaFormatListPart::Item(modifier)
-            if modifier
-                .token()
-                .is_some_and(|token| token.text() == "static") =>
+            if modifier.token().is_some_and(|token| {
+                token.kind() == jolt_java_syntax::JavaSyntaxKind::StaticKw
+            }) =>
         {
             0
         }
@@ -613,10 +610,8 @@ fn format_exports<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     format_named_list_directive(
-        value,
         value.exports_keyword(),
         value.package(),
-        value.to_keyword(),
         value.targets(),
         value.semicolon(),
         doc,
@@ -628,10 +623,8 @@ fn format_opens<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     format_named_list_directive(
-        value,
         value.opens_keyword(),
         value.package(),
-        value.to_keyword(),
         value.targets(),
         value.semicolon(),
         doc,
@@ -642,7 +635,7 @@ fn format_uses<'source>(
     value: &UsesDirective<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(value, doc, |doc| {
+    {
         doc_concat!(
             doc,
             [
@@ -651,37 +644,32 @@ fn format_uses<'source>(
                 semicolon(value.semicolon(), doc),
             ]
         )
-    })
+    }
 }
 
 fn format_provides<'source>(
     value: &ProvidesDirective<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(value, doc, |doc| {
+    {
         let service =
             format_required_field(value.service(), doc, |name, doc| format_name(&name, doc));
-        let with = format_required_field(value.with_keyword(), doc, |token, doc| {
-            doc_concat!(doc, [doc.space(), format_token_with_comments(doc, &token)])
-        });
-        let implementations = format_required_field(value.implementations(), doc, |list, doc| {
-            format_name_list(&list, doc)
+        let implementation = format_required_field(value.implementation(), doc, |clause, doc| {
+            format_module_implementation_clause(&clause, doc)
         });
         doc_concat!(
             doc,
             [
                 keyword(value.provides_keyword(), doc),
                 service,
-                with,
-                implementations,
+                implementation,
                 semicolon(value.semicolon(), doc),
             ]
         )
-    })
+    }
 }
 
-fn format_named_list_directive<'source, V: JavaSyntaxView<'source>>(
-    owner: &V,
+fn format_named_list_directive<'source>(
     keyword_field: Result<
         jolt_java_syntax::JavaSyntaxField<'source, jolt_java_syntax::JavaSyntaxToken<'source>>,
         jolt_java_syntax::JavaSyntaxInvariantError,
@@ -690,12 +678,8 @@ fn format_named_list_directive<'source, V: JavaSyntaxView<'source>>(
         jolt_java_syntax::JavaSyntaxField<'source, NameSyntax<'source>>,
         jolt_java_syntax::JavaSyntaxInvariantError,
     >,
-    connective_field: Result<
-        jolt_java_syntax::JavaSyntaxField<'source, jolt_java_syntax::JavaSyntaxToken<'source>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
-    names_field: Result<
-        jolt_java_syntax::JavaSyntaxField<'source, NameList<'source>>,
+    targets_field: Result<
+        jolt_java_syntax::JavaSyntaxField<'source, ModuleTargetClause<'source>>,
         jolt_java_syntax::JavaSyntaxInvariantError,
     >,
     semicolon_field: Result<
@@ -704,42 +688,73 @@ fn format_named_list_directive<'source, V: JavaSyntaxView<'source>>(
     >,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(owner, doc, |doc| {
+    {
         let subject =
             format_required_field(subject_field, doc, |name, doc| format_name(&name, doc));
-        let connective = format_optional_field(connective_field, doc, |token, doc| {
-            doc_concat!(doc, [doc.space(), format_token_with_comments(doc, &token)])
+        let targets = format_optional_field(targets_field, doc, |clause, doc| {
+            format_module_target_clause(&clause, doc)
         });
-        let names =
-            format_required_field(names_field, doc, |list, doc| format_name_list(&list, doc));
         doc_concat!(
             doc,
             [
                 keyword(keyword_field, doc),
                 subject,
-                connective,
-                names,
+                targets,
                 semicolon(semicolon_field, doc)
             ]
         )
-    })
+    }
+}
+
+fn format_module_target_clause<'source>(
+    clause: &ModuleTargetClause<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let to = format_required_field(clause.to_keyword(), doc, |token, doc| {
+        doc_concat!(doc, [doc.space(), format_token_with_comments(doc, &token)])
+    });
+    let targets = format_required_field(clause.targets(), doc, |list, doc| {
+        format_name_list(&list, doc)
+    });
+    doc_concat!(doc, [to, targets])
+}
+
+fn format_module_implementation_clause<'source>(
+    clause: &ModuleImplementationClause<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let with = format_required_field(clause.with_keyword(), doc, |token, doc| {
+        doc_concat!(doc, [doc.space(), format_token_with_comments(doc, &token)])
+    });
+    let implementations = format_required_field(clause.implementations(), doc, |list, doc| {
+        format_name_list(&list, doc)
+    });
+    doc_concat!(doc, [with, implementations])
 }
 
 fn format_name_list<'source>(
-    list: &NameList<'source>,
+    list: &ModuleNameList<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(list, doc, |doc| {
+    {
         let syntax_parts = list.parts();
         let (lower, _) = syntax_parts.size_hint();
         let mut parts = Vec::with_capacity(lower);
         for part in syntax_parts {
-            match resolve_list_part(part, doc) {
-                JavaFormatListPart::Item(name) => {
+            match part {
+                Ok(jolt_java_syntax::JavaSyntaxListPart::Item(name)) => {
                     parts.push(NameListPart::Name(format_name(&name, doc)));
                 }
-                JavaFormatListPart::Separator(comma) => parts.push(NameListPart::Comma(comma)),
-                JavaFormatListPart::Malformed(raw) => parts.push(NameListPart::Raw(raw)),
+                Ok(jolt_java_syntax::JavaSyntaxListPart::Separator(comma)) => {
+                    parts.push(NameListPart::Comma(comma));
+                }
+                Ok(jolt_java_syntax::JavaSyntaxListPart::Malformed(malformed)) => {
+                    parts.push(NameListPart::Malformed(malformed));
+                }
+                Ok(jolt_java_syntax::JavaSyntaxListPart::Missing(missing)) => {
+                    parts.push(NameListPart::Missing(missing));
+                }
+                Err(error) => doc.block_on_invariant(error.to_string()),
             }
         }
         if parts.is_empty() {
@@ -754,22 +769,32 @@ fn format_name_list<'source>(
                     docs.push(line);
                     for part in parts {
                         match part {
-                            NameListPart::Name(name) | NameListPart::Raw(name) => docs.push(name),
+                            NameListPart::Name(name) => docs.push(name),
                             NameListPart::Comma(comma) => {
                                 let line = docs.line();
                                 let comma = format_separator_with_comments(docs, &comma, line);
                                 docs.push(comma);
+                            }
+                            NameListPart::Malformed(malformed) => {
+                                let malformed = format_malformed(&malformed, docs);
+                                docs.push(malformed);
+                            }
+                            NameListPart::Missing(missing) => {
+                                let missing =
+                                    crate::helpers::recovery::format_missing(&missing, docs);
+                                docs.push(missing);
                             }
                         }
                     }
                 })
             )
         )
-    })
+    }
 }
 
 enum NameListPart<'source> {
     Name(Doc<'source>),
     Comma(jolt_java_syntax::JavaSyntaxToken<'source>),
-    Raw(Doc<'source>),
+    Malformed(JavaMalformedSyntax<'source>),
+    Missing(JavaMissingSyntax<'source>),
 }

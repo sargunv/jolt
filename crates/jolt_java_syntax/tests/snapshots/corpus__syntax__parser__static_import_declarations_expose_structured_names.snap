@@ -11,7 +11,7 @@ class StaticImports {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
+  CompilationUnitItemList
     ImportDeclaration
       ImportKw "import" @ 0..6 trailing=[Whitespace " "]
       StaticKw "static" @ 7..13 trailing=[Whitespace " "]
@@ -52,7 +52,6 @@ CompilationUnit
       Dot "." @ 82..83
       Star "*" @ 83..84
       Semicolon ";" @ 84..85
-  CompilationUnitDeclarationList
     ClassDeclaration
       ClassKw "class" @ 87..92 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Identifier "StaticImports" @ 93..106 trailing=[Whitespace " "]

@@ -12,14 +12,13 @@ class Raw {int x=1+2;}
 syntax:
 syntax:
 CompilationUnit
-  PackageDeclaration
-    AnnotationList
-    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
-    Name
-      Identifier "demo" @ 8..12
-    Semicolon ";" @ 12..13
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
+    PackageDeclaration
+      AnnotationList
+      PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+      Name
+        Identifier "demo" @ 8..12
+      Semicolon ";" @ 12..13
     ClassDeclaration
       ClassKw "class" @ 33..38 leading=[Newline "\n", Newline "\n", LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace " "]
       Identifier "Raw" @ 39..42 trailing=[Whitespace " "]

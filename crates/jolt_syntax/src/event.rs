@@ -1,5 +1,9 @@
 use crate::RawSyntaxKind;
 
+/// Stable reference to a parser node start event before tree construction.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct NodeAnchor(pub(crate) usize);
+
 /// Sentinel stored in a start event when a node has no forward parent.
 pub(crate) const NO_FORWARD_PARENT: u32 = 0;
 
@@ -39,6 +43,12 @@ impl Marker {
         events.push(Event::Tombstone);
 
         Self { position }
+    }
+
+    /// Returns the construction anchor for diagnostics owned by this node.
+    #[must_use]
+    pub const fn anchor(&self) -> NodeAnchor {
+        NodeAnchor(self.position)
     }
 
     /// Completes this marker as a syntax node of `kind`.

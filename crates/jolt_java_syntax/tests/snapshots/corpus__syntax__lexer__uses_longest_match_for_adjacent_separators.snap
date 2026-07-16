@@ -8,9 +8,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
-    BogusTypeDeclaration
+  CompilationUnitItemList
+    BogusCompilationUnitItem
       Ellipsis "..." @ 0..3
       Dot "." @ 3..4 trailing=[Whitespace " "]
       DoubleColon "::" @ 5..7 trailing=[Whitespace " "]

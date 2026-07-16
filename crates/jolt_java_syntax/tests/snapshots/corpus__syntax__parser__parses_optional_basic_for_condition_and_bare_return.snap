@@ -14,8 +14,7 @@ class OptionalFlowExpressions {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "OptionalFlowExpressions" @ 6..29 trailing=[Whitespace " "]

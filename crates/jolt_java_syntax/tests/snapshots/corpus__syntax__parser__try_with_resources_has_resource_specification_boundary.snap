@@ -16,8 +16,7 @@ class ResourceSpecificationShape {
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "ResourceSpecificationShape" @ 6..32 trailing=[Whitespace " "]

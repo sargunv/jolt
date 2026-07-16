@@ -8,8 +8,7 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
   Eof "" @ 4..4 leading=[BlockComment "/* c"]
 
 diagnostics:

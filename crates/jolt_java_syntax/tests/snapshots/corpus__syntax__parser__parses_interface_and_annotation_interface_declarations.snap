@@ -22,8 +22,7 @@ interface Drawable {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     InterfaceDeclaration
       ModifierList
         Identifier "sealed" @ 0..6 trailing=[Whitespace " "]

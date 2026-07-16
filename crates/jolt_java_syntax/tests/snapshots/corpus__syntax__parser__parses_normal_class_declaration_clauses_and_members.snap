@@ -32,8 +32,7 @@ class E extends Exception {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclarationList
-  CompilationUnitDeclarationList
+  CompilationUnitItemList
     ClassDeclaration
       ModifierList
         Identifier "sealed" @ 0..6 trailing=[Whitespace " "]
