@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const IMPLEMENTATION_BASELINE: &str = "2197128";
-const MAX_IMPLEMENTATION_NET_DELTA: usize = 3_836;
+const MAX_IMPLEMENTATION_NET_DELTA: usize = 4_063;
 
 const ERROR_NODE_SITE_LIMITS: &[(&str, usize)] = &[
     (
@@ -110,14 +110,14 @@ fn forbidden_architecture_patterns_do_not_regress() {
 /// construction. Untracked implementation files are added to the projection so
 /// a local `mise run test` cannot evade the gate before staging them.
 #[test]
-fn implementation_projection_stays_within_phase_fifteen_budget() {
+fn implementation_projection_stays_within_phase_sixteen_budget() {
     let workspace = workspace_root();
     let (additions, deletions) = implementation_projection(&workspace);
     let net = additions.saturating_sub(deletions);
 
     assert!(
         net <= MAX_IMPLEMENTATION_NET_DELTA,
-        "Phase 15 implementation projection against {IMPLEMENTATION_BASELINE} is \
+        "Phase 16 implementation projection against {IMPLEMENTATION_BASELINE} is \
          +{additions}/-{deletions}, net +{net}; maximum net delta is \
          +{MAX_IMPLEMENTATION_NET_DELTA}. The projection includes crates/**/*.rs and \
          tools/**/*.py, including tests and test support."

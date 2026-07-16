@@ -41,7 +41,7 @@ pub(crate) fn format_file_item<'source>(
     item: &KotlinFileItem<'source>,
 ) -> Doc<'source> {
     match item {
-        KotlinFileItem::PackageHeader(_) => Doc::nil(),
+        KotlinFileItem::PackageHeader(_) | KotlinFileItem::ImportDirectiveList(_) => Doc::nil(),
         KotlinFileItem::ClassDeclaration(node) => format_class_declaration(doc, node),
         KotlinFileItem::InterfaceDeclaration(node) => format_interface_declaration(doc, node),
         KotlinFileItem::ObjectDeclaration(node) => format_object_declaration(doc, node),

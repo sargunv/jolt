@@ -2,15 +2,15 @@ use std::cmp::Ordering;
 
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    KotlinComment, KotlinNode, KotlinRoleElement, KotlinSyntaxField, KotlinSyntaxListPart,
-    KotlinSyntaxToken, Name, QualifiedName,
+    KotlinComment, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView,
+    Name, QualifiedName, QualifiedNameSegment,
 };
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, format_comment, format_token,
 };
 use crate::helpers::recovery::{
-    KotlinFormatField, KotlinFormatListPart, format_or_verbatim, format_required_field,
+    KotlinFormatField, KotlinFormatListPart, format_malformed, format_required_field,
     resolve_list_part, resolve_required_field,
 };
 
@@ -18,15 +18,13 @@ pub(crate) fn format_name<'source>(
     doc: &mut DocBuilder<'source>,
     name: &Name<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(name, doc, |doc| {
-        format_required_field(name.identifier(), doc, |token, doc| {
-            format_token(
-                doc,
-                &token,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::Preserve,
-            )
-        })
+    format_required_field(name.identifier(), doc, |token, doc| {
+        format_token(
+            doc,
+            &token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        )
     })
 }
 
@@ -34,15 +32,13 @@ pub(crate) fn format_qualified_name<'source>(
     doc: &mut DocBuilder<'source>,
     name: &QualifiedName<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(name, doc, |doc| {
-        let multiline = qualified_name_has_line_comments(name);
-        let contents = format_qualified_name_parts(doc, name, multiline);
-        if multiline {
-            doc.indent(contents)
-        } else {
-            contents
-        }
-    })
+    let multiline = qualified_name_has_line_comments(name);
+    let contents = format_qualified_name_parts(doc, name, multiline);
+    if multiline {
+        doc.indent(contents)
+    } else {
+        contents
+    }
 }
 
 fn format_qualified_name_parts<'source>(
@@ -54,29 +50,23 @@ fn format_qualified_name_parts<'source>(
         KotlinFormatField::Present(segments) => doc.concat_list(|docs| {
             for part in segments.parts() {
                 match resolve_list_part(part, docs) {
-                    KotlinFormatListPart::Item(element) => match element {
-                        KotlinRoleElement::Node(node) => {
-                            if let Some(name) = Name::cast(node) {
-                                let formatted = format_name(docs, &name);
-                                docs.push(formatted);
-                            } else {
-                                docs.block_on_invariant("invalid qualified-name segment node");
-                            }
-                        }
-                        KotlinRoleElement::Token(token) => {
-                            if multiline {
-                                let line = docs.hard_line();
-                                docs.push(line);
-                            }
-                            let dot = format_name_dot(docs, &token);
-                            docs.push(dot);
-                        }
-                    },
+                    KotlinFormatListPart::Item(QualifiedNameSegment::Name(name)) => {
+                        let formatted = format_name(docs, &name);
+                        docs.push(formatted);
+                    }
+                    KotlinFormatListPart::Item(
+                        QualifiedNameSegment::BogusQualifiedNameSegment(malformed),
+                    ) => {
+                        let malformed = format_malformed(&malformed, docs);
+                        docs.push(malformed);
+                    }
                     KotlinFormatListPart::Separator(separator) => {
-                        docs.block_on_invariant(format!(
-                            "unexpected qualified-name separator slot: {:?}",
-                            separator.kind()
-                        ));
+                        if multiline {
+                            let line = docs.hard_line();
+                            docs.push(line);
+                        }
+                        let dot = format_name_dot(docs, &separator);
+                        docs.push(dot);
                     }
                     KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
                 }
@@ -91,22 +81,25 @@ fn qualified_name_has_line_comments(name: &QualifiedName<'_>) -> bool {
         return false;
     };
     segments.parts().any(|part| match part {
-        Ok(KotlinSyntaxListPart::Item(KotlinRoleElement::Token(token))) => {
-            token_has_line_comments(&token)
-        }
-        Ok(KotlinSyntaxListPart::Item(KotlinRoleElement::Node(node))) => {
-            node.first_token()
+        Ok(KotlinSyntaxListPart::Item(QualifiedNameSegment::Name(name))) => {
+            name.first_token()
                 .is_some_and(|token| token_has_line_comments(&token))
-                || node
+                || name
                     .last_token()
                     .is_some_and(|token| token_has_line_comments(&token))
         }
-        Ok(
-            KotlinSyntaxListPart::Separator(_)
-            | KotlinSyntaxListPart::Missing(_)
-            | KotlinSyntaxListPart::Malformed(_),
-        )
-        | Err(_) => false,
+        Ok(KotlinSyntaxListPart::Item(QualifiedNameSegment::BogusQualifiedNameSegment(
+            malformed,
+        ))) => {
+            malformed
+                .first_token()
+                .is_some_and(|token| token_has_line_comments(&token))
+                || malformed
+                    .last_token()
+                    .is_some_and(|token| token_has_line_comments(&token))
+        }
+        Ok(KotlinSyntaxListPart::Separator(token)) => token_has_line_comments(&token),
+        Ok(KotlinSyntaxListPart::Missing(_) | KotlinSyntaxListPart::Malformed(_)) | Err(_) => false,
     })
 }
 
@@ -124,32 +117,32 @@ pub(crate) struct NameSortKey<'source> {
 }
 
 impl<'source> NameSortKey<'source> {
-    pub(crate) fn empty() -> Self {
-        Self {
-            segments: Vec::new(),
-            on_demand: false,
+    pub(crate) fn new(name: &QualifiedName<'source>, on_demand: bool) -> Option<Self> {
+        if !name.is_recovery_free() {
+            return None;
         }
-    }
-
-    pub(crate) fn new(name: &QualifiedName<'source>, on_demand: bool) -> Self {
         let mut identifiers = Vec::new();
-        if let Ok(KotlinSyntaxField::Present(segments)) = name.segments() {
-            for part in segments.parts() {
-                let Ok(KotlinSyntaxListPart::Item(KotlinRoleElement::Node(node))) = part else {
-                    continue;
-                };
-                let Some(name) = Name::cast(node) else {
-                    continue;
-                };
-                if let Ok(KotlinSyntaxField::Present(identifier)) = name.identifier() {
+        let KotlinSyntaxField::Present(segments) = name.segments().ok()? else {
+            return None;
+        };
+        for part in segments.parts() {
+            match part.ok()? {
+                KotlinSyntaxListPart::Item(QualifiedNameSegment::Name(name)) => {
+                    let KotlinSyntaxField::Present(identifier) = name.identifier().ok()? else {
+                        return None;
+                    };
                     identifiers.push(identifier.text());
                 }
+                KotlinSyntaxListPart::Separator(_) => {}
+                KotlinSyntaxListPart::Item(QualifiedNameSegment::BogusQualifiedNameSegment(_))
+                | KotlinSyntaxListPart::Missing(_)
+                | KotlinSyntaxListPart::Malformed(_) => return None,
             }
         }
-        Self {
+        Some(Self {
             segments: identifiers,
             on_demand,
-        }
+        })
     }
 
     fn chars(&self) -> impl Iterator<Item = char> + '_ {

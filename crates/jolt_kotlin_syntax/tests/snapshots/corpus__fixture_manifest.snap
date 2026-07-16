@@ -217,6 +217,7 @@ syntax/recovery/navigation-without-receiver.kt
 syntax/recovery/nested-recovered-when-condition.kt
 syntax/recovery/normalizes-package-import-spacing.kt
 syntax/recovery/object-delegation.kt
+syntax/recovery/phase-16-program.kt
 syntax/recovery/preserves-file-annotation-preamble.kt
 syntax/recovery/property-body-recovered-gap.kt
 syntax/recovery/source-gap-trivia-ownership.kt

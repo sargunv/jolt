@@ -3,16 +3,16 @@ source: crates/jolt_kotlin_syntax/src/schema_audit.rs
 expression: audit.render()
 ---
 language = kotlin
-fixture_files = 246
-diagnostic_fixture_files = 64
-audited_nodes = 15430
-exact_valid_shapes = 15182
-malformed_nodes = 180
+fixture_files = 247
+diagnostic_fixture_files = 65
+audited_nodes = 15297
+exact_valid_shapes = 15068
+malformed_nodes = 159
 clean_missing_required_shapes = 0
-diagnostic_missing_required_shapes = 28
+diagnostic_missing_required_shapes = 33
 clean_unexpected_shapes = 0
-diagnostic_unexpected_shapes = 40
-error_node_owners = 180
+diagnostic_unexpected_shapes = 37
+error_node_owners = 152
 
 [clean_missing_required]
 
@@ -38,6 +38,11 @@ syntax__recovery__destructuring: DestructuringEntrySeparatedList occurrence 1 (D
 syntax__recovery__lambda_missing_close: Block occurrence 1 (LBrace("{") BlockItemList)
 syntax__recovery__lambda_missing_close: LambdaBody occurrence 1 (LBrace("{") LambdaBodyItemList)
 syntax__recovery__lambda_parameter_list: LambdaParameterSeparatedList occurrence 1 (LambdaParameter Comma(",") Comma(",") ErrorNode LambdaParameter)
+syntax__recovery__phase_16_program: Name occurrence 7 ()
+syntax__recovery__phase_16_program: Name occurrence 15 ()
+syntax__recovery__phase_16_program: Name occurrence 17 ()
+syntax__recovery__phase_16_program: ImportOnDemandSuffix occurrence 1 (Star("*"))
+syntax__recovery__phase_16_program: Name occurrence 22 ()
 syntax__recovery__type_argument_list: TypeProjectionSeparatedList occurrence 1 (TypeArgument Comma(",") Comma(",") ErrorNode TypeArgument)
 syntax__recovery__type_constraints: TypeConstraint occurrence 2 (Name)
 syntax__recovery__type_constraints: Name occurrence 4 ()
@@ -51,7 +56,6 @@ syntax__recovery__when_missing_close: WhenExpression occurrence 1 (WhenKw("when"
 [diagnostic_unexpected]
 syntax__lexer__comment_markers_inside_character_literals_are_literal_content: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=7, tokens=2, children=2] (LiteralExpression ErrorNode)
 syntax__lexer__keeps_range_dots_out_of_number_literals: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=10, tokens=6, children=4] (BinaryExpression ErrorNode ErrorNode ErrorNode)
-syntax__lexer__recognizes_all_hard_keywords: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=149, tokens=28, children=28] (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
 syntax__lexer__recognizes_all_operators: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=87, tokens=32, children=20] (BinaryExpression ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
 syntax__lexer__recognizes_character_literals: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=27, tokens=5, children=5] (LiteralExpression ErrorNode ErrorNode ErrorNode ErrorNode)
 syntax__lexer__recognizes_decimal_floating_point_literals: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=30, tokens=7, children=7] (LiteralExpression ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
@@ -86,8 +90,6 @@ syntax__recovery__else_without_branch: IfExpression occurrence 1 has valid kind 
 syntax__recovery__navigation_without_receiver: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=6, tokens=2, children=2] (ErrorNode ErrorNode)
 syntax__recovery__nested_recovered_when_condition: WhenEntry occurrence 1 has valid kind with direct malformed ownership [bytes=33, tokens=9, children=6] (WhenConditionSeparatedList ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
 syntax__recovery__nested_recovered_when_condition: WhenCondition occurrence 1 has valid kind with direct malformed ownership [bytes=13, tokens=4, children=4] (LiteralExpression ErrorNode ErrorNode ErrorNode)
-syntax__recovery__top_level_orphan_token: KotlinFileItemList occurrence 1 has valid kind with direct malformed ownership [bytes=34, tokens=7, children=2] (FunctionDeclaration RBrace("}"))
-syntax__recovery__type_constraints: KotlinFileItemList occurrence 1 has valid kind with direct malformed ownership [bytes=61, tokens=18, children=3] (FunctionDeclaration Statement RBrace("}"))
 syntax__recovery__type_constraints: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=17, tokens=5, children=5] (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
 
 [error_node_ownership]
@@ -95,34 +97,6 @@ syntax__lexer__comment_markers_inside_character_literals_are_literal_content: Er
 syntax__lexer__keeps_range_dots_out_of_number_literals: ErrorNode occurrence 1 owned by ExpressionStatement
 syntax__lexer__keeps_range_dots_out_of_number_literals: ErrorNode occurrence 2 owned by ExpressionStatement
 syntax__lexer__keeps_range_dots_out_of_number_literals: ErrorNode occurrence 3 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 1 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 2 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 3 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 4 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 5 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 6 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 7 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 8 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 9 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 10 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 11 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 12 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 13 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 14 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 15 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 16 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 17 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 18 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 19 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 20 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 21 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 22 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 23 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 24 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 25 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 26 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 27 owned by ExpressionStatement
-syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 28 owned by ExpressionStatement
 syntax__lexer__recognizes_all_operators: ErrorNode occurrence 1 owned by UnaryExpression
 syntax__lexer__recognizes_all_operators: ErrorNode occurrence 2 owned by BinaryExpression
 syntax__lexer__recognizes_all_operators: ErrorNode occurrence 3 owned by BinaryExpression

@@ -14,57 +14,57 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  PackageHeader
-    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
-    QualifiedName
-      QualifiedNameSegmentList
-        Name
-          Identifier "samples" @ 8..15
-        Dot "." @ 15..16
-        Name
-          Identifier "soft" @ 16..20
-        Dot "." @ 20..21
-        Name
-          Identifier "context" @ 21..28
-    TerminatorList
-  ImportDirectiveList
-    ImportDirective
-      Identifier "import" @ 30..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        QualifiedNameSegmentList
-          Name
-            Identifier "samples" @ 37..44
-          Dot "." @ 44..45
-          Name
-            Identifier "where" @ 45..50
-          Dot "." @ 50..51
-          Name
-            Identifier "by" @ 51..53
-          Dot "." @ 53..54
-          Name
-            Identifier "context" @ 54..61
-      TerminatorList
-    ImportDirective
-      Identifier "import" @ 62..68 leading=[Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        QualifiedNameSegmentList
-          Name
-            Identifier "samples" @ 69..76
-          Dot "." @ 76..77
-          Name
-            Identifier "field" @ 77..82
-          Dot "." @ 82..83
-          Name
-            Identifier "get" @ 83..86
-          Dot "." @ 86..87
-          Name
-            Identifier "set" @ 87..90 trailing=[Whitespace " "]
-      ImportAlias
-        AsKw "as" @ 91..93 trailing=[Whitespace " "]
-        Name
-          Identifier "Accessors" @ 94..103
-      TerminatorList
   KotlinFileItemList
+    PackageHeader
+      PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "samples" @ 8..15
+          Dot "." @ 15..16
+          Name
+            Identifier "soft" @ 16..20
+          Dot "." @ 20..21
+          Name
+            Identifier "context" @ 21..28
+      TerminatorList
+    ImportDirectiveList
+      ImportDirective
+        Identifier "import" @ 30..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "samples" @ 37..44
+            Dot "." @ 44..45
+            Name
+              Identifier "where" @ 45..50
+            Dot "." @ 50..51
+            Name
+              Identifier "by" @ 51..53
+            Dot "." @ 53..54
+            Name
+              Identifier "context" @ 54..61
+        TerminatorList
+      ImportDirective
+        Identifier "import" @ 62..68 leading=[Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "samples" @ 69..76
+            Dot "." @ 76..77
+            Name
+              Identifier "field" @ 77..82
+            Dot "." @ 82..83
+            Name
+              Identifier "get" @ 83..86
+            Dot "." @ 86..87
+            Name
+              Identifier "set" @ 87..90 trailing=[Whitespace " "]
+        ImportAlias
+          AsKw "as" @ 91..93 trailing=[Whitespace " "]
+          Name
+            Identifier "Accessors" @ 94..103
+        TerminatorList
     PropertyDeclaration
       ModifierList
       ModifierList

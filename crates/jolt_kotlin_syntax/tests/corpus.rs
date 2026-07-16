@@ -1,7 +1,8 @@
-use jolt_kotlin_syntax::parse_kotlin_file;
+use jolt_kotlin_syntax::{KotlinSyntaxView, parse_kotlin_file};
 use jolt_test_support::{
-    SnapshotBuilder, collect_kotlin_files, fixture_manifest, fixture_snapshot_name,
-    kotlin_fixture_root, read_to_string, render_diagnostics,
+    SnapshotBuilder, assert_bidirectional_diagnostic_ownership, collect_kotlin_files,
+    fixture_manifest, fixture_snapshot_name, kotlin_fixture_root, read_to_string,
+    render_diagnostics,
 };
 
 #[test]
@@ -23,6 +24,15 @@ fn kotlin_corpus_syntax_snapshots() {
             "parser reconstruction changed source in {}",
             path.display()
         );
+        if path.ends_with("syntax/recovery/phase-16-program.kt") {
+            assert_bidirectional_diagnostic_ownership(
+                syntax.syntax_node().expect("physical Kotlin root"),
+                parse.diagnostics(),
+                parse.structural_diagnostic_owners(),
+                |_| true,
+                path.display(),
+            );
+        }
 
         let snapshot = SnapshotBuilder::new()
             .section("input", &source)

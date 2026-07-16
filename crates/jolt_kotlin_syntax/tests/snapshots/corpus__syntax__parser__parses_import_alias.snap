@@ -13,35 +13,35 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  PackageHeader
-    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
-    QualifiedName
-      QualifiedNameSegmentList
-        Name
-          Identifier "samples" @ 8..15
-        Dot "." @ 15..16
-        Name
-          Identifier "imports" @ 16..23
-    TerminatorList
-  ImportDirectiveList
-    ImportDirective
-      Identifier "import" @ 25..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+  KotlinFileItemList
+    PackageHeader
+      PackageKw "package" @ 0..7 trailing=[Whitespace " "]
       QualifiedName
         QualifiedNameSegmentList
           Name
-            Identifier "kotlin" @ 32..38
-          Dot "." @ 38..39
+            Identifier "samples" @ 8..15
+          Dot "." @ 15..16
           Name
-            Identifier "collections" @ 39..50
-          Dot "." @ 50..51
-          Name
-            Identifier "MutableMap" @ 51..61 trailing=[Whitespace " "]
-      ImportAlias
-        AsKw "as" @ 62..64 trailing=[Whitespace " "]
-        Name
-          Identifier "KMutableMap" @ 65..76
+            Identifier "imports" @ 16..23
       TerminatorList
-  KotlinFileItemList
+    ImportDirectiveList
+      ImportDirective
+        Identifier "import" @ 25..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "kotlin" @ 32..38
+            Dot "." @ 38..39
+            Name
+              Identifier "collections" @ 39..50
+            Dot "." @ 50..51
+            Name
+              Identifier "MutableMap" @ 51..61 trailing=[Whitespace " "]
+        ImportAlias
+          AsKw "as" @ 62..64 trailing=[Whitespace " "]
+          Name
+            Identifier "KMutableMap" @ 65..76
+        TerminatorList
     ClassDeclaration
       ModifierList
       ModifierList

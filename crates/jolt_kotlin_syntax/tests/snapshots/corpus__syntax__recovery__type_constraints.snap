@@ -9,7 +9,6 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
       ModifierList
@@ -59,7 +58,8 @@ KotlinFile
         ErrorNode
           LBrace "{" @ 59..60
       TerminatorList
-    RBrace "}" @ 60..61
+    BogusKotlinFileItem
+      RBrace "}" @ 60..61
   Eof "" @ 62..62 leading=[Newline "\n"]
 
 diagnostics:

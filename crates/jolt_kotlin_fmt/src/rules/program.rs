@@ -2,8 +2,9 @@ use std::ops::Range;
 
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    ImportDirective, KotlinFamily, KotlinFile, KotlinFileItem, KotlinRoleElement,
-    KotlinSyntaxField, KotlinSyntaxView, PackageHeader, StatementSyntax,
+    KotlinFamily, KotlinFile, KotlinFileItem, KotlinMalformedSyntax, KotlinMissingSyntax,
+    KotlinRoleElement, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxView, PackageHeader,
+    StatementSyntax,
 };
 use jolt_syntax::tokens_have_blank_line_between;
 
@@ -17,12 +18,12 @@ use crate::helpers::formatter_ignore::{
     relative_token_range_between,
 };
 use crate::helpers::recovery::{
-    KotlinFormatField, KotlinFormatListPart, format_malformed, format_or_verbatim,
-    format_required_field, resolve_list_part, resolve_optional_field, resolve_required_field,
+    KotlinFormatField, KotlinFormatListPart, format_malformed, format_missing,
+    format_optional_field, format_required_field, resolve_list_part, resolve_required_field,
 };
 use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::{format_file_item, format_fun_interface_file_items};
-use crate::rules::imports::format_imports;
+use crate::rules::imports::format_import_list;
 use crate::rules::names::format_qualified_name;
 use crate::rules::statements::format_statement_syntax_with_leading;
 
@@ -30,22 +31,16 @@ pub(crate) fn format_file<'source>(
     file: &KotlinFile<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(file, doc, |doc| format_valid_file(file, doc))
+    format_structured_file(file, doc)
 }
 
-fn format_valid_file<'source>(
+fn format_structured_file<'source>(
     file: &KotlinFile<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let annotations = format_file_annotations(doc, file);
     let mut entries = Vec::new();
 
-    match resolve_optional_field(file.package_header(), doc) {
-        KotlinFormatField::Present(Some(package)) => entries.push(FileEntry::Package(package)),
-        KotlinFormatField::Present(None) => {}
-        KotlinFormatField::Malformed(recovery) => entries.push(FileEntry::Raw(recovery, None)),
-    }
-    collect_imports(file, doc, &mut entries);
     collect_items(file, doc, &mut entries);
 
     let (contents, ignored_eof_comments) = format_entries_with_ignored(file, doc, entries);
@@ -84,60 +79,39 @@ fn format_valid_file<'source>(
     doc.concat([contents, eof, line])
 }
 
-fn collect_imports<'source>(
-    file: &KotlinFile<'source>,
-    doc: &mut DocBuilder<'source>,
-    entries: &mut Vec<FileEntry<'source>>,
-) {
-    let directives = match resolve_required_field(file.import_list(), doc) {
-        KotlinFormatField::Present(directives) => directives,
-        KotlinFormatField::Malformed(recovery) => {
-            entries.push(FileEntry::Raw(recovery, None));
-            return;
-        }
-    };
-    for part in directives.parts() {
-        match resolve_list_part(part, doc) {
-            KotlinFormatListPart::Item(import) => entries.push(FileEntry::Import(import)),
-            KotlinFormatListPart::Separator(separator) => entries.push(FileEntry::Raw(
-                format_token(
-                    doc,
-                    &separator,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::Preserve,
-                ),
-                Some(token_range(&separator, file.text_range().start().get())),
-            )),
-            KotlinFormatListPart::Malformed(recovery) => {
-                entries.push(FileEntry::Raw(recovery, None));
-            }
-        }
-    }
-}
-
 fn collect_items<'source>(
     file: &KotlinFile<'source>,
     doc: &mut DocBuilder<'source>,
     entries: &mut Vec<FileEntry<'source>>,
 ) {
-    let items = match resolve_required_field(file.items(), doc) {
-        KotlinFormatField::Present(items) => items,
-        KotlinFormatField::Malformed(recovery) => {
-            entries.push(FileEntry::Raw(recovery, None));
+    let items = match file.items() {
+        Ok(KotlinSyntaxField::Present(items)) => items,
+        Ok(KotlinSyntaxField::Malformed(malformed)) => {
+            entries.push(FileEntry::Malformed(malformed));
+            return;
+        }
+        Ok(KotlinSyntaxField::Missing(missing)) => {
+            entries.push(FileEntry::Missing(missing));
+            return;
+        }
+        Err(error) => {
+            doc.block_on_invariant(error.to_string());
             return;
         }
     };
     for part in items.parts() {
-        match resolve_list_part(part, doc) {
-            KotlinFormatListPart::Item(KotlinRoleElement::Node(node)) => {
+        match part {
+            Ok(KotlinSyntaxListPart::Item(KotlinRoleElement::Node(node))) => {
                 if let Some(item) = KotlinFileItem::cast(node) {
                     entries.push(FileEntry::Item(item));
                 } else {
                     doc.block_on_invariant("invalid Kotlin file item node");
                 }
             }
-            KotlinFormatListPart::Item(KotlinRoleElement::Token(token))
-            | KotlinFormatListPart::Separator(token) => {
+            Ok(
+                KotlinSyntaxListPart::Item(KotlinRoleElement::Token(token))
+                | KotlinSyntaxListPart::Separator(token),
+            ) => {
                 let separator = format_removed_separator(
                     doc,
                     &token,
@@ -150,32 +124,42 @@ fn collect_items<'source>(
                     token_has_comments(&token),
                 ));
             }
-            KotlinFormatListPart::Malformed(recovery) => {
-                entries.push(FileEntry::Raw(recovery, None));
+            Ok(KotlinSyntaxListPart::Malformed(malformed)) => {
+                entries.push(FileEntry::Malformed(malformed));
             }
+            Ok(KotlinSyntaxListPart::Missing(missing)) => {
+                entries.push(FileEntry::Missing(missing));
+            }
+            Err(error) => doc.block_on_invariant(error.to_string()),
         }
     }
 }
 
 enum FileEntry<'source> {
-    Package(PackageHeader<'source>),
-    Import(ImportDirective<'source>),
     Item(KotlinFileItem<'source>),
-    Raw(Doc<'source>, Option<Range<usize>>),
+    Malformed(KotlinMalformedSyntax<'source>),
+    Missing(KotlinMissingSyntax<'source>),
     Separator(Doc<'source>, Option<Range<usize>>, bool),
 }
 
 impl FileEntry<'_> {
     fn token_range(&self, base: usize) -> Option<Range<usize>> {
         match self {
-            Self::Package(item) => view_token_range(item, base),
-            Self::Import(item) => view_token_range(item, base),
             Self::Item(item) => {
                 let first = item.first_token()?;
                 let last = item.last_token()?;
                 Some(relative_token_range_between(&first, &last, base))
             }
-            Self::Raw(_, range) | Self::Separator(_, range, _) => range.clone(),
+            Self::Malformed(malformed) => {
+                let syntax = malformed.syntax_node()?;
+                Some(relative_token_range_between(
+                    &syntax.first_token()?,
+                    &syntax.last_token()?,
+                    base,
+                ))
+            }
+            Self::Missing(_) => None,
+            Self::Separator(_, range, _) => range.clone(),
         }
     }
 }
@@ -263,30 +247,29 @@ fn format_entry_segment<'source>(
     entries: Vec<FileEntry<'source>>,
 ) -> Option<FileSection<'source>> {
     let mut sections = Vec::new();
-    let mut imports = Vec::new();
     let mut body = Vec::new();
     for entry in entries {
         match entry {
-            FileEntry::Import(import) => {
+            FileEntry::Item(KotlinFileItem::ImportDirectiveList(imports)) => {
                 flush_body(doc, &mut body, &mut sections);
-                imports.push(import);
+                sections.push(FileSection::visible(format_import_list(doc, &imports)));
             }
-            FileEntry::Package(package) => {
-                flush_imports(doc, &mut imports, &mut sections);
+            FileEntry::Item(KotlinFileItem::PackageHeader(package)) => {
                 flush_body(doc, &mut body, &mut sections);
                 sections.push(FileSection::visible(format_package_header(doc, &package)));
             }
             FileEntry::Item(item) => {
-                flush_imports(doc, &mut imports, &mut sections);
                 body.push(item);
             }
-            FileEntry::Raw(raw, _) => {
-                flush_imports(doc, &mut imports, &mut sections);
+            FileEntry::Malformed(malformed) => {
                 flush_body(doc, &mut body, &mut sections);
-                sections.push(FileSection::visible(raw));
+                sections.push(FileSection::visible(format_malformed(&malformed, doc)));
+            }
+            FileEntry::Missing(missing) => {
+                flush_body(doc, &mut body, &mut sections);
+                sections.push(FileSection::visible(format_missing(&missing, doc)));
             }
             FileEntry::Separator(separator, _, visible) => {
-                flush_imports(doc, &mut imports, &mut sections);
                 flush_body(doc, &mut body, &mut sections);
                 sections.push(FileSection {
                     doc: separator,
@@ -296,7 +279,6 @@ fn format_entry_segment<'source>(
             }
         }
     }
-    flush_imports(doc, &mut imports, &mut sections);
     flush_body(doc, &mut body, &mut sections);
     if sections.is_empty() {
         None
@@ -307,16 +289,6 @@ fn format_entry_segment<'source>(
             visible,
             ignored: false,
         })
-    }
-}
-
-fn flush_imports<'source>(
-    doc: &mut DocBuilder<'source>,
-    imports: &mut Vec<ImportDirective<'source>>,
-    sections: &mut Vec<FileSection<'source>>,
-) {
-    if let Some(imports) = format_imports(doc, std::mem::take(imports)) {
-        sections.push(FileSection::visible(imports));
     }
 }
 
@@ -383,14 +355,9 @@ fn format_file_annotations<'source>(
     doc: &mut DocBuilder<'source>,
     file: &KotlinFile<'source>,
 ) -> Option<Doc<'source>> {
-    let KotlinFormatField::Present(annotations) = resolve_required_field(file.annotations(), doc)
-    else {
-        if let KotlinFormatField::Malformed(recovery) =
-            resolve_required_field(file.annotations(), doc)
-        {
-            return Some(recovery);
-        }
-        return None;
+    let annotations = match resolve_required_field(file.annotations(), doc) {
+        KotlinFormatField::Present(annotations) => annotations,
+        KotlinFormatField::Malformed(recovery) => return Some(recovery),
     };
     let mut formatted = Vec::new();
     for part in annotations.parts() {
@@ -503,37 +470,31 @@ fn format_package_header<'source>(
     doc: &mut DocBuilder<'source>,
     package: &PackageHeader<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(package, doc, |doc| {
-        let keyword = format_required_field(package.package_token(), doc, |token, doc| {
-            let token = format_token(
-                doc,
-                &token,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::Preserve,
-            );
+    let keyword = format_required_field(package.package_token(), doc, |token, doc| {
+        format_token(
+            doc,
+            &token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        )
+    });
+    let name = format_required_field(package.name(), doc, |name, doc| {
+        let has_token = name.first_token().is_some();
+        let name = format_qualified_name(doc, &name);
+        if has_token {
             let space = doc.space();
-            doc.concat([token, space])
-        });
-        let name = format_required_field(package.name(), doc, |name, doc| {
-            format_qualified_name(doc, &name)
-        });
-        let terminators = format_required_field(package.terminators(), doc, |terminators, doc| {
-            format_terminator_list(doc, &terminators, true)
-        });
-        doc.concat([keyword, name, terminators])
-    })
-}
-
-fn view_token_range<'source>(
-    view: &impl KotlinSyntaxView<'source>,
-    base: usize,
-) -> Option<Range<usize>> {
-    let syntax = view.syntax_node()?;
-    Some(relative_token_range_between(
-        &syntax.first_token()?,
-        &syntax.last_token()?,
-        base,
-    ))
+            doc.concat([space, name])
+        } else {
+            name
+        }
+    });
+    let suffix = format_optional_field(package.suffix(), doc, |suffix, doc| {
+        format_malformed(&suffix, doc)
+    });
+    let terminators = format_required_field(package.terminators(), doc, |terminators, doc| {
+        format_terminator_list(doc, &terminators, true)
+    });
+    doc.concat([keyword, name, suffix, terminators])
 }
 
 fn token_range(token: &jolt_kotlin_syntax::KotlinSyntaxToken<'_>, base: usize) -> Range<usize> {

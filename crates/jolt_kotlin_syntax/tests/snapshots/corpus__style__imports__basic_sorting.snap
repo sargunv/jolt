@@ -15,54 +15,54 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  PackageHeader
-    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
-    QualifiedName
-      QualifiedNameSegmentList
-        Name
-          Identifier "com" @ 8..11
-        Dot "." @ 11..12
-        Name
-          Identifier "example" @ 12..19
-        Dot "." @ 19..20
-        Name
-          Identifier "imports" @ 20..27
-    TerminatorList
-  ImportDirectiveList
-    ImportDirective
-      Identifier "import" @ 29..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        QualifiedNameSegmentList
-          Name
-            Identifier "zeta" @ 36..40
-          Dot "." @ 40..41
-          Name
-            Identifier "Zed" @ 41..44
-      TerminatorList
-    ImportDirective
-      Identifier "import" @ 45..51 leading=[Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        QualifiedNameSegmentList
-          Name
-            Identifier "kotlin" @ 52..58
-          Dot "." @ 58..59
-          Name
-            Identifier "collections" @ 59..70
-          Dot "." @ 70..71
-          Name
-            Identifier "List" @ 71..75
-      TerminatorList
-    ImportDirective
-      Identifier "import" @ 76..82 leading=[Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        QualifiedNameSegmentList
-          Name
-            Identifier "alpha" @ 83..88
-          Dot "." @ 88..89
-          Name
-            Identifier "Alpha" @ 89..94
-      TerminatorList
   KotlinFileItemList
+    PackageHeader
+      PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "com" @ 8..11
+          Dot "." @ 11..12
+          Name
+            Identifier "example" @ 12..19
+          Dot "." @ 19..20
+          Name
+            Identifier "imports" @ 20..27
+      TerminatorList
+    ImportDirectiveList
+      ImportDirective
+        Identifier "import" @ 29..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "zeta" @ 36..40
+            Dot "." @ 40..41
+            Name
+              Identifier "Zed" @ 41..44
+        TerminatorList
+      ImportDirective
+        Identifier "import" @ 45..51 leading=[Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "kotlin" @ 52..58
+            Dot "." @ 58..59
+            Name
+              Identifier "collections" @ 59..70
+            Dot "." @ 70..71
+            Name
+              Identifier "List" @ 71..75
+        TerminatorList
+      ImportDirective
+        Identifier "import" @ 76..82 leading=[Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "alpha" @ 83..88
+            Dot "." @ 88..89
+            Name
+              Identifier "Alpha" @ 89..94
+        TerminatorList
     ClassDeclaration
       ModifierList
       ModifierList

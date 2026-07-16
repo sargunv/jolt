@@ -14,30 +14,29 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  PackageHeader
-    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
-    QualifiedName
-      QualifiedNameSegmentList
-        Name
-          Identifier "com" @ 8..11
-        Dot "." @ 11..12
-        Name
-          Identifier "example" @ 12..19
-        Dot "." @ 19..20
-        Name
-          Identifier "very" @ 20..24
-        Dot "." @ 24..25
-        Name
-          Identifier "long" @ 25..29
-        Dot "." @ 29..30
-        Name
-          Identifier "packageName" @ 30..41
-        Dot "." @ 41..42
-        Name
-          Identifier "withManySegments" @ 42..58
-    TerminatorList
-  ImportDirectiveList
   KotlinFileItemList
+    PackageHeader
+      PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "com" @ 8..11
+          Dot "." @ 11..12
+          Name
+            Identifier "example" @ 12..19
+          Dot "." @ 19..20
+          Name
+            Identifier "very" @ 20..24
+          Dot "." @ 24..25
+          Name
+            Identifier "long" @ 25..29
+          Dot "." @ 29..30
+          Name
+            Identifier "packageName" @ 30..41
+          Dot "." @ 41..42
+          Name
+            Identifier "withManySegments" @ 42..58
+      TerminatorList
     FunctionDeclaration
       ModifierList
       ModifierList

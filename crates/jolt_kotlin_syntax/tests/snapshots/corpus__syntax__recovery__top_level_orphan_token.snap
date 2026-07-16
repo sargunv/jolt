@@ -10,7 +10,6 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
       ModifierList
@@ -28,7 +27,8 @@ KotlinFile
       Assign "=" @ 26..27 trailing=[Whitespace " "]
       NameExpression
         Identifier "Unit" @ 28..32
-    RBrace "}" @ 33..34 leading=[Newline "\n"]
+    BogusKotlinFileItem
+      RBrace "}" @ 33..34 leading=[Newline "\n"]
   Eof "" @ 35..35 leading=[Newline "\n"]
 
 diagnostics:

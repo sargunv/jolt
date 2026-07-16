@@ -3,10 +3,10 @@ use jolt_kotlin_syntax::{
     Annotation, ArrowFunctionType, BangDefinitelyNonNullableType, ContextFunctionType,
     DefinitelyNonNullableType, FunctionType, FunctionTypeParameter,
     IntersectionDefinitelyNonNullableType, KotlinRoleElement, KotlinSyntaxField,
-    KotlinSyntaxInvariantError, KotlinSyntaxToken, ModifierList, NullableType, ParenthesizedType,
-    ReceiverType, SuspendedFunctionType, TypeArgument, TypeArgumentList, TypeConstraint,
-    TypeConstraintList, TypeParameter, TypeParameterList, TypeProjection, TypeReference,
-    TypeSyntax, UserType,
+    KotlinSyntaxInvariantError, KotlinSyntaxListPart, KotlinSyntaxToken, ModifierList,
+    NullableType, ParenthesizedType, ReceiverType, SuspendedFunctionType, TypeArgument,
+    TypeArgumentList, TypeConstraint, TypeConstraintList, TypeParameter, TypeParameterList,
+    TypeProjection, TypeReference, TypeSyntax, UserType,
 };
 
 use crate::helpers::comments::{
@@ -63,16 +63,28 @@ pub(crate) fn format_type_constraint_list<'source>(
                 TrailingTrivia::Preserve,
             )
         });
-        let items = match resolve_required_field(constraints.entries(), doc) {
-            KotlinFormatField::Present(entries) => {
-                physical_comma_list_items(doc, entries.parts(), |doc, constraint| CommaListItem {
-                    doc: format_type_constraint(doc, &constraint),
-                    comma: None,
-                })
-            }
-            KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
-        };
-        let constraints = format_constraint_items(doc, items);
+        let (items, trailing_empty_constraint) =
+            match resolve_required_field(constraints.entries(), doc) {
+                KotlinFormatField::Present(entries) => {
+                    let parts = entries.parts().collect::<Vec<_>>();
+                    let trailing_empty_constraint = parts.last().is_some_and(|part| {
+                        matches!(
+                            part,
+                            Ok(KotlinSyntaxListPart::Item(constraint))
+                                if constraint.first_token().is_none()
+                        )
+                    });
+                    (
+                        physical_comma_list_items(doc, parts, |doc, constraint| CommaListItem {
+                            doc: format_type_constraint(doc, &constraint),
+                            comma: None,
+                        }),
+                        trailing_empty_constraint,
+                    )
+                }
+                KotlinFormatField::Malformed(recovery) => (malformed_item(recovery), false),
+            };
+        let constraints = format_constraint_items(doc, items, trailing_empty_constraint);
         let line = doc.line();
         let space = doc.space();
         let constraints = doc.group(constraints);
@@ -154,18 +166,22 @@ fn format_required_type_bound<'source>(
     >,
     bound: Result<KotlinSyntaxField<'source, TypeReference<'source>>, KotlinSyntaxInvariantError>,
 ) -> Doc<'source> {
-    let before = doc.space();
     let colon = format_required_field(colon, doc, |colon, doc| {
-        format_token(
+        let before = doc.space();
+        let colon = format_token(
             doc,
             &colon,
             LeadingTrivia::Preserve,
             TrailingTrivia::Preserve,
-        )
+        );
+        doc.concat([before, colon])
     });
-    let after = doc.space();
-    let bound = format_required_field(bound, doc, |bound, doc| format_type_reference(doc, &bound));
-    doc.concat([before, colon, after, bound])
+    let bound = format_required_field(bound, doc, |bound, doc| {
+        let before = doc.space();
+        let bound = format_type_reference(doc, &bound);
+        doc.concat([before, bound])
+    });
+    doc.concat([colon, bound])
 }
 
 pub(crate) fn format_type_reference<'source>(
@@ -681,7 +697,9 @@ fn format_role_token<'source>(
 fn format_constraint_items<'source>(
     doc: &mut DocBuilder<'source>,
     items: Vec<CommaListItem<'source>>,
+    trailing_empty_constraint: bool,
 ) -> Doc<'source> {
+    let item_count = items.len();
     let mut items = items.into_iter();
     let Some(first) = items.next() else {
         return doc.nil();
@@ -689,9 +707,13 @@ fn format_constraint_items<'source>(
     let first_doc = first.doc;
     let mut previous_comma = first.comma;
     let rest = doc.concat_list(|rest| {
-        for entry in items {
+        for (index, entry) in items.enumerate() {
             let separator = if let Some(comma) = previous_comma.as_ref() {
-                let line = rest.line();
+                let line = if trailing_empty_constraint && index + 2 == item_count {
+                    rest.nil()
+                } else {
+                    rest.line()
+                };
                 format_separator_with_comments(rest, comma, line)
             } else {
                 rest.line()

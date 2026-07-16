@@ -17,73 +17,74 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  PackageHeader
-    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
-    QualifiedName
-      QualifiedNameSegmentList
-        Name
-          Identifier "com" @ 8..11
-        Dot "." @ 11..12
-        Name
-          Identifier "example" @ 12..19
-        Dot "." @ 19..20
-        Name
-          Identifier "imports" @ 20..27
-    TerminatorList
-  ImportDirectiveList
-    ImportDirective
-      Identifier "import" @ 29..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        QualifiedNameSegmentList
-          Name
-            Identifier "com" @ 36..39
-          Dot "." @ 39..40
-          Name
-            Identifier "example" @ 40..47
-          Dot "." @ 47..48
-          Name
-            Identifier "tools" @ 48..53
-          Dot "." @ 53..54
-          Name
-            Identifier "Factory" @ 54..61 trailing=[Whitespace " "]
-      ImportAlias
-        AsKw "as" @ 62..64 trailing=[Whitespace " "]
-        Name
-          Identifier "ToolFactory" @ 65..76
-      TerminatorList
-    ImportDirective
-      Identifier "import" @ 77..83 leading=[Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        QualifiedNameSegmentList
-          Name
-            Identifier "com" @ 84..87
-          Dot "." @ 87..88
-          Name
-            Identifier "example" @ 88..95
-          Dot "." @ 95..96
-          Name
-            Identifier "tools" @ 96..101
-          Dot "." @ 101..102
-      Star "*" @ 102..103
-      TerminatorList
-    ImportDirective
-      Identifier "import" @ 104..110 leading=[Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        QualifiedNameSegmentList
-          Name
-            Identifier "kotlin" @ 111..117
-          Dot "." @ 117..118
-          Name
-            Identifier "io" @ 118..120
-          Dot "." @ 120..121
-          Name
-            Identifier "println" @ 121..128 trailing=[Whitespace " "]
-      ImportAlias
-        AsKw "as" @ 129..131 trailing=[Whitespace " "]
-        Name
-          Identifier "say" @ 132..135
-      TerminatorList
   KotlinFileItemList
+    PackageHeader
+      PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "com" @ 8..11
+          Dot "." @ 11..12
+          Name
+            Identifier "example" @ 12..19
+          Dot "." @ 19..20
+          Name
+            Identifier "imports" @ 20..27
+      TerminatorList
+    ImportDirectiveList
+      ImportDirective
+        Identifier "import" @ 29..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "com" @ 36..39
+            Dot "." @ 39..40
+            Name
+              Identifier "example" @ 40..47
+            Dot "." @ 47..48
+            Name
+              Identifier "tools" @ 48..53
+            Dot "." @ 53..54
+            Name
+              Identifier "Factory" @ 54..61 trailing=[Whitespace " "]
+        ImportAlias
+          AsKw "as" @ 62..64 trailing=[Whitespace " "]
+          Name
+            Identifier "ToolFactory" @ 65..76
+        TerminatorList
+      ImportDirective
+        Identifier "import" @ 77..83 leading=[Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "com" @ 84..87
+            Dot "." @ 87..88
+            Name
+              Identifier "example" @ 88..95
+            Dot "." @ 95..96
+            Name
+              Identifier "tools" @ 96..101
+        ImportOnDemandSuffix
+          Dot "." @ 101..102
+          Star "*" @ 102..103
+        TerminatorList
+      ImportDirective
+        Identifier "import" @ 104..110 leading=[Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "kotlin" @ 111..117
+            Dot "." @ 117..118
+            Name
+              Identifier "io" @ 118..120
+            Dot "." @ 120..121
+            Name
+              Identifier "println" @ 121..128 trailing=[Whitespace " "]
+        ImportAlias
+          AsKw "as" @ 129..131 trailing=[Whitespace " "]
+          Name
+            Identifier "say" @ 132..135
+        TerminatorList
     FunctionDeclaration
       ModifierList
       ModifierList

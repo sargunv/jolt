@@ -4,7 +4,9 @@ mod source;
 use std::fmt;
 
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
-use jolt_syntax::{SyntaxTree, build_syntax_tree_with_factory};
+use jolt_syntax::{
+    SyntaxDiagnosticOwner, SyntaxTree, build_syntax_tree_with_factory_and_diagnostic_owners,
+};
 
 use crate::{
     KotlinFile,
@@ -53,6 +55,7 @@ pub struct KotlinParse<'source> {
     source: &'source str,
     tree: Option<SyntaxTree>,
     diagnostics: Vec<Diagnostic>,
+    diagnostic_owners: Vec<Option<SyntaxDiagnosticOwner>>,
 }
 
 impl KotlinParse<'_> {
@@ -75,6 +78,13 @@ impl KotlinParse<'_> {
     #[must_use]
     pub fn diagnostics(&self) -> &[Diagnostic] {
         &self.diagnostics
+    }
+
+    /// Returns structural syntax owners parallel to [`Self::diagnostics`].
+    /// Lexer and non-structural diagnostics have no owner.
+    #[must_use]
+    pub fn structural_diagnostic_owners(&self) -> &[Option<SyntaxDiagnosticOwner>] {
+        &self.diagnostic_owners
     }
 }
 
@@ -124,20 +134,23 @@ pub fn parse_kotlin_file(source: &str) -> KotlinParse<'_> {
 
 fn finish_parse(source: &str, parse: source::ParseEvents) -> KotlinParse<'_> {
     let mut diagnostics = parse.diagnostics;
-    let tree = match build_syntax_tree_with_factory(
+    let (tree, diagnostic_owners) = match build_syntax_tree_with_factory_and_diagnostic_owners(
         source,
         parse.events,
         parse.tokens,
         parse.trivia,
+        &parse.diagnostic_owners,
         &KotlinSyntaxFactory,
     ) {
         Ok(tree) => tree,
         Err(error) => {
             diagnostics.push(invalid_event_stream_diagnostic(&error));
+            let diagnostic_owners = vec![None; diagnostics.len()];
             return KotlinParse {
                 source,
                 tree: None,
                 diagnostics,
+                diagnostic_owners,
             };
         }
     };
@@ -145,6 +158,48 @@ fn finish_parse(source: &str, parse: source::ParseEvents) -> KotlinParse<'_> {
         source,
         tree: Some(tree),
         diagnostics,
+        diagnostic_owners,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use jolt_test_support::assert_exact_diagnostic_owner;
+
+    use crate::{KotlinSyntaxKind, KotlinSyntaxView, parse_kotlin_file};
+
+    use super::KotlinParseDiagnosticCode;
+
+    #[rustfmt::skip]
+    fn check(source: &str, message: &str, kind: KotlinSyntaxKind, slot: Option<u16>) {
+        let parse = parse_kotlin_file(source);
+        let root = parse.syntax().expect("represented Kotlin file");
+        assert_exact_diagnostic_owner(
+            root.syntax_node().expect("physical Kotlin root"),
+            parse.diagnostics(),
+            parse.structural_diagnostic_owners(),
+            if message.starts_with("unexpected") {
+                KotlinParseDiagnosticCode::UnexpectedSyntax.id()
+            } else {
+                KotlinParseDiagnosticCode::ExpectedSyntax.id()
+            },
+            message,
+            kind,
+            slot,
+        );
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn phase_sixteen_diagnostics_own_the_declared_node_or_slot() {
+        check("package\n", "expected name", KotlinSyntaxKind::Name, Some(crate::shape::name::Slot::identifier as u16));
+        check("import sample*\n", "expected `.` before import star", KotlinSyntaxKind::ImportOnDemandSuffix, Some(crate::shape::import_on_demand_suffix::Slot::dot as u16));
+        check("import sample as\n", "expected name", KotlinSyntaxKind::Name, Some(crate::shape::name::Slot::identifier as u16));
+        check("package sample unexpected\n", "unexpected token in package header", KotlinSyntaxKind::BogusPackageSuffix, None);
+        check("import sample unexpected\n", "unexpected token in import directive", KotlinSyntaxKind::BogusImportSuffix, None);
+        check("package first\npackage second\n", "unexpected package header after file header", KotlinSyntaxKind::PackageHeader, None);
+        check("class C\nimport sample.Name\n", "unexpected import after file item", KotlinSyntaxKind::ImportDirectiveList, None);
+        check("}\n", "unexpected closing brace at top level", KotlinSyntaxKind::BogusKotlinFileItem, None);
     }
 }
 

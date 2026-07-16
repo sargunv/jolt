@@ -1,5 +1,12 @@
 package sample
 
+import sample.Z
+// @formatter:off
+import   sample.KeepUgly
+import   sample.AlsoKeepUgly
+// @formatter:on
+import sample.A
+
 // @formatter:off
 class   KeepUgly   {   fun   messy( )  { println(1) } }
 // @formatter:on

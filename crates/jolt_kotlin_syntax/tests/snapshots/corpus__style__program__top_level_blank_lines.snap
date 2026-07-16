@@ -18,21 +18,20 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  PackageHeader
-    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
-    QualifiedName
-      QualifiedNameSegmentList
-        Name
-          Identifier "com" @ 8..11
-        Dot "." @ 11..12
-        Name
-          Identifier "example" @ 12..19
-        Dot "." @ 19..20
-        Name
-          Identifier "demo" @ 20..24
-    TerminatorList
-  ImportDirectiveList
   KotlinFileItemList
+    PackageHeader
+      PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "com" @ 8..11
+          Dot "." @ 11..12
+          Name
+            Identifier "example" @ 12..19
+          Dot "." @ 19..20
+          Name
+            Identifier "demo" @ 20..24
+      TerminatorList
     PropertyDeclaration
       ModifierList
         Identifier "const" @ 27..32 leading=[Newline "\n", Newline "\n", Newline "\n"] trailing=[Whitespace " "]

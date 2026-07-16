@@ -16,51 +16,51 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  PackageHeader
-    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
-    QualifiedName
-      QualifiedNameSegmentList
-        Name
-          Identifier "com" @ 8..11
-        Dot "." @ 11..12
-        Name
-          Identifier "example" @ 12..19
-        Dot "." @ 19..20
-        Name
-          Identifier "imports" @ 20..27
-    TerminatorList
-  ImportDirectiveList
-    ImportDirective
-      Identifier "import" @ 29..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        QualifiedNameSegmentList
-          Name
-            Identifier "alpha" @ 36..41
-          Dot "." @ 41..42
-          Name
-            Identifier "Alpha" @ 42..47
-      TerminatorList
-    ImportDirective
-      Identifier "import" @ 94..100 leading=[Newline "\n", LineComment "// Keep generated imports below this comment.", Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        QualifiedNameSegmentList
-          Name
-            Identifier "generated" @ 101..110
-          Dot "." @ 110..111
-          Name
-            Identifier "Zed" @ 111..114
-      TerminatorList
-    ImportDirective
-      Identifier "import" @ 115..121 leading=[Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        QualifiedNameSegmentList
-          Name
-            Identifier "generated" @ 122..131
-          Dot "." @ 131..132
-          Name
-            Identifier "Alpha" @ 132..137
-      TerminatorList
   KotlinFileItemList
+    PackageHeader
+      PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "com" @ 8..11
+          Dot "." @ 11..12
+          Name
+            Identifier "example" @ 12..19
+          Dot "." @ 19..20
+          Name
+            Identifier "imports" @ 20..27
+      TerminatorList
+    ImportDirectiveList
+      ImportDirective
+        Identifier "import" @ 29..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "alpha" @ 36..41
+            Dot "." @ 41..42
+            Name
+              Identifier "Alpha" @ 42..47
+        TerminatorList
+      ImportDirective
+        Identifier "import" @ 94..100 leading=[Newline "\n", LineComment "// Keep generated imports below this comment.", Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "generated" @ 101..110
+            Dot "." @ 110..111
+            Name
+              Identifier "Zed" @ 111..114
+        TerminatorList
+      ImportDirective
+        Identifier "import" @ 115..121 leading=[Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "generated" @ 122..131
+            Dot "." @ 131..132
+            Name
+              Identifier "Alpha" @ 132..137
+        TerminatorList
     ClassDeclaration
       ModifierList
       ModifierList

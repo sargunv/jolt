@@ -1023,6 +1023,41 @@ Vertically migrate files, duplicate package/import containers, names, EOF
 comments, and imports. Retain Phase 2 trivia behavior and use
 category-compatible bogus entries as sorting barriers.
 
+Implementation status: **complete and gate-green**. `KotlinFile` now exposes one
+source-ordered item list containing package headers, import-list containers, and
+body items. Duplicate or misplaced headers remain in that order with exact
+diagnostic ownership instead of falling into positional root fields. Qualified
+names use an exact separated segment list with category-compatible bogus
+segments; import stars and malformed package/import suffixes have dedicated
+typed roles.
+
+The formatter consumes those typed parts directly. It no longer replays a whole
+file, package, import, alias, name, or qualified name when one child is
+malformed. Clean import runs sort in bounded `O(r log r)` time, while comments,
+formatter-ignore runs, missing roles, and syntax-owned bogus entries form
+conservation-safe barriers. EOF comments retain the Phase 2 behavior. A focused
+recovery fixture covers duplicate and late containers, missing and malformed
+names, import stars and aliases, bogus suffixes, and an orphan top-level brace;
+the syntax corpus proves bidirectional ownership for all of its diagnostics.
+Removing whole-file replay also exposed an existing empty trailing type
+constraint: the formatter now suppresses layout around that zero-token role so
+the newly structured root remains whitespace-clean and idempotent. Phase 17
+still owns the full type/list migration.
+
+The phase adds 227 net implementation lines to the formal projection relative to
+Phase 15, moving the cumulative baseline delta to +4,063. Most of the local
+growth is the first complete Kotlin structural-diagnostic ownership plumbing and
+import-local formatter-ignore partitioning; the old positional root and
+whole-node fallback paths were deleted. Fixtures and mechanically changed syntax
+snapshots are excluded from that projection. The final Phase 22 deletion and
+Phase 24 net-negative gate remain binding.
+
+Quality audit: the Rust 1.96 fix gate, all 130 workspace tests, imported Kotlin
+and Java corpora, recovery idempotence and conservation, CLI/dprint coverage,
+schema audit, bidirectional diagnostic ownership, and `git diff --check` pass.
+No benchmark was run; Phase 23 remains the designated cumulative performance
+gate.
+
 ### New Phase 17: Kotlin Types And Parameters
 
 Vertically migrate names/types, arguments/parameters, constraints, projections,

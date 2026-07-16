@@ -35,15 +35,14 @@ KotlinFile
                   RegularStringPart "unused" @ 16..22
               ClosingQuote "\"" @ 22..23
         RParen ")" @ 23..24
-  PackageHeader
-    PackageKw "package" @ 26..33 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    QualifiedName
-      QualifiedNameSegmentList
-        Name
-          Identifier "sample" @ 34..40
-    TerminatorList
-  ImportDirectiveList
   KotlinFileItemList
+    PackageHeader
+      PackageKw "package" @ 26..33 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "sample" @ 34..40
+      TerminatorList
     ClassDeclaration
       ModifierList
       ModifierList

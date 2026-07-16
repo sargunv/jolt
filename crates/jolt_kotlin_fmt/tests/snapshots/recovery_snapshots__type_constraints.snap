@@ -6,7 +6,10 @@ input:
 fun <T> demo() where T : Any, /* orphan */ , T : Closeable {}
 
 formatted:
-fun <T> demo() where T : Any, /* orphan */ , T : Closeable {}
+fun <T> demo() where T : Any, /* orphan */
+, T : Closeable {
+
+}
 
 diagnostics:
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(44) }) message=expected name

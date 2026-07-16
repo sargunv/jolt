@@ -15,18 +15,17 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  PackageHeader
-    PackageKw "package" @ 23..30 leading=[ShebangComment "#!/usr/bin/env kotlin", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    QualifiedName
-      QualifiedNameSegmentList
-        Name
-          Identifier "samples" @ 31..38
-        Dot "." @ 38..39
-        Name
-          Identifier "scriptlike" @ 39..49
-    TerminatorList
-  ImportDirectiveList
   KotlinFileItemList
+    PackageHeader
+      PackageKw "package" @ 23..30 leading=[ShebangComment "#!/usr/bin/env kotlin", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "samples" @ 31..38
+          Dot "." @ 38..39
+          Name
+            Identifier "scriptlike" @ 39..49
+      TerminatorList
     FunctionDeclaration
       ModifierList
       ModifierList

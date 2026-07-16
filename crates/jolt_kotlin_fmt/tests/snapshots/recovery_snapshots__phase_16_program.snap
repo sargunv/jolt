@@ -1,0 +1,67 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+package first
+import z.Z
+package second
+import z.Z
+import
+import b.B
+import a.A
+class BeforeLateImport
+import c.C
+
+package
+package broken..name.
+import
+import direct*
+import broken..name.*
+import aliased.Name as
+import suffix.Name unexpected suffix
+}
+
+formatted:
+package first
+
+import z.Z
+
+package second
+
+import z.Z
+import
+import a.A
+import b.B
+
+class BeforeLateImport
+
+import c.C
+
+package
+
+package broken..name.
+
+import
+import direct*
+import broken..name.*
+import aliased.Name as
+import suffix.Name unexpected suffix
+
+}
+
+diagnostics:
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(25), end: TextSize(32) }) message=unexpected package header after file header
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(58), end: TextSize(64) }) message=expected name
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(103), end: TextSize(109) }) message=unexpected import after file item
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(115), end: TextSize(122) }) message=unexpected package header after file header
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(123), end: TextSize(130) }) message=expected name
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(123), end: TextSize(130) }) message=unexpected package header after file header
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(137), end: TextSize(139) }) message=unexpected token in package header
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(145), end: TextSize(151) }) message=unexpected import after file item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(152), end: TextSize(158) }) message=expected name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(165), end: TextSize(166) }) message=expected `.` before import star
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(180), end: TextSize(182) }) message=unexpected token in import directive
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(212), end: TextSize(218) }) message=expected name
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(231), end: TextSize(241) }) message=unexpected token in import directive
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(249), end: TextSize(250) }) message=unexpected closing brace at top level

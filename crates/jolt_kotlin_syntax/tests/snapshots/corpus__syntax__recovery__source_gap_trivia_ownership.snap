@@ -24,7 +24,6 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportDirectiveList
   KotlinFileItemList
     FunctionDeclaration
       ModifierList

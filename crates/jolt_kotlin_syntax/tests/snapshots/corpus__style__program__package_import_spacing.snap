@@ -36,41 +36,41 @@ KotlinFile
                   RegularStringPart "unused" @ 16..22
               ClosingQuote "\"" @ 22..23
         RParen ")" @ 23..24
-  PackageHeader
-    PackageKw "package" @ 25..32 leading=[Newline "\n"] trailing=[Whitespace "   "]
-    QualifiedName
-      QualifiedNameSegmentList
-        Name
-          Identifier "com" @ 35..38
-        Dot "." @ 38..39
-        Name
-          Identifier "example" @ 39..46
-        Dot "." @ 46..47
-        Name
-          Identifier "demo" @ 47..51
-    TerminatorList
-  ImportDirectiveList
-    ImportDirective
-      Identifier "import" @ 52..58 leading=[Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        QualifiedNameSegmentList
-          Name
-            Identifier "zeta" @ 59..63
-          Dot "." @ 63..64
-          Name
-            Identifier "Zed" @ 64..67
-      TerminatorList
-    ImportDirective
-      Identifier "import" @ 68..74 leading=[Newline "\n"] trailing=[Whitespace " "]
-      QualifiedName
-        QualifiedNameSegmentList
-          Name
-            Identifier "alpha" @ 75..80
-          Dot "." @ 80..81
-          Name
-            Identifier "Alpha" @ 81..86
-      TerminatorList
   KotlinFileItemList
+    PackageHeader
+      PackageKw "package" @ 25..32 leading=[Newline "\n"] trailing=[Whitespace "   "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "com" @ 35..38
+          Dot "." @ 38..39
+          Name
+            Identifier "example" @ 39..46
+          Dot "." @ 46..47
+          Name
+            Identifier "demo" @ 47..51
+      TerminatorList
+    ImportDirectiveList
+      ImportDirective
+        Identifier "import" @ 52..58 leading=[Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "zeta" @ 59..63
+            Dot "." @ 63..64
+            Name
+              Identifier "Zed" @ 64..67
+        TerminatorList
+      ImportDirective
+        Identifier "import" @ 68..74 leading=[Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "alpha" @ 75..80
+            Dot "." @ 80..81
+            Name
+              Identifier "Alpha" @ 81..86
+        TerminatorList
     ClassDeclaration
       ModifierList
       ModifierList

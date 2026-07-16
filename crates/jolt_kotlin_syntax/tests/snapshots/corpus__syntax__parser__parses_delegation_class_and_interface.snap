@@ -28,7 +28,6 @@ syntax:
 syntax:
 KotlinFile
   AnnotationList
-  ImportDirectiveList
   KotlinFileItemList
     InterfaceDeclaration
       ModifierList

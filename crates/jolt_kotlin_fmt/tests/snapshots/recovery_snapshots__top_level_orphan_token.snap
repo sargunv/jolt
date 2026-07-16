@@ -8,6 +8,7 @@ fun topLevelOrphanToken() = Unit
 
 formatted:
 fun topLevelOrphanToken() = Unit
+
 }
 
 diagnostics:

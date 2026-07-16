@@ -63,31 +63,31 @@ KotlinFile
                   RegularStringPart "unused" @ 43..49
               ClosingQuote "\"" @ 49..50
         RParen ")" @ 50..51
-  PackageHeader
-    PackageKw "package" @ 53..60 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    QualifiedName
-      QualifiedNameSegmentList
-        Name
-          Identifier "samples" @ 61..68
-        Dot "." @ 68..69
-        Name
-          Identifier "structure" @ 69..78
-    TerminatorList
-  ImportDirectiveList
-    ImportDirective
-      Identifier "import" @ 80..86 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+  KotlinFileItemList
+    PackageHeader
+      PackageKw "package" @ 53..60 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       QualifiedName
         QualifiedNameSegmentList
           Name
-            Identifier "kotlin" @ 87..93
-          Dot "." @ 93..94
+            Identifier "samples" @ 61..68
+          Dot "." @ 68..69
           Name
-            Identifier "collections" @ 94..105
-          Dot "." @ 105..106
-          Name
-            Identifier "List" @ 106..110
+            Identifier "structure" @ 69..78
       TerminatorList
-  KotlinFileItemList
+    ImportDirectiveList
+      ImportDirective
+        Identifier "import" @ 80..86 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "kotlin" @ 87..93
+            Dot "." @ 93..94
+            Name
+              Identifier "collections" @ 94..105
+            Dot "." @ 105..106
+            Name
+              Identifier "List" @ 106..110
+        TerminatorList
     ClassDeclaration
       ModifierList
       ModifierList

@@ -4,25 +4,51 @@ use super::super::Parser;
 
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn parse_qualified_name(&mut self) {
+        self.parse_qualified_name_after_start(false);
+    }
+
+    pub(in crate::parser::grammar) fn parse_file_qualified_name(&mut self) {
+        self.parse_qualified_name_after_start(true);
+    }
+
+    fn parse_qualified_name_after_start(&mut self, require_same_line_start: bool) {
         let marker = self.start();
         let segments = self.start();
-        self.parse_name();
-        while self.eat(K::Dot) {
-            if self.at(K::Star) {
-                break;
-            }
+        if require_same_line_start && self.newline_before_current() {
+            self.parse_file_name();
+        } else {
             self.parse_name();
+        }
+        while self.at(K::Dot) && self.nth_kind(1) != K::Star {
+            self.bump();
+            if require_same_line_start {
+                self.parse_file_name();
+            } else {
+                self.parse_name();
+            }
         }
         self.complete(segments, K::QualifiedNameSegmentList);
         self.complete(marker, K::QualifiedName);
     }
 
     pub(in crate::parser::grammar) fn parse_name(&mut self) {
+        self.parse_name_with_line_boundary(false);
+    }
+
+    pub(in crate::parser::grammar) fn parse_file_name(&mut self) {
+        self.parse_name_with_line_boundary(true);
+    }
+
+    fn parse_name_with_line_boundary(&mut self, stop_at_line_break: bool) {
         let marker = self.start();
-        if self.at_identifier_like() {
+        if (!stop_at_line_break || !self.newline_before_current()) && self.at_identifier_like() {
             self.bump();
         } else {
-            self.expected_here("expected name");
+            self.expected_owned_slot(
+                "expected name",
+                marker.anchor(),
+                crate::shape::name::Slot::identifier as u16,
+            );
         }
         self.complete(marker, K::Name);
     }

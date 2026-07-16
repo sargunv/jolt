@@ -154,6 +154,7 @@ macro_rules! kotlin_syntax_schema {
             categories {
                 KotlinFileItem => BogusKotlinFileItem {
                     PackageHeader,
+                    ImportDirectiveList,
                     ClassDeclaration,
                     InterfaceDeclaration,
                     ObjectDeclaration,
@@ -270,6 +271,9 @@ macro_rules! kotlin_syntax_schema {
                     SecondaryConstructor,
                     InitializerBlock,
                 }
+                QualifiedNameSegment => BogusQualifiedNameSegment {
+                    Name,
+                }
             }
             nodes {
                 ErrorNode => ErrorNode [error_node malformed] {
@@ -277,27 +281,36 @@ macro_rules! kotlin_syntax_schema {
                 }
                 KotlinFile => KotlinFile [kotlin_file valid] {
                     annotations: required (list AnnotationList);
-                    package_header: optional (node PackageHeader);
-                    import_list: required (list ImportDirectiveList);
                     items: required (list KotlinFileItemList);
                     eof: required (token Eof);
                 }
                 PackageHeader => PackageHeader [package_header valid] {
                     package_token: required (token PackageKw);
                     name: required (node QualifiedName);
+                    suffix: optional (node BogusPackageSuffix);
                     terminators: required (list TerminatorList);
                 }
                 ImportDirective => ImportDirective [import_directive valid] {
                     import_token: required (contextual "import");
                     name: required (node QualifiedName);
-                    star_separator: optional (token Dot);
-                    star: optional (token Star);
+                    on_demand: optional (node ImportOnDemandSuffix);
                     alias: optional (node ImportAlias);
+                    suffix: optional (node BogusImportSuffix);
                     terminators: required (list TerminatorList);
+                }
+                ImportOnDemandSuffix => ImportOnDemandSuffix [import_on_demand_suffix valid] {
+                    dot: required (token Dot);
+                    star: required (token Star);
                 }
                 ImportAlias => ImportAlias [import_alias valid] {
                     alias_keyword: required (token_set [AsKw, Identifier]);
                     name: required (node Name);
+                }
+                BogusPackageSuffix => BogusPackageSuffix [bogus_package_suffix malformed] {
+                    elements: many (any_element) => BogusPackageSuffixElement;
+                }
+                BogusImportSuffix => BogusImportSuffix [bogus_import_suffix malformed] {
+                    elements: many (any_element) => BogusImportSuffixElement;
                 }
                 Annotation => Annotation [annotation valid] {
                     sigil: required (token_set [At, Hash]);
@@ -875,7 +888,7 @@ macro_rules! kotlin_syntax_schema {
                     terminators: many (token_set [EolOrSemicolon, Semicolon]);
                 }
                 ImportDirectiveList => ImportDirectiveList [import_directive_list list] {
-                    directives: many (node ImportDirective);
+                    directives: one_or_more (node ImportDirective);
                 }
                 ModifierList => ModifierList [modifier_list list] {
                     modifiers: many (choice [
@@ -908,7 +921,7 @@ macro_rules! kotlin_syntax_schema {
                     entries: many (choice [(token Star), (node Annotation)]);
                 }
                 QualifiedNameSegmentList => QualifiedNameSegmentList [qualified_name_segment_list list] {
-                    segments: many (choice [(node Name), (token Dot)]);
+                    segments: one_or_more (category QualifiedNameSegment) [separated (token Dot), minimum 1, trailing forbidden, recovery bogus_owner];
                 }
                 CallableNamePartList => CallableNamePartList [callable_name_part_list list] {
                     parts: many (choice [(node_set [Name, TypeReference]), (token Dot)]);
