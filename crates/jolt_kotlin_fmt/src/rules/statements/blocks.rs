@@ -2,6 +2,7 @@ use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     Block, BlockItem, BlockItemList, BlockItemListElement, BlockItemListElementSyntax,
     KotlinCommentKind, KotlinSyntaxInvariantError, KotlinSyntaxListPart, KotlinSyntaxToken,
+    boundary_separator_removal_claim,
 };
 use jolt_syntax::tokens_have_blank_line_between;
 
@@ -108,34 +109,49 @@ fn collect_block_parts<'source>(
     doc: &mut DocBuilder<'source>,
     items: &BlockItemList<'source>,
 ) -> Vec<BlockPart<'source>> {
-    items
-        .parts()
-        .filter_map(|part| match part {
-            Ok(KotlinSyntaxListPart::Item(element)) => block_element_part(doc, items, element),
+    let mut parts = Vec::new();
+    let mut preceding_item = None;
+    for part in items.parts() {
+        let part = match part {
+            Ok(KotlinSyntaxListPart::Item(element)) => {
+                block_element_part(doc, &mut preceding_item, element)
+            }
             Ok(
                 KotlinSyntaxListPart::Separator(_)
                 | KotlinSyntaxListPart::Missing(_)
                 | KotlinSyntaxListPart::Malformed(_),
             ) => {
+                preceding_item = None;
                 doc.block_on_invariant("typed Kotlin block list exposed a non-item part");
                 None
             }
-            Err(error) => invariant_block_part(doc, error),
-        })
-        .collect()
+            Err(error) => {
+                preceding_item = None;
+                invariant_block_part(doc, error)
+            }
+        };
+        if let Some(part) = part {
+            parts.push(part);
+        }
+    }
+    parts
 }
 
 fn block_element_part<'source>(
     doc: &mut DocBuilder<'source>,
-    items: &BlockItemList<'source>,
+    preceding_item: &mut Option<BlockItem<'source>>,
     element: BlockItemListElement<'source>,
 ) -> Option<BlockPart<'source>> {
     match element.classify() {
-        Ok(BlockItemListElementSyntax::Item(item)) => Some(BlockPart::Item(item)),
+        Ok(BlockItemListElementSyntax::Item(item)) => {
+            *preceding_item = Some(item);
+            Some(BlockPart::Item(item))
+        }
         Ok(BlockItemListElementSyntax::Terminator(token)) => {
-            Some(separator_part(doc, items, token))
+            Some(separator_part(doc, preceding_item.as_ref(), token))
         }
         Err(error) => {
+            *preceding_item = None;
             doc.block_on_invariant(error.to_string());
             None
         }
@@ -144,11 +160,11 @@ fn block_element_part<'source>(
 
 fn separator_part<'source>(
     doc: &mut DocBuilder<'source>,
-    items: &BlockItemList<'source>,
+    preceding_item: Option<&BlockItem<'source>>,
     token: KotlinSyntaxToken<'source>,
 ) -> BlockPart<'source> {
-    let removed =
-        format_removed_separator(doc, &token, items.separator_removal_claim(token), false);
+    let claim = preceding_item.and_then(|owner| boundary_separator_removal_claim(owner, token));
+    let removed = format_removed_separator(doc, &token, claim, false);
     BlockPart::Separator {
         token,
         removed,

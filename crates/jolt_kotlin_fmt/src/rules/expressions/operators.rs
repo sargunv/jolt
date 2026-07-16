@@ -103,18 +103,18 @@ pub(super) fn format_binary_expression<'source>(
     let mut operators = Vec::new();
     collect_binary_chain(root, &mut operands, &mut operators);
     if operators.len() + 1 != operands.len() {
-        let left = format_binary_operand_with_leading(doc, &left, &operator, leading);
-        let right = format_binary_operand(doc, &right, &operator);
+        let left = format_binary_operand_with_leading(doc, expression, &left, &operator, leading);
+        let right = format_binary_operand(doc, expression, &right, &operator);
         let part = binary_chain_part(doc, operator, right);
         return binary_chain(doc, left, vec![part]);
     }
 
     let mut operands = operands.into_iter();
     let first = operands.next().unwrap_or(left);
-    let first = format_binary_operand_with_leading(doc, &first, &operator, leading);
+    let first = format_binary_operand_with_leading(doc, expression, &first, &operator, leading);
     let mut rest = Vec::new();
     for (operator, operand) in operators.into_iter().zip(operands) {
-        let operand = format_binary_operand(doc, &operand, &operator);
+        let operand = format_binary_operand(doc, expression, &operand, &operator);
         rest.push(binary_chain_part(doc, operator, operand));
     }
     binary_chain(doc, first, rest)
@@ -209,34 +209,36 @@ fn present<T>(
 
 fn format_binary_operand<'source>(
     doc: &mut DocBuilder<'source>,
+    owner: &BinaryExpression<'source>,
     expression: &Expression<'source>,
     parent_operator: &KotlinSyntaxToken<'_>,
 ) -> Doc<'source> {
     let formatted = format_expression(doc, expression);
-    format_binary_operand_doc(doc, formatted, expression, parent_operator)
+    format_binary_operand_doc(doc, formatted, owner, expression, parent_operator)
 }
 
 fn format_binary_operand_with_leading<'source>(
     doc: &mut DocBuilder<'source>,
+    owner: &BinaryExpression<'source>,
     expression: &Expression<'source>,
     parent_operator: &KotlinSyntaxToken<'_>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
     let formatted = format_expression_with_leading(doc, expression, leading);
-    format_binary_operand_doc(doc, formatted, expression, parent_operator)
+    format_binary_operand_doc(doc, formatted, owner, expression, parent_operator)
 }
 
 fn format_binary_operand_doc<'source>(
     doc: &mut DocBuilder<'source>,
     formatted: Doc<'source>,
+    owner: &BinaryExpression<'source>,
     expression: &Expression<'source>,
     parent_operator: &KotlinSyntaxToken<'_>,
 ) -> Doc<'source> {
     if !should_parenthesize_binary_operand(expression, parent_operator) {
         return formatted;
     }
-    let Some(claims) = expression.precedence_parenthesis_claims() else {
-        doc.block_on_invariant("valid Kotlin binary operand lacked normalization claims");
+    let Some(claims) = owner.precedence_parenthesis_claims(expression) else {
         return formatted;
     };
     let open = inserted_syntax_token(doc, claims.open);

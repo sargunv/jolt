@@ -3,7 +3,7 @@ use std::{fmt, marker::PhantomData};
 use jolt_text::{TextRange, TextSize};
 
 use crate::{
-    Language, RawSyntaxKind, SyntaxConservationTracker, SyntaxVerbatimCore,
+    Language, RawSyntaxKind, SourceNodeId, SyntaxConservationTracker, SyntaxVerbatimCore,
     syntax_tree::{NodeId, SyntaxNodeId, SyntaxTree, TokenId, TreeElement, TreeSlot},
 };
 
@@ -66,6 +66,15 @@ impl<'tree, L: Language> SyntaxNode<'tree, L> {
     #[must_use]
     pub fn id(&self) -> SyntaxNodeId {
         SyntaxNodeId(self.id.index_u32())
+    }
+
+    /// Returns this node's parse-local source identity.
+    #[must_use]
+    pub const fn source_id(&self) -> SourceNodeId<'tree> {
+        SourceNodeId {
+            tree: self.tree,
+            id: self.id,
+        }
     }
 
     /// Creates root-level dense source conservation accounting for this tree.

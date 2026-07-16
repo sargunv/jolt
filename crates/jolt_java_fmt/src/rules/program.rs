@@ -218,9 +218,10 @@ fn flush_imports<'source>(
     sections: &mut Vec<(Doc<'source>, bool, bool)>,
     doc: &mut DocBuilder<'source>,
 ) {
-    if let Some(imports) = format_imports(std::mem::take(imports), doc) {
-        sections.push((imports, true, false));
+    if let Some(formatted) = format_imports(imports, doc) {
+        sections.push((formatted, true, false));
     }
+    imports.clear();
 }
 
 fn join_program_sections<'source>(
@@ -321,7 +322,7 @@ fn format_program_item<'source>(
         }
         CompilationUnitItem::ImportDeclaration(import) => {
             doc.block_on_invariant("import bypassed its compilation-unit sorting run");
-            crate::rules::imports::format_imports(vec![import], doc).unwrap_or_else(Doc::nil)
+            crate::rules::imports::format_imports(&[import], doc).unwrap_or_else(Doc::nil)
         }
         CompilationUnitItem::ModuleDeclaration(module) => format_module_declaration(&module, doc),
         CompilationUnitItem::ClassDeclaration(declaration) => {

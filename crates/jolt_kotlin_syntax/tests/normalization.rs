@@ -20,30 +20,36 @@ fn separator_removal_requires_a_clean_owning_list() {
 }
 
 #[test]
-fn precedence_parentheses_require_a_recovery_free_expression() {
+fn precedence_parentheses_require_a_recovery_free_binary_owner() {
     let valid_parse = parse_kotlin_file("val value = 1 + 2\n");
-    let valid = Expression::BinaryExpression(
-        find_nodes::<BinaryExpression<'_>>(
-            valid_parse
-                .syntax()
-                .expect("represented Kotlin file")
-                .syntax_node()
-                .expect("physical Kotlin file"),
-        )[0],
+    let valid = find_nodes::<BinaryExpression<'_>>(
+        valid_parse
+            .syntax()
+            .expect("represented Kotlin file")
+            .syntax_node()
+            .expect("physical Kotlin file"),
+    )[0];
+    let valid_operand = Expression::BinaryExpression(valid);
+    assert!(
+        valid
+            .precedence_parenthesis_claims(&valid_operand)
+            .is_some()
     );
-    assert!(valid.precedence_parenthesis_claims().is_some());
 
     let recovered_parse = parse_kotlin_file("val value = 1 +\n");
-    let recovered = Expression::BinaryExpression(
-        find_nodes::<BinaryExpression<'_>>(
-            recovered_parse
-                .syntax()
-                .expect("represented Kotlin file")
-                .syntax_node()
-                .expect("physical Kotlin file"),
-        )[0],
+    let recovered = find_nodes::<BinaryExpression<'_>>(
+        recovered_parse
+            .syntax()
+            .expect("represented Kotlin file")
+            .syntax_node()
+            .expect("physical Kotlin file"),
+    )[0];
+    let recovered_operand = Expression::BinaryExpression(recovered);
+    assert!(
+        recovered
+            .precedence_parenthesis_claims(&recovered_operand)
+            .is_none()
     );
-    assert!(recovered.precedence_parenthesis_claims().is_none());
 }
 
 #[test]

@@ -22,6 +22,7 @@ class D {
 
 module m {
   exports p to /* target */ ;
+
   provides S with /* impl */ ;
 }
 

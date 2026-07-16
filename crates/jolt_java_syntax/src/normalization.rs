@@ -1,16 +1,17 @@
 use jolt_syntax::{
-    NormalizedToken, RemovalReason, ReorderReason, ReplacementClaim, SourceIdentity, SynthesisClaim,
+    NormalizationOwner, NormalizedToken, RemovalReason, ReorderReason, ReplacementClaim,
+    SourceIdentity, SynthesisClaim,
 };
 pub use jolt_syntax::{RemovalClaim, ReorderClaim};
 
 use crate::language::{JavaLanguage, NORMALIZATION_AUTHORITY};
 use crate::{
-    AnnotationArrayInitializer, ArrayInitializer, BasicForStatement, ClassBodyMember, DoStatement,
-    EmptyDeclaration, EmptyStatement, EnhancedForStatement, EnumBody, Expression, Guard,
-    IfStatement, ImportDeclaration, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxToken,
-    JavaSyntaxView, LambdaExpression, LambdaParameter, ModifierList, ModuleDeclaration,
-    ParameterModifierList, ParenthesizedExpression, RequiresDirective, ResourceSpecification,
-    Statement, WhileStatement,
+    AnnotationArrayInitializer, ArrayInitializer, BasicForStatement, BinaryExpression,
+    ClassBodyMember, DoStatement, EmptyDeclaration, EmptyStatement, EnhancedForStatement, EnumBody,
+    Expression, Guard, IfStatement, ImportDeclaration, JavaSyntaxField, JavaSyntaxListPart,
+    JavaSyntaxToken, JavaSyntaxView, LambdaExpression, LambdaParameter, ModifierList,
+    ModuleDirective, ParameterModifierList, ParenthesizedExpression, RequiresModifierList,
+    ResourceSpecification, Statement, WhileStatement,
 };
 
 /// Paired source-free delimiters authorized by one valid Java syntax owner.
@@ -25,22 +26,33 @@ pub struct JavaDelimiterRemoval<'source> {
     pub close: Option<RemovalClaim<'source>>,
 }
 
+/// Control-owner authorization for bracing a non-block body and, for an empty
+/// body, consuming its represented semicolon in the same operation.
+pub struct JavaControlBodyNormalization<'source> {
+    pub braces: JavaDelimiterSynthesis<'source>,
+    pub empty_separator: Option<RemovalClaim<'source>>,
+}
+
+fn normalization_owner<'source>(
+    owner: &impl JavaSyntaxView<'source>,
+) -> Option<NormalizationOwner<'source, JavaLanguage>> {
+    NormalizationOwner::authorized(NORMALIZATION_AUTHORITY, &owner.syntax_node()?)
+}
+
 fn delimiter_synthesis<'source>(
     owner: &impl JavaSyntaxView<'source>,
     open: NormalizedToken,
     close: NormalizedToken,
 ) -> Option<JavaDelimiterSynthesis<'source>> {
-    if !owner.is_recovery_free() {
-        return None;
-    }
     let syntax = owner.syntax_node()?;
+    let owner = normalization_owner(owner)?;
     let anchor = syntax
         .first_token()
         .or_else(|| syntax.last_token())?
         .source_id();
     Some(JavaDelimiterSynthesis {
-        open: SynthesisClaim::authorized::<JavaLanguage>(NORMALIZATION_AUTHORITY, anchor, open),
-        close: SynthesisClaim::authorized::<JavaLanguage>(NORMALIZATION_AUTHORITY, anchor, close),
+        open: SynthesisClaim::authorized(owner, anchor, open),
+        close: SynthesisClaim::authorized(owner, anchor, close),
     })
 }
 
@@ -55,12 +67,10 @@ impl<'source> EmptyStatement<'source> {
     /// Authorizes omission of this redundant empty-statement separator.
     #[must_use]
     pub fn separator_removal_claim(&self) -> Option<RemovalClaim<'source>> {
-        if !self.is_recovery_free() {
-            return None;
-        }
+        let owner = normalization_owner(self)?;
         let token = present(self.semicolon())?;
-        Some(RemovalClaim::authorized::<JavaLanguage>(
-            NORMALIZATION_AUTHORITY,
+        Some(RemovalClaim::authorized(
+            owner,
             SourceIdentity::Token(token.source_id()),
             RemovalReason::RedundantSeparator,
         ))
@@ -70,25 +80,41 @@ impl<'source> EmptyStatement<'source> {
 fn control_body_brace_claims<'source>(
     owner: &impl JavaSyntaxView<'source>,
     body: Statement<'source>,
-) -> Option<JavaDelimiterSynthesis<'source>> {
+) -> Option<JavaControlBodyNormalization<'source>> {
     if matches!(body, Statement::Block(_)) {
         return None;
     }
-    delimiter_synthesis(
+    let braces = delimiter_synthesis(
         owner,
         NormalizedToken::OpenBlockBrace,
         NormalizedToken::CloseBlockBrace,
-    )
+    )?;
+    let empty_separator = match body {
+        Statement::EmptyStatement(statement) => {
+            let owner = normalization_owner(owner)?;
+            let semicolon = present(statement.semicolon())?;
+            Some(RemovalClaim::authorized(
+                owner,
+                SourceIdentity::Token(semicolon.source_id()),
+                RemovalReason::RedundantSeparator,
+            ))
+        }
+        _ => None,
+    };
+    Some(JavaControlBodyNormalization {
+        braces,
+        empty_separator,
+    })
 }
 
 impl<'source> IfStatement<'source> {
     #[must_use]
-    pub fn then_block_brace_claims(&self) -> Option<JavaDelimiterSynthesis<'source>> {
+    pub fn then_block_brace_claims(&self) -> Option<JavaControlBodyNormalization<'source>> {
         control_body_brace_claims(self, present(self.then_branch())?)
     }
 
     #[must_use]
-    pub fn else_block_brace_claims(&self) -> Option<JavaDelimiterSynthesis<'source>> {
+    pub fn else_block_brace_claims(&self) -> Option<JavaControlBodyNormalization<'source>> {
         control_body_brace_claims(self, present(self.else_branch())?)
     }
 }
@@ -100,7 +126,7 @@ macro_rules! impl_control_body_brace_claims {
                 #[must_use]
                 pub fn body_block_brace_claims(
                     &self,
-                ) -> Option<JavaDelimiterSynthesis<'source>> {
+                ) -> Option<JavaControlBodyNormalization<'source>> {
                     control_body_brace_claims(self, present(self.body())?)
                 }
             }
@@ -119,19 +145,13 @@ fn reorder_claim<'source>(
     owner: &impl JavaSyntaxView<'source>,
     reason: ReorderReason,
 ) -> Option<ReorderClaim<'source>> {
-    if !owner.is_recovery_free() {
-        return None;
-    }
     let syntax = owner.syntax_node()?;
+    let owner = normalization_owner(owner)?;
     let anchor = syntax
         .first_token()
         .or_else(|| syntax.last_token())?
         .source_id();
-    Some(ReorderClaim::authorized::<JavaLanguage>(
-        NORMALIZATION_AUTHORITY,
-        anchor,
-        reason,
-    ))
+    Some(ReorderClaim::authorized(owner, anchor, reason))
 }
 
 macro_rules! impl_reorder_claim {
@@ -149,16 +169,16 @@ impl_reorder_claim!(ImportDeclaration, Imports);
 impl_reorder_claim!(ModifierList, Modifiers);
 impl_reorder_claim!(ParameterModifierList, Modifiers);
 
-impl<'source> ModuleDeclaration<'source> {
+impl<'source> ModuleDirective<'source> {
     #[must_use]
-    pub fn directive_reorder_claim(&self) -> Option<ReorderClaim<'source>> {
+    pub fn canonical_reorder_claim(&self) -> Option<ReorderClaim<'source>> {
         reorder_claim(self, ReorderReason::ModuleDirectives)
     }
 }
 
-impl<'source> RequiresDirective<'source> {
+impl<'source> RequiresModifierList<'source> {
     #[must_use]
-    pub fn modifier_reorder_claim(&self) -> Option<ReorderClaim<'source>> {
+    pub fn canonical_reorder_claim(&self) -> Option<ReorderClaim<'source>> {
         reorder_claim(self, ReorderReason::RequiresModifiers)
     }
 }
@@ -168,12 +188,10 @@ impl<'source> ResourceSpecification<'source> {
     /// separator while retaining its represented comments.
     #[must_use]
     pub fn trailing_separator_removal_claim(&self) -> Option<RemovalClaim<'source>> {
-        if !self.is_recovery_free() {
-            return None;
-        }
+        let owner = normalization_owner(self)?;
         let token = present(self.trailing_semicolon())?;
-        Some(RemovalClaim::authorized::<JavaLanguage>(
-            NORMALIZATION_AUTHORITY,
+        Some(RemovalClaim::authorized(
+            owner,
             SourceIdentity::Token(token.source_id()),
             RemovalReason::RedundantSeparator,
         ))
@@ -185,7 +203,13 @@ impl<'source> Guard<'source> {
     /// switch-pattern guard condition.
     #[must_use]
     pub fn redundant_parenthesis_removal_claims(&self) -> JavaDelimiterRemoval<'source> {
-        if !self.is_recovery_free() || present(self.condition()).is_none() {
+        let Some(owner) = normalization_owner(self) else {
+            return JavaDelimiterRemoval {
+                open: None,
+                close: None,
+            };
+        };
+        if present(self.condition()).is_none() {
             return JavaDelimiterRemoval {
                 open: None,
                 close: None,
@@ -199,13 +223,13 @@ impl<'source> Guard<'source> {
             };
         };
         JavaDelimiterRemoval {
-            open: Some(RemovalClaim::authorized::<JavaLanguage>(
-                NORMALIZATION_AUTHORITY,
+            open: Some(RemovalClaim::authorized(
+                owner,
                 SourceIdentity::Token(open.source_id()),
                 RemovalReason::RedundantDelimiter,
             )),
-            close: Some(RemovalClaim::authorized::<JavaLanguage>(
-                NORMALIZATION_AUTHORITY,
+            close: Some(RemovalClaim::authorized(
+                owner,
                 SourceIdentity::Token(close.source_id()),
                 RemovalReason::RedundantDelimiter,
             )),
@@ -217,43 +241,92 @@ impl<'source> EmptyDeclaration<'source> {
     /// Authorizes omission of this redundant empty-declaration separator.
     #[must_use]
     pub fn separator_removal_claim(&self) -> Option<RemovalClaim<'source>> {
-        if !self.is_recovery_free() {
-            return None;
-        }
+        let owner = normalization_owner(self)?;
         let token = present(self.semicolon())?;
-        Some(RemovalClaim::authorized::<JavaLanguage>(
-            NORMALIZATION_AUTHORITY,
+        Some(RemovalClaim::authorized(
+            owner,
             SourceIdentity::Token(token.source_id()),
             RemovalReason::RedundantSeparator,
         ))
     }
 }
 
-impl<'source> Expression<'source> {
+impl<'source> BinaryExpression<'source> {
     /// Authorizes readability parentheses around this valid expression.
     #[must_use]
-    pub fn precedence_parenthesis_claims(&self) -> Option<JavaDelimiterSynthesis<'source>> {
-        delimiter_synthesis(
-            self,
-            NormalizedToken::OpenPrecedenceParenthesis,
-            NormalizedToken::ClosePrecedenceParenthesis,
-        )
+    pub fn precedence_parenthesis_claims(
+        &self,
+        operand: &Expression<'source>,
+    ) -> Option<JavaDelimiterSynthesis<'source>> {
+        let owner = normalization_owner(self)?;
+        let syntax = operand.syntax_node()?;
+        let anchor = syntax
+            .first_token()
+            .or_else(|| syntax.last_token())?
+            .source_id();
+        Some(JavaDelimiterSynthesis {
+            open: SynthesisClaim::authorized(
+                owner,
+                anchor,
+                NormalizedToken::OpenPrecedenceParenthesis,
+            ),
+            close: SynthesisClaim::authorized(
+                owner,
+                anchor,
+                NormalizedToken::ClosePrecedenceParenthesis,
+            ),
+        })
+    }
+
+    /// Authorizes removing represented grouping parentheses only as part of
+    /// flattening this complete recovery-free binary operation.
+    #[must_use]
+    pub fn redundant_parenthesis_removal_claims(
+        &self,
+        parentheses: &ParenthesizedExpression<'source>,
+    ) -> JavaDelimiterRemoval<'source> {
+        let Some(owner) = normalization_owner(self) else {
+            return JavaDelimiterRemoval {
+                open: None,
+                close: None,
+            };
+        };
+        if !parentheses.is_recovery_free() || present(parentheses.expression()).is_none() {
+            return JavaDelimiterRemoval {
+                open: None,
+                close: None,
+            };
+        }
+        JavaDelimiterRemoval {
+            open: present(parentheses.open_paren()).map(|token| {
+                RemovalClaim::authorized(
+                    owner,
+                    SourceIdentity::Token(token.source_id()),
+                    RemovalReason::RedundantDelimiter,
+                )
+            }),
+            close: present(parentheses.close_paren()).map(|token| {
+                RemovalClaim::authorized(
+                    owner,
+                    SourceIdentity::Token(token.source_id()),
+                    RemovalReason::RedundantDelimiter,
+                )
+            }),
+        }
     }
 }
 
 fn trailing_comma<'source>(
     owner: &impl JavaSyntaxView<'source>,
 ) -> Option<SynthesisClaim<'source>> {
-    if !owner.is_recovery_free() {
-        return None;
-    }
     let syntax = owner.syntax_node()?;
+    let owner = normalization_owner(owner)?;
     let anchor = syntax
         .last_token()
         .or_else(|| syntax.first_token())?
         .source_id();
-    Some(SynthesisClaim::authorized::<JavaLanguage>(
-        NORMALIZATION_AUTHORITY,
+    Some(SynthesisClaim::authorized(
+        owner,
         anchor,
         NormalizedToken::TrailingComma,
     ))
@@ -319,6 +392,7 @@ impl<'source> EnumBody<'source> {
         source: &JavaSyntaxToken<'source>,
         normalized: NormalizedToken,
     ) -> Option<ReplacementClaim<'source>> {
+        let owner = normalization_owner(self)?;
         let recovery_free_shape = present(self.open_brace()).is_some()
             && self
                 .constants()
@@ -328,8 +402,7 @@ impl<'source> EnumBody<'source> {
                 .is_ok_and(|field| !matches!(field, JavaSyntaxField::Malformed(_)))
             && present(self.members()).is_some_and(|members| members.is_recovery_free())
             && present(self.close_brace()).is_some();
-        if !self.is_recovery_free()
-            || !recovery_free_shape
+        if !recovery_free_shape
             || !matches!(
                 normalized,
                 NormalizedToken::EnumComma | NormalizedToken::EnumSemicolon
@@ -338,8 +411,8 @@ impl<'source> EnumBody<'source> {
         {
             return None;
         }
-        Some(ReplacementClaim::authorized::<JavaLanguage>(
-            NORMALIZATION_AUTHORITY,
+        Some(ReplacementClaim::authorized(
+            owner,
             source.source_id(),
             normalized,
         ))
@@ -352,15 +425,13 @@ impl<'source> EnumBody<'source> {
         &self,
         source: &JavaSyntaxToken<'source>,
     ) -> Option<RemovalClaim<'source>> {
+        let owner = normalization_owner(self)?;
         let body_separator = present(self.body_separator())?;
-        if !self.is_recovery_free()
-            || body_separator.source_id() == source.source_id()
-            || !self.owns_separator(source)
-        {
+        if body_separator.source_id() == source.source_id() || !self.owns_separator(source) {
             return None;
         }
-        Some(RemovalClaim::authorized::<JavaLanguage>(
-            NORMALIZATION_AUTHORITY,
+        Some(RemovalClaim::authorized(
+            owner,
             SourceIdentity::Token(source.source_id()),
             RemovalReason::RedundantSeparator,
         ))
@@ -370,6 +441,7 @@ impl<'source> EnumBody<'source> {
     /// retained body declarations.
     #[must_use]
     pub fn redundant_body_separator_removal_claim(&self) -> Option<RemovalClaim<'source>> {
+        let owner = normalization_owner(self)?;
         let separator = present(self.body_separator())?;
         let constants_are_empty = match self.constants().ok()? {
             JavaSyntaxField::Missing(_) => true,
@@ -385,11 +457,11 @@ impl<'source> EnumBody<'source> {
                 )))
             )
         });
-        if !self.is_recovery_free() || !constants_are_empty || !members_are_empty {
+        if !constants_are_empty || !members_are_empty {
             return None;
         }
-        Some(RemovalClaim::authorized::<JavaLanguage>(
-            NORMALIZATION_AUTHORITY,
+        Some(RemovalClaim::authorized(
+            owner,
             SourceIdentity::Token(separator.source_id()),
             RemovalReason::RedundantSeparator,
         ))
@@ -422,10 +494,8 @@ impl<'source> LambdaExpression<'source> {
     pub fn simple_parameter_parenthesis_removal(
         &self,
     ) -> Option<JavaLambdaParameterParenthesisRemoval<'source>> {
-        if !self.is_recovery_free()
-            || present(self.arrow()).is_none()
-            || present(self.body()).is_none()
-        {
+        let owner = normalization_owner(self)?;
+        if present(self.arrow()).is_none() || present(self.body()).is_none() {
             return None;
         }
         let parameters = present(self.parameters())?;
@@ -452,13 +522,13 @@ impl<'source> LambdaExpression<'source> {
         let close = present(self.close_paren())?;
         Some(JavaLambdaParameterParenthesisRemoval {
             parameter,
-            open: RemovalClaim::authorized::<JavaLanguage>(
-                NORMALIZATION_AUTHORITY,
+            open: RemovalClaim::authorized(
+                owner,
                 SourceIdentity::Token(open.source_id()),
                 RemovalReason::RedundantDelimiter,
             ),
-            close: RemovalClaim::authorized::<JavaLanguage>(
-                NORMALIZATION_AUTHORITY,
+            close: RemovalClaim::authorized(
+                owner,
                 SourceIdentity::Token(close.source_id()),
                 RemovalReason::RedundantDelimiter,
             ),
@@ -472,33 +542,40 @@ pub struct JavaLambdaParameterParenthesisRemoval<'source> {
     pub close: RemovalClaim<'source>,
 }
 
-impl<'source> ParenthesizedExpression<'source> {
-    /// Authorizes omission of represented readability parentheses while a
-    /// binary chain is flattened. Formatter policy still decides whether the
-    /// delimiters are comment-free and safe to omit.
-    #[must_use]
-    pub fn redundant_parenthesis_removal_claims(&self) -> JavaDelimiterRemoval<'source> {
-        if !self.is_recovery_free() || present(self.expression()).is_none() {
-            return JavaDelimiterRemoval {
-                open: None,
-                close: None,
-            };
+#[cfg(test)]
+mod tests {
+    use super::{ArrayInitializer, normalization_owner};
+    use crate::{JavaNode, JavaSyntaxView, parse_compilation_unit};
+    use jolt_syntax::{NormalizedToken, SynthesisClaim};
+
+    #[test]
+    #[should_panic(expected = "normalization anchor must belong to its complete owner")]
+    fn normalization_claim_rejects_a_foreign_anchor() {
+        let owner_parse = parse_compilation_unit("class C { int[] values = {1}; }");
+        let foreign_parse = parse_compilation_unit("class D { int[] values = {2}; }");
+        let owner = find_array(&owner_parse);
+        let foreign = find_array(&foreign_parse)
+            .first_token()
+            .expect("foreign array token")
+            .source_id();
+
+        let owner = normalization_owner(&owner).expect("clean array owner");
+        let _ = SynthesisClaim::authorized(owner, foreign, NormalizedToken::TrailingComma);
+    }
+
+    fn find_array<'source>(parse: &'source crate::JavaParse<'source>) -> ArrayInitializer<'source> {
+        let root = parse
+            .syntax()
+            .expect("represented compilation unit")
+            .syntax_node()
+            .expect("physical compilation unit");
+        let mut stack = vec![root];
+        while let Some(node) = stack.pop() {
+            if let Some(array) = ArrayInitializer::cast(node) {
+                return array;
+            }
+            stack.extend(node.children());
         }
-        JavaDelimiterRemoval {
-            open: present(self.open_paren()).map(|token| {
-                RemovalClaim::authorized::<JavaLanguage>(
-                    NORMALIZATION_AUTHORITY,
-                    SourceIdentity::Token(token.source_id()),
-                    RemovalReason::RedundantDelimiter,
-                )
-            }),
-            close: present(self.close_paren()).map(|token| {
-                RemovalClaim::authorized::<JavaLanguage>(
-                    NORMALIZATION_AUTHORITY,
-                    SourceIdentity::Token(token.source_id()),
-                    RemovalReason::RedundantDelimiter,
-                )
-            }),
-        }
+        panic!("expected array initializer");
     }
 }

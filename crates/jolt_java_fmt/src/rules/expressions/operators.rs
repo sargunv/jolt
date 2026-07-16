@@ -82,7 +82,7 @@ pub(super) fn format_binary_expression<'source>(
     {
         let parent_operator = operator.kind();
         let (first, rest, has_rest) = flatten_binary_expression(expression, operator, doc);
-        let first = format_binary_operand(&first, parent_operator, doc);
+        let first = format_binary_operand(expression, &first, parent_operator, doc);
         return binary_chain(doc, first, rest, has_rest);
     }
     let left = format_required_field(expression.left(), doc, |left, doc| {
@@ -163,7 +163,7 @@ fn flatten_binary_expression<'source>(
     let mut has_rest = false;
     let rest = doc.concat_list(|rest| {
         for parentheses in removed_parentheses {
-            let removals = parentheses.redundant_parenthesis_removal_claims();
+            let removals = expression.redundant_parenthesis_removal_claims(&parentheses);
             if let Some(open) = removals.open {
                 let removed = rest.removed_source(open);
                 rest.push(removed);
@@ -174,7 +174,7 @@ fn flatten_binary_expression<'source>(
             }
         }
         for (operator, operand) in operators.into_iter().zip(operands) {
-            let operand = format_binary_operand(&operand, operator.kind(), rest);
+            let operand = format_binary_operand(expression, &operand, operator.kind(), rest);
             let operator = format_operator_with_comments(&operator, rest);
             let item = binary_chain_item(operator, operand, rest);
             rest.push(item);
@@ -186,14 +186,14 @@ fn flatten_binary_expression<'source>(
 }
 
 fn format_binary_operand<'source>(
+    owner: &BinaryExpression<'source>,
     expression: &Expression<'source>,
     parent_operator: JavaOperatorKind,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let formatted = format_expression(expression, doc);
     if should_parenthesize_binary_operand(expression, parent_operator) {
-        let Some(claims) = expression.precedence_parenthesis_claims() else {
-            doc.block_on_invariant("valid binary operand lacked parenthesis normalization claims");
+        let Some(claims) = owner.precedence_parenthesis_claims(expression) else {
             return formatted;
         };
         let open = inserted_syntax_token(doc, claims.open);

@@ -4,7 +4,7 @@ use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     ImportAlias, ImportDirective, ImportDirectiveList, ImportOnDemandSuffix, KotlinMalformedSyntax,
     KotlinMissingSyntax, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken,
-    KotlinSyntaxView,
+    KotlinSyntaxView, ReorderClaim,
 };
 
 use crate::helpers::comments::{
@@ -236,6 +236,7 @@ fn flush_sortable<'source>(
 
 struct FormattedImport<'source> {
     import: ImportDirective<'source>,
+    reorder: ReorderClaim<'source>,
     path: NameSortKey<'source>,
 }
 
@@ -243,8 +244,8 @@ impl<'source> FormattedImport<'source> {
     fn new(import: ImportDirective<'source>) -> Option<Self> {
         use KotlinSyntaxField::{Missing, Present};
 
-        if import.canonical_reorder_claim().is_none()
-            || !matches!(import.import_token(), Ok(Present(_)))
+        let reorder = import.canonical_reorder_claim()?;
+        if !matches!(import.import_token(), Ok(Present(_)))
             || !matches!(import.on_demand(), Ok(Present(_) | Missing(_)))
             || !matches!(import.alias(), Ok(Present(_) | Missing(_)))
             || !matches!(import.suffix(), Ok(Missing(_)))
@@ -257,10 +258,15 @@ impl<'source> FormattedImport<'source> {
         };
         let on_demand = matches!(import.on_demand(), Ok(Present(_)));
         let path = NameSortKey::new(&name, on_demand)?;
-        Some(Self { import, path })
+        Some(Self {
+            import,
+            reorder,
+            path,
+        })
     }
 
     fn into_doc(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
+        let _authorization = self.reorder.into_parts();
         format_import(doc, &self.import)
     }
 }

@@ -15,15 +15,15 @@ mod red;
 
 pub use comment::{Comment, CommentKind, Comments};
 pub use conservation::{
-    ConservationError, SourceIdentity, SourceTokenId, SourceTriviaId, SourceTriviaPiece,
-    SourceTriviaSide, SyntaxConservationTracker, SyntaxVerbatimCore,
+    ConservationError, SourceIdentity, SourceNodeId, SourceTokenId, SourceTriviaId,
+    SourceTriviaPiece, SourceTriviaSide, SyntaxConservationTracker, SyntaxVerbatimCore,
 };
 pub use event::{CompletedMarker, Event, Marker, NodeAnchor};
 pub use kind::RawSyntaxKind;
 pub use language::Language;
 pub use normalization::{
-    NormalizedToken, RemovalClaim, RemovalReason, ReorderClaim, ReorderReason, ReplacementClaim,
-    SynthesisClaim,
+    NormalizationOwner, NormalizedToken, RemovalClaim, RemovalReason, ReorderClaim, ReorderReason,
+    ReplacementClaim, SynthesisClaim,
 };
 pub use parser::{
     CursorCheckpoint, LanguageLexer, LexedToken, ParseEvents, Parser, PendingDiagnostic,

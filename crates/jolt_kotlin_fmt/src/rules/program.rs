@@ -4,7 +4,7 @@ use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     KotlinFamily, KotlinFile, KotlinFileItem, KotlinMalformedSyntax, KotlinMissingSyntax,
     KotlinRoleElement, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxView, PackageHeader,
-    StatementSyntax,
+    StatementSyntax, boundary_separator_removal_claim,
 };
 use jolt_syntax::tokens_have_blank_line_between;
 
@@ -98,12 +98,15 @@ fn collect_items<'source>(
             return;
         }
     };
+    let mut preceding_item = None;
     for part in items.parts() {
         match part {
             Ok(KotlinSyntaxListPart::Item(KotlinRoleElement::Node(node))) => {
                 if let Some(item) = KotlinFileItem::cast(node) {
+                    preceding_item = Some(item);
                     entries.push(FileEntry::Item(item));
                 } else {
+                    preceding_item = None;
                     doc.block_on_invariant("invalid Kotlin file item node");
                 }
             }
@@ -114,7 +117,9 @@ fn collect_items<'source>(
                 let separator = format_removed_separator(
                     doc,
                     &token,
-                    items.separator_removal_claim(token),
+                    preceding_item
+                        .as_ref()
+                        .and_then(|owner| boundary_separator_removal_claim(owner, token)),
                     false,
                 );
                 entries.push(FileEntry::Separator(
@@ -124,12 +129,17 @@ fn collect_items<'source>(
                 ));
             }
             Ok(KotlinSyntaxListPart::Malformed(malformed)) => {
+                preceding_item = None;
                 entries.push(FileEntry::Malformed(malformed));
             }
             Ok(KotlinSyntaxListPart::Missing(missing)) => {
+                preceding_item = None;
                 entries.push(FileEntry::Missing(missing));
             }
-            Err(error) => doc.block_on_invariant(error.to_string()),
+            Err(error) => {
+                preceding_item = None;
+                doc.block_on_invariant(error.to_string());
+            }
         }
     }
 }

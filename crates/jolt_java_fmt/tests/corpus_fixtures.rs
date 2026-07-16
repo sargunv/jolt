@@ -2,8 +2,8 @@ use std::path::PathBuf;
 
 use jolt_java_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
 use jolt_java_syntax::{
-    EmptyDeclaration, EmptyStatement, Guard, JavaNode, JavaSyntaxView, LambdaExpression,
-    ParenthesizedExpression, ResourceSpecification, parse_compilation_unit,
+    BinaryExpression, EmptyDeclaration, EmptyStatement, Guard, JavaNode, JavaSyntaxView,
+    LambdaExpression, ParenthesizedExpression, ResourceSpecification, parse_compilation_unit,
 };
 use jolt_test_support::{
     DeferredReason, ImportedFormatterSummary, ObservedDeferredPath, RepresentedTokenRemoval,
@@ -53,6 +53,7 @@ fn imported_fixture_inputs_format_idempotently_and_conserve_represented_syntax()
     insta::assert_snapshot!("prettier_java_formatter_summary", prettier_summary.render());
 }
 
+#[allow(clippy::too_many_lines)]
 fn assert_corpus(
     suite: &str,
     deferred: &mut Vec<ObservedDeferredPath>,
@@ -237,8 +238,7 @@ fn syntax_authorized_removals(
             }
             None
         } else {
-            ParenthesizedExpression::cast(node)
-                .map(|expression| expression.redundant_parenthesis_removal_claims())
+            ParenthesizedExpression::cast(node).and_then(binary_parenthesis_removals)
         };
         if let Some(parentheses) = parentheses {
             redundant_open_parentheses += usize::from(parentheses.open.is_some());
@@ -262,6 +262,19 @@ fn syntax_authorized_removals(
     .into_iter()
     .flatten()
     .collect()
+}
+
+fn binary_parenthesis_removals(
+    expression: ParenthesizedExpression<'_>,
+) -> Option<jolt_java_syntax::JavaDelimiterRemoval<'_>> {
+    let mut ancestor = expression.syntax_node().and_then(|node| node.parent());
+    while let Some(node) = ancestor {
+        if let Some(binary) = BinaryExpression::cast(node) {
+            return Some(binary.redundant_parenthesis_removal_claims(&expression));
+        }
+        ancestor = node.parent();
+    }
+    None
 }
 
 fn format_source(

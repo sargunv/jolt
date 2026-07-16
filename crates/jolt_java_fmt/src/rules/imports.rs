@@ -1,5 +1,5 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_java_syntax::{ImportDeclaration, JavaSyntaxView, NameSyntax};
+use jolt_java_syntax::{ImportDeclaration, JavaSyntaxView, NameSyntax, ReorderClaim};
 
 use crate::helpers::blocks::join_empty_lines;
 use crate::helpers::comments::{
@@ -10,22 +10,20 @@ use crate::helpers::recovery::{format_optional_field, format_required_field};
 use crate::rules::names::{NameSortKey, format_name};
 
 pub(crate) fn format_imports<'source>(
-    imports: Vec<ImportDeclaration<'source>>,
+    imports: &[ImportDeclaration<'source>],
     doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     if imports.is_empty() {
         return None;
     }
 
-    if imports.iter().any(|import| !import.is_recovery_free()) {
-        return Some(format_imports_in_source_order(imports, doc));
-    }
-
     let mut sections = Vec::new();
     let mut sortable = Vec::new();
     for declaration in imports.iter().copied() {
         let Some(import) = FormattedImport::new(declaration) else {
-            return Some(format_imports_in_source_order(imports, doc));
+            flush_sortable(&mut sortable, &mut sections, doc);
+            sections.push(format_import(&declaration, doc));
+            continue;
         };
         if !sortable.is_empty()
             && import
@@ -39,22 +37,6 @@ pub(crate) fn format_imports<'source>(
     }
     flush_sortable(&mut sortable, &mut sections, doc);
     Some(join_empty_lines(doc, sections))
-}
-
-fn format_imports_in_source_order<'source>(
-    imports: Vec<ImportDeclaration<'source>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    doc.concat_list(|docs| {
-        for import in imports {
-            if !docs.is_empty() {
-                let line = docs.hard_line();
-                docs.push(line);
-            }
-            let import = format_import(&import, docs);
-            docs.push(import);
-        }
-    })
 }
 
 fn flush_sortable<'source>(
@@ -105,6 +87,7 @@ fn format_import_list<'source>(
 
 struct FormattedImport<'source> {
     import: ImportDeclaration<'source>,
+    reorder: ReorderClaim<'source>,
     key: NameSortKey<'source>,
     is_static: bool,
 }
@@ -113,8 +96,8 @@ impl<'source> FormattedImport<'source> {
     fn new(import: ImportDeclaration<'source>) -> Option<Self> {
         use jolt_java_syntax::JavaSyntaxField::{Malformed, Missing, Present};
 
-        if import.canonical_reorder_claim().is_none()
-            || !matches!(import.import_keyword(), Ok(Present(_)))
+        let reorder = import.canonical_reorder_claim()?;
+        if !matches!(import.import_keyword(), Ok(Present(_)))
             || !matches!(import.module_keyword(), Ok(Present(_) | Missing(_)))
             || !matches!(import.static_keyword(), Ok(Present(_) | Missing(_)))
             || !matches!(import.on_demand_dot(), Ok(Present(_) | Missing(_)))
@@ -132,6 +115,7 @@ impl<'source> FormattedImport<'source> {
         let is_static = matches!(import.static_keyword(), Ok(Present(_)));
         Some(Self {
             import,
+            reorder,
             key,
             is_static,
         })
@@ -139,6 +123,7 @@ impl<'source> FormattedImport<'source> {
 
     #[allow(clippy::redundant_closure_for_method_calls)]
     fn into_doc(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
+        let _authorization = self.reorder.into_parts();
         format_import(&self.import, doc)
     }
 }

@@ -94,10 +94,10 @@ pub(super) fn format_if_statement<'source>(
 
 fn statement_as_block<'source>(
     statement: &Statement<'source>,
-    brace_claims: Option<jolt_java_syntax::JavaDelimiterSynthesis<'source>>,
+    normalization: Option<jolt_java_syntax::JavaControlBodyNormalization<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    statement_body_as_block(Ok(JavaSyntaxField::Present(*statement)), brace_claims, doc)
+    statement_body_as_block(Ok(JavaSyntaxField::Present(*statement)), normalization, doc)
 }
 
 pub(super) fn format_parenthesized_statement_expression<'source>(

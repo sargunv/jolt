@@ -20,9 +20,10 @@ pub(crate) fn format_modifier_prefix<'source>(
     let Some(modifiers) = modifiers else {
         return Doc::nil();
     };
-    if modifiers.canonical_reorder_claim().is_none() {
+    let Some(authorization) = modifiers.canonical_reorder_claim() else {
         return format_modifier_items_in_source_order(modifiers.partitioned_items(), true, doc);
-    }
+    };
+    let _authorization = authorization.into_parts();
 
     let entry_capacity = modifiers
         .partitioned_items()
@@ -100,7 +101,7 @@ pub(crate) fn format_typed_modifier_prefix<'source>(
             type_use_prefix: Doc::nil(),
         };
     };
-    if modifiers.canonical_reorder_claim().is_none() {
+    let Some(authorization) = modifiers.canonical_reorder_claim() else {
         return TypedModifierPrefix {
             declaration_prefix: format_modifier_items_in_source_order(
                 modifiers.partitioned_items(),
@@ -109,7 +110,8 @@ pub(crate) fn format_typed_modifier_prefix<'source>(
             ),
             type_use_prefix: Doc::nil(),
         };
-    }
+    };
+    let _authorization = authorization.into_parts();
 
     let parts = partition_modifier_items(&modifiers, doc);
     format_typed_modifier_prefix_from_split_parts(
@@ -124,7 +126,7 @@ pub(crate) fn format_typed_parameter_modifier_prefix<'source>(
     modifiers: &ParameterModifierList<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> TypedModifierPrefix<'source> {
-    if modifiers.canonical_reorder_claim().is_none() {
+    let Some(authorization) = modifiers.canonical_reorder_claim() else {
         return TypedModifierPrefix {
             declaration_prefix: format_modifier_items_in_source_order(
                 modifiers.partitioned_items(),
@@ -133,7 +135,8 @@ pub(crate) fn format_typed_parameter_modifier_prefix<'source>(
             ),
             type_use_prefix: Doc::nil(),
         };
-    }
+    };
+    let _authorization = authorization.into_parts();
     let parts = partition_parameter_modifier_items(modifiers, doc);
     format_typed_modifier_prefix_from_split_parts(
         parts.declaration_annotations,
@@ -147,7 +150,7 @@ pub(crate) fn format_inline_typed_parameter_modifier_prefix<'source>(
     modifiers: &ParameterModifierList<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> TypedModifierPrefix<'source> {
-    if modifiers.canonical_reorder_claim().is_none() {
+    let Some(authorization) = modifiers.canonical_reorder_claim() else {
         return TypedModifierPrefix {
             declaration_prefix: format_modifier_items_in_source_order(
                 modifiers.partitioned_items(),
@@ -156,7 +159,8 @@ pub(crate) fn format_inline_typed_parameter_modifier_prefix<'source>(
             ),
             type_use_prefix: Doc::nil(),
         };
-    }
+    };
+    let _authorization = authorization.into_parts();
     let parts = partition_parameter_modifier_items(modifiers, doc);
     let type_use_is_first = parts.declaration_annotations.is_empty() && parts.entries.is_empty();
     let (type_use_forces_line, type_use_needs_line) =

@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const IMPLEMENTATION_BASELINE: &str = "2197128";
-const MAX_IMPLEMENTATION_NET_DELTA: usize = 7_626;
+const MAX_IMPLEMENTATION_NET_DELTA: usize = 8_085;
 
 #[test]
 fn forbidden_architecture_patterns_do_not_regress() {
@@ -21,16 +21,20 @@ fn forbidden_architecture_patterns_do_not_regress() {
             "build_reference_syntax_tree",
             "build_syntax_tree_with_factory_and_diagnostic_owners",
             "completed_is_error_node",
+            "directive_reorder_claim",
             "error_node_kind",
             "ErrorNode",
             "expect_owned(",
             "expected_here(",
             "expected_owned_",
             "own_diagnostic(",
+            "modifier_reorder_claim",
             "represented_range_is_trivia",
             "tokens_between",
             "unexpected_here(",
             "unexpected_owned_",
+            "canonical_reorder_claim().is_none()",
+            "canonical_reorder_claim().is_some()",
         ] {
             if source.contains(forbidden) {
                 failures.push(format!("{relative}: forbidden pattern {forbidden:?}"));
@@ -94,14 +98,14 @@ fn forbidden_architecture_patterns_do_not_regress() {
 /// construction. Untracked implementation files are added to the projection so
 /// a local `mise run test` cannot evade the gate before staging them.
 #[test]
-fn implementation_projection_stays_within_phase_twenty_six_budget() {
+fn implementation_projection_stays_within_phase_twenty_seven_budget() {
     let workspace = workspace_root();
     let (additions, deletions) = implementation_projection(&workspace);
     let net = additions.saturating_sub(deletions);
 
     assert!(
         net <= MAX_IMPLEMENTATION_NET_DELTA,
-        "Phase 26 implementation projection against {IMPLEMENTATION_BASELINE} is \
+        "Phase 27 implementation projection against {IMPLEMENTATION_BASELINE} is \
          +{additions}/-{deletions}, net +{net}; maximum net delta is \
          +{MAX_IMPLEMENTATION_NET_DELTA}. The projection includes crates/**/*.rs and \
          tools/**/*.py, including tests and test support."

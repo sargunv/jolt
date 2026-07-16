@@ -6,7 +6,7 @@ use jolt_kotlin_syntax::{
     InitializerBlock, KotlinFileItem, KotlinNode, KotlinRoleElement, KotlinSyntaxField,
     KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView, ModifierList, PropertyAccessor,
     PropertyBinding, PropertyBodyMember, PropertyDeclaration, PropertyInitializer,
-    SecondaryConstructor, TypeAliasDeclaration, TypeReference,
+    SecondaryConstructor, TypeAliasDeclaration, TypeReference, boundary_separator_removal_claim,
 };
 
 use crate::helpers::comments::{
@@ -392,13 +392,16 @@ fn format_property_members<'source>(
     members: &jolt_kotlin_syntax::PropertyBodyMemberList<'source>,
 ) -> Doc<'source> {
     let contents = doc.concat_list(|docs| {
+        let mut preceding_member = None;
         for part in members.parts() {
             match resolve_list_part(part, docs) {
                 KotlinFormatListPart::Item(member) => {
                     let Some(member) = member.cast_family::<PropertyBodyMember<'source>>() else {
+                        preceding_member = None;
                         docs.block_on_invariant("invalid property body member");
                         continue;
                     };
+                    preceding_member = Some(member);
                     let formatted = match member {
                         PropertyBodyMember::ExplicitBackingField(field) => {
                             format_explicit_backing_field(docs, &field)
@@ -418,13 +421,18 @@ fn format_property_members<'source>(
                     let removed = format_removed_separator(
                         docs,
                         &token,
-                        members.separator_removal_claim(token),
+                        preceding_member
+                            .as_ref()
+                            .and_then(|owner| boundary_separator_removal_claim(owner, token)),
                         false,
                     );
                     docs.push(removed);
                 }
                 KotlinFormatListPart::Malformed(recovery)
-                | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
+                | KotlinFormatListPart::Invisible(recovery) => {
+                    preceding_member = None;
+                    docs.push(recovery);
+                }
             }
         }
     });

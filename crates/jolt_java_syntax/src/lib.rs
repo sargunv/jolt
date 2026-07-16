@@ -17,5 +17,8 @@ pub use kind::JavaSyntaxKind;
 pub use language::JavaLanguage;
 pub use lexer::JavaLexer;
 pub use nodes::*;
-pub use normalization::{JavaDelimiterRemoval, JavaDelimiterSynthesis, RemovalClaim, ReorderClaim};
+pub use normalization::{
+    JavaControlBodyNormalization, JavaDelimiterRemoval, JavaDelimiterSynthesis, RemovalClaim,
+    ReorderClaim,
+};
 pub use parser::{JavaParse, parse_compilation_unit};

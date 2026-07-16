@@ -1,7 +1,7 @@
 use jolt_java_syntax::{
     AnnotationArrayInitializer, ArrayInitializer, EmptyDeclaration, EmptyStatement, Guard,
     IfStatement, ImportDeclaration, JavaNode, JavaSyntaxNode, JavaSyntaxView, ModifierList,
-    ModuleDeclaration, ParameterModifierList, RequiresDirective, WhileStatement,
+    ModuleDirective, ParameterModifierList, RequiresModifierList, UsesDirective, WhileStatement,
     parse_compilation_unit,
 };
 
@@ -216,7 +216,7 @@ fn import_and_modifier_reordering_require_recovery_free_owners() {
 }
 
 #[test]
-fn module_reordering_requires_the_recovery_free_parent() {
+fn module_reordering_uses_the_smallest_complete_local_owner() {
     let valid_module_parse =
         parse_compilation_unit("module m { requires transitive static a.b; uses z.B; }");
     let valid_module_root = valid_module_parse
@@ -225,13 +225,13 @@ fn module_reordering_requires_the_recovery_free_parent() {
         .syntax_node()
         .expect("physical compilation unit");
     assert!(
-        find_node::<ModuleDeclaration<'_>>(valid_module_root)
-            .directive_reorder_claim()
+        ModuleDirective::UsesDirective(find_node::<UsesDirective<'_>>(valid_module_root))
+            .canonical_reorder_claim()
             .is_some()
     );
     assert!(
-        find_node::<RequiresDirective<'_>>(valid_module_root)
-            .modifier_reorder_claim()
+        find_node::<RequiresModifierList<'_>>(valid_module_root)
+            .canonical_reorder_claim()
             .is_some()
     );
 
@@ -243,14 +243,14 @@ fn module_reordering_requires_the_recovery_free_parent() {
         .syntax_node()
         .expect("physical compilation unit");
     assert!(
-        find_node::<ModuleDeclaration<'_>>(malformed_module_root)
-            .directive_reorder_claim()
-            .is_none()
+        ModuleDirective::UsesDirective(find_node::<UsesDirective<'_>>(malformed_module_root))
+            .canonical_reorder_claim()
+            .is_some()
     );
     assert!(
-        find_node::<RequiresDirective<'_>>(malformed_module_root)
-            .modifier_reorder_claim()
-            .is_none()
+        find_node::<RequiresModifierList<'_>>(malformed_module_root)
+            .canonical_reorder_claim()
+            .is_some()
     );
 }
 

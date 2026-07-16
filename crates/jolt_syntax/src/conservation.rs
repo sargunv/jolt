@@ -4,8 +4,52 @@ use jolt_text::{TextRange, TextSize};
 
 use crate::{
     Language, SyntaxNode, SyntaxToken, SyntaxTrivia, TriviaKind,
-    syntax_tree::{SyntaxTree, TokenId},
+    syntax_tree::{NodeId, SyntaxTree, TokenId},
 };
+
+/// The parse-local identity of a represented syntax node.
+#[derive(Clone, Copy)]
+pub struct SourceNodeId<'tree> {
+    pub(crate) tree: &'tree SyntaxTree,
+    pub(crate) id: NodeId,
+}
+
+impl SourceNodeId<'_> {
+    fn belongs_to(self, tree: &SyntaxTree) -> bool {
+        std::ptr::eq(self.tree, tree)
+    }
+
+    pub(crate) fn contains_token(self, token: SourceTokenId<'_>) -> bool {
+        token.belongs_to(self.tree) && self.tree.token_range(self.id).contains(&token.id.index())
+    }
+
+    pub(crate) fn immediately_precedes(self, token: SourceTokenId<'_>) -> bool {
+        token.belongs_to(self.tree) && self.tree.token_range(self.id).end == token.id.index()
+    }
+}
+
+impl fmt::Debug for SourceNodeId<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("SourceNodeId")
+            .field(&self.id.index())
+            .finish()
+    }
+}
+
+impl PartialEq for SourceNodeId<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.belongs_to(other.tree) && self.id == other.id
+    }
+}
+
+impl Eq for SourceNodeId<'_> {}
+
+impl std::hash::Hash for SourceNodeId<'_> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        std::ptr::from_ref(self.tree).hash(state);
+        self.id.hash(state);
+    }
+}
 
 /// Identifies which side of a source token owns a trivia piece.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -22,7 +66,7 @@ pub struct SourceTokenId<'tree> {
 }
 
 impl SourceTokenId<'_> {
-    fn belongs_to(self, tree: &SyntaxTree) -> bool {
+    pub(crate) fn belongs_to(self, tree: &SyntaxTree) -> bool {
         std::ptr::eq(self.tree, tree)
     }
 }
@@ -78,6 +122,15 @@ impl<'tree> SourceTriviaId<'tree> {
 pub enum SourceIdentity<'tree> {
     Token(SourceTokenId<'tree>),
     Trivia(SourceTriviaId<'tree>),
+}
+
+impl<'tree> SourceIdentity<'tree> {
+    pub(crate) const fn token_id(self) -> SourceTokenId<'tree> {
+        match self {
+            Self::Token(token) => token,
+            Self::Trivia(trivia) => trivia.token,
+        }
+    }
 }
 
 /// A trivia piece paired with its parse-local identity and exact source range.

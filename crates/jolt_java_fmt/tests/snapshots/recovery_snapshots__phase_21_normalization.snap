@@ -17,6 +17,7 @@ static transient class RecoveredModifiers {
 
 formatted:
 import z.B unexpected;
+
 import a.A;
 
 static transient class RecoveredModifiers {

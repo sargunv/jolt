@@ -1594,6 +1594,45 @@ represented tokens and source order. Java and Kotlin normalization,
 conservation, diagnostic-inventory, lexical-equivalence, determinism, and
 idempotence lanes pass.
 
+Implemented and quality-audited. Shared `NormalizationOwner` is now a
+recovery-free borrowed syntax node rather than owner metadata: every removal,
+replacement, synthesis, and reorder claim records that exact node, and claim
+construction rejects an affected source token or anchor outside its subtree.
+This keeps the proof local without adding formatter-side tree walks or owned
+syntax copies.
+
+Java import and module-directive sorting now treats malformed syntax,
+formatter-ignore ranges, and comment boundaries as barriers while sorting clean
+neighboring runs. Requires-modifier sorting is authorized by the
+`RequiresModifierList`, not the surrounding directive. Binary readability
+parenthesis insertion and flattening removal are authorized by the complete
+`BinaryExpression`. Control-body brace insertion and an empty-body semicolon
+removal are one control-owner normalization bundle, so a clean child can no
+longer repair a malformed `if`, loop, or `for`.
+
+Kotlin import sorting retains per-directive claims. Binary readability
+parentheses are authorized by the complete binary owner. File, block, and
+property-body separator removal binds each separator to its preceding clean item
+rather than the whole physical list; a malformed sibling is a local barrier and
+no longer disables canonical formatting of valid neighbors. Terminator-list
+removal is likewise authorized by its complete package, import, or statement
+parent.
+
+Focused syntax tests prove clean-owner grants, malformed-owner denial,
+smallest-owner selection, and rejection of a foreign normalization anchor.
+Formatter tests prove Java import, module, requires-modifier, control, and
+binary authority plus Kotlin file, block, property-body, import, and binary
+authority while valid neighboring owners still canonicalize. Every focused
+malformed case preserves diagnostic inventory and is idempotent. The full
+isolated Java and Kotlin normalization, conservation, lexical-equivalence,
+determinism, idempotence, CLI/dprint, architecture, rustfmt, clippy, and diff
+gates close the phase.
+
+Size: the isolated Phase 27 implementation projection is +33,452/-25,367 against
+`2197128`, net +8,085. Phase 27 adds 460 net implementation/test lines to make
+complete-owner authority executable; later proof-carrying IR and
+factory/projection cleanup remain excluded.
+
 ### New Phase 28: Proof-Carrying Source Documents
 
 Make source emission and conservation ownership one formatter-IR operation.

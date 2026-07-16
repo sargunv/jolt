@@ -98,27 +98,27 @@ fn statement_body_as_block<'source>(
         jolt_java_syntax::JavaSyntaxField<'source, Statement<'source>>,
         jolt_java_syntax::JavaSyntaxInvariantError,
     >,
-    brace_claims: Option<jolt_java_syntax::JavaDelimiterSynthesis<'source>>,
+    normalization: Option<jolt_java_syntax::JavaControlBodyNormalization<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     match resolve_required_field(body, doc) {
         JavaFormatField::Present(Statement::Block(block)) => format_block(&block, doc),
-        JavaFormatField::Present(Statement::EmptyStatement(statement)) => {
-            match (brace_claims, statement.separator_removal_claim()) {
-                (Some(claims), Some(removal)) => {
-                    let body = format_empty_statement_comments(&statement, doc);
-                    let removed = doc.removed_source(removal);
-                    let block = inserted_braced_body(doc, body, claims);
-                    doc_concat!(doc, [removed, block])
-                }
-                _ => format_empty_statement(&statement, doc),
+        JavaFormatField::Present(Statement::EmptyStatement(statement)) => match normalization {
+            Some(normalization) => {
+                let body = format_empty_statement_comments(&statement, doc);
+                let removed = normalization
+                    .empty_separator
+                    .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
+                let block = inserted_braced_body(doc, body, normalization.braces);
+                doc_concat!(doc, [removed, block])
             }
-        }
+            None => format_empty_statement(&statement, doc),
+        },
         JavaFormatField::Present(statement) => {
             let body = format_statement(&statement, doc);
-            brace_claims.map_or_else(
+            normalization.map_or_else(
                 || body,
-                |claims| inserted_braced_body(doc, Some(body), claims),
+                |normalization| inserted_braced_body(doc, Some(body), normalization.braces),
             )
         }
         JavaFormatField::Malformed(recovery) => recovery,

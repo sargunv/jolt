@@ -8,7 +8,9 @@ module m { requires a; /* module */ + ; exports p; }
 formatted:
 module m {
   requires a; /* module */
+
   + ;
+
   exports p;
 }
 
