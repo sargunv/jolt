@@ -535,10 +535,14 @@ impl<'source> JavaRoleElement<'source> {
 }
 
 trait JavaListItem<'source>: Sized {
+    const IS_FAMILY: bool;
+
     fn cast_element(element: JavaRoleElement<'source>) -> Option<Self>;
 }
 
 impl<'source> JavaListItem<'source> for JavaRoleElement<'source> {
+    const IS_FAMILY: bool = false;
+
     fn cast_element(element: JavaRoleElement<'source>) -> Option<Self> {
         Some(element)
     }
@@ -565,20 +569,29 @@ fn list_parts<'source, T: JavaListItem<'source>>(
             });
         };
         match slot {
-            SyntaxSlot::Node(node) if node.is_directly_malformed() => {
-                Ok(JavaSyntaxListPart::Malformed(JavaMalformedSyntax {
-                    syntax: node,
-                }))
-            }
             SyntaxSlot::Token(token) if separated && index % 2 == 1 => {
                 Ok(JavaSyntaxListPart::Separator(token))
             }
-            SyntaxSlot::Node(node) => T::cast_element(JavaRoleElement::Node(node))
-                .map(JavaSyntaxListPart::Item)
-                .ok_or(JavaSyntaxInvariantError {
-                    node: syntax.kind(),
-                    slot: index,
-                }),
+            SyntaxSlot::Node(node) => {
+                let item = T::cast_element(JavaRoleElement::Node(node));
+                match item {
+                    Some(item)
+                        if !node.is_directly_malformed()
+                            || (T::IS_FAMILY && java_kind_is_category_bogus(node.kind())) =>
+                    {
+                        Ok(JavaSyntaxListPart::Item(item))
+                    }
+                    _ if node.is_directly_malformed() => {
+                        Ok(JavaSyntaxListPart::Malformed(JavaMalformedSyntax {
+                            syntax: node,
+                        }))
+                    }
+                    _ => Err(JavaSyntaxInvariantError {
+                        node: syntax.kind(),
+                        slot: index,
+                    }),
+                }
+            }
             SyntaxSlot::Token(token) => T::cast_element(JavaRoleElement::Token(token))
                 .map(JavaSyntaxListPart::Item)
                 .ok_or(JavaSyntaxInvariantError {
@@ -702,16 +715,31 @@ fn required_family<'source, F: JavaFamily<'source>>(
     syntax: JavaFixedSyntax<'source>,
     slot: usize,
 ) -> JavaSyntaxResult<JavaSyntaxField<'source, F>> {
-    match required_slot(syntax, slot)? {
-        JavaSyntaxField::Present(SyntaxElement::Node(node)) => F::cast(node)
-            .map(JavaSyntaxField::Present)
-            .ok_or(JavaSyntaxInvariantError {
+    match syntax.slot_at(slot) {
+        Some(SyntaxSlot::Node(node)) => match F::cast(node) {
+            Some(value)
+                if !node.is_directly_malformed() || java_kind_is_category_bogus(node.kind()) =>
+            {
+                Ok(JavaSyntaxField::Present(value))
+            }
+            Some(_) => Ok(JavaSyntaxField::Malformed(JavaMalformedSyntax {
+                syntax: node,
+            })),
+            None if node.is_directly_malformed() => {
+                Ok(JavaSyntaxField::Malformed(JavaMalformedSyntax {
+                    syntax: node,
+                }))
+            }
+            None => Err(JavaSyntaxInvariantError {
                 node: syntax.kind(),
                 slot,
             }),
-        JavaSyntaxField::Missing(missing) => Ok(JavaSyntaxField::Missing(missing)),
-        JavaSyntaxField::Malformed(node) => Ok(JavaSyntaxField::Malformed(node)),
-        JavaSyntaxField::Present(SyntaxElement::Token(_)) => Err(JavaSyntaxInvariantError {
+        },
+        Some(SyntaxSlot::Empty) => Ok(JavaSyntaxField::Missing(JavaMissingSyntax {
+            owner: syntax.missing_owner(),
+            slot,
+        })),
+        Some(SyntaxSlot::Token(_)) | None => Err(JavaSyntaxInvariantError {
             node: syntax.kind(),
             slot,
         }),
@@ -723,20 +751,7 @@ fn optional_family<'source, F: JavaFamily<'source>>(
     syntax: JavaFixedSyntax<'source>,
     slot: usize,
 ) -> JavaSyntaxResult<JavaSyntaxField<'source, F>> {
-    match optional_slot(syntax, slot)? {
-        JavaSyntaxField::Present(SyntaxElement::Node(node)) => F::cast(node)
-            .map(JavaSyntaxField::Present)
-            .ok_or(JavaSyntaxInvariantError {
-                node: syntax.kind(),
-                slot,
-            }),
-        JavaSyntaxField::Missing(missing) => Ok(JavaSyntaxField::Missing(missing)),
-        JavaSyntaxField::Malformed(node) => Ok(JavaSyntaxField::Malformed(node)),
-        JavaSyntaxField::Present(SyntaxElement::Token(_)) => Err(JavaSyntaxInvariantError {
-            node: syntax.kind(),
-            slot,
-        }),
-    }
+    required_family(syntax, slot)
 }
 
 fn syntax_source_text(syntax: JavaFixedSyntax<'_>) -> &str {
@@ -911,6 +926,8 @@ macro_rules! define_java_role {
         }
 
         impl<'source> JavaListItem<'source> for $role<'source> {
+            const IS_FAMILY: bool = false;
+
             fn cast_element(element: JavaRoleElement<'source>) -> Option<Self> {
                 Some(Self { element })
             }
@@ -1039,6 +1056,8 @@ macro_rules! define_java_cst_node {
         }
 
         impl<'source> JavaListItem<'source> for $node<'source> {
+            const IS_FAMILY: bool = false;
+
             fn cast_element(element: JavaRoleElement<'source>) -> Option<Self> {
                 <Self as JavaTypedNode<'source>>::cast_element(element)
             }
@@ -1123,12 +1142,15 @@ macro_rules! java_cst {
             }
 
             impl<'source> JavaListItem<'source> for $family<'source> {
+                const IS_FAMILY: bool = true;
+
                 fn cast_element(element: JavaRoleElement<'source>) -> Option<Self> {
                     match element {
                         JavaRoleElement::Node(node) => Self::cast(node),
                         JavaRoleElement::Token(_) => None,
                     }
                 }
+
             }
 
             impl private::Sealed for $family<'_> {}
@@ -1157,6 +1179,10 @@ macro_rules! define_java_cst_from_schema {
         categories { $($family:ident => $bogus:ident { $($member:ident,)* })* }
         nodes { $($kind:ident => $wrapper:ident [$module:ident $class:ident] { $($fields:tt)* })* }
     ) => {
+        fn java_kind_is_category_bogus(kind: JavaSyntaxKind) -> bool {
+            matches!(kind, $(JavaSyntaxKind::$bogus)|*)
+        }
+
         java_cst! {
             nodes {
                 $($wrapper => $kind [$class],)*

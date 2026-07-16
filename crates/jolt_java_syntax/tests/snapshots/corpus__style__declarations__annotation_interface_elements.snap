@@ -141,27 +141,26 @@ CompilationUnit
               ClassBody
                 LBrace "{" @ 250..251 trailing=[Whitespace " "]
                 ClassBodyMemberList
-                  ClassBodyDeclaration
-                    MethodDeclaration
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 252..258 trailing=[Whitespace " "]
-                      Identifier "name" @ 259..263
-                      LParen "(" @ 263..264
-                      RParen ")" @ 264..265 trailing=[Whitespace " "]
-                      Block
-                        LBrace "{" @ 266..267 trailing=[Whitespace " "]
-                        BlockStatementList
-                          BlockStatement
-                            ReturnStatement
-                              ReturnKw "return" @ 268..274 trailing=[Whitespace " "]
-                              LiteralExpression
-                                StringLiteral "\"helper\"" @ 275..283
-                              Semicolon ";" @ 283..284 trailing=[Whitespace " "]
-                        RBrace "}" @ 285..286 trailing=[Whitespace " "]
+                  MethodDeclaration
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "String" @ 252..258 trailing=[Whitespace " "]
+                    Identifier "name" @ 259..263
+                    LParen "(" @ 263..264
+                    RParen ")" @ 264..265 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 266..267 trailing=[Whitespace " "]
+                      BlockStatementList
+                        BlockStatement
+                          ReturnStatement
+                            ReturnKw "return" @ 268..274 trailing=[Whitespace " "]
+                            LiteralExpression
+                              StringLiteral "\"helper\"" @ 275..283
+                            Semicolon ";" @ 283..284 trailing=[Whitespace " "]
+                      RBrace "}" @ 285..286 trailing=[Whitespace " "]
                 RBrace "}" @ 287..288 trailing=[Whitespace " "]
             EnumDeclaration
               EnumKw "enum" @ 289..293 trailing=[Whitespace " "]

@@ -30,153 +30,152 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 31..32
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 37..41 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 42..48
-              LParen "(" @ 48..49
-              RParen ")" @ 49..50 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 51..52
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 61..64 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "min" @ 65..68 trailing=[Whitespace " "]
-                          Assign "=" @ 69..70 trailing=[Whitespace " "]
-                          VariableInitializer
-                            UnaryExpression
-                              Minus "-" @ 71..72
-                              LiteralExpression
-                                IntegerLiteral "2_147_483_648" @ 72..85
-                    Semicolon ";" @ 85..86
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 95..98 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "badInt" @ 99..105 trailing=[Whitespace " "]
-                          Assign "=" @ 106..107 trailing=[Whitespace " "]
-                          VariableInitializer
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 37..41 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 42..48
+            LParen "(" @ 48..49
+            RParen ")" @ 49..50 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 51..52
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 61..64 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "min" @ 65..68 trailing=[Whitespace " "]
+                        Assign "=" @ 69..70 trailing=[Whitespace " "]
+                        VariableInitializer
+                          UnaryExpression
+                            Minus "-" @ 71..72
                             LiteralExpression
-                              IntegerLiteral "2_147_483_648" @ 108..121
-                    Semicolon ";" @ 121..122
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 131..134 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "badParenthesizedInt" @ 135..154 trailing=[Whitespace " "]
-                          Assign "=" @ 155..156 trailing=[Whitespace " "]
-                          VariableInitializer
-                            UnaryExpression
-                              Minus "-" @ 157..158
-                              ParenthesizedExpression
-                                LParen "(" @ 158..159
-                                LiteralExpression
-                                  IntegerLiteral "2147483648" @ 159..169
-                                RParen ")" @ 169..170
-                    Semicolon ";" @ 170..171
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        LongKw "long" @ 180..184 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "minLong" @ 185..192 trailing=[Whitespace " "]
-                          Assign "=" @ 193..194 trailing=[Whitespace " "]
-                          VariableInitializer
-                            UnaryExpression
-                              Minus "-" @ 195..196
+                              IntegerLiteral "2_147_483_648" @ 72..85
+                  Semicolon ";" @ 85..86
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 95..98 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "badInt" @ 99..105 trailing=[Whitespace " "]
+                        Assign "=" @ 106..107 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "2_147_483_648" @ 108..121
+                  Semicolon ";" @ 121..122
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 131..134 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "badParenthesizedInt" @ 135..154 trailing=[Whitespace " "]
+                        Assign "=" @ 155..156 trailing=[Whitespace " "]
+                        VariableInitializer
+                          UnaryExpression
+                            Minus "-" @ 157..158
+                            ParenthesizedExpression
+                              LParen "(" @ 158..159
                               LiteralExpression
-                                IntegerLiteral "9_223_372_036_854_775_808L" @ 196..222
-                    Semicolon ";" @ 222..223
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        LongKw "long" @ 232..236 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "badLong" @ 237..244 trailing=[Whitespace " "]
-                          Assign "=" @ 245..246 trailing=[Whitespace " "]
-                          VariableInitializer
+                                IntegerLiteral "2147483648" @ 159..169
+                              RParen ")" @ 169..170
+                  Semicolon ";" @ 170..171
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      LongKw "long" @ 180..184 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "minLong" @ 185..192 trailing=[Whitespace " "]
+                        Assign "=" @ 193..194 trailing=[Whitespace " "]
+                        VariableInitializer
+                          UnaryExpression
+                            Minus "-" @ 195..196
                             LiteralExpression
-                              IntegerLiteral "9_223_372_036_854_775_808L" @ 247..273
-                    Semicolon ";" @ 273..274
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        LongKw "long" @ 283..287 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "badPlusLong" @ 288..299 trailing=[Whitespace " "]
-                          Assign "=" @ 300..301 trailing=[Whitespace " "]
-                          VariableInitializer
-                            UnaryExpression
-                              Plus "+" @ 302..303
-                              LiteralExpression
-                                IntegerLiteral "9223372036854775808L" @ 303..323
-                    Semicolon ";" @ 323..324
-                  BlockStatement
-                    SwitchStatement
-                      SwitchKw "switch" @ 333..339 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      LParen "(" @ 340..341
-                      NameExpression
-                        Identifier "badInt" @ 341..347
-                      RParen ")" @ 347..348 trailing=[Whitespace " "]
-                      SwitchBlock
-                        LBrace "{" @ 349..350
-                        SwitchEntryList
-                          SwitchBlockStatementGroup
-                            SwitchLabelColonList
-                              SwitchLabel
-                                CaseKw "case" @ 363..367 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                SwitchLabelItemList
-                                  CaseConstant
-                                    UnaryExpression
-                                      Minus "-" @ 368..369
-                                      LiteralExpression
-                                        IntegerLiteral "2147483648" @ 369..379
-                              Colon ":" @ 379..380
-                            BlockStatementList
-                              BlockStatement
-                                BreakStatement
-                                  BreakKw "break" @ 397..402 leading=[Newline "\n", Whitespace "                "]
-                                  Semicolon ";" @ 402..403
-                          SwitchBlockStatementGroup
-                            SwitchLabelColonList
-                              SwitchLabel
-                                CaseKw "case" @ 416..420 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                SwitchLabelItemList
-                                  CaseConstant
+                              IntegerLiteral "9_223_372_036_854_775_808L" @ 196..222
+                  Semicolon ";" @ 222..223
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      LongKw "long" @ 232..236 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "badLong" @ 237..244 trailing=[Whitespace " "]
+                        Assign "=" @ 245..246 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "9_223_372_036_854_775_808L" @ 247..273
+                  Semicolon ";" @ 273..274
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      LongKw "long" @ 283..287 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "badPlusLong" @ 288..299 trailing=[Whitespace " "]
+                        Assign "=" @ 300..301 trailing=[Whitespace " "]
+                        VariableInitializer
+                          UnaryExpression
+                            Plus "+" @ 302..303
+                            LiteralExpression
+                              IntegerLiteral "9223372036854775808L" @ 303..323
+                  Semicolon ";" @ 323..324
+                BlockStatement
+                  SwitchStatement
+                    SwitchKw "switch" @ 333..339 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    LParen "(" @ 340..341
+                    NameExpression
+                      Identifier "badInt" @ 341..347
+                    RParen ")" @ 347..348 trailing=[Whitespace " "]
+                    SwitchBlock
+                      LBrace "{" @ 349..350
+                      SwitchEntryList
+                        SwitchBlockStatementGroup
+                          SwitchLabelColonList
+                            SwitchLabel
+                              CaseKw "case" @ 363..367 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                                CaseConstant
+                                  UnaryExpression
+                                    Minus "-" @ 368..369
                                     LiteralExpression
-                                      IntegerLiteral "2147483648" @ 421..431
-                              Colon ":" @ 431..432
-                            BlockStatementList
-                              BlockStatement
-                                BreakStatement
-                                  BreakKw "break" @ 449..454 leading=[Newline "\n", Whitespace "                "]
-                                  Semicolon ";" @ 454..455
-                        RBrace "}" @ 464..465 leading=[Newline "\n", Whitespace "        "]
-                RBrace "}" @ 470..471 leading=[Newline "\n", Whitespace "    "]
+                                      IntegerLiteral "2147483648" @ 369..379
+                            Colon ":" @ 379..380
+                          BlockStatementList
+                            BlockStatement
+                              BreakStatement
+                                BreakKw "break" @ 397..402 leading=[Newline "\n", Whitespace "                "]
+                                Semicolon ";" @ 402..403
+                        SwitchBlockStatementGroup
+                          SwitchLabelColonList
+                            SwitchLabel
+                              CaseKw "case" @ 416..420 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                                CaseConstant
+                                  LiteralExpression
+                                    IntegerLiteral "2147483648" @ 421..431
+                            Colon ":" @ 431..432
+                          BlockStatementList
+                            BlockStatement
+                              BreakStatement
+                                BreakKw "break" @ 449..454 leading=[Newline "\n", Whitespace "                "]
+                                Semicolon ";" @ 454..455
+                      RBrace "}" @ 464..465 leading=[Newline "\n", Whitespace "        "]
+              RBrace "}" @ 470..471 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 472..473 leading=[Newline "\n"]
   Eof "" @ 474..474 leading=[Newline "\n"]
 

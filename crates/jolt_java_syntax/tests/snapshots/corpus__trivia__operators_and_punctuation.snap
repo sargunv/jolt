@@ -32,160 +32,158 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 30..31
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 34..38 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              Identifier "run" @ 39..42
-              LParen "(" @ 42..43
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    BooleanKw "boolean" @ 43..50 trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 34..38 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "run" @ 39..42
+            LParen "(" @ 42..43
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "flag" @ 51..55
-                Comma "," @ 55..56 trailing=[Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    IntKw "int" @ 57..60 trailing=[Whitespace " "]
+                  BooleanKw "boolean" @ 43..50 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "flag" @ 51..55
+              Comma "," @ 55..56 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "a" @ 61..62
-                Comma "," @ 62..63 trailing=[Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    IntKw "int" @ 64..67 trailing=[Whitespace " "]
+                  IntKw "int" @ 57..60 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "a" @ 61..62
+              Comma "," @ 62..63 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "b" @ 68..69
-                Comma "," @ 69..70 trailing=[Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    IntKw "int" @ 71..74 trailing=[Whitespace " "]
+                  IntKw "int" @ 64..67 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "b" @ 68..69
+              Comma "," @ 69..70 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "c" @ 75..76
-              RParen ")" @ 76..77 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 78..79
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 84..87 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "ternary" @ 88..95 trailing=[Whitespace " "]
-                          Assign "=" @ 96..97
-                          VariableInitializer
-                            ConditionalExpression
-                              NameExpression
-                                Identifier "flag" @ 106..110 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:ternary-condition */", Whitespace " "]
-                              Question "?" @ 147..148 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:before-question-result */", Whitespace " "]
-                              NameExpression
-                                Identifier "a" @ 190..191
-                              Colon ":" @ 204..205 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:before-colon-result */", Whitespace " "]
-                              NameExpression
-                                Identifier "b" @ 244..245 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:ternary-before-semi */"]
-                    Semicolon ";" @ 283..284
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 289..292 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "shifted" @ 293..300 trailing=[Whitespace " "]
-                          Assign "=" @ 301..302
-                          VariableInitializer
+                  IntKw "int" @ 71..74 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "c" @ 75..76
+            RParen ")" @ 76..77 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 78..79
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 84..87 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "ternary" @ 88..95 trailing=[Whitespace " "]
+                        Assign "=" @ 96..97
+                        VariableInitializer
+                          ConditionalExpression
+                            NameExpression
+                              Identifier "flag" @ 106..110 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:ternary-condition */", Whitespace " "]
+                            Question "?" @ 147..148 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:before-question-result */", Whitespace " "]
+                            NameExpression
+                              Identifier "a" @ 190..191
+                            Colon ":" @ 204..205 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:before-colon-result */", Whitespace " "]
+                            NameExpression
+                              Identifier "b" @ 244..245 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:ternary-before-semi */"]
+                  Semicolon ";" @ 283..284
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 289..292 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "shifted" @ 293..300 trailing=[Whitespace " "]
+                        Assign "=" @ 301..302
+                        VariableInitializer
+                          BinaryExpression
                             BinaryExpression
+                              NameExpression
+                                Identifier "a" @ 311..312 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:shift-left */", Whitespace " "]
+                              LShift "<<" @ 342..344 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:shift-operator */", Whitespace " "]
+                              NameExpression
+                                Identifier "b" @ 378..379
+                            RightShiftOperator
+                              Gt ">" @ 392..393 leading=[Newline "\n", Whitespace "            "]
+                              Gt ">" @ 393..394 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:shift-right-operator */", Whitespace " "]
+                            NameExpression
+                              Identifier "c" @ 434..435 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:shift-before-semi */"]
+                  Semicolon ";" @ 471..472
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      BooleanKw "boolean" @ 477..484 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "logic" @ 485..490 trailing=[Whitespace " "]
+                        Assign "=" @ 491..492
+                        VariableInitializer
+                          BinaryExpression
+                            ParenthesizedExpression
+                              LParen "(" @ 501..502 leading=[Newline "\n", Whitespace "        "]
                               BinaryExpression
                                 NameExpression
-                                  Identifier "a" @ 311..312 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:shift-left */", Whitespace " "]
-                                LShift "<<" @ 342..344 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:shift-operator */", Whitespace " "]
+                                  Identifier "a" @ 502..503 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:comparison-left */", Whitespace " "]
+                                Lt "<" @ 538..539 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:comparison-op */", Whitespace " "]
                                 NameExpression
-                                  Identifier "b" @ 378..379
-                              RightShiftOperator
-                                Gt ">" @ 392..393 leading=[Newline "\n", Whitespace "            "]
-                                Gt ">" @ 393..394 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:shift-right-operator */", Whitespace " "]
-                              NameExpression
-                                Identifier "c" @ 434..435 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:shift-before-semi */"]
-                    Semicolon ";" @ 471..472
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        BooleanKw "boolean" @ 477..484 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "logic" @ 485..490 trailing=[Whitespace " "]
-                          Assign "=" @ 491..492
-                          VariableInitializer
-                            BinaryExpression
-                              ParenthesizedExpression
-                                LParen "(" @ 501..502 leading=[Newline "\n", Whitespace "        "]
-                                BinaryExpression
-                                  NameExpression
-                                    Identifier "a" @ 502..503 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:comparison-left */", Whitespace " "]
-                                  Lt "<" @ 538..539 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:comparison-op */", Whitespace " "]
-                                  NameExpression
-                                    Identifier "b" @ 572..573
-                                RParen ")" @ 573..574
-                              AndAnd "&&" @ 587..589 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:logic-op */", Whitespace " "]
-                              ParenthesizedExpression
-                                LParen "(" @ 617..618
-                                BinaryExpression
-                                  NameExpression
-                                    Identifier "b" @ 618..619 trailing=[Whitespace " "]
-                                  GreaterThanOrEqualOperator
-                                    Gt ">" @ 620..621
-                                    Assign "=" @ 621..622 trailing=[Whitespace " "]
-                                  NameExpression
-                                    Identifier "c" @ 623..624 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:comparison-tail */"]
-                                RParen ")" @ 658..659
-                    Semicolon ";" @ 659..660
-                  BlockStatement
-                    ExpressionStatement
-                      AssignmentExpression
-                        NameExpression
-                          Identifier "count" @ 665..670 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:compound-target */", Whitespace " "]
-                        PlusEq "+=" @ 705..707 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:compound-op */", Whitespace " "]
-                        NameExpression
-                          Identifier "ternary" @ 738..745
-                      Semicolon ";" @ 745..746
-                  BlockStatement
-                    ExpressionStatement
-                      UnaryExpression
-                        PlusPlus "++" @ 751..753 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:prefix-op */", Whitespace " "]
-                        NameExpression
-                          Identifier "count" @ 782..787
-                      Semicolon ";" @ 787..788
-                  BlockStatement
-                    ExpressionStatement
-                      PostfixExpression
-                        NameExpression
-                          Identifier "count" @ 793..798 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:postfix-target */", Whitespace " "]
-                        PlusPlus "++" @ 832..834 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:postfix-before-semi */"]
-                      Semicolon ";" @ 872..873
-                RBrace "}" @ 876..877 leading=[Newline "\n", Whitespace "  "]
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 881..884 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "count" @ 885..890
-              Semicolon ";" @ 890..891
+                                  Identifier "b" @ 572..573
+                              RParen ")" @ 573..574
+                            AndAnd "&&" @ 587..589 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:logic-op */", Whitespace " "]
+                            ParenthesizedExpression
+                              LParen "(" @ 617..618
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "b" @ 618..619 trailing=[Whitespace " "]
+                                GreaterThanOrEqualOperator
+                                  Gt ">" @ 620..621
+                                  Assign "=" @ 621..622 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "c" @ 623..624 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:comparison-tail */"]
+                              RParen ")" @ 658..659
+                  Semicolon ";" @ 659..660
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "count" @ 665..670 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:compound-target */", Whitespace " "]
+                      PlusEq "+=" @ 705..707 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:compound-op */", Whitespace " "]
+                      NameExpression
+                        Identifier "ternary" @ 738..745
+                    Semicolon ";" @ 745..746
+                BlockStatement
+                  ExpressionStatement
+                    UnaryExpression
+                      PlusPlus "++" @ 751..753 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:prefix-op */", Whitespace " "]
+                      NameExpression
+                        Identifier "count" @ 782..787
+                    Semicolon ";" @ 787..788
+                BlockStatement
+                  ExpressionStatement
+                    PostfixExpression
+                      NameExpression
+                        Identifier "count" @ 793..798 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:postfix-target */", Whitespace " "]
+                      PlusPlus "++" @ 832..834 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:postfix-before-semi */"]
+                    Semicolon ";" @ 872..873
+              RBrace "}" @ 876..877 leading=[Newline "\n", Whitespace "  "]
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 881..884 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "count" @ 885..890
+            Semicolon ";" @ 890..891
         RBrace "}" @ 892..893 leading=[Newline "\n"]
   Eof "" @ 894..894 leading=[Newline "\n"]
 

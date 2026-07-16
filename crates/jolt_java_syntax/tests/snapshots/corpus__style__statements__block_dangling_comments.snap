@@ -37,141 +37,136 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 14..15
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 16..20 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "run" @ 21..24
-              LParen "(" @ 24..25
-              RParen ")" @ 25..26 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 27..28 trailing=[LineComment "// headline"]
-                BlockStatementList
-                RBrace "}" @ 40..41 leading=[Newline "\n"]
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 42..46 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "nested" @ 47..53
-              LParen "(" @ 53..54
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    BooleanKw "boolean" @ 54..61 trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 16..20 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "run" @ 21..24
+            LParen "(" @ 24..25
+            RParen ")" @ 25..26 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 27..28 trailing=[LineComment "// headline"]
+              BlockStatementList
+              RBrace "}" @ 40..41 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 42..46 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "nested" @ 47..53
+            LParen "(" @ 53..54
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "ready" @ 62..67
-              RParen ")" @ 67..68 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 69..70
-                BlockStatementList
-                  BlockStatement
-                    IfStatement
-                      IfKw "if" @ 71..73 leading=[Newline "\n"]
-                      LParen "(" @ 73..74
-                      NameExpression
-                        Identifier "ready" @ 74..79
-                      RParen ")" @ 79..80
-                      Block
-                        LBrace "{" @ 80..81 trailing=[BlockComment "/* keep */"]
-                        BlockStatementList
-                        RBrace "}" @ 91..92
-                      ElseKw "else" @ 92..96
-                      Block
-                        LBrace "{" @ 96..97
-                        BlockStatementList
-                        RBrace "}" @ 109..110 leading=[Newline "\n", BlockComment "/* else */", Newline "\n"]
-                RBrace "}" @ 111..112 leading=[Newline "\n"]
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 113..117 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "tail" @ 118..122
-              LParen "(" @ 122..123
-              RParen ")" @ 123..124 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 125..126
-                BlockStatementList
-                  BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        UnqualifiedMethodInvocation
-                          NameExpression
-                            Identifier "call" @ 127..131 leading=[Newline "\n"]
-                          ArgumentList
-                            LParen "(" @ 131..132
-                            ExpressionList
-                            RParen ")" @ 132..133
-                      Semicolon ";" @ 133..134
-                RBrace "}" @ 146..147 leading=[Newline "\n", BlockComment "/* tail */", Newline "\n"]
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 148..152 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "keyword" @ 153..160
-              LParen "(" @ 160..161
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    BooleanKw "boolean" @ 161..168 trailing=[Whitespace " "]
+                  BooleanKw "boolean" @ 54..61 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "ready" @ 62..67
+            RParen ")" @ 67..68 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 69..70
+              BlockStatementList
+                BlockStatement
+                  IfStatement
+                    IfKw "if" @ 71..73 leading=[Newline "\n"]
+                    LParen "(" @ 73..74
+                    NameExpression
+                      Identifier "ready" @ 74..79
+                    RParen ")" @ 79..80
+                    Block
+                      LBrace "{" @ 80..81 trailing=[BlockComment "/* keep */"]
+                      BlockStatementList
+                      RBrace "}" @ 91..92
+                    ElseKw "else" @ 92..96
+                    Block
+                      LBrace "{" @ 96..97
+                      BlockStatementList
+                      RBrace "}" @ 109..110 leading=[Newline "\n", BlockComment "/* else */", Newline "\n"]
+              RBrace "}" @ 111..112 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 113..117 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "tail" @ 118..122
+            LParen "(" @ 122..123
+            RParen ")" @ 123..124 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 125..126
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "call" @ 127..131 leading=[Newline "\n"]
+                        ArgumentList
+                          LParen "(" @ 131..132
+                          ExpressionList
+                          RParen ")" @ 132..133
+                    Semicolon ";" @ 133..134
+              RBrace "}" @ 146..147 leading=[Newline "\n", BlockComment "/* tail */", Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 148..152 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "keyword" @ 153..160
+            LParen "(" @ 160..161
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "ready" @ 169..174
-              RParen ")" @ 174..175 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 176..177
-                BlockStatementList
-                  BlockStatement
-                    DoStatement
-                      DoKw "do" @ 178..180 leading=[Newline "\n"] trailing=[BlockComment "/* loop */"]
-                      Block
-                        LBrace "{" @ 190..191
-                        BlockStatementList
-                          BlockStatement
-                            AssertStatement
-                              AssertKw "assert" @ 209..215 leading=[Newline "\n", LineComment "// before assert", Newline "\n"] trailing=[Whitespace " "]
-                              NameExpression
-                                Identifier "ready" @ 216..221
-                              Semicolon ";" @ 221..222
-                        RBrace "}" @ 223..224 leading=[Newline "\n"]
-                      WhileKw "while" @ 224..229
-                      LParen "(" @ 229..230
-                      NameExpression
-                        Identifier "ready" @ 230..235
-                      RParen ")" @ 235..236
-                      Semicolon ";" @ 236..237
-                RBrace "}" @ 238..239 leading=[Newline "\n"]
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 240..244 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "chain" @ 245..250
-              LParen "(" @ 250..251
-              RParen ")" @ 251..252 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 253..254
-                BlockStatementList
-                  BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        QualifiedMethodInvocation
-                          FieldAccessExpression
+                  BooleanKw "boolean" @ 161..168 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "ready" @ 169..174
+            RParen ")" @ 174..175 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 176..177
+              BlockStatementList
+                BlockStatement
+                  DoStatement
+                    DoKw "do" @ 178..180 leading=[Newline "\n"] trailing=[BlockComment "/* loop */"]
+                    Block
+                      LBrace "{" @ 190..191
+                      BlockStatementList
+                        BlockStatement
+                          AssertStatement
+                            AssertKw "assert" @ 209..215 leading=[Newline "\n", LineComment "// before assert", Newline "\n"] trailing=[Whitespace " "]
                             NameExpression
-                              Identifier "System" @ 274..280 leading=[Newline "\n", LineComment "// keep with chain", Newline "\n"]
-                            Dot "." @ 280..281
-                            Identifier "out" @ 281..284
-                          Dot "." @ 284..285
-                          Identifier "println" @ 285..292
-                          ArgumentList
-                            LParen "(" @ 292..293
-                            ExpressionList
-                              LiteralExpression
-                                StringLiteral "\"x\"" @ 293..296
-                            RParen ")" @ 296..297
-                      Semicolon ";" @ 297..298
-                RBrace "}" @ 299..300 leading=[Newline "\n"]
+                              Identifier "ready" @ 216..221
+                            Semicolon ";" @ 221..222
+                      RBrace "}" @ 223..224 leading=[Newline "\n"]
+                    WhileKw "while" @ 224..229
+                    LParen "(" @ 229..230
+                    NameExpression
+                      Identifier "ready" @ 230..235
+                    RParen ")" @ 235..236
+                    Semicolon ";" @ 236..237
+              RBrace "}" @ 238..239 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 240..244 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "chain" @ 245..250
+            LParen "(" @ 250..251
+            RParen ")" @ 251..252 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 253..254
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      QualifiedMethodInvocation
+                        FieldAccessExpression
+                          NameExpression
+                            Identifier "System" @ 274..280 leading=[Newline "\n", LineComment "// keep with chain", Newline "\n"]
+                          Dot "." @ 280..281
+                          Identifier "out" @ 281..284
+                        Dot "." @ 284..285
+                        Identifier "println" @ 285..292
+                        ArgumentList
+                          LParen "(" @ 292..293
+                          ExpressionList
+                            LiteralExpression
+                              StringLiteral "\"x\"" @ 293..296
+                          RParen ")" @ 296..297
+                    Semicolon ";" @ 297..298
+              RBrace "}" @ 299..300 leading=[Newline "\n"]
         RBrace "}" @ 301..302 leading=[Newline "\n"]
   Eof "" @ 303..303 leading=[Newline "\n"]
 

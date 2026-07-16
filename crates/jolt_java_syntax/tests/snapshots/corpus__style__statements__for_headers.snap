@@ -29,357 +29,356 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 14..15
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 16..20 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "run" @ 21..24
-              LParen "(" @ 24..25
-              RParen ")" @ 25..26 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 27..28
-                BlockStatementList
-                  BlockStatement
-                    ForStatement
-                      BasicForStatement
-                        ForKw "for" @ 29..32 leading=[Newline "\n"]
-                        LParen "(" @ 32..33
-                        ForInitializer
-                          LocalVariableDeclaration
-                            ParameterModifierList
-                            PrimitiveType
-                              AnnotationList
-                              IntKw "int" @ 33..36 trailing=[Whitespace " "]
-                            VariableDeclaratorList
-                              VariableDeclarator
-                                Identifier "i" @ 37..38 trailing=[Whitespace " "]
-                                Assign "=" @ 39..40 trailing=[Whitespace " "]
-                                VariableInitializer
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 41..42
-                        Semicolon ";" @ 42..43
-                        BinaryExpression
-                          NameExpression
-                            Identifier "i" @ 43..44 trailing=[Whitespace " "]
-                          Lt "<" @ 45..46 trailing=[Whitespace " "]
-                          LiteralExpression
-                            IntegerLiteral "10" @ 47..49
-                        Semicolon ";" @ 49..50
-                        ForUpdate
-                          StatementExpressionList
-                            PostfixExpression
-                              NameExpression
-                                Identifier "i" @ 50..51
-                              PlusPlus "++" @ 51..53
-                        RParen ")" @ 53..54 trailing=[Whitespace " "]
-                        ExpressionStatement
-                          MethodInvocationExpression
-                            UnqualifiedMethodInvocation
-                              NameExpression
-                                Identifier "run" @ 55..58
-                              ArgumentList
-                                LParen "(" @ 58..59
-                                ExpressionList
-                                  NameExpression
-                                    Identifier "i" @ 59..60
-                                RParen ")" @ 60..61
-                          Semicolon ";" @ 61..62
-                  BlockStatement
-                    ForStatement
-                      BasicForStatement
-                        ForKw "for" @ 63..66 leading=[Newline "\n"]
-                        LParen "(" @ 66..67
-                        ForInitializer
-                          StatementExpressionList
-                            AssignmentExpression
-                              NameExpression
-                                Identifier "i" @ 67..68 trailing=[Whitespace " "]
-                              Assign "=" @ 69..70 trailing=[Whitespace " "]
-                              LiteralExpression
-                                IntegerLiteral "0" @ 71..72
-                            Comma "," @ 72..73
-                            AssignmentExpression
-                              NameExpression
-                                Identifier "j" @ 73..74 trailing=[Whitespace " "]
-                              Assign "=" @ 75..76 trailing=[Whitespace " "]
-                              LiteralExpression
-                                IntegerLiteral "0" @ 77..78
-                        Semicolon ";" @ 78..79
-                        BinaryExpression
-                          NameExpression
-                            Identifier "i" @ 79..80 trailing=[Whitespace " "]
-                          Lt "<" @ 81..82 trailing=[Whitespace " "]
-                          NameExpression
-                            Identifier "count" @ 83..88
-                        Semicolon ";" @ 88..89
-                        ForUpdate
-                          StatementExpressionList
-                            PostfixExpression
-                              NameExpression
-                                Identifier "i" @ 89..90
-                              PlusPlus "++" @ 90..92
-                            Comma "," @ 92..93
-                            PostfixExpression
-                              NameExpression
-                                Identifier "j" @ 93..94
-                              PlusPlus "++" @ 94..96
-                        RParen ")" @ 96..97 trailing=[Whitespace " "]
-                        ExpressionStatement
-                          MethodInvocationExpression
-                            UnqualifiedMethodInvocation
-                              NameExpression
-                                Identifier "run" @ 98..101
-                              ArgumentList
-                                LParen "(" @ 101..102
-                                ExpressionList
-                                  NameExpression
-                                    Identifier "i" @ 102..103
-                                  Comma "," @ 103..104 trailing=[Whitespace " "]
-                                  NameExpression
-                                    Identifier "j" @ 105..106
-                                RParen ")" @ 106..107
-                          Semicolon ";" @ 107..108
-                  BlockStatement
-                    ForStatement
-                      BasicForStatement
-                        ForKw "for" @ 109..112 leading=[Newline "\n"]
-                        LParen "(" @ 112..113
-                        Semicolon ";" @ 113..114
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 16..20 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "run" @ 21..24
+            LParen "(" @ 24..25
+            RParen ")" @ 25..26 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 27..28
+              BlockStatementList
+                BlockStatement
+                  ForStatement
+                    BasicForStatement
+                      ForKw "for" @ 29..32 leading=[Newline "\n"]
+                      LParen "(" @ 32..33
+                      ForInitializer
+                        LocalVariableDeclaration
+                          ParameterModifierList
+                          PrimitiveType
+                            AnnotationList
+                            IntKw "int" @ 33..36 trailing=[Whitespace " "]
+                          VariableDeclaratorList
+                            VariableDeclarator
+                              Identifier "i" @ 37..38 trailing=[Whitespace " "]
+                              Assign "=" @ 39..40 trailing=[Whitespace " "]
+                              VariableInitializer
+                                LiteralExpression
+                                  IntegerLiteral "0" @ 41..42
+                      Semicolon ";" @ 42..43
+                      BinaryExpression
+                        NameExpression
+                          Identifier "i" @ 43..44 trailing=[Whitespace " "]
+                        Lt "<" @ 45..46 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "10" @ 47..49
+                      Semicolon ";" @ 49..50
+                      ForUpdate
+                        StatementExpressionList
+                          PostfixExpression
+                            NameExpression
+                              Identifier "i" @ 50..51
+                            PlusPlus "++" @ 51..53
+                      RParen ")" @ 53..54 trailing=[Whitespace " "]
+                      ExpressionStatement
                         MethodInvocationExpression
                           UnqualifiedMethodInvocation
                             NameExpression
-                              Identifier "ready" @ 114..119
+                              Identifier "run" @ 55..58
                             ArgumentList
-                              LParen "(" @ 119..120
+                              LParen "(" @ 58..59
                               ExpressionList
-                              RParen ")" @ 120..121
-                        Semicolon ";" @ 121..122
-                        ForUpdate
-                          StatementExpressionList
-                            MethodInvocationExpression
-                              UnqualifiedMethodInvocation
                                 NameExpression
-                                  Identifier "tick" @ 122..126
-                                ArgumentList
-                                  LParen "(" @ 126..127
-                                  ExpressionList
-                                  RParen ")" @ 127..128
-                        RParen ")" @ 128..129 trailing=[Whitespace " "]
-                        ExpressionStatement
-                          MethodInvocationExpression
-                            UnqualifiedMethodInvocation
-                              NameExpression
-                                Identifier "run" @ 130..133
-                              ArgumentList
-                                LParen "(" @ 133..134
-                                ExpressionList
-                                RParen ")" @ 134..135
-                          Semicolon ";" @ 135..136
-                  BlockStatement
-                    ForStatement
-                      BasicForStatement
-                        ForKw "for" @ 137..140 leading=[Newline "\n"]
-                        LParen "(" @ 140..141
-                        ForInitializer
-                          LocalVariableDeclaration
-                            ParameterModifierList
-                            PrimitiveType
-                              AnnotationList
-                              IntKw "int" @ 141..144 trailing=[Whitespace " "]
-                            VariableDeclaratorList
-                              VariableDeclarator
-                                Identifier "index" @ 145..150 trailing=[Whitespace " "]
-                                Assign "=" @ 151..152 trailing=[Whitespace " "]
-                                VariableInitializer
-                                  NameExpression
-                                    Identifier "startIndex" @ 153..163
-                              Comma "," @ 163..164 trailing=[Whitespace " "]
-                              VariableDeclarator
-                                Identifier "limit" @ 165..170 trailing=[Whitespace " "]
-                                Assign "=" @ 171..172 trailing=[Whitespace " "]
-                                VariableInitializer
-                                  MethodInvocationExpression
-                                    UnqualifiedMethodInvocation
-                                      NameExpression
-                                        Identifier "computeLimit" @ 173..185
-                                      ArgumentList
-                                        LParen "(" @ 185..186
-                                        ExpressionList
-                                          NameExpression
-                                            Identifier "input" @ 186..191
-                                        RParen ")" @ 191..192
-                        Semicolon ";" @ 192..193
-                        BinaryExpression
-                          BinaryExpression
+                                  Identifier "i" @ 59..60
+                              RParen ")" @ 60..61
+                        Semicolon ";" @ 61..62
+                BlockStatement
+                  ForStatement
+                    BasicForStatement
+                      ForKw "for" @ 63..66 leading=[Newline "\n"]
+                      LParen "(" @ 66..67
+                      ForInitializer
+                        StatementExpressionList
+                          AssignmentExpression
                             NameExpression
-                              Identifier "index" @ 193..198 trailing=[Whitespace " "]
-                            Lt "<" @ 199..200 trailing=[Whitespace " "]
+                              Identifier "i" @ 67..68 trailing=[Whitespace " "]
+                            Assign "=" @ 69..70 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "0" @ 71..72
+                          Comma "," @ 72..73
+                          AssignmentExpression
                             NameExpression
-                              Identifier "limit" @ 201..206 trailing=[Whitespace " "]
-                          AndAnd "&&" @ 207..209 trailing=[Whitespace " "]
+                              Identifier "j" @ 73..74 trailing=[Whitespace " "]
+                            Assign "=" @ 75..76 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "0" @ 77..78
+                      Semicolon ";" @ 78..79
+                      BinaryExpression
+                        NameExpression
+                          Identifier "i" @ 79..80 trailing=[Whitespace " "]
+                        Lt "<" @ 81..82 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "count" @ 83..88
+                      Semicolon ";" @ 88..89
+                      ForUpdate
+                        StatementExpressionList
+                          PostfixExpression
+                            NameExpression
+                              Identifier "i" @ 89..90
+                            PlusPlus "++" @ 90..92
+                          Comma "," @ 92..93
+                          PostfixExpression
+                            NameExpression
+                              Identifier "j" @ 93..94
+                            PlusPlus "++" @ 94..96
+                      RParen ")" @ 96..97 trailing=[Whitespace " "]
+                      ExpressionStatement
+                        MethodInvocationExpression
+                          UnqualifiedMethodInvocation
+                            NameExpression
+                              Identifier "run" @ 98..101
+                            ArgumentList
+                              LParen "(" @ 101..102
+                              ExpressionList
+                                NameExpression
+                                  Identifier "i" @ 102..103
+                                Comma "," @ 103..104 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "j" @ 105..106
+                              RParen ")" @ 106..107
+                        Semicolon ";" @ 107..108
+                BlockStatement
+                  ForStatement
+                    BasicForStatement
+                      ForKw "for" @ 109..112 leading=[Newline "\n"]
+                      LParen "(" @ 112..113
+                      Semicolon ";" @ 113..114
+                      MethodInvocationExpression
+                        UnqualifiedMethodInvocation
+                          NameExpression
+                            Identifier "ready" @ 114..119
+                          ArgumentList
+                            LParen "(" @ 119..120
+                            ExpressionList
+                            RParen ")" @ 120..121
+                      Semicolon ";" @ 121..122
+                      ForUpdate
+                        StatementExpressionList
                           MethodInvocationExpression
                             UnqualifiedMethodInvocation
                               NameExpression
-                                Identifier "shouldContinue" @ 210..224
+                                Identifier "tick" @ 122..126
                               ArgumentList
-                                LParen "(" @ 224..225
+                                LParen "(" @ 126..127
                                 ExpressionList
-                                  NameExpression
-                                    Identifier "index" @ 225..230
-                                RParen ")" @ 230..231
-                        Semicolon ";" @ 231..232
-                        ForUpdate
-                          StatementExpressionList
-                            PostfixExpression
-                              NameExpression
-                                Identifier "index" @ 232..237
-                              PlusPlus "++" @ 237..239
-                            Comma "," @ 239..240
-                            PostfixExpression
-                              NameExpression
-                                Identifier "processed" @ 240..249
-                              PlusPlus "++" @ 249..251
-                        RParen ")" @ 251..252 trailing=[Whitespace " "]
-                        ExpressionStatement
-                          MethodInvocationExpression
-                            UnqualifiedMethodInvocation
-                              NameExpression
-                                Identifier "run" @ 253..256
-                              ArgumentList
-                                LParen "(" @ 256..257
-                                ExpressionList
-                                  NameExpression
-                                    Identifier "index" @ 257..262
-                                RParen ")" @ 262..263
-                          Semicolon ";" @ 263..264
-                  BlockStatement
-                    ForStatement
-                      BasicForStatement
-                        ForKw "for" @ 265..268 leading=[Newline "\n"]
-                        LParen "(" @ 268..269
-                        ForInitializer
-                          StatementExpressionList
-                            AssignmentExpression
-                              NameExpression
-                                Identifier "i" @ 269..270 trailing=[Whitespace " "]
-                              Assign "=" @ 271..272 trailing=[Whitespace " "]
-                              LiteralExpression
-                                IntegerLiteral "0" @ 273..274
-                            Comma "," @ 274..275 trailing=[BlockComment "/* reset */"]
-                            AssignmentExpression
-                              NameExpression
-                                Identifier "j" @ 286..287 trailing=[Whitespace " "]
-                              Assign "=" @ 288..289 trailing=[Whitespace " "]
-                              LiteralExpression
-                                IntegerLiteral "0" @ 290..291
-                        Semicolon ";" @ 291..292
+                                RParen ")" @ 127..128
+                      RParen ")" @ 128..129 trailing=[Whitespace " "]
+                      ExpressionStatement
+                        MethodInvocationExpression
+                          UnqualifiedMethodInvocation
+                            NameExpression
+                              Identifier "run" @ 130..133
+                            ArgumentList
+                              LParen "(" @ 133..134
+                              ExpressionList
+                              RParen ")" @ 134..135
+                        Semicolon ";" @ 135..136
+                BlockStatement
+                  ForStatement
+                    BasicForStatement
+                      ForKw "for" @ 137..140 leading=[Newline "\n"]
+                      LParen "(" @ 140..141
+                      ForInitializer
+                        LocalVariableDeclaration
+                          ParameterModifierList
+                          PrimitiveType
+                            AnnotationList
+                            IntKw "int" @ 141..144 trailing=[Whitespace " "]
+                          VariableDeclaratorList
+                            VariableDeclarator
+                              Identifier "index" @ 145..150 trailing=[Whitespace " "]
+                              Assign "=" @ 151..152 trailing=[Whitespace " "]
+                              VariableInitializer
+                                NameExpression
+                                  Identifier "startIndex" @ 153..163
+                            Comma "," @ 163..164 trailing=[Whitespace " "]
+                            VariableDeclarator
+                              Identifier "limit" @ 165..170 trailing=[Whitespace " "]
+                              Assign "=" @ 171..172 trailing=[Whitespace " "]
+                              VariableInitializer
+                                MethodInvocationExpression
+                                  UnqualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "computeLimit" @ 173..185
+                                    ArgumentList
+                                      LParen "(" @ 185..186
+                                      ExpressionList
+                                        NameExpression
+                                          Identifier "input" @ 186..191
+                                      RParen ")" @ 191..192
+                      Semicolon ";" @ 192..193
+                      BinaryExpression
                         BinaryExpression
                           NameExpression
-                            Identifier "i" @ 292..293 trailing=[Whitespace " "]
-                          Lt "<" @ 294..295 trailing=[Whitespace " "]
+                            Identifier "index" @ 193..198 trailing=[Whitespace " "]
+                          Lt "<" @ 199..200 trailing=[Whitespace " "]
                           NameExpression
-                            Identifier "count" @ 296..301
-                        Semicolon ";" @ 301..302
-                        ForUpdate
-                          StatementExpressionList
-                            PostfixExpression
-                              NameExpression
-                                Identifier "i" @ 302..303
-                              PlusPlus "++" @ 303..305
-                            Comma "," @ 305..306 trailing=[Whitespace " ", LineComment "// bump"]
-                            PostfixExpression
-                              NameExpression
-                                Identifier "j" @ 315..316 leading=[Newline "\n"]
-                              PlusPlus "++" @ 316..318
-                        RParen ")" @ 318..319 trailing=[Whitespace " "]
-                        ExpressionStatement
-                          MethodInvocationExpression
-                            UnqualifiedMethodInvocation
-                              NameExpression
-                                Identifier "run" @ 320..323
-                              ArgumentList
-                                LParen "(" @ 323..324
-                                ExpressionList
-                                  NameExpression
-                                    Identifier "i" @ 324..325
-                                  Comma "," @ 325..326 trailing=[Whitespace " "]
-                                  NameExpression
-                                    Identifier "j" @ 327..328
-                                RParen ")" @ 328..329
-                          Semicolon ";" @ 329..330
-                  BlockStatement
-                    ForStatement
-                      BasicForStatement
-                        ForKw "for" @ 331..334 leading=[Newline "\n"]
-                        LParen "(" @ 334..335
-                        Semicolon ";" @ 335..336
-                        Semicolon ";" @ 336..337
-                        RParen ")" @ 337..338 trailing=[Whitespace " "]
-                        ExpressionStatement
-                          MethodInvocationExpression
-                            UnqualifiedMethodInvocation
-                              NameExpression
-                                Identifier "run" @ 339..342
-                              ArgumentList
-                                LParen "(" @ 342..343
-                                ExpressionList
-                                RParen ")" @ 343..344
-                          Semicolon ";" @ 344..345
-                  BlockStatement
-                    ForStatement
-                      BasicForStatement
-                        ForKw "for" @ 346..349 leading=[Newline "\n"]
-                        LParen "(" @ 349..350 trailing=[BlockComment "/* keep going */"]
-                        Semicolon ";" @ 366..367
-                        Semicolon ";" @ 367..368
-                        RParen ")" @ 368..369 trailing=[Whitespace " "]
-                        ExpressionStatement
-                          MethodInvocationExpression
-                            UnqualifiedMethodInvocation
-                              NameExpression
-                                Identifier "run" @ 370..373
-                              ArgumentList
-                                LParen "(" @ 373..374
-                                ExpressionList
-                                RParen ")" @ 374..375
-                          Semicolon ";" @ 375..376
-                  BlockStatement
-                    ForStatement
-                      BasicForStatement
-                        ForKw "for" @ 377..380 leading=[Newline "\n"]
-                        LParen "(" @ 380..381 trailing=[LineComment "// keep going"]
-                        Semicolon ";" @ 395..396 leading=[Newline "\n"]
-                        Semicolon ";" @ 396..397
-                        RParen ")" @ 397..398 trailing=[Whitespace " "]
-                        ExpressionStatement
-                          MethodInvocationExpression
-                            UnqualifiedMethodInvocation
-                              NameExpression
-                                Identifier "run" @ 399..402
-                              ArgumentList
-                                LParen "(" @ 402..403
-                                ExpressionList
-                                RParen ")" @ 403..404
-                          Semicolon ";" @ 404..405
-                  BlockStatement
-                    ForStatement
-                      BasicForStatement
-                        ForKw "for" @ 406..409 leading=[Newline "\n"]
-                        LParen "(" @ 409..410
-                        Semicolon ";" @ 410..411
-                        Semicolon ";" @ 411..412 trailing=[BlockComment "/* close */"]
-                        RParen ")" @ 423..424 trailing=[Whitespace " "]
-                        ExpressionStatement
-                          MethodInvocationExpression
-                            UnqualifiedMethodInvocation
-                              NameExpression
-                                Identifier "run" @ 425..428
-                              ArgumentList
-                                LParen "(" @ 428..429
-                                ExpressionList
-                                RParen ")" @ 429..430
-                          Semicolon ";" @ 430..431
-                RBrace "}" @ 432..433 leading=[Newline "\n"]
+                            Identifier "limit" @ 201..206 trailing=[Whitespace " "]
+                        AndAnd "&&" @ 207..209 trailing=[Whitespace " "]
+                        MethodInvocationExpression
+                          UnqualifiedMethodInvocation
+                            NameExpression
+                              Identifier "shouldContinue" @ 210..224
+                            ArgumentList
+                              LParen "(" @ 224..225
+                              ExpressionList
+                                NameExpression
+                                  Identifier "index" @ 225..230
+                              RParen ")" @ 230..231
+                      Semicolon ";" @ 231..232
+                      ForUpdate
+                        StatementExpressionList
+                          PostfixExpression
+                            NameExpression
+                              Identifier "index" @ 232..237
+                            PlusPlus "++" @ 237..239
+                          Comma "," @ 239..240
+                          PostfixExpression
+                            NameExpression
+                              Identifier "processed" @ 240..249
+                            PlusPlus "++" @ 249..251
+                      RParen ")" @ 251..252 trailing=[Whitespace " "]
+                      ExpressionStatement
+                        MethodInvocationExpression
+                          UnqualifiedMethodInvocation
+                            NameExpression
+                              Identifier "run" @ 253..256
+                            ArgumentList
+                              LParen "(" @ 256..257
+                              ExpressionList
+                                NameExpression
+                                  Identifier "index" @ 257..262
+                              RParen ")" @ 262..263
+                        Semicolon ";" @ 263..264
+                BlockStatement
+                  ForStatement
+                    BasicForStatement
+                      ForKw "for" @ 265..268 leading=[Newline "\n"]
+                      LParen "(" @ 268..269
+                      ForInitializer
+                        StatementExpressionList
+                          AssignmentExpression
+                            NameExpression
+                              Identifier "i" @ 269..270 trailing=[Whitespace " "]
+                            Assign "=" @ 271..272 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "0" @ 273..274
+                          Comma "," @ 274..275 trailing=[BlockComment "/* reset */"]
+                          AssignmentExpression
+                            NameExpression
+                              Identifier "j" @ 286..287 trailing=[Whitespace " "]
+                            Assign "=" @ 288..289 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "0" @ 290..291
+                      Semicolon ";" @ 291..292
+                      BinaryExpression
+                        NameExpression
+                          Identifier "i" @ 292..293 trailing=[Whitespace " "]
+                        Lt "<" @ 294..295 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "count" @ 296..301
+                      Semicolon ";" @ 301..302
+                      ForUpdate
+                        StatementExpressionList
+                          PostfixExpression
+                            NameExpression
+                              Identifier "i" @ 302..303
+                            PlusPlus "++" @ 303..305
+                          Comma "," @ 305..306 trailing=[Whitespace " ", LineComment "// bump"]
+                          PostfixExpression
+                            NameExpression
+                              Identifier "j" @ 315..316 leading=[Newline "\n"]
+                            PlusPlus "++" @ 316..318
+                      RParen ")" @ 318..319 trailing=[Whitespace " "]
+                      ExpressionStatement
+                        MethodInvocationExpression
+                          UnqualifiedMethodInvocation
+                            NameExpression
+                              Identifier "run" @ 320..323
+                            ArgumentList
+                              LParen "(" @ 323..324
+                              ExpressionList
+                                NameExpression
+                                  Identifier "i" @ 324..325
+                                Comma "," @ 325..326 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "j" @ 327..328
+                              RParen ")" @ 328..329
+                        Semicolon ";" @ 329..330
+                BlockStatement
+                  ForStatement
+                    BasicForStatement
+                      ForKw "for" @ 331..334 leading=[Newline "\n"]
+                      LParen "(" @ 334..335
+                      Semicolon ";" @ 335..336
+                      Semicolon ";" @ 336..337
+                      RParen ")" @ 337..338 trailing=[Whitespace " "]
+                      ExpressionStatement
+                        MethodInvocationExpression
+                          UnqualifiedMethodInvocation
+                            NameExpression
+                              Identifier "run" @ 339..342
+                            ArgumentList
+                              LParen "(" @ 342..343
+                              ExpressionList
+                              RParen ")" @ 343..344
+                        Semicolon ";" @ 344..345
+                BlockStatement
+                  ForStatement
+                    BasicForStatement
+                      ForKw "for" @ 346..349 leading=[Newline "\n"]
+                      LParen "(" @ 349..350 trailing=[BlockComment "/* keep going */"]
+                      Semicolon ";" @ 366..367
+                      Semicolon ";" @ 367..368
+                      RParen ")" @ 368..369 trailing=[Whitespace " "]
+                      ExpressionStatement
+                        MethodInvocationExpression
+                          UnqualifiedMethodInvocation
+                            NameExpression
+                              Identifier "run" @ 370..373
+                            ArgumentList
+                              LParen "(" @ 373..374
+                              ExpressionList
+                              RParen ")" @ 374..375
+                        Semicolon ";" @ 375..376
+                BlockStatement
+                  ForStatement
+                    BasicForStatement
+                      ForKw "for" @ 377..380 leading=[Newline "\n"]
+                      LParen "(" @ 380..381 trailing=[LineComment "// keep going"]
+                      Semicolon ";" @ 395..396 leading=[Newline "\n"]
+                      Semicolon ";" @ 396..397
+                      RParen ")" @ 397..398 trailing=[Whitespace " "]
+                      ExpressionStatement
+                        MethodInvocationExpression
+                          UnqualifiedMethodInvocation
+                            NameExpression
+                              Identifier "run" @ 399..402
+                            ArgumentList
+                              LParen "(" @ 402..403
+                              ExpressionList
+                              RParen ")" @ 403..404
+                        Semicolon ";" @ 404..405
+                BlockStatement
+                  ForStatement
+                    BasicForStatement
+                      ForKw "for" @ 406..409 leading=[Newline "\n"]
+                      LParen "(" @ 409..410
+                      Semicolon ";" @ 410..411
+                      Semicolon ";" @ 411..412 trailing=[BlockComment "/* close */"]
+                      RParen ")" @ 423..424 trailing=[Whitespace " "]
+                      ExpressionStatement
+                        MethodInvocationExpression
+                          UnqualifiedMethodInvocation
+                            NameExpression
+                              Identifier "run" @ 425..428
+                            ArgumentList
+                              LParen "(" @ 428..429
+                              ExpressionList
+                              RParen ")" @ 429..430
+                        Semicolon ";" @ 430..431
+              RBrace "}" @ 432..433 leading=[Newline "\n"]
         RBrace "}" @ 434..435 leading=[Newline "\n"]
   Eof "" @ 436..436 leading=[Newline "\n"]
 

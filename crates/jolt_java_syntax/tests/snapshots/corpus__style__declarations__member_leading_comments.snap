@@ -21,33 +21,31 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 21..22
         ClassBodyMemberList
-          ClassBodyDeclaration
-            ConstructorDeclaration
-              Identifier "MemberComments" @ 43..57 leading=[Newline "\n", LineComment "// constructor lead", Newline "\n"]
-              LParen "(" @ 57..58
-              RParen ")" @ 58..59
-              ConstructorBody
-                LBrace "{" @ 59..60 trailing=[LineComment "// before super"]
-                ConstructorBodyEntryList
-                  ConstructorInvocation
-                    SuperKw "super" @ 76..81 leading=[Newline "\n"]
-                    ArgumentList
-                      LParen "(" @ 81..82
-                      ExpressionList
-                      RParen ")" @ 82..83
-                    Semicolon ";" @ 83..84
-                RBrace "}" @ 84..85
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 101..105 leading=[Newline "\n", LineComment "// method lead", Newline "\n"] trailing=[Whitespace " "]
-              Identifier "work" @ 106..110
-              LParen "(" @ 110..111
-              RParen ")" @ 111..112
-              Block
-                LBrace "{" @ 112..113
-                BlockStatementList
-                RBrace "}" @ 113..114
+          ConstructorDeclaration
+            Identifier "MemberComments" @ 43..57 leading=[Newline "\n", LineComment "// constructor lead", Newline "\n"]
+            LParen "(" @ 57..58
+            RParen ")" @ 58..59
+            ConstructorBody
+              LBrace "{" @ 59..60 trailing=[LineComment "// before super"]
+              ConstructorBodyEntryList
+                ConstructorInvocation
+                  SuperKw "super" @ 76..81 leading=[Newline "\n"]
+                  ArgumentList
+                    LParen "(" @ 81..82
+                    ExpressionList
+                    RParen ")" @ 82..83
+                  Semicolon ";" @ 83..84
+              RBrace "}" @ 84..85
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 101..105 leading=[Newline "\n", LineComment "// method lead", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "work" @ 106..110
+            LParen "(" @ 110..111
+            RParen ")" @ 111..112
+            Block
+              LBrace "{" @ 112..113
+              BlockStatementList
+              RBrace "}" @ 113..114
         RBrace "}" @ 115..116 leading=[Newline "\n"]
   Eof "" @ 117..117 leading=[Newline "\n"]
 

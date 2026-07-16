@@ -39,213 +39,195 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 35..36
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 41..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "module" @ 45..51
-              Semicolon ";" @ 51..52
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 57..60 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "open" @ 61..65
-              Semicolon ";" @ 65..66
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 71..74 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "opens" @ 75..80
-              Semicolon ";" @ 80..81
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 86..89 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "requires" @ 90..98
-              Semicolon ";" @ 98..99
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 104..107 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "transitive" @ 108..118
-              Semicolon ";" @ 118..119
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 124..127 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "exports" @ 128..135
-              Semicolon ";" @ 135..136
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 141..144 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "to" @ 145..147
-              Semicolon ";" @ 147..148
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 153..156 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "uses" @ 157..161
-              Semicolon ";" @ 161..162
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 167..170 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "provides" @ 171..179
-              Semicolon ";" @ 179..180
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 185..188 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "with" @ 189..193
-              Semicolon ";" @ 193..194
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 199..202 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "when" @ 203..207
-              Semicolon ";" @ 207..208
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 213..216 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "permits" @ 217..224
-              Semicolon ";" @ 224..225
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 230..233 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "sealed" @ 234..240
-              Semicolon ";" @ 240..241
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 246..249 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "record" @ 250..256
-              Semicolon ";" @ 256..257
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 262..265 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "var" @ 266..269
-              Semicolon ";" @ 269..270
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 276..280 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "when" @ 281..285
-              LParen "(" @ 285..286
-              RParen ")" @ 286..287 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 288..289
-                BlockStatementList
-                RBrace "}" @ 289..290
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 295..299 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "requires" @ 300..308
-              LParen "(" @ 308..309
-              RParen ")" @ 309..310 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 311..312
-                BlockStatementList
-                RBrace "}" @ 312..313
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 318..322 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 323..329
-              LParen "(" @ 329..330
-              RParen ")" @ 330..331 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 332..333
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 342..345 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "when" @ 346..350 trailing=[Whitespace " "]
-                          Assign "=" @ 351..352 trailing=[Whitespace " "]
-                          VariableInitializer
-                            FieldAccessExpression
-                              ThisExpression
-                                ThisKw "this" @ 353..357
-                              Dot "." @ 357..358
-                              Identifier "when" @ 358..362
-                    Semicolon ";" @ 362..363
-                  BlockStatement
-                    ExpressionStatement
-                      AssignmentExpression
-                        NameExpression
-                          Identifier "record" @ 372..378 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                        Assign "=" @ 379..380 trailing=[Whitespace " "]
-                        LiteralExpression
-                          StringLiteral "\"name\"" @ 381..387
-                      Semicolon ";" @ 387..388
-                  BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        QualifiedMethodInvocation
-                          ThisExpression
-                            ThisKw "this" @ 397..401 leading=[Newline "\n", Whitespace "        "]
-                          Dot "." @ 401..402
-                          Identifier "requires" @ 402..410
-                          ArgumentList
-                            LParen "(" @ 410..411
-                            ExpressionList
-                            RParen ")" @ 411..412
-                      Semicolon ";" @ 412..413
-                RBrace "}" @ 418..419 leading=[Newline "\n", Whitespace "    "]
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 41..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "module" @ 45..51
+            Semicolon ";" @ 51..52
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 57..60 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "open" @ 61..65
+            Semicolon ";" @ 65..66
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 71..74 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "opens" @ 75..80
+            Semicolon ";" @ 80..81
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 86..89 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "requires" @ 90..98
+            Semicolon ";" @ 98..99
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 104..107 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "transitive" @ 108..118
+            Semicolon ";" @ 118..119
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 124..127 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "exports" @ 128..135
+            Semicolon ";" @ 135..136
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 141..144 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "to" @ 145..147
+            Semicolon ";" @ 147..148
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 153..156 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "uses" @ 157..161
+            Semicolon ";" @ 161..162
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 167..170 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "provides" @ 171..179
+            Semicolon ";" @ 179..180
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 185..188 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "with" @ 189..193
+            Semicolon ";" @ 193..194
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 199..202 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "when" @ 203..207
+            Semicolon ";" @ 207..208
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 213..216 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "permits" @ 217..224
+            Semicolon ";" @ 224..225
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 230..233 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "sealed" @ 234..240
+            Semicolon ";" @ 240..241
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 246..249 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "record" @ 250..256
+            Semicolon ";" @ 256..257
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 262..265 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "var" @ 266..269
+            Semicolon ";" @ 269..270
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 276..280 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "when" @ 281..285
+            LParen "(" @ 285..286
+            RParen ")" @ 286..287 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 288..289
+              BlockStatementList
+              RBrace "}" @ 289..290
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 295..299 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "requires" @ 300..308
+            LParen "(" @ 308..309
+            RParen ")" @ 309..310 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 311..312
+              BlockStatementList
+              RBrace "}" @ 312..313
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 318..322 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 323..329
+            LParen "(" @ 329..330
+            RParen ")" @ 330..331 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 332..333
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 342..345 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "when" @ 346..350 trailing=[Whitespace " "]
+                        Assign "=" @ 351..352 trailing=[Whitespace " "]
+                        VariableInitializer
+                          FieldAccessExpression
+                            ThisExpression
+                              ThisKw "this" @ 353..357
+                            Dot "." @ 357..358
+                            Identifier "when" @ 358..362
+                  Semicolon ";" @ 362..363
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "record" @ 372..378 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      Assign "=" @ 379..380 trailing=[Whitespace " "]
+                      LiteralExpression
+                        StringLiteral "\"name\"" @ 381..387
+                    Semicolon ";" @ 387..388
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      QualifiedMethodInvocation
+                        ThisExpression
+                          ThisKw "this" @ 397..401 leading=[Newline "\n", Whitespace "        "]
+                        Dot "." @ 401..402
+                        Identifier "requires" @ 402..410
+                        ArgumentList
+                          LParen "(" @ 410..411
+                          ExpressionList
+                          RParen ")" @ 411..412
+                    Semicolon ";" @ 412..413
+              RBrace "}" @ 418..419 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 420..421 leading=[Newline "\n"]
   Eof "" @ 422..422 leading=[Newline "\n"]
 

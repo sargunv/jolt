@@ -29,68 +29,67 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 55..56
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 61..65 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 66..72
-              LParen "(" @ 72..73
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    IntKw "int" @ 73..76 trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 61..65 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 66..72
+            LParen "(" @ 72..73
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "non" @ 77..80
-                Comma "," @ 80..81 trailing=[Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    IntKw "int" @ 82..85 trailing=[Whitespace " "]
+                  IntKw "int" @ 73..76 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "non" @ 77..80
+              Comma "," @ 80..81 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "sealedclass" @ 86..97
-              RParen ")" @ 97..98 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 99..100
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "varfilename" @ 109..120 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "value" @ 121..126 trailing=[Whitespace " "]
-                          Assign "=" @ 127..128 trailing=[Whitespace " "]
-                          VariableInitializer
-                            LiteralExpression
-                              NullLiteral "null" @ 129..133
-                    Semicolon ";" @ 133..134
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 143..146 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "difference" @ 147..157 trailing=[Whitespace " "]
-                          Assign "=" @ 158..159 trailing=[Whitespace " "]
-                          VariableInitializer
-                            BinaryExpression
-                              NameExpression
-                                Identifier "non" @ 160..163
-                              Minus "-" @ 163..164
-                              NameExpression
-                                Identifier "sealedclass" @ 164..175
-                    Semicolon ";" @ 175..176
-                RBrace "}" @ 181..182 leading=[Newline "\n", Whitespace "    "]
+                  IntKw "int" @ 82..85 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "sealedclass" @ 86..97
+            RParen ")" @ 97..98 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 99..100
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "varfilename" @ 109..120 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "value" @ 121..126 trailing=[Whitespace " "]
+                        Assign "=" @ 127..128 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            NullLiteral "null" @ 129..133
+                  Semicolon ";" @ 133..134
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 143..146 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "difference" @ 147..157 trailing=[Whitespace " "]
+                        Assign "=" @ 158..159 trailing=[Whitespace " "]
+                        VariableInitializer
+                          BinaryExpression
+                            NameExpression
+                              Identifier "non" @ 160..163
+                            Minus "-" @ 163..164
+                            NameExpression
+                              Identifier "sealedclass" @ 164..175
+                  Semicolon ";" @ 175..176
+              RBrace "}" @ 181..182 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 183..184 leading=[Newline "\n"]
   Eof "" @ 185..185 leading=[Newline "\n"]
 

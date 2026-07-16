@@ -19,45 +19,44 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 36..37
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              PrimitiveType
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 42..45 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 46..52
+            LParen "(" @ 52..53
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 53..59 trailing=[Whitespace " "]
                 AnnotationList
-                IntKw "int" @ 42..45 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 46..52
-              LParen "(" @ 52..53
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 53..59 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "x" @ 60..61
-              RParen ")" @ 61..62 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 63..64
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 73..79 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      BinaryExpression
-                        CastExpression
-                          LParen "(" @ 80..81
-                          PrimitiveType
-                            AnnotationList
-                            IntKw "int" @ 81..84
-                          RParen ")" @ 84..85 trailing=[Whitespace " "]
-                          NameExpression
-                            Identifier "x" @ 86..87 trailing=[Whitespace " "]
-                        Plus "+" @ 88..89 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "1" @ 90..91
-                      Semicolon ";" @ 91..92
-                RBrace "}" @ 97..98 leading=[Newline "\n", Whitespace "    "]
+                Identifier "x" @ 60..61
+            RParen ")" @ 61..62 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 63..64
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 73..79 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    BinaryExpression
+                      CastExpression
+                        LParen "(" @ 80..81
+                        PrimitiveType
+                          AnnotationList
+                          IntKw "int" @ 81..84
+                        RParen ")" @ 84..85 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "x" @ 86..87 trailing=[Whitespace " "]
+                      Plus "+" @ 88..89 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "1" @ 90..91
+                    Semicolon ";" @ 91..92
+              RBrace "}" @ 97..98 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 99..100 leading=[Newline "\n"]
   Eof "" @ 101..101 leading=[Newline "\n"]
 

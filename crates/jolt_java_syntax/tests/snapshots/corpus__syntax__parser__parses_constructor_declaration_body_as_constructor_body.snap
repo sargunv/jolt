@@ -21,41 +21,39 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 27..28
         ClassBodyMemberList
-          ClassBodyDeclaration
-            ConstructorDeclaration
-              Identifier "ConstructorBodyShape" @ 33..53 leading=[Newline "\n", Whitespace "    "]
-              LParen "(" @ 53..54
-              RParen ")" @ 54..55 trailing=[Whitespace " "]
-              ConstructorBody
-                LBrace "{" @ 56..57
-                ConstructorBodyEntryList
-                  ConstructorInvocation
-                    ThisKw "this" @ 66..70 leading=[Newline "\n", Whitespace "        "]
-                    ArgumentList
-                      LParen "(" @ 70..71
-                      ExpressionList
-                        LiteralExpression
-                          IntegerLiteral "0" @ 71..72
-                      RParen ")" @ 72..73
-                    Semicolon ";" @ 73..74
-                RBrace "}" @ 79..80 leading=[Newline "\n", Whitespace "    "]
-          ClassBodyDeclaration
-            ConstructorDeclaration
-              Identifier "ConstructorBodyShape" @ 86..106 leading=[Newline "\n", Newline "\n", Whitespace "    "]
-              LParen "(" @ 106..107
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    IntKw "int" @ 107..110 trailing=[Whitespace " "]
+          ConstructorDeclaration
+            Identifier "ConstructorBodyShape" @ 33..53 leading=[Newline "\n", Whitespace "    "]
+            LParen "(" @ 53..54
+            RParen ")" @ 54..55 trailing=[Whitespace " "]
+            ConstructorBody
+              LBrace "{" @ 56..57
+              ConstructorBodyEntryList
+                ConstructorInvocation
+                  ThisKw "this" @ 66..70 leading=[Newline "\n", Whitespace "        "]
+                  ArgumentList
+                    LParen "(" @ 70..71
+                    ExpressionList
+                      LiteralExpression
+                        IntegerLiteral "0" @ 71..72
+                    RParen ")" @ 72..73
+                  Semicolon ";" @ 73..74
+              RBrace "}" @ 79..80 leading=[Newline "\n", Whitespace "    "]
+          ConstructorDeclaration
+            Identifier "ConstructorBodyShape" @ 86..106 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+            LParen "(" @ 106..107
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "value" @ 111..116
-              RParen ")" @ 116..117 trailing=[Whitespace " "]
-              ConstructorBody
-                LBrace "{" @ 118..119
-                ConstructorBodyEntryList
-                RBrace "}" @ 119..120
+                  IntKw "int" @ 107..110 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 111..116
+            RParen ")" @ 116..117 trailing=[Whitespace " "]
+            ConstructorBody
+              LBrace "{" @ 118..119
+              ConstructorBodyEntryList
+              RBrace "}" @ 119..120
         RBrace "}" @ 121..122 leading=[Newline "\n"]
   Eof "" @ 123..123 leading=[Newline "\n"]
 

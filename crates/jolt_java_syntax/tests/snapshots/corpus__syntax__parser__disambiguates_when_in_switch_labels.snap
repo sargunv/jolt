@@ -22,50 +22,49 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 27..28
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 33..37 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 38..44
-              LParen "(" @ 44..45
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    IntKw "int" @ 45..48 trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 33..37 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 38..44
+            LParen "(" @ 44..45
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "when" @ 49..53
-              RParen ")" @ 53..54 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 55..56
-                BlockStatementList
-                  BlockStatement
-                    SwitchStatement
-                      SwitchKw "switch" @ 65..71 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      LParen "(" @ 72..73
-                      NameExpression
-                        Identifier "when" @ 73..77
-                      RParen ")" @ 77..78 trailing=[Whitespace " "]
-                      SwitchBlock
-                        LBrace "{" @ 79..80
-                        SwitchEntryList
-                          SwitchBlockStatementGroup
-                            SwitchLabelColonList
-                              SwitchLabel
-                                CaseKw "case" @ 93..97 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                SwitchLabelItemList
-                                  CaseConstant
-                                    NameExpression
-                                      Identifier "when" @ 98..102
-                              Colon ":" @ 102..103
-                            BlockStatementList
-                              BlockStatement
-                                BreakStatement
-                                  BreakKw "break" @ 120..125 leading=[Newline "\n", Whitespace "                "]
-                                  Semicolon ";" @ 125..126
-                        RBrace "}" @ 135..136 leading=[Newline "\n", Whitespace "        "]
-                RBrace "}" @ 141..142 leading=[Newline "\n", Whitespace "    "]
+                  IntKw "int" @ 45..48 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "when" @ 49..53
+            RParen ")" @ 53..54 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 55..56
+              BlockStatementList
+                BlockStatement
+                  SwitchStatement
+                    SwitchKw "switch" @ 65..71 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    LParen "(" @ 72..73
+                    NameExpression
+                      Identifier "when" @ 73..77
+                    RParen ")" @ 77..78 trailing=[Whitespace " "]
+                    SwitchBlock
+                      LBrace "{" @ 79..80
+                      SwitchEntryList
+                        SwitchBlockStatementGroup
+                          SwitchLabelColonList
+                            SwitchLabel
+                              CaseKw "case" @ 93..97 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                                CaseConstant
+                                  NameExpression
+                                    Identifier "when" @ 98..102
+                            Colon ":" @ 102..103
+                          BlockStatementList
+                            BlockStatement
+                              BreakStatement
+                                BreakKw "break" @ 120..125 leading=[Newline "\n", Whitespace "                "]
+                                Semicolon ";" @ 125..126
+                      RBrace "}" @ 135..136 leading=[Newline "\n", Whitespace "        "]
+              RBrace "}" @ 141..142 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 143..144 leading=[Newline "\n"]
   Eof "" @ 145..145 leading=[Newline "\n"]
 

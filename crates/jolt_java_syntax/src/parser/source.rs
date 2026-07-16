@@ -79,7 +79,7 @@ pub(super) trait JavaParserExt {
     fn unqualified_yield_method_invocation_here(&mut self, message: &str);
     fn decimal_integer_boundary_literal_here(&mut self, message: &str);
     fn misplaced_receiver_parameter_here(&mut self, message: &str) -> DiagnosticMarker;
-    fn misplaced_constructor_invocation_here(&mut self, message: &str);
+    fn misplaced_constructor_invocation_here(&mut self, message: &str) -> DiagnosticMarker;
     fn restricted_type_identifier_here(&mut self, message: &str) -> DiagnosticMarker;
 }
 
@@ -142,11 +142,11 @@ impl JavaParserExt for Parser<'_> {
         )
     }
 
-    fn misplaced_constructor_invocation_here(&mut self, message: &str) {
+    fn misplaced_constructor_invocation_here(&mut self, message: &str) -> DiagnosticMarker {
         self.error_here(
             JavaParseDiagnosticCode::MisplacedConstructorInvocation.id(),
             message,
-        );
+        )
     }
 
     fn restricted_type_identifier_here(&mut self, message: &str) -> DiagnosticMarker {

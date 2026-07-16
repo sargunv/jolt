@@ -13,8 +13,8 @@ use jolt_fmt_ir::DocBuilder;
 
 use crate::helpers::recovery::{
     JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_optional_field,
-    format_or_verbatim, format_required_field, resolve_list_part, resolve_optional_field,
-    resolve_required_delimiter, resolve_required_field,
+    format_required_field, resolve_list_part, resolve_optional_field, resolve_required_delimiter,
+    resolve_required_field,
 };
 use crate::rules::annotations::format_annotation;
 
@@ -79,15 +79,6 @@ pub(super) fn format_constructor_declaration<'source>(
     constructor: &jolt_java_syntax::ConstructorDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(constructor, doc, |doc| {
-        format_constructor_declaration_structured(constructor, doc)
-    })
-}
-
-fn format_constructor_declaration_structured<'source>(
-    constructor: &jolt_java_syntax::ConstructorDeclaration<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
     let constructor_first_token = constructor.first_token();
     let modifiers = resolve_optional_field(constructor.modifiers(), doc);
     let throws = resolve_optional_field(constructor.throws(), doc);
@@ -133,15 +124,6 @@ pub(super) fn format_compact_constructor_declaration<'source>(
     constructor: &jolt_java_syntax::CompactConstructorDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(constructor, doc, |doc| {
-        format_compact_constructor_declaration_structured(constructor, doc)
-    })
-}
-
-fn format_compact_constructor_declaration_structured<'source>(
-    constructor: &jolt_java_syntax::CompactConstructorDeclaration<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
     let modifiers = resolve_optional_field(constructor.modifiers(), doc);
     let prefix = format_optional_modifier_prefix(modifiers, doc);
     let header = format_required_field(constructor.name(), doc, |name, doc| {
@@ -157,15 +139,6 @@ fn format_compact_constructor_declaration_structured<'source>(
 }
 
 pub(crate) fn format_method_declaration<'source>(
-    method: &MethodDeclaration<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    format_or_verbatim(method, doc, |doc| {
-        format_method_declaration_structured(method, doc)
-    })
-}
-
-fn format_method_declaration_structured<'source>(
     method: &MethodDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
@@ -185,8 +158,7 @@ fn format_method_declaration_structured<'source>(
     let return_type = format_required_field(method.return_type(), doc, |return_type, doc| {
         format_type_without_leading_comments(&return_type, doc)
     });
-    let body = resolve_optional_field(method.body(), doc);
-    let semicolon = method.semicolon();
+    let body = resolve_required_field(method.body(), doc);
     let modifiers = match method_modifiers {
         JavaFormatField::Present(modifiers) => format_typed_modifier_prefix(modifiers, doc),
         JavaFormatField::Malformed(malformed) => crate::rules::modifiers::TypedModifierPrefix {
@@ -237,26 +209,29 @@ fn format_method_declaration_structured<'source>(
     );
 
     match body {
-        JavaFormatField::Present(Some(body)) => {
-            callable_declaration_with_body_doc(prefix, header, format_block(&body, doc), doc)
+        JavaFormatField::Present(body) => {
+            if let Some(block) = body.cast_node::<jolt_java_syntax::Block<'source>>() {
+                callable_declaration_with_body_doc(prefix, header, format_block(&block, doc), doc)
+            } else if let Some(semicolon) = body.token() {
+                doc_concat!(
+                    doc,
+                    [
+                        prefix,
+                        doc_group!(doc, header),
+                        format_statement_semicolon(
+                            Ok(jolt_java_syntax::JavaSyntaxField::Present(semicolon)),
+                            doc,
+                        )
+                    ]
+                )
+            } else {
+                doc.block_on_invariant("method body had an undeclared kind");
+                doc_concat!(doc, [prefix, doc_group!(doc, header)])
+            }
         }
-        JavaFormatField::Present(None) => doc_concat!(
-            doc,
-            [
-                prefix,
-                doc_group!(doc, header),
-                format_statement_semicolon(semicolon, doc)
-            ]
-        ),
         JavaFormatField::Malformed(malformed) => doc_concat!(
             doc,
-            [
-                prefix,
-                doc_group!(doc, header),
-                doc.space(),
-                malformed,
-                format_statement_semicolon(semicolon, doc),
-            ]
+            [prefix, doc_group!(doc, header), doc.space(), malformed,]
         ),
     }
 }
@@ -291,15 +266,6 @@ fn format_optional_annotation_list<'source>(
 }
 
 pub(super) fn format_annotation_element_declaration<'source>(
-    element: &AnnotationElementDeclaration<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    format_or_verbatim(element, doc, |doc| {
-        format_annotation_element_declaration_structured(element, doc)
-    })
-}
-
-fn format_annotation_element_declaration_structured<'source>(
     element: &AnnotationElementDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {

@@ -69,147 +69,142 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 109..110 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              ModifierList
-                Annotation
-                  At "@" @ 111..112
+          FieldDeclaration
+            ModifierList
+              Annotation
+                At "@" @ 111..112
+                Name
+                  Identifier "FieldAnno" @ 112..121
+                AnnotationArgumentList
+                  LParen "(" @ 121..122
+                  AnnotationElementList
+                    AnnotationElementArgumentList
+                      AnnotationElementValuePair
+                        Identifier "name" @ 122..126
+                        Assign "=" @ 126..127
+                        AnnotationElementValue
+                          LiteralExpression
+                            StringLiteral "\"id\"" @ 127..131
+                      Comma "," @ 131..132 trailing=[Whitespace " "]
+                      AnnotationElementValuePair
+                        Identifier "values" @ 133..139
+                        Assign "=" @ 139..140
+                        AnnotationElementValue
+                          AnnotationArrayInitializer
+                            LBrace "{" @ 140..141
+                            AnnotationElementValueList
+                              AnnotationElementValue
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 141..142
+                              Comma "," @ 142..143
+                              AnnotationElementValue
+                                LiteralExpression
+                                  IntegerLiteral "2" @ 143..144
+                            RBrace "}" @ 144..145
+                  RParen ")" @ 145..146 trailing=[Whitespace " "]
+              PrivateKw "private" @ 147..154 trailing=[Whitespace " "]
+              FinalKw "final" @ 155..160 trailing=[Whitespace " "]
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
                   Name
-                    Identifier "FieldAnno" @ 112..121
-                  AnnotationArgumentList
-                    LParen "(" @ 121..122
-                    AnnotationElementList
-                      AnnotationElementArgumentList
-                        AnnotationElementValuePair
-                          Identifier "name" @ 122..126
-                          Assign "=" @ 126..127
-                          AnnotationElementValue
-                            LiteralExpression
-                              StringLiteral "\"id\"" @ 127..131
-                        Comma "," @ 131..132 trailing=[Whitespace " "]
-                        AnnotationElementValuePair
-                          Identifier "values" @ 133..139
-                          Assign "=" @ 139..140
-                          AnnotationElementValue
-                            AnnotationArrayInitializer
-                              LBrace "{" @ 140..141
-                              AnnotationElementValueList
-                                AnnotationElementValue
-                                  LiteralExpression
-                                    IntegerLiteral "1" @ 141..142
-                                Comma "," @ 142..143
-                                AnnotationElementValue
-                                  LiteralExpression
-                                    IntegerLiteral "2" @ 143..144
-                              RBrace "}" @ 144..145
-                    RParen ")" @ 145..146 trailing=[Whitespace " "]
-                PrivateKw "private" @ 147..154 trailing=[Whitespace " "]
-                FinalKw "final" @ 155..160 trailing=[Whitespace " "]
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 161..167 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "id" @ 168..170
-              Semicolon ";" @ 170..171 trailing=[Whitespace " "]
-          ClassBodyDeclaration
-            FieldDeclaration
-              ModifierList
-                Annotation
-                  At "@" @ 172..173
+                    Identifier "String" @ 161..167 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "id" @ 168..170
+            Semicolon ";" @ 170..171 trailing=[Whitespace " "]
+          FieldDeclaration
+            ModifierList
+              Annotation
+                At "@" @ 172..173
+                Name
+                  Identifier "FieldOnly" @ 173..182 trailing=[Whitespace " "]
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
                   Name
-                    Identifier "FieldOnly" @ 173..182 trailing=[Whitespace " "]
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 183..189 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "unqualified" @ 190..201
-              Semicolon ";" @ 201..202 trailing=[Whitespace " "]
-          ClassBodyDeclaration
-            MethodDeclaration
-              ModifierList
-                PublicKw "public" @ 203..209 trailing=[Whitespace " "]
-                Annotation
-                  At "@" @ 210..211
+                    Identifier "String" @ 183..189 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "unqualified" @ 190..201
+            Semicolon ";" @ 201..202 trailing=[Whitespace " "]
+          MethodDeclaration
+            ModifierList
+              PublicKw "public" @ 203..209 trailing=[Whitespace " "]
+              Annotation
+                At "@" @ 210..211
+                Name
+                  Identifier "Nonnull" @ 211..218 trailing=[Whitespace " "]
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
                   Name
-                    Identifier "Nonnull" @ 211..218 trailing=[Whitespace " "]
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 219..225 trailing=[Whitespace " "]
-              Identifier "name" @ 226..230
-              LParen "(" @ 230..231
-              RParen ")" @ 231..232
-              Block
-                LBrace "{" @ 232..233 trailing=[Whitespace " "]
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 234..240 trailing=[Whitespace " "]
-                      NameExpression
-                        Identifier "id" @ 241..243
-                      Semicolon ";" @ 243..244 trailing=[Whitespace " "]
-                RBrace "}" @ 245..246 trailing=[Whitespace " "]
-          ClassBodyDeclaration
-            MethodDeclaration
-              ModifierList
-                Annotation
-                  At "@" @ 247..248
+                    Identifier "String" @ 219..225 trailing=[Whitespace " "]
+            Identifier "name" @ 226..230
+            LParen "(" @ 230..231
+            RParen ")" @ 231..232
+            Block
+              LBrace "{" @ 232..233 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 234..240 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "id" @ 241..243
+                    Semicolon ";" @ 243..244 trailing=[Whitespace " "]
+              RBrace "}" @ 245..246 trailing=[Whitespace " "]
+          MethodDeclaration
+            ModifierList
+              Annotation
+                At "@" @ 247..248
+                Name
+                  Identifier "Action" @ 248..254 trailing=[Whitespace " "]
+              Annotation
+                At "@" @ 255..256
+                Name
+                  Identifier "Checked" @ 256..263 trailing=[Whitespace " "]
+              PublicKw "public" @ 264..270 trailing=[Whitespace " "]
+              Annotation
+                At "@" @ 271..272
+                Name
+                  Identifier "Nullable" @ 272..280 trailing=[Whitespace " "]
+            VoidType
+              VoidKw "void" @ 281..285 trailing=[Whitespace " "]
+            Identifier "reset" @ 286..291
+            LParen "(" @ 291..292
+            RParen ")" @ 292..293
+            Block
+              LBrace "{" @ 293..294
+              BlockStatementList
+              RBrace "}" @ 294..295 trailing=[Whitespace " "]
+          MethodDeclaration
+            ModifierList
+              Annotation
+                At "@" @ 296..297
+                Name
+                  Identifier "Override" @ 297..305 trailing=[Whitespace " "]
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
                   Name
-                    Identifier "Action" @ 248..254 trailing=[Whitespace " "]
-                Annotation
-                  At "@" @ 255..256
-                  Name
-                    Identifier "Checked" @ 256..263 trailing=[Whitespace " "]
-                PublicKw "public" @ 264..270 trailing=[Whitespace " "]
-                Annotation
-                  At "@" @ 271..272
-                  Name
-                    Identifier "Nullable" @ 272..280 trailing=[Whitespace " "]
-              VoidType
-                VoidKw "void" @ 281..285 trailing=[Whitespace " "]
-              Identifier "reset" @ 286..291
-              LParen "(" @ 291..292
-              RParen ")" @ 292..293
-              Block
-                LBrace "{" @ 293..294
-                BlockStatementList
-                RBrace "}" @ 294..295 trailing=[Whitespace " "]
-          ClassBodyDeclaration
-            MethodDeclaration
-              ModifierList
-                Annotation
-                  At "@" @ 296..297
-                  Name
-                    Identifier "Override" @ 297..305 trailing=[Whitespace " "]
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 306..312 trailing=[Whitespace " "]
-              Identifier "raw" @ 313..316
-              LParen "(" @ 316..317
-              RParen ")" @ 317..318
-              Block
-                LBrace "{" @ 318..319 trailing=[Whitespace " "]
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 320..326 trailing=[Whitespace " "]
-                      NameExpression
-                        Identifier "id" @ 327..329
-                      Semicolon ";" @ 329..330 trailing=[Whitespace " "]
-                RBrace "}" @ 331..332 trailing=[Whitespace " "]
+                    Identifier "String" @ 306..312 trailing=[Whitespace " "]
+            Identifier "raw" @ 313..316
+            LParen "(" @ 316..317
+            RParen ")" @ 317..318
+            Block
+              LBrace "{" @ 318..319 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 320..326 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "id" @ 327..329
+                    Semicolon ";" @ 329..330 trailing=[Whitespace " "]
+              RBrace "}" @ 331..332 trailing=[Whitespace " "]
         RBrace "}" @ 333..334
     ClassDeclaration
       ModifierList
@@ -259,18 +254,17 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 489..490 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              ModifierList
-                VolatileKw "volatile" @ 491..499 trailing=[Whitespace " ", BlockComment "/* shared */", Whitespace " "]
-                PublicKw "public" @ 513..519 trailing=[Whitespace " "]
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 520..523 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "value" @ 524..529
-              Semicolon ";" @ 529..530 trailing=[Whitespace " "]
+          FieldDeclaration
+            ModifierList
+              VolatileKw "volatile" @ 491..499 trailing=[Whitespace " ", BlockComment "/* shared */", Whitespace " "]
+              PublicKw "public" @ 513..519 trailing=[Whitespace " "]
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 520..523 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "value" @ 524..529
+            Semicolon ";" @ 529..530 trailing=[Whitespace " "]
         RBrace "}" @ 531..532
   Eof "" @ 533..533 leading=[Newline "\n"]
 

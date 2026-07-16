@@ -15,53 +15,51 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 8..9 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "List" @ 10..14
-                    TypeArgumentList
-                      Lt "<" @ 14..15
-                      TypeArgumentSeparatedList
-                        TypeArgument
-                          AnnotationList
-                          WildcardType
-                            Question "?" @ 15..16 trailing=[Whitespace " "]
-                            ExtendsKw "extends" @ 17..24 trailing=[Whitespace " ", BlockComment "/* bound */"]
-                            BogusType
-                              AnnotationList
-                      Gt ">" @ 36..37 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "a" @ 38..39
-              Semicolon ";" @ 39..40 trailing=[Whitespace " "]
-          ClassBodyDeclaration
-            FieldDeclaration
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "List" @ 41..45
-                    TypeArgumentList
-                      Lt "<" @ 45..46
-                      TypeArgumentSeparatedList
-                        TypeArgument
-                          AnnotationList
-                            Annotation
-                              At "@" @ 46..47
-                              Name
-                                Identifier "A" @ 47..48 trailing=[Whitespace " ", BlockComment "/* arg */"]
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "List" @ 10..14
+                  TypeArgumentList
+                    Lt "<" @ 14..15
+                    TypeArgumentSeparatedList
+                      TypeArgument
+                        AnnotationList
+                        WildcardType
+                          Question "?" @ 15..16 trailing=[Whitespace " "]
+                          ExtendsKw "extends" @ 17..24 trailing=[Whitespace " ", BlockComment "/* bound */"]
                           BogusType
                             AnnotationList
-                      Gt ">" @ 58..59 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "b" @ 60..61
-              Semicolon ";" @ 61..62 trailing=[Whitespace " "]
+                    Gt ">" @ 36..37 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "a" @ 38..39
+            Semicolon ";" @ 39..40 trailing=[Whitespace " "]
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "List" @ 41..45
+                  TypeArgumentList
+                    Lt "<" @ 45..46
+                    TypeArgumentSeparatedList
+                      TypeArgument
+                        AnnotationList
+                          Annotation
+                            At "@" @ 46..47
+                            Name
+                              Identifier "A" @ 47..48 trailing=[Whitespace " ", BlockComment "/* arg */"]
+                        BogusType
+                          AnnotationList
+                    Gt ">" @ 58..59 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "b" @ 60..61
+            Semicolon ";" @ 61..62 trailing=[Whitespace " "]
         RBrace "}" @ 63..64
   Eof "" @ 65..65 leading=[Newline "\n"]
 

@@ -21,59 +21,58 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 29..30
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 35..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 40..46
-              LParen "(" @ 46..47
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    IntKw "int" @ 47..50 trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 35..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 40..46
+            LParen "(" @ 46..47
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "n" @ 51..52
-              RParen ")" @ 52..53 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 54..55
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ArrayType
-                        PrimitiveType
+                  IntKw "int" @ 47..50 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "n" @ 51..52
+            RParen ")" @ 52..53 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 54..55
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ArrayType
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 64..67 leading=[Newline "\n", Whitespace "        "]
+                      ArrayDimensions
+                        ArrayDimension
                           AnnotationList
-                          IntKw "int" @ 64..67 leading=[Newline "\n", Whitespace "        "]
-                        ArrayDimensions
-                          ArrayDimension
-                            AnnotationList
-                            LBracket "[" @ 67..68
-                            RBracket "]" @ 68..69 trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "values" @ 70..76 trailing=[Whitespace " "]
-                          Assign "=" @ 77..78 trailing=[Whitespace " "]
-                          VariableInitializer
-                            ArrayCreationExpression
-                              NewKw "new" @ 79..82 trailing=[Whitespace " "]
-                              PrimitiveType
+                          LBracket "[" @ 67..68
+                          RBracket "]" @ 68..69 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "values" @ 70..76 trailing=[Whitespace " "]
+                        Assign "=" @ 77..78 trailing=[Whitespace " "]
+                        VariableInitializer
+                          ArrayCreationExpression
+                            NewKw "new" @ 79..82 trailing=[Whitespace " "]
+                            PrimitiveType
+                              AnnotationList
+                              IntKw "int" @ 83..86 trailing=[Whitespace " "]
+                            DimExpressionList
+                              DimExpression
                                 AnnotationList
-                                IntKw "int" @ 83..86 trailing=[Whitespace " "]
-                              DimExpressionList
-                                DimExpression
-                                  AnnotationList
-                                    Annotation
-                                      At "@" @ 87..88
-                                      Name
-                                        Identifier "Marker" @ 88..94 trailing=[Whitespace " "]
-                                  LBracket "[" @ 95..96
-                                  NameExpression
-                                    Identifier "n" @ 96..97
-                                  RBracket "]" @ 97..98
-                    Semicolon ";" @ 98..99
-                RBrace "}" @ 104..105 leading=[Newline "\n", Whitespace "    "]
+                                  Annotation
+                                    At "@" @ 87..88
+                                    Name
+                                      Identifier "Marker" @ 88..94 trailing=[Whitespace " "]
+                                LBracket "[" @ 95..96
+                                NameExpression
+                                  Identifier "n" @ 96..97
+                                RBracket "]" @ 97..98
+                  Semicolon ";" @ 98..99
+              RBrace "}" @ 104..105 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 106..107 leading=[Newline "\n"]
     AnnotationInterfaceDeclaration
       At "@" @ 109..110 leading=[Newline "\n", Newline "\n"]

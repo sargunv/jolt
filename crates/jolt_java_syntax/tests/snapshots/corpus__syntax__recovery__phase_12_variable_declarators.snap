@@ -17,20 +17,19 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 33..34
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 39..42 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "first" @ 43..48
-                Comma "," @ 48..49 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:variable-recovered */", Whitespace " "]
-                VariableDeclarator
-                Comma "," @ 87..88 trailing=[Whitespace " "]
-                VariableDeclarator
-                  Identifier "second" @ 89..95
-              Semicolon ";" @ 95..96
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 39..42 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "first" @ 43..48
+              Comma "," @ 48..49 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:variable-recovered */", Whitespace " "]
+              VariableDeclarator
+              Comma "," @ 87..88 trailing=[Whitespace " "]
+              VariableDeclarator
+                Identifier "second" @ 89..95
+            Semicolon ";" @ 95..96
         RBrace "}" @ 97..98 leading=[Newline "\n"]
   Eof "" @ 99..99 leading=[Newline "\n"]
 

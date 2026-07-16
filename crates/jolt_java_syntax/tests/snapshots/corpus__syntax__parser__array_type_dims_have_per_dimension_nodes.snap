@@ -20,36 +20,35 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 32..33
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              ArrayType
-                ClassType
-                  ClassTypeSegmentList
-                    ClassTypeSegmentNode
-                      AnnotationList
+          FieldDeclaration
+            ArrayType
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 38..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ArrayDimensions
+                ArrayDimension
+                  AnnotationList
+                    Annotation
+                      At "@" @ 45..46
                       Name
-                        Identifier "String" @ 38..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                ArrayDimensions
-                  ArrayDimension
-                    AnnotationList
-                      Annotation
-                        At "@" @ 45..46
-                        Name
-                          Identifier "A" @ 46..47 trailing=[Whitespace " "]
-                    LBracket "[" @ 48..49
-                    RBracket "]" @ 49..50 trailing=[Whitespace " "]
-                  ArrayDimension
-                    AnnotationList
-                      Annotation
-                        At "@" @ 51..52
-                        Name
-                          Identifier "B" @ 52..53 trailing=[Whitespace " "]
-                    LBracket "[" @ 54..55
-                    RBracket "]" @ 55..56 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "names" @ 57..62
-              Semicolon ";" @ 62..63
+                        Identifier "A" @ 46..47 trailing=[Whitespace " "]
+                  LBracket "[" @ 48..49
+                  RBracket "]" @ 49..50 trailing=[Whitespace " "]
+                ArrayDimension
+                  AnnotationList
+                    Annotation
+                      At "@" @ 51..52
+                      Name
+                        Identifier "B" @ 52..53 trailing=[Whitespace " "]
+                  LBracket "[" @ 54..55
+                  RBracket "]" @ 55..56 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "names" @ 57..62
+            Semicolon ";" @ 62..63
         RBrace "}" @ 64..65 leading=[Newline "\n"]
     AnnotationInterfaceDeclaration
       At "@" @ 67..68 leading=[Newline "\n", Newline "\n"]

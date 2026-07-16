@@ -23,125 +23,121 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 11..12
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 15..19 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              Identifier "call" @ 20..24
-              LParen "(" @ 24..25
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "String" @ 25..31
-                  AnnotationList
-                  Ellipsis "..." @ 31..34 trailing=[Whitespace " "]
-                  Identifier "names" @ 35..40
-              RParen ")" @ 40..41 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 42..43
-                BlockStatementList
-                RBrace "}" @ 43..44
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 47..51 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              Identifier "mix" @ 52..55
-              LParen "(" @ 55..56
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                    FinalKw "final" @ 56..61 trailing=[Whitespace " "]
-                  PrimitiveType
-                    AnnotationList
-                    IntKw "int" @ 62..65 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "count" @ 66..71
-                Comma "," @ 71..72 trailing=[Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 73..79
-                  AnnotationList
-                  Ellipsis "..." @ 79..82 trailing=[Whitespace " "]
-                  Identifier "values" @ 83..89
-              RParen ")" @ 89..90 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 91..92
-                BlockStatementList
-                RBrace "}" @ 92..93
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 96..100 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              Identifier "annotated" @ 101..110
-              LParen "(" @ 110..111
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                    Annotation
-                      At "@" @ 111..112
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 15..19 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "call" @ 20..24
+            LParen "(" @ 24..25
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
                       Name
-                        Identifier "Nonnull" @ 112..119 trailing=[Whitespace " "]
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "String" @ 120..126 trailing=[Whitespace " "]
+                        Identifier "String" @ 25..31
+                AnnotationList
+                Ellipsis "..." @ 31..34 trailing=[Whitespace " "]
+                Identifier "names" @ 35..40
+            RParen ")" @ 40..41 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 42..43
+              BlockStatementList
+              RBrace "}" @ 43..44
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 47..51 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "mix" @ 52..55
+            LParen "(" @ 55..56
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                  FinalKw "final" @ 56..61 trailing=[Whitespace " "]
+                PrimitiveType
                   AnnotationList
-                  Identifier "name" @ 127..131
-                Comma "," @ 131..132 trailing=[Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "String" @ 133..139 trailing=[Whitespace " "]
-                  AnnotationList
-                    Annotation
-                      At "@" @ 140..141
+                  IntKw "int" @ 62..65 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "count" @ 66..71
+              Comma "," @ 71..72 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
                       Name
-                        Identifier "Marker" @ 141..147 trailing=[Whitespace " "]
-                  Ellipsis "..." @ 148..151 trailing=[Whitespace " "]
-                  Identifier "labels" @ 152..158
-              RParen ")" @ 158..159 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 160..161
-                BlockStatementList
-                RBrace "}" @ 161..162
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 165..169 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              Identifier "unnamed" @ 170..177
-              LParen "(" @ 177..178
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 178..184 trailing=[Whitespace " "]
-                  AnnotationList
-                  UnderscoreKw "_" @ 185..186
-              RParen ")" @ 186..187 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 188..189
-                BlockStatementList
-                RBrace "}" @ 189..190
+                        Identifier "Object" @ 73..79
+                AnnotationList
+                Ellipsis "..." @ 79..82 trailing=[Whitespace " "]
+                Identifier "values" @ 83..89
+            RParen ")" @ 89..90 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 91..92
+              BlockStatementList
+              RBrace "}" @ 92..93
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 96..100 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "annotated" @ 101..110
+            LParen "(" @ 110..111
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                  Annotation
+                    At "@" @ 111..112
+                    Name
+                      Identifier "Nonnull" @ 112..119 trailing=[Whitespace " "]
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 120..126 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "name" @ 127..131
+              Comma "," @ 131..132 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 133..139 trailing=[Whitespace " "]
+                AnnotationList
+                  Annotation
+                    At "@" @ 140..141
+                    Name
+                      Identifier "Marker" @ 141..147 trailing=[Whitespace " "]
+                Ellipsis "..." @ 148..151 trailing=[Whitespace " "]
+                Identifier "labels" @ 152..158
+            RParen ")" @ 158..159 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 160..161
+              BlockStatementList
+              RBrace "}" @ 161..162
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 165..169 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "unnamed" @ 170..177
+            LParen "(" @ 177..178
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 178..184 trailing=[Whitespace " "]
+                AnnotationList
+                UnderscoreKw "_" @ 185..186
+            RParen ")" @ 186..187 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 188..189
+              BlockStatementList
+              RBrace "}" @ 189..190
         RBrace "}" @ 191..192 leading=[Newline "\n"]
     RecordDeclaration
       Identifier "record" @ 194..200 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]

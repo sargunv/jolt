@@ -11,48 +11,13 @@ use super::{
 use crate::helpers::{
     comments::format_token_after_relocated_leading_comments,
     recovery::{
-        JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_or_verbatim,
-        resolve_list_part, resolve_optional_field, resolve_required_delimiter,
-        resolve_required_field,
+        JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, resolve_list_part,
+        resolve_optional_field, resolve_required_delimiter, resolve_required_field,
     },
 };
 use jolt_fmt_ir::DocBuilder;
 
-macro_rules! type_declaration_formatter {
-    ($name:ident, $structured:ident, $ty:ty) => {
-        pub(super) fn $name<'source>(node: &$ty, doc: &mut DocBuilder<'source>) -> Doc<'source> {
-            format_or_verbatim(node, doc, |doc| $structured(node, doc))
-        }
-    };
-}
-
-type_declaration_formatter!(
-    format_class_declaration,
-    format_class_structured,
-    ClassDeclaration<'source>
-);
-type_declaration_formatter!(
-    format_interface_declaration,
-    format_interface_structured,
-    InterfaceDeclaration<'source>
-);
-type_declaration_formatter!(
-    format_record_declaration,
-    format_record_structured,
-    RecordDeclaration<'source>
-);
-type_declaration_formatter!(
-    format_enum_declaration,
-    format_enum_structured,
-    EnumDeclaration<'source>
-);
-type_declaration_formatter!(
-    format_annotation_interface_declaration,
-    format_annotation_structured,
-    AnnotationInterfaceDeclaration<'source>
-);
-
-fn format_class_structured<'source>(
+pub(super) fn format_class_declaration<'source>(
     class: &ClassDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
@@ -84,6 +49,10 @@ fn format_class_structured<'source>(
         let contents = format_class_body(&body, doc);
         source_braced_body(doc, open, close, contents)
     });
+    let (missing_body_semicolon, has_missing_body_semicolon) =
+        optional_doc_with_presence(class.missing_body_semicolon(), doc, |semicolon, doc| {
+            format_token_with_comments(doc, &semicolon)
+        });
     type_with_body(
         class.first_token().as_ref(),
         modifiers,
@@ -100,12 +69,13 @@ fn format_class_structured<'source>(
             ]
         ),
         body,
-        body_is_structured,
+        body_is_structured && !has_missing_body_semicolon,
+        missing_body_semicolon,
         doc,
     )
 }
 
-fn format_interface_structured<'source>(
+pub(super) fn format_interface_declaration<'source>(
     interface: &InterfaceDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
@@ -136,6 +106,10 @@ fn format_interface_structured<'source>(
             let contents = format_interface_body(&body, doc);
             source_braced_body(doc, open, close, contents)
         });
+    let (missing_body_semicolon, has_missing_body_semicolon) =
+        optional_doc_with_presence(interface.missing_body_semicolon(), doc, |semicolon, doc| {
+            format_token_with_comments(doc, &semicolon)
+        });
     type_with_body(
         interface.first_token().as_ref(),
         modifiers,
@@ -144,12 +118,13 @@ fn format_interface_structured<'source>(
             [keyword, name_separator, name, parameters, extends, permits]
         ),
         body,
-        body_is_structured,
+        body_is_structured && !has_missing_body_semicolon,
+        missing_body_semicolon,
         doc,
     )
 }
 
-fn format_record_structured<'source>(
+pub(super) fn format_record_declaration<'source>(
     record: &RecordDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
@@ -179,6 +154,10 @@ fn format_record_structured<'source>(
         let contents = format_record_body(&body, doc);
         source_braced_body(doc, open, close, contents)
     });
+    let (missing_body_semicolon, has_missing_body_semicolon) =
+        optional_doc_with_presence(record.missing_body_semicolon(), doc, |semicolon, doc| {
+            format_token_with_comments(doc, &semicolon)
+        });
     type_with_body(
         record.first_token().as_ref(),
         modifiers,
@@ -197,12 +176,13 @@ fn format_record_structured<'source>(
             )
         ),
         body,
-        body_is_structured,
+        body_is_structured && !has_missing_body_semicolon,
+        missing_body_semicolon,
         doc,
     )
 }
 
-fn format_enum_structured<'source>(
+pub(super) fn format_enum_declaration<'source>(
     node: &EnumDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
@@ -225,17 +205,22 @@ fn format_enum_structured<'source>(
         let contents = format_enum_body_contents(&body, doc);
         source_braced_body(doc, open, close, contents)
     });
+    let (missing_body_semicolon, has_missing_body_semicolon) =
+        optional_doc_with_presence(node.missing_body_semicolon(), doc, |semicolon, doc| {
+            format_token_with_comments(doc, &semicolon)
+        });
     type_with_body(
         node.first_token().as_ref(),
         modifiers,
         doc_concat!(doc, [keyword, name_separator, name, implements]),
         body,
-        body_is_structured,
+        body_is_structured && !has_missing_body_semicolon,
+        missing_body_semicolon,
         doc,
     )
 }
 
-fn format_annotation_structured<'source>(
+pub(super) fn format_annotation_interface_declaration<'source>(
     node: &AnnotationInterfaceDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
@@ -258,12 +243,17 @@ fn format_annotation_structured<'source>(
         let contents = format_annotation_interface_body(&body, doc);
         source_braced_body(doc, open, close, contents)
     });
+    let (missing_body_semicolon, has_missing_body_semicolon) =
+        optional_doc_with_presence(node.missing_body_semicolon(), doc, |semicolon, doc| {
+            format_token_with_comments(doc, &semicolon)
+        });
     type_with_body(
         node.first_token().as_ref(),
         modifiers,
         doc_concat!(doc, [at, interface, name_separator, name]),
         body,
-        body_is_structured,
+        body_is_structured && !has_missing_body_semicolon,
+        missing_body_semicolon,
         doc,
     )
 }
@@ -274,6 +264,7 @@ fn type_with_body<'source>(
     header: Doc<'source>,
     body: Doc<'source>,
     body_is_structured: bool,
+    missing_body_semicolon: Doc<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let body_separator = structured_separator(body_is_structured, doc);
@@ -295,6 +286,7 @@ fn type_with_body<'source>(
             doc_group!(doc, header),
             body_separator,
             body,
+            missing_body_semicolon,
         ]
     )
 }
@@ -343,6 +335,21 @@ fn optional_doc<'source, T>(
         JavaFormatField::Present(Some(value)) => present(value, doc),
         JavaFormatField::Present(None) => Doc::nil(),
         JavaFormatField::Malformed(malformed) => malformed,
+    }
+}
+
+fn optional_doc_with_presence<'source, T>(
+    field: Result<
+        jolt_java_syntax::JavaSyntaxField<'source, T>,
+        jolt_java_syntax::JavaSyntaxInvariantError,
+    >,
+    doc: &mut DocBuilder<'source>,
+    present: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
+) -> (Doc<'source>, bool) {
+    match resolve_optional_field(field, doc) {
+        JavaFormatField::Present(Some(value)) => (present(value, doc), true),
+        JavaFormatField::Present(None) => (Doc::nil(), false),
+        JavaFormatField::Malformed(malformed) => (malformed, true),
     }
 }
 

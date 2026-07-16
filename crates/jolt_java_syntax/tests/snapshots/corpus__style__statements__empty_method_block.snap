@@ -17,17 +17,16 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 14..15
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 18..22 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              Identifier "run" @ 23..26
-              LParen "(" @ 26..27
-              RParen ")" @ 27..28 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 29..30 trailing=[Whitespace " "]
-                BlockStatementList
-                RBrace "}" @ 31..32
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 18..22 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "run" @ 23..26
+            LParen "(" @ 26..27
+            RParen ")" @ 27..28 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 29..30 trailing=[Whitespace " "]
+              BlockStatementList
+              RBrace "}" @ 31..32
         RBrace "}" @ 33..34 leading=[Newline "\n"]
   Eof "" @ 35..35 leading=[Newline "\n"]
 

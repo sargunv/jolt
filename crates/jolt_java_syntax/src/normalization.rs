@@ -4,9 +4,10 @@ use jolt_syntax::{
 
 use crate::language::{JavaLanguage, NORMALIZATION_AUTHORITY};
 use crate::{
-    AnnotationArrayInitializer, ArrayInitializer, EmptyDeclaration, EmptyStatement, EnumBody,
-    Expression, Guard, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxToken, JavaSyntaxView,
-    LambdaExpression, ParenthesizedExpression, ResourceSpecification, Statement,
+    AnnotationArrayInitializer, ArrayInitializer, ClassBodyMember, EmptyDeclaration,
+    EmptyStatement, EnumBody, Expression, Guard, JavaSyntaxField, JavaSyntaxListPart,
+    JavaSyntaxToken, JavaSyntaxView, LambdaExpression, ParenthesizedExpression,
+    ResourceSpecification, Statement,
 };
 
 /// Paired source-free delimiters authorized by one valid Java syntax owner.
@@ -286,8 +287,9 @@ impl<'source> EnumBody<'source> {
         let members_are_empty = members.parts().all(|part| {
             matches!(
                 part,
-                Ok(JavaSyntaxListPart::Item(member))
-                    if member.cast_node::<EmptyDeclaration<'source>>().is_some()
+                Ok(JavaSyntaxListPart::Item(ClassBodyMember::EmptyDeclaration(
+                    _
+                )))
             )
         });
         if !self.is_recovery_free() || !constants_are_empty || !members_are_empty {

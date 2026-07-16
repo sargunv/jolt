@@ -24,31 +24,29 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 30..31
         ClassBodyMemberList
-          ClassBodyDeclaration
-            ConstructorDeclaration
-              TypeParameterList
-                Lt "<" @ 36..37 leading=[Newline "\n", Whitespace "    "]
-                TypeParameterSeparatedList
-                  TypeParameter
-                    AnnotationList
-                    Identifier "T" @ 37..38
-                Gt ">" @ 38..39
-              LParen "(" @ 39..40
-              RParen ")" @ 40..41 trailing=[Whitespace " "]
-              ConstructorBody
-                LBrace "{" @ 42..43
-                ConstructorBodyEntryList
-                RBrace "}" @ 43..44
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 49..53 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              LParen "(" @ 54..55
-              RParen ")" @ 55..56 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 57..58
-                BlockStatementList
-                RBrace "}" @ 58..59
+          ConstructorDeclaration
+            TypeParameterList
+              Lt "<" @ 36..37 leading=[Newline "\n", Whitespace "    "]
+              TypeParameterSeparatedList
+                TypeParameter
+                  AnnotationList
+                  Identifier "T" @ 37..38
+              Gt ">" @ 38..39
+            LParen "(" @ 39..40
+            RParen ")" @ 40..41 trailing=[Whitespace " "]
+            ConstructorBody
+              LBrace "{" @ 42..43
+              ConstructorBodyEntryList
+              RBrace "}" @ 43..44
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 49..53 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            LParen "(" @ 54..55
+            RParen ")" @ 55..56 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 57..58
+              BlockStatementList
+              RBrace "}" @ 58..59
         RBrace "}" @ 60..61 leading=[Newline "\n"]
     AnnotationInterfaceDeclaration
       At "@" @ 63..64 leading=[Newline "\n", Newline "\n"]

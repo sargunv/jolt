@@ -23,69 +23,67 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 35..36
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              ModifierList
-                StaticKw "static" @ 41..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                FinalKw "final" @ 48..53 trailing=[Whitespace " "]
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 54..57 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "OFFSET" @ 58..64 trailing=[Whitespace " "]
-                  Assign "=" @ 65..66 trailing=[Whitespace " "]
-                  VariableInitializer
-                    LiteralExpression
-                      IntegerLiteral "1" @ 67..68
-              Semicolon ";" @ 68..69
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 75..79 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 80..86
-              LParen "(" @ 86..87
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    IntKw "int" @ 87..90 trailing=[Whitespace " "]
+          FieldDeclaration
+            ModifierList
+              StaticKw "static" @ 41..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              FinalKw "final" @ 48..53 trailing=[Whitespace " "]
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 54..57 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "OFFSET" @ 58..64 trailing=[Whitespace " "]
+                Assign "=" @ 65..66 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "1" @ 67..68
+            Semicolon ";" @ 68..69
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 75..79 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 80..86
+            LParen "(" @ 86..87
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "value" @ 91..96
-              RParen ")" @ 96..97 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 98..99
-                BlockStatementList
-                  BlockStatement
-                    SwitchStatement
-                      SwitchKw "switch" @ 108..114 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      LParen "(" @ 115..116
-                      NameExpression
-                        Identifier "value" @ 116..121
-                      RParen ")" @ 121..122 trailing=[Whitespace " "]
-                      SwitchBlock
-                        LBrace "{" @ 123..124
-                        SwitchEntryList
-                          SwitchRule
-                            SwitchLabel
-                              CaseKw "case" @ 137..141 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                              SwitchLabelItemList
-                                CaseConstant
-                                  BinaryExpression
-                                    LiteralExpression
-                                      IntegerLiteral "1" @ 142..143 trailing=[Whitespace " "]
-                                    Plus "+" @ 144..145 trailing=[Whitespace " "]
-                                    NameExpression
-                                      Identifier "OFFSET" @ 146..152 trailing=[Whitespace " "]
-                            Arrow "->" @ 153..155 trailing=[Whitespace " "]
-                            PostfixExpression
-                              NameExpression
-                                Identifier "value" @ 156..161
-                              PlusPlus "++" @ 161..163
-                            Semicolon ";" @ 163..164
-                        RBrace "}" @ 173..174 leading=[Newline "\n", Whitespace "        "]
-                RBrace "}" @ 179..180 leading=[Newline "\n", Whitespace "    "]
+                  IntKw "int" @ 87..90 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 91..96
+            RParen ")" @ 96..97 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 98..99
+              BlockStatementList
+                BlockStatement
+                  SwitchStatement
+                    SwitchKw "switch" @ 108..114 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    LParen "(" @ 115..116
+                    NameExpression
+                      Identifier "value" @ 116..121
+                    RParen ")" @ 121..122 trailing=[Whitespace " "]
+                    SwitchBlock
+                      LBrace "{" @ 123..124
+                      SwitchEntryList
+                        SwitchRule
+                          SwitchLabel
+                            CaseKw "case" @ 137..141 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                            SwitchLabelItemList
+                              CaseConstant
+                                BinaryExpression
+                                  LiteralExpression
+                                    IntegerLiteral "1" @ 142..143 trailing=[Whitespace " "]
+                                  Plus "+" @ 144..145 trailing=[Whitespace " "]
+                                  NameExpression
+                                    Identifier "OFFSET" @ 146..152 trailing=[Whitespace " "]
+                          Arrow "->" @ 153..155 trailing=[Whitespace " "]
+                          PostfixExpression
+                            NameExpression
+                              Identifier "value" @ 156..161
+                            PlusPlus "++" @ 161..163
+                          Semicolon ";" @ 163..164
+                      RBrace "}" @ 173..174 leading=[Newline "\n", Whitespace "        "]
+              RBrace "}" @ 179..180 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 181..182 leading=[Newline "\n"]
   Eof "" @ 183..183 leading=[Newline "\n"]
 

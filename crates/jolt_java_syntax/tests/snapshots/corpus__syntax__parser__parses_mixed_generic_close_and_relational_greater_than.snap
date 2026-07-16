@@ -19,70 +19,69 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 38..39
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              PrimitiveType
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              BooleanKw "boolean" @ 44..51 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 52..58
+            LParen "(" @ 58..59
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 59..65 trailing=[Whitespace " "]
                 AnnotationList
-                BooleanKw "boolean" @ 44..51 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 52..58
-              LParen "(" @ 58..59
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 59..65 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "value" @ 66..71
-                Comma "," @ 71..72 trailing=[Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 73..79 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "limit" @ 80..85
-              RParen ")" @ 85..86 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 87..88
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 97..103 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      BinaryExpression
-                        InstanceofExpression
-                          NameExpression
-                            Identifier "value" @ 104..109 trailing=[Whitespace " "]
-                          InstanceofKw "instanceof" @ 110..120 trailing=[Whitespace " "]
-                          ClassType
-                            ClassTypeSegmentList
-                              ClassTypeSegmentNode
-                                AnnotationList
-                                Name
-                                  Identifier "Box" @ 121..124
-                                TypeArgumentList
-                                  Lt "<" @ 124..125
-                                  TypeArgumentSeparatedList
-                                    TypeArgument
-                                      AnnotationList
-                                      ClassType
-                                        ClassTypeSegmentList
-                                          ClassTypeSegmentNode
-                                            AnnotationList
-                                            Name
-                                              Identifier "String" @ 125..131
-                                  Gt ">" @ 131..132
-                        Gt ">" @ 132..133 trailing=[Whitespace " "]
+                Identifier "value" @ 66..71
+              Comma "," @ 71..72 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 73..79 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "limit" @ 80..85
+            RParen ")" @ 85..86 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 87..88
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 97..103 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    BinaryExpression
+                      InstanceofExpression
                         NameExpression
-                          Identifier "limit" @ 134..139
-                      Semicolon ";" @ 139..140
-                RBrace "}" @ 145..146 leading=[Newline "\n", Whitespace "    "]
+                          Identifier "value" @ 104..109 trailing=[Whitespace " "]
+                        InstanceofKw "instanceof" @ 110..120 trailing=[Whitespace " "]
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "Box" @ 121..124
+                              TypeArgumentList
+                                Lt "<" @ 124..125
+                                TypeArgumentSeparatedList
+                                  TypeArgument
+                                    AnnotationList
+                                    ClassType
+                                      ClassTypeSegmentList
+                                        ClassTypeSegmentNode
+                                          AnnotationList
+                                          Name
+                                            Identifier "String" @ 125..131
+                                Gt ">" @ 131..132
+                      Gt ">" @ 132..133 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "limit" @ 134..139
+                    Semicolon ";" @ 139..140
+              RBrace "}" @ 145..146 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 147..148 leading=[Newline "\n"]
   Eof "" @ 149..149 leading=[Newline "\n"]
 

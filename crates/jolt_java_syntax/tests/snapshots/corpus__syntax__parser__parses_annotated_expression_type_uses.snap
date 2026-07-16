@@ -30,546 +30,545 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 34..35
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 40..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 45..51
-              LParen "(" @ 51..52
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 52..58 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "o" @ 59..60
-              RParen ")" @ 60..61 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 62..63
-                BlockStatementList
-                  BlockStatement
-                    ExpressionStatement
-                      ObjectCreationExpression
-                        NewKw "new" @ 72..75 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                        ClassType
-                          ClassTypeSegmentList
-                            ClassTypeSegmentNode
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 40..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 45..51
+            LParen "(" @ 51..52
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 52..58 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "o" @ 59..60
+            RParen ")" @ 60..61 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 62..63
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    ObjectCreationExpression
+                      NewKw "new" @ 72..75 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                              Annotation
+                                At "@" @ 76..77
+                                Name
+                                  Identifier "A" @ 77..78
+                                AnnotationArgumentList
+                                  LParen "(" @ 78..79
+                                  AnnotationElementList
+                                    AnnotationElementArgumentList
+                                      AnnotationElementValue
+                                        LiteralExpression
+                                          IntegerLiteral "0x44" @ 79..83
+                                  RParen ")" @ 83..84 trailing=[Whitespace " "]
+                            Name
+                              Identifier "ArrayList" @ 85..94
+                            TypeArgumentList
+                              Lt "<" @ 94..95
+                              TypeArgumentSeparatedList
+                              Gt ">" @ 95..96
+                      ArgumentList
+                        LParen "(" @ 96..97
+                        ExpressionList
+                        RParen ")" @ 97..98
+                    Semicolon ";" @ 98..99
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          QualifiedName
+                            QualifiedNameSegmentNode
+                              AnnotationList
+                              Identifier "java" @ 108..112 leading=[Newline "\n", Whitespace "        "]
+                            Dot "." @ 112..113
+                            NameSegmentDotList
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "util" @ 113..117
+                              Dot "." @ 117..118
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "function" @ 118..126
+                              Dot "." @ 126..127
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "Supplier" @ 127..135
+                          TypeArgumentList
+                            Lt "<" @ 135..136
+                            TypeArgumentSeparatedList
+                              TypeArgument
+                                AnnotationList
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      QualifiedName
+                                        QualifiedNameSegmentNode
+                                          AnnotationList
+                                          Identifier "java" @ 136..140
+                                        Dot "." @ 140..141
+                                        NameSegmentDotList
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "util" @ 141..145
+                                          Dot "." @ 145..146
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "List" @ 146..150
+                                      TypeArgumentList
+                                        Lt "<" @ 150..151
+                                        TypeArgumentSeparatedList
+                                          TypeArgument
+                                            AnnotationList
+                                            WildcardType
+                                              Question "?" @ 151..152
+                                        Gt ">" @ 152..153
+                            Gt ">" @ 153..154 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "a" @ 155..156 trailing=[Whitespace " "]
+                        Assign "=" @ 157..158 trailing=[Whitespace " "]
+                        VariableInitializer
+                          MethodReferenceExpression
+                            NameExpression
                               AnnotationList
                                 Annotation
-                                  At "@" @ 76..77
+                                  At "@" @ 159..160
                                   Name
-                                    Identifier "A" @ 77..78
+                                    Identifier "A" @ 160..161
                                   AnnotationArgumentList
-                                    LParen "(" @ 78..79
+                                    LParen "(" @ 161..162
                                     AnnotationElementList
                                       AnnotationElementArgumentList
                                         AnnotationElementValue
                                           LiteralExpression
-                                            IntegerLiteral "0x44" @ 79..83
-                                    RParen ")" @ 83..84 trailing=[Whitespace " "]
-                              Name
-                                Identifier "ArrayList" @ 85..94
-                              TypeArgumentList
-                                Lt "<" @ 94..95
-                                TypeArgumentSeparatedList
-                                Gt ">" @ 95..96
-                        ArgumentList
-                          LParen "(" @ 96..97
-                          ExpressionList
-                          RParen ")" @ 97..98
-                      Semicolon ";" @ 98..99
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            QualifiedName
+                                            IntegerLiteral "0x45" @ 162..166
+                                    RParen ")" @ 166..167 trailing=[Whitespace " "]
+                              Identifier "ArrayList" @ 168..177
+                            DoubleColon "::" @ 177..179
+                            NewKw "new" @ 179..182
+                  Semicolon ";" @ 182..183
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          QualifiedName
+                            QualifiedNameSegmentNode
+                              AnnotationList
+                              Identifier "java" @ 192..196 leading=[Newline "\n", Whitespace "        "]
+                            Dot "." @ 196..197
+                            NameSegmentDotList
                               QualifiedNameSegmentNode
                                 AnnotationList
-                                Identifier "java" @ 108..112 leading=[Newline "\n", Whitespace "        "]
-                              Dot "." @ 112..113
-                              NameSegmentDotList
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "util" @ 113..117
-                                Dot "." @ 117..118
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "function" @ 118..126
-                                Dot "." @ 126..127
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "Supplier" @ 127..135
-                            TypeArgumentList
-                              Lt "<" @ 135..136
-                              TypeArgumentSeparatedList
-                                TypeArgument
-                                  AnnotationList
-                                  ClassType
-                                    ClassTypeSegmentList
-                                      ClassTypeSegmentNode
-                                        AnnotationList
-                                        QualifiedName
-                                          QualifiedNameSegmentNode
-                                            AnnotationList
-                                            Identifier "java" @ 136..140
-                                          Dot "." @ 140..141
-                                          NameSegmentDotList
-                                            QualifiedNameSegmentNode
-                                              AnnotationList
-                                              Identifier "util" @ 141..145
-                                            Dot "." @ 145..146
-                                            QualifiedNameSegmentNode
-                                              AnnotationList
-                                              Identifier "List" @ 146..150
-                                        TypeArgumentList
-                                          Lt "<" @ 150..151
-                                          TypeArgumentSeparatedList
-                                            TypeArgument
-                                              AnnotationList
-                                              WildcardType
-                                                Question "?" @ 151..152
-                                          Gt ">" @ 152..153
-                              Gt ">" @ 153..154 trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "a" @ 155..156 trailing=[Whitespace " "]
-                          Assign "=" @ 157..158 trailing=[Whitespace " "]
-                          VariableInitializer
-                            MethodReferenceExpression
-                              NameExpression
-                                AnnotationList
-                                  Annotation
-                                    At "@" @ 159..160
-                                    Name
-                                      Identifier "A" @ 160..161
-                                    AnnotationArgumentList
-                                      LParen "(" @ 161..162
-                                      AnnotationElementList
-                                        AnnotationElementArgumentList
-                                          AnnotationElementValue
-                                            LiteralExpression
-                                              IntegerLiteral "0x45" @ 162..166
-                                      RParen ")" @ 166..167 trailing=[Whitespace " "]
-                                Identifier "ArrayList" @ 168..177
-                              DoubleColon "::" @ 177..179
-                              NewKw "new" @ 179..182
-                    Semicolon ";" @ 182..183
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            QualifiedName
+                                Identifier "util" @ 197..201
+                              Dot "." @ 201..202
                               QualifiedNameSegmentNode
                                 AnnotationList
-                                Identifier "java" @ 192..196 leading=[Newline "\n", Whitespace "        "]
-                              Dot "." @ 196..197
-                              NameSegmentDotList
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "util" @ 197..201
-                                Dot "." @ 201..202
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "function" @ 202..210
-                                Dot "." @ 210..211
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "Supplier" @ 211..219
-                            TypeArgumentList
-                              Lt "<" @ 219..220
-                              TypeArgumentSeparatedList
-                                TypeArgument
-                                  AnnotationList
-                                  ClassType
-                                    ClassTypeSegmentList
-                                      ClassTypeSegmentNode
-                                        AnnotationList
-                                        QualifiedName
-                                          QualifiedNameSegmentNode
-                                            AnnotationList
-                                            Identifier "java" @ 220..224
-                                          Dot "." @ 224..225
-                                          NameSegmentDotList
-                                            QualifiedNameSegmentNode
-                                              AnnotationList
-                                              Identifier "util" @ 225..229
-                                            Dot "." @ 229..230
-                                            QualifiedNameSegmentNode
-                                              AnnotationList
-                                              Identifier "List" @ 230..234
-                                        TypeArgumentList
-                                          Lt "<" @ 234..235
-                                          TypeArgumentSeparatedList
-                                            TypeArgument
-                                              AnnotationList
-                                              WildcardType
-                                                Question "?" @ 235..236
-                                          Gt ">" @ 236..237
-                              Gt ">" @ 237..238 trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "b" @ 239..240 trailing=[Whitespace " "]
-                          Assign "=" @ 241..242 trailing=[Whitespace " "]
-                          VariableInitializer
-                            MethodReferenceExpression
-                              NameExpression
-                                AnnotationList
-                                  Annotation
-                                    At "@" @ 243..244
-                                    Name
-                                      Identifier "A" @ 244..245
-                                    AnnotationArgumentList
-                                      LParen "(" @ 245..246
-                                      AnnotationElementList
-                                        AnnotationElementArgumentList
-                                          AnnotationElementValue
-                                            LiteralExpression
-                                              IntegerLiteral "0x46" @ 246..250
-                                      RParen ")" @ 250..251 trailing=[Whitespace " "]
-                                Identifier "ImmutableList" @ 252..265
-                              DoubleColon "::" @ 265..267
-                              Identifier "of" @ 267..269
-                    Semicolon ";" @ 269..270
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 279..285 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "s" @ 286..287 trailing=[Whitespace " "]
-                          Assign "=" @ 288..289 trailing=[Whitespace " "]
-                          VariableInitializer
-                            CastExpression
-                              LParen "(" @ 290..291
-                              ClassType
-                                ClassTypeSegmentList
-                                  ClassTypeSegmentNode
-                                    AnnotationList
-                                      Annotation
-                                        At "@" @ 291..292
-                                        Name
-                                          Identifier "A" @ 292..293
-                                        AnnotationArgumentList
-                                          LParen "(" @ 293..294
-                                          AnnotationElementList
-                                            AnnotationElementArgumentList
-                                              AnnotationElementValue
-                                                LiteralExpression
-                                                  IntegerLiteral "0x47" @ 294..298
-                                          RParen ")" @ 298..299 trailing=[Whitespace " "]
-                                    Name
-                                      Identifier "String" @ 300..306
-                              RParen ")" @ 306..307 trailing=[Whitespace " "]
-                              NameExpression
-                                Identifier "o" @ 308..309
-                    Semicolon ";" @ 309..310
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            QualifiedName
+                                Identifier "function" @ 202..210
+                              Dot "." @ 210..211
                               QualifiedNameSegmentNode
                                 AnnotationList
-                                Identifier "java" @ 319..323 leading=[Newline "\n", Whitespace "        "]
-                              Dot "." @ 323..324
-                              NameSegmentDotList
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "util" @ 324..328
-                                Dot "." @ 328..329
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "List" @ 329..333
-                            TypeArgumentList
-                              Lt "<" @ 333..334
-                              TypeArgumentSeparatedList
-                                TypeArgument
-                                  AnnotationList
-                                  WildcardType
-                                    Question "?" @ 334..335
-                              Gt ">" @ 335..336 trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "xs" @ 337..339 trailing=[Whitespace " "]
-                          Assign "=" @ 340..341 trailing=[Whitespace " "]
-                          VariableInitializer
-                            ObjectCreationExpression
-                              NewKw "new" @ 342..345 trailing=[Whitespace " "]
-                              ClassType
-                                ClassTypeSegmentList
-                                  ClassTypeSegmentNode
-                                    AnnotationList
-                                    Name
-                                      Identifier "ArrayList" @ 346..355
-                                    TypeArgumentList
-                                      Lt "<" @ 355..356
-                                      TypeArgumentSeparatedList
-                                        TypeArgument
+                                Identifier "Supplier" @ 211..219
+                          TypeArgumentList
+                            Lt "<" @ 219..220
+                            TypeArgumentSeparatedList
+                              TypeArgument
+                                AnnotationList
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      QualifiedName
+                                        QualifiedNameSegmentNode
                                           AnnotationList
-                                            Annotation
-                                              At "@" @ 356..357
-                                              Name
-                                                Identifier "A" @ 357..358
-                                              AnnotationArgumentList
-                                                LParen "(" @ 358..359
-                                                AnnotationElementList
-                                                  AnnotationElementArgumentList
-                                                    AnnotationElementValue
-                                                      LiteralExpression
-                                                        IntegerLiteral "0x48" @ 359..363
-                                                RParen ")" @ 363..364 trailing=[Whitespace " "]
-                                          ClassType
-                                            ClassTypeSegmentList
-                                              ClassTypeSegmentNode
-                                                AnnotationList
-                                                Name
-                                                  Identifier "String" @ 365..371
-                                      Gt ">" @ 371..372
-                              ArgumentList
-                                LParen "(" @ 372..373
-                                ExpressionList
-                                RParen ")" @ 373..374
-                    Semicolon ";" @ 374..375
-                  BlockStatement
-                    ExpressionStatement
-                      AssignmentExpression
-                        NameExpression
-                          Identifier "xs" @ 384..386 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                        Assign "=" @ 387..388 trailing=[Whitespace " "]
-                        MethodInvocationExpression
-                          QualifiedMethodInvocation
+                                          Identifier "java" @ 220..224
+                                        Dot "." @ 224..225
+                                        NameSegmentDotList
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "util" @ 225..229
+                                          Dot "." @ 229..230
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "List" @ 230..234
+                                      TypeArgumentList
+                                        Lt "<" @ 234..235
+                                        TypeArgumentSeparatedList
+                                          TypeArgument
+                                            AnnotationList
+                                            WildcardType
+                                              Question "?" @ 235..236
+                                        Gt ">" @ 236..237
+                            Gt ">" @ 237..238 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "b" @ 239..240 trailing=[Whitespace " "]
+                        Assign "=" @ 241..242 trailing=[Whitespace " "]
+                        VariableInitializer
+                          MethodReferenceExpression
                             NameExpression
-                              Identifier "ImmutableList" @ 389..402
-                            Dot "." @ 402..403
-                            TypeArgumentList
-                              Lt "<" @ 403..404
-                              TypeArgumentSeparatedList
-                                TypeArgument
+                              AnnotationList
+                                Annotation
+                                  At "@" @ 243..244
+                                  Name
+                                    Identifier "A" @ 244..245
+                                  AnnotationArgumentList
+                                    LParen "(" @ 245..246
+                                    AnnotationElementList
+                                      AnnotationElementArgumentList
+                                        AnnotationElementValue
+                                          LiteralExpression
+                                            IntegerLiteral "0x46" @ 246..250
+                                    RParen ")" @ 250..251 trailing=[Whitespace " "]
+                              Identifier "ImmutableList" @ 252..265
+                            DoubleColon "::" @ 265..267
+                            Identifier "of" @ 267..269
+                  Semicolon ";" @ 269..270
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "String" @ 279..285 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "s" @ 286..287 trailing=[Whitespace " "]
+                        Assign "=" @ 288..289 trailing=[Whitespace " "]
+                        VariableInitializer
+                          CastExpression
+                            LParen "(" @ 290..291
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
                                   AnnotationList
                                     Annotation
-                                      At "@" @ 404..405
+                                      At "@" @ 291..292
                                       Name
-                                        Identifier "A" @ 405..406
+                                        Identifier "A" @ 292..293
                                       AnnotationArgumentList
-                                        LParen "(" @ 406..407
+                                        LParen "(" @ 293..294
                                         AnnotationElementList
                                           AnnotationElementArgumentList
                                             AnnotationElementValue
                                               LiteralExpression
-                                                IntegerLiteral "0x49" @ 407..411
-                                        RParen ")" @ 411..412 trailing=[Whitespace " "]
-                                  ClassType
-                                    ClassTypeSegmentList
-                                      ClassTypeSegmentNode
+                                                IntegerLiteral "0x47" @ 294..298
+                                        RParen ")" @ 298..299 trailing=[Whitespace " "]
+                                  Name
+                                    Identifier "String" @ 300..306
+                            RParen ")" @ 306..307 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "o" @ 308..309
+                  Semicolon ";" @ 309..310
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          QualifiedName
+                            QualifiedNameSegmentNode
+                              AnnotationList
+                              Identifier "java" @ 319..323 leading=[Newline "\n", Whitespace "        "]
+                            Dot "." @ 323..324
+                            NameSegmentDotList
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "util" @ 324..328
+                              Dot "." @ 328..329
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "List" @ 329..333
+                          TypeArgumentList
+                            Lt "<" @ 333..334
+                            TypeArgumentSeparatedList
+                              TypeArgument
+                                AnnotationList
+                                WildcardType
+                                  Question "?" @ 334..335
+                            Gt ">" @ 335..336 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "xs" @ 337..339 trailing=[Whitespace " "]
+                        Assign "=" @ 340..341 trailing=[Whitespace " "]
+                        VariableInitializer
+                          ObjectCreationExpression
+                            NewKw "new" @ 342..345 trailing=[Whitespace " "]
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "ArrayList" @ 346..355
+                                  TypeArgumentList
+                                    Lt "<" @ 355..356
+                                    TypeArgumentSeparatedList
+                                      TypeArgument
                                         AnnotationList
-                                        Name
-                                          Identifier "String" @ 413..419
-                              Gt ">" @ 419..420
-                            Identifier "of" @ 420..422
+                                          Annotation
+                                            At "@" @ 356..357
+                                            Name
+                                              Identifier "A" @ 357..358
+                                            AnnotationArgumentList
+                                              LParen "(" @ 358..359
+                                              AnnotationElementList
+                                                AnnotationElementArgumentList
+                                                  AnnotationElementValue
+                                                    LiteralExpression
+                                                      IntegerLiteral "0x48" @ 359..363
+                                              RParen ")" @ 363..364 trailing=[Whitespace " "]
+                                        ClassType
+                                          ClassTypeSegmentList
+                                            ClassTypeSegmentNode
+                                              AnnotationList
+                                              Name
+                                                Identifier "String" @ 365..371
+                                    Gt ">" @ 371..372
                             ArgumentList
-                              LParen "(" @ 422..423
+                              LParen "(" @ 372..373
                               ExpressionList
-                              RParen ")" @ 423..424
-                      Semicolon ";" @ 424..425
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            QualifiedName
+                              RParen ")" @ 373..374
+                  Semicolon ";" @ 374..375
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "xs" @ 384..386 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      Assign "=" @ 387..388 trailing=[Whitespace " "]
+                      MethodInvocationExpression
+                        QualifiedMethodInvocation
+                          NameExpression
+                            Identifier "ImmutableList" @ 389..402
+                          Dot "." @ 402..403
+                          TypeArgumentList
+                            Lt "<" @ 403..404
+                            TypeArgumentSeparatedList
+                              TypeArgument
+                                AnnotationList
+                                  Annotation
+                                    At "@" @ 404..405
+                                    Name
+                                      Identifier "A" @ 405..406
+                                    AnnotationArgumentList
+                                      LParen "(" @ 406..407
+                                      AnnotationElementList
+                                        AnnotationElementArgumentList
+                                          AnnotationElementValue
+                                            LiteralExpression
+                                              IntegerLiteral "0x49" @ 407..411
+                                      RParen ")" @ 411..412 trailing=[Whitespace " "]
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      Name
+                                        Identifier "String" @ 413..419
+                            Gt ">" @ 419..420
+                          Identifier "of" @ 420..422
+                          ArgumentList
+                            LParen "(" @ 422..423
+                            ExpressionList
+                            RParen ")" @ 423..424
+                    Semicolon ";" @ 424..425
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          QualifiedName
+                            QualifiedNameSegmentNode
+                              AnnotationList
+                              Identifier "java" @ 434..438 leading=[Newline "\n", Whitespace "        "]
+                            Dot "." @ 438..439
+                            NameSegmentDotList
                               QualifiedNameSegmentNode
                                 AnnotationList
-                                Identifier "java" @ 434..438 leading=[Newline "\n", Whitespace "        "]
-                              Dot "." @ 438..439
-                              NameSegmentDotList
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "util" @ 439..443
-                                Dot "." @ 443..444
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "function" @ 444..452
-                                Dot "." @ 452..453
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "Supplier" @ 453..461
+                                Identifier "util" @ 439..443
+                              Dot "." @ 443..444
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "function" @ 444..452
+                              Dot "." @ 452..453
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "Supplier" @ 453..461
+                          TypeArgumentList
+                            Lt "<" @ 461..462
+                            TypeArgumentSeparatedList
+                              TypeArgument
+                                AnnotationList
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      QualifiedName
+                                        QualifiedNameSegmentNode
+                                          AnnotationList
+                                          Identifier "java" @ 462..466
+                                        Dot "." @ 466..467
+                                        NameSegmentDotList
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "util" @ 467..471
+                                          Dot "." @ 471..472
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "List" @ 472..476
+                                      TypeArgumentList
+                                        Lt "<" @ 476..477
+                                        TypeArgumentSeparatedList
+                                          TypeArgument
+                                            AnnotationList
+                                            WildcardType
+                                              Question "?" @ 477..478
+                                        Gt ">" @ 478..479
+                            Gt ">" @ 479..480 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "c" @ 481..482 trailing=[Whitespace " "]
+                        Assign "=" @ 483..484 trailing=[Whitespace " "]
+                        VariableInitializer
+                          MethodReferenceExpression
+                            NameExpression
+                              Identifier "ArrayList" @ 485..494
                             TypeArgumentList
-                              Lt "<" @ 461..462
+                              Lt "<" @ 494..495
                               TypeArgumentSeparatedList
                                 TypeArgument
                                   AnnotationList
+                                    Annotation
+                                      At "@" @ 495..496
+                                      Name
+                                        Identifier "A" @ 496..497
+                                      AnnotationArgumentList
+                                        LParen "(" @ 497..498
+                                        AnnotationElementList
+                                          AnnotationElementArgumentList
+                                            AnnotationElementValue
+                                              LiteralExpression
+                                                IntegerLiteral "0x4A" @ 498..502
+                                        RParen ")" @ 502..503 trailing=[Whitespace " "]
                                   ClassType
                                     ClassTypeSegmentList
                                       ClassTypeSegmentNode
                                         AnnotationList
-                                        QualifiedName
-                                          QualifiedNameSegmentNode
-                                            AnnotationList
-                                            Identifier "java" @ 462..466
-                                          Dot "." @ 466..467
-                                          NameSegmentDotList
-                                            QualifiedNameSegmentNode
-                                              AnnotationList
-                                              Identifier "util" @ 467..471
-                                            Dot "." @ 471..472
-                                            QualifiedNameSegmentNode
-                                              AnnotationList
-                                              Identifier "List" @ 472..476
-                                        TypeArgumentList
-                                          Lt "<" @ 476..477
-                                          TypeArgumentSeparatedList
-                                            TypeArgument
-                                              AnnotationList
-                                              WildcardType
-                                                Question "?" @ 477..478
-                                          Gt ">" @ 478..479
-                              Gt ">" @ 479..480 trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "c" @ 481..482 trailing=[Whitespace " "]
-                          Assign "=" @ 483..484 trailing=[Whitespace " "]
-                          VariableInitializer
-                            MethodReferenceExpression
-                              NameExpression
-                                Identifier "ArrayList" @ 485..494
-                              TypeArgumentList
-                                Lt "<" @ 494..495
-                                TypeArgumentSeparatedList
-                                  TypeArgument
-                                    AnnotationList
-                                      Annotation
-                                        At "@" @ 495..496
                                         Name
-                                          Identifier "A" @ 496..497
-                                        AnnotationArgumentList
-                                          LParen "(" @ 497..498
-                                          AnnotationElementList
-                                            AnnotationElementArgumentList
-                                              AnnotationElementValue
-                                                LiteralExpression
-                                                  IntegerLiteral "0x4A" @ 498..502
-                                          RParen ")" @ 502..503 trailing=[Whitespace " "]
-                                    ClassType
-                                      ClassTypeSegmentList
-                                        ClassTypeSegmentNode
-                                          AnnotationList
-                                          Name
-                                            Identifier "String" @ 504..510
-                                Gt ">" @ 510..511
-                              DoubleColon "::" @ 511..513
-                              NewKw "new" @ 513..516
-                    Semicolon ";" @ 516..517
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            QualifiedName
+                                          Identifier "String" @ 504..510
+                              Gt ">" @ 510..511
+                            DoubleColon "::" @ 511..513
+                            NewKw "new" @ 513..516
+                  Semicolon ";" @ 516..517
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          QualifiedName
+                            QualifiedNameSegmentNode
+                              AnnotationList
+                              Identifier "java" @ 526..530 leading=[Newline "\n", Whitespace "        "]
+                            Dot "." @ 530..531
+                            NameSegmentDotList
                               QualifiedNameSegmentNode
                                 AnnotationList
-                                Identifier "java" @ 526..530 leading=[Newline "\n", Whitespace "        "]
-                              Dot "." @ 530..531
-                              NameSegmentDotList
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "util" @ 531..535
-                                Dot "." @ 535..536
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "function" @ 536..544
-                                Dot "." @ 544..545
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "Supplier" @ 545..553
+                                Identifier "util" @ 531..535
+                              Dot "." @ 535..536
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "function" @ 536..544
+                              Dot "." @ 544..545
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "Supplier" @ 545..553
+                          TypeArgumentList
+                            Lt "<" @ 553..554
+                            TypeArgumentSeparatedList
+                              TypeArgument
+                                AnnotationList
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      QualifiedName
+                                        QualifiedNameSegmentNode
+                                          AnnotationList
+                                          Identifier "java" @ 554..558
+                                        Dot "." @ 558..559
+                                        NameSegmentDotList
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "util" @ 559..563
+                                          Dot "." @ 563..564
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "List" @ 564..568
+                                      TypeArgumentList
+                                        Lt "<" @ 568..569
+                                        TypeArgumentSeparatedList
+                                          TypeArgument
+                                            AnnotationList
+                                            WildcardType
+                                              Question "?" @ 569..570
+                                        Gt ">" @ 570..571
+                            Gt ">" @ 571..572 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "d" @ 573..574 trailing=[Whitespace " "]
+                        Assign "=" @ 575..576 trailing=[Whitespace " "]
+                        VariableInitializer
+                          MethodReferenceExpression
+                            NameExpression
+                              Identifier "ImmutableList" @ 577..590
+                            DoubleColon "::" @ 590..592
                             TypeArgumentList
-                              Lt "<" @ 553..554
+                              Lt "<" @ 592..593
                               TypeArgumentSeparatedList
                                 TypeArgument
                                   AnnotationList
+                                    Annotation
+                                      At "@" @ 593..594
+                                      Name
+                                        Identifier "A" @ 594..595
+                                      AnnotationArgumentList
+                                        LParen "(" @ 595..596
+                                        AnnotationElementList
+                                          AnnotationElementArgumentList
+                                            AnnotationElementValue
+                                              LiteralExpression
+                                                IntegerLiteral "0x4B" @ 596..600
+                                        RParen ")" @ 600..601 trailing=[Whitespace " "]
                                   ClassType
                                     ClassTypeSegmentList
                                       ClassTypeSegmentNode
                                         AnnotationList
-                                        QualifiedName
-                                          QualifiedNameSegmentNode
-                                            AnnotationList
-                                            Identifier "java" @ 554..558
-                                          Dot "." @ 558..559
-                                          NameSegmentDotList
-                                            QualifiedNameSegmentNode
-                                              AnnotationList
-                                              Identifier "util" @ 559..563
-                                            Dot "." @ 563..564
-                                            QualifiedNameSegmentNode
-                                              AnnotationList
-                                              Identifier "List" @ 564..568
-                                        TypeArgumentList
-                                          Lt "<" @ 568..569
-                                          TypeArgumentSeparatedList
-                                            TypeArgument
-                                              AnnotationList
-                                              WildcardType
-                                                Question "?" @ 569..570
-                                          Gt ">" @ 570..571
-                              Gt ">" @ 571..572 trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "d" @ 573..574 trailing=[Whitespace " "]
-                          Assign "=" @ 575..576 trailing=[Whitespace " "]
-                          VariableInitializer
-                            MethodReferenceExpression
-                              NameExpression
-                                Identifier "ImmutableList" @ 577..590
-                              DoubleColon "::" @ 590..592
-                              TypeArgumentList
-                                Lt "<" @ 592..593
-                                TypeArgumentSeparatedList
-                                  TypeArgument
-                                    AnnotationList
-                                      Annotation
-                                        At "@" @ 593..594
                                         Name
-                                          Identifier "A" @ 594..595
-                                        AnnotationArgumentList
-                                          LParen "(" @ 595..596
-                                          AnnotationElementList
-                                            AnnotationElementArgumentList
-                                              AnnotationElementValue
-                                                LiteralExpression
-                                                  IntegerLiteral "0x4B" @ 596..600
-                                          RParen ")" @ 600..601 trailing=[Whitespace " "]
-                                    ClassType
-                                      ClassTypeSegmentList
-                                        ClassTypeSegmentNode
-                                          AnnotationList
-                                          Name
-                                            Identifier "String" @ 602..608
-                                Gt ">" @ 608..609
-                              Identifier "of" @ 609..611
-                    Semicolon ";" @ 611..612
-                RBrace "}" @ 617..618 leading=[Newline "\n", Whitespace "    "]
+                                          Identifier "String" @ 602..608
+                              Gt ">" @ 608..609
+                            Identifier "of" @ 609..611
+                  Semicolon ";" @ 611..612
+              RBrace "}" @ 617..618 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 619..620 leading=[Newline "\n"]
     AnnotationInterfaceDeclaration
       At "@" @ 622..623 leading=[Newline "\n", Newline "\n"]

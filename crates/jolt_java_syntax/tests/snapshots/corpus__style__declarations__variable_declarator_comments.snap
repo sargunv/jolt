@@ -21,53 +21,51 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 11..12
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 15..18 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "first" @ 19..24 trailing=[Whitespace " ", BlockComment "/* kept */"]
-                Comma "," @ 35..36 trailing=[Whitespace " ", BlockComment "/* next */", Whitespace " "]
-                VariableDeclarator
-                  Identifier "second" @ 48..54 trailing=[Whitespace " "]
-                  Assign "=" @ 55..56 trailing=[Whitespace " "]
-                  VariableInitializer
-                    LiteralExpression
-                      IntegerLiteral "2" @ 57..58
-                Comma "," @ 58..59 trailing=[Whitespace " "]
-                VariableDeclarator
-                  Identifier "third" @ 60..65
-              Semicolon ";" @ 65..66
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 70..74 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              Identifier "run" @ 75..78
-              LParen "(" @ 78..79
-              RParen ")" @ 79..80 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 81..82
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 87..90 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "alpha" @ 91..96 trailing=[Whitespace " ", BlockComment "/* comma */"]
-                        Comma "," @ 108..109 trailing=[Whitespace " ", BlockComment "/* beta */", Whitespace " "]
-                        VariableDeclarator
-                          Identifier "beta" @ 121..125 trailing=[Whitespace " "]
-                          Assign "=" @ 126..127 trailing=[Whitespace " "]
-                          VariableInitializer
-                            LiteralExpression
-                              IntegerLiteral "1" @ 128..129
-                    Semicolon ";" @ 129..130
-                RBrace "}" @ 133..134 leading=[Newline "\n", Whitespace "  "]
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 15..18 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "first" @ 19..24 trailing=[Whitespace " ", BlockComment "/* kept */"]
+              Comma "," @ 35..36 trailing=[Whitespace " ", BlockComment "/* next */", Whitespace " "]
+              VariableDeclarator
+                Identifier "second" @ 48..54 trailing=[Whitespace " "]
+                Assign "=" @ 55..56 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "2" @ 57..58
+              Comma "," @ 58..59 trailing=[Whitespace " "]
+              VariableDeclarator
+                Identifier "third" @ 60..65
+            Semicolon ";" @ 65..66
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 70..74 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "run" @ 75..78
+            LParen "(" @ 78..79
+            RParen ")" @ 79..80 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 81..82
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 87..90 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "alpha" @ 91..96 trailing=[Whitespace " ", BlockComment "/* comma */"]
+                      Comma "," @ 108..109 trailing=[Whitespace " ", BlockComment "/* beta */", Whitespace " "]
+                      VariableDeclarator
+                        Identifier "beta" @ 121..125 trailing=[Whitespace " "]
+                        Assign "=" @ 126..127 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "1" @ 128..129
+                  Semicolon ";" @ 129..130
+              RBrace "}" @ 133..134 leading=[Newline "\n", Whitespace "  "]
         RBrace "}" @ 135..136 leading=[Newline "\n"]
   Eof "" @ 137..137 leading=[Newline "\n"]
 

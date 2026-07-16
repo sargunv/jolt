@@ -1,0 +1,109 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+enum RecoveredEnum {
+    ONLY,
+    @Marker() /* JOLT-TRIVIA:enum-annotation */
+    (/* JOLT-TRIVIA:enum-arguments */ 1) {
+        /* JOLT-TRIVIA:enum-body */
+        void recovered() {}
+    },
+    /* JOLT-TRIVIA:enum-recovered */ ,
+    ;
+    int member;
+}
+
+enum Phase13Enum {
+    ONLY /* JOLT-TRIVIA:enum-separator */ ;
+    int member;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    EnumDeclaration
+      EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
+      Identifier "RecoveredEnum" @ 5..18 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 19..20
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+            Identifier "ONLY" @ 25..29 leading=[Newline "\n", Whitespace "    "]
+          Comma "," @ 29..30
+          EnumConstant
+            AnnotationList
+              Annotation
+                At "@" @ 35..36 leading=[Newline "\n", Whitespace "    "]
+                Name
+                  Identifier "Marker" @ 36..42
+                AnnotationArgumentList
+                  LParen "(" @ 42..43
+                  RParen ")" @ 43..44 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:enum-annotation */"]
+            ArgumentList
+              LParen "(" @ 83..84 leading=[Newline "\n", Whitespace "    "] trailing=[BlockComment "/* JOLT-TRIVIA:enum-arguments */", Whitespace " "]
+              ExpressionList
+                LiteralExpression
+                  IntegerLiteral "1" @ 117..118
+              RParen ")" @ 118..119 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 120..121
+              ClassBodyMemberList
+                MethodDeclaration
+                  VoidType
+                    VoidKw "void" @ 166..170 leading=[Newline "\n", Whitespace "        ", BlockComment "/* JOLT-TRIVIA:enum-body */", Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  Identifier "recovered" @ 171..180
+                  LParen "(" @ 180..181
+                  RParen ")" @ 181..182 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 183..184
+                    BlockStatementList
+                    RBrace "}" @ 184..185
+              RBrace "}" @ 190..191 leading=[Newline "\n", Whitespace "    "]
+          Comma "," @ 191..192
+          EnumConstant
+            AnnotationList
+          Comma "," @ 230..231 leading=[Newline "\n", Whitespace "    ", BlockComment "/* JOLT-TRIVIA:enum-recovered */", Whitespace " "]
+        Semicolon ";" @ 236..237 leading=[Newline "\n", Whitespace "    "]
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 242..245 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "member" @ 246..252
+            Semicolon ";" @ 252..253
+        RBrace "}" @ 254..255 leading=[Newline "\n"]
+    EnumDeclaration
+      EnumKw "enum" @ 257..261 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Phase13Enum" @ 262..273 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 274..275
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+            Identifier "ONLY" @ 280..284 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:enum-separator */", Whitespace " "]
+        Semicolon ";" @ 318..319
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 324..327 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "member" @ 328..334
+            Semicolon ";" @ 334..335
+        RBrace "}" @ 336..337 leading=[Newline "\n"]
+  Eof "" @ 338..338 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=83..84 message="expected enum constant name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=230..231 message="expected enum constant name"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(83), end: TextSize(84) }) message=expected enum constant name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(230), end: TextSize(231) }) message=expected enum constant name

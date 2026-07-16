@@ -16,61 +16,60 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 8..9 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 10..14 trailing=[Whitespace " "]
-              Identifier "m" @ 15..16
-              LParen "(" @ 16..17
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 17..23 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "value" @ 24..29
-              RParen ")" @ 29..30 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 31..32 trailing=[Whitespace " "]
-                BlockStatementList
-                  BlockStatement
-                    SwitchStatement
-                      SwitchKw "switch" @ 33..39 trailing=[Whitespace " "]
-                      LParen "(" @ 40..41
-                      NameExpression
-                        Identifier "value" @ 41..46
-                      RParen ")" @ 46..47 trailing=[Whitespace " "]
-                      SwitchBlock
-                        LBrace "{" @ 48..49 trailing=[Whitespace " "]
-                        SwitchEntryList
-                          SwitchRule
-                            SwitchLabel
-                              CaseKw "case" @ 50..54 trailing=[Whitespace " "]
-                              SwitchLabelItemList
-                                CaseConstant
-                                  NameExpression
-                                    Identifier "A" @ 55..56
-                                Comma "," @ 56..57 trailing=[Whitespace " ", BlockComment "/* case */", Whitespace " "]
-                                Comma "," @ 69..70 trailing=[Whitespace " "]
-                                CaseConstant
-                                  NameExpression
-                                    Identifier "B" @ 71..72 trailing=[Whitespace " "]
-                            Arrow "->" @ 73..75 trailing=[Whitespace " "]
-                            MethodInvocationExpression
-                              UnqualifiedMethodInvocation
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 10..14 trailing=[Whitespace " "]
+            Identifier "m" @ 15..16
+            LParen "(" @ 16..17
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 17..23 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 24..29
+            RParen ")" @ 29..30 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 31..32 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  SwitchStatement
+                    SwitchKw "switch" @ 33..39 trailing=[Whitespace " "]
+                    LParen "(" @ 40..41
+                    NameExpression
+                      Identifier "value" @ 41..46
+                    RParen ")" @ 46..47 trailing=[Whitespace " "]
+                    SwitchBlock
+                      LBrace "{" @ 48..49 trailing=[Whitespace " "]
+                      SwitchEntryList
+                        SwitchRule
+                          SwitchLabel
+                            CaseKw "case" @ 50..54 trailing=[Whitespace " "]
+                            SwitchLabelItemList
+                              CaseConstant
                                 NameExpression
-                                  Identifier "use" @ 76..79
-                                ArgumentList
-                                  LParen "(" @ 79..80
-                                  ExpressionList
-                                  RParen ")" @ 80..81
-                            Semicolon ";" @ 81..82 trailing=[Whitespace " "]
-                        RBrace "}" @ 83..84 trailing=[Whitespace " "]
-                RBrace "}" @ 85..86 trailing=[Whitespace " "]
+                                  Identifier "A" @ 55..56
+                              Comma "," @ 56..57 trailing=[Whitespace " ", BlockComment "/* case */", Whitespace " "]
+                              Comma "," @ 69..70 trailing=[Whitespace " "]
+                              CaseConstant
+                                NameExpression
+                                  Identifier "B" @ 71..72 trailing=[Whitespace " "]
+                          Arrow "->" @ 73..75 trailing=[Whitespace " "]
+                          MethodInvocationExpression
+                            UnqualifiedMethodInvocation
+                              NameExpression
+                                Identifier "use" @ 76..79
+                              ArgumentList
+                                LParen "(" @ 79..80
+                                ExpressionList
+                                RParen ")" @ 80..81
+                          Semicolon ";" @ 81..82 trailing=[Whitespace " "]
+                      RBrace "}" @ 83..84 trailing=[Whitespace " "]
+              RBrace "}" @ 85..86 trailing=[Whitespace " "]
         RBrace "}" @ 87..88
     ModuleDeclaration
       AnnotationList

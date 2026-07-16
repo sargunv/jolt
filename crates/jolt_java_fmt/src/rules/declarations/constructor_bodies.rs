@@ -7,7 +7,7 @@ use super::{
     formatter_ignore_runs, join_body_items, relative_token_range_between,
 };
 use jolt_fmt_ir::DocBuilder;
-use jolt_java_syntax::{JavaSyntaxListPart, JavaSyntaxView};
+use jolt_java_syntax::{ConstructorBodyEntry, JavaSyntaxListPart};
 
 use crate::helpers::recovery::{
     JavaFormatField, format_malformed, format_optional_field, format_required_field,
@@ -126,17 +126,17 @@ fn constructor_body_elements<'source>(
     entries
         .parts()
         .filter_map(|part| match part {
-            Ok(JavaSyntaxListPart::Item(item)) => item
-                .cast_node::<jolt_java_syntax::ConstructorInvocation<'source>>()
-                .map(ConstructorBodyElement::Invocation)
-                .or_else(|| {
-                    item.cast_node::<jolt_java_syntax::BlockStatement<'source>>()
-                        .map(ConstructorBodyElement::Statement)
-                })
-                .or_else(|| {
-                    doc.block_on_invariant("constructor body entry had an undeclared kind");
-                    None
-                }),
+            Ok(JavaSyntaxListPart::Item(ConstructorBodyEntry::ConstructorInvocation(item))) => {
+                Some(ConstructorBodyElement::Invocation(item))
+            }
+            Ok(JavaSyntaxListPart::Item(ConstructorBodyEntry::BlockStatement(item))) => {
+                Some(ConstructorBodyElement::Statement(item))
+            }
+            Ok(JavaSyntaxListPart::Item(ConstructorBodyEntry::BogusConstructorBodyEntry(item))) => {
+                Some(ConstructorBodyElement::Recovery(format_malformed(
+                    &item, doc,
+                )))
+            }
             Ok(JavaSyntaxListPart::Malformed(malformed)) => Some(ConstructorBodyElement::Recovery(
                 format_malformed(&malformed, doc),
             )),
@@ -194,9 +194,6 @@ fn format_constructor_invocation<'source>(
     invocation: &ConstructorInvocation<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    if invocation.is_malformed() {
-        return format_malformed(invocation, doc);
-    }
     let type_arguments =
         format_optional_field(invocation.type_arguments(), doc, |arguments, doc| {
             format_type_argument_list(&arguments, doc)

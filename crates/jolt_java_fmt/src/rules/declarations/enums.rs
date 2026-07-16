@@ -13,13 +13,11 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_leading_comments, format_token,
 };
 use crate::helpers::recovery::{
-    JavaFormatField, JavaFormatListPart, format_malformed, format_optional_field,
-    format_required_field, resolve_list_part, resolve_optional_field, resolve_required_delimiter,
-    resolve_required_field,
+    JavaFormatField, JavaFormatListPart, format_optional_field, format_required_field,
+    resolve_list_part, resolve_optional_field, resolve_required_delimiter, resolve_required_field,
 };
 use crate::helpers::syntax_tokens::{format_token_with_normalized_text, inserted_syntax_token};
 use jolt_fmt_ir::{ConcatBuilder, DocBuilder, NormalizedToken};
-use jolt_java_syntax::JavaSyntaxView;
 
 struct FormattedEnumConstant<'source> {
     doc: Doc<'source>,
@@ -32,9 +30,6 @@ pub(super) fn format_enum_body_contents<'source>(
     body: &jolt_java_syntax::EnumBody<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> crate::helpers::blocks::BodyContent<'source> {
-    if body.is_malformed() {
-        return crate::helpers::blocks::BodyContent::new(format_malformed(body, doc), true, true);
-    }
     let open = present_token(body.open_brace());
     let close = present_token(body.close_brace());
     let mut constants = Vec::new();
@@ -83,10 +78,13 @@ pub(super) fn format_enum_body_contents<'source>(
     let (members_doc, has_body_declarations) = match resolve_required_field(body.members(), doc) {
         JavaFormatField::Present(members) => {
             let has_declarations = members.parts().any(|part| match part {
-                Ok(jolt_java_syntax::JavaSyntaxListPart::Item(item)) => item
-                    .cast_node::<jolt_java_syntax::EmptyDeclaration<'source>>()
-                    .is_none(),
-                Ok(jolt_java_syntax::JavaSyntaxListPart::Malformed(_)) => true,
+                Ok(jolt_java_syntax::JavaSyntaxListPart::Item(
+                    jolt_java_syntax::ClassBodyMember::EmptyDeclaration(_),
+                )) => false,
+                Ok(
+                    jolt_java_syntax::JavaSyntaxListPart::Item(_)
+                    | jolt_java_syntax::JavaSyntaxListPart::Malformed(_),
+                ) => true,
                 _ => false,
             });
             (
@@ -309,13 +307,16 @@ fn format_enum_constant_separator<'source>(
     if let Some(body_declaration_separator) = body_declaration_separator
         && separator == ";"
     {
-        let removed_comma = comma
-            .and_then(|comma| body.redundant_constant_separator_removal_claim(comma))
-            .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
+        let comma = comma.map_or_else(Doc::nil, |comma| {
+            match body.redundant_constant_separator_removal_claim(comma) {
+                Some(claim) => doc.removed_source(claim),
+                None => format_enum_constant_separator(doc, body, Some(comma), None, ",", false),
+            }
+        });
         return doc_concat!(
             doc,
             [
-                removed_comma,
+                comma,
                 format_enum_body_declaration_separator(doc, Some(body_declaration_separator)),
             ]
         );
@@ -419,9 +420,6 @@ fn format_enum_constant<'source>(
     constant: &EnumConstant<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    if constant.is_malformed() {
-        return format_malformed(constant, doc);
-    }
     let annotations = format_required_field(constant.annotations(), doc, |annotations, doc| {
         format_enum_constant_annotations(annotations, doc)
     });

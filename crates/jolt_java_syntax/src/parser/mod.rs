@@ -213,6 +213,7 @@ mod tests {
             "package ;\nimport foo + lost;\nmodule m { +; requires ; exports p to ; opens p target; uses ; provides s with ; }\n+;",
             "module missing requires dependency; class After {}",
             "native class C { int ; void f(, String... xs, int y) {} }",
+            "class C { +; C() { this(); this(); } }",
         ] {
             let parse = parse_compilation_unit(source);
             let root = parse.syntax().expect("represented compilation unit");
@@ -252,6 +253,10 @@ mod tests {
                         | JavaSyntaxKind::BogusFormalParameter
                         | JavaSyntaxKind::BogusModifier
                         | JavaSyntaxKind::BogusType
+                        | JavaSyntaxKind::BogusClassBodyMember
+                        | JavaSyntaxKind::BogusInterfaceBodyMember
+                        | JavaSyntaxKind::BogusAnnotationInterfaceBodyMember
+                        | JavaSyntaxKind::BogusConstructorBodyEntry
                 ) {
                     assert!(node.is_directly_malformed());
                     assert!(
@@ -264,17 +269,19 @@ mod tests {
         }
     }
 
+    #[rustfmt::skip]
+    fn check(source: &str, code: jolt_diagnostics::DiagnosticCodeId, message: &str, kind: JavaSyntaxKind, slot: Option<u16>) {
+        let parse = parse_compilation_unit(source);
+        let root = parse.syntax().expect("represented compilation unit");
+        assert_exact_diagnostic_owner(
+            *root.syntax(), parse.diagnostics(), parse.structural_diagnostic_owners(),
+            code, message, kind, slot,
+        );
+    }
+
     #[test]
     #[rustfmt::skip] // Keep the owner matrix one case per line.
     fn phase_twelve_diagnostics_own_the_declared_node_or_slot() {
-        fn check(source: &str, code: jolt_diagnostics::DiagnosticCodeId, message: &str, kind: JavaSyntaxKind, slot: Option<u16>) {
-            let parse = parse_compilation_unit(source);
-            let root = parse.syntax().expect("represented compilation unit");
-            assert_exact_diagnostic_owner(
-                *root.syntax(), parse.diagnostics(), parse.structural_diagnostic_owners(),
-                code, message, kind, slot,
-            );
-        }
         let expected = JavaParseDiagnosticCode::ExpectedSyntax.id();
         let unexpected = JavaParseDiagnosticCode::UnexpectedSyntax.id();
         macro_rules! slot { ($src:literal, $msg:literal, $kind:ident, $shape:ident, $slot:ident) => {
@@ -299,5 +306,30 @@ mod tests {
         check("class C { void f(@A final C this) {} }", unexpected, "invalid receiver parameter modifier", JavaSyntaxKind::BogusFormalParameter, None);
         check("class C { void f(C... this) {} }", unexpected, "invalid receiver parameter", JavaSyntaxKind::BogusFormalParameter, None);
         check("class var {}", JavaParseDiagnosticCode::RestrictedTypeIdentifier.id(), "expected type name", JavaSyntaxKind::ClassDeclaration, None);
+    }
+
+    #[test]
+    #[rustfmt::skip] // Keep the owner matrix one case per line.
+    fn phase_thirteen_diagnostics_own_the_declared_node_or_slot() {
+        let expected = JavaParseDiagnosticCode::ExpectedSyntax.id();
+        let unexpected = JavaParseDiagnosticCode::UnexpectedSyntax.id();
+        macro_rules! slot { ($src:literal, $msg:literal, $kind:ident, $shape:ident, $slot:ident) => {
+            check($src, expected, $msg, JavaSyntaxKind::$kind, Some(crate::shape::$shape::Slot::$slot as u16));
+        }; }
+
+        slot!("class C", "expected type body", ClassBody, class_body, open_brace);
+        slot!("class C {", "expected `}` after type body", ClassBody, class_body, close_brace);
+        slot!("record R {}", "expected record header", RecordDeclaration, record_declaration, open_paren);
+        slot!("record R(int value {}", "expected `)` after record header", RecordDeclaration, record_declaration, close_paren);
+        slot!("class C { int value }", "expected `;` after field declaration", FieldDeclaration, field_declaration, semicolon);
+        slot!("class C { void f(int value {}", "expected `)` after parameters", MethodDeclaration, method_declaration, close_paren);
+        slot!("class C { void f() }", "expected method body", MethodDeclaration, method_declaration, body);
+        slot!("class C { C() }", "expected constructor body", ConstructorBody, constructor_body, open_brace);
+        slot!("class C { C() {", "expected `}` after constructor body", ConstructorBody, constructor_body, close_brace);
+        slot!("@interface A { int value(); int missing() }", "expected `;` after annotation element", AnnotationElementDeclaration, annotation_element_declaration, semicolon);
+        slot!("enum E { , }", "expected enum constant name", EnumConstant, enum_constant, name);
+        check("class C { +; }", unexpected, "unexpected token in type body", JavaSyntaxKind::BogusClassBodyMember, None);
+        check("class C { C() { this(); this(); } }", JavaParseDiagnosticCode::MisplacedConstructorInvocation.id(), "constructor body must have at most one explicit constructor invocation", JavaSyntaxKind::BogusConstructorBodyEntry, None);
+        check("class C { C() { <T>lost this(); } }", expected, "expected `this` or `super` in constructor invocation", JavaSyntaxKind::BogusConstructorBodyEntry, None);
     }
 }

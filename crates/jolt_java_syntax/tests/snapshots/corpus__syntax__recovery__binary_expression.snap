@@ -15,26 +15,25 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 8..9 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 10..14 trailing=[Whitespace " "]
-              Identifier "m" @ 15..16
-              LParen "(" @ 16..17
-              RParen ")" @ 17..18 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 19..20 trailing=[Whitespace " "]
-                BlockStatementList
-                  BlockStatement
-                    ExpressionStatement
-                      ErrorNode
-                        BinaryExpression
-                          NameExpression
-                            Identifier "value" @ 21..26 trailing=[Whitespace " "]
-                          Plus "+" @ 27..28 trailing=[Whitespace " ", BlockComment "/* rhs */", Whitespace " "]
-                          ErrorNode
-                      Semicolon ";" @ 39..40 trailing=[Whitespace " "]
-                RBrace "}" @ 41..42 trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 10..14 trailing=[Whitespace " "]
+            Identifier "m" @ 15..16
+            LParen "(" @ 16..17
+            RParen ")" @ 17..18 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 19..20 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    ErrorNode
+                      BinaryExpression
+                        NameExpression
+                          Identifier "value" @ 21..26 trailing=[Whitespace " "]
+                        Plus "+" @ 27..28 trailing=[Whitespace " ", BlockComment "/* rhs */", Whitespace " "]
+                        ErrorNode
+                    Semicolon ";" @ 39..40 trailing=[Whitespace " "]
+              RBrace "}" @ 41..42 trailing=[Whitespace " "]
         RBrace "}" @ 43..44
   Eof "" @ 45..45 leading=[Newline "\n"]
 

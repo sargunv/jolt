@@ -8,7 +8,7 @@
 schema = 1
 baseline_commit = "2197128"
 verified_date = "2026-07-12"
-fixture_count = 49
+fixture_count = 50
 inline_regression_count = 2
 parser_fix_count = 27
 corpus_gate_count = 1
@@ -476,7 +476,6 @@ location = "historical"
 old_phase = 11
 old_commit = "95d158c"
 owners = [
-  { phase = 13, scope = "recovered enum entry pieces" },
   { phase = 14, scope = "lambda and array-creation siblings and dimensions" },
   { phase = 15, scope = "recovered switch labels" },
 ]
@@ -512,8 +511,19 @@ old_phase = 13
 old_commit = "e47c982"
 owners = [
   { phase = 8, scope = "binary expression and block-statement vertical slice" },
-  { phase = 13, scope = "enum separators and body pieces" },
   { phase = 15, scope = "resources and switch statements" },
+]
+
+[[fixture]]
+id = "phase-13-java-declarations"
+language = "java"
+path = "fixtures/java/syntax/recovery/phase-13-declarations.java"
+location = "current"
+old_phase = 13
+old_commit = "e47c982"
+owners = [
+  { phase = 13, scope = "recovered enum entry annotations, arguments, body, and empty sibling" },
+  { phase = 13, scope = "enum separator and following body members" },
 ]
 
 [[fixture]]

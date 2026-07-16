@@ -1,0 +1,46 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+enum RecoveredEnum {
+    ONLY,
+    @Marker() /* JOLT-TRIVIA:enum-annotation */
+    (/* JOLT-TRIVIA:enum-arguments */ 1) {
+        /* JOLT-TRIVIA:enum-body */
+        void recovered() {}
+    },
+    /* JOLT-TRIVIA:enum-recovered */ ,
+    ;
+    int member;
+}
+
+enum Phase13Enum {
+    ONLY /* JOLT-TRIVIA:enum-separator */ ;
+    int member;
+}
+
+formatted:
+enum RecoveredEnum {
+  ONLY,
+  @Marker() /* JOLT-TRIVIA:enum-annotation */
+  ( /* JOLT-TRIVIA:enum-arguments */1) {
+    /* JOLT-TRIVIA:enum-body */
+    void recovered() {
+    }
+  },
+  /* JOLT-TRIVIA:enum-recovered */
+  ,;
+
+  int member;
+}
+
+enum Phase13Enum {
+  ONLY /* JOLT-TRIVIA:enum-separator */;
+
+  int member;
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(83), end: TextSize(84) }) message=expected enum constant name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(230), end: TextSize(231) }) message=expected enum constant name

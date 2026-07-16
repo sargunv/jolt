@@ -36,20 +36,19 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 54..55
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              ModifierList
-                BogusModifier
-                  TransientKw "transient" @ 60..69 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VoidType
-                VoidKw "void" @ 70..74 trailing=[Whitespace " "]
-              Identifier "method" @ 75..81
-              LParen "(" @ 81..82
-              RParen ")" @ 82..83 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 84..85
-                BlockStatementList
-                RBrace "}" @ 85..86
+          MethodDeclaration
+            ModifierList
+              BogusModifier
+                TransientKw "transient" @ 60..69 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VoidType
+              VoidKw "void" @ 70..74 trailing=[Whitespace " "]
+            Identifier "method" @ 75..81
+            LParen "(" @ 81..82
+            RParen ")" @ 82..83 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 84..85
+              BlockStatementList
+              RBrace "}" @ 85..86
         RBrace "}" @ 87..88 leading=[Newline "\n"]
   Eof "" @ 89..89 leading=[Newline "\n"]
 

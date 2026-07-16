@@ -57,26 +57,25 @@ CompilationUnit
       RecordBody
         LBrace "{" @ 165..166
         RecordBodyMemberList
-          ClassBodyDeclaration
-            CompactConstructorDeclaration
-              Identifier "Box" @ 169..172 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:compact-constructor-name */", Whitespace " "]
-              ConstructorBody
-                LBrace "{" @ 216..217
-                ConstructorBodyEntryList
-                  BlockStatement
-                    ExpressionStatement
-                      AssignmentExpression
+          CompactConstructorDeclaration
+            Identifier "Box" @ 169..172 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:compact-constructor-name */", Whitespace " "]
+            ConstructorBody
+              LBrace "{" @ 216..217
+              ConstructorBodyEntryList
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "count" @ 222..227 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      Assign "=" @ 228..229 trailing=[Whitespace " "]
+                      BinaryExpression
                         NameExpression
-                          Identifier "count" @ 222..227 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                        Assign "=" @ 228..229 trailing=[Whitespace " "]
-                        BinaryExpression
-                          NameExpression
-                            Identifier "count" @ 230..235 trailing=[Whitespace " "]
-                          Plus "+" @ 236..237 trailing=[Whitespace " "]
-                          LiteralExpression
-                            IntegerLiteral "1" @ 238..239
-                      Semicolon ";" @ 239..240
-                RBrace "}" @ 243..244 leading=[Newline "\n", Whitespace "  "]
+                          Identifier "count" @ 230..235 trailing=[Whitespace " "]
+                        Plus "+" @ 236..237 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "1" @ 238..239
+                    Semicolon ";" @ 239..240
+              RBrace "}" @ 243..244 leading=[Newline "\n", Whitespace "  "]
         RBrace "}" @ 245..246 leading=[Newline "\n"]
     EnumDeclaration
       EnumKw "enum" @ 248..252 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
@@ -99,35 +98,33 @@ CompilationUnit
               RParen ")" @ 394..395 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:enum-b-tail */"]
         Semicolon ";" @ 425..426
         ClassBodyMemberList
-          ClassBodyDeclaration
-            ConstructorDeclaration
-              Identifier "Mode" @ 430..434 leading=[Newline "\n", Newline "\n", Whitespace "  "]
-              LParen "(" @ 434..435
-              RParen ")" @ 435..436 trailing=[Whitespace " "]
-              ConstructorBody
-                LBrace "{" @ 437..438
-                ConstructorBodyEntryList
-                RBrace "}" @ 438..439
-          ClassBodyDeclaration
-            ConstructorDeclaration
-              Identifier "Mode" @ 443..447 leading=[Newline "\n", Newline "\n", Whitespace "  "]
-              LParen "(" @ 447..448
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "String" @ 448..454 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "value" @ 455..460
-              RParen ")" @ 460..461 trailing=[Whitespace " "]
-              ConstructorBody
-                LBrace "{" @ 462..463
-                ConstructorBodyEntryList
-                RBrace "}" @ 463..464
+          ConstructorDeclaration
+            Identifier "Mode" @ 430..434 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+            LParen "(" @ 434..435
+            RParen ")" @ 435..436 trailing=[Whitespace " "]
+            ConstructorBody
+              LBrace "{" @ 437..438
+              ConstructorBodyEntryList
+              RBrace "}" @ 438..439
+          ConstructorDeclaration
+            Identifier "Mode" @ 443..447 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+            LParen "(" @ 447..448
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 448..454 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 455..460
+            RParen ")" @ 460..461 trailing=[Whitespace " "]
+            ConstructorBody
+              LBrace "{" @ 462..463
+              ConstructorBodyEntryList
+              RBrace "}" @ 463..464
         RBrace "}" @ 465..466 leading=[Newline "\n"]
     AnnotationInterfaceDeclaration
       At "@" @ 468..469 leading=[Newline "\n", Newline "\n"]

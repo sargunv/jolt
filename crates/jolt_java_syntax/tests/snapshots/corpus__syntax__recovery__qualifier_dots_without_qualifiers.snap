@@ -15,72 +15,69 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 8..9 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            ConstructorDeclaration
-              Identifier "C" @ 10..11
-              LParen "(" @ 11..12
-              RParen ")" @ 12..13 trailing=[Whitespace " "]
-              ConstructorBody
-                LBrace "{" @ 14..15 trailing=[Whitespace " "]
-                ConstructorBodyEntryList
-                  ConstructorInvocation
-                    TypeArgumentList
-                      Lt "<" @ 16..17
-                      TypeArgumentSeparatedList
-                        TypeArgument
-                          AnnotationList
-                          ClassType
-                            ClassTypeSegmentList
-                              ClassTypeSegmentNode
-                                AnnotationList
-                                Name
-                                  Identifier "T" @ 17..18
-                      Gt ">" @ 18..19
+          ConstructorDeclaration
+            Identifier "C" @ 10..11
+            LParen "(" @ 11..12
+            RParen ")" @ 12..13 trailing=[Whitespace " "]
+            ConstructorBody
+              LBrace "{" @ 14..15 trailing=[Whitespace " "]
+              ConstructorBodyEntryList
+                BogusConstructorBodyEntry
+                  TypeArgumentList
+                    Lt "<" @ 16..17
+                    TypeArgumentSeparatedList
+                      TypeArgument
+                        AnnotationList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "T" @ 17..18
+                    Gt ">" @ 18..19
+                  Dot "." @ 19..20
+                  ThisKw "this" @ 20..24
+                  LParen "(" @ 24..25
+                  RParen ")" @ 25..26
+                  Semicolon ";" @ 26..27 trailing=[Whitespace " "]
+              RBrace "}" @ 28..29 trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 30..34 trailing=[Whitespace " "]
+            Identifier "m" @ 35..36
+            LParen "(" @ 36..37
+            RParen ")" @ 37..38 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 39..40 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
                     ErrorNode
-                      Dot "." @ 19..20
-                      ThisKw "this" @ 20..24
-                      LParen "(" @ 24..25
-                      RParen ")" @ 25..26
-                    Semicolon ";" @ 26..27 trailing=[Whitespace " "]
-                RBrace "}" @ 28..29 trailing=[Whitespace " "]
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 30..34 trailing=[Whitespace " "]
-              Identifier "m" @ 35..36
-              LParen "(" @ 36..37
-              RParen ")" @ 37..38 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 39..40 trailing=[Whitespace " "]
-                BlockStatementList
-                  BlockStatement
-                    ExpressionStatement
-                      ErrorNode
-                        Dot "." @ 41..42
-                      ErrorNode
-                        NewKw "new" @ 42..45 trailing=[Whitespace " "]
-                      ErrorNode
-                        Identifier "Nested" @ 46..52
-                      ErrorNode
-                        LParen "(" @ 52..53
-                      ErrorNode
-                        RParen ")" @ 53..54
-                      Semicolon ";" @ 54..55 trailing=[Whitespace " "]
-                  BlockStatement
-                    ExpressionStatement
-                      ErrorNode
-                        Dot "." @ 56..57
-                      ErrorNode
-                        ThisKw "this" @ 57..61
-                      Semicolon ";" @ 61..62 trailing=[Whitespace " "]
-                  BlockStatement
-                    ExpressionStatement
-                      ErrorNode
-                        Dot "." @ 63..64
-                      ErrorNode
-                        SuperKw "super" @ 64..69
-                      Semicolon ";" @ 69..70 trailing=[Whitespace " "]
-                RBrace "}" @ 71..72 trailing=[Whitespace " "]
+                      Dot "." @ 41..42
+                    ErrorNode
+                      NewKw "new" @ 42..45 trailing=[Whitespace " "]
+                    ErrorNode
+                      Identifier "Nested" @ 46..52
+                    ErrorNode
+                      LParen "(" @ 52..53
+                    ErrorNode
+                      RParen ")" @ 53..54
+                    Semicolon ";" @ 54..55 trailing=[Whitespace " "]
+                BlockStatement
+                  ExpressionStatement
+                    ErrorNode
+                      Dot "." @ 56..57
+                    ErrorNode
+                      ThisKw "this" @ 57..61
+                    Semicolon ";" @ 61..62 trailing=[Whitespace " "]
+                BlockStatement
+                  ExpressionStatement
+                    ErrorNode
+                      Dot "." @ 63..64
+                    ErrorNode
+                      SuperKw "super" @ 64..69
+                    Semicolon ";" @ 69..70 trailing=[Whitespace " "]
+              RBrace "}" @ 71..72 trailing=[Whitespace " "]
         RBrace "}" @ 73..74
   Eof "" @ 75..75 leading=[Newline "\n"]
 

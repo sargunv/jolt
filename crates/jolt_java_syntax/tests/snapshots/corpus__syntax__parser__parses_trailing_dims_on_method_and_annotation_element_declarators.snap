@@ -21,20 +21,19 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 25..26
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              PrimitiveType
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 31..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "values" @ 35..41
+            LParen "(" @ 41..42
+            RParen ")" @ 42..43
+            ArrayDimensions
+              ArrayDimension
                 AnnotationList
-                IntKw "int" @ 31..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "values" @ 35..41
-              LParen "(" @ 41..42
-              RParen ")" @ 42..43
-              ArrayDimensions
-                ArrayDimension
-                  AnnotationList
-                  LBracket "[" @ 43..44
-                  RBracket "]" @ 44..45
-              Semicolon ";" @ 45..46
+                LBracket "[" @ 43..44
+                RBracket "]" @ 44..45
+            Semicolon ";" @ 45..46
         RBrace "}" @ 47..48 leading=[Newline "\n"]
     AnnotationInterfaceDeclaration
       At "@" @ 50..51 leading=[Newline "\n", Newline "\n"]

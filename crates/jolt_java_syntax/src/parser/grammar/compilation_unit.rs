@@ -16,7 +16,7 @@ impl Parser<'_> {
             } else if self.starts_module_declaration() {
                 self.parse_module_declaration();
             } else if self.starts_top_level_type_declaration() {
-                self.parse_type_declaration();
+                self.parse_type_declaration(JavaSyntaxKind::BogusCompilationUnitItem);
             } else if self.starts_misspelled_non_sealed_type_declaration() {
                 self.error_unexpected_top_level_token();
             } else if self.starts_compact_member_declaration() {

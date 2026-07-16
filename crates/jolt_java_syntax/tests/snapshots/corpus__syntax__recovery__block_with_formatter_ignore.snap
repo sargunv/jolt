@@ -22,62 +22,61 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 8..9 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 10..14 trailing=[Whitespace " "]
-              Identifier "m" @ 15..16
-              LParen "(" @ 16..17
-              RParen ")" @ 17..18 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 19..20
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 23..26 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "before" @ 27..33
-                    Semicolon ";" @ 33..34
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 57..60 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "raw" @ 61..64
-                          Assign "=" @ 64..65
-                          VariableInitializer
-                            BinaryExpression
-                              LiteralExpression
-                                IntegerLiteral "1" @ 65..66
-                              Plus "+" @ 66..67
-                              LiteralExpression
-                                IntegerLiteral "2" @ 67..68
-                    Semicolon ";" @ 68..69
-                  BlockStatement
-                    ExpressionStatement
-                      ErrorNode
-                        UnaryExpression
-                          Plus "+" @ 103..104 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  ", BlockComment "/* block */", Whitespace " "] trailing=[Whitespace " "]
-                          ErrorNode
-                      Semicolon ";" @ 105..106
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 109..112 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "after" @ 113..118
-                    Semicolon ";" @ 118..119
-                RBrace "}" @ 120..121 leading=[Newline "\n"] trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 10..14 trailing=[Whitespace " "]
+            Identifier "m" @ 15..16
+            LParen "(" @ 16..17
+            RParen ")" @ 17..18 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 19..20
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 23..26 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "before" @ 27..33
+                  Semicolon ";" @ 33..34
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 57..60 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "raw" @ 61..64
+                        Assign "=" @ 64..65
+                        VariableInitializer
+                          BinaryExpression
+                            LiteralExpression
+                              IntegerLiteral "1" @ 65..66
+                            Plus "+" @ 66..67
+                            LiteralExpression
+                              IntegerLiteral "2" @ 67..68
+                  Semicolon ";" @ 68..69
+                BlockStatement
+                  ExpressionStatement
+                    ErrorNode
+                      UnaryExpression
+                        Plus "+" @ 103..104 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  ", BlockComment "/* block */", Whitespace " "] trailing=[Whitespace " "]
+                        ErrorNode
+                    Semicolon ";" @ 105..106
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 109..112 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "after" @ 113..118
+                  Semicolon ";" @ 118..119
+              RBrace "}" @ 120..121 leading=[Newline "\n"] trailing=[Whitespace " "]
         RBrace "}" @ 122..123
   Eof "" @ 124..124 leading=[Newline "\n"]
 

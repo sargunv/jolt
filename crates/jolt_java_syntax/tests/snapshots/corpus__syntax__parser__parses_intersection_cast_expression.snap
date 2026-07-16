@@ -19,63 +19,62 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 23..24
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 29..33 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 34..40
-              LParen "(" @ 40..41
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 41..47 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "value" @ 48..53
-              RParen ")" @ 53..54 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 55..56
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "Runnable" @ 65..73 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "runnable" @ 74..82 trailing=[Whitespace " "]
-                          Assign "=" @ 83..84 trailing=[Whitespace " "]
-                          VariableInitializer
-                            CastExpression
-                              LParen "(" @ 85..86
-                              IntersectionType
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 29..33 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 34..40
+            LParen "(" @ 40..41
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 41..47 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 48..53
+            RParen ")" @ 53..54 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 55..56
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Runnable" @ 65..73 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "runnable" @ 74..82 trailing=[Whitespace " "]
+                        Assign "=" @ 83..84 trailing=[Whitespace " "]
+                        VariableInitializer
+                          CastExpression
+                            LParen "(" @ 85..86
+                            IntersectionType
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "Runnable" @ 86..94 trailing=[Whitespace " "]
+                              Amp "&" @ 95..96 trailing=[Whitespace " "]
+                              TypeAmpList
                                 ClassType
                                   ClassTypeSegmentList
                                     ClassTypeSegmentNode
                                       AnnotationList
                                       Name
-                                        Identifier "Runnable" @ 86..94 trailing=[Whitespace " "]
-                                Amp "&" @ 95..96 trailing=[Whitespace " "]
-                                TypeAmpList
-                                  ClassType
-                                    ClassTypeSegmentList
-                                      ClassTypeSegmentNode
-                                        AnnotationList
-                                        Name
-                                          Identifier "AutoCloseable" @ 97..110
-                              RParen ")" @ 110..111 trailing=[Whitespace " "]
-                              NameExpression
-                                Identifier "value" @ 112..117
-                    Semicolon ";" @ 117..118
-                RBrace "}" @ 123..124 leading=[Newline "\n", Whitespace "    "]
+                                        Identifier "AutoCloseable" @ 97..110
+                            RParen ")" @ 110..111 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "value" @ 112..117
+                  Semicolon ";" @ 117..118
+              RBrace "}" @ 123..124 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 125..126 leading=[Newline "\n"]
   Eof "" @ 127..127 leading=[Newline "\n"]
 

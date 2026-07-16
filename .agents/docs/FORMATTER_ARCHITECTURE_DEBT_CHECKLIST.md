@@ -784,13 +784,13 @@ Vertically migrate names, types, dimensions, annotations, modifiers, parameters,
 declarators, and throws clauses. Delete range-derived and skip-capable recovery
 accessors for these families.
 
-Implementation status: **implemented, gate-green, and uncommitted for review**.
-The Java schema now gives malformed types, modifiers, formal parameters, and
-annotation arguments category-compatible bogus variants. Scoped parser
-diagnostics attach directly to those nodes or to the exact required slot that is
-absent; the migrated type and identifier grammar no longer constructs the
-generic `ErrorNode`. The architecture inventory freezes that reduction at zero
-type and identifier sites and four later-phase declaration-container sites.
+Implementation status: **implemented, gate-green, and committed**. The Java
+schema now gives malformed types, modifiers, formal parameters, and annotation
+arguments category-compatible bogus variants. Scoped parser diagnostics attach
+directly to those nodes or to the exact required slot that is absent; the
+migrated type and identifier grammar no longer constructs the generic
+`ErrorNode`. The architecture inventory freezes that reduction at zero type and
+identifier sites and four later-phase declaration-container sites.
 
 Formatters consume the generated typed categories exhaustively. Annotation
 arguments and modifiers no longer use broad `format_or_verbatim` containers, and
@@ -822,6 +822,42 @@ final roadmap below zero.
 Vertically migrate fields, methods, constructors, initializers, annotation
 elements, classes, interfaces, enums, records, members, and bodies. Missing-body
 diagnostics must have narrow syntax owners; valid declarations may not replay.
+
+Implementation status: **implemented, gate-green, and uncommitted for review**.
+Class and record bodies now contain the generated `ClassBodyMember` category
+directly; the redundant `ClassBodyDeclaration` wrapper and its formatter
+dispatch layer are deleted. Constructor bodies likewise expose an exhaustive
+typed entry category, including a narrow bogus entry for misplaced or duplicate
+explicit constructor invocations. Methods expose one required block-or-semicolon
+body role, and all five type declarations expose missing-body semicolons without
+turning the valid declaration into a replay range.
+
+The declaration grammar no longer constructs generic `ErrorNode` nodes. Missing
+record-header delimiters, field and annotation-element semicolons, callable
+parameter delimiters and bodies, constructor braces, enum constant names, and
+type-body delimiters each have an exact node or missing-slot owner. Unexpected
+body fragments use the narrow body-member bogus category for their context.
+Generated category accessors expose only schema-declared bogus category nodes as
+typed family members; unrelated malformed valid nodes remain explicit malformed
+entries, so recovery cannot leak a node into a role that did not declare it.
+
+Declaration formatters now dispatch valid fields, callables, initializers, type
+declarations, enum constants, members, and bodies structurally. Broad
+`format_or_verbatim` wrappers and declaration-local replay loops are gone.
+Syntax-owned bogus members remain the only declaration-level verbatim path. The
+focused recovery fixture covers nameless annotated enum constants with arguments
+and bodies, empty recovered constants, separators, and following body members.
+It passes reconstruction, token and trivia conservation, represented comment
+conservation, reparse, determinism, and idempotence gates; the imported deferred
+manifest contains no Phase-13-owned paths.
+
+The Phase 13 review point is +27,052/-24,544 implementation lines, net +2,508
+from `2197128`: 114 lines above Phase 12. Java formatter cleanup removes 85 net
+lines, while the Java syntax ownership, category, and compact exact-owner proof
+cases add 199 net lines. Fixtures, snapshots, reports, and documentation are
+excluded; tests and test support are included. Later vertical phases must keep
+reusing the shared ownership machinery and the final roadmap remains responsible
+for crossing below zero.
 
 ### New Phase 14: Java Expressions And Patterns
 

@@ -21,145 +21,144 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 24..25
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 30..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 35..41
-              LParen "(" @ 41..42
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    BooleanKw "boolean" @ 42..49 trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 30..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 35..41
+            LParen "(" @ 41..42
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "flag" @ 50..54
-              RParen ")" @ 54..55 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 56..57
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            QualifiedName
+                  BooleanKw "boolean" @ 42..49 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "flag" @ 50..54
+            RParen ")" @ 54..55 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 56..57
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          QualifiedName
+                            QualifiedNameSegmentNode
+                              AnnotationList
+                              Identifier "java" @ 66..70 leading=[Newline "\n", Whitespace "        "]
+                            Dot "." @ 70..71
+                            NameSegmentDotList
                               QualifiedNameSegmentNode
                                 AnnotationList
-                                Identifier "java" @ 66..70 leading=[Newline "\n", Whitespace "        "]
-                              Dot "." @ 70..71
-                              NameSegmentDotList
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "util" @ 71..75
-                                Dot "." @ 75..76
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "function" @ 76..84
-                                Dot "." @ 84..85
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "Function" @ 85..93
-                            TypeArgumentList
-                              Lt "<" @ 93..94
-                              TypeArgumentSeparatedList
-                                TypeArgument
-                                  AnnotationList
-                                  ClassType
-                                    ClassTypeSegmentList
-                                      ClassTypeSegmentNode
-                                        AnnotationList
-                                        Name
-                                          Identifier "Integer" @ 94..101
-                                Comma "," @ 101..102 trailing=[Whitespace " "]
-                                TypeArgument
-                                  AnnotationList
-                                  ClassType
-                                    ClassTypeSegmentList
-                                      ClassTypeSegmentNode
-                                        AnnotationList
-                                        Name
-                                          Identifier "Integer" @ 103..110
-                              Gt ">" @ 110..111 trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "existing" @ 112..120 trailing=[Whitespace " "]
-                          Assign "=" @ 121..122 trailing=[Whitespace " "]
-                          VariableInitializer
-                            LiteralExpression
-                              NullLiteral "null" @ 123..127
-                    Semicolon ";" @ 127..128
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            QualifiedName
+                                Identifier "util" @ 71..75
+                              Dot "." @ 75..76
                               QualifiedNameSegmentNode
                                 AnnotationList
-                                Identifier "java" @ 137..141 leading=[Newline "\n", Whitespace "        "]
-                              Dot "." @ 141..142
-                              NameSegmentDotList
-                                QualifiedNameSegmentNode
+                                Identifier "function" @ 76..84
+                              Dot "." @ 84..85
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "Function" @ 85..93
+                          TypeArgumentList
+                            Lt "<" @ 93..94
+                            TypeArgumentSeparatedList
+                              TypeArgument
+                                AnnotationList
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      Name
+                                        Identifier "Integer" @ 94..101
+                              Comma "," @ 101..102 trailing=[Whitespace " "]
+                              TypeArgument
+                                AnnotationList
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      Name
+                                        Identifier "Integer" @ 103..110
+                            Gt ">" @ 110..111 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "existing" @ 112..120 trailing=[Whitespace " "]
+                        Assign "=" @ 121..122 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            NullLiteral "null" @ 123..127
+                  Semicolon ";" @ 127..128
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          QualifiedName
+                            QualifiedNameSegmentNode
+                              AnnotationList
+                              Identifier "java" @ 137..141 leading=[Newline "\n", Whitespace "        "]
+                            Dot "." @ 141..142
+                            NameSegmentDotList
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "util" @ 142..146
+                              Dot "." @ 146..147
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "function" @ 147..155
+                              Dot "." @ 155..156
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "Function" @ 156..164
+                          TypeArgumentList
+                            Lt "<" @ 164..165
+                            TypeArgumentSeparatedList
+                              TypeArgument
+                                AnnotationList
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      Name
+                                        Identifier "Integer" @ 165..172
+                              Comma "," @ 172..173 trailing=[Whitespace " "]
+                              TypeArgument
+                                AnnotationList
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      Name
+                                        Identifier "Integer" @ 174..181
+                            Gt ">" @ 181..182 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "chosen" @ 183..189 trailing=[Whitespace " "]
+                        Assign "=" @ 190..191
+                        VariableInitializer
+                          ConditionalExpression
+                            NameExpression
+                              Identifier "flag" @ 204..208 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                            Question "?" @ 209..210 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "existing" @ 211..219 trailing=[Whitespace " "]
+                            Colon ":" @ 220..221 trailing=[Whitespace " "]
+                            LambdaExpression
+                              LambdaParameterList
+                                LambdaParameter
+                                  LambdaModifierList
                                   AnnotationList
-                                  Identifier "util" @ 142..146
-                                Dot "." @ 146..147
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "function" @ 147..155
-                                Dot "." @ 155..156
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "Function" @ 156..164
-                            TypeArgumentList
-                              Lt "<" @ 164..165
-                              TypeArgumentSeparatedList
-                                TypeArgument
-                                  AnnotationList
-                                  ClassType
-                                    ClassTypeSegmentList
-                                      ClassTypeSegmentNode
-                                        AnnotationList
-                                        Name
-                                          Identifier "Integer" @ 165..172
-                                Comma "," @ 172..173 trailing=[Whitespace " "]
-                                TypeArgument
-                                  AnnotationList
-                                  ClassType
-                                    ClassTypeSegmentList
-                                      ClassTypeSegmentNode
-                                        AnnotationList
-                                        Name
-                                          Identifier "Integer" @ 174..181
-                              Gt ">" @ 181..182 trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "chosen" @ 183..189 trailing=[Whitespace " "]
-                          Assign "=" @ 190..191
-                          VariableInitializer
-                            ConditionalExpression
+                                  Identifier "x" @ 222..223 trailing=[Whitespace " "]
+                              Arrow "->" @ 224..226 trailing=[Whitespace " "]
                               NameExpression
-                                Identifier "flag" @ 204..208 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                              Question "?" @ 209..210 trailing=[Whitespace " "]
-                              NameExpression
-                                Identifier "existing" @ 211..219 trailing=[Whitespace " "]
-                              Colon ":" @ 220..221 trailing=[Whitespace " "]
-                              LambdaExpression
-                                LambdaParameterList
-                                  LambdaParameter
-                                    LambdaModifierList
-                                    AnnotationList
-                                    Identifier "x" @ 222..223 trailing=[Whitespace " "]
-                                Arrow "->" @ 224..226 trailing=[Whitespace " "]
-                                NameExpression
-                                  Identifier "x" @ 227..228
-                    Semicolon ";" @ 228..229
-                RBrace "}" @ 234..235 leading=[Newline "\n", Whitespace "    "]
+                                Identifier "x" @ 227..228
+                  Semicolon ";" @ 228..229
+              RBrace "}" @ 234..235 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 236..237 leading=[Newline "\n"]
   Eof "" @ 238..238 leading=[Newline "\n"]
 

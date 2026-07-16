@@ -24,105 +24,103 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 26..27
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 32..36 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 37..43
-              LParen "(" @ 43..44
-              RParen ")" @ 44..45 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 46..47
-                BlockStatementList
-                  BlockStatement
-                    TryStatement
-                      TryKw "try" @ 56..59 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      Block
-                        LBrace "{" @ 60..61
-                        BlockStatementList
-                          BlockStatement
-                            ExpressionStatement
-                              MethodInvocationExpression
-                                UnqualifiedMethodInvocation
-                                  NameExpression
-                                    Identifier "risky" @ 74..79 leading=[Newline "\n", Whitespace "            "]
-                                  ArgumentList
-                                    LParen "(" @ 79..80
-                                    ExpressionList
-                                    RParen ")" @ 80..81
-                              Semicolon ";" @ 81..82
-                        RBrace "}" @ 91..92 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      CatchClauseList
-                        CatchClause
-                          CatchKw "catch" @ 93..98 trailing=[Whitespace " "]
-                          LParen "(" @ 99..100
-                          CatchParameter
-                            ParameterModifierList
-                            CatchTypeList
-                              UnionType
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 32..36 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 37..43
+            LParen "(" @ 43..44
+            RParen ")" @ 44..45 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 46..47
+              BlockStatementList
+                BlockStatement
+                  TryStatement
+                    TryKw "try" @ 56..59 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 60..61
+                      BlockStatementList
+                        BlockStatement
+                          ExpressionStatement
+                            MethodInvocationExpression
+                              UnqualifiedMethodInvocation
+                                NameExpression
+                                  Identifier "risky" @ 74..79 leading=[Newline "\n", Whitespace "            "]
+                                ArgumentList
+                                  LParen "(" @ 79..80
+                                  ExpressionList
+                                  RParen ")" @ 80..81
+                            Semicolon ";" @ 81..82
+                      RBrace "}" @ 91..92 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    CatchClauseList
+                      CatchClause
+                        CatchKw "catch" @ 93..98 trailing=[Whitespace " "]
+                        LParen "(" @ 99..100
+                        CatchParameter
+                          ParameterModifierList
+                          CatchTypeList
+                            UnionType
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    QualifiedName
+                                      QualifiedNameSegmentNode
+                                        AnnotationList
+                                        Identifier "java" @ 100..104
+                                      Dot "." @ 104..105
+                                      NameSegmentDotList
+                                        QualifiedNameSegmentNode
+                                          AnnotationList
+                                          Identifier "io" @ 105..107
+                                        Dot "." @ 107..108
+                                        QualifiedNameSegmentNode
+                                          AnnotationList
+                                          Identifier "IOException" @ 108..119 trailing=[Whitespace " "]
+                              Bar "|" @ 120..121 trailing=[Whitespace " "]
+                              TypeBarList
                                 ClassType
                                   ClassTypeSegmentList
                                     ClassTypeSegmentNode
                                       AnnotationList
-                                      QualifiedName
-                                        QualifiedNameSegmentNode
-                                          AnnotationList
-                                          Identifier "java" @ 100..104
-                                        Dot "." @ 104..105
-                                        NameSegmentDotList
-                                          QualifiedNameSegmentNode
-                                            AnnotationList
-                                            Identifier "io" @ 105..107
-                                          Dot "." @ 107..108
-                                          QualifiedNameSegmentNode
-                                            AnnotationList
-                                            Identifier "IOException" @ 108..119 trailing=[Whitespace " "]
-                                Bar "|" @ 120..121 trailing=[Whitespace " "]
-                                TypeBarList
-                                  ClassType
-                                    ClassTypeSegmentList
-                                      ClassTypeSegmentNode
-                                        AnnotationList
-                                        Name
-                                          Identifier "RuntimeException" @ 122..138 trailing=[Whitespace " "]
-                            Identifier "ex" @ 139..141
-                          RParen ")" @ 141..142 trailing=[Whitespace " "]
-                          Block
-                            LBrace "{" @ 143..144
-                            BlockStatementList
-                            RBrace "}" @ 153..154 leading=[Newline "\n", Whitespace "        "]
-                RBrace "}" @ 159..160 leading=[Newline "\n", Whitespace "    "]
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 166..170 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "risky" @ 171..176
-              LParen "(" @ 176..177
-              RParen ")" @ 177..178 trailing=[Whitespace " "]
-              ThrowsClause
-                ThrowsKw "throws" @ 179..185 trailing=[Whitespace " "]
-                TypeList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        QualifiedName
+                                      Name
+                                        Identifier "RuntimeException" @ 122..138 trailing=[Whitespace " "]
+                          Identifier "ex" @ 139..141
+                        RParen ")" @ 141..142 trailing=[Whitespace " "]
+                        Block
+                          LBrace "{" @ 143..144
+                          BlockStatementList
+                          RBrace "}" @ 153..154 leading=[Newline "\n", Whitespace "        "]
+              RBrace "}" @ 159..160 leading=[Newline "\n", Whitespace "    "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 166..170 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "risky" @ 171..176
+            LParen "(" @ 176..177
+            RParen ")" @ 177..178 trailing=[Whitespace " "]
+            ThrowsClause
+              ThrowsKw "throws" @ 179..185 trailing=[Whitespace " "]
+              TypeList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      QualifiedName
+                        QualifiedNameSegmentNode
+                          AnnotationList
+                          Identifier "java" @ 186..190
+                        Dot "." @ 190..191
+                        NameSegmentDotList
                           QualifiedNameSegmentNode
                             AnnotationList
-                            Identifier "java" @ 186..190
-                          Dot "." @ 190..191
-                          NameSegmentDotList
-                            QualifiedNameSegmentNode
-                              AnnotationList
-                              Identifier "io" @ 191..193
-                            Dot "." @ 193..194
-                            QualifiedNameSegmentNode
-                              AnnotationList
-                              Identifier "IOException" @ 194..205 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 206..207
-                BlockStatementList
-                RBrace "}" @ 207..208
+                            Identifier "io" @ 191..193
+                          Dot "." @ 193..194
+                          QualifiedNameSegmentNode
+                            AnnotationList
+                            Identifier "IOException" @ 194..205 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 206..207
+              BlockStatementList
+              RBrace "}" @ 207..208
         RBrace "}" @ 209..210 leading=[Newline "\n"]
   Eof "" @ 211..211 leading=[Newline "\n"]
 

@@ -20,425 +20,421 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 26..27
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              ArrayType
-                PrimitiveType
+          FieldDeclaration
+            ArrayType
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 28..31 leading=[Newline "\n"]
+              ArrayDimensions
+                ArrayDimension
                   AnnotationList
-                  IntKw "int" @ 28..31 leading=[Newline "\n"]
+                  LBracket "[" @ 31..32
+                  RBracket "]" @ 32..33
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 33..34
+                  RBracket "]" @ 34..35
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 35..36
+                  RBracket "]" @ 36..37
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 37..38
+                  RBracket "]" @ 38..39
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 39..40
+                  RBracket "]" @ 40..41
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 41..42
+                  RBracket "]" @ 42..43
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 43..44
+                  RBracket "]" @ 44..45
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 45..46
+                  RBracket "]" @ 46..47
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 47..48
+                  RBracket "]" @ 48..49
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 49..50
+                  RBracket "]" @ 50..51
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 51..52
+                  RBracket "]" @ 52..53
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 53..54
+                  RBracket "]" @ 54..55
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 55..56
+                  RBracket "]" @ 56..57
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 57..58
+                  RBracket "]" @ 58..59
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 59..60
+                  RBracket "]" @ 60..61
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 61..62
+                  RBracket "]" @ 62..63
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 63..64
+                  RBracket "]" @ 64..65
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 65..66
+                  RBracket "]" @ 66..67
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 67..68
+                  RBracket "]" @ 68..69
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 69..70
+                  RBracket "]" @ 70..71
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 71..72
+                  RBracket "]" @ 72..73
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 73..74
+                  RBracket "]" @ 74..75
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 75..76
+                  RBracket "]" @ 76..77
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 77..78
+                  RBracket "]" @ 78..79 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "values" @ 80..86
                 ArrayDimensions
                   ArrayDimension
                     AnnotationList
-                    LBracket "[" @ 31..32
-                    RBracket "]" @ 32..33
+                    LBracket "[" @ 86..87
+                    RBracket "]" @ 87..88
                   ArrayDimension
                     AnnotationList
-                    LBracket "[" @ 33..34
-                    RBracket "]" @ 34..35
+                    LBracket "[" @ 88..89
+                    RBracket "]" @ 89..90
                   ArrayDimension
                     AnnotationList
-                    LBracket "[" @ 35..36
-                    RBracket "]" @ 36..37
+                    LBracket "[" @ 90..91
+                    RBracket "]" @ 91..92
                   ArrayDimension
                     AnnotationList
-                    LBracket "[" @ 37..38
-                    RBracket "]" @ 38..39
+                    LBracket "[" @ 92..93
+                    RBracket "]" @ 93..94
                   ArrayDimension
                     AnnotationList
-                    LBracket "[" @ 39..40
-                    RBracket "]" @ 40..41
+                    LBracket "[" @ 94..95
+                    RBracket "]" @ 95..96
                   ArrayDimension
                     AnnotationList
-                    LBracket "[" @ 41..42
-                    RBracket "]" @ 42..43
+                    LBracket "[" @ 96..97
+                    RBracket "]" @ 97..98
                   ArrayDimension
                     AnnotationList
-                    LBracket "[" @ 43..44
-                    RBracket "]" @ 44..45
+                    LBracket "[" @ 98..99
+                    RBracket "]" @ 99..100
                   ArrayDimension
                     AnnotationList
-                    LBracket "[" @ 45..46
-                    RBracket "]" @ 46..47
+                    LBracket "[" @ 100..101
+                    RBracket "]" @ 101..102
                   ArrayDimension
                     AnnotationList
-                    LBracket "[" @ 47..48
-                    RBracket "]" @ 48..49
+                    LBracket "[" @ 102..103
+                    RBracket "]" @ 103..104
                   ArrayDimension
                     AnnotationList
-                    LBracket "[" @ 49..50
-                    RBracket "]" @ 50..51
+                    LBracket "[" @ 104..105
+                    RBracket "]" @ 105..106
                   ArrayDimension
                     AnnotationList
-                    LBracket "[" @ 51..52
-                    RBracket "]" @ 52..53
+                    LBracket "[" @ 106..107
+                    RBracket "]" @ 107..108
                   ArrayDimension
                     AnnotationList
-                    LBracket "[" @ 53..54
-                    RBracket "]" @ 54..55
-                  ArrayDimension
-                    AnnotationList
-                    LBracket "[" @ 55..56
-                    RBracket "]" @ 56..57
-                  ArrayDimension
-                    AnnotationList
-                    LBracket "[" @ 57..58
-                    RBracket "]" @ 58..59
-                  ArrayDimension
-                    AnnotationList
-                    LBracket "[" @ 59..60
-                    RBracket "]" @ 60..61
-                  ArrayDimension
-                    AnnotationList
-                    LBracket "[" @ 61..62
-                    RBracket "]" @ 62..63
-                  ArrayDimension
-                    AnnotationList
-                    LBracket "[" @ 63..64
-                    RBracket "]" @ 64..65
-                  ArrayDimension
-                    AnnotationList
-                    LBracket "[" @ 65..66
-                    RBracket "]" @ 66..67
-                  ArrayDimension
-                    AnnotationList
-                    LBracket "[" @ 67..68
-                    RBracket "]" @ 68..69
-                  ArrayDimension
-                    AnnotationList
-                    LBracket "[" @ 69..70
-                    RBracket "]" @ 70..71
-                  ArrayDimension
-                    AnnotationList
-                    LBracket "[" @ 71..72
-                    RBracket "]" @ 72..73
-                  ArrayDimension
-                    AnnotationList
-                    LBracket "[" @ 73..74
-                    RBracket "]" @ 74..75
-                  ArrayDimension
-                    AnnotationList
-                    LBracket "[" @ 75..76
-                    RBracket "]" @ 76..77
-                  ArrayDimension
-                    AnnotationList
-                    LBracket "[" @ 77..78
-                    RBracket "]" @ 78..79 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "values" @ 80..86
-                  ArrayDimensions
-                    ArrayDimension
-                      AnnotationList
-                      LBracket "[" @ 86..87
-                      RBracket "]" @ 87..88
-                    ArrayDimension
-                      AnnotationList
-                      LBracket "[" @ 88..89
-                      RBracket "]" @ 89..90
-                    ArrayDimension
-                      AnnotationList
-                      LBracket "[" @ 90..91
-                      RBracket "]" @ 91..92
-                    ArrayDimension
-                      AnnotationList
-                      LBracket "[" @ 92..93
-                      RBracket "]" @ 93..94
-                    ArrayDimension
-                      AnnotationList
-                      LBracket "[" @ 94..95
-                      RBracket "]" @ 95..96
-                    ArrayDimension
-                      AnnotationList
-                      LBracket "[" @ 96..97
-                      RBracket "]" @ 97..98
-                    ArrayDimension
-                      AnnotationList
-                      LBracket "[" @ 98..99
-                      RBracket "]" @ 99..100
-                    ArrayDimension
-                      AnnotationList
-                      LBracket "[" @ 100..101
-                      RBracket "]" @ 101..102
-                    ArrayDimension
-                      AnnotationList
-                      LBracket "[" @ 102..103
-                      RBracket "]" @ 103..104
-                    ArrayDimension
-                      AnnotationList
-                      LBracket "[" @ 104..105
-                      RBracket "]" @ 105..106
-                    ArrayDimension
-                      AnnotationList
-                      LBracket "[" @ 106..107
-                      RBracket "]" @ 107..108
-                    ArrayDimension
-                      AnnotationList
-                      LBracket "[" @ 108..109
-                      RBracket "]" @ 109..110
-              Semicolon ";" @ 110..111
-          ClassBodyDeclaration
-            FieldDeclaration
-              ArrayType
-                PrimitiveType
+                    LBracket "[" @ 108..109
+                    RBracket "]" @ 109..110
+            Semicolon ";" @ 110..111
+          FieldDeclaration
+            ArrayType
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 112..115 leading=[Newline "\n"]
+              ArrayDimensions
+                ArrayDimension
                   AnnotationList
-                  IntKw "int" @ 112..115 leading=[Newline "\n"]
-                ArrayDimensions
-                  ArrayDimension
+                  LBracket "[" @ 115..116
+                  RBracket "]" @ 116..117
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 117..118
+                  RBracket "]" @ 118..119 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "compactValues" @ 120..133
+            Semicolon ";" @ 133..134
+          FieldDeclaration
+            ArrayType
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
                     AnnotationList
-                    LBracket "[" @ 115..116
-                    RBracket "]" @ 116..117
-                  ArrayDimension
-                    AnnotationList
-                    LBracket "[" @ 117..118
-                    RBracket "]" @ 118..119 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "compactValues" @ 120..133
-              Semicolon ";" @ 133..134
-          ClassBodyDeclaration
-            FieldDeclaration
-              ArrayType
-                ClassType
-                  ClassTypeSegmentList
-                    ClassTypeSegmentNode
-                      AnnotationList
+                    Name
+                      Identifier "String" @ 135..141 leading=[Newline "\n"] trailing=[Whitespace " "]
+              ArrayDimensions
+                ArrayDimension
+                  AnnotationList
+                    Annotation
+                      At "@" @ 142..143
                       Name
-                        Identifier "String" @ 135..141 leading=[Newline "\n"] trailing=[Whitespace " "]
-                ArrayDimensions
-                  ArrayDimension
-                    AnnotationList
-                      Annotation
-                        At "@" @ 142..143
-                        Name
-                          Identifier "Readonly" @ 143..151 trailing=[Whitespace " "]
-                    LBracket "[" @ 152..153
-                    RBracket "]" @ 153..154 trailing=[Whitespace " "]
-                  ArrayDimension
-                    AnnotationList
-                      Annotation
-                        At "@" @ 155..156
-                        Name
-                          Identifier "Frozen" @ 156..162 trailing=[Whitespace " "]
-                    LBracket "[" @ 163..164
-                    RBracket "]" @ 164..165 trailing=[Whitespace " "]
-                  ArrayDimension
-                    AnnotationList
-                      Annotation
-                        At "@" @ 166..167
-                        Name
-                          Identifier "Stable" @ 167..173 trailing=[Whitespace " "]
-                    LBracket "[" @ 174..175
-                    RBracket "]" @ 175..176 trailing=[Whitespace " "]
-                  ArrayDimension
-                    AnnotationList
-                      Annotation
-                        At "@" @ 177..178
-                        Name
-                          Identifier "Shared" @ 178..184 trailing=[Whitespace " "]
-                    LBracket "[" @ 185..186
-                    RBracket "]" @ 186..187 trailing=[Whitespace " "]
-                  ArrayDimension
-                    AnnotationList
-                      Annotation
-                        At "@" @ 188..189
-                        Name
-                          Identifier "Large" @ 189..194 trailing=[Whitespace " "]
-                    LBracket "[" @ 195..196
-                    RBracket "]" @ 196..197 trailing=[Whitespace " "]
-                  ArrayDimension
-                    AnnotationList
-                      Annotation
-                        At "@" @ 198..199
-                        Name
-                          Identifier "Huge" @ 199..203 trailing=[Whitespace " "]
-                    LBracket "[" @ 204..205
-                    RBracket "]" @ 205..206 trailing=[Whitespace " "]
-                  ArrayDimension
-                    AnnotationList
-                      Annotation
-                        At "@" @ 207..208
-                        Name
-                          Identifier "Wide" @ 208..212 trailing=[Whitespace " "]
-                    LBracket "[" @ 213..214
-                    RBracket "]" @ 214..215 trailing=[Whitespace " "]
-                  ArrayDimension
-                    AnnotationList
-                      Annotation
-                        At "@" @ 216..217
-                        Name
-                          Identifier "Deep" @ 217..221 trailing=[Whitespace " "]
-                    LBracket "[" @ 222..223
-                    RBracket "]" @ 223..224 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "labels" @ 225..231
-              Semicolon ";" @ 231..232
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 233..237 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "consume" @ 238..245
-              LParen "(" @ 245..246
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ArrayType
-                    PrimitiveType
-                      AnnotationList
-                      IntKw "int" @ 246..249
-                    ArrayDimensions
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 249..250
-                        RBracket "]" @ 250..251
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 251..252
-                        RBracket "]" @ 252..253
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 253..254
-                        RBracket "]" @ 254..255
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 255..256
-                        RBracket "]" @ 256..257
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 257..258
-                        RBracket "]" @ 258..259
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 259..260
-                        RBracket "]" @ 260..261
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 261..262
-                        RBracket "]" @ 262..263
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 263..264
-                        RBracket "]" @ 264..265
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 265..266
-                        RBracket "]" @ 266..267
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 267..268
-                        RBracket "]" @ 268..269
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 269..270
-                        RBracket "]" @ 270..271
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 271..272
-                        RBracket "]" @ 272..273
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 273..274
-                        RBracket "]" @ 274..275
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 275..276
-                        RBracket "]" @ 276..277
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 277..278
-                        RBracket "]" @ 278..279
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 279..280
-                        RBracket "]" @ 280..281
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 281..282
-                        RBracket "]" @ 282..283
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 283..284
-                        RBracket "]" @ 284..285
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 285..286
-                        RBracket "]" @ 286..287
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 287..288
-                        RBracket "]" @ 288..289
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 289..290
-                        RBracket "]" @ 290..291
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 291..292
-                        RBracket "]" @ 292..293
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 293..294
-                        RBracket "]" @ 294..295
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 295..296
-                        RBracket "]" @ 296..297 trailing=[Whitespace " "]
+                        Identifier "Readonly" @ 143..151 trailing=[Whitespace " "]
+                  LBracket "[" @ 152..153
+                  RBracket "]" @ 153..154 trailing=[Whitespace " "]
+                ArrayDimension
                   AnnotationList
-                  Identifier "values" @ 298..304
+                    Annotation
+                      At "@" @ 155..156
+                      Name
+                        Identifier "Frozen" @ 156..162 trailing=[Whitespace " "]
+                  LBracket "[" @ 163..164
+                  RBracket "]" @ 164..165 trailing=[Whitespace " "]
+                ArrayDimension
+                  AnnotationList
+                    Annotation
+                      At "@" @ 166..167
+                      Name
+                        Identifier "Stable" @ 167..173 trailing=[Whitespace " "]
+                  LBracket "[" @ 174..175
+                  RBracket "]" @ 175..176 trailing=[Whitespace " "]
+                ArrayDimension
+                  AnnotationList
+                    Annotation
+                      At "@" @ 177..178
+                      Name
+                        Identifier "Shared" @ 178..184 trailing=[Whitespace " "]
+                  LBracket "[" @ 185..186
+                  RBracket "]" @ 186..187 trailing=[Whitespace " "]
+                ArrayDimension
+                  AnnotationList
+                    Annotation
+                      At "@" @ 188..189
+                      Name
+                        Identifier "Large" @ 189..194 trailing=[Whitespace " "]
+                  LBracket "[" @ 195..196
+                  RBracket "]" @ 196..197 trailing=[Whitespace " "]
+                ArrayDimension
+                  AnnotationList
+                    Annotation
+                      At "@" @ 198..199
+                      Name
+                        Identifier "Huge" @ 199..203 trailing=[Whitespace " "]
+                  LBracket "[" @ 204..205
+                  RBracket "]" @ 205..206 trailing=[Whitespace " "]
+                ArrayDimension
+                  AnnotationList
+                    Annotation
+                      At "@" @ 207..208
+                      Name
+                        Identifier "Wide" @ 208..212 trailing=[Whitespace " "]
+                  LBracket "[" @ 213..214
+                  RBracket "]" @ 214..215 trailing=[Whitespace " "]
+                ArrayDimension
+                  AnnotationList
+                    Annotation
+                      At "@" @ 216..217
+                      Name
+                        Identifier "Deep" @ 217..221 trailing=[Whitespace " "]
+                  LBracket "[" @ 222..223
+                  RBracket "]" @ 223..224 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "labels" @ 225..231
+            Semicolon ";" @ 231..232
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 233..237 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "consume" @ 238..245
+            LParen "(" @ 245..246
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ArrayType
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 246..249
                   ArrayDimensions
                     ArrayDimension
                       AnnotationList
-                      LBracket "[" @ 304..305
-                      RBracket "]" @ 305..306
+                      LBracket "[" @ 249..250
+                      RBracket "]" @ 250..251
                     ArrayDimension
                       AnnotationList
-                      LBracket "[" @ 306..307
-                      RBracket "]" @ 307..308
+                      LBracket "[" @ 251..252
+                      RBracket "]" @ 252..253
                     ArrayDimension
                       AnnotationList
-                      LBracket "[" @ 308..309
-                      RBracket "]" @ 309..310
+                      LBracket "[" @ 253..254
+                      RBracket "]" @ 254..255
                     ArrayDimension
                       AnnotationList
-                      LBracket "[" @ 310..311
-                      RBracket "]" @ 311..312
+                      LBracket "[" @ 255..256
+                      RBracket "]" @ 256..257
                     ArrayDimension
                       AnnotationList
-                      LBracket "[" @ 312..313
-                      RBracket "]" @ 313..314
+                      LBracket "[" @ 257..258
+                      RBracket "]" @ 258..259
                     ArrayDimension
                       AnnotationList
-                      LBracket "[" @ 314..315
-                      RBracket "]" @ 315..316
+                      LBracket "[" @ 259..260
+                      RBracket "]" @ 260..261
                     ArrayDimension
                       AnnotationList
-                      LBracket "[" @ 316..317
-                      RBracket "]" @ 317..318
+                      LBracket "[" @ 261..262
+                      RBracket "]" @ 262..263
                     ArrayDimension
                       AnnotationList
-                      LBracket "[" @ 318..319
-                      RBracket "]" @ 319..320
+                      LBracket "[" @ 263..264
+                      RBracket "]" @ 264..265
                     ArrayDimension
                       AnnotationList
-                      LBracket "[" @ 320..321
-                      RBracket "]" @ 321..322
+                      LBracket "[" @ 265..266
+                      RBracket "]" @ 266..267
                     ArrayDimension
                       AnnotationList
-                      LBracket "[" @ 322..323
-                      RBracket "]" @ 323..324
+                      LBracket "[" @ 267..268
+                      RBracket "]" @ 268..269
                     ArrayDimension
                       AnnotationList
-                      LBracket "[" @ 324..325
-                      RBracket "]" @ 325..326
+                      LBracket "[" @ 269..270
+                      RBracket "]" @ 270..271
                     ArrayDimension
                       AnnotationList
-                      LBracket "[" @ 326..327
-                      RBracket "]" @ 327..328
-              RParen ")" @ 328..329 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 330..331
-                BlockStatementList
-                RBrace "}" @ 331..332
+                      LBracket "[" @ 271..272
+                      RBracket "]" @ 272..273
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 273..274
+                      RBracket "]" @ 274..275
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 275..276
+                      RBracket "]" @ 276..277
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 277..278
+                      RBracket "]" @ 278..279
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 279..280
+                      RBracket "]" @ 280..281
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 281..282
+                      RBracket "]" @ 282..283
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 283..284
+                      RBracket "]" @ 284..285
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 285..286
+                      RBracket "]" @ 286..287
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 287..288
+                      RBracket "]" @ 288..289
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 289..290
+                      RBracket "]" @ 290..291
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 291..292
+                      RBracket "]" @ 292..293
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 293..294
+                      RBracket "]" @ 294..295
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 295..296
+                      RBracket "]" @ 296..297 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "values" @ 298..304
+                ArrayDimensions
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 304..305
+                    RBracket "]" @ 305..306
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 306..307
+                    RBracket "]" @ 307..308
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 308..309
+                    RBracket "]" @ 309..310
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 310..311
+                    RBracket "]" @ 311..312
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 312..313
+                    RBracket "]" @ 313..314
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 314..315
+                    RBracket "]" @ 315..316
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 316..317
+                    RBracket "]" @ 317..318
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 318..319
+                    RBracket "]" @ 319..320
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 320..321
+                    RBracket "]" @ 321..322
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 322..323
+                    RBracket "]" @ 323..324
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 324..325
+                    RBracket "]" @ 325..326
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 326..327
+                    RBracket "]" @ 327..328
+            RParen ")" @ 328..329 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 330..331
+              BlockStatementList
+              RBrace "}" @ 331..332
         RBrace "}" @ 333..334 leading=[Newline "\n"]
   Eof "" @ 335..335 leading=[Newline "\n"]
 

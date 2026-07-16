@@ -15,35 +15,34 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 8..9 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 10..14 trailing=[Whitespace " "]
-              Identifier "m" @ 15..16
-              LParen "(" @ 16..17
-              RParen ")" @ 17..18 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 19..20 trailing=[Whitespace " "]
-                BlockStatementList
-                  BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        UnqualifiedMethodInvocation
-                          NameExpression
-                            Identifier "call" @ 21..25
-                          ArgumentList
-                            LParen "(" @ 25..26
-                            ExpressionList
-                              NameExpression
-                                Identifier "first" @ 26..31
-                              Comma "," @ 31..32 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
-                              ErrorNode
-                              Comma "," @ 46..47 trailing=[Whitespace " "]
-                              NameExpression
-                                Identifier "second" @ 48..54
-                            RParen ")" @ 54..55
-                      Semicolon ";" @ 55..56 trailing=[Whitespace " "]
-                RBrace "}" @ 57..58 trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 10..14 trailing=[Whitespace " "]
+            Identifier "m" @ 15..16
+            LParen "(" @ 16..17
+            RParen ")" @ 17..18 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 19..20 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "call" @ 21..25
+                        ArgumentList
+                          LParen "(" @ 25..26
+                          ExpressionList
+                            NameExpression
+                              Identifier "first" @ 26..31
+                            Comma "," @ 31..32 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
+                            ErrorNode
+                            Comma "," @ 46..47 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "second" @ 48..54
+                          RParen ")" @ 54..55
+                    Semicolon ";" @ 55..56 trailing=[Whitespace " "]
+              RBrace "}" @ 57..58 trailing=[Whitespace " "]
         RBrace "}" @ 59..60
   Eof "" @ 61..61 leading=[Newline "\n"]
 

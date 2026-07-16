@@ -25,159 +25,157 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 14..15
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 16..20 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "values" @ 21..27
-              LParen "(" @ 27..28
-              RParen ")" @ 28..29 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 30..31
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ArrayType
-                        ClassType
-                          ClassTypeSegmentList
-                            ClassTypeSegmentNode
-                              AnnotationList
-                              Name
-                                Identifier "Object" @ 32..38 leading=[Newline "\n"]
-                        ArrayDimensions
-                          ArrayDimension
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 16..20 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "values" @ 21..27
+            LParen "(" @ 27..28
+            RParen ")" @ 28..29 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 30..31
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ArrayType
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
                             AnnotationList
-                            LBracket "[" @ 38..39
-                            RBracket "]" @ 39..40 trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "valuesThatForceTheArrayInitializerOntoTheNextLineHere" @ 41..94 trailing=[Whitespace " "]
-                          Assign "=" @ 95..96 trailing=[Whitespace " "]
-                          VariableInitializer
-                            ArrayCreationExpression
-                              NewKw "new" @ 97..100 trailing=[Whitespace " "]
-                              ArrayType
-                                ClassType
-                                  ClassTypeSegmentList
-                                    ClassTypeSegmentNode
-                                      AnnotationList
-                                      Name
-                                        Identifier "Object" @ 101..107
-                                ArrayDimensions
-                                  ArrayDimension
+                            Name
+                              Identifier "Object" @ 32..38 leading=[Newline "\n"]
+                      ArrayDimensions
+                        ArrayDimension
+                          AnnotationList
+                          LBracket "[" @ 38..39
+                          RBracket "]" @ 39..40 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "valuesThatForceTheArrayInitializerOntoTheNextLineHere" @ 41..94 trailing=[Whitespace " "]
+                        Assign "=" @ 95..96 trailing=[Whitespace " "]
+                        VariableInitializer
+                          ArrayCreationExpression
+                            NewKw "new" @ 97..100 trailing=[Whitespace " "]
+                            ArrayType
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
                                     AnnotationList
-                                    LBracket "[" @ 107..108
-                                    RBracket "]" @ 108..109 trailing=[Whitespace " "]
-                              DimExpressionList
-                              ArrayInitializer
-                                LBrace "{" @ 110..111
-                                VariableInitializerList
-                                  ObjectCreationExpression
-                                    NewKw "new" @ 112..115 leading=[Newline "\n"] trailing=[Whitespace " "]
-                                    ClassType
-                                      ClassTypeSegmentList
-                                        ClassTypeSegmentNode
-                                          AnnotationList
-                                          Name
-                                            Identifier "Object" @ 116..122
-                                    ArgumentList
-                                      LParen "(" @ 122..123
-                                      ExpressionList
-                                      RParen ")" @ 123..124
-                                  Comma "," @ 124..125
-                                  ObjectCreationExpression
-                                    NewKw "new" @ 126..129 leading=[Newline "\n"] trailing=[Whitespace " "]
-                                    ClassType
-                                      ClassTypeSegmentList
-                                        ClassTypeSegmentNode
-                                          AnnotationList
-                                          Name
-                                            Identifier "Object" @ 130..136
-                                    ArgumentList
-                                      LParen "(" @ 136..137
-                                      ExpressionList
-                                      RParen ")" @ 137..138
-                                  Comma "," @ 138..139
-                                RBrace "}" @ 140..141 leading=[Newline "\n"]
-                    Semicolon ";" @ 141..142
-                RBrace "}" @ 143..144 leading=[Newline "\n"]
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 145..149 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "inlineValues" @ 150..162
-              LParen "(" @ 162..163
-              RParen ")" @ 163..164 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 165..166
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ArrayType
-                        ClassType
-                          ClassTypeSegmentList
-                            ClassTypeSegmentNode
-                              AnnotationList
-                              Name
-                                Identifier "Object" @ 167..173 leading=[Newline "\n"]
-                        ArrayDimensions
-                          ArrayDimension
+                                    Name
+                                      Identifier "Object" @ 101..107
+                              ArrayDimensions
+                                ArrayDimension
+                                  AnnotationList
+                                  LBracket "[" @ 107..108
+                                  RBracket "]" @ 108..109 trailing=[Whitespace " "]
+                            DimExpressionList
+                            ArrayInitializer
+                              LBrace "{" @ 110..111
+                              VariableInitializerList
+                                ObjectCreationExpression
+                                  NewKw "new" @ 112..115 leading=[Newline "\n"] trailing=[Whitespace " "]
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "Object" @ 116..122
+                                  ArgumentList
+                                    LParen "(" @ 122..123
+                                    ExpressionList
+                                    RParen ")" @ 123..124
+                                Comma "," @ 124..125
+                                ObjectCreationExpression
+                                  NewKw "new" @ 126..129 leading=[Newline "\n"] trailing=[Whitespace " "]
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "Object" @ 130..136
+                                  ArgumentList
+                                    LParen "(" @ 136..137
+                                    ExpressionList
+                                    RParen ")" @ 137..138
+                                Comma "," @ 138..139
+                              RBrace "}" @ 140..141 leading=[Newline "\n"]
+                  Semicolon ";" @ 141..142
+              RBrace "}" @ 143..144 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 145..149 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "inlineValues" @ 150..162
+            LParen "(" @ 162..163
+            RParen ")" @ 163..164 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 165..166
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ArrayType
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
                             AnnotationList
-                            LBracket "[" @ 173..174
-                            RBracket "]" @ 174..175 trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "values" @ 176..182 trailing=[Whitespace " "]
-                          Assign "=" @ 183..184 trailing=[Whitespace " "]
-                          VariableInitializer
-                            ArrayCreationExpression
-                              NewKw "new" @ 185..188 trailing=[Whitespace " "]
-                              ArrayType
-                                ClassType
-                                  ClassTypeSegmentList
-                                    ClassTypeSegmentNode
-                                      AnnotationList
-                                      Name
-                                        Identifier "Object" @ 189..195
-                                ArrayDimensions
-                                  ArrayDimension
+                            Name
+                              Identifier "Object" @ 167..173 leading=[Newline "\n"]
+                      ArrayDimensions
+                        ArrayDimension
+                          AnnotationList
+                          LBracket "[" @ 173..174
+                          RBracket "]" @ 174..175 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "values" @ 176..182 trailing=[Whitespace " "]
+                        Assign "=" @ 183..184 trailing=[Whitespace " "]
+                        VariableInitializer
+                          ArrayCreationExpression
+                            NewKw "new" @ 185..188 trailing=[Whitespace " "]
+                            ArrayType
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
                                     AnnotationList
-                                    LBracket "[" @ 195..196
-                                    RBracket "]" @ 196..197 trailing=[Whitespace " "]
-                              DimExpressionList
-                              ArrayInitializer
-                                LBrace "{" @ 198..199
-                                VariableInitializerList
-                                  ObjectCreationExpression
-                                    NewKw "new" @ 199..202 trailing=[Whitespace " "]
-                                    ClassType
-                                      ClassTypeSegmentList
-                                        ClassTypeSegmentNode
-                                          AnnotationList
-                                          Name
-                                            Identifier "Object" @ 203..209
-                                    ArgumentList
-                                      LParen "(" @ 209..210
-                                      ExpressionList
-                                      RParen ")" @ 210..211
-                                  Comma "," @ 211..212 trailing=[Whitespace " "]
-                                  ObjectCreationExpression
-                                    NewKw "new" @ 213..216 trailing=[Whitespace " "]
-                                    ClassType
-                                      ClassTypeSegmentList
-                                        ClassTypeSegmentNode
-                                          AnnotationList
-                                          Name
-                                            Identifier "Object" @ 217..223
-                                    ArgumentList
-                                      LParen "(" @ 223..224
-                                      ExpressionList
-                                      RParen ")" @ 224..225
-                                RBrace "}" @ 225..226
-                    Semicolon ";" @ 226..227
-                RBrace "}" @ 228..229 leading=[Newline "\n"]
+                                    Name
+                                      Identifier "Object" @ 189..195
+                              ArrayDimensions
+                                ArrayDimension
+                                  AnnotationList
+                                  LBracket "[" @ 195..196
+                                  RBracket "]" @ 196..197 trailing=[Whitespace " "]
+                            DimExpressionList
+                            ArrayInitializer
+                              LBrace "{" @ 198..199
+                              VariableInitializerList
+                                ObjectCreationExpression
+                                  NewKw "new" @ 199..202 trailing=[Whitespace " "]
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "Object" @ 203..209
+                                  ArgumentList
+                                    LParen "(" @ 209..210
+                                    ExpressionList
+                                    RParen ")" @ 210..211
+                                Comma "," @ 211..212 trailing=[Whitespace " "]
+                                ObjectCreationExpression
+                                  NewKw "new" @ 213..216 trailing=[Whitespace " "]
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "Object" @ 217..223
+                                  ArgumentList
+                                    LParen "(" @ 223..224
+                                    ExpressionList
+                                    RParen ")" @ 224..225
+                              RBrace "}" @ 225..226
+                  Semicolon ";" @ 226..227
+              RBrace "}" @ 228..229 leading=[Newline "\n"]
         RBrace "}" @ 230..231 leading=[Newline "\n"]
   Eof "" @ 232..232 leading=[Newline "\n"]
 

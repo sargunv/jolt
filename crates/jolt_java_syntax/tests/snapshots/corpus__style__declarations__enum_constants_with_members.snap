@@ -28,32 +28,30 @@ CompilationUnit
             Identifier "BLUE" @ 25..29
         Semicolon ";" @ 29..30 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              ModifierList
-                PrivateKw "private" @ 31..38 trailing=[Whitespace " "]
-                FinalKw "final" @ 39..44 trailing=[Whitespace " "]
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 45..48 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "code" @ 49..53
-              Semicolon ";" @ 53..54 trailing=[Whitespace " "]
-          ClassBodyDeclaration
-            MethodDeclaration
-              ModifierList
-                PublicKw "public" @ 55..61 trailing=[Whitespace " "]
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 62..65 trailing=[Whitespace " "]
-              Identifier "code" @ 66..70
-              LParen "(" @ 70..71
-              RParen ")" @ 71..72 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 73..74
-                BlockStatementList
-                RBrace "}" @ 74..75 trailing=[Whitespace " "]
+          FieldDeclaration
+            ModifierList
+              PrivateKw "private" @ 31..38 trailing=[Whitespace " "]
+              FinalKw "final" @ 39..44 trailing=[Whitespace " "]
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 45..48 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "code" @ 49..53
+            Semicolon ";" @ 53..54 trailing=[Whitespace " "]
+          MethodDeclaration
+            ModifierList
+              PublicKw "public" @ 55..61 trailing=[Whitespace " "]
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 62..65 trailing=[Whitespace " "]
+            Identifier "code" @ 66..70
+            LParen "(" @ 70..71
+            RParen ")" @ 71..72 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 73..74
+              BlockStatementList
+              RBrace "}" @ 74..75 trailing=[Whitespace " "]
         RBrace "}" @ 76..77
   Eof "" @ 78..78 leading=[Newline "\n"]
 

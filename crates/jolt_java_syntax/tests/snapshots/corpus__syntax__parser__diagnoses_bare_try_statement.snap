@@ -19,25 +19,24 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 14..15
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 20..24 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 25..31
-              LParen "(" @ 31..32
-              RParen ")" @ 32..33 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 34..35
-                BlockStatementList
-                  BlockStatement
-                    TryStatement
-                      TryKw "try" @ 44..47 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      Block
-                        LBrace "{" @ 48..49
-                        BlockStatementList
-                        RBrace "}" @ 49..50
-                      CatchClauseList
-                RBrace "}" @ 55..56 leading=[Newline "\n", Whitespace "    "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 20..24 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 25..31
+            LParen "(" @ 31..32
+            RParen ")" @ 32..33 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 34..35
+              BlockStatementList
+                BlockStatement
+                  TryStatement
+                    TryKw "try" @ 44..47 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 48..49
+                      BlockStatementList
+                      RBrace "}" @ 49..50
+                    CatchClauseList
+              RBrace "}" @ 55..56 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 57..58 leading=[Newline "\n"]
   Eof "" @ 59..59 leading=[Newline "\n"]
 

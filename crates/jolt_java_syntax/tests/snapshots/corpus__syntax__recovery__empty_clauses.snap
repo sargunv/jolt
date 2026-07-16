@@ -34,19 +34,18 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 52..53 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 54..58 trailing=[Whitespace " "]
-              Identifier "m" @ 59..60
-              LParen "(" @ 60..61
-              RParen ")" @ 61..62 trailing=[Whitespace " "]
-              ThrowsClause
-                ThrowsKw "throws" @ 63..69 trailing=[Whitespace " ", BlockComment "/* throws */", Whitespace " "]
-              Block
-                LBrace "{" @ 83..84
-                BlockStatementList
-                RBrace "}" @ 84..85 trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 54..58 trailing=[Whitespace " "]
+            Identifier "m" @ 59..60
+            LParen "(" @ 60..61
+            RParen ")" @ 61..62 trailing=[Whitespace " "]
+            ThrowsClause
+              ThrowsKw "throws" @ 63..69 trailing=[Whitespace " ", BlockComment "/* throws */", Whitespace " "]
+            Block
+              LBrace "{" @ 83..84
+              BlockStatementList
+              RBrace "}" @ 84..85 trailing=[Whitespace " "]
         RBrace "}" @ 86..87
     ModuleDeclaration
       AnnotationList

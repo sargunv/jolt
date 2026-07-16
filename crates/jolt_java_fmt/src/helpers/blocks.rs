@@ -88,6 +88,16 @@ pub(crate) fn source_braced_body<'source>(
     body: impl Into<BodyContent<'source>>,
 ) -> Doc<'source> {
     let body = body.into();
+    if open.source().is_none() && close.source().is_none() && !body.visible {
+        return doc_concat!(
+            doc,
+            [
+                format_source_open_brace(doc, open),
+                body.doc,
+                format_source_close_brace(doc, close),
+            ]
+        );
+    }
     doc_concat!(
         doc,
         [

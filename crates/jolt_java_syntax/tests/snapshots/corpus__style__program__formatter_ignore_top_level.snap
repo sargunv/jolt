@@ -25,23 +25,22 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 43..44
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 44..47 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "x" @ 48..49
-                  Assign "=" @ 49..50
-                  VariableInitializer
-                    BinaryExpression
-                      LiteralExpression
-                        IntegerLiteral "1" @ 50..51
-                      Plus "+" @ 51..52
-                      LiteralExpression
-                        IntegerLiteral "2" @ 52..53
-              Semicolon ";" @ 53..54
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 44..47 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "x" @ 48..49
+                Assign "=" @ 49..50
+                VariableInitializer
+                  BinaryExpression
+                    LiteralExpression
+                      IntegerLiteral "1" @ 50..51
+                    Plus "+" @ 51..52
+                    LiteralExpression
+                      IntegerLiteral "2" @ 52..53
+            Semicolon ";" @ 53..54
         RBrace "}" @ 54..55
   Eof "" @ 73..73 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"]
 

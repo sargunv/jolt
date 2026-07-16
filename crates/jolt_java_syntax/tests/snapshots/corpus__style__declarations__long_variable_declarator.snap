@@ -26,208 +26,201 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 29..30
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              ModifierList
-                FinalKw "final" @ 31..36 leading=[Newline "\n"] trailing=[Whitespace " "]
-                Annotation
-                  At "@" @ 37..38
-                  Name
-                    Identifier "Nullable" @ 38..46 trailing=[Whitespace " "]
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 47..53 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "creationUserAgentXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" @ 54..129
-              Semicolon ";" @ 129..130
-          ClassBodyDeclaration
-            FieldDeclaration
-              ModifierList
-                FinalKw "final" @ 131..136 leading=[Newline "\n"] trailing=[Whitespace " "]
-                Annotation
-                  At "@" @ 137..138
-                  Name
-                    Identifier "Nullable" @ 138..146 trailing=[Whitespace " "]
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 147..153 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "shortName" @ 154..163 trailing=[Whitespace " "]
-                  Assign "=" @ 164..165 trailing=[Whitespace " "]
-                  VariableInitializer
-                    MethodInvocationExpression
-                      UnqualifiedMethodInvocation
-                        NameExpression
-                          Identifier "computeCreationUserAgentXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" @ 166..248
-                        ArgumentList
-                          LParen "(" @ 248..249
-                          ExpressionList
-                          RParen ")" @ 249..250
-              Semicolon ";" @ 250..251
-          ClassBodyDeclaration
-            FieldDeclaration
-              ModifierList
-                FinalKw "final" @ 252..257 leading=[Newline "\n"] trailing=[Whitespace " "]
-                Annotation
-                  At "@" @ 258..259
-                  Name
-                    Identifier "Nullable" @ 259..267 trailing=[Whitespace " "]
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 268..274 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "compactName" @ 275..286
-              Semicolon ";" @ 286..287
-          ClassBodyDeclaration
-            MethodDeclaration
-              ModifierList
-                PublicKw "public" @ 288..294 leading=[Newline "\n"] trailing=[Whitespace " "]
-                Annotation
-                  At "@" @ 295..296
-                  Name
-                    Identifier "Nullable" @ 296..304 trailing=[Whitespace " "]
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 305..311 trailing=[Whitespace " "]
-              Identifier "returnValueXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" @ 312..381
-              LParen "(" @ 381..382
-              RParen ")" @ 382..383 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 384..385 trailing=[Whitespace " "]
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 386..392 trailing=[Whitespace " "]
-                      LiteralExpression
-                        StringLiteral "\"\"" @ 393..395
-                      Semicolon ";" @ 395..396 trailing=[Whitespace " "]
-                RBrace "}" @ 397..398
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 399..403 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "consume" @ 404..411
-              LParen "(" @ 411..412
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                    FinalKw "final" @ 412..417 trailing=[Whitespace " "]
-                    Annotation
-                      At "@" @ 418..419
-                      Name
-                        Identifier "Nullable" @ 419..427 trailing=[Whitespace " "]
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "String" @ 428..434 trailing=[Whitespace " "]
+          FieldDeclaration
+            ModifierList
+              FinalKw "final" @ 31..36 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Annotation
+                At "@" @ 37..38
+                Name
+                  Identifier "Nullable" @ 38..46 trailing=[Whitespace " "]
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
                   AnnotationList
-                  Identifier "creationUserAgentXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" @ 435..508
-              RParen ")" @ 508..509 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 510..511
-                BlockStatementList
-                RBrace "}" @ 511..512
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 513..517 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "consumeShort" @ 518..530
-              LParen "(" @ 530..531
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                    FinalKw "final" @ 531..536 trailing=[Whitespace " "]
-                    Annotation
-                      At "@" @ 537..538
-                      Name
-                        Identifier "Nullable" @ 538..546 trailing=[Whitespace " "]
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "String" @ 547..553 trailing=[Whitespace " "]
+                  Name
+                    Identifier "String" @ 47..53 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "creationUserAgentXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" @ 54..129
+            Semicolon ";" @ 129..130
+          FieldDeclaration
+            ModifierList
+              FinalKw "final" @ 131..136 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Annotation
+                At "@" @ 137..138
+                Name
+                  Identifier "Nullable" @ 138..146 trailing=[Whitespace " "]
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
                   AnnotationList
-                  Identifier "shortName" @ 554..563
-              RParen ")" @ 563..564 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 565..566
-                BlockStatementList
-                RBrace "}" @ 566..567
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 568..572 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "run" @ 573..576
-              LParen "(" @ 576..577
-              RParen ")" @ 577..578 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 579..580
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                        FinalKw "final" @ 581..586 leading=[Newline "\n"] trailing=[Whitespace " "]
-                        Annotation
-                          At "@" @ 587..588
+                  Name
+                    Identifier "String" @ 147..153 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "shortName" @ 154..163 trailing=[Whitespace " "]
+                Assign "=" @ 164..165 trailing=[Whitespace " "]
+                VariableInitializer
+                  MethodInvocationExpression
+                    UnqualifiedMethodInvocation
+                      NameExpression
+                        Identifier "computeCreationUserAgentXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" @ 166..248
+                      ArgumentList
+                        LParen "(" @ 248..249
+                        ExpressionList
+                        RParen ")" @ 249..250
+            Semicolon ";" @ 250..251
+          FieldDeclaration
+            ModifierList
+              FinalKw "final" @ 252..257 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Annotation
+                At "@" @ 258..259
+                Name
+                  Identifier "Nullable" @ 259..267 trailing=[Whitespace " "]
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "String" @ 268..274 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "compactName" @ 275..286
+            Semicolon ";" @ 286..287
+          MethodDeclaration
+            ModifierList
+              PublicKw "public" @ 288..294 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Annotation
+                At "@" @ 295..296
+                Name
+                  Identifier "Nullable" @ 296..304 trailing=[Whitespace " "]
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "String" @ 305..311 trailing=[Whitespace " "]
+            Identifier "returnValueXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" @ 312..381
+            LParen "(" @ 381..382
+            RParen ")" @ 382..383 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 384..385 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 386..392 trailing=[Whitespace " "]
+                    LiteralExpression
+                      StringLiteral "\"\"" @ 393..395
+                    Semicolon ";" @ 395..396 trailing=[Whitespace " "]
+              RBrace "}" @ 397..398
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 399..403 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "consume" @ 404..411
+            LParen "(" @ 411..412
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                  FinalKw "final" @ 412..417 trailing=[Whitespace " "]
+                  Annotation
+                    At "@" @ 418..419
+                    Name
+                      Identifier "Nullable" @ 419..427 trailing=[Whitespace " "]
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 428..434 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "creationUserAgentXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" @ 435..508
+            RParen ")" @ 508..509 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 510..511
+              BlockStatementList
+              RBrace "}" @ 511..512
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 513..517 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "consumeShort" @ 518..530
+            LParen "(" @ 530..531
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                  FinalKw "final" @ 531..536 trailing=[Whitespace " "]
+                  Annotation
+                    At "@" @ 537..538
+                    Name
+                      Identifier "Nullable" @ 538..546 trailing=[Whitespace " "]
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 547..553 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "shortName" @ 554..563
+            RParen ")" @ 563..564 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 565..566
+              BlockStatementList
+              RBrace "}" @ 566..567
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 568..572 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "run" @ 573..576
+            LParen "(" @ 576..577
+            RParen ")" @ 577..578 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 579..580
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                      FinalKw "final" @ 581..586 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      Annotation
+                        At "@" @ 587..588
+                        Name
+                          Identifier "Nullable" @ 588..596 trailing=[Whitespace " "]
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
                           Name
-                            Identifier "Nullable" @ 588..596 trailing=[Whitespace " "]
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 597..603 trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "creationUserAgentXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" @ 604..677
-                    Semicolon ";" @ 677..678
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                        FinalKw "final" @ 679..684 leading=[Newline "\n"] trailing=[Whitespace " "]
-                        Annotation
-                          At "@" @ 685..686
+                            Identifier "String" @ 597..603 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "creationUserAgentXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" @ 604..677
+                  Semicolon ";" @ 677..678
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                      FinalKw "final" @ 679..684 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      Annotation
+                        At "@" @ 685..686
+                        Name
+                          Identifier "Nullable" @ 686..694 trailing=[Whitespace " "]
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
                           Name
-                            Identifier "Nullable" @ 686..694 trailing=[Whitespace " "]
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 695..701 trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "shortName" @ 702..711 trailing=[Whitespace " "]
-                          Assign "=" @ 712..713 trailing=[Whitespace " "]
-                          VariableInitializer
-                            MethodInvocationExpression
-                              UnqualifiedMethodInvocation
-                                NameExpression
-                                  Identifier "computeCreationUserAgentXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" @ 714..794
-                                ArgumentList
-                                  LParen "(" @ 794..795
-                                  ExpressionList
-                                  RParen ")" @ 795..796
-                    Semicolon ";" @ 796..797
-                RBrace "}" @ 798..799 leading=[Newline "\n"]
+                            Identifier "String" @ 695..701 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "shortName" @ 702..711 trailing=[Whitespace " "]
+                        Assign "=" @ 712..713 trailing=[Whitespace " "]
+                        VariableInitializer
+                          MethodInvocationExpression
+                            UnqualifiedMethodInvocation
+                              NameExpression
+                                Identifier "computeCreationUserAgentXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" @ 714..794
+                              ArgumentList
+                                LParen "(" @ 794..795
+                                ExpressionList
+                                RParen ")" @ 795..796
+                  Semicolon ";" @ 796..797
+              RBrace "}" @ 798..799 leading=[Newline "\n"]
         RBrace "}" @ 800..801 leading=[Newline "\n"]
   Eof "" @ 802..802 leading=[Newline "\n"]
 

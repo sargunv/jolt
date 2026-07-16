@@ -25,59 +25,57 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 24..25
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "Outer" @ 30..35 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "outer" @ 36..41
-              Semicolon ";" @ 41..42
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 48..52 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 53..59
-              LParen "(" @ 59..60
-              RParen ")" @ 60..61 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 62..63
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "Object" @ 72..78 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "inner" @ 79..84 trailing=[Whitespace " "]
-                          Assign "=" @ 85..86 trailing=[Whitespace " "]
-                          VariableInitializer
-                            ObjectCreationExpression
-                              NameExpression
-                                Identifier "outer" @ 87..92
-                              Dot "." @ 92..93
-                              NewKw "new" @ 93..96 trailing=[Whitespace " "]
-                              ClassType
-                                ClassTypeSegmentList
-                                  ClassTypeSegmentNode
-                                    AnnotationList
-                                    Name
-                                      Identifier "Inner" @ 97..102
-                              ArgumentList
-                                LParen "(" @ 102..103
-                                ExpressionList
-                                RParen ")" @ 103..104
-                    Semicolon ";" @ 104..105
-                RBrace "}" @ 110..111 leading=[Newline "\n", Whitespace "    "]
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "Outer" @ 30..35 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "outer" @ 36..41
+            Semicolon ";" @ 41..42
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 48..52 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 53..59
+            LParen "(" @ 59..60
+            RParen ")" @ 60..61 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 62..63
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Object" @ 72..78 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "inner" @ 79..84 trailing=[Whitespace " "]
+                        Assign "=" @ 85..86 trailing=[Whitespace " "]
+                        VariableInitializer
+                          ObjectCreationExpression
+                            NameExpression
+                              Identifier "outer" @ 87..92
+                            Dot "." @ 92..93
+                            NewKw "new" @ 93..96 trailing=[Whitespace " "]
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "Inner" @ 97..102
+                            ArgumentList
+                              LParen "(" @ 102..103
+                              ExpressionList
+                              RParen ")" @ 103..104
+                  Semicolon ";" @ 104..105
+              RBrace "}" @ 110..111 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 112..113 leading=[Newline "\n"]
     ClassDeclaration
       ClassKw "class" @ 115..120 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
@@ -85,14 +83,13 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 127..128
         ClassBodyMemberList
-          ClassBodyDeclaration
-            ClassDeclaration
-              ClassKw "class" @ 133..138 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "Inner" @ 139..144 trailing=[Whitespace " "]
-              ClassBody
-                LBrace "{" @ 145..146
-                ClassBodyMemberList
-                RBrace "}" @ 146..147
+          ClassDeclaration
+            ClassKw "class" @ 133..138 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "Inner" @ 139..144 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 145..146
+              ClassBodyMemberList
+              RBrace "}" @ 146..147
         RBrace "}" @ 148..149 leading=[Newline "\n"]
   Eof "" @ 150..150 leading=[Newline "\n"]
 

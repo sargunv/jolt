@@ -54,15 +54,14 @@ CompilationUnit
           Comma "," @ 85..86 trailing=[Whitespace " ", LineComment "// before members"]
         Semicolon ";" @ 107..108 leading=[Newline "\n", Whitespace "  "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 112..115 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "code" @ 116..120
-              Semicolon ";" @ 120..121
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 112..115 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "code" @ 116..120
+            Semicolon ";" @ 120..121
         RBrace "}" @ 122..123 leading=[Newline "\n"]
     EnumDeclaration
       EnumKw "enum" @ 125..129 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
@@ -76,15 +75,14 @@ CompilationUnit
           Comma "," @ 154..155 trailing=[Whitespace " ", BlockComment "/* before members */"]
         Semicolon ";" @ 179..180 leading=[Newline "\n", Whitespace "  "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 184..187 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "code" @ 188..192
-              Semicolon ";" @ 192..193
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 184..187 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "code" @ 188..192
+            Semicolon ";" @ 192..193
         RBrace "}" @ 194..195 leading=[Newline "\n"]
   Eof "" @ 196..196 leading=[Newline "\n"]
 

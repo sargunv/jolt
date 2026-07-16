@@ -26,34 +26,33 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 46..47
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              ModifierList
-                AbstractKw "abstract" @ 52..60 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              PrimitiveType
+          MethodDeclaration
+            ModifierList
+              AbstractKw "abstract" @ 52..60 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 61..64 trailing=[Whitespace " "]
+            Identifier "values" @ 65..71
+            LParen "(" @ 71..72
+            RParen ")" @ 72..73 trailing=[Whitespace " "]
+            ArrayDimensions
+              ArrayDimension
                 AnnotationList
-                IntKw "int" @ 61..64 trailing=[Whitespace " "]
-              Identifier "values" @ 65..71
-              LParen "(" @ 71..72
-              RParen ")" @ 72..73 trailing=[Whitespace " "]
-              ArrayDimensions
-                ArrayDimension
-                  AnnotationList
-                    Annotation
-                      At "@" @ 74..75
-                      Name
-                        Identifier "A" @ 75..76 trailing=[Whitespace " "]
-                  LBracket "[" @ 77..78
-                  RBracket "]" @ 78..79 trailing=[Whitespace " "]
-                ArrayDimension
-                  AnnotationList
-                    Annotation
-                      At "@" @ 80..81
-                      Name
-                        Identifier "B" @ 81..82 trailing=[Whitespace " "]
-                  LBracket "[" @ 83..84
-                  RBracket "]" @ 84..85
-              Semicolon ";" @ 85..86
+                  Annotation
+                    At "@" @ 74..75
+                    Name
+                      Identifier "A" @ 75..76 trailing=[Whitespace " "]
+                LBracket "[" @ 77..78
+                RBracket "]" @ 78..79 trailing=[Whitespace " "]
+              ArrayDimension
+                AnnotationList
+                  Annotation
+                    At "@" @ 80..81
+                    Name
+                      Identifier "B" @ 81..82 trailing=[Whitespace " "]
+                LBracket "[" @ 83..84
+                RBracket "]" @ 84..85
+            Semicolon ";" @ 85..86
         RBrace "}" @ 87..88 leading=[Newline "\n"]
     AnnotationInterfaceDeclaration
       At "@" @ 90..91 leading=[Newline "\n", Newline "\n"]

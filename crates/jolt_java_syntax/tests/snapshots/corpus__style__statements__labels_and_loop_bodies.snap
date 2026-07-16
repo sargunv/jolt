@@ -23,201 +23,200 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 14..15
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 16..20 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "run" @ 21..24
-              LParen "(" @ 24..25
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        QualifiedName
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 16..20 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "run" @ 21..24
+            LParen "(" @ 24..25
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      QualifiedName
+                        QualifiedNameSegmentNode
+                          AnnotationList
+                          Identifier "java" @ 25..29
+                        Dot "." @ 29..30
+                        NameSegmentDotList
                           QualifiedNameSegmentNode
                             AnnotationList
-                            Identifier "java" @ 25..29
-                          Dot "." @ 29..30
-                          NameSegmentDotList
-                            QualifiedNameSegmentNode
-                              AnnotationList
-                              Identifier "util" @ 30..34
-                            Dot "." @ 34..35
-                            QualifiedNameSegmentNode
-                              AnnotationList
-                              Identifier "List" @ 35..39
-                        TypeArgumentList
-                          Lt "<" @ 39..40
-                          TypeArgumentSeparatedList
-                            TypeArgument
-                              AnnotationList
-                              ClassType
-                                ClassTypeSegmentList
-                                  ClassTypeSegmentNode
-                                    AnnotationList
-                                    Name
-                                      Identifier "String" @ 40..46
-                          Gt ">" @ 46..47 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "values" @ 48..54
-              RParen ")" @ 54..55 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 56..57
-                BlockStatementList
-                  BlockStatement
-                    LabeledStatement
-                      Identifier "retry" @ 58..63 leading=[Newline "\n"] trailing=[BlockComment "/* label */"]
-                      Colon ":" @ 74..75 trailing=[Whitespace " "]
-                      ForStatement
-                        EnhancedForStatement
-                          ForKw "for" @ 76..79
-                          LParen "(" @ 79..80 trailing=[BlockComment "/* each */", Whitespace " "]
-                          LocalVariableDeclaration
-                            ParameterModifierList
+                            Identifier "util" @ 30..34
+                          Dot "." @ 34..35
+                          QualifiedNameSegmentNode
+                            AnnotationList
+                            Identifier "List" @ 35..39
+                      TypeArgumentList
+                        Lt "<" @ 39..40
+                        TypeArgumentSeparatedList
+                          TypeArgument
+                            AnnotationList
                             ClassType
                               ClassTypeSegmentList
                                 ClassTypeSegmentNode
                                   AnnotationList
                                   Name
-                                    Identifier "String" @ 91..97 trailing=[Whitespace " "]
-                            VariableDeclaratorList
-                              VariableDeclarator
-                                Identifier "value" @ 98..103
-                          Colon ":" @ 103..104
-                          NameExpression
-                            Identifier "values" @ 104..110
-                          RParen ")" @ 110..111 trailing=[Whitespace " "]
-                          Block
-                            LBrace "{" @ 112..113 trailing=[Whitespace " "]
-                            BlockStatementList
-                              BlockStatement
-                                IfStatement
-                                  IfKw "if" @ 114..116 trailing=[Whitespace " "]
-                                  LParen "(" @ 117..118
-                                  MethodInvocationExpression
-                                    UnqualifiedMethodInvocation
-                                      NameExpression
-                                        Identifier "skip" @ 118..122
-                                      ArgumentList
-                                        LParen "(" @ 122..123
-                                        ExpressionList
-                                          NameExpression
-                                            Identifier "value" @ 123..128
-                                        RParen ")" @ 128..129
-                                  RParen ")" @ 129..130 trailing=[Whitespace " "]
-                                  ContinueStatement
-                                    ContinueKw "continue" @ 131..139 trailing=[Whitespace " "]
-                                    Identifier "retry" @ 140..145 trailing=[BlockComment "/* again */"]
-                                    Semicolon ";" @ 156..157 trailing=[Whitespace " "]
-                              BlockStatement
-                                IfStatement
-                                  IfKw "if" @ 158..160 trailing=[Whitespace " "]
-                                  LParen "(" @ 161..162
-                                  MethodInvocationExpression
-                                    UnqualifiedMethodInvocation
-                                      NameExpression
-                                        Identifier "stop" @ 162..166
-                                      ArgumentList
-                                        LParen "(" @ 166..167
-                                        ExpressionList
-                                          NameExpression
-                                            Identifier "value" @ 167..172
-                                        RParen ")" @ 172..173
-                                  RParen ")" @ 173..174 trailing=[Whitespace " "]
-                                  BreakStatement
-                                    BreakKw "break" @ 175..180 trailing=[Whitespace " "]
-                                    Identifier "retry" @ 181..186 trailing=[BlockComment "/* target */"]
-                                    Semicolon ";" @ 198..199 trailing=[Whitespace " "]
-                              BlockStatement
-                                ExpressionStatement
-                                  MethodInvocationExpression
-                                    UnqualifiedMethodInvocation
-                                      NameExpression
-                                        Identifier "process" @ 200..207
-                                      ArgumentList
-                                        LParen "(" @ 207..208
-                                        ExpressionList
-                                          NameExpression
-                                            Identifier "value" @ 208..213
-                                        RParen ")" @ 213..214
-                                  Semicolon ";" @ 214..215 trailing=[Whitespace " "]
-                            RBrace "}" @ 216..217
-                  BlockStatement
-                    WhileStatement
-                      WhileKw "while" @ 218..223 leading=[Newline "\n"]
-                      LParen "(" @ 223..224 trailing=[BlockComment "/* while */", Whitespace " "]
-                      MethodInvocationExpression
-                        UnqualifiedMethodInvocation
-                          NameExpression
-                            Identifier "ready" @ 236..241
-                          ArgumentList
-                            LParen "(" @ 241..242
-                            ExpressionList
-                            RParen ")" @ 242..243
-                      RParen ")" @ 243..244 trailing=[Whitespace " "]
-                      EmptyStatement
-                        Semicolon ";" @ 245..246
-                  BlockStatement
-                    DoStatement
-                      DoKw "do" @ 247..249 leading=[Newline "\n"] trailing=[Whitespace " "]
-                      ExpressionStatement
-                        MethodInvocationExpression
-                          UnqualifiedMethodInvocation
-                            NameExpression
-                              Identifier "processNext" @ 250..261
-                            ArgumentList
-                              LParen "(" @ 261..262
-                              ExpressionList
-                              RParen ")" @ 262..263
-                        Semicolon ";" @ 263..264 trailing=[Whitespace " "]
-                      WhileKw "while" @ 265..270
-                      LParen "(" @ 270..271 trailing=[BlockComment "/* done */", Whitespace " "]
-                      MethodInvocationExpression
-                        UnqualifiedMethodInvocation
-                          NameExpression
-                            Identifier "hasNext" @ 282..289
-                          ArgumentList
-                            LParen "(" @ 289..290
-                            ExpressionList
-                            RParen ")" @ 290..291
-                      RParen ")" @ 291..292
-                      Semicolon ";" @ 292..293
-                  BlockStatement
+                                    Identifier "String" @ 40..46
+                        Gt ">" @ 46..47 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "values" @ 48..54
+            RParen ")" @ 54..55 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 56..57
+              BlockStatementList
+                BlockStatement
+                  LabeledStatement
+                    Identifier "retry" @ 58..63 leading=[Newline "\n"] trailing=[BlockComment "/* label */"]
+                    Colon ":" @ 74..75 trailing=[Whitespace " "]
                     ForStatement
-                      BasicForStatement
-                        ForKw "for" @ 294..297 leading=[Newline "\n"]
-                        LParen "(" @ 297..298 trailing=[BlockComment "/* forever */"]
-                        Semicolon ";" @ 311..312
-                        Semicolon ";" @ 312..313
-                        RParen ")" @ 313..314 trailing=[Whitespace " "]
-                        EmptyStatement
-                          Semicolon ";" @ 315..316
-                  BlockStatement
-                    SynchronizedStatement
-                      SynchronizedKw "synchronized" @ 317..329 leading=[Newline "\n"] trailing=[Whitespace " "]
-                      LParen "(" @ 330..331 trailing=[BlockComment "/* lock */", Whitespace " "]
-                      ThisExpression
-                        ThisKw "this" @ 342..346 trailing=[Whitespace " "]
-                      RParen ")" @ 347..348 trailing=[Whitespace " "]
-                      Block
-                        LBrace "{" @ 349..350 trailing=[Whitespace " "]
-                        BlockStatementList
-                          BlockStatement
-                            ExpressionStatement
-                              MethodInvocationExpression
-                                UnqualifiedMethodInvocation
-                                  NameExpression
-                                    Identifier "check" @ 351..356
-                                  ArgumentList
-                                    LParen "(" @ 356..357
-                                    ExpressionList
-                                    RParen ")" @ 357..358
-                              Semicolon ";" @ 358..359 trailing=[Whitespace " "]
-                        RBrace "}" @ 360..361
-                RBrace "}" @ 362..363 leading=[Newline "\n"]
+                      EnhancedForStatement
+                        ForKw "for" @ 76..79
+                        LParen "(" @ 79..80 trailing=[BlockComment "/* each */", Whitespace " "]
+                        LocalVariableDeclaration
+                          ParameterModifierList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 91..97 trailing=[Whitespace " "]
+                          VariableDeclaratorList
+                            VariableDeclarator
+                              Identifier "value" @ 98..103
+                        Colon ":" @ 103..104
+                        NameExpression
+                          Identifier "values" @ 104..110
+                        RParen ")" @ 110..111 trailing=[Whitespace " "]
+                        Block
+                          LBrace "{" @ 112..113 trailing=[Whitespace " "]
+                          BlockStatementList
+                            BlockStatement
+                              IfStatement
+                                IfKw "if" @ 114..116 trailing=[Whitespace " "]
+                                LParen "(" @ 117..118
+                                MethodInvocationExpression
+                                  UnqualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "skip" @ 118..122
+                                    ArgumentList
+                                      LParen "(" @ 122..123
+                                      ExpressionList
+                                        NameExpression
+                                          Identifier "value" @ 123..128
+                                      RParen ")" @ 128..129
+                                RParen ")" @ 129..130 trailing=[Whitespace " "]
+                                ContinueStatement
+                                  ContinueKw "continue" @ 131..139 trailing=[Whitespace " "]
+                                  Identifier "retry" @ 140..145 trailing=[BlockComment "/* again */"]
+                                  Semicolon ";" @ 156..157 trailing=[Whitespace " "]
+                            BlockStatement
+                              IfStatement
+                                IfKw "if" @ 158..160 trailing=[Whitespace " "]
+                                LParen "(" @ 161..162
+                                MethodInvocationExpression
+                                  UnqualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "stop" @ 162..166
+                                    ArgumentList
+                                      LParen "(" @ 166..167
+                                      ExpressionList
+                                        NameExpression
+                                          Identifier "value" @ 167..172
+                                      RParen ")" @ 172..173
+                                RParen ")" @ 173..174 trailing=[Whitespace " "]
+                                BreakStatement
+                                  BreakKw "break" @ 175..180 trailing=[Whitespace " "]
+                                  Identifier "retry" @ 181..186 trailing=[BlockComment "/* target */"]
+                                  Semicolon ";" @ 198..199 trailing=[Whitespace " "]
+                            BlockStatement
+                              ExpressionStatement
+                                MethodInvocationExpression
+                                  UnqualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "process" @ 200..207
+                                    ArgumentList
+                                      LParen "(" @ 207..208
+                                      ExpressionList
+                                        NameExpression
+                                          Identifier "value" @ 208..213
+                                      RParen ")" @ 213..214
+                                Semicolon ";" @ 214..215 trailing=[Whitespace " "]
+                          RBrace "}" @ 216..217
+                BlockStatement
+                  WhileStatement
+                    WhileKw "while" @ 218..223 leading=[Newline "\n"]
+                    LParen "(" @ 223..224 trailing=[BlockComment "/* while */", Whitespace " "]
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "ready" @ 236..241
+                        ArgumentList
+                          LParen "(" @ 241..242
+                          ExpressionList
+                          RParen ")" @ 242..243
+                    RParen ")" @ 243..244 trailing=[Whitespace " "]
+                    EmptyStatement
+                      Semicolon ";" @ 245..246
+                BlockStatement
+                  DoStatement
+                    DoKw "do" @ 247..249 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    ExpressionStatement
+                      MethodInvocationExpression
+                        UnqualifiedMethodInvocation
+                          NameExpression
+                            Identifier "processNext" @ 250..261
+                          ArgumentList
+                            LParen "(" @ 261..262
+                            ExpressionList
+                            RParen ")" @ 262..263
+                      Semicolon ";" @ 263..264 trailing=[Whitespace " "]
+                    WhileKw "while" @ 265..270
+                    LParen "(" @ 270..271 trailing=[BlockComment "/* done */", Whitespace " "]
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "hasNext" @ 282..289
+                        ArgumentList
+                          LParen "(" @ 289..290
+                          ExpressionList
+                          RParen ")" @ 290..291
+                    RParen ")" @ 291..292
+                    Semicolon ";" @ 292..293
+                BlockStatement
+                  ForStatement
+                    BasicForStatement
+                      ForKw "for" @ 294..297 leading=[Newline "\n"]
+                      LParen "(" @ 297..298 trailing=[BlockComment "/* forever */"]
+                      Semicolon ";" @ 311..312
+                      Semicolon ";" @ 312..313
+                      RParen ")" @ 313..314 trailing=[Whitespace " "]
+                      EmptyStatement
+                        Semicolon ";" @ 315..316
+                BlockStatement
+                  SynchronizedStatement
+                    SynchronizedKw "synchronized" @ 317..329 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    LParen "(" @ 330..331 trailing=[BlockComment "/* lock */", Whitespace " "]
+                    ThisExpression
+                      ThisKw "this" @ 342..346 trailing=[Whitespace " "]
+                    RParen ")" @ 347..348 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 349..350 trailing=[Whitespace " "]
+                      BlockStatementList
+                        BlockStatement
+                          ExpressionStatement
+                            MethodInvocationExpression
+                              UnqualifiedMethodInvocation
+                                NameExpression
+                                  Identifier "check" @ 351..356
+                                ArgumentList
+                                  LParen "(" @ 356..357
+                                  ExpressionList
+                                  RParen ")" @ 357..358
+                            Semicolon ";" @ 358..359 trailing=[Whitespace " "]
+                      RBrace "}" @ 360..361
+              RBrace "}" @ 362..363 leading=[Newline "\n"]
         RBrace "}" @ 364..365 leading=[Newline "\n"]
   Eof "" @ 366..366 leading=[Newline "\n"]
 

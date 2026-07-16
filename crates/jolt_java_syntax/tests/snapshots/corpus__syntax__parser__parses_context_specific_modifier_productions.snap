@@ -46,17 +46,16 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 67..68
         ClassBodyMemberList
-          ClassBodyDeclaration
-            ConstructorDeclaration
-              ModifierList
-                PublicKw "public" @ 73..79 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "ModifiedConstructor" @ 80..99
-              LParen "(" @ 99..100
-              RParen ")" @ 100..101 trailing=[Whitespace " "]
-              ConstructorBody
-                LBrace "{" @ 102..103
-                ConstructorBodyEntryList
-                RBrace "}" @ 103..104
+          ConstructorDeclaration
+            ModifierList
+              PublicKw "public" @ 73..79 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "ModifiedConstructor" @ 80..99
+            LParen "(" @ 99..100
+            RParen ")" @ 100..101 trailing=[Whitespace " "]
+            ConstructorBody
+              LBrace "{" @ 102..103
+              ConstructorBodyEntryList
+              RBrace "}" @ 103..104
         RBrace "}" @ 105..106 leading=[Newline "\n"]
     InterfaceDeclaration
       InterfaceKw "interface" @ 108..117 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]

@@ -22,74 +22,73 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 22..23
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              PrimitiveType
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 28..31 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 32..38
+            LParen "(" @ 38..39
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 39..45 trailing=[Whitespace " "]
                 AnnotationList
-                IntKw "int" @ 28..31 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 32..38
-              LParen "(" @ 38..39
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 39..45 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "value" @ 46..51
-              RParen ")" @ 51..52 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 53..54
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 63..69 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      SwitchExpression
-                        SwitchKw "switch" @ 70..76 trailing=[Whitespace " "]
-                        LParen "(" @ 77..78
-                        NameExpression
-                          Identifier "value" @ 78..83
-                        RParen ")" @ 83..84 trailing=[Whitespace " "]
-                        SwitchBlock
-                          LBrace "{" @ 85..86
-                          SwitchEntryList
-                            SwitchRule
-                              SwitchLabel
-                                CaseKw "case" @ 99..103 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                SwitchLabelItemList
-                                  CaseConstant
-                                    LiteralExpression
-                                      NullLiteral "null" @ 104..108 trailing=[Whitespace " "]
-                              Arrow "->" @ 109..111 trailing=[Whitespace " "]
-                              ThrowStatement
-                                ThrowKw "throw" @ 112..117 trailing=[Whitespace " "]
-                                ObjectCreationExpression
-                                  NewKw "new" @ 118..121 trailing=[Whitespace " "]
-                                  ClassType
-                                    ClassTypeSegmentList
-                                      ClassTypeSegmentNode
-                                        AnnotationList
-                                        Name
-                                          Identifier "IllegalArgumentException" @ 122..146
-                                  ArgumentList
-                                    LParen "(" @ 146..147
-                                    ExpressionList
-                                    RParen ")" @ 147..148
-                                Semicolon ";" @ 148..149
-                            SwitchRule
-                              SwitchLabel
-                                DefaultKw "default" @ 162..169 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                SwitchLabelItemList
-                              Arrow "->" @ 170..172 trailing=[Whitespace " "]
-                              LiteralExpression
-                                IntegerLiteral "0" @ 173..174
-                              Semicolon ";" @ 174..175
-                          RBrace "}" @ 184..185 leading=[Newline "\n", Whitespace "        "]
-                      Semicolon ";" @ 185..186
-                RBrace "}" @ 191..192 leading=[Newline "\n", Whitespace "    "]
+                Identifier "value" @ 46..51
+            RParen ")" @ 51..52 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 53..54
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 63..69 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    SwitchExpression
+                      SwitchKw "switch" @ 70..76 trailing=[Whitespace " "]
+                      LParen "(" @ 77..78
+                      NameExpression
+                        Identifier "value" @ 78..83
+                      RParen ")" @ 83..84 trailing=[Whitespace " "]
+                      SwitchBlock
+                        LBrace "{" @ 85..86
+                        SwitchEntryList
+                          SwitchRule
+                            SwitchLabel
+                              CaseKw "case" @ 99..103 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                                CaseConstant
+                                  LiteralExpression
+                                    NullLiteral "null" @ 104..108 trailing=[Whitespace " "]
+                            Arrow "->" @ 109..111 trailing=[Whitespace " "]
+                            ThrowStatement
+                              ThrowKw "throw" @ 112..117 trailing=[Whitespace " "]
+                              ObjectCreationExpression
+                                NewKw "new" @ 118..121 trailing=[Whitespace " "]
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      Name
+                                        Identifier "IllegalArgumentException" @ 122..146
+                                ArgumentList
+                                  LParen "(" @ 146..147
+                                  ExpressionList
+                                  RParen ")" @ 147..148
+                              Semicolon ";" @ 148..149
+                          SwitchRule
+                            SwitchLabel
+                              DefaultKw "default" @ 162..169 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                            Arrow "->" @ 170..172 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "0" @ 173..174
+                            Semicolon ";" @ 174..175
+                        RBrace "}" @ 184..185 leading=[Newline "\n", Whitespace "        "]
+                    Semicolon ";" @ 185..186
+              RBrace "}" @ 191..192 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 193..194 leading=[Newline "\n"]
   Eof "" @ 195..195 leading=[Newline "\n"]
 

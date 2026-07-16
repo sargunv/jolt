@@ -56,17 +56,16 @@ CompilationUnit
             ClassBody
               LBrace "{" @ 57..58 trailing=[Whitespace " "]
               ClassBodyMemberList
-                ClassBodyDeclaration
-                  MethodDeclaration
-                    VoidType
-                      VoidKw "void" @ 59..63 trailing=[Whitespace " "]
-                    Identifier "run" @ 64..67
-                    LParen "(" @ 67..68
-                    RParen ")" @ 68..69 trailing=[Whitespace " "]
-                    Block
-                      LBrace "{" @ 70..71
-                      BlockStatementList
-                      RBrace "}" @ 71..72 trailing=[Whitespace " "]
+                MethodDeclaration
+                  VoidType
+                    VoidKw "void" @ 59..63 trailing=[Whitespace " "]
+                  Identifier "run" @ 64..67
+                  LParen "(" @ 67..68
+                  RParen ")" @ 68..69 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 70..71
+                    BlockStatementList
+                    RBrace "}" @ 71..72 trailing=[Whitespace " "]
               RBrace "}" @ 73..74 trailing=[Whitespace " "]
         ClassBodyMemberList
         RBrace "}" @ 75..76

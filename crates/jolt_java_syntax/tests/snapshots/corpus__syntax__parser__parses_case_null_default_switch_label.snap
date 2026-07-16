@@ -21,56 +21,55 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 29..30
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              PrimitiveType
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 35..38 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 39..45
+            LParen "(" @ 45..46
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 46..52 trailing=[Whitespace " "]
                 AnnotationList
-                IntKw "int" @ 35..38 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 39..45
-              LParen "(" @ 45..46
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 46..52 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "value" @ 53..58
-              RParen ")" @ 58..59 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 60..61
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 70..76 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      SwitchExpression
-                        SwitchKw "switch" @ 77..83 trailing=[Whitespace " "]
-                        LParen "(" @ 84..85
-                        NameExpression
-                          Identifier "value" @ 85..90
-                        RParen ")" @ 90..91 trailing=[Whitespace " "]
-                        SwitchBlock
-                          LBrace "{" @ 92..93
-                          SwitchEntryList
-                            SwitchRule
-                              SwitchLabel
-                                CaseKw "case" @ 106..110 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                SwitchLabelItemList
-                                  CaseConstant
-                                    LiteralExpression
-                                      NullLiteral "null" @ 111..115
-                                  Comma "," @ 115..116 trailing=[Whitespace " "]
-                                  DefaultKw "default" @ 117..124 trailing=[Whitespace " "]
-                              Arrow "->" @ 125..127 trailing=[Whitespace " "]
-                              LiteralExpression
-                                IntegerLiteral "0" @ 128..129
-                              Semicolon ";" @ 129..130
-                          RBrace "}" @ 139..140 leading=[Newline "\n", Whitespace "        "]
-                      Semicolon ";" @ 140..141
-                RBrace "}" @ 146..147 leading=[Newline "\n", Whitespace "    "]
+                Identifier "value" @ 53..58
+            RParen ")" @ 58..59 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 60..61
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 70..76 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    SwitchExpression
+                      SwitchKw "switch" @ 77..83 trailing=[Whitespace " "]
+                      LParen "(" @ 84..85
+                      NameExpression
+                        Identifier "value" @ 85..90
+                      RParen ")" @ 90..91 trailing=[Whitespace " "]
+                      SwitchBlock
+                        LBrace "{" @ 92..93
+                        SwitchEntryList
+                          SwitchRule
+                            SwitchLabel
+                              CaseKw "case" @ 106..110 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                                CaseConstant
+                                  LiteralExpression
+                                    NullLiteral "null" @ 111..115
+                                Comma "," @ 115..116 trailing=[Whitespace " "]
+                                DefaultKw "default" @ 117..124 trailing=[Whitespace " "]
+                            Arrow "->" @ 125..127 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "0" @ 128..129
+                            Semicolon ";" @ 129..130
+                        RBrace "}" @ 139..140 leading=[Newline "\n", Whitespace "        "]
+                    Semicolon ";" @ 140..141
+              RBrace "}" @ 146..147 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 148..149 leading=[Newline "\n"]
   Eof "" @ 150..150 leading=[Newline "\n"]
 

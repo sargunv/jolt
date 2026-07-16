@@ -27,36 +27,35 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 15..16
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 19..23 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              Identifier "run" @ 24..27
-              LParen "(" @ 27..28 trailing=[BlockComment "/* params */"]
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "String" @ 45..51 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 19..23 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "run" @ 24..27
+            LParen "(" @ 27..28 trailing=[BlockComment "/* params */"]
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 45..51 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "name" @ 52..56
+              Comma "," @ 56..57 trailing=[Whitespace " ", LineComment "// user name"]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "name" @ 52..56
-                Comma "," @ 56..57 trailing=[Whitespace " ", LineComment "// user name"]
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    IntKw "int" @ 75..78 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "count" @ 79..84 trailing=[Whitespace " ", BlockComment "/* kept */"]
-              RParen ")" @ 125..126 leading=[Newline "\n", Whitespace "    ", LineComment "// before params close", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 127..128
-                BlockStatementList
-                RBrace "}" @ 128..129
+                  IntKw "int" @ 75..78 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "count" @ 79..84 trailing=[Whitespace " ", BlockComment "/* kept */"]
+            RParen ")" @ 125..126 leading=[Newline "\n", Whitespace "    ", LineComment "// before params close", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 127..128
+              BlockStatementList
+              RBrace "}" @ 128..129
         RBrace "}" @ 130..131 leading=[Newline "\n"]
     RecordDeclaration
       Identifier "record" @ 133..139 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]

@@ -16,8 +16,7 @@ use crate::helpers::recovery::{
 };
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{
-    AnnotationInterfaceBodyMemberList, ClassBodyDeclaration, ClassBodyMemberElement,
-    JavaSyntaxInvariantError, JavaSyntaxListPart, JavaSyntaxView,
+    AnnotationInterfaceBodyMemberList, JavaSyntaxInvariantError, JavaSyntaxListPart, JavaSyntaxView,
 };
 
 type PartResult<'source, T> = Result<JavaSyntaxListPart<'source, T>, JavaSyntaxInvariantError>;
@@ -45,12 +44,15 @@ pub(super) fn format_class_body<'source>(
         body.text_range().start().get(),
         body.token_iter(),
     );
-    format_class_member_body(
+    format_member_parts(
         body.text_range().start().get(),
         &ignored,
         members.parts(),
         open_comments,
         close_comments,
+        |member| family_token_range(member, body.text_range().start().get()),
+        member_category,
+        |member, doc| Some(FormattedMember::from_member(member, doc)),
         doc,
     )
 }
@@ -84,9 +86,9 @@ pub(super) fn format_record_body<'source>(
         members.parts(),
         open_comments,
         close_comments,
-        |declaration| node_token_range(declaration, body.text_range().start().get()),
-        |_| MemberCategory::Type,
-        |declaration, doc| format_class_body_declaration(declaration, doc),
+        |member| family_token_range(member, body.text_range().start().get()),
+        member_category,
+        |member, doc| Some(FormattedMember::from_member(member, doc)),
         doc,
     )
 }
@@ -214,7 +216,7 @@ fn present_token<'source>(
 pub(super) fn format_class_member_body<'source>(
     body_start: usize,
     ignored_ranges: &[crate::helpers::formatter_ignore::FormatterIgnoreRange<'source>],
-    members: impl IntoIterator<Item = PartResult<'source, ClassBodyMemberElement<'source>>>,
+    members: impl IntoIterator<Item = PartResult<'source, ClassBodyMember<'source>>>,
     open_dangling_comments: Option<FormattedMember<'source>>,
     close_dangling_comments: Option<FormattedMember<'source>>,
     doc: &mut DocBuilder<'source>,
@@ -225,9 +227,9 @@ pub(super) fn format_class_member_body<'source>(
         members,
         open_dangling_comments,
         close_dangling_comments,
-        |member| role_token_range(*member, body_start),
-        |member| class_element_category(*member),
-        |member, doc| format_class_element(*member, doc),
+        |member| family_token_range(member, body_start),
+        member_category,
+        |member, doc| Some(FormattedMember::from_member(member, doc)),
         doc,
     )
 }
@@ -380,35 +382,6 @@ fn part_category<T>(
     }
 }
 
-fn required_value<'source, T>(
-    field: Result<
-        jolt_java_syntax::JavaSyntaxField<'source, T>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
-    doc: &mut DocBuilder<'source>,
-) -> Option<T> {
-    match resolve_required_field(field, doc) {
-        JavaFormatField::Present(value) => Some(value),
-        JavaFormatField::Malformed(_) => None,
-    }
-}
-
-fn role_token_range(role: ClassBodyMemberElement<'_>, body_start: usize) -> Option<Range<usize>> {
-    Some(relative_token_range_between(
-        &role.first_token()?,
-        &role.last_token()?,
-        body_start,
-    ))
-}
-
-fn node_token_range(node: &ClassBodyDeclaration<'_>, body_start: usize) -> Option<Range<usize>> {
-    Some(relative_token_range_between(
-        &node.first_token()?,
-        &node.last_token()?,
-        body_start,
-    ))
-}
-
 fn family_token_range<'source>(
     member: &impl JavaSyntaxView<'source>,
     body_start: usize,
@@ -419,39 +392,6 @@ fn family_token_range<'source>(
         &syntax.last_token()?,
         body_start,
     ))
-}
-
-fn class_element_category(element: ClassBodyMemberElement<'_>) -> MemberCategory {
-    element
-        .cast_node::<ClassBodyDeclaration<'_>>()
-        .and_then(|declaration| match declaration.member().ok()? {
-            jolt_java_syntax::JavaSyntaxField::Present(member) => Some(member_category(&member)),
-            _ => None,
-        })
-        .unwrap_or(MemberCategory::Type)
-}
-
-fn format_class_element<'source>(
-    element: ClassBodyMemberElement<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Option<FormattedMember<'source>> {
-    if let Some(empty) = element.cast_node::<jolt_java_syntax::EmptyDeclaration<'source>>() {
-        let member = ClassBodyMember::EmptyDeclaration(empty);
-        return Some(FormattedMember::from_member(&member, doc));
-    }
-    let declaration = element.cast_node::<ClassBodyDeclaration<'source>>()?;
-    format_class_body_declaration(&declaration, doc)
-}
-
-#[allow(clippy::unnecessary_wraps)]
-fn format_class_body_declaration<'source>(
-    declaration: &ClassBodyDeclaration<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Option<FormattedMember<'source>> {
-    match resolve_required_field(declaration.member(), doc) {
-        JavaFormatField::Present(member) => Some(FormattedMember::from_member(&member, doc)),
-        JavaFormatField::Malformed(malformed) => Some(FormattedMember::comment(malformed)),
-    }
 }
 
 pub(super) fn format_body_open_dangling_comments<'source>(
@@ -576,30 +516,29 @@ impl<'source> FormattedMember<'source> {
                 format_method_declaration(value, doc),
             ),
             ClassBodyMember::StaticInitializer(value) => {
-                let static_token = required_value(value.static_keyword(), doc);
-                let body = required_value(value.body(), doc);
+                let static_token = crate::helpers::recovery::format_required_field(
+                    value.static_keyword(),
+                    doc,
+                    |token, doc| format_token_with_comments(doc, &token),
+                );
+                let body = crate::helpers::recovery::format_required_field(
+                    value.body(),
+                    doc,
+                    |body, doc| format_block(&body, doc),
+                );
                 Self::formatted(
                     MemberCategory::Initializer,
                     starts_after_blank_line,
-                    doc_concat!(
-                        doc,
-                        [
-                            static_token.map_or_else(Doc::nil, |token| doc_concat!(
-                                doc,
-                                [format_token_with_comments(doc, &token), doc.space()]
-                            )),
-                            body.map_or_else(Doc::nil, |body| format_block(&body, doc))
-                        ]
-                    ),
+                    doc_concat!(doc, [static_token, doc.space(), body]),
                 )
             }
             ClassBodyMember::InstanceInitializer(value) => {
-                let body = required_value(value.body(), doc);
-                Self::formatted(
-                    MemberCategory::Initializer,
-                    starts_after_blank_line,
-                    body.map_or_else(Doc::nil, |body| format_block(&body, doc)),
-                )
+                let body = crate::helpers::recovery::format_required_field(
+                    value.body(),
+                    doc,
+                    |body, doc| format_block(&body, doc),
+                );
+                Self::formatted(MemberCategory::Initializer, starts_after_blank_line, body)
             }
             ClassBodyMember::ClassDeclaration(value) => Self::formatted(
                 MemberCategory::Type,
@@ -629,11 +568,9 @@ impl<'source> FormattedMember<'source> {
             ClassBodyMember::EmptyDeclaration(empty) => {
                 format_empty_member(empty, starts_after_blank_line, doc)
             }
-            ClassBodyMember::BogusClassBodyMember(value) => Self::formatted(
-                MemberCategory::Type,
-                starts_after_blank_line,
-                format_malformed(value, doc),
-            ),
+            ClassBodyMember::BogusClassBodyMember(value) => {
+                Self::comment(format_malformed(value, doc))
+            }
         }
     }
 
@@ -680,7 +617,7 @@ impl<'source> FormattedMember<'source> {
             ),
             InterfaceBodyMember::EmptyDeclaration(empty) => format_empty_member(empty, blank, doc),
             InterfaceBodyMember::BogusInterfaceBodyMember(value) => {
-                Self::formatted(MemberCategory::Type, blank, format_malformed(value, doc))
+                Self::comment(format_malformed(value, doc))
             }
         }
     }
@@ -737,7 +674,7 @@ impl<'source> FormattedMember<'source> {
                 format_empty_member(empty, blank, doc)
             }
             AnnotationInterfaceBodyMember::BogusAnnotationInterfaceBodyMember(value) => {
-                Self::formatted(MemberCategory::Type, blank, format_malformed(value, doc))
+                Self::comment(format_malformed(value, doc))
             }
         }
     }

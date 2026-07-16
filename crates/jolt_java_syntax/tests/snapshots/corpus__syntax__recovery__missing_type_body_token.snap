@@ -13,8 +13,8 @@ CompilationUnit
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "MissingTypeBody" @ 6..21
       ClassBody
-        Semicolon ";" @ 21..22
         ClassBodyMemberList
+      Semicolon ";" @ 21..22
   Eof "" @ 23..23 leading=[Newline "\n"]
 
 diagnostics:

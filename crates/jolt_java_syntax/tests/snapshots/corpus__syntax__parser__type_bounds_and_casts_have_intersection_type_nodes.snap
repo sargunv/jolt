@@ -60,56 +60,55 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 77..78
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "Object" @ 83..89 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 90..96
-              LParen "(" @ 96..97
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 97..103 trailing=[Whitespace " "]
+          MethodDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
                   AnnotationList
-                  Identifier "value" @ 104..109
-              RParen ")" @ 109..110 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 111..112
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 121..127 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      CastExpression
-                        LParen "(" @ 128..129
-                        IntersectionType
+                  Name
+                    Identifier "Object" @ 83..89 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 90..96
+            LParen "(" @ 96..97
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 97..103 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 104..109
+            RParen ")" @ 109..110 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 111..112
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 121..127 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    CastExpression
+                      LParen "(" @ 128..129
+                      IntersectionType
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "A" @ 129..130 trailing=[Whitespace " "]
+                        Amp "&" @ 131..132 trailing=[Whitespace " "]
+                        TypeAmpList
                           ClassType
                             ClassTypeSegmentList
                               ClassTypeSegmentNode
                                 AnnotationList
                                 Name
-                                  Identifier "A" @ 129..130 trailing=[Whitespace " "]
-                          Amp "&" @ 131..132 trailing=[Whitespace " "]
-                          TypeAmpList
-                            ClassType
-                              ClassTypeSegmentList
-                                ClassTypeSegmentNode
-                                  AnnotationList
-                                  Name
-                                    Identifier "B" @ 133..134
-                        RParen ")" @ 134..135 trailing=[Whitespace " "]
-                        NameExpression
-                          Identifier "value" @ 136..141
-                      Semicolon ";" @ 141..142
-                RBrace "}" @ 147..148 leading=[Newline "\n", Whitespace "    "]
+                                  Identifier "B" @ 133..134
+                      RParen ")" @ 134..135 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "value" @ 136..141
+                    Semicolon ";" @ 141..142
+              RBrace "}" @ 147..148 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 149..150 leading=[Newline "\n"]
   Eof "" @ 151..151 leading=[Newline "\n"]
 

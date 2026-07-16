@@ -98,17 +98,16 @@ CompilationUnit
         ClassBodyMemberList
           EmptyDeclaration
             Semicolon ";" @ 275..276 leading=[Newline "\n", Whitespace "  ", LineComment "// keep enum marker", Newline "\n", Whitespace "  "]
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 279..283 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              Identifier "run" @ 284..287
-              LParen "(" @ 287..288
-              RParen ")" @ 288..289 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 290..291
-                BlockStatementList
-                RBrace "}" @ 291..292
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 279..283 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "run" @ 284..287
+            LParen "(" @ 287..288
+            RParen ")" @ 288..289 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 290..291
+              BlockStatementList
+              RBrace "}" @ 291..292
         RBrace "}" @ 293..294 leading=[Newline "\n"]
     EnumDeclaration
       EnumKw "enum" @ 295..299 leading=[Newline "\n"] trailing=[Whitespace " "]

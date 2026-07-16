@@ -21,230 +21,229 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 39..40
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 45..49 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 50..56
-              LParen "(" @ 56..57
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        QualifiedName
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 45..49 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 50..56
+            LParen "(" @ 56..57
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      QualifiedName
+                        QualifiedNameSegmentNode
+                          AnnotationList
+                          Identifier "java" @ 57..61
+                        Dot "." @ 61..62
+                        NameSegmentDotList
                           QualifiedNameSegmentNode
                             AnnotationList
-                            Identifier "java" @ 57..61
-                          Dot "." @ 61..62
-                          NameSegmentDotList
-                            QualifiedNameSegmentNode
-                              AnnotationList
-                              Identifier "util" @ 62..66
-                            Dot "." @ 66..67
-                            QualifiedNameSegmentNode
-                              AnnotationList
-                              Identifier "Set" @ 67..70
-                        TypeArgumentList
-                          Lt "<" @ 70..71
-                          TypeArgumentSeparatedList
-                            TypeArgument
-                              AnnotationList
-                              ClassType
-                                ClassTypeSegmentList
-                                  ClassTypeSegmentNode
-                                    AnnotationList
-                                    Name
-                                      Identifier "Class" @ 71..76
-                                    TypeArgumentList
-                                      Lt "<" @ 76..77
-                                      TypeArgumentSeparatedList
-                                        TypeArgument
-                                          AnnotationList
-                                          WildcardType
-                                            Question "?" @ 77..78
-                                      Gt ">" @ 78..79
-                          Gt ">" @ 79..80 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "classes" @ 81..88
-              RParen ")" @ 88..89 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 90..91
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ArrayType
-                        ClassType
-                          ClassTypeSegmentList
-                            ClassTypeSegmentNode
-                              AnnotationList
-                              Name
-                                Identifier "Class" @ 100..105 leading=[Newline "\n", Whitespace "        "]
-                              TypeArgumentList
-                                Lt "<" @ 105..106
-                                TypeArgumentSeparatedList
-                                  TypeArgument
-                                    AnnotationList
-                                    WildcardType
-                                      Question "?" @ 106..107
-                                Gt ">" @ 107..108
-                        ArrayDimensions
-                          ArrayDimension
+                            Identifier "util" @ 62..66
+                          Dot "." @ 66..67
+                          QualifiedNameSegmentNode
                             AnnotationList
-                            LBracket "[" @ 108..109
-                            RBracket "]" @ 109..110 trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "copied" @ 111..117 trailing=[Whitespace " "]
-                          Assign "=" @ 118..119 trailing=[Whitespace " "]
-                          VariableInitializer
-                            MethodInvocationExpression
-                              QualifiedMethodInvocation
-                                NameExpression
-                                  Identifier "classes" @ 120..127
-                                Dot "." @ 127..128
-                                Identifier "toArray" @ 128..135
-                                ArgumentList
-                                  LParen "(" @ 135..136
-                                  ExpressionList
-                                    MethodReferenceExpression
-                                      ArrayType
-                                        ClassType
-                                          ClassTypeSegmentList
-                                            ClassTypeSegmentNode
-                                              AnnotationList
-                                              Name
-                                                Identifier "Class" @ 136..141
-                                              TypeArgumentList
-                                                Lt "<" @ 141..142
-                                                TypeArgumentSeparatedList
-                                                  TypeArgument
-                                                    AnnotationList
-                                                    WildcardType
-                                                      Question "?" @ 142..143
-                                                Gt ">" @ 143..144
-                                        ArrayDimensions
-                                          ArrayDimension
-                                            AnnotationList
-                                            LBracket "[" @ 144..145
-                                            RBracket "]" @ 145..146
-                                      DoubleColon "::" @ 146..148
-                                      NewKw "new" @ 148..151
-                                  RParen ")" @ 151..152
-                    Semicolon ";" @ 152..153
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
+                            Identifier "Set" @ 67..70
+                      TypeArgumentList
+                        Lt "<" @ 70..71
+                        TypeArgumentSeparatedList
+                          TypeArgument
+                            AnnotationList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "Class" @ 71..76
+                                  TypeArgumentList
+                                    Lt "<" @ 76..77
+                                    TypeArgumentSeparatedList
+                                      TypeArgument
+                                        AnnotationList
+                                        WildcardType
+                                          Question "?" @ 77..78
+                                    Gt ">" @ 78..79
+                        Gt ">" @ 79..80 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "classes" @ 81..88
+            RParen ")" @ 88..89 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 90..91
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ArrayType
                       ClassType
                         ClassTypeSegmentList
                           ClassTypeSegmentNode
                             AnnotationList
-                            QualifiedName
-                              QualifiedNameSegmentNode
-                                AnnotationList
-                                Identifier "java" @ 162..166 leading=[Newline "\n", Whitespace "        "]
-                              Dot "." @ 166..167
-                              NameSegmentDotList
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "util" @ 167..171
-                                Dot "." @ 171..172
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "function" @ 172..180
-                                Dot "." @ 180..181
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "IntFunction" @ 181..192
+                            Name
+                              Identifier "Class" @ 100..105 leading=[Newline "\n", Whitespace "        "]
                             TypeArgumentList
-                              Lt "<" @ 192..193
+                              Lt "<" @ 105..106
                               TypeArgumentSeparatedList
                                 TypeArgument
                                   AnnotationList
-                                  ArrayType
-                                    ClassType
-                                      ClassTypeSegmentList
-                                        ClassTypeSegmentNode
+                                  WildcardType
+                                    Question "?" @ 106..107
+                              Gt ">" @ 107..108
+                      ArrayDimensions
+                        ArrayDimension
+                          AnnotationList
+                          LBracket "[" @ 108..109
+                          RBracket "]" @ 109..110 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "copied" @ 111..117 trailing=[Whitespace " "]
+                        Assign "=" @ 118..119 trailing=[Whitespace " "]
+                        VariableInitializer
+                          MethodInvocationExpression
+                            QualifiedMethodInvocation
+                              NameExpression
+                                Identifier "classes" @ 120..127
+                              Dot "." @ 127..128
+                              Identifier "toArray" @ 128..135
+                              ArgumentList
+                                LParen "(" @ 135..136
+                                ExpressionList
+                                  MethodReferenceExpression
+                                    ArrayType
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            Name
+                                              Identifier "Class" @ 136..141
+                                            TypeArgumentList
+                                              Lt "<" @ 141..142
+                                              TypeArgumentSeparatedList
+                                                TypeArgument
+                                                  AnnotationList
+                                                  WildcardType
+                                                    Question "?" @ 142..143
+                                              Gt ">" @ 143..144
+                                      ArrayDimensions
+                                        ArrayDimension
                                           AnnotationList
-                                          QualifiedName
+                                          LBracket "[" @ 144..145
+                                          RBracket "]" @ 145..146
+                                    DoubleColon "::" @ 146..148
+                                    NewKw "new" @ 148..151
+                                RParen ")" @ 151..152
+                  Semicolon ";" @ 152..153
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          QualifiedName
+                            QualifiedNameSegmentNode
+                              AnnotationList
+                              Identifier "java" @ 162..166 leading=[Newline "\n", Whitespace "        "]
+                            Dot "." @ 166..167
+                            NameSegmentDotList
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "util" @ 167..171
+                              Dot "." @ 171..172
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "function" @ 172..180
+                              Dot "." @ 180..181
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "IntFunction" @ 181..192
+                          TypeArgumentList
+                            Lt "<" @ 192..193
+                            TypeArgumentSeparatedList
+                              TypeArgument
+                                AnnotationList
+                                ArrayType
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        QualifiedName
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "java" @ 193..197
+                                          Dot "." @ 197..198
+                                          NameSegmentDotList
                                             QualifiedNameSegmentNode
                                               AnnotationList
-                                              Identifier "java" @ 193..197
-                                            Dot "." @ 197..198
-                                            NameSegmentDotList
-                                              QualifiedNameSegmentNode
-                                                AnnotationList
-                                                Identifier "util" @ 198..202
-                                              Dot "." @ 202..203
-                                              QualifiedNameSegmentNode
-                                                AnnotationList
-                                                Identifier "List" @ 203..207
-                                          TypeArgumentList
-                                            Lt "<" @ 207..208
-                                            TypeArgumentSeparatedList
-                                              TypeArgument
-                                                AnnotationList
-                                                ClassType
-                                                  ClassTypeSegmentList
-                                                    ClassTypeSegmentNode
-                                                      AnnotationList
-                                                      Name
-                                                        Identifier "String" @ 208..214
-                                            Gt ">" @ 214..215
-                                    ArrayDimensions
-                                      ArrayDimension
-                                        AnnotationList
-                                        LBracket "[" @ 215..216
-                                        RBracket "]" @ 216..217
-                              Gt ">" @ 217..218 trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "factory" @ 219..226 trailing=[Whitespace " "]
-                          Assign "=" @ 227..228
-                          VariableInitializer
-                            MethodReferenceExpression
-                              ArrayType
-                                ClassType
-                                  ClassTypeSegmentList
-                                    ClassTypeSegmentNode
+                                              Identifier "util" @ 198..202
+                                            Dot "." @ 202..203
+                                            QualifiedNameSegmentNode
+                                              AnnotationList
+                                              Identifier "List" @ 203..207
+                                        TypeArgumentList
+                                          Lt "<" @ 207..208
+                                          TypeArgumentSeparatedList
+                                            TypeArgument
+                                              AnnotationList
+                                              ClassType
+                                                ClassTypeSegmentList
+                                                  ClassTypeSegmentNode
+                                                    AnnotationList
+                                                    Name
+                                                      Identifier "String" @ 208..214
+                                          Gt ">" @ 214..215
+                                  ArrayDimensions
+                                    ArrayDimension
                                       AnnotationList
-                                      QualifiedName
+                                      LBracket "[" @ 215..216
+                                      RBracket "]" @ 216..217
+                            Gt ">" @ 217..218 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "factory" @ 219..226 trailing=[Whitespace " "]
+                        Assign "=" @ 227..228
+                        VariableInitializer
+                          MethodReferenceExpression
+                            ArrayType
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    QualifiedName
+                                      QualifiedNameSegmentNode
+                                        AnnotationList
+                                        Identifier "java" @ 241..245 leading=[Newline "\n", Whitespace "            "]
+                                      Dot "." @ 245..246
+                                      NameSegmentDotList
                                         QualifiedNameSegmentNode
                                           AnnotationList
-                                          Identifier "java" @ 241..245 leading=[Newline "\n", Whitespace "            "]
-                                        Dot "." @ 245..246
-                                        NameSegmentDotList
-                                          QualifiedNameSegmentNode
-                                            AnnotationList
-                                            Identifier "util" @ 246..250
-                                          Dot "." @ 250..251
-                                          QualifiedNameSegmentNode
-                                            AnnotationList
-                                            Identifier "List" @ 251..255
-                                      TypeArgumentList
-                                        Lt "<" @ 255..256
-                                        TypeArgumentSeparatedList
-                                          TypeArgument
-                                            AnnotationList
-                                            ClassType
-                                              ClassTypeSegmentList
-                                                ClassTypeSegmentNode
-                                                  AnnotationList
-                                                  Name
-                                                    Identifier "String" @ 256..262
-                                        Gt ">" @ 262..263
-                                ArrayDimensions
-                                  ArrayDimension
-                                    AnnotationList
-                                    LBracket "[" @ 263..264
-                                    RBracket "]" @ 264..265
-                              DoubleColon "::" @ 265..267
-                              NewKw "new" @ 267..270
-                    Semicolon ";" @ 270..271
-                RBrace "}" @ 276..277 leading=[Newline "\n", Whitespace "    "]
+                                          Identifier "util" @ 246..250
+                                        Dot "." @ 250..251
+                                        QualifiedNameSegmentNode
+                                          AnnotationList
+                                          Identifier "List" @ 251..255
+                                    TypeArgumentList
+                                      Lt "<" @ 255..256
+                                      TypeArgumentSeparatedList
+                                        TypeArgument
+                                          AnnotationList
+                                          ClassType
+                                            ClassTypeSegmentList
+                                              ClassTypeSegmentNode
+                                                AnnotationList
+                                                Name
+                                                  Identifier "String" @ 256..262
+                                      Gt ">" @ 262..263
+                              ArrayDimensions
+                                ArrayDimension
+                                  AnnotationList
+                                  LBracket "[" @ 263..264
+                                  RBracket "]" @ 264..265
+                            DoubleColon "::" @ 265..267
+                            NewKw "new" @ 267..270
+                  Semicolon ";" @ 270..271
+              RBrace "}" @ 276..277 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 278..279 leading=[Newline "\n"]
   Eof "" @ 280..280 leading=[Newline "\n"]
 

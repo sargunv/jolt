@@ -2,7 +2,7 @@ use super::{JavaParserExt, JavaSyntaxKind, Parser, StopSet};
 use jolt_syntax::UnresolvedDiagnosticOwner;
 
 impl Parser<'_> {
-    pub(super) fn parse_type_declaration(&mut self) {
+    pub(super) fn parse_type_declaration(&mut self, bogus_kind: JavaSyntaxKind) {
         let type_decl = self.start();
         self.parse_modifier_list();
 
@@ -20,9 +20,13 @@ impl Parser<'_> {
         } else if self.eat_contextual("record") {
             JavaSyntaxKind::RecordDeclaration
         } else {
-            self.expected_here("expected top-level type declaration");
+            let diagnostic = self.expected_here("expected top-level type declaration");
+            self.own_diagnostic(
+                diagnostic,
+                UnresolvedDiagnosticOwner::node(type_decl.anchor()),
+            );
             self.recover_top_level();
-            self.complete(type_decl, JavaSyntaxKind::ErrorNode);
+            self.complete(type_decl, bogus_kind);
             return;
         };
 
@@ -42,16 +46,16 @@ impl Parser<'_> {
             _ => unreachable!("matched type declaration kind"),
         };
         self.expect_type_identifier("expected type name", type_decl.anchor(), name_slot);
-        self.parse_type_declaration_header(kind);
+        self.parse_type_declaration_header(kind, type_decl.anchor());
         self.parse_type_body(body_kind_for_type(kind), type_name);
         self.complete(type_decl, kind);
     }
 
     pub(super) fn parse_type_body(&mut self, kind: JavaSyntaxKind, type_name: Option<usize>) {
         let body = self.start();
+        let owner = body.anchor();
         if !self.at(JavaSyntaxKind::LBrace) {
-            self.expected_here("expected type body");
-            self.eat(JavaSyntaxKind::Semicolon);
+            self.expected_owned_slot("expected type body", owner, type_body_open_brace_slot(kind));
             let members = self.start();
             self.complete(
                 members,
@@ -65,6 +69,7 @@ impl Parser<'_> {
                 },
             );
             self.complete(body, kind);
+            self.eat(JavaSyntaxKind::Semicolon);
             return;
         }
 
@@ -90,7 +95,12 @@ impl Parser<'_> {
             );
         }
 
-        self.expect(JavaSyntaxKind::RBrace, "expected `}` after type body");
+        self.expect_owned(
+            JavaSyntaxKind::RBrace,
+            "expected `}` after type body",
+            owner,
+            type_body_close_brace_slot(kind),
+        );
         self.complete(body, kind);
     }
 
@@ -228,7 +238,11 @@ impl Parser<'_> {
         self.complete(annotation, JavaSyntaxKind::Annotation);
     }
 
-    pub(super) fn parse_type_declaration_header(&mut self, kind: JavaSyntaxKind) {
+    pub(super) fn parse_type_declaration_header(
+        &mut self,
+        kind: JavaSyntaxKind,
+        declaration: jolt_syntax::NodeAnchor,
+    ) {
         match kind {
             JavaSyntaxKind::ClassDeclaration => {
                 self.parse_optional_type_parameter_list();
@@ -246,7 +260,7 @@ impl Parser<'_> {
             }
             JavaSyntaxKind::RecordDeclaration => {
                 self.parse_optional_type_parameter_list();
-                self.parse_record_header();
+                self.parse_record_header(declaration);
                 self.parse_optional_implements_clause();
             }
             _ => {}
@@ -382,9 +396,13 @@ impl Parser<'_> {
         self.complete(names, JavaSyntaxKind::NameList);
     }
 
-    pub(super) fn parse_record_header(&mut self) {
+    pub(super) fn parse_record_header(&mut self, owner: jolt_syntax::NodeAnchor) {
         if !self.eat(JavaSyntaxKind::LParen) {
-            self.expected_here("expected record header");
+            self.expected_owned_slot(
+                "expected record header",
+                owner,
+                crate::shape::record_declaration::Slot::open_paren as u16,
+            );
             return;
         }
 
@@ -399,7 +417,12 @@ impl Parser<'_> {
             self.complete(list, JavaSyntaxKind::RecordComponentList);
         }
 
-        self.expect(JavaSyntaxKind::RParen, "expected `)` after record header");
+        self.expect_owned(
+            JavaSyntaxKind::RParen,
+            "expected `)` after record header",
+            owner,
+            crate::shape::record_declaration::Slot::close_paren as u16,
+        );
     }
 
     pub(super) fn parse_record_component(&mut self) {
@@ -428,11 +451,13 @@ impl Parser<'_> {
         }
 
         if body_kind == JavaSyntaxKind::ClassBody || body_kind == JavaSyntaxKind::RecordBody {
-            let declaration = self.start();
             self.parse_class_body_declaration_contents(body_kind, type_name);
-            self.complete(declaration, JavaSyntaxKind::ClassBodyDeclaration);
         } else {
-            self.parse_member_declaration(type_name, false);
+            self.parse_member_declaration(
+                type_name,
+                false,
+                JavaSyntaxKind::BogusInterfaceBodyMember,
+            );
         }
     }
 
@@ -459,7 +484,7 @@ impl Parser<'_> {
         if body_kind == JavaSyntaxKind::RecordBody && self.starts_compact_constructor(type_name) {
             self.parse_compact_constructor_declaration();
         } else {
-            self.parse_member_declaration(type_name, false);
+            self.parse_member_declaration(type_name, false, JavaSyntaxKind::BogusClassBodyMember);
         }
     }
 
@@ -467,9 +492,10 @@ impl Parser<'_> {
         &mut self,
         type_name: Option<usize>,
         annotation_body: bool,
+        bogus_kind: JavaSyntaxKind,
     ) {
         if self.starts_top_level_type_declaration() {
-            self.parse_type_declaration();
+            self.parse_type_declaration(bogus_kind);
             return;
         }
 
@@ -489,20 +515,24 @@ impl Parser<'_> {
             self.parse_field_declaration();
         } else {
             let error = self.start();
-            self.unexpected_here("unexpected token in type body");
+            let diagnostic = self.unexpected_here("unexpected token in type body");
+            self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(error.anchor()));
             self.consume_body_member_fragment();
-            self.complete(error, JavaSyntaxKind::ErrorNode);
+            self.complete(error, bogus_kind);
         }
     }
 
     pub(super) fn parse_field_declaration(&mut self) {
         let field = self.start();
+        let owner = field.anchor();
         self.parse_field_modifier_list();
         self.parse_type();
         self.parse_variable_declarator_list();
-        self.expect(
+        self.expect_owned(
             JavaSyntaxKind::Semicolon,
             "expected `;` after field declaration",
+            owner,
+            crate::shape::field_declaration::Slot::semicolon as u16,
         );
         self.complete(field, JavaSyntaxKind::FieldDeclaration);
     }
@@ -583,10 +613,14 @@ impl Parser<'_> {
             owner,
             crate::shape::method_declaration::Slot::name as u16,
         );
-        self.parse_formal_parameter_section();
+        self.parse_formal_parameter_section(
+            owner,
+            crate::shape::method_declaration::Slot::open_paren as u16,
+            crate::shape::method_declaration::Slot::close_paren as u16,
+        );
         self.parse_array_dimensions();
         self.parse_optional_throws_clause();
-        self.parse_method_body();
+        self.parse_method_body(owner);
         self.complete(method, JavaSyntaxKind::MethodDeclaration);
     }
 
@@ -600,36 +634,59 @@ impl Parser<'_> {
             owner,
             crate::shape::annotation_element_declaration::Slot::name as u16,
         );
-        self.expect(JavaSyntaxKind::LParen, "expected `(`");
-        self.expect(JavaSyntaxKind::RParen, "expected `)`");
+        self.expect_owned(
+            JavaSyntaxKind::LParen,
+            "expected `(`",
+            owner,
+            crate::shape::annotation_element_declaration::Slot::open_paren as u16,
+        );
+        self.expect_owned(
+            JavaSyntaxKind::RParen,
+            "expected `)`",
+            owner,
+            crate::shape::annotation_element_declaration::Slot::close_paren as u16,
+        );
         self.parse_array_dimensions();
         if self.at(JavaSyntaxKind::DefaultKw) {
             self.parse_default_value();
         }
-        self.expect(
+        self.expect_owned(
             JavaSyntaxKind::Semicolon,
             "expected `;` after annotation element",
+            owner,
+            crate::shape::annotation_element_declaration::Slot::semicolon as u16,
         );
         self.complete(element, JavaSyntaxKind::AnnotationElementDeclaration);
     }
 
     pub(super) fn parse_default_value(&mut self) {
         let default_value = self.start();
-        self.expect(JavaSyntaxKind::DefaultKw, "expected `default`");
+        let owner = default_value.anchor();
+        self.expect_owned(
+            JavaSyntaxKind::DefaultKw,
+            "expected `default`",
+            owner,
+            crate::shape::default_value::Slot::default_keyword as u16,
+        );
         self.parse_annotation_element_value(JavaSyntaxKind::Semicolon);
         self.complete(default_value, JavaSyntaxKind::DefaultValue);
     }
 
     pub(super) fn parse_constructor_declaration(&mut self) {
         let constructor = self.start();
+        let owner = constructor.anchor();
         self.parse_constructor_modifier_list();
         self.parse_optional_type_parameter_list();
         self.expect_type_identifier(
             "expected constructor name",
-            constructor.anchor(),
+            owner,
             crate::shape::constructor_declaration::Slot::name as u16,
         );
-        self.parse_formal_parameter_section();
+        self.parse_formal_parameter_section(
+            owner,
+            crate::shape::constructor_declaration::Slot::open_paren as u16,
+            crate::shape::constructor_declaration::Slot::close_paren as u16,
+        );
         self.parse_optional_throws_clause();
         self.parse_constructor_block();
         self.complete(constructor, JavaSyntaxKind::ConstructorDeclaration);
@@ -655,8 +712,13 @@ impl Parser<'_> {
         self.parse_type();
     }
 
-    pub(super) fn parse_formal_parameter_section(&mut self) {
-        self.expect(JavaSyntaxKind::LParen, "expected `(`");
+    pub(super) fn parse_formal_parameter_section(
+        &mut self,
+        owner: jolt_syntax::NodeAnchor,
+        open_slot: u16,
+        close_slot: u16,
+    ) {
+        self.expect_owned(JavaSyntaxKind::LParen, "expected `(`", owner, open_slot);
         if !self.at(JavaSyntaxKind::RParen) {
             let list = self.start();
             let mut allow_receiver = true;
@@ -685,7 +747,12 @@ impl Parser<'_> {
             }
             self.complete(list, JavaSyntaxKind::FormalParameterList);
         }
-        self.expect(JavaSyntaxKind::RParen, "expected `)` after parameters");
+        self.expect_owned(
+            JavaSyntaxKind::RParen,
+            "expected `)` after parameters",
+            owner,
+            close_slot,
+        );
     }
 
     fn parse_receiver_parameter_entry(&mut self, misplaced: bool) {
@@ -818,17 +885,29 @@ impl Parser<'_> {
         self.complete(clause, JavaSyntaxKind::ThrowsClause);
     }
 
-    pub(super) fn parse_method_body(&mut self) {
+    pub(super) fn parse_method_body(&mut self, owner: jolt_syntax::NodeAnchor) {
         if self.at(JavaSyntaxKind::LBrace) {
             self.parse_block();
+        } else if self.at(JavaSyntaxKind::Semicolon) {
+            self.bump();
         } else {
-            self.expect(JavaSyntaxKind::Semicolon, "expected method body");
+            self.expected_owned_slot(
+                "expected method body",
+                owner,
+                crate::shape::method_declaration::Slot::body as u16,
+            );
         }
     }
 
     pub(super) fn parse_constructor_block(&mut self) {
         let block = self.start();
-        self.expect(JavaSyntaxKind::LBrace, "expected constructor body");
+        let owner = block.anchor();
+        self.expect_owned(
+            JavaSyntaxKind::LBrace,
+            "expected constructor body",
+            owner,
+            crate::shape::constructor_body::Slot::open_brace as u16,
+        );
         let entries = self.start();
         let mut saw_constructor_invocation = false;
         while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) {
@@ -837,25 +916,30 @@ impl Parser<'_> {
                 saw_constructor_invocation = true;
             } else if self.starts_constructor_invocation_statement() {
                 let error = self.start();
-                self.misplaced_constructor_invocation_here(
+                let diagnostic = self.misplaced_constructor_invocation_here(
                     "constructor body must have at most one explicit constructor invocation",
                 );
+                self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(error.anchor()));
                 self.parse_constructor_invocation();
-                self.complete(error, JavaSyntaxKind::ErrorNode);
+                self.complete(error, JavaSyntaxKind::BogusConstructorBodyEntry);
             } else {
                 self.parse_block_statement();
             }
         }
         self.complete(entries, JavaSyntaxKind::ConstructorBodyEntryList);
-        self.expect(
+        self.expect_owned(
             JavaSyntaxKind::RBrace,
             "expected `}` after constructor body",
+            owner,
+            crate::shape::constructor_body::Slot::close_brace as u16,
         );
         self.complete(block, JavaSyntaxKind::ConstructorBody);
     }
 
     pub(super) fn parse_constructor_invocation(&mut self) {
         let invocation = self.start();
+        let owner = invocation.anchor();
+        let mut kind = JavaSyntaxKind::ConstructorInvocation;
 
         if self.at(JavaSyntaxKind::Lt)
             || matches!(
@@ -868,32 +952,47 @@ impl Parser<'_> {
                 self.bump();
                 self.parse_argument_list();
             } else {
-                self.expected_here("expected `this` or `super` in constructor invocation");
-                let malformed = self.start();
+                kind = JavaSyntaxKind::BogusConstructorBodyEntry;
+                self.expected_owned_node(
+                    "expected `this` or `super` in constructor invocation",
+                    owner,
+                );
                 while !self.at_eof()
                     && !self.at(JavaSyntaxKind::Semicolon)
                     && !self.at(JavaSyntaxKind::RBrace)
                 {
                     self.bump();
                 }
-                self.complete(malformed, JavaSyntaxKind::ErrorNode);
             }
         } else {
             self.parse_constructor_invocation_qualifier();
-            self.expect(JavaSyntaxKind::Dot, "expected `.` before `super`");
+            if self.at(JavaSyntaxKind::Dot) {
+                self.bump();
+            } else {
+                kind = JavaSyntaxKind::BogusConstructorBodyEntry;
+                self.expected_owned_node("expected `.` before `super`", owner);
+            }
             self.parse_optional_type_argument_list();
-            self.expect(
-                JavaSyntaxKind::SuperKw,
-                "expected `super` in constructor invocation",
-            );
+            if self.at(JavaSyntaxKind::SuperKw) {
+                self.bump();
+            } else {
+                kind = JavaSyntaxKind::BogusConstructorBodyEntry;
+                self.expected_owned_node("expected `super` in constructor invocation", owner);
+            }
             self.parse_argument_list();
         }
 
-        self.expect(
-            JavaSyntaxKind::Semicolon,
-            "expected `;` after constructor invocation",
-        );
-        self.complete(invocation, JavaSyntaxKind::ConstructorInvocation);
+        if kind == JavaSyntaxKind::ConstructorInvocation {
+            self.expect_owned(
+                JavaSyntaxKind::Semicolon,
+                "expected `;` after constructor invocation",
+                owner,
+                crate::shape::constructor_invocation::Slot::semicolon as u16,
+            );
+        } else if !self.eat(JavaSyntaxKind::Semicolon) {
+            self.expected_owned_node("expected `;` after constructor invocation", owner);
+        }
+        self.complete(invocation, kind);
     }
 
     pub(super) fn parse_constructor_invocation_qualifier(&mut self) {
@@ -960,8 +1059,14 @@ impl Parser<'_> {
 
     pub(super) fn parse_enum_constant(&mut self) {
         let constant = self.start();
+        let owner = constant.anchor();
         self.parse_annotations();
-        self.expect_named_variable_identifier("expected enum constant name");
+        self.expect_variable_identifier_owned(
+            "expected enum constant name",
+            owner,
+            crate::shape::enum_constant::Slot::name as u16,
+            false,
+        );
         if self.at(JavaSyntaxKind::LParen) {
             self.parse_argument_list();
         }
@@ -978,7 +1083,11 @@ impl Parser<'_> {
             if self.at(JavaSyntaxKind::Semicolon) {
                 self.parse_empty_declaration();
             } else {
-                self.parse_member_declaration(None, true);
+                self.parse_member_declaration(
+                    None,
+                    true,
+                    JavaSyntaxKind::BogusAnnotationInterfaceBodyMember,
+                );
             }
         }
         self.complete(members, JavaSyntaxKind::AnnotationInterfaceBodyMemberList);
@@ -1073,5 +1182,31 @@ fn body_kind_for_type(kind: JavaSyntaxKind) -> JavaSyntaxKind {
         JavaSyntaxKind::EnumDeclaration => JavaSyntaxKind::EnumBody,
         JavaSyntaxKind::RecordDeclaration => JavaSyntaxKind::RecordBody,
         _ => JavaSyntaxKind::ClassBody,
+    }
+}
+
+fn type_body_open_brace_slot(kind: JavaSyntaxKind) -> u16 {
+    match kind {
+        JavaSyntaxKind::AnnotationInterfaceBody => {
+            crate::shape::annotation_interface_body::Slot::open_brace as u16
+        }
+        JavaSyntaxKind::ClassBody => crate::shape::class_body::Slot::open_brace as u16,
+        JavaSyntaxKind::EnumBody => crate::shape::enum_body::Slot::open_brace as u16,
+        JavaSyntaxKind::InterfaceBody => crate::shape::interface_body::Slot::open_brace as u16,
+        JavaSyntaxKind::RecordBody => crate::shape::record_body::Slot::open_brace as u16,
+        _ => unreachable!("type declaration has a body kind"),
+    }
+}
+
+fn type_body_close_brace_slot(kind: JavaSyntaxKind) -> u16 {
+    match kind {
+        JavaSyntaxKind::AnnotationInterfaceBody => {
+            crate::shape::annotation_interface_body::Slot::close_brace as u16
+        }
+        JavaSyntaxKind::ClassBody => crate::shape::class_body::Slot::close_brace as u16,
+        JavaSyntaxKind::EnumBody => crate::shape::enum_body::Slot::close_brace as u16,
+        JavaSyntaxKind::InterfaceBody => crate::shape::interface_body::Slot::close_brace as u16,
+        JavaSyntaxKind::RecordBody => crate::shape::record_body::Slot::close_brace as u16,
+        _ => unreachable!("type declaration has a body kind"),
     }
 }

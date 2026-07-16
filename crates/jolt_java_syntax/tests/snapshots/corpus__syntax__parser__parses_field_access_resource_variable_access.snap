@@ -21,58 +21,56 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 26..27
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "AutoCloseable" @ 32..45 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "existing" @ 46..54
-              Semicolon ";" @ 54..55
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 61..65 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 66..72
-              LParen "(" @ 72..73
-              RParen ")" @ 73..74 trailing=[Whitespace " "]
-              ThrowsClause
-                ThrowsKw "throws" @ 75..81 trailing=[Whitespace " "]
-                TypeList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Exception" @ 82..91 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 92..93
-                BlockStatementList
-                  BlockStatement
-                    TryStatement
-                      TryWithResourcesStatement
-                        TryKw "try" @ 102..105 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                        ResourceSpecification
-                          LParen "(" @ 106..107
-                          ResourceList
-                            Resource
-                              VariableAccess
-                                FieldAccessExpression
-                                  ThisExpression
-                                    ThisKw "this" @ 107..111
-                                  Dot "." @ 111..112
-                                  Identifier "existing" @ 112..120
-                          RParen ")" @ 120..121 trailing=[Whitespace " "]
-                        Block
-                          LBrace "{" @ 122..123
-                          BlockStatementList
-                          RBrace "}" @ 123..124
-                        CatchClauseList
-                RBrace "}" @ 129..130 leading=[Newline "\n", Whitespace "    "]
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "AutoCloseable" @ 32..45 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "existing" @ 46..54
+            Semicolon ";" @ 54..55
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 61..65 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 66..72
+            LParen "(" @ 72..73
+            RParen ")" @ 73..74 trailing=[Whitespace " "]
+            ThrowsClause
+              ThrowsKw "throws" @ 75..81 trailing=[Whitespace " "]
+              TypeList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Exception" @ 82..91 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 92..93
+              BlockStatementList
+                BlockStatement
+                  TryStatement
+                    TryWithResourcesStatement
+                      TryKw "try" @ 102..105 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      ResourceSpecification
+                        LParen "(" @ 106..107
+                        ResourceList
+                          Resource
+                            VariableAccess
+                              FieldAccessExpression
+                                ThisExpression
+                                  ThisKw "this" @ 107..111
+                                Dot "." @ 111..112
+                                Identifier "existing" @ 112..120
+                        RParen ")" @ 120..121 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 122..123
+                        BlockStatementList
+                        RBrace "}" @ 123..124
+                      CatchClauseList
+              RBrace "}" @ 129..130 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 131..132 leading=[Newline "\n"]
   Eof "" @ 133..133 leading=[Newline "\n"]
 

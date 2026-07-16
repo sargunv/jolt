@@ -29,60 +29,59 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 27..28 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              ModifierList
-                Annotation
-                  At "@" @ 29..30
-                  Name
-                    Identifier "A" @ 30..31
-                  AnnotationArgumentList
-                    LParen "(" @ 31..32
-                    AnnotationElementList
-                      AnnotationElementArgumentList
-                        AnnotationElementValuePair
-                          Identifier "x" @ 32..33 trailing=[Whitespace " "]
-                          Assign "=" @ 34..35 trailing=[Whitespace " "]
-                          AnnotationElementValue
-                            LiteralExpression
-                              IntegerLiteral "1" @ 36..37
-                        Comma "," @ 37..38 trailing=[Whitespace " ", BlockComment "/* ann */", Whitespace " "]
-                        BogusAnnotationArgument
-                        Comma "," @ 49..50 trailing=[Whitespace " "]
-                        AnnotationElementValuePair
-                          Identifier "y" @ 51..52 trailing=[Whitespace " "]
-                          Assign "=" @ 53..54 trailing=[Whitespace " "]
-                          AnnotationElementValue
-                            LiteralExpression
-                              IntegerLiteral "2" @ 55..56
-                    RParen ")" @ 56..57 trailing=[Whitespace " "]
-              VoidType
-                VoidKw "void" @ 58..62 trailing=[Whitespace " "]
-              Identifier "m" @ 63..64
-              LParen "(" @ 64..65
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    IntKw "int" @ 65..68 trailing=[Whitespace " "]
+          MethodDeclaration
+            ModifierList
+              Annotation
+                At "@" @ 29..30
+                Name
+                  Identifier "A" @ 30..31
+                AnnotationArgumentList
+                  LParen "(" @ 31..32
+                  AnnotationElementList
+                    AnnotationElementArgumentList
+                      AnnotationElementValuePair
+                        Identifier "x" @ 32..33 trailing=[Whitespace " "]
+                        Assign "=" @ 34..35 trailing=[Whitespace " "]
+                        AnnotationElementValue
+                          LiteralExpression
+                            IntegerLiteral "1" @ 36..37
+                      Comma "," @ 37..38 trailing=[Whitespace " ", BlockComment "/* ann */", Whitespace " "]
+                      BogusAnnotationArgument
+                      Comma "," @ 49..50 trailing=[Whitespace " "]
+                      AnnotationElementValuePair
+                        Identifier "y" @ 51..52 trailing=[Whitespace " "]
+                        Assign "=" @ 53..54 trailing=[Whitespace " "]
+                        AnnotationElementValue
+                          LiteralExpression
+                            IntegerLiteral "2" @ 55..56
+                  RParen ")" @ 56..57 trailing=[Whitespace " "]
+            VoidType
+              VoidKw "void" @ 58..62 trailing=[Whitespace " "]
+            Identifier "m" @ 63..64
+            LParen "(" @ 64..65
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "a" @ 69..70
-                Comma "," @ 70..71 trailing=[Whitespace " ", BlockComment "/* param */", Whitespace " "]
-                BogusFormalParameter
-                Comma "," @ 84..85 trailing=[Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    IntKw "int" @ 86..89 trailing=[Whitespace " "]
+                  IntKw "int" @ 65..68 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "a" @ 69..70
+              Comma "," @ 70..71 trailing=[Whitespace " ", BlockComment "/* param */", Whitespace " "]
+              BogusFormalParameter
+              Comma "," @ 84..85 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "b" @ 90..91
-              RParen ")" @ 91..92 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 93..94
-                BlockStatementList
-                RBrace "}" @ 94..95 trailing=[Whitespace " "]
+                  IntKw "int" @ 86..89 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "b" @ 90..91
+            RParen ")" @ 91..92 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 93..94
+              BlockStatementList
+              RBrace "}" @ 94..95 trailing=[Whitespace " "]
         RBrace "}" @ 96..97
   Eof "" @ 98..98 leading=[Newline "\n"]
 

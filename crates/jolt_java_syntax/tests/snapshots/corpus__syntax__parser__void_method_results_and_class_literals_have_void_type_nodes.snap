@@ -19,37 +19,36 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 21..22
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 27..31 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 32..38
-              LParen "(" @ 38..39
-              RParen ")" @ 39..40 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 41..42
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "Object" @ 51..57 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "literal" @ 58..65 trailing=[Whitespace " "]
-                          Assign "=" @ 66..67 trailing=[Whitespace " "]
-                          VariableInitializer
-                            ClassLiteralExpression
-                              VoidType
-                                VoidKw "void" @ 68..72
-                              Dot "." @ 72..73
-                              ClassKw "class" @ 73..78
-                    Semicolon ";" @ 78..79
-                RBrace "}" @ 84..85 leading=[Newline "\n", Whitespace "    "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 27..31 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 32..38
+            LParen "(" @ 38..39
+            RParen ")" @ 39..40 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 41..42
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Object" @ 51..57 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "literal" @ 58..65 trailing=[Whitespace " "]
+                        Assign "=" @ 66..67 trailing=[Whitespace " "]
+                        VariableInitializer
+                          ClassLiteralExpression
+                            VoidType
+                              VoidKw "void" @ 68..72
+                            Dot "." @ 72..73
+                            ClassKw "class" @ 73..78
+                  Semicolon ";" @ 78..79
+              RBrace "}" @ 84..85 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 86..87 leading=[Newline "\n"]
   Eof "" @ 88..88 leading=[Newline "\n"]
 

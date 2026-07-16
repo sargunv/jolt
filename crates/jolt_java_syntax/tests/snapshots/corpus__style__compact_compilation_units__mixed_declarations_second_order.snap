@@ -148,34 +148,33 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 162..163
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              ModifierList
-                StaticKw "static" @ 163..169 trailing=[Whitespace " "]
-              VoidType
-                VoidKw "void" @ 170..174 trailing=[Whitespace " "]
-              Identifier "run" @ 175..178
-              LParen "(" @ 178..179
-              RParen ")" @ 179..180
-              Block
-                LBrace "{" @ 180..181
-                BlockStatementList
-                  BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        QualifiedMethodInvocation
-                          NameExpression
-                            Identifier "IO" @ 181..183
-                          Dot "." @ 183..184
-                          Identifier "println" @ 184..191
-                          ArgumentList
-                            LParen "(" @ 191..192
-                            ExpressionList
-                              NameExpression
-                                Identifier "COUNTS" @ 192..198
-                            RParen ")" @ 198..199
-                      Semicolon ";" @ 199..200
-                RBrace "}" @ 200..201
+          MethodDeclaration
+            ModifierList
+              StaticKw "static" @ 163..169 trailing=[Whitespace " "]
+            VoidType
+              VoidKw "void" @ 170..174 trailing=[Whitespace " "]
+            Identifier "run" @ 175..178
+            LParen "(" @ 178..179
+            RParen ")" @ 179..180
+            Block
+              LBrace "{" @ 180..181
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      QualifiedMethodInvocation
+                        NameExpression
+                          Identifier "IO" @ 181..183
+                        Dot "." @ 183..184
+                        Identifier "println" @ 184..191
+                        ArgumentList
+                          LParen "(" @ 191..192
+                          ExpressionList
+                            NameExpression
+                              Identifier "COUNTS" @ 192..198
+                          RParen ")" @ 198..199
+                    Semicolon ";" @ 199..200
+              RBrace "}" @ 200..201
         RBrace "}" @ 201..202
     InterfaceDeclaration
       InterfaceKw "interface" @ 203..212 leading=[Newline "\n"] trailing=[Whitespace " "]

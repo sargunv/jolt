@@ -32,331 +32,330 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 14..15
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 16..20 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "run" @ 21..24
-              LParen "(" @ 24..25
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Builder" @ 25..32 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "builder" @ 33..40
-                Comma "," @ 40..41 trailing=[Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 42..48 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "first" @ 49..54
-                Comma "," @ 54..55 trailing=[Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 56..62 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "second" @ 63..69
-              RParen ")" @ 69..70 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 71..72
-                BlockStatementList
-                  BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        QualifiedMethodInvocation
-                          MethodInvocationExpression
-                            QualifiedMethodInvocation
-                              MethodInvocationExpression
-                                QualifiedMethodInvocation
-                                  NameExpression
-                                    Identifier "builder" @ 73..80 leading=[Newline "\n"]
-                                  Dot "." @ 80..81
-                                  Identifier "add" @ 81..84
-                                  ArgumentList
-                                    LParen "(" @ 84..85
-                                    ExpressionList
-                                      NameExpression
-                                        Identifier "first" @ 85..90
-                                    RParen ")" @ 90..91
-                              Dot "." @ 91..92
-                              Identifier "add" @ 92..95
-                              ArgumentList
-                                LParen "(" @ 95..96
-                                ExpressionList
-                                  NameExpression
-                                    Identifier "second" @ 96..102
-                                RParen ")" @ 102..103
-                          Dot "." @ 103..104
-                          Identifier "build" @ 104..109
-                          ArgumentList
-                            LParen "(" @ 109..110
-                            ExpressionList
-                            RParen ")" @ 110..111
-                      Semicolon ";" @ 111..112
-                  BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        QualifiedMethodInvocation
-                          NameExpression
-                            Identifier "builder" @ 113..120 leading=[Newline "\n"]
-                          Dot "." @ 120..121 trailing=[BlockComment "/* call */"]
-                          Identifier "add" @ 131..134
-                          ArgumentList
-                            LParen "(" @ 134..135
-                            ExpressionList
-                              NameExpression
-                                Identifier "first" @ 135..140
-                            RParen ")" @ 140..141
-                      Semicolon ";" @ 141..142
-                  BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        QualifiedMethodInvocation
-                          MethodInvocationExpression
-                            QualifiedMethodInvocation
-                              MethodInvocationExpression
-                                QualifiedMethodInvocation
-                                  NameExpression
-                                    Identifier "builder" @ 143..150 leading=[Newline "\n"]
-                                  Dot "." @ 150..151
-                                  Identifier "withFirstValue" @ 151..165
-                                  ArgumentList
-                                    LParen "(" @ 165..166
-                                    ExpressionList
-                                      MethodInvocationExpression
-                                        QualifiedMethodInvocation
-                                          NameExpression
-                                            Identifier "first" @ 166..171
-                                          Dot "." @ 171..172
-                                          Identifier "reallyLongDisplayName" @ 172..193
-                                          ArgumentList
-                                            LParen "(" @ 193..194
-                                            ExpressionList
-                                            RParen ")" @ 194..195
-                                    RParen ")" @ 195..196
-                              Dot "." @ 196..197
-                              Identifier "withSecondValue" @ 197..212
-                              ArgumentList
-                                LParen "(" @ 212..213
-                                ExpressionList
-                                  MethodInvocationExpression
-                                    QualifiedMethodInvocation
-                                      NameExpression
-                                        Identifier "second" @ 213..219
-                                      Dot "." @ 219..220
-                                      Identifier "reallyLongDisplayName" @ 220..241
-                                      ArgumentList
-                                        LParen "(" @ 241..242
-                                        ExpressionList
-                                        RParen ")" @ 242..243
-                                RParen ")" @ 243..244
-                          Dot "." @ 244..245
-                          Identifier "build" @ 245..250
-                          ArgumentList
-                            LParen "(" @ 250..251
-                            ExpressionList
-                            RParen ")" @ 251..252
-                      Semicolon ";" @ 252..253
-                  BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        QualifiedMethodInvocation
-                          MethodInvocationExpression
-                            QualifiedMethodInvocation
-                              MethodInvocationExpression
-                                QualifiedMethodInvocation
-                                  ParenthesizedExpression
-                                    LParen "(" @ 254..255 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 16..20 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "run" @ 21..24
+            LParen "(" @ 24..25
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Builder" @ 25..32 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "builder" @ 33..40
+              Comma "," @ 40..41 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 42..48 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "first" @ 49..54
+              Comma "," @ 54..55 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 56..62 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "second" @ 63..69
+            RParen ")" @ 69..70 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 71..72
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      QualifiedMethodInvocation
+                        MethodInvocationExpression
+                          QualifiedMethodInvocation
+                            MethodInvocationExpression
+                              QualifiedMethodInvocation
+                                NameExpression
+                                  Identifier "builder" @ 73..80 leading=[Newline "\n"]
+                                Dot "." @ 80..81
+                                Identifier "add" @ 81..84
+                                ArgumentList
+                                  LParen "(" @ 84..85
+                                  ExpressionList
+                                    NameExpression
+                                      Identifier "first" @ 85..90
+                                  RParen ")" @ 90..91
+                            Dot "." @ 91..92
+                            Identifier "add" @ 92..95
+                            ArgumentList
+                              LParen "(" @ 95..96
+                              ExpressionList
+                                NameExpression
+                                  Identifier "second" @ 96..102
+                              RParen ")" @ 102..103
+                        Dot "." @ 103..104
+                        Identifier "build" @ 104..109
+                        ArgumentList
+                          LParen "(" @ 109..110
+                          ExpressionList
+                          RParen ")" @ 110..111
+                    Semicolon ";" @ 111..112
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      QualifiedMethodInvocation
+                        NameExpression
+                          Identifier "builder" @ 113..120 leading=[Newline "\n"]
+                        Dot "." @ 120..121 trailing=[BlockComment "/* call */"]
+                        Identifier "add" @ 131..134
+                        ArgumentList
+                          LParen "(" @ 134..135
+                          ExpressionList
+                            NameExpression
+                              Identifier "first" @ 135..140
+                          RParen ")" @ 140..141
+                    Semicolon ";" @ 141..142
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      QualifiedMethodInvocation
+                        MethodInvocationExpression
+                          QualifiedMethodInvocation
+                            MethodInvocationExpression
+                              QualifiedMethodInvocation
+                                NameExpression
+                                  Identifier "builder" @ 143..150 leading=[Newline "\n"]
+                                Dot "." @ 150..151
+                                Identifier "withFirstValue" @ 151..165
+                                ArgumentList
+                                  LParen "(" @ 165..166
+                                  ExpressionList
                                     MethodInvocationExpression
                                       QualifiedMethodInvocation
                                         NameExpression
-                                          Identifier "builderFactory" @ 255..269
-                                        Dot "." @ 269..270
-                                        Identifier "createBuilderForExtremelyLongNamedDomainObject" @ 270..316
+                                          Identifier "first" @ 166..171
+                                        Dot "." @ 171..172
+                                        Identifier "reallyLongDisplayName" @ 172..193
                                         ArgumentList
-                                          LParen "(" @ 316..317
+                                          LParen "(" @ 193..194
                                           ExpressionList
-                                            NameExpression
-                                              Identifier "first" @ 317..322
-                                            Comma "," @ 322..323
-                                            NameExpression
-                                              Identifier "second" @ 323..329
-                                          RParen ")" @ 329..330
-                                    RParen ")" @ 330..331
-                                  Dot "." @ 331..332
-                                  Identifier "withFirstValue" @ 332..346
-                                  ArgumentList
-                                    LParen "(" @ 346..347
-                                    ExpressionList
-                                      MethodInvocationExpression
-                                        QualifiedMethodInvocation
-                                          NameExpression
-                                            Identifier "first" @ 347..352
-                                          Dot "." @ 352..353
-                                          Identifier "reallyLongDisplayName" @ 353..374
-                                          ArgumentList
-                                            LParen "(" @ 374..375
-                                            ExpressionList
-                                            RParen ")" @ 375..376
-                                    RParen ")" @ 376..377
-                              Dot "." @ 377..378
-                              Identifier "withSecondValue" @ 378..393
-                              ArgumentList
-                                LParen "(" @ 393..394
-                                ExpressionList
+                                          RParen ")" @ 194..195
+                                  RParen ")" @ 195..196
+                            Dot "." @ 196..197
+                            Identifier "withSecondValue" @ 197..212
+                            ArgumentList
+                              LParen "(" @ 212..213
+                              ExpressionList
+                                MethodInvocationExpression
+                                  QualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "second" @ 213..219
+                                    Dot "." @ 219..220
+                                    Identifier "reallyLongDisplayName" @ 220..241
+                                    ArgumentList
+                                      LParen "(" @ 241..242
+                                      ExpressionList
+                                      RParen ")" @ 242..243
+                              RParen ")" @ 243..244
+                        Dot "." @ 244..245
+                        Identifier "build" @ 245..250
+                        ArgumentList
+                          LParen "(" @ 250..251
+                          ExpressionList
+                          RParen ")" @ 251..252
+                    Semicolon ";" @ 252..253
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      QualifiedMethodInvocation
+                        MethodInvocationExpression
+                          QualifiedMethodInvocation
+                            MethodInvocationExpression
+                              QualifiedMethodInvocation
+                                ParenthesizedExpression
+                                  LParen "(" @ 254..255 leading=[Newline "\n"]
                                   MethodInvocationExpression
                                     QualifiedMethodInvocation
                                       NameExpression
-                                        Identifier "second" @ 394..400
-                                      Dot "." @ 400..401
-                                      Identifier "reallyLongDisplayName" @ 401..422
+                                        Identifier "builderFactory" @ 255..269
+                                      Dot "." @ 269..270
+                                      Identifier "createBuilderForExtremelyLongNamedDomainObject" @ 270..316
                                       ArgumentList
-                                        LParen "(" @ 422..423
+                                        LParen "(" @ 316..317
                                         ExpressionList
-                                        RParen ")" @ 423..424
-                                RParen ")" @ 424..425
-                          Dot "." @ 425..426
-                          Identifier "build" @ 426..431
-                          ArgumentList
-                            LParen "(" @ 431..432
-                            ExpressionList
-                            RParen ")" @ 432..433
-                      Semicolon ";" @ 433..434
-                  BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        QualifiedMethodInvocation
-                          MethodInvocationExpression
-                            QualifiedMethodInvocation
-                              MethodInvocationExpression
-                                QualifiedMethodInvocation
-                                  NameExpression
-                                    Identifier "builder" @ 435..442 leading=[Newline "\n"]
-                                  Dot "." @ 444..445 leading=[Newline "\n", Newline "\n"]
-                                  Identifier "withFirstValue" @ 445..459
-                                  ArgumentList
-                                    LParen "(" @ 459..460
-                                    ExpressionList
-                                      MethodInvocationExpression
-                                        QualifiedMethodInvocation
                                           NameExpression
-                                            Identifier "first" @ 460..465
-                                          Dot "." @ 465..466
-                                          Identifier "reallyLongDisplayName" @ 466..487
-                                          ArgumentList
-                                            LParen "(" @ 487..488
-                                            ExpressionList
-                                            RParen ")" @ 488..489
-                                    RParen ")" @ 489..490
-                              Dot "." @ 492..493 leading=[Newline "\n", Newline "\n"]
-                              Identifier "withSecondValue" @ 493..508
-                              ArgumentList
-                                LParen "(" @ 508..509
-                                ExpressionList
-                                  MethodInvocationExpression
-                                    QualifiedMethodInvocation
-                                      NameExpression
-                                        Identifier "second" @ 509..515
-                                      Dot "." @ 515..516
-                                      Identifier "reallyLongDisplayName" @ 516..537
-                                      ArgumentList
-                                        LParen "(" @ 537..538
-                                        ExpressionList
-                                        RParen ")" @ 538..539
-                                RParen ")" @ 539..540
-                          Dot "." @ 542..543 leading=[Newline "\n", Newline "\n"]
-                          Identifier "build" @ 543..548
-                          ArgumentList
-                            LParen "(" @ 548..549
-                            ExpressionList
-                            RParen ")" @ 549..550
-                      Semicolon ";" @ 550..551
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 552..558 leading=[Newline "\n"] trailing=[Whitespace " "]
-                      MethodInvocationExpression
-                        QualifiedMethodInvocation
-                          MethodInvocationExpression
-                            QualifiedMethodInvocation
-                              MethodInvocationExpression
-                                QualifiedMethodInvocation
-                                  ThisExpression
-                                    ThisKw "this" @ 559..563
-                                  Dot "." @ 563..564
-                                  Identifier "toStringHelper" @ 564..578
-                                  ArgumentList
-                                    LParen "(" @ 578..579
-                                    ExpressionList
-                                    RParen ")" @ 579..580
-                              Dot "." @ 580..581
-                              Identifier "add" @ 581..584
-                              ArgumentList
-                                LParen "(" @ 584..585
-                                ExpressionList
-                                  LiteralExpression
-                                    StringLiteral "\"foo\"" @ 585..590
-                                  Comma "," @ 590..591 trailing=[Whitespace " "]
-                                  NameExpression
-                                    Identifier "foo_________________________________________" @ 592..636
-                                RParen ")" @ 636..637
-                          Dot "." @ 637..638
-                          Identifier "add" @ 638..641
-                          ArgumentList
-                            LParen "(" @ 641..642
-                            ExpressionList
-                              LiteralExpression
-                                StringLiteral "\"bar\"" @ 642..647
-                              Comma "," @ 647..648 trailing=[Whitespace " "]
-                              NameExpression
-                                Identifier "bar_________________________________________" @ 649..693
-                            RParen ")" @ 693..694
-                      Semicolon ";" @ 694..695
-                  BlockStatement
-                    ExpressionStatement
-                      AssignmentExpression
-                        FieldAccessExpression
-                          ThisExpression
-                            ThisKw "this" @ 696..700 leading=[Newline "\n"]
-                          Dot "." @ 700..701
-                          Identifier "field" @ 701..706
-                        Assign "=" @ 706..707
-                        FieldAccessExpression
-                          NameExpression
-                            Identifier "builder" @ 707..714
-                          Dot "." @ 714..715
-                          Identifier "value" @ 715..720
-                      Semicolon ";" @ 720..721
-                  BlockStatement
-                    ExpressionStatement
-                      AssignmentExpression
-                        FieldAccessExpression
-                          ThisExpression
-                            ThisKw "this" @ 722..726 leading=[Newline "\n"]
-                          Dot "." @ 726..727
-                          Identifier "field" @ 727..732
-                        Assign "=" @ 732..733
-                        FieldAccessExpression
-                          NameExpression
-                            Identifier "builder" @ 733..740
-                          Dot "." @ 740..741 trailing=[BlockComment "/* field */"]
-                          Identifier "value" @ 752..757
-                      Semicolon ";" @ 757..758
-                RBrace "}" @ 759..760 leading=[Newline "\n"]
+                                            Identifier "first" @ 317..322
+                                          Comma "," @ 322..323
+                                          NameExpression
+                                            Identifier "second" @ 323..329
+                                        RParen ")" @ 329..330
+                                  RParen ")" @ 330..331
+                                Dot "." @ 331..332
+                                Identifier "withFirstValue" @ 332..346
+                                ArgumentList
+                                  LParen "(" @ 346..347
+                                  ExpressionList
+                                    MethodInvocationExpression
+                                      QualifiedMethodInvocation
+                                        NameExpression
+                                          Identifier "first" @ 347..352
+                                        Dot "." @ 352..353
+                                        Identifier "reallyLongDisplayName" @ 353..374
+                                        ArgumentList
+                                          LParen "(" @ 374..375
+                                          ExpressionList
+                                          RParen ")" @ 375..376
+                                  RParen ")" @ 376..377
+                            Dot "." @ 377..378
+                            Identifier "withSecondValue" @ 378..393
+                            ArgumentList
+                              LParen "(" @ 393..394
+                              ExpressionList
+                                MethodInvocationExpression
+                                  QualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "second" @ 394..400
+                                    Dot "." @ 400..401
+                                    Identifier "reallyLongDisplayName" @ 401..422
+                                    ArgumentList
+                                      LParen "(" @ 422..423
+                                      ExpressionList
+                                      RParen ")" @ 423..424
+                              RParen ")" @ 424..425
+                        Dot "." @ 425..426
+                        Identifier "build" @ 426..431
+                        ArgumentList
+                          LParen "(" @ 431..432
+                          ExpressionList
+                          RParen ")" @ 432..433
+                    Semicolon ";" @ 433..434
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      QualifiedMethodInvocation
+                        MethodInvocationExpression
+                          QualifiedMethodInvocation
+                            MethodInvocationExpression
+                              QualifiedMethodInvocation
+                                NameExpression
+                                  Identifier "builder" @ 435..442 leading=[Newline "\n"]
+                                Dot "." @ 444..445 leading=[Newline "\n", Newline "\n"]
+                                Identifier "withFirstValue" @ 445..459
+                                ArgumentList
+                                  LParen "(" @ 459..460
+                                  ExpressionList
+                                    MethodInvocationExpression
+                                      QualifiedMethodInvocation
+                                        NameExpression
+                                          Identifier "first" @ 460..465
+                                        Dot "." @ 465..466
+                                        Identifier "reallyLongDisplayName" @ 466..487
+                                        ArgumentList
+                                          LParen "(" @ 487..488
+                                          ExpressionList
+                                          RParen ")" @ 488..489
+                                  RParen ")" @ 489..490
+                            Dot "." @ 492..493 leading=[Newline "\n", Newline "\n"]
+                            Identifier "withSecondValue" @ 493..508
+                            ArgumentList
+                              LParen "(" @ 508..509
+                              ExpressionList
+                                MethodInvocationExpression
+                                  QualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "second" @ 509..515
+                                    Dot "." @ 515..516
+                                    Identifier "reallyLongDisplayName" @ 516..537
+                                    ArgumentList
+                                      LParen "(" @ 537..538
+                                      ExpressionList
+                                      RParen ")" @ 538..539
+                              RParen ")" @ 539..540
+                        Dot "." @ 542..543 leading=[Newline "\n", Newline "\n"]
+                        Identifier "build" @ 543..548
+                        ArgumentList
+                          LParen "(" @ 548..549
+                          ExpressionList
+                          RParen ")" @ 549..550
+                    Semicolon ";" @ 550..551
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 552..558 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    MethodInvocationExpression
+                      QualifiedMethodInvocation
+                        MethodInvocationExpression
+                          QualifiedMethodInvocation
+                            MethodInvocationExpression
+                              QualifiedMethodInvocation
+                                ThisExpression
+                                  ThisKw "this" @ 559..563
+                                Dot "." @ 563..564
+                                Identifier "toStringHelper" @ 564..578
+                                ArgumentList
+                                  LParen "(" @ 578..579
+                                  ExpressionList
+                                  RParen ")" @ 579..580
+                            Dot "." @ 580..581
+                            Identifier "add" @ 581..584
+                            ArgumentList
+                              LParen "(" @ 584..585
+                              ExpressionList
+                                LiteralExpression
+                                  StringLiteral "\"foo\"" @ 585..590
+                                Comma "," @ 590..591 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "foo_________________________________________" @ 592..636
+                              RParen ")" @ 636..637
+                        Dot "." @ 637..638
+                        Identifier "add" @ 638..641
+                        ArgumentList
+                          LParen "(" @ 641..642
+                          ExpressionList
+                            LiteralExpression
+                              StringLiteral "\"bar\"" @ 642..647
+                            Comma "," @ 647..648 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "bar_________________________________________" @ 649..693
+                          RParen ")" @ 693..694
+                    Semicolon ";" @ 694..695
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      FieldAccessExpression
+                        ThisExpression
+                          ThisKw "this" @ 696..700 leading=[Newline "\n"]
+                        Dot "." @ 700..701
+                        Identifier "field" @ 701..706
+                      Assign "=" @ 706..707
+                      FieldAccessExpression
+                        NameExpression
+                          Identifier "builder" @ 707..714
+                        Dot "." @ 714..715
+                        Identifier "value" @ 715..720
+                    Semicolon ";" @ 720..721
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      FieldAccessExpression
+                        ThisExpression
+                          ThisKw "this" @ 722..726 leading=[Newline "\n"]
+                        Dot "." @ 726..727
+                        Identifier "field" @ 727..732
+                      Assign "=" @ 732..733
+                      FieldAccessExpression
+                        NameExpression
+                          Identifier "builder" @ 733..740
+                        Dot "." @ 740..741 trailing=[BlockComment "/* field */"]
+                        Identifier "value" @ 752..757
+                    Semicolon ";" @ 757..758
+              RBrace "}" @ 759..760 leading=[Newline "\n"]
         RBrace "}" @ 761..762 leading=[Newline "\n"]
   Eof "" @ 763..763 leading=[Newline "\n"]
 

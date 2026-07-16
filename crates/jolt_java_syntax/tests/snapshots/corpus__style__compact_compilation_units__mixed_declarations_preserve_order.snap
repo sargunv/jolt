@@ -42,27 +42,26 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 38..39
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 39..45 trailing=[Whitespace " "]
-              Identifier "join" @ 46..50
-              LParen "(" @ 50..51
-              RParen ")" @ 51..52
-              Block
-                LBrace "{" @ 52..53
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 53..59 trailing=[Whitespace " "]
-                      LiteralExpression
-                        StringLiteral "\"x\"" @ 60..63
-                      Semicolon ";" @ 63..64
-                RBrace "}" @ 64..65
+          MethodDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "String" @ 39..45 trailing=[Whitespace " "]
+            Identifier "join" @ 46..50
+            LParen "(" @ 50..51
+            RParen ")" @ 51..52
+            Block
+              LBrace "{" @ 52..53
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 53..59 trailing=[Whitespace " "]
+                    LiteralExpression
+                      StringLiteral "\"x\"" @ 60..63
+                    Semicolon ";" @ 63..64
+              RBrace "}" @ 64..65
         RBrace "}" @ 65..66
     FieldDeclaration
       ClassType

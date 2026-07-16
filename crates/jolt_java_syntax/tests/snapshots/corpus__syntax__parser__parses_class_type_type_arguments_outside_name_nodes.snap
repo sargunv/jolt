@@ -17,58 +17,57 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 45..46
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    QualifiedName
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  QualifiedName
+                    QualifiedNameSegmentNode
+                      AnnotationList
+                      Identifier "java" @ 51..55 leading=[Newline "\n", Whitespace "    "]
+                    Dot "." @ 55..56
+                    NameSegmentDotList
                       QualifiedNameSegmentNode
                         AnnotationList
-                        Identifier "java" @ 51..55 leading=[Newline "\n", Whitespace "    "]
-                      Dot "." @ 55..56
-                      NameSegmentDotList
-                        QualifiedNameSegmentNode
-                          AnnotationList
-                          Identifier "util" @ 56..60
-                        Dot "." @ 60..61
-                        QualifiedNameSegmentNode
-                          AnnotationList
-                          Identifier "Map" @ 61..64
-                    TypeArgumentList
-                      Lt "<" @ 64..65
-                      TypeArgumentSeparatedList
-                        TypeArgument
-                          AnnotationList
-                          ClassType
-                            ClassTypeSegmentList
-                              ClassTypeSegmentNode
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 65..71
-                      Gt ">" @ 71..72
-                  Dot "." @ 72..73
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "Entry" @ 73..78
-                    TypeArgumentList
-                      Lt "<" @ 78..79
-                      TypeArgumentSeparatedList
-                        TypeArgument
-                          AnnotationList
-                          ClassType
-                            ClassTypeSegmentList
-                              ClassTypeSegmentNode
-                                AnnotationList
-                                Name
-                                  Identifier "Integer" @ 79..86
-                      Gt ">" @ 86..87 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "value" @ 88..93
-              Semicolon ";" @ 93..94
+                        Identifier "util" @ 56..60
+                      Dot "." @ 60..61
+                      QualifiedNameSegmentNode
+                        AnnotationList
+                        Identifier "Map" @ 61..64
+                  TypeArgumentList
+                    Lt "<" @ 64..65
+                    TypeArgumentSeparatedList
+                      TypeArgument
+                        AnnotationList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 65..71
+                    Gt ">" @ 71..72
+                Dot "." @ 72..73
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "Entry" @ 73..78
+                  TypeArgumentList
+                    Lt "<" @ 78..79
+                    TypeArgumentSeparatedList
+                      TypeArgument
+                        AnnotationList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "Integer" @ 79..86
+                    Gt ">" @ 86..87 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "value" @ 88..93
+            Semicolon ";" @ 93..94
         RBrace "}" @ 95..96 leading=[Newline "\n"]
   Eof "" @ 97..97 leading=[Newline "\n"]
 

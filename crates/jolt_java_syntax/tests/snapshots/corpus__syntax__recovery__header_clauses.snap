@@ -64,36 +64,35 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 115..116 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 117..121 trailing=[Whitespace " "]
-              Identifier "m" @ 122..123
-              LParen "(" @ 123..124
-              RParen ")" @ 124..125 trailing=[Whitespace " "]
-              ThrowsClause
-                ThrowsKw "throws" @ 126..132 trailing=[Whitespace " "]
-                TypeList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "E" @ 133..134
-                  Comma "," @ 134..135 trailing=[Whitespace " ", BlockComment "/* throws */", Whitespace " "]
-                  BogusType
-                    AnnotationList
-                  Comma "," @ 149..150 trailing=[Whitespace " "]
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "F" @ 151..152 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 153..154
-                BlockStatementList
-                RBrace "}" @ 154..155 trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 117..121 trailing=[Whitespace " "]
+            Identifier "m" @ 122..123
+            LParen "(" @ 123..124
+            RParen ")" @ 124..125 trailing=[Whitespace " "]
+            ThrowsClause
+              ThrowsKw "throws" @ 126..132 trailing=[Whitespace " "]
+              TypeList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "E" @ 133..134
+                Comma "," @ 134..135 trailing=[Whitespace " ", BlockComment "/* throws */", Whitespace " "]
+                BogusType
+                  AnnotationList
+                Comma "," @ 149..150 trailing=[Whitespace " "]
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "F" @ 151..152 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 153..154
+              BlockStatementList
+              RBrace "}" @ 154..155 trailing=[Whitespace " "]
         RBrace "}" @ 156..157
   Eof "" @ 158..158 leading=[Newline "\n"]
 

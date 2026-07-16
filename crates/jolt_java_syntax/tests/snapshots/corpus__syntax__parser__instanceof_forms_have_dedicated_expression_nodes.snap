@@ -19,80 +19,79 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 32..33
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              PrimitiveType
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              BooleanKw "boolean" @ 38..45 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 46..52
+            LParen "(" @ 52..53
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 53..59 trailing=[Whitespace " "]
                 AnnotationList
-                BooleanKw "boolean" @ 38..45 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 46..52
-              LParen "(" @ 52..53
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 53..59 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "value" @ 60..65
-              RParen ")" @ 65..66 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 67..68
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 77..83 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      BinaryExpression
-                        InstanceofExpression
-                          NameExpression
-                            Identifier "value" @ 84..89 trailing=[Whitespace " "]
-                          InstanceofKw "instanceof" @ 90..100 trailing=[Whitespace " "]
-                          ClassType
-                            ClassTypeSegmentList
-                              ClassTypeSegmentNode
-                                AnnotationList
-                                QualifiedName
+                Identifier "value" @ 60..65
+            RParen ")" @ 65..66 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 67..68
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 77..83 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    BinaryExpression
+                      InstanceofExpression
+                        NameExpression
+                          Identifier "value" @ 84..89 trailing=[Whitespace " "]
+                        InstanceofKw "instanceof" @ 90..100 trailing=[Whitespace " "]
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              QualifiedName
+                                QualifiedNameSegmentNode
+                                  AnnotationList
+                                  Identifier "java" @ 101..105
+                                Dot "." @ 105..106
+                                NameSegmentDotList
                                   QualifiedNameSegmentNode
                                     AnnotationList
-                                    Identifier "java" @ 101..105
-                                  Dot "." @ 105..106
-                                  NameSegmentDotList
-                                    QualifiedNameSegmentNode
-                                      AnnotationList
-                                      Identifier "util" @ 106..110
-                                    Dot "." @ 110..111
-                                    QualifiedNameSegmentNode
-                                      AnnotationList
-                                      Identifier "List" @ 111..115
-                                TypeArgumentList
-                                  Lt "<" @ 115..116
-                                  TypeArgumentSeparatedList
-                                    TypeArgument
-                                      AnnotationList
-                                      WildcardType
-                                        Question "?" @ 116..117
-                                  Gt ">" @ 117..118 trailing=[Whitespace " "]
-                        OrOr "||" @ 119..121 trailing=[Whitespace " "]
-                        InstanceofExpression
-                          NameExpression
-                            Identifier "value" @ 122..127 trailing=[Whitespace " "]
-                          InstanceofKw "instanceof" @ 128..138 trailing=[Whitespace " "]
-                          TypePattern
-                            LocalVariableDeclaration
-                              ParameterModifierList
-                              ClassType
-                                ClassTypeSegmentList
-                                  ClassTypeSegmentNode
+                                    Identifier "util" @ 106..110
+                                  Dot "." @ 110..111
+                                  QualifiedNameSegmentNode
                                     AnnotationList
-                                    Name
-                                      Identifier "String" @ 139..145 trailing=[Whitespace " "]
-                              VariableDeclaratorList
-                                VariableDeclarator
-                                  Identifier "text" @ 146..150
-                      Semicolon ";" @ 150..151
-                RBrace "}" @ 156..157 leading=[Newline "\n", Whitespace "    "]
+                                    Identifier "List" @ 111..115
+                              TypeArgumentList
+                                Lt "<" @ 115..116
+                                TypeArgumentSeparatedList
+                                  TypeArgument
+                                    AnnotationList
+                                    WildcardType
+                                      Question "?" @ 116..117
+                                Gt ">" @ 117..118 trailing=[Whitespace " "]
+                      OrOr "||" @ 119..121 trailing=[Whitespace " "]
+                      InstanceofExpression
+                        NameExpression
+                          Identifier "value" @ 122..127 trailing=[Whitespace " "]
+                        InstanceofKw "instanceof" @ 128..138 trailing=[Whitespace " "]
+                        TypePattern
+                          LocalVariableDeclaration
+                            ParameterModifierList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "String" @ 139..145 trailing=[Whitespace " "]
+                            VariableDeclaratorList
+                              VariableDeclarator
+                                Identifier "text" @ 146..150
+                    Semicolon ";" @ 150..151
+              RBrace "}" @ 156..157 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 158..159 leading=[Newline "\n"]
   Eof "" @ 160..160 leading=[Newline "\n"]
 

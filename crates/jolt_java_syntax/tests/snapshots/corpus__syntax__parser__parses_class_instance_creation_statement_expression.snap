@@ -22,64 +22,62 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 34..35
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 40..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 45..51
-              LParen "(" @ 51..52
-              RParen ")" @ 52..53 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 54..55
-                BlockStatementList
-                  BlockStatement
-                    ExpressionStatement
-                      ObjectCreationExpression
-                        NewKw "new" @ 64..67 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                        ClassType
-                          ClassTypeSegmentList
-                            ClassTypeSegmentNode
-                              AnnotationList
-                              Name
-                                Identifier "Object" @ 68..74
-                        ArgumentList
-                          LParen "(" @ 74..75
-                          ExpressionList
-                          RParen ")" @ 75..76
-                      Semicolon ";" @ 76..77
-                  BlockStatement
-                    ExpressionStatement
-                      ObjectCreationExpression
-                        NewKw "new" @ 86..89 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                        ClassType
-                          ClassTypeSegmentList
-                            ClassTypeSegmentNode
-                              AnnotationList
-                              Name
-                                Identifier "Runnable" @ 90..98
-                        ArgumentList
-                          LParen "(" @ 98..99
-                          ExpressionList
-                          RParen ")" @ 99..100 trailing=[Whitespace " "]
-                        ClassBody
-                          LBrace "{" @ 101..102
-                          ClassBodyMemberList
-                            ClassBodyDeclaration
-                              MethodDeclaration
-                                ModifierList
-                                  PublicKw "public" @ 115..121 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                VoidType
-                                  VoidKw "void" @ 122..126 trailing=[Whitespace " "]
-                                Identifier "run" @ 127..130
-                                LParen "(" @ 130..131
-                                RParen ")" @ 131..132 trailing=[Whitespace " "]
-                                Block
-                                  LBrace "{" @ 133..134
-                                  BlockStatementList
-                                  RBrace "}" @ 134..135
-                          RBrace "}" @ 144..145 leading=[Newline "\n", Whitespace "        "]
-                      Semicolon ";" @ 145..146
-                RBrace "}" @ 151..152 leading=[Newline "\n", Whitespace "    "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 40..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 45..51
+            LParen "(" @ 51..52
+            RParen ")" @ 52..53 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 54..55
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    ObjectCreationExpression
+                      NewKw "new" @ 64..67 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "Object" @ 68..74
+                      ArgumentList
+                        LParen "(" @ 74..75
+                        ExpressionList
+                        RParen ")" @ 75..76
+                    Semicolon ";" @ 76..77
+                BlockStatement
+                  ExpressionStatement
+                    ObjectCreationExpression
+                      NewKw "new" @ 86..89 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "Runnable" @ 90..98
+                      ArgumentList
+                        LParen "(" @ 98..99
+                        ExpressionList
+                        RParen ")" @ 99..100 trailing=[Whitespace " "]
+                      ClassBody
+                        LBrace "{" @ 101..102
+                        ClassBodyMemberList
+                          MethodDeclaration
+                            ModifierList
+                              PublicKw "public" @ 115..121 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                            VoidType
+                              VoidKw "void" @ 122..126 trailing=[Whitespace " "]
+                            Identifier "run" @ 127..130
+                            LParen "(" @ 130..131
+                            RParen ")" @ 131..132 trailing=[Whitespace " "]
+                            Block
+                              LBrace "{" @ 133..134
+                              BlockStatementList
+                              RBrace "}" @ 134..135
+                        RBrace "}" @ 144..145 leading=[Newline "\n", Whitespace "        "]
+                    Semicolon ";" @ 145..146
+              RBrace "}" @ 151..152 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 153..154 leading=[Newline "\n"]
   Eof "" @ 155..155 leading=[Newline "\n"]
 

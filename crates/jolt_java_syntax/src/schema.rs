@@ -272,6 +272,10 @@ macro_rules! java_syntax_schema {
                     MethodDeclaration,
                     AnnotationElementDeclaration,
                 }
+                ConstructorBodyEntry => BogusConstructorBodyEntry {
+                    ConstructorInvocation,
+                    BlockStatement,
+                }
                 VariableInitializerValue => BogusVariableInitializer {
                     LiteralExpression,
                     TemplateExpression,
@@ -450,6 +454,7 @@ macro_rules! java_syntax_schema {
                     close_paren: required (token RParen);
                     implements: optional (node ImplementsClause);
                     body: required (node RecordBody);
+                    missing_body_semicolon: optional (token Semicolon);
                 }
                 EnumDeclaration => EnumDeclaration [enum_declaration valid] {
                     modifiers: optional (list ModifierList);
@@ -457,6 +462,7 @@ macro_rules! java_syntax_schema {
                     name: required (token Identifier);
                     implements: optional (node ImplementsClause);
                     body: required (node EnumBody);
+                    missing_body_semicolon: optional (token Semicolon);
                 }
                 InterfaceDeclaration => InterfaceDeclaration [interface_declaration valid] {
                     modifiers: optional (list ModifierList);
@@ -466,6 +472,7 @@ macro_rules! java_syntax_schema {
                     extends: optional (node ExtendsClause);
                     permits: optional (node PermitsClause);
                     body: required (node InterfaceBody);
+                    missing_body_semicolon: optional (token Semicolon);
                 }
                 AnnotationInterfaceDeclaration => AnnotationInterfaceDeclaration [annotation_interface_declaration valid] {
                     modifiers: optional (list ModifierList);
@@ -473,6 +480,7 @@ macro_rules! java_syntax_schema {
                     interface_keyword: required (token InterfaceKw);
                     name: required (token Identifier);
                     body: required (node AnnotationInterfaceBody);
+                    missing_body_semicolon: optional (token Semicolon);
                 }
                 TypeParameterList => TypeParameterList [type_parameter_list valid] {
                     open_angle: required (token Lt);
@@ -504,9 +512,6 @@ macro_rules! java_syntax_schema {
                     open_brace: required (token LBrace);
                     members: required (list ClassBodyMemberList);
                     close_brace: required (token RBrace);
-                }
-                ClassBodyDeclaration => ClassBodyDeclaration [class_body_declaration valid] {
-                    member: required (category ClassBodyMember);
                 }
                 EmptyDeclaration => EmptyDeclaration [empty_declaration valid] {
                     semicolon: required (token Semicolon);
@@ -569,8 +574,7 @@ macro_rules! java_syntax_schema {
                     close_paren: required (token RParen);
                     dimensions: optional (list ArrayDimensions);
                     throws: optional (node ThrowsClause);
-                    body: optional (node Block);
-                    semicolon: optional (token Semicolon);
+                    body: required (choice [(node Block), (token Semicolon)]) => MethodBody;
                 }
                 ConstructorDeclaration => ConstructorDeclaration [constructor_declaration valid] {
                     modifiers: optional (list ModifierList) [disambiguate leftmost_longest];
@@ -656,7 +660,7 @@ macro_rules! java_syntax_schema {
                     declarators: required (list VariableDeclaratorList);
                 }
                 LocalClassOrInterfaceDeclaration => LocalClassOrInterfaceDeclaration [local_class_or_interface_declaration valid] {
-                    declaration: required (node_set [ClassDeclaration, InterfaceDeclaration]) => LocalTypeDeclaration;
+                    declaration: required (node_set [ClassDeclaration, InterfaceDeclaration, BogusTypeDeclaration]) => LocalTypeDeclaration;
                 }
                 EmptyStatement => EmptyStatement [empty_statement valid] {
                     semicolon: required (token Semicolon);
@@ -1170,10 +1174,10 @@ macro_rules! java_syntax_schema {
                     elements: many (category Type) [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];
                 }
                 ClassBodyMemberList => ClassBodyMemberList [class_body_member_list list] {
-                    elements: many (node_set [ClassBodyDeclaration, EmptyDeclaration]) => ClassBodyMemberElement;
+                    elements: many (category ClassBodyMember);
                 }
                 RecordBodyMemberList => RecordBodyMemberList [record_body_member_list list] {
-                    elements: many (node ClassBodyDeclaration);
+                    elements: many (category ClassBodyMember);
                 }
                 InterfaceBodyMemberList => InterfaceBodyMemberList [interface_body_member_list list] {
                     elements: many (category InterfaceBodyMember);
@@ -1182,7 +1186,7 @@ macro_rules! java_syntax_schema {
                     elements: many (element_set [Annotation, BogusModifier, FinalKw]) => ParameterModifier;
                 }
                 ConstructorBodyEntryList => ConstructorBodyEntryList [constructor_body_entry_list list] {
-                    elements: many (node_set [ConstructorInvocation, BlockStatement]) => ConstructorBodyEntryRole;
+                    elements: many (category ConstructorBodyEntry);
                 }
                 BlockStatementList => BlockStatementList [block_statement_list list] {
                     elements: many (node BlockStatement);

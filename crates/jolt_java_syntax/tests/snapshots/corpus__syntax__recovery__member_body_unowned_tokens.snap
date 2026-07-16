@@ -15,30 +15,27 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 8..9 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 10..13 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "a" @ 14..15
-              Semicolon ";" @ 15..16 trailing=[Whitespace " ", BlockComment "/* member */", Whitespace " "]
-          ClassBodyDeclaration
-            ErrorNode
-              Plus "+" @ 30..31 trailing=[Whitespace " "]
-              Semicolon ";" @ 32..33 trailing=[Whitespace " "]
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 34..38 trailing=[Whitespace " "]
-              Identifier "m" @ 39..40
-              LParen "(" @ 40..41
-              RParen ")" @ 41..42 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 43..44
-                BlockStatementList
-                RBrace "}" @ 44..45 trailing=[Whitespace " "]
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 10..13 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "a" @ 14..15
+            Semicolon ";" @ 15..16 trailing=[Whitespace " ", BlockComment "/* member */", Whitespace " "]
+          BogusClassBodyMember
+            Plus "+" @ 30..31 trailing=[Whitespace " "]
+            Semicolon ";" @ 32..33 trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 34..38 trailing=[Whitespace " "]
+            Identifier "m" @ 39..40
+            LParen "(" @ 40..41
+            RParen ")" @ 41..42 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 43..44
+              BlockStatementList
+              RBrace "}" @ 44..45 trailing=[Whitespace " "]
         RBrace "}" @ 46..47
   Eof "" @ 48..48 leading=[Newline "\n"]
 

@@ -24,82 +24,81 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 14..15
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 16..20 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "run" @ 21..24
-              LParen "(" @ 24..25
-              RParen ")" @ 25..26 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 27..28
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 29..32 leading=[Newline "\n"] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "before" @ 33..39
-                          Assign "=" @ 39..40
-                          VariableInitializer
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 16..20 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "run" @ 21..24
+            LParen "(" @ 24..25
+            RParen ")" @ 25..26 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 27..28
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 29..32 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "before" @ 33..39
+                        Assign "=" @ 39..40
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "1" @ 40..41
+                  Semicolon ";" @ 41..42
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 69..72 leading=[Newline "\n", Whitespace "    ", LineComment "// @formatter:off", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "x" @ 73..74
+                        Assign "=" @ 74..75 trailing=[Whitespace "       "]
+                        VariableInitializer
+                          BinaryExpression
                             LiteralExpression
-                              IntegerLiteral "1" @ 40..41
-                    Semicolon ";" @ 41..42
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 69..72 leading=[Newline "\n", Whitespace "    ", LineComment "// @formatter:off", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "x" @ 73..74
-                          Assign "=" @ 74..75 trailing=[Whitespace "       "]
-                          VariableInitializer
-                            BinaryExpression
-                              LiteralExpression
-                                IntegerLiteral "1" @ 82..83
-                              Plus "+" @ 83..84
-                              LiteralExpression
-                                IntegerLiteral "2" @ 84..85
-                    Semicolon ";" @ 85..86
-                  BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        UnqualifiedMethodInvocation
-                          NameExpression
-                            Identifier "foo" @ 91..94 leading=[Newline "\n", Whitespace "    "]
-                          ArgumentList
-                            LParen "(" @ 94..95 trailing=[Whitespace " "]
-                            ExpressionList
-                              NameExpression
-                                Identifier "a" @ 96..97
-                              Comma "," @ 97..98
-                              NameExpression
-                                Identifier "b" @ 98..99
-                              Comma "," @ 99..100
-                              NameExpression
-                                Identifier "c" @ 100..101 trailing=[Whitespace " "]
-                            RParen ")" @ 102..103
-                      Semicolon ";" @ 103..104
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 126..129 leading=[Newline "\n", Whitespace "    ", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "after" @ 130..135
-                          Assign "=" @ 135..136
-                          VariableInitializer
+                              IntegerLiteral "1" @ 82..83
+                            Plus "+" @ 83..84
                             LiteralExpression
-                              IntegerLiteral "2" @ 136..137
-                    Semicolon ";" @ 137..138
-                RBrace "}" @ 139..140 leading=[Newline "\n"]
+                              IntegerLiteral "2" @ 84..85
+                  Semicolon ";" @ 85..86
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "foo" @ 91..94 leading=[Newline "\n", Whitespace "    "]
+                        ArgumentList
+                          LParen "(" @ 94..95 trailing=[Whitespace " "]
+                          ExpressionList
+                            NameExpression
+                              Identifier "a" @ 96..97
+                            Comma "," @ 97..98
+                            NameExpression
+                              Identifier "b" @ 98..99
+                            Comma "," @ 99..100
+                            NameExpression
+                              Identifier "c" @ 100..101 trailing=[Whitespace " "]
+                          RParen ")" @ 102..103
+                    Semicolon ";" @ 103..104
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 126..129 leading=[Newline "\n", Whitespace "    ", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "after" @ 130..135
+                        Assign "=" @ 135..136
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "2" @ 136..137
+                  Semicolon ";" @ 137..138
+              RBrace "}" @ 139..140 leading=[Newline "\n"]
         RBrace "}" @ 141..142 leading=[Newline "\n"]
   Eof "" @ 143..143 leading=[Newline "\n"]
 

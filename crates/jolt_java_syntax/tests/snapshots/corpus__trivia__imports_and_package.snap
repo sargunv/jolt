@@ -79,40 +79,39 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 334..335
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "List" @ 338..342 leading=[Newline "\n", Whitespace "  "]
-                    TypeArgumentList
-                      Lt "<" @ 342..343
-                      TypeArgumentSeparatedList
-                        TypeArgument
-                          AnnotationList
-                          ClassType
-                            ClassTypeSegmentList
-                              ClassTypeSegmentNode
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 343..349
-                      Gt ">" @ 349..350 trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "names" @ 351..356 trailing=[Whitespace " "]
-                  Assign "=" @ 357..358 trailing=[Whitespace " "]
-                  VariableInitializer
-                    MethodInvocationExpression
-                      UnqualifiedMethodInvocation
-                        NameExpression
-                          Identifier "emptyList" @ 359..368
-                        ArgumentList
-                          LParen "(" @ 368..369
-                          ExpressionList
-                          RParen ")" @ 369..370
-              Semicolon ";" @ 370..371
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "List" @ 338..342 leading=[Newline "\n", Whitespace "  "]
+                  TypeArgumentList
+                    Lt "<" @ 342..343
+                    TypeArgumentSeparatedList
+                      TypeArgument
+                        AnnotationList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 343..349
+                    Gt ">" @ 349..350 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "names" @ 351..356 trailing=[Whitespace " "]
+                Assign "=" @ 357..358 trailing=[Whitespace " "]
+                VariableInitializer
+                  MethodInvocationExpression
+                    UnqualifiedMethodInvocation
+                      NameExpression
+                        Identifier "emptyList" @ 359..368
+                      ArgumentList
+                        LParen "(" @ 368..369
+                        ExpressionList
+                        RParen ")" @ 369..370
+            Semicolon ";" @ 370..371
         RBrace "}" @ 372..373 leading=[Newline "\n"]
   Eof "" @ 374..374 leading=[Newline "\n"]
 

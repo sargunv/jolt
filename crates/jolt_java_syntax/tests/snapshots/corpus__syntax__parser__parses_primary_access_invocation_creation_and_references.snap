@@ -49,358 +49,355 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 31..32
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "Object" @ 37..43 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "field" @ 44..49
-              Semicolon ";" @ 49..50
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 56..60 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 61..67
-              LParen "(" @ 67..68
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ArrayType
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "Object" @ 37..43 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "field" @ 44..49
+            Semicolon ";" @ 49..50
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 56..60 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 61..67
+            LParen "(" @ 67..68
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ArrayType
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "String" @ 68..74
+                  ArrayDimensions
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 74..75
+                      RBracket "]" @ 75..76 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "values" @ 77..83
+            RParen ")" @ 83..84 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 85..86
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
                     ClassType
                       ClassTypeSegmentList
                         ClassTypeSegmentNode
                           AnnotationList
                           Name
-                            Identifier "String" @ 68..74
-                    ArrayDimensions
-                      ArrayDimension
-                        AnnotationList
-                        LBracket "[" @ 74..75
-                        RBracket "]" @ 75..76 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "values" @ 77..83
-              RParen ")" @ 83..84 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 85..86
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "Object" @ 95..101 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "classLiteral" @ 102..114 trailing=[Whitespace " "]
-                          Assign "=" @ 115..116 trailing=[Whitespace " "]
-                          VariableInitializer
-                            ClassLiteralExpression
-                              NameExpression
-                                Identifier "String" @ 117..123
-                              ArrayDimensions
-                                ArrayDimension
-                                  AnnotationList
-                                  LBracket "[" @ 123..124
-                                  RBracket "]" @ 124..125
-                                ArrayDimension
-                                  AnnotationList
-                                  LBracket "[" @ 125..126
-                                  RBracket "]" @ 126..127
-                              Dot "." @ 127..128
-                              ClassKw "class" @ 128..133
-                    Semicolon ";" @ 133..134
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "Object" @ 143..149 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "created" @ 150..157 trailing=[Whitespace " "]
-                          Assign "=" @ 158..159 trailing=[Whitespace " "]
-                          VariableInitializer
+                            Identifier "Object" @ 95..101 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "classLiteral" @ 102..114 trailing=[Whitespace " "]
+                        Assign "=" @ 115..116 trailing=[Whitespace " "]
+                        VariableInitializer
+                          ClassLiteralExpression
+                            NameExpression
+                              Identifier "String" @ 117..123
+                            ArrayDimensions
+                              ArrayDimension
+                                AnnotationList
+                                LBracket "[" @ 123..124
+                                RBracket "]" @ 124..125
+                              ArrayDimension
+                                AnnotationList
+                                LBracket "[" @ 125..126
+                                RBracket "]" @ 126..127
+                            Dot "." @ 127..128
+                            ClassKw "class" @ 128..133
+                  Semicolon ";" @ 133..134
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Object" @ 143..149 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "created" @ 150..157 trailing=[Whitespace " "]
+                        Assign "=" @ 158..159 trailing=[Whitespace " "]
+                        VariableInitializer
+                          ObjectCreationExpression
                             ObjectCreationExpression
-                              ObjectCreationExpression
-                                NewKw "new" @ 160..163 trailing=[Whitespace " "]
+                              NewKw "new" @ 160..163 trailing=[Whitespace " "]
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "Outer" @ 164..169
+                                    TypeArgumentList
+                                      Lt "<" @ 169..170
+                                      TypeArgumentSeparatedList
+                                        TypeArgument
+                                          AnnotationList
+                                          ClassType
+                                            ClassTypeSegmentList
+                                              ClassTypeSegmentNode
+                                                AnnotationList
+                                                Name
+                                                  Identifier "String" @ 170..176
+                                      Gt ">" @ 176..177
+                              ArgumentList
+                                LParen "(" @ 177..178
+                                ExpressionList
+                                RParen ")" @ 178..179
+                            Dot "." @ 179..180
+                            NewKw "new" @ 180..183 trailing=[Whitespace " "]
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "Inner" @ 184..189
+                            ArgumentList
+                              LParen "(" @ 189..190
+                              ExpressionList
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 190..191
+                              RParen ")" @ 191..192
+                  Semicolon ";" @ 192..193
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Object" @ 202..208 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "anonymous" @ 209..218 trailing=[Whitespace " "]
+                        Assign "=" @ 219..220 trailing=[Whitespace " "]
+                        VariableInitializer
+                          ObjectCreationExpression
+                            NewKw "new" @ 221..224 trailing=[Whitespace " "]
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "Runnable" @ 225..233
+                            ArgumentList
+                              LParen "(" @ 233..234
+                              ExpressionList
+                              RParen ")" @ 234..235 trailing=[Whitespace " "]
+                            ClassBody
+                              LBrace "{" @ 236..237
+                              ClassBodyMemberList
+                                MethodDeclaration
+                                  ModifierList
+                                    PublicKw "public" @ 250..256 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                                  VoidType
+                                    VoidKw "void" @ 257..261 trailing=[Whitespace " "]
+                                  Identifier "run" @ 262..265
+                                  LParen "(" @ 265..266
+                                  RParen ")" @ 266..267 trailing=[Whitespace " "]
+                                  Block
+                                    LBrace "{" @ 268..269
+                                    BlockStatementList
+                                    RBrace "}" @ 269..270
+                              RBrace "}" @ 279..280 leading=[Newline "\n", Whitespace "        "]
+                  Semicolon ";" @ 280..281
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Object" @ 290..296 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "literal" @ 297..304 trailing=[Whitespace " "]
+                        Assign "=" @ 305..306 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            NullLiteral "null" @ 307..311
+                  Semicolon ";" @ 311..312
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Object" @ 321..327 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "parenthesized" @ 328..341 trailing=[Whitespace " "]
+                        Assign "=" @ 342..343 trailing=[Whitespace " "]
+                        VariableInitializer
+                          ParenthesizedExpression
+                            LParen "(" @ 344..345
+                            NameExpression
+                              Identifier "created" @ 345..352
+                            RParen ")" @ 352..353
+                  Semicolon ";" @ 353..354
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Object" @ 363..369 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "fieldAccess" @ 370..381 trailing=[Whitespace " "]
+                        Assign "=" @ 382..383 trailing=[Whitespace " "]
+                        VariableInitializer
+                          FieldAccessExpression
+                            ThisExpression
+                              ThisKw "this" @ 384..388
+                            Dot "." @ 388..389
+                            Identifier "field" @ 389..394
+                  Semicolon ";" @ 394..395
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Object" @ 404..410 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "superAccess" @ 411..422 trailing=[Whitespace " "]
+                        Assign "=" @ 423..424 trailing=[Whitespace " "]
+                        VariableInitializer
+                          MethodInvocationExpression
+                            QualifiedMethodInvocation
+                              SuperExpression
+                                SuperKw "super" @ 425..430
+                              Dot "." @ 430..431
+                              Identifier "toString" @ 431..439
+                              ArgumentList
+                                LParen "(" @ 439..440
+                                ExpressionList
+                                RParen ")" @ 440..441
+                  Semicolon ";" @ 441..442
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Object" @ 451..457 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "arrayAccess" @ 458..469 trailing=[Whitespace " "]
+                        Assign "=" @ 470..471 trailing=[Whitespace " "]
+                        VariableInitializer
+                          ArrayAccessExpression
+                            NameExpression
+                              Identifier "values" @ 472..478
+                            LBracket "[" @ 478..479
+                            LiteralExpression
+                              IntegerLiteral "0" @ 479..480
+                            RBracket "]" @ 480..481
+                  Semicolon ";" @ 481..482
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Object" @ 491..497 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "invocation" @ 498..508 trailing=[Whitespace " "]
+                        Assign "=" @ 509..510 trailing=[Whitespace " "]
+                        VariableInitializer
+                          MethodInvocationExpression
+                            QualifiedMethodInvocation
+                              NameExpression
+                                Identifier "created" @ 511..518
+                              Dot "." @ 518..519
+                              Identifier "toString" @ 519..527
+                              ArgumentList
+                                LParen "(" @ 527..528
+                                ExpressionList
+                                RParen ")" @ 528..529
+                  Semicolon ";" @ 529..530
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          QualifiedName
+                            QualifiedNameSegmentNode
+                              AnnotationList
+                              Identifier "java" @ 539..543 leading=[Newline "\n", Whitespace "        "]
+                            Dot "." @ 543..544
+                            NameSegmentDotList
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "util" @ 544..548
+                              Dot "." @ 548..549
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "function" @ 549..557
+                              Dot "." @ 557..558
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "Function" @ 558..566
+                          TypeArgumentList
+                            Lt "<" @ 566..567
+                            TypeArgumentSeparatedList
+                              TypeArgument
+                                AnnotationList
                                 ClassType
                                   ClassTypeSegmentList
                                     ClassTypeSegmentNode
                                       AnnotationList
                                       Name
-                                        Identifier "Outer" @ 164..169
-                                      TypeArgumentList
-                                        Lt "<" @ 169..170
-                                        TypeArgumentSeparatedList
-                                          TypeArgument
-                                            AnnotationList
-                                            ClassType
-                                              ClassTypeSegmentList
-                                                ClassTypeSegmentNode
-                                                  AnnotationList
-                                                  Name
-                                                    Identifier "String" @ 170..176
-                                        Gt ">" @ 176..177
-                                ArgumentList
-                                  LParen "(" @ 177..178
-                                  ExpressionList
-                                  RParen ")" @ 178..179
-                              Dot "." @ 179..180
-                              NewKw "new" @ 180..183 trailing=[Whitespace " "]
-                              ClassType
-                                ClassTypeSegmentList
-                                  ClassTypeSegmentNode
-                                    AnnotationList
-                                    Name
-                                      Identifier "Inner" @ 184..189
-                              ArgumentList
-                                LParen "(" @ 189..190
-                                ExpressionList
-                                  LiteralExpression
-                                    IntegerLiteral "1" @ 190..191
-                                RParen ")" @ 191..192
-                    Semicolon ";" @ 192..193
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "Object" @ 202..208 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "anonymous" @ 209..218 trailing=[Whitespace " "]
-                          Assign "=" @ 219..220 trailing=[Whitespace " "]
-                          VariableInitializer
-                            ObjectCreationExpression
-                              NewKw "new" @ 221..224 trailing=[Whitespace " "]
-                              ClassType
-                                ClassTypeSegmentList
-                                  ClassTypeSegmentNode
-                                    AnnotationList
-                                    Name
-                                      Identifier "Runnable" @ 225..233
-                              ArgumentList
-                                LParen "(" @ 233..234
-                                ExpressionList
-                                RParen ")" @ 234..235 trailing=[Whitespace " "]
-                              ClassBody
-                                LBrace "{" @ 236..237
-                                ClassBodyMemberList
-                                  ClassBodyDeclaration
-                                    MethodDeclaration
-                                      ModifierList
-                                        PublicKw "public" @ 250..256 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                      VoidType
-                                        VoidKw "void" @ 257..261 trailing=[Whitespace " "]
-                                      Identifier "run" @ 262..265
-                                      LParen "(" @ 265..266
-                                      RParen ")" @ 266..267 trailing=[Whitespace " "]
-                                      Block
-                                        LBrace "{" @ 268..269
-                                        BlockStatementList
-                                        RBrace "}" @ 269..270
-                                RBrace "}" @ 279..280 leading=[Newline "\n", Whitespace "        "]
-                    Semicolon ";" @ 280..281
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "Object" @ 290..296 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "literal" @ 297..304 trailing=[Whitespace " "]
-                          Assign "=" @ 305..306 trailing=[Whitespace " "]
-                          VariableInitializer
-                            LiteralExpression
-                              NullLiteral "null" @ 307..311
-                    Semicolon ";" @ 311..312
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "Object" @ 321..327 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "parenthesized" @ 328..341 trailing=[Whitespace " "]
-                          Assign "=" @ 342..343 trailing=[Whitespace " "]
-                          VariableInitializer
-                            ParenthesizedExpression
-                              LParen "(" @ 344..345
-                              NameExpression
-                                Identifier "created" @ 345..352
-                              RParen ")" @ 352..353
-                    Semicolon ";" @ 353..354
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "Object" @ 363..369 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "fieldAccess" @ 370..381 trailing=[Whitespace " "]
-                          Assign "=" @ 382..383 trailing=[Whitespace " "]
-                          VariableInitializer
-                            FieldAccessExpression
-                              ThisExpression
-                                ThisKw "this" @ 384..388
-                              Dot "." @ 388..389
-                              Identifier "field" @ 389..394
-                    Semicolon ";" @ 394..395
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "Object" @ 404..410 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "superAccess" @ 411..422 trailing=[Whitespace " "]
-                          Assign "=" @ 423..424 trailing=[Whitespace " "]
-                          VariableInitializer
-                            MethodInvocationExpression
-                              QualifiedMethodInvocation
-                                SuperExpression
-                                  SuperKw "super" @ 425..430
-                                Dot "." @ 430..431
-                                Identifier "toString" @ 431..439
-                                ArgumentList
-                                  LParen "(" @ 439..440
-                                  ExpressionList
-                                  RParen ")" @ 440..441
-                    Semicolon ";" @ 441..442
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "Object" @ 451..457 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "arrayAccess" @ 458..469 trailing=[Whitespace " "]
-                          Assign "=" @ 470..471 trailing=[Whitespace " "]
-                          VariableInitializer
-                            ArrayAccessExpression
-                              NameExpression
-                                Identifier "values" @ 472..478
-                              LBracket "[" @ 478..479
-                              LiteralExpression
-                                IntegerLiteral "0" @ 479..480
-                              RBracket "]" @ 480..481
-                    Semicolon ";" @ 481..482
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "Object" @ 491..497 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "invocation" @ 498..508 trailing=[Whitespace " "]
-                          Assign "=" @ 509..510 trailing=[Whitespace " "]
-                          VariableInitializer
-                            MethodInvocationExpression
-                              QualifiedMethodInvocation
-                                NameExpression
-                                  Identifier "created" @ 511..518
-                                Dot "." @ 518..519
-                                Identifier "toString" @ 519..527
-                                ArgumentList
-                                  LParen "(" @ 527..528
-                                  ExpressionList
-                                  RParen ")" @ 528..529
-                    Semicolon ";" @ 529..530
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            QualifiedName
-                              QualifiedNameSegmentNode
+                                        Identifier "String" @ 567..573
+                              Comma "," @ 573..574 trailing=[Whitespace " "]
+                              TypeArgument
                                 AnnotationList
-                                Identifier "java" @ 539..543 leading=[Newline "\n", Whitespace "        "]
-                              Dot "." @ 543..544
-                              NameSegmentDotList
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "util" @ 544..548
-                                Dot "." @ 548..549
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "function" @ 549..557
-                                Dot "." @ 557..558
-                                QualifiedNameSegmentNode
-                                  AnnotationList
-                                  Identifier "Function" @ 558..566
-                            TypeArgumentList
-                              Lt "<" @ 566..567
-                              TypeArgumentSeparatedList
-                                TypeArgument
-                                  AnnotationList
-                                  ClassType
-                                    ClassTypeSegmentList
-                                      ClassTypeSegmentNode
-                                        AnnotationList
-                                        Name
-                                          Identifier "String" @ 567..573
-                                Comma "," @ 573..574 trailing=[Whitespace " "]
-                                TypeArgument
-                                  AnnotationList
-                                  ClassType
-                                    ClassTypeSegmentList
-                                      ClassTypeSegmentNode
-                                        AnnotationList
-                                        Name
-                                          Identifier "Integer" @ 575..582
-                              Gt ">" @ 582..583 trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "ref" @ 584..587 trailing=[Whitespace " "]
-                          Assign "=" @ 588..589 trailing=[Whitespace " "]
-                          VariableInitializer
-                            MethodReferenceExpression
-                              NameExpression
-                                Identifier "String" @ 590..596
-                              DoubleColon "::" @ 596..598
-                              Identifier "length" @ 598..604
-                    Semicolon ";" @ 604..605
-                RBrace "}" @ 610..611 leading=[Newline "\n", Whitespace "    "]
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      Name
+                                        Identifier "Integer" @ 575..582
+                            Gt ">" @ 582..583 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "ref" @ 584..587 trailing=[Whitespace " "]
+                        Assign "=" @ 588..589 trailing=[Whitespace " "]
+                        VariableInitializer
+                          MethodReferenceExpression
+                            NameExpression
+                              Identifier "String" @ 590..596
+                            DoubleColon "::" @ 596..598
+                            Identifier "length" @ 598..604
+                  Semicolon ";" @ 604..605
+              RBrace "}" @ 610..611 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 612..613 leading=[Newline "\n"]
     ClassDeclaration
       ClassKw "class" @ 615..620 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
@@ -422,31 +419,29 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 645..646
         ClassBodyMemberList
-          ClassBodyDeclaration
-            ClassDeclaration
-              ClassKw "class" @ 651..656 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "Inner" @ 657..662 trailing=[Whitespace " "]
-              ClassBody
-                LBrace "{" @ 663..664
-                ClassBodyMemberList
-                  ClassBodyDeclaration
-                    ConstructorDeclaration
-                      Identifier "Inner" @ 673..678 leading=[Newline "\n", Whitespace "        "]
-                      LParen "(" @ 678..679
-                      FormalParameterList
-                        FormalParameter
-                          ParameterModifierList
-                          PrimitiveType
-                            AnnotationList
-                            IntKw "int" @ 679..682 trailing=[Whitespace " "]
-                          AnnotationList
-                          Identifier "value" @ 683..688
-                      RParen ")" @ 688..689 trailing=[Whitespace " "]
-                      ConstructorBody
-                        LBrace "{" @ 690..691
-                        ConstructorBodyEntryList
-                        RBrace "}" @ 691..692
-                RBrace "}" @ 697..698 leading=[Newline "\n", Whitespace "    "]
+          ClassDeclaration
+            ClassKw "class" @ 651..656 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "Inner" @ 657..662 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 663..664
+              ClassBodyMemberList
+                ConstructorDeclaration
+                  Identifier "Inner" @ 673..678 leading=[Newline "\n", Whitespace "        "]
+                  LParen "(" @ 678..679
+                  FormalParameterList
+                    FormalParameter
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 679..682 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "value" @ 683..688
+                  RParen ")" @ 688..689 trailing=[Whitespace " "]
+                  ConstructorBody
+                    LBrace "{" @ 690..691
+                    ConstructorBodyEntryList
+                    RBrace "}" @ 691..692
+              RBrace "}" @ 697..698 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 699..700 leading=[Newline "\n"]
   Eof "" @ 701..701 leading=[Newline "\n"]
 

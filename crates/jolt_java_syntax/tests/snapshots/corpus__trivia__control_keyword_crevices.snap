@@ -32,81 +32,80 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 29..30
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 33..37 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              Identifier "run" @ 38..41
-              LParen "(" @ 41..42
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    BooleanKw "boolean" @ 42..49 trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 33..37 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "run" @ 38..41
+            LParen "(" @ 41..42
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "flag" @ 50..54
-              RParen ")" @ 54..55 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 56..57
-                BlockStatementList
-                  BlockStatement
-                    LabeledStatement
-                      Identifier "outer" @ 62..67 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:label-before-colon */", Whitespace " "]
-                      Colon ":" @ 105..106 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:label-after-colon */"]
-                      WhileStatement
-                        WhileKw "while" @ 147..152 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:while-before-paren */", Whitespace " "]
-                        LParen "(" @ 190..191
-                        NameExpression
-                          Identifier "flag" @ 191..195 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:while-before-close */"]
-                        RParen ")" @ 232..233
-                        BreakStatement
-                          BreakKw "break" @ 240..245 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:break-label-gap */", Whitespace " "]
-                          Identifier "outer" @ 280..285 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:break-before-semi */"]
-                          Semicolon ";" @ 321..322
-                  BlockStatement
-                    DoStatement
-                      DoKw "do" @ 328..330 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:do-before-body */", Whitespace " "]
-                      Block
-                        LBrace "{" @ 364..365
-                        BlockStatementList
-                          BlockStatement
-                            ExpressionStatement
-                              AssignmentExpression
-                                NameExpression
-                                  Identifier "flag" @ 372..376 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
-                                Assign "=" @ 377..378 trailing=[Whitespace " "]
-                                LiteralExpression
-                                  BooleanLiteral "false" @ 379..384
-                              Semicolon ";" @ 384..385
-                        RBrace "}" @ 390..391 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                      WhileKw "while" @ 392..397 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:do-while-before-paren */", Whitespace " "]
-                      LParen "(" @ 438..439
+                  BooleanKw "boolean" @ 42..49 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "flag" @ 50..54
+            RParen ")" @ 54..55 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 56..57
+              BlockStatementList
+                BlockStatement
+                  LabeledStatement
+                    Identifier "outer" @ 62..67 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:label-before-colon */", Whitespace " "]
+                    Colon ":" @ 105..106 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:label-after-colon */"]
+                    WhileStatement
+                      WhileKw "while" @ 147..152 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:while-before-paren */", Whitespace " "]
+                      LParen "(" @ 190..191
                       NameExpression
-                        Identifier "flag" @ 439..443 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:do-while-before-close */"]
-                      RParen ")" @ 483..484
-                      Semicolon ";" @ 531..532 leading=[Newline "\n", Whitespace "        ", BlockComment "/* JOLT-TRIVIA:do-while-before-semi */"]
-                  BlockStatement
-                    SynchronizedStatement
-                      SynchronizedKw "synchronized" @ 538..550 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:synchronized-before-paren */", Whitespace " "]
-                      LParen "(" @ 595..596
-                      ThisExpression
-                        ThisKw "this" @ 605..609 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:synchronized-before-close */"]
-                      RParen ")" @ 653..654 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:synchronized-before-body */", Whitespace " "]
-                      Block
-                        LBrace "{" @ 698..699
-                        BlockStatementList
-                          BlockStatement
-                            AssertStatement
-                              AssertKw "assert" @ 706..712 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:assert-before-condition */", Whitespace " "]
+                        Identifier "flag" @ 191..195 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:while-before-close */"]
+                      RParen ")" @ 232..233
+                      BreakStatement
+                        BreakKw "break" @ 240..245 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:break-label-gap */", Whitespace " "]
+                        Identifier "outer" @ 280..285 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:break-before-semi */"]
+                        Semicolon ";" @ 321..322
+                BlockStatement
+                  DoStatement
+                    DoKw "do" @ 328..330 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:do-before-body */", Whitespace " "]
+                    Block
+                      LBrace "{" @ 364..365
+                      BlockStatementList
+                        BlockStatement
+                          ExpressionStatement
+                            AssignmentExpression
                               NameExpression
-                                Identifier "flag" @ 755..759
-                              Colon ":" @ 770..771 leading=[Newline "\n", Whitespace "          "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:assert-before-message */", Whitespace " "]
+                                Identifier "flag" @ 372..376 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                              Assign "=" @ 377..378 trailing=[Whitespace " "]
                               LiteralExpression
-                                StringLiteral "\"message\"" @ 812..821 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:assert-before-semi */"]
-                              Semicolon ";" @ 858..859
-                        RBrace "}" @ 864..865 leading=[Newline "\n", Whitespace "    "]
-                RBrace "}" @ 868..869 leading=[Newline "\n", Whitespace "  "]
+                                BooleanLiteral "false" @ 379..384
+                            Semicolon ";" @ 384..385
+                      RBrace "}" @ 390..391 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    WhileKw "while" @ 392..397 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:do-while-before-paren */", Whitespace " "]
+                    LParen "(" @ 438..439
+                    NameExpression
+                      Identifier "flag" @ 439..443 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:do-while-before-close */"]
+                    RParen ")" @ 483..484
+                    Semicolon ";" @ 531..532 leading=[Newline "\n", Whitespace "        ", BlockComment "/* JOLT-TRIVIA:do-while-before-semi */"]
+                BlockStatement
+                  SynchronizedStatement
+                    SynchronizedKw "synchronized" @ 538..550 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:synchronized-before-paren */", Whitespace " "]
+                    LParen "(" @ 595..596
+                    ThisExpression
+                      ThisKw "this" @ 605..609 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:synchronized-before-close */"]
+                    RParen ")" @ 653..654 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:synchronized-before-body */", Whitespace " "]
+                    Block
+                      LBrace "{" @ 698..699
+                      BlockStatementList
+                        BlockStatement
+                          AssertStatement
+                            AssertKw "assert" @ 706..712 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:assert-before-condition */", Whitespace " "]
+                            NameExpression
+                              Identifier "flag" @ 755..759
+                            Colon ":" @ 770..771 leading=[Newline "\n", Whitespace "          "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:assert-before-message */", Whitespace " "]
+                            LiteralExpression
+                              StringLiteral "\"message\"" @ 812..821 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:assert-before-semi */"]
+                            Semicolon ";" @ 858..859
+                      RBrace "}" @ 864..865 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 868..869 leading=[Newline "\n", Whitespace "  "]
         RBrace "}" @ 870..871 leading=[Newline "\n"]
   Eof "" @ 872..872 leading=[Newline "\n"]
 

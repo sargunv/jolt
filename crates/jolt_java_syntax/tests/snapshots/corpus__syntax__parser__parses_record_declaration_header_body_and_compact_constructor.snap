@@ -60,58 +60,56 @@ CompilationUnit
       RecordBody
         LBrace "{" @ 67..68
         RecordBodyMemberList
-          ClassBodyDeclaration
-            CompactConstructorDeclaration
-              Identifier "Point" @ 73..78 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ConstructorBody
-                LBrace "{" @ 79..80
-                ConstructorBodyEntryList
-                  BlockStatement
-                    ExpressionStatement
-                      AssignmentExpression
-                        NameExpression
-                          Identifier "labels" @ 89..95 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                        Assign "=" @ 96..97 trailing=[Whitespace " "]
-                        MethodInvocationExpression
-                          QualifiedMethodInvocation
-                            NameExpression
-                              Identifier "labels" @ 98..104
-                            Dot "." @ 104..105
-                            Identifier "clone" @ 105..110
-                            ArgumentList
-                              LParen "(" @ 110..111
-                              ExpressionList
-                              RParen ")" @ 111..112
-                      Semicolon ";" @ 112..113
-                RBrace "}" @ 118..119 leading=[Newline "\n", Whitespace "    "]
-          ClassBodyDeclaration
-            MethodDeclaration
-              ModifierList
-                PublicKw "public" @ 125..131 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 132..138 trailing=[Whitespace " "]
-              Identifier "name" @ 139..143
-              LParen "(" @ 143..144
-              RParen ")" @ 144..145 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 146..147
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 156..162 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      ArrayAccessExpression
-                        NameExpression
-                          Identifier "labels" @ 163..169
-                        LBracket "[" @ 169..170
-                        LiteralExpression
-                          IntegerLiteral "0" @ 170..171
-                        RBracket "]" @ 171..172
-                      Semicolon ";" @ 172..173
-                RBrace "}" @ 178..179 leading=[Newline "\n", Whitespace "    "]
+          CompactConstructorDeclaration
+            Identifier "Point" @ 73..78 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            ConstructorBody
+              LBrace "{" @ 79..80
+              ConstructorBodyEntryList
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "labels" @ 89..95 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      Assign "=" @ 96..97 trailing=[Whitespace " "]
+                      MethodInvocationExpression
+                        QualifiedMethodInvocation
+                          NameExpression
+                            Identifier "labels" @ 98..104
+                          Dot "." @ 104..105
+                          Identifier "clone" @ 105..110
+                          ArgumentList
+                            LParen "(" @ 110..111
+                            ExpressionList
+                            RParen ")" @ 111..112
+                    Semicolon ";" @ 112..113
+              RBrace "}" @ 118..119 leading=[Newline "\n", Whitespace "    "]
+          MethodDeclaration
+            ModifierList
+              PublicKw "public" @ 125..131 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "String" @ 132..138 trailing=[Whitespace " "]
+            Identifier "name" @ 139..143
+            LParen "(" @ 143..144
+            RParen ")" @ 144..145 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 146..147
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 156..162 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    ArrayAccessExpression
+                      NameExpression
+                        Identifier "labels" @ 163..169
+                      LBracket "[" @ 169..170
+                      LiteralExpression
+                        IntegerLiteral "0" @ 170..171
+                      RBracket "]" @ 171..172
+                    Semicolon ";" @ 172..173
+              RBrace "}" @ 178..179 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 180..181 leading=[Newline "\n"]
     InterfaceDeclaration
       InterfaceKw "interface" @ 183..192 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]

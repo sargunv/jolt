@@ -15,61 +15,60 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 8..9 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 10..14 trailing=[Whitespace " "]
-              Identifier "m" @ 15..16
-              LParen "(" @ 16..17
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    IntKw "int" @ 17..20 trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 10..14 trailing=[Whitespace " "]
+            Identifier "m" @ 15..16
+            LParen "(" @ 16..17
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "value" @ 21..26
-              RParen ")" @ 26..27 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 28..29 trailing=[Whitespace " "]
-                BlockStatementList
-                  BlockStatement
-                    SwitchStatement
-                      SwitchKw "switch" @ 30..36 trailing=[Whitespace " "]
-                      LParen "(" @ 37..38
-                      NameExpression
-                        Identifier "value" @ 38..43
-                      RParen ")" @ 43..44 trailing=[Whitespace " "]
-                      SwitchBlock
-                        LBrace "{" @ 45..46 trailing=[Whitespace " ", BlockComment "/* block */", Whitespace " "]
-                        SwitchEntryList
-                          ErrorNode
-                            BlockStatement
-                              ExpressionStatement
-                                ErrorNode
-                                  UnaryExpression
-                                    Plus "+" @ 59..60 trailing=[Whitespace " "]
-                                    ErrorNode
-                                Semicolon ";" @ 61..62 trailing=[Whitespace " "]
-                          SwitchRule
-                            SwitchLabel
-                              CaseKw "case" @ 63..67 trailing=[Whitespace " "]
-                              SwitchLabelItemList
-                                CaseConstant
-                                  LiteralExpression
-                                    IntegerLiteral "1" @ 68..69 trailing=[Whitespace " "]
-                            Arrow "->" @ 70..72 trailing=[Whitespace " "]
-                            MethodInvocationExpression
-                              UnqualifiedMethodInvocation
-                                NameExpression
-                                  Identifier "use" @ 73..76
-                                ArgumentList
-                                  LParen "(" @ 76..77
-                                  ExpressionList
-                                  RParen ")" @ 77..78
-                            Semicolon ";" @ 78..79 trailing=[Whitespace " "]
-                        RBrace "}" @ 80..81 trailing=[Whitespace " "]
-                RBrace "}" @ 82..83 trailing=[Whitespace " "]
+                  IntKw "int" @ 17..20 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 21..26
+            RParen ")" @ 26..27 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 28..29 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  SwitchStatement
+                    SwitchKw "switch" @ 30..36 trailing=[Whitespace " "]
+                    LParen "(" @ 37..38
+                    NameExpression
+                      Identifier "value" @ 38..43
+                    RParen ")" @ 43..44 trailing=[Whitespace " "]
+                    SwitchBlock
+                      LBrace "{" @ 45..46 trailing=[Whitespace " ", BlockComment "/* block */", Whitespace " "]
+                      SwitchEntryList
+                        ErrorNode
+                          BlockStatement
+                            ExpressionStatement
+                              ErrorNode
+                                UnaryExpression
+                                  Plus "+" @ 59..60 trailing=[Whitespace " "]
+                                  ErrorNode
+                              Semicolon ";" @ 61..62 trailing=[Whitespace " "]
+                        SwitchRule
+                          SwitchLabel
+                            CaseKw "case" @ 63..67 trailing=[Whitespace " "]
+                            SwitchLabelItemList
+                              CaseConstant
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 68..69 trailing=[Whitespace " "]
+                          Arrow "->" @ 70..72 trailing=[Whitespace " "]
+                          MethodInvocationExpression
+                            UnqualifiedMethodInvocation
+                              NameExpression
+                                Identifier "use" @ 73..76
+                              ArgumentList
+                                LParen "(" @ 76..77
+                                ExpressionList
+                                RParen ")" @ 77..78
+                          Semicolon ";" @ 78..79 trailing=[Whitespace " "]
+                      RBrace "}" @ 80..81 trailing=[Whitespace " "]
+              RBrace "}" @ 82..83 trailing=[Whitespace " "]
         RBrace "}" @ 84..85
   Eof "" @ 86..86 leading=[Newline "\n"]
 

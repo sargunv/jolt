@@ -15,11 +15,10 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 23..24 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            ErrorNode
-              VoidKw "void" @ 25..29 trailing=[Whitespace " "]
-              Identifier "x" @ 30..31
-              Semicolon ";" @ 31..32 trailing=[Whitespace " "]
+          BogusClassBodyMember
+            VoidKw "void" @ 25..29 trailing=[Whitespace " "]
+            Identifier "x" @ 30..31
+            Semicolon ";" @ 31..32 trailing=[Whitespace " "]
         RBrace "}" @ 33..34
   Eof "" @ 34..34
 

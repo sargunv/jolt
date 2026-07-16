@@ -31,7 +31,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_local_class_or_interface_declaration(&mut self) {
         let declaration = self.start();
-        self.parse_type_declaration();
+        self.parse_type_declaration(JavaSyntaxKind::BogusTypeDeclaration);
         self.complete(
             declaration,
             JavaSyntaxKind::LocalClassOrInterfaceDeclaration,

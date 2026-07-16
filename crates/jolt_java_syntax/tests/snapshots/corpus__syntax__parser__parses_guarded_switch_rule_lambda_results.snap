@@ -22,133 +22,132 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 37..38
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    QualifiedName
+          MethodDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  QualifiedName
+                    QualifiedNameSegmentNode
+                      AnnotationList
+                      Identifier "java" @ 43..47 leading=[Newline "\n", Whitespace "    "]
+                    Dot "." @ 47..48
+                    NameSegmentDotList
                       QualifiedNameSegmentNode
                         AnnotationList
-                        Identifier "java" @ 43..47 leading=[Newline "\n", Whitespace "    "]
-                      Dot "." @ 47..48
-                      NameSegmentDotList
-                        QualifiedNameSegmentNode
-                          AnnotationList
-                          Identifier "util" @ 48..52
-                        Dot "." @ 52..53
-                        QualifiedNameSegmentNode
-                          AnnotationList
-                          Identifier "function" @ 53..61
-                        Dot "." @ 61..62
-                        QualifiedNameSegmentNode
-                          AnnotationList
-                          Identifier "Function" @ 62..70
-                    TypeArgumentList
-                      Lt "<" @ 70..71
-                      TypeArgumentSeparatedList
-                        TypeArgument
-                          AnnotationList
-                          ClassType
-                            ClassTypeSegmentList
-                              ClassTypeSegmentNode
-                                AnnotationList
-                                Name
-                                  Identifier "Integer" @ 71..78
-                        Comma "," @ 78..79 trailing=[Whitespace " "]
-                        TypeArgument
-                          AnnotationList
-                          ClassType
-                            ClassTypeSegmentList
-                              ClassTypeSegmentNode
-                                AnnotationList
-                                Name
-                                  Identifier "Integer" @ 80..87
-                      Gt ">" @ 87..88 trailing=[Whitespace " "]
-              Identifier "method" @ 89..95
-              LParen "(" @ 95..96
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
+                        Identifier "util" @ 48..52
+                      Dot "." @ 52..53
+                      QualifiedNameSegmentNode
                         AnnotationList
-                        Name
-                          Identifier "Object" @ 96..102 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "value" @ 103..108
-              RParen ")" @ 108..109 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 110..111
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 120..126 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      SwitchExpression
-                        SwitchKw "switch" @ 127..133 trailing=[Whitespace " "]
-                        LParen "(" @ 134..135
-                        NameExpression
-                          Identifier "value" @ 135..140
-                        RParen ")" @ 140..141 trailing=[Whitespace " "]
-                        SwitchBlock
-                          LBrace "{" @ 142..143
-                          SwitchEntryList
-                            SwitchRule
-                              SwitchLabel
-                                CaseKw "case" @ 156..160 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                SwitchLabelItemList
-                                  CasePattern
-                                    TypePattern
-                                      LocalVariableDeclaration
-                                        ParameterModifierList
-                                        ClassType
-                                          ClassTypeSegmentList
-                                            ClassTypeSegmentNode
-                                              AnnotationList
-                                              Name
-                                                Identifier "Boolean" @ 161..168 trailing=[Whitespace " "]
-                                        VariableDeclaratorList
-                                          VariableDeclarator
-                                            Identifier "enabled" @ 169..176 trailing=[Whitespace " "]
-                                Guard
-                                  Identifier "when" @ 177..181 trailing=[Whitespace " "]
-                                  NameExpression
-                                    Identifier "enabled" @ 182..189 trailing=[Whitespace " "]
-                              Arrow "->" @ 190..192 trailing=[Whitespace " "]
-                              LambdaExpression
-                                LambdaParameterList
-                                  LambdaParameter
-                                    LambdaModifierList
-                                    AnnotationList
-                                    Identifier "x" @ 193..194 trailing=[Whitespace " "]
-                                Arrow "->" @ 195..197 trailing=[Whitespace " "]
-                                BinaryExpression
-                                  NameExpression
-                                    Identifier "x" @ 198..199 trailing=[Whitespace " "]
-                                  Plus "+" @ 200..201 trailing=[Whitespace " "]
-                                  LiteralExpression
-                                    IntegerLiteral "1" @ 202..203
-                              Semicolon ";" @ 203..204
-                            SwitchRule
-                              SwitchLabel
-                                DefaultKw "default" @ 217..224 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                SwitchLabelItemList
-                              Arrow "->" @ 225..227 trailing=[Whitespace " "]
-                              LambdaExpression
-                                LambdaParameterList
-                                  LambdaParameter
-                                    LambdaModifierList
-                                    AnnotationList
-                                    Identifier "x" @ 228..229 trailing=[Whitespace " "]
-                                Arrow "->" @ 230..232 trailing=[Whitespace " "]
+                        Identifier "function" @ 53..61
+                      Dot "." @ 61..62
+                      QualifiedNameSegmentNode
+                        AnnotationList
+                        Identifier "Function" @ 62..70
+                  TypeArgumentList
+                    Lt "<" @ 70..71
+                    TypeArgumentSeparatedList
+                      TypeArgument
+                        AnnotationList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "Integer" @ 71..78
+                      Comma "," @ 78..79 trailing=[Whitespace " "]
+                      TypeArgument
+                        AnnotationList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "Integer" @ 80..87
+                    Gt ">" @ 87..88 trailing=[Whitespace " "]
+            Identifier "method" @ 89..95
+            LParen "(" @ 95..96
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 96..102 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 103..108
+            RParen ")" @ 108..109 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 110..111
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 120..126 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    SwitchExpression
+                      SwitchKw "switch" @ 127..133 trailing=[Whitespace " "]
+                      LParen "(" @ 134..135
+                      NameExpression
+                        Identifier "value" @ 135..140
+                      RParen ")" @ 140..141 trailing=[Whitespace " "]
+                      SwitchBlock
+                        LBrace "{" @ 142..143
+                        SwitchEntryList
+                          SwitchRule
+                            SwitchLabel
+                              CaseKw "case" @ 156..160 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                                CasePattern
+                                  TypePattern
+                                    LocalVariableDeclaration
+                                      ParameterModifierList
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            Name
+                                              Identifier "Boolean" @ 161..168 trailing=[Whitespace " "]
+                                      VariableDeclaratorList
+                                        VariableDeclarator
+                                          Identifier "enabled" @ 169..176 trailing=[Whitespace " "]
+                              Guard
+                                Identifier "when" @ 177..181 trailing=[Whitespace " "]
                                 NameExpression
-                                  Identifier "x" @ 233..234
-                              Semicolon ";" @ 234..235
-                          RBrace "}" @ 244..245 leading=[Newline "\n", Whitespace "        "]
-                      Semicolon ";" @ 245..246
-                RBrace "}" @ 251..252 leading=[Newline "\n", Whitespace "    "]
+                                  Identifier "enabled" @ 182..189 trailing=[Whitespace " "]
+                            Arrow "->" @ 190..192 trailing=[Whitespace " "]
+                            LambdaExpression
+                              LambdaParameterList
+                                LambdaParameter
+                                  LambdaModifierList
+                                  AnnotationList
+                                  Identifier "x" @ 193..194 trailing=[Whitespace " "]
+                              Arrow "->" @ 195..197 trailing=[Whitespace " "]
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "x" @ 198..199 trailing=[Whitespace " "]
+                                Plus "+" @ 200..201 trailing=[Whitespace " "]
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 202..203
+                            Semicolon ";" @ 203..204
+                          SwitchRule
+                            SwitchLabel
+                              DefaultKw "default" @ 217..224 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                            Arrow "->" @ 225..227 trailing=[Whitespace " "]
+                            LambdaExpression
+                              LambdaParameterList
+                                LambdaParameter
+                                  LambdaModifierList
+                                  AnnotationList
+                                  Identifier "x" @ 228..229 trailing=[Whitespace " "]
+                              Arrow "->" @ 230..232 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "x" @ 233..234
+                            Semicolon ";" @ 234..235
+                        RBrace "}" @ 244..245 leading=[Newline "\n", Whitespace "        "]
+                    Semicolon ";" @ 245..246
+              RBrace "}" @ 251..252 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 253..254 leading=[Newline "\n"]
   Eof "" @ 255..255 leading=[Newline "\n"]
 

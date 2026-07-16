@@ -60,123 +60,122 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 67..68 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 69..73 trailing=[Whitespace " "]
-              Identifier "m" @ 74..75
-              LParen "(" @ 75..76
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 76..82 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "value" @ 83..88
-              RParen ")" @ 88..89 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 90..91 trailing=[Whitespace " "]
-                BlockStatementList
-                  BlockStatement
-                    IfStatement
-                      IfKw "if" @ 92..94 trailing=[Whitespace " "]
-                      LParen "(" @ 95..96
-                      InstanceofExpression
-                        NameExpression
-                          Identifier "value" @ 96..101 trailing=[Whitespace " "]
-                        InstanceofKw "instanceof" @ 102..112 trailing=[Whitespace " "]
-                        RecordPattern
-                          ClassType
-                            ClassTypeSegmentList
-                              ClassTypeSegmentNode
-                                AnnotationList
-                                Name
-                                  Identifier "Point" @ 113..118
-                          LParen "(" @ 118..119
-                          ComponentPatternList
-                            ComponentPattern
-                              TypePattern
-                                LocalVariableDeclaration
-                                  ParameterModifierList
-                                  PrimitiveType
-                                    AnnotationList
-                                    IntKw "int" @ 119..122 trailing=[Whitespace " "]
-                                  VariableDeclaratorList
-                                    VariableDeclarator
-                                      Identifier "x" @ 123..124
-                            Comma "," @ 124..125 trailing=[Whitespace " ", BlockComment "/* pattern */", Whitespace " "]
-                            ComponentPattern
-                              TypePattern
-                                LocalVariableDeclaration
-                                  ParameterModifierList
-                                  BogusType
-                                    AnnotationList
-                                  VariableDeclaratorList
-                                    VariableDeclarator
-                            Comma "," @ 140..141 trailing=[Whitespace " "]
-                            ComponentPattern
-                              TypePattern
-                                LocalVariableDeclaration
-                                  ParameterModifierList
-                                  PrimitiveType
-                                    AnnotationList
-                                    IntKw "int" @ 142..145 trailing=[Whitespace " "]
-                                  VariableDeclaratorList
-                                    VariableDeclarator
-                                      Identifier "y" @ 146..147
-                          RParen ")" @ 147..148
-                      RParen ")" @ 148..149 trailing=[Whitespace " "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 69..73 trailing=[Whitespace " "]
+            Identifier "m" @ 74..75
+            LParen "(" @ 75..76
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 76..82 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 83..88
+            RParen ")" @ 88..89 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 90..91 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  IfStatement
+                    IfKw "if" @ 92..94 trailing=[Whitespace " "]
+                    LParen "(" @ 95..96
+                    InstanceofExpression
+                      NameExpression
+                        Identifier "value" @ 96..101 trailing=[Whitespace " "]
+                      InstanceofKw "instanceof" @ 102..112 trailing=[Whitespace " "]
+                      RecordPattern
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "Point" @ 113..118
+                        LParen "(" @ 118..119
+                        ComponentPatternList
+                          ComponentPattern
+                            TypePattern
+                              LocalVariableDeclaration
+                                ParameterModifierList
+                                PrimitiveType
+                                  AnnotationList
+                                  IntKw "int" @ 119..122 trailing=[Whitespace " "]
+                                VariableDeclaratorList
+                                  VariableDeclarator
+                                    Identifier "x" @ 123..124
+                          Comma "," @ 124..125 trailing=[Whitespace " ", BlockComment "/* pattern */", Whitespace " "]
+                          ComponentPattern
+                            TypePattern
+                              LocalVariableDeclaration
+                                ParameterModifierList
+                                BogusType
+                                  AnnotationList
+                                VariableDeclaratorList
+                                  VariableDeclarator
+                          Comma "," @ 140..141 trailing=[Whitespace " "]
+                          ComponentPattern
+                            TypePattern
+                              LocalVariableDeclaration
+                                ParameterModifierList
+                                PrimitiveType
+                                  AnnotationList
+                                  IntKw "int" @ 142..145 trailing=[Whitespace " "]
+                                VariableDeclaratorList
+                                  VariableDeclarator
+                                    Identifier "y" @ 146..147
+                        RParen ")" @ 147..148
+                    RParen ")" @ 148..149 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 150..151
+                      BlockStatementList
+                      RBrace "}" @ 151..152 trailing=[Whitespace " "]
+                BlockStatement
+                  ForStatement
+                    BasicForStatement
+                      ForKw "for" @ 153..156 trailing=[Whitespace " "]
+                      LParen "(" @ 157..158
+                      ForInitializer
+                        StatementExpressionList
+                          AssignmentExpression
+                            NameExpression
+                              Identifier "i" @ 158..159 trailing=[Whitespace " "]
+                            Assign "=" @ 160..161 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "0" @ 162..163
+                          Comma "," @ 163..164 trailing=[Whitespace " ", BlockComment "/* init */", Whitespace " "]
+                          ErrorNode
+                          Comma "," @ 176..177 trailing=[Whitespace " "]
+                          AssignmentExpression
+                            NameExpression
+                              Identifier "j" @ 178..179 trailing=[Whitespace " "]
+                            Assign "=" @ 180..181 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "0" @ 182..183
+                      Semicolon ";" @ 183..184 trailing=[Whitespace " "]
+                      Semicolon ";" @ 185..186 trailing=[Whitespace " "]
+                      ForUpdate
+                        StatementExpressionList
+                          PostfixExpression
+                            NameExpression
+                              Identifier "i" @ 187..188
+                            PlusPlus "++" @ 188..190
+                          Comma "," @ 190..191 trailing=[Whitespace " ", BlockComment "/* update */", Whitespace " "]
+                          ErrorNode
+                          Comma "," @ 205..206 trailing=[Whitespace " "]
+                          PostfixExpression
+                            NameExpression
+                              Identifier "j" @ 207..208
+                            PlusPlus "++" @ 208..210
+                      RParen ")" @ 210..211 trailing=[Whitespace " "]
                       Block
-                        LBrace "{" @ 150..151
+                        LBrace "{" @ 212..213
                         BlockStatementList
-                        RBrace "}" @ 151..152 trailing=[Whitespace " "]
-                  BlockStatement
-                    ForStatement
-                      BasicForStatement
-                        ForKw "for" @ 153..156 trailing=[Whitespace " "]
-                        LParen "(" @ 157..158
-                        ForInitializer
-                          StatementExpressionList
-                            AssignmentExpression
-                              NameExpression
-                                Identifier "i" @ 158..159 trailing=[Whitespace " "]
-                              Assign "=" @ 160..161 trailing=[Whitespace " "]
-                              LiteralExpression
-                                IntegerLiteral "0" @ 162..163
-                            Comma "," @ 163..164 trailing=[Whitespace " ", BlockComment "/* init */", Whitespace " "]
-                            ErrorNode
-                            Comma "," @ 176..177 trailing=[Whitespace " "]
-                            AssignmentExpression
-                              NameExpression
-                                Identifier "j" @ 178..179 trailing=[Whitespace " "]
-                              Assign "=" @ 180..181 trailing=[Whitespace " "]
-                              LiteralExpression
-                                IntegerLiteral "0" @ 182..183
-                        Semicolon ";" @ 183..184 trailing=[Whitespace " "]
-                        Semicolon ";" @ 185..186 trailing=[Whitespace " "]
-                        ForUpdate
-                          StatementExpressionList
-                            PostfixExpression
-                              NameExpression
-                                Identifier "i" @ 187..188
-                              PlusPlus "++" @ 188..190
-                            Comma "," @ 190..191 trailing=[Whitespace " ", BlockComment "/* update */", Whitespace " "]
-                            ErrorNode
-                            Comma "," @ 205..206 trailing=[Whitespace " "]
-                            PostfixExpression
-                              NameExpression
-                                Identifier "j" @ 207..208
-                              PlusPlus "++" @ 208..210
-                        RParen ")" @ 210..211 trailing=[Whitespace " "]
-                        Block
-                          LBrace "{" @ 212..213
-                          BlockStatementList
-                          RBrace "}" @ 213..214 trailing=[Whitespace " "]
-                RBrace "}" @ 215..216 trailing=[Whitespace " "]
+                        RBrace "}" @ 213..214 trailing=[Whitespace " "]
+              RBrace "}" @ 215..216 trailing=[Whitespace " "]
         RBrace "}" @ 217..218
   Eof "" @ 219..219 leading=[Newline "\n"]
 

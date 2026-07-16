@@ -19,37 +19,35 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 20..21
         ClassBodyMemberList
-          ClassBodyDeclaration
-            ClassDeclaration
-              ClassKw "class" @ 26..31 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "ReceiverInner" @ 32..45 trailing=[Whitespace " "]
-              ClassBody
-                LBrace "{" @ 46..47
-                ClassBodyMemberList
-                  ClassBodyDeclaration
-                    MethodDeclaration
-                      VoidType
-                        VoidKw "void" @ 56..60 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      Identifier "method" @ 61..67
-                      LParen "(" @ 67..68
-                      FormalParameterList
-                        ReceiverParameter
-                          AnnotationList
-                          ClassType
-                            ClassTypeSegmentList
-                              ClassTypeSegmentNode
-                                AnnotationList
-                                Name
-                                  Identifier "ReceiverOuter" @ 68..81 trailing=[Whitespace " "]
-                          Identifier "ReceiverOuter" @ 82..95
-                          Dot "." @ 95..96
-                          ThisKw "this" @ 96..100
-                      RParen ")" @ 100..101 trailing=[Whitespace " "]
-                      Block
-                        LBrace "{" @ 102..103
-                        BlockStatementList
-                        RBrace "}" @ 103..104
-                RBrace "}" @ 109..110 leading=[Newline "\n", Whitespace "    "]
+          ClassDeclaration
+            ClassKw "class" @ 26..31 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "ReceiverInner" @ 32..45 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 46..47
+              ClassBodyMemberList
+                MethodDeclaration
+                  VoidType
+                    VoidKw "void" @ 56..60 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  Identifier "method" @ 61..67
+                  LParen "(" @ 67..68
+                  FormalParameterList
+                    ReceiverParameter
+                      AnnotationList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "ReceiverOuter" @ 68..81 trailing=[Whitespace " "]
+                      Identifier "ReceiverOuter" @ 82..95
+                      Dot "." @ 95..96
+                      ThisKw "this" @ 96..100
+                  RParen ")" @ 100..101 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 102..103
+                    BlockStatementList
+                    RBrace "}" @ 103..104
+              RBrace "}" @ 109..110 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 111..112 leading=[Newline "\n"]
   Eof "" @ 113..113 leading=[Newline "\n"]
 

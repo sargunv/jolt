@@ -45,590 +45,583 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 14..15
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              PrimitiveType
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              BooleanKw "boolean" @ 16..23 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "allowed" @ 24..31
+            LParen "(" @ 31..32
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "User" @ 32..36 trailing=[Whitespace " "]
                 AnnotationList
-                BooleanKw "boolean" @ 16..23 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "allowed" @ 24..31
-              LParen "(" @ 31..32
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "User" @ 32..36 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "user" @ 37..41
-                Comma "," @ 41..42 trailing=[Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Account" @ 43..50 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "account" @ 51..58
-              RParen ")" @ 58..59 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 60..61
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 62..68 leading=[Newline "\n"] trailing=[Whitespace " "]
-                      ConditionalExpression
-                        ParenthesizedExpression
-                          LParen "(" @ 69..70 trailing=[BlockComment "/* allowed */", Whitespace " "]
-                          BinaryExpression
-                            MethodInvocationExpression
-                              QualifiedMethodInvocation
-                                NameExpression
-                                  Identifier "user" @ 84..88
-                                Dot "." @ 88..89
-                                Identifier "isActive" @ 89..97
-                                ArgumentList
-                                  LParen "(" @ 97..98
-                                  ExpressionList
-                                  RParen ")" @ 98..99
-                            AndAnd "&&" @ 99..101
-                            MethodInvocationExpression
-                              QualifiedMethodInvocation
-                                NameExpression
-                                  Identifier "account" @ 101..108
-                                Dot "." @ 108..109
-                                Identifier "hasPermission" @ 109..122
-                                ArgumentList
-                                  LParen "(" @ 122..123
-                                  ExpressionList
-                                    LiteralExpression
-                                      StringLiteral "\"write\"" @ 123..130
-                                  RParen ")" @ 130..131
-                          RParen ")" @ 131..132
-                        Question "?" @ 132..133
-                        LiteralExpression
-                          BooleanLiteral "true" @ 133..137
-                        Colon ":" @ 137..138
-                        LiteralExpression
-                          BooleanLiteral "false" @ 138..143
-                      Semicolon ";" @ 143..144
-                RBrace "}" @ 145..146 leading=[Newline "\n"]
-          ClassBodyDeclaration
-            MethodDeclaration
-              PrimitiveType
+                Identifier "user" @ 37..41
+              Comma "," @ 41..42 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Account" @ 43..50 trailing=[Whitespace " "]
                 AnnotationList
-                BooleanKw "boolean" @ 147..154 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "commented" @ 155..164
-              LParen "(" @ 164..165
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    BooleanKw "boolean" @ 165..172 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "ready" @ 173..178
-              RParen ")" @ 178..179 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 180..181
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 182..188 leading=[Newline "\n"] trailing=[Whitespace " "]
-                      ConditionalExpression
-                        NameExpression
-                          Identifier "ready" @ 189..194
-                        Question "?" @ 194..195 trailing=[BlockComment "/* yes */"]
-                        LiteralExpression
-                          BooleanLiteral "true" @ 204..208
-                        Colon ":" @ 208..209 trailing=[BlockComment "/* no */"]
-                        LiteralExpression
-                          BooleanLiteral "false" @ 217..222
-                      Semicolon ";" @ 222..223
-                RBrace "}" @ 224..225 leading=[Newline "\n"]
-          ClassBodyDeclaration
-            MethodDeclaration
-              PrimitiveType
-                AnnotationList
-                BooleanKw "boolean" @ 226..233 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "returned" @ 234..242
-              LParen "(" @ 242..243
-              RParen ")" @ 243..244 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 245..246
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 247..253 leading=[Newline "\n"] trailing=[Whitespace " "]
-                      BinaryExpression
+                Identifier "account" @ 51..58
+            RParen ")" @ 58..59 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 60..61
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 62..68 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    ConditionalExpression
+                      ParenthesizedExpression
+                        LParen "(" @ 69..70 trailing=[BlockComment "/* allowed */", Whitespace " "]
                         BinaryExpression
-                          BinaryExpression
-                            MethodInvocationExpression
-                              QualifiedMethodInvocation
-                                NameExpression
-                                  Identifier "user" @ 254..258
-                                Dot "." @ 258..259
-                                Identifier "isActive" @ 259..267
-                                ArgumentList
-                                  LParen "(" @ 267..268
-                                  ExpressionList
-                                  RParen ")" @ 268..269 trailing=[Whitespace " "]
-                            AndAnd "&&" @ 270..272 trailing=[Whitespace " "]
-                            MethodInvocationExpression
-                              QualifiedMethodInvocation
-                                NameExpression
-                                  Identifier "account" @ 273..280
-                                Dot "." @ 280..281
-                                Identifier "hasPermission" @ 281..294
-                                ArgumentList
-                                  LParen "(" @ 294..295
-                                  ExpressionList
-                                    LiteralExpression
-                                      StringLiteral "\"write\"" @ 295..302
-                                  RParen ")" @ 302..303 trailing=[Whitespace " "]
-                          AndAnd "&&" @ 304..306 trailing=[Whitespace " "]
                           MethodInvocationExpression
                             QualifiedMethodInvocation
                               NameExpression
-                                Identifier "featureFlags" @ 307..319
-                              Dot "." @ 319..320
-                              Identifier "enabled" @ 320..327
+                                Identifier "user" @ 84..88
+                              Dot "." @ 88..89
+                              Identifier "isActive" @ 89..97
                               ArgumentList
-                                LParen "(" @ 327..328
+                                LParen "(" @ 97..98
                                 ExpressionList
-                                RParen ")" @ 328..329 trailing=[Whitespace " "]
-                        AndAnd "&&" @ 330..332 trailing=[Whitespace " "]
+                                RParen ")" @ 98..99
+                          AndAnd "&&" @ 99..101
+                          MethodInvocationExpression
+                            QualifiedMethodInvocation
+                              NameExpression
+                                Identifier "account" @ 101..108
+                              Dot "." @ 108..109
+                              Identifier "hasPermission" @ 109..122
+                              ArgumentList
+                                LParen "(" @ 122..123
+                                ExpressionList
+                                  LiteralExpression
+                                    StringLiteral "\"write\"" @ 123..130
+                                RParen ")" @ 130..131
+                        RParen ")" @ 131..132
+                      Question "?" @ 132..133
+                      LiteralExpression
+                        BooleanLiteral "true" @ 133..137
+                      Colon ":" @ 137..138
+                      LiteralExpression
+                        BooleanLiteral "false" @ 138..143
+                    Semicolon ";" @ 143..144
+              RBrace "}" @ 145..146 leading=[Newline "\n"]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              BooleanKw "boolean" @ 147..154 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "commented" @ 155..164
+            LParen "(" @ 164..165
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  BooleanKw "boolean" @ 165..172 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "ready" @ 173..178
+            RParen ")" @ 178..179 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 180..181
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 182..188 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    ConditionalExpression
+                      NameExpression
+                        Identifier "ready" @ 189..194
+                      Question "?" @ 194..195 trailing=[BlockComment "/* yes */"]
+                      LiteralExpression
+                        BooleanLiteral "true" @ 204..208
+                      Colon ":" @ 208..209 trailing=[BlockComment "/* no */"]
+                      LiteralExpression
+                        BooleanLiteral "false" @ 217..222
+                    Semicolon ";" @ 222..223
+              RBrace "}" @ 224..225 leading=[Newline "\n"]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              BooleanKw "boolean" @ 226..233 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "returned" @ 234..242
+            LParen "(" @ 242..243
+            RParen ")" @ 243..244 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 245..246
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 247..253 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    BinaryExpression
+                      BinaryExpression
+                        BinaryExpression
+                          MethodInvocationExpression
+                            QualifiedMethodInvocation
+                              NameExpression
+                                Identifier "user" @ 254..258
+                              Dot "." @ 258..259
+                              Identifier "isActive" @ 259..267
+                              ArgumentList
+                                LParen "(" @ 267..268
+                                ExpressionList
+                                RParen ")" @ 268..269 trailing=[Whitespace " "]
+                          AndAnd "&&" @ 270..272 trailing=[Whitespace " "]
+                          MethodInvocationExpression
+                            QualifiedMethodInvocation
+                              NameExpression
+                                Identifier "account" @ 273..280
+                              Dot "." @ 280..281
+                              Identifier "hasPermission" @ 281..294
+                              ArgumentList
+                                LParen "(" @ 294..295
+                                ExpressionList
+                                  LiteralExpression
+                                    StringLiteral "\"write\"" @ 295..302
+                                RParen ")" @ 302..303 trailing=[Whitespace " "]
+                        AndAnd "&&" @ 304..306 trailing=[Whitespace " "]
                         MethodInvocationExpression
                           QualifiedMethodInvocation
                             NameExpression
-                              Identifier "auditPolicy" @ 333..344
-                            Dot "." @ 344..345
-                            Identifier "allows" @ 345..351
+                              Identifier "featureFlags" @ 307..319
+                            Dot "." @ 319..320
+                            Identifier "enabled" @ 320..327
                             ArgumentList
-                              LParen "(" @ 351..352
+                              LParen "(" @ 327..328
                               ExpressionList
-                                NameExpression
-                                  Identifier "user" @ 352..356
-                              RParen ")" @ 356..357
-                      Semicolon ";" @ 357..358
-                RBrace "}" @ 359..360 leading=[Newline "\n"]
-          ClassBodyDeclaration
-            MethodDeclaration
-              PrimitiveType
-                AnnotationList
-                BooleanKw "boolean" @ 361..368 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "hasMore" @ 369..376
-              LParen "(" @ 376..377
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ArrayType
-                    ClassType
-                      ClassTypeSegmentList
-                        ClassTypeSegmentNode
-                          AnnotationList
-                          Name
-                            Identifier "String" @ 377..383
-                    ArrayDimensions
-                      ArrayDimension
+                              RParen ")" @ 328..329 trailing=[Whitespace " "]
+                      AndAnd "&&" @ 330..332 trailing=[Whitespace " "]
+                      MethodInvocationExpression
+                        QualifiedMethodInvocation
+                          NameExpression
+                            Identifier "auditPolicy" @ 333..344
+                          Dot "." @ 344..345
+                          Identifier "allows" @ 345..351
+                          ArgumentList
+                            LParen "(" @ 351..352
+                            ExpressionList
+                              NameExpression
+                                Identifier "user" @ 352..356
+                            RParen ")" @ 356..357
+                    Semicolon ";" @ 357..358
+              RBrace "}" @ 359..360 leading=[Newline "\n"]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              BooleanKw "boolean" @ 361..368 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "hasMore" @ 369..376
+            LParen "(" @ 376..377
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ArrayType
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
                         AnnotationList
-                        LBracket "[" @ 383..384
-                        RBracket "]" @ 384..385 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "names" @ 386..391
-              RParen ")" @ 391..392 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 393..394
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 395..401 leading=[Newline "\n"] trailing=[Whitespace " "]
+                        Name
+                          Identifier "String" @ 377..383
+                  ArrayDimensions
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 383..384
+                      RBracket "]" @ 384..385 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "names" @ 386..391
+            RParen ")" @ 391..392 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 393..394
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 395..401 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    BinaryExpression
                       BinaryExpression
                         BinaryExpression
-                          BinaryExpression
-                            FieldAccessExpression
-                              ThisExpression
-                                ThisKw "this" @ 402..406
-                              Dot "." @ 406..407
-                              Identifier "index" @ 407..412
-                            Lt "<" @ 412..413
-                            FieldAccessExpression
-                              NameExpression
-                                Identifier "names" @ 413..418
-                              Dot "." @ 418..419
-                              Identifier "length" @ 419..425
-                          AndAnd "&&" @ 425..427
-                          BinaryExpression
-                            MethodInvocationExpression
-                              QualifiedMethodInvocation
-                                ArrayAccessExpression
-                                  NameExpression
-                                    Identifier "names" @ 427..432
-                                  LBracket "[" @ 432..433
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 433..434
-                                  RBracket "]" @ 434..435
-                                Dot "." @ 435..436
-                                Identifier "length" @ 436..442
-                                ArgumentList
-                                  LParen "(" @ 442..443
-                                  ExpressionList
-                                  RParen ")" @ 443..444
-                            Lt "<" @ 444..445
-                            MethodInvocationExpression
-                              QualifiedMethodInvocation
-                                NameExpression
-                                  Identifier "items" @ 445..450
-                                Dot "." @ 450..451
-                                Identifier "size" @ 451..455
-                                ArgumentList
-                                  LParen "(" @ 455..456
-                                  ExpressionList
-                                  RParen ")" @ 456..457
-                        AndAnd "&&" @ 457..459
-                        BinaryExpression
-                          MethodInvocationExpression
-                            QualifiedMethodInvocation
-                              NameExpression
-                                Identifier "items" @ 459..464
-                              Dot "." @ 464..465
-                              Identifier "size" @ 465..469
-                              ArgumentList
-                                LParen "(" @ 469..470
-                                ExpressionList
-                                RParen ")" @ 470..471
-                          Lt "<" @ 471..472
+                          FieldAccessExpression
+                            ThisExpression
+                              ThisKw "this" @ 402..406
+                            Dot "." @ 406..407
+                            Identifier "index" @ 407..412
+                          Lt "<" @ 412..413
                           FieldAccessExpression
                             NameExpression
-                              Identifier "names" @ 472..477
-                            Dot "." @ 477..478
-                            Identifier "length" @ 478..484
-                      Semicolon ";" @ 484..485
-                RBrace "}" @ 486..487 leading=[Newline "\n"]
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 488..492 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "guarded" @ 493..500
-              LParen "(" @ 500..501
-              RParen ")" @ 501..502 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 503..504
-                BlockStatementList
-                  BlockStatement
-                    IfStatement
-                      IfKw "if" @ 505..507 leading=[Newline "\n"] trailing=[Whitespace " "]
-                      LParen "(" @ 508..509
+                              Identifier "names" @ 413..418
+                            Dot "." @ 418..419
+                            Identifier "length" @ 419..425
+                        AndAnd "&&" @ 425..427
+                        BinaryExpression
+                          MethodInvocationExpression
+                            QualifiedMethodInvocation
+                              ArrayAccessExpression
+                                NameExpression
+                                  Identifier "names" @ 427..432
+                                LBracket "[" @ 432..433
+                                LiteralExpression
+                                  IntegerLiteral "0" @ 433..434
+                                RBracket "]" @ 434..435
+                              Dot "." @ 435..436
+                              Identifier "length" @ 436..442
+                              ArgumentList
+                                LParen "(" @ 442..443
+                                ExpressionList
+                                RParen ")" @ 443..444
+                          Lt "<" @ 444..445
+                          MethodInvocationExpression
+                            QualifiedMethodInvocation
+                              NameExpression
+                                Identifier "items" @ 445..450
+                              Dot "." @ 450..451
+                              Identifier "size" @ 451..455
+                              ArgumentList
+                                LParen "(" @ 455..456
+                                ExpressionList
+                                RParen ")" @ 456..457
+                      AndAnd "&&" @ 457..459
+                      BinaryExpression
+                        MethodInvocationExpression
+                          QualifiedMethodInvocation
+                            NameExpression
+                              Identifier "items" @ 459..464
+                            Dot "." @ 464..465
+                            Identifier "size" @ 465..469
+                            ArgumentList
+                              LParen "(" @ 469..470
+                              ExpressionList
+                              RParen ")" @ 470..471
+                        Lt "<" @ 471..472
+                        FieldAccessExpression
+                          NameExpression
+                            Identifier "names" @ 472..477
+                          Dot "." @ 477..478
+                          Identifier "length" @ 478..484
+                    Semicolon ";" @ 484..485
+              RBrace "}" @ 486..487 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 488..492 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "guarded" @ 493..500
+            LParen "(" @ 500..501
+            RParen ")" @ 501..502 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 503..504
+              BlockStatementList
+                BlockStatement
+                  IfStatement
+                    IfKw "if" @ 505..507 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    LParen "(" @ 508..509
+                    BinaryExpression
+                      BinaryExpression
+                        BinaryExpression
+                          MethodInvocationExpression
+                            QualifiedMethodInvocation
+                              NameExpression
+                                Identifier "user" @ 509..513
+                              Dot "." @ 513..514
+                              Identifier "isActive" @ 514..522
+                              ArgumentList
+                                LParen "(" @ 522..523
+                                ExpressionList
+                                RParen ")" @ 523..524 trailing=[Whitespace " "]
+                          AndAnd "&&" @ 525..527 trailing=[Whitespace " "]
+                          MethodInvocationExpression
+                            QualifiedMethodInvocation
+                              NameExpression
+                                Identifier "account" @ 528..535
+                              Dot "." @ 535..536
+                              Identifier "hasPermission" @ 536..549
+                              ArgumentList
+                                LParen "(" @ 549..550
+                                ExpressionList
+                                  LiteralExpression
+                                    StringLiteral "\"write\"" @ 550..557
+                                RParen ")" @ 557..558 trailing=[Whitespace " "]
+                        AndAnd "&&" @ 559..561 trailing=[Whitespace " "]
+                        MethodInvocationExpression
+                          QualifiedMethodInvocation
+                            NameExpression
+                              Identifier "featureFlags" @ 562..574
+                            Dot "." @ 574..575
+                            Identifier "enabled" @ 575..582
+                            ArgumentList
+                              LParen "(" @ 582..583
+                              ExpressionList
+                              RParen ")" @ 583..584 trailing=[Whitespace " "]
+                      AndAnd "&&" @ 585..587 trailing=[Whitespace " "]
+                      MethodInvocationExpression
+                        QualifiedMethodInvocation
+                          NameExpression
+                            Identifier "auditPolicy" @ 588..599
+                          Dot "." @ 599..600
+                          Identifier "allows" @ 600..606
+                          ArgumentList
+                            LParen "(" @ 606..607
+                            ExpressionList
+                              NameExpression
+                                Identifier "user" @ 607..611
+                            RParen ")" @ 611..612
+                    RParen ")" @ 612..613 trailing=[Whitespace " "]
+                    ExpressionStatement
+                      MethodInvocationExpression
+                        UnqualifiedMethodInvocation
+                          NameExpression
+                            Identifier "run" @ 614..617
+                          ArgumentList
+                            LParen "(" @ 617..618
+                            ExpressionList
+                            RParen ")" @ 618..619
+                      Semicolon ";" @ 619..620
+              RBrace "}" @ 621..622 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 623..627 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "assign" @ 628..634
+            LParen "(" @ 634..635
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  BooleanKw "boolean" @ 635..642 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "left" @ 643..647
+              Comma "," @ 647..648 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  BooleanKw "boolean" @ 649..656 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "right" @ 657..662
+              Comma "," @ 662..663 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "User" @ 664..668 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "user" @ 669..673
+              Comma "," @ 673..674 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Account" @ 675..682 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "account" @ 683..690
+              Comma "," @ 690..691 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "FeatureFlags" @ 692..704 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "featureFlags" @ 705..717
+              Comma "," @ 717..718 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "AuditPolicy" @ 719..730 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "auditPolicy" @ 731..742
+            RParen ")" @ 742..743 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 744..745
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "allowed" @ 746..753 leading=[Newline "\n"]
+                      Assign "=" @ 753..754
+                      BinaryExpression
+                        NameExpression
+                          Identifier "left" @ 754..758
+                        AndAnd "&&" @ 758..760
+                        NameExpression
+                          Identifier "right" @ 760..765
+                    Semicolon ";" @ 765..766
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "allowed" @ 767..774 leading=[Newline "\n"]
+                      Assign "=" @ 774..775
+                      BinaryExpression
+                        NameExpression
+                          Identifier "left" @ 775..779
+                        AndAnd "&&" @ 779..781 trailing=[BlockComment "/* both */"]
+                        NameExpression
+                          Identifier "right" @ 791..796
+                    Semicolon ";" @ 796..797
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "count" @ 798..803 leading=[Newline "\n"]
+                      PlusEq "+=" @ 803..805
+                      LiteralExpression
+                        IntegerLiteral "1" @ 805..806
+                    Semicolon ";" @ 806..807
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "count" @ 808..813 leading=[Newline "\n"]
+                      PlusEq "+=" @ 813..815 trailing=[BlockComment "/* increment */"]
+                      LiteralExpression
+                        IntegerLiteral "1" @ 830..831
+                    Semicolon ";" @ 831..832
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "allowed" @ 833..840 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      Assign "=" @ 841..842 trailing=[Whitespace " "]
                       BinaryExpression
                         BinaryExpression
                           BinaryExpression
                             MethodInvocationExpression
                               QualifiedMethodInvocation
                                 NameExpression
-                                  Identifier "user" @ 509..513
-                                Dot "." @ 513..514
-                                Identifier "isActive" @ 514..522
+                                  Identifier "user" @ 843..847
+                                Dot "." @ 847..848
+                                Identifier "isActive" @ 848..856
                                 ArgumentList
-                                  LParen "(" @ 522..523
+                                  LParen "(" @ 856..857
                                   ExpressionList
-                                  RParen ")" @ 523..524 trailing=[Whitespace " "]
-                            AndAnd "&&" @ 525..527 trailing=[Whitespace " "]
+                                  RParen ")" @ 857..858 trailing=[Whitespace " "]
+                            AndAnd "&&" @ 859..861 trailing=[Whitespace " "]
                             MethodInvocationExpression
                               QualifiedMethodInvocation
                                 NameExpression
-                                  Identifier "account" @ 528..535
-                                Dot "." @ 535..536
-                                Identifier "hasPermission" @ 536..549
+                                  Identifier "account" @ 862..869
+                                Dot "." @ 869..870
+                                Identifier "hasPermission" @ 870..883
                                 ArgumentList
-                                  LParen "(" @ 549..550
+                                  LParen "(" @ 883..884
                                   ExpressionList
                                     LiteralExpression
-                                      StringLiteral "\"write\"" @ 550..557
-                                  RParen ")" @ 557..558 trailing=[Whitespace " "]
-                          AndAnd "&&" @ 559..561 trailing=[Whitespace " "]
+                                      StringLiteral "\"write\"" @ 884..891
+                                  RParen ")" @ 891..892 trailing=[Whitespace " "]
+                          AndAnd "&&" @ 893..895 trailing=[Whitespace " "]
                           MethodInvocationExpression
                             QualifiedMethodInvocation
                               NameExpression
-                                Identifier "featureFlags" @ 562..574
-                              Dot "." @ 574..575
-                              Identifier "enabled" @ 575..582
+                                Identifier "featureFlags" @ 896..908
+                              Dot "." @ 908..909
+                              Identifier "enabled" @ 909..916
                               ArgumentList
-                                LParen "(" @ 582..583
+                                LParen "(" @ 916..917
                                 ExpressionList
-                                RParen ")" @ 583..584 trailing=[Whitespace " "]
-                        AndAnd "&&" @ 585..587 trailing=[Whitespace " "]
+                                RParen ")" @ 917..918 trailing=[Whitespace " "]
+                        AndAnd "&&" @ 919..921 trailing=[Whitespace " "]
                         MethodInvocationExpression
                           QualifiedMethodInvocation
                             NameExpression
-                              Identifier "auditPolicy" @ 588..599
-                            Dot "." @ 599..600
-                            Identifier "allows" @ 600..606
+                              Identifier "auditPolicy" @ 922..933
+                            Dot "." @ 933..934
+                            Identifier "allows" @ 934..940
                             ArgumentList
-                              LParen "(" @ 606..607
+                              LParen "(" @ 940..941
                               ExpressionList
                                 NameExpression
-                                  Identifier "user" @ 607..611
-                              RParen ")" @ 611..612
-                      RParen ")" @ 612..613 trailing=[Whitespace " "]
-                      ExpressionStatement
-                        MethodInvocationExpression
-                          UnqualifiedMethodInvocation
-                            NameExpression
-                              Identifier "run" @ 614..617
-                            ArgumentList
-                              LParen "(" @ 617..618
-                              ExpressionList
-                              RParen ")" @ 618..619
-                        Semicolon ";" @ 619..620
-                RBrace "}" @ 621..622 leading=[Newline "\n"]
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 623..627 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "assign" @ 628..634
-              LParen "(" @ 634..635
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    BooleanKw "boolean" @ 635..642 trailing=[Whitespace " "]
+                                  Identifier "user" @ 941..945
+                              RParen ")" @ 945..946
+                    Semicolon ";" @ 946..947
+              RBrace "}" @ 948..949 leading=[Newline "\n"]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              FloatKw "float" @ 950..955 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "estimate" @ 956..964
+            LParen "(" @ 964..965
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "left" @ 643..647
-                Comma "," @ 647..648 trailing=[Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    BooleanKw "boolean" @ 649..656 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "right" @ 657..662
-                Comma "," @ 662..663 trailing=[Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "User" @ 664..668 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "user" @ 669..673
-                Comma "," @ 673..674 trailing=[Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Account" @ 675..682 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "account" @ 683..690
-                Comma "," @ 690..691 trailing=[Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "FeatureFlags" @ 692..704 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "featureFlags" @ 705..717
-                Comma "," @ 717..718 trailing=[Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "AuditPolicy" @ 719..730 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "auditPolicy" @ 731..742
-              RParen ")" @ 742..743 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 744..745
-                BlockStatementList
-                  BlockStatement
-                    ExpressionStatement
-                      AssignmentExpression
-                        NameExpression
-                          Identifier "allowed" @ 746..753 leading=[Newline "\n"]
-                        Assign "=" @ 753..754
-                        BinaryExpression
-                          NameExpression
-                            Identifier "left" @ 754..758
-                          AndAnd "&&" @ 758..760
-                          NameExpression
-                            Identifier "right" @ 760..765
-                      Semicolon ";" @ 765..766
-                  BlockStatement
-                    ExpressionStatement
-                      AssignmentExpression
-                        NameExpression
-                          Identifier "allowed" @ 767..774 leading=[Newline "\n"]
-                        Assign "=" @ 774..775
-                        BinaryExpression
-                          NameExpression
-                            Identifier "left" @ 775..779
-                          AndAnd "&&" @ 779..781 trailing=[BlockComment "/* both */"]
-                          NameExpression
-                            Identifier "right" @ 791..796
-                      Semicolon ";" @ 796..797
-                  BlockStatement
-                    ExpressionStatement
-                      AssignmentExpression
-                        NameExpression
-                          Identifier "count" @ 798..803 leading=[Newline "\n"]
-                        PlusEq "+=" @ 803..805
-                        LiteralExpression
-                          IntegerLiteral "1" @ 805..806
-                      Semicolon ";" @ 806..807
-                  BlockStatement
-                    ExpressionStatement
-                      AssignmentExpression
-                        NameExpression
-                          Identifier "count" @ 808..813 leading=[Newline "\n"]
-                        PlusEq "+=" @ 813..815 trailing=[BlockComment "/* increment */"]
-                        LiteralExpression
-                          IntegerLiteral "1" @ 830..831
-                      Semicolon ";" @ 831..832
-                  BlockStatement
-                    ExpressionStatement
-                      AssignmentExpression
-                        NameExpression
-                          Identifier "allowed" @ 833..840 leading=[Newline "\n"] trailing=[Whitespace " "]
-                        Assign "=" @ 841..842 trailing=[Whitespace " "]
-                        BinaryExpression
-                          BinaryExpression
-                            BinaryExpression
-                              MethodInvocationExpression
-                                QualifiedMethodInvocation
-                                  NameExpression
-                                    Identifier "user" @ 843..847
-                                  Dot "." @ 847..848
-                                  Identifier "isActive" @ 848..856
-                                  ArgumentList
-                                    LParen "(" @ 856..857
-                                    ExpressionList
-                                    RParen ")" @ 857..858 trailing=[Whitespace " "]
-                              AndAnd "&&" @ 859..861 trailing=[Whitespace " "]
-                              MethodInvocationExpression
-                                QualifiedMethodInvocation
-                                  NameExpression
-                                    Identifier "account" @ 862..869
-                                  Dot "." @ 869..870
-                                  Identifier "hasPermission" @ 870..883
-                                  ArgumentList
-                                    LParen "(" @ 883..884
-                                    ExpressionList
-                                      LiteralExpression
-                                        StringLiteral "\"write\"" @ 884..891
-                                    RParen ")" @ 891..892 trailing=[Whitespace " "]
-                            AndAnd "&&" @ 893..895 trailing=[Whitespace " "]
-                            MethodInvocationExpression
-                              QualifiedMethodInvocation
-                                NameExpression
-                                  Identifier "featureFlags" @ 896..908
-                                Dot "." @ 908..909
-                                Identifier "enabled" @ 909..916
-                                ArgumentList
-                                  LParen "(" @ 916..917
-                                  ExpressionList
-                                  RParen ")" @ 917..918 trailing=[Whitespace " "]
-                          AndAnd "&&" @ 919..921 trailing=[Whitespace " "]
-                          MethodInvocationExpression
-                            QualifiedMethodInvocation
-                              NameExpression
-                                Identifier "auditPolicy" @ 922..933
-                              Dot "." @ 933..934
-                              Identifier "allows" @ 934..940
-                              ArgumentList
-                                LParen "(" @ 940..941
-                                ExpressionList
-                                  NameExpression
-                                    Identifier "user" @ 941..945
-                                RParen ")" @ 945..946
-                      Semicolon ";" @ 946..947
-                RBrace "}" @ 948..949 leading=[Newline "\n"]
-          ClassBodyDeclaration
-            MethodDeclaration
-              PrimitiveType
+                  FloatKw "float" @ 965..970 trailing=[Whitespace " "]
                 AnnotationList
-                FloatKw "float" @ 950..955 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "estimate" @ 956..964
-              LParen "(" @ 964..965
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    FloatKw "float" @ 965..970 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "currentEstimate" @ 971..986
-              RParen ")" @ 986..987 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 988..989
-                BlockStatementList
-                  BlockStatement
-                    ExpressionStatement
-                      AssignmentExpression
-                        NameExpression
-                          Identifier "currentEstimate" @ 990..1005 leading=[Newline "\n"] trailing=[Whitespace " "]
-                        Assign "=" @ 1006..1007 trailing=[Whitespace " "]
-                        BinaryExpression
-                          ParenthesizedExpression
-                            LParen "(" @ 1008..1009
-                            BinaryExpression
-                              NameExpression
-                                Identifier "currentEstimate" @ 1009..1024 trailing=[Whitespace " "]
-                              Plus "+" @ 1025..1026 trailing=[Whitespace " "]
-                              BinaryExpression
-                                NameExpression
-                                  Identifier "xxxxxxxxxxxxx" @ 1027..1040 trailing=[Whitespace " "]
-                                Slash "/" @ 1041..1042 trailing=[Whitespace " "]
-                                NameExpression
-                                  Identifier "currentEstimate" @ 1043..1058
-                            RParen ")" @ 1058..1059 trailing=[Whitespace " "]
-                          Slash "/" @ 1060..1061 trailing=[Whitespace " "]
-                          LiteralExpression
-                            FloatingPointLiteral "2.0f" @ 1062..1066
-                      Semicolon ";" @ 1066..1067
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 1068..1074 leading=[Newline "\n"] trailing=[Whitespace " "]
+                Identifier "currentEstimate" @ 971..986
+            RParen ")" @ 986..987 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 988..989
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
                       NameExpression
-                        Identifier "currentEstimate" @ 1075..1090
-                      Semicolon ";" @ 1090..1091
-                RBrace "}" @ 1092..1093 leading=[Newline "\n"]
-          ClassBodyDeclaration
-            MethodDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 1094..1097 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "sum" @ 1098..1101
-              LParen "(" @ 1101..1102
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  PrimitiveType
-                    AnnotationList
-                    IntKw "int" @ 1102..1105 trailing=[Whitespace " "]
+                        Identifier "currentEstimate" @ 990..1005 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      Assign "=" @ 1006..1007 trailing=[Whitespace " "]
+                      BinaryExpression
+                        ParenthesizedExpression
+                          LParen "(" @ 1008..1009
+                          BinaryExpression
+                            NameExpression
+                              Identifier "currentEstimate" @ 1009..1024 trailing=[Whitespace " "]
+                            Plus "+" @ 1025..1026 trailing=[Whitespace " "]
+                            BinaryExpression
+                              NameExpression
+                                Identifier "xxxxxxxxxxxxx" @ 1027..1040 trailing=[Whitespace " "]
+                              Slash "/" @ 1041..1042 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "currentEstimate" @ 1043..1058
+                          RParen ")" @ 1058..1059 trailing=[Whitespace " "]
+                        Slash "/" @ 1060..1061 trailing=[Whitespace " "]
+                        LiteralExpression
+                          FloatingPointLiteral "2.0f" @ 1062..1066
+                    Semicolon ";" @ 1066..1067
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 1068..1074 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "currentEstimate" @ 1075..1090
+                    Semicolon ";" @ 1090..1091
+              RBrace "}" @ 1092..1093 leading=[Newline "\n"]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 1094..1097 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "sum" @ 1098..1101
+            LParen "(" @ 1101..1102
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
                   AnnotationList
-                  Identifier "x" @ 1106..1107
-              RParen ")" @ 1107..1108 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 1109..1110
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 1111..1117 leading=[Newline "\n"] trailing=[Whitespace " "]
+                  IntKw "int" @ 1102..1105 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "x" @ 1106..1107
+            RParen ")" @ 1107..1108 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1109..1110
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 1111..1117 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    BinaryExpression
                       BinaryExpression
                         BinaryExpression
                           BinaryExpression
@@ -649,74 +642,73 @@ CompilationUnit
                                                         BinaryExpression
                                                           BinaryExpression
                                                             BinaryExpression
-                                                              BinaryExpression
-                                                                NameExpression
-                                                                  Identifier "x" @ 1118..1119 trailing=[Whitespace " "]
-                                                                Plus "+" @ 1120..1121 trailing=[Whitespace " "]
-                                                                NameExpression
-                                                                  Identifier "x" @ 1122..1123 trailing=[Whitespace " "]
-                                                              Plus "+" @ 1124..1125 trailing=[Whitespace " "]
                                                               NameExpression
-                                                                Identifier "x" @ 1126..1127 trailing=[Whitespace " "]
-                                                            Plus "+" @ 1128..1129 trailing=[Whitespace " "]
+                                                                Identifier "x" @ 1118..1119 trailing=[Whitespace " "]
+                                                              Plus "+" @ 1120..1121 trailing=[Whitespace " "]
+                                                              NameExpression
+                                                                Identifier "x" @ 1122..1123 trailing=[Whitespace " "]
+                                                            Plus "+" @ 1124..1125 trailing=[Whitespace " "]
                                                             NameExpression
-                                                              Identifier "x" @ 1130..1131 trailing=[Whitespace " "]
-                                                          Plus "+" @ 1132..1133 trailing=[Whitespace " "]
+                                                              Identifier "x" @ 1126..1127 trailing=[Whitespace " "]
+                                                          Plus "+" @ 1128..1129 trailing=[Whitespace " "]
                                                           NameExpression
-                                                            Identifier "x" @ 1134..1135 trailing=[Whitespace " "]
-                                                        Plus "+" @ 1136..1137 trailing=[Whitespace " "]
+                                                            Identifier "x" @ 1130..1131 trailing=[Whitespace " "]
+                                                        Plus "+" @ 1132..1133 trailing=[Whitespace " "]
                                                         NameExpression
-                                                          Identifier "x" @ 1138..1139 trailing=[Whitespace " "]
-                                                      Plus "+" @ 1140..1141 trailing=[Whitespace " "]
+                                                          Identifier "x" @ 1134..1135 trailing=[Whitespace " "]
+                                                      Plus "+" @ 1136..1137 trailing=[Whitespace " "]
                                                       NameExpression
-                                                        Identifier "x" @ 1142..1143 trailing=[Whitespace " "]
-                                                    Plus "+" @ 1144..1145 trailing=[Whitespace " "]
+                                                        Identifier "x" @ 1138..1139 trailing=[Whitespace " "]
+                                                    Plus "+" @ 1140..1141 trailing=[Whitespace " "]
                                                     NameExpression
-                                                      Identifier "x" @ 1146..1147 trailing=[Whitespace " "]
-                                                  Plus "+" @ 1148..1149 trailing=[Whitespace " "]
+                                                      Identifier "x" @ 1142..1143 trailing=[Whitespace " "]
+                                                  Plus "+" @ 1144..1145 trailing=[Whitespace " "]
                                                   NameExpression
-                                                    Identifier "x" @ 1150..1151 trailing=[Whitespace " "]
-                                                Plus "+" @ 1152..1153 trailing=[Whitespace " "]
+                                                    Identifier "x" @ 1146..1147 trailing=[Whitespace " "]
+                                                Plus "+" @ 1148..1149 trailing=[Whitespace " "]
                                                 NameExpression
-                                                  Identifier "x" @ 1154..1155 trailing=[Whitespace " "]
-                                              Plus "+" @ 1156..1157 trailing=[Whitespace " "]
+                                                  Identifier "x" @ 1150..1151 trailing=[Whitespace " "]
+                                              Plus "+" @ 1152..1153 trailing=[Whitespace " "]
                                               NameExpression
-                                                Identifier "x" @ 1158..1159 trailing=[Whitespace " "]
-                                            Plus "+" @ 1160..1161 trailing=[Whitespace " "]
+                                                Identifier "x" @ 1154..1155 trailing=[Whitespace " "]
+                                            Plus "+" @ 1156..1157 trailing=[Whitespace " "]
                                             NameExpression
-                                              Identifier "x" @ 1162..1163 trailing=[Whitespace " "]
-                                          Plus "+" @ 1164..1165 trailing=[Whitespace " "]
+                                              Identifier "x" @ 1158..1159 trailing=[Whitespace " "]
+                                          Plus "+" @ 1160..1161 trailing=[Whitespace " "]
                                           NameExpression
-                                            Identifier "x" @ 1166..1167 trailing=[Whitespace " "]
-                                        Plus "+" @ 1168..1169 trailing=[Whitespace " "]
+                                            Identifier "x" @ 1162..1163 trailing=[Whitespace " "]
+                                        Plus "+" @ 1164..1165 trailing=[Whitespace " "]
                                         NameExpression
-                                          Identifier "x" @ 1170..1171 trailing=[Whitespace " "]
-                                      Plus "+" @ 1172..1173 trailing=[Whitespace " "]
+                                          Identifier "x" @ 1166..1167 trailing=[Whitespace " "]
+                                      Plus "+" @ 1168..1169 trailing=[Whitespace " "]
                                       NameExpression
-                                        Identifier "x" @ 1174..1175 trailing=[Whitespace " "]
-                                    Plus "+" @ 1176..1177 trailing=[Whitespace " "]
+                                        Identifier "x" @ 1170..1171 trailing=[Whitespace " "]
+                                    Plus "+" @ 1172..1173 trailing=[Whitespace " "]
                                     NameExpression
-                                      Identifier "x" @ 1178..1179 trailing=[Whitespace " "]
-                                  Plus "+" @ 1180..1181 trailing=[Whitespace " "]
+                                      Identifier "x" @ 1174..1175 trailing=[Whitespace " "]
+                                  Plus "+" @ 1176..1177 trailing=[Whitespace " "]
                                   NameExpression
-                                    Identifier "x" @ 1182..1183 trailing=[Whitespace " "]
-                                Plus "+" @ 1184..1185 trailing=[Whitespace " "]
+                                    Identifier "x" @ 1178..1179 trailing=[Whitespace " "]
+                                Plus "+" @ 1180..1181 trailing=[Whitespace " "]
                                 NameExpression
-                                  Identifier "x" @ 1186..1187 trailing=[Whitespace " "]
-                              Plus "+" @ 1188..1189 trailing=[Whitespace " "]
+                                  Identifier "x" @ 1182..1183 trailing=[Whitespace " "]
+                              Plus "+" @ 1184..1185 trailing=[Whitespace " "]
                               NameExpression
-                                Identifier "x" @ 1190..1191 trailing=[Whitespace " "]
-                            Plus "+" @ 1192..1193 trailing=[Whitespace " "]
+                                Identifier "x" @ 1186..1187 trailing=[Whitespace " "]
+                            Plus "+" @ 1188..1189 trailing=[Whitespace " "]
                             NameExpression
-                              Identifier "x" @ 1194..1195 trailing=[Whitespace " "]
-                          Plus "+" @ 1196..1197 trailing=[Whitespace " "]
+                              Identifier "x" @ 1190..1191 trailing=[Whitespace " "]
+                          Plus "+" @ 1192..1193 trailing=[Whitespace " "]
                           NameExpression
-                            Identifier "x" @ 1198..1199 trailing=[Whitespace " "]
-                        Plus "+" @ 1200..1201 trailing=[Whitespace " "]
+                            Identifier "x" @ 1194..1195 trailing=[Whitespace " "]
+                        Plus "+" @ 1196..1197 trailing=[Whitespace " "]
                         NameExpression
-                          Identifier "x" @ 1202..1203
-                      Semicolon ";" @ 1203..1204
-                RBrace "}" @ 1205..1206 leading=[Newline "\n"]
+                          Identifier "x" @ 1198..1199 trailing=[Whitespace " "]
+                      Plus "+" @ 1200..1201 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "x" @ 1202..1203
+                    Semicolon ";" @ 1203..1204
+              RBrace "}" @ 1205..1206 leading=[Newline "\n"]
         RBrace "}" @ 1207..1208 leading=[Newline "\n"]
   Eof "" @ 1209..1209 leading=[Newline "\n"]
 

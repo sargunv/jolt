@@ -18,24 +18,22 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 25..26
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                FloatKw "float" @ 31..36 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "single" @ 37..43
-              Semicolon ";" @ 43..44
-          ClassBodyDeclaration
-            FieldDeclaration
-              PrimitiveType
-                AnnotationList
-                DoubleKw "double" @ 49..55 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "wide" @ 56..60
-              Semicolon ";" @ 60..61
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              FloatKw "float" @ 31..36 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "single" @ 37..43
+            Semicolon ";" @ 43..44
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              DoubleKw "double" @ 49..55 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "wide" @ 56..60
+            Semicolon ";" @ 60..61
         RBrace "}" @ 62..63 leading=[Newline "\n"]
   Eof "" @ 64..64 leading=[Newline "\n"]
 

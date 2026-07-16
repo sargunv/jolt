@@ -39,111 +39,108 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 177..178
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              ModifierList
-                Annotation
-                  At "@" @ 181..182 leading=[Newline "\n", Whitespace "  "]
-                  Name
-                    Identifier "SuppressWarnings" @ 182..198 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:annotation-name-before-paren */", Whitespace " "]
-                  AnnotationArgumentList
-                    LParen "(" @ 246..247
-                    AnnotationElementList
-                      AnnotationElementArgumentList
-                        AnnotationElementValue
-                          LiteralExpression
-                            StringLiteral "\"unchecked\"" @ 295..306 leading=[Newline "\n", Whitespace "      ", BlockComment "/* JOLT-TRIVIA:annotation-arg-leading */", Whitespace " "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:annotation-arg-before-close */"]
-                    RParen ")" @ 352..353
-                PrivateKw "private" @ 356..363 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:private-static-gap */", Whitespace " "]
-                StaticKw "static" @ 401..407 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:static-final-gap */", Whitespace " "]
-                FinalKw "final" @ 443..448
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 455..461 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:const-type-name */", Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "VALUE" @ 496..501 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:const-name-equals */", Whitespace " "]
-                  Assign "=" @ 538..539 trailing=[Whitespace " "]
-                  VariableInitializer
-                    LiteralExpression
-                      StringLiteral "\"x\"" @ 540..543
-              Semicolon ";" @ 543..544
-          ClassBodyDeclaration
-            MethodDeclaration
-              ModifierList
-                Annotation
-                  At "@" @ 548..549 leading=[Newline "\n", Newline "\n", Whitespace "  "]
-                  Name
-                    Identifier "Deprecated" @ 549..559 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:method-annotation-tail */"]
-                PublicKw "public" @ 603..609 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              TypeParameterList
-                Lt "<" @ 610..611
-                TypeParameterSeparatedList
-                  TypeParameter
-                    AnnotationList
-                    Identifier "T" @ 611..612 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:annotated-method-type-param */"]
-                Gt ">" @ 658..659
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "T" @ 666..667 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
-              Identifier "identity" @ 668..676 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:generic-method-name-before-paren */", Whitespace " "]
-              LParen "(" @ 728..729
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                    FinalKw "final" @ 740..745 leading=[Newline "\n", Whitespace "          "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:param-final-type-gap */", Whitespace " "]
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "T" @ 785..786 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:param-type-name-gap */", Whitespace " "]
+          FieldDeclaration
+            ModifierList
+              Annotation
+                At "@" @ 181..182 leading=[Newline "\n", Whitespace "  "]
+                Name
+                  Identifier "SuppressWarnings" @ 182..198 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:annotation-name-before-paren */", Whitespace " "]
+                AnnotationArgumentList
+                  LParen "(" @ 246..247
+                  AnnotationElementList
+                    AnnotationElementArgumentList
+                      AnnotationElementValue
+                        LiteralExpression
+                          StringLiteral "\"unchecked\"" @ 295..306 leading=[Newline "\n", Whitespace "      ", BlockComment "/* JOLT-TRIVIA:annotation-arg-leading */", Whitespace " "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:annotation-arg-before-close */"]
+                  RParen ")" @ 352..353
+              PrivateKw "private" @ 356..363 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:private-static-gap */", Whitespace " "]
+              StaticKw "static" @ 401..407 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:static-final-gap */", Whitespace " "]
+              FinalKw "final" @ 443..448
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
                   AnnotationList
-                  Identifier "value" @ 825..830
-              RParen ")" @ 830..831
-              Block
-                LBrace "{" @ 881..882 leading=[Newline "\n", Whitespace "      ", BlockComment "/* JOLT-TRIVIA:method-close-before-body */", Whitespace " "]
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 887..893 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                      NameExpression
-                        Identifier "value" @ 894..899 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:return-expression-before-semi */"]
-                      Semicolon ";" @ 947..948
-                RBrace "}" @ 951..952 leading=[Newline "\n", Whitespace "  "]
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 956..960 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              Identifier "typeUseLineComment" @ 961..979
-              LParen "(" @ 979..980
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                    FinalKw "final" @ 980..985 trailing=[Whitespace " "]
-                    Annotation
-                      At "@" @ 986..987
+                  Name
+                    Identifier "String" @ 455..461 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:const-type-name */", Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "VALUE" @ 496..501 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:const-name-equals */", Whitespace " "]
+                Assign "=" @ 538..539 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    StringLiteral "\"x\"" @ 540..543
+            Semicolon ";" @ 543..544
+          MethodDeclaration
+            ModifierList
+              Annotation
+                At "@" @ 548..549 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+                Name
+                  Identifier "Deprecated" @ 549..559 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:method-annotation-tail */"]
+              PublicKw "public" @ 603..609 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            TypeParameterList
+              Lt "<" @ 610..611
+              TypeParameterSeparatedList
+                TypeParameter
+                  AnnotationList
+                  Identifier "T" @ 611..612 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:annotated-method-type-param */"]
+              Gt ">" @ 658..659
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "T" @ 666..667 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+            Identifier "identity" @ 668..676 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:generic-method-name-before-paren */", Whitespace " "]
+            LParen "(" @ 728..729
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                  FinalKw "final" @ 740..745 leading=[Newline "\n", Whitespace "          "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:param-final-type-gap */", Whitespace " "]
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
                       Name
-                        Identifier "Deprecated" @ 987..997 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:type-use-line-boundary"]
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "String" @ 1042..1048 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "value" @ 1049..1054
-              RParen ")" @ 1054..1055 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 1056..1057
-                BlockStatementList
-                RBrace "}" @ 1057..1058
+                        Identifier "T" @ 785..786 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:param-type-name-gap */", Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 825..830
+            RParen ")" @ 830..831
+            Block
+              LBrace "{" @ 881..882 leading=[Newline "\n", Whitespace "      ", BlockComment "/* JOLT-TRIVIA:method-close-before-body */", Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 887..893 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "value" @ 894..899 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:return-expression-before-semi */"]
+                    Semicolon ";" @ 947..948
+              RBrace "}" @ 951..952 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 956..960 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "typeUseLineComment" @ 961..979
+            LParen "(" @ 979..980
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                  FinalKw "final" @ 980..985 trailing=[Whitespace " "]
+                  Annotation
+                    At "@" @ 986..987
+                    Name
+                      Identifier "Deprecated" @ 987..997 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:type-use-line-boundary"]
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 1042..1048 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 1049..1054
+            RParen ")" @ 1054..1055 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1056..1057
+              BlockStatementList
+              RBrace "}" @ 1057..1058
         RBrace "}" @ 1059..1060 leading=[Newline "\n"]
   Eof "" @ 1061..1061 leading=[Newline "\n"]
 

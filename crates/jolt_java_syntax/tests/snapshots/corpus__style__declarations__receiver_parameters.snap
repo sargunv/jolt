@@ -15,83 +15,80 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 20..21 trailing=[Whitespace " "]
         ClassBodyMemberList
-          ClassBodyDeclaration
-            ClassDeclaration
-              ClassKw "class" @ 22..27 trailing=[Whitespace " "]
-              Identifier "ReceiverInner" @ 28..41 trailing=[Whitespace " "]
-              ClassBody
-                LBrace "{" @ 42..43 trailing=[Whitespace " "]
-                ClassBodyMemberList
-                  ClassBodyDeclaration
-                    ConstructorDeclaration
-                      Identifier "ReceiverInner" @ 44..57
-                      LParen "(" @ 57..58
-                      FormalParameterList
-                        ReceiverParameter
-                          AnnotationList
-                            Annotation
-                              At "@" @ 58..59
-                              Name
-                                Identifier "Readonly" @ 59..67 trailing=[Whitespace " "]
-                          ClassType
-                            ClassTypeSegmentList
-                              ClassTypeSegmentNode
-                                AnnotationList
-                                Name
-                                  Identifier "ReceiverOuter" @ 68..81 trailing=[Whitespace " "]
-                          Identifier "ReceiverOuter" @ 82..95
-                          Dot "." @ 95..96
-                          ThisKw "this" @ 96..100
-                        Comma "," @ 100..101 trailing=[Whitespace " "]
-                        FormalParameter
-                          ParameterModifierList
-                          PrimitiveType
+          ClassDeclaration
+            ClassKw "class" @ 22..27 trailing=[Whitespace " "]
+            Identifier "ReceiverInner" @ 28..41 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 42..43 trailing=[Whitespace " "]
+              ClassBodyMemberList
+                ConstructorDeclaration
+                  Identifier "ReceiverInner" @ 44..57
+                  LParen "(" @ 57..58
+                  FormalParameterList
+                    ReceiverParameter
+                      AnnotationList
+                        Annotation
+                          At "@" @ 58..59
+                          Name
+                            Identifier "Readonly" @ 59..67 trailing=[Whitespace " "]
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
                             AnnotationList
-                            IntKw "int" @ 102..105 trailing=[Whitespace " "]
-                          AnnotationList
-                          Identifier "value" @ 106..111
-                      RParen ")" @ 111..112 trailing=[Whitespace " "]
-                      ConstructorBody
-                        LBrace "{" @ 113..114
-                        ConstructorBodyEntryList
-                        RBrace "}" @ 114..115 trailing=[Whitespace " "]
-                  ClassBodyDeclaration
-                    MethodDeclaration
-                      VoidType
-                        VoidKw "void" @ 116..120 trailing=[Whitespace " "]
-                      Identifier "bind" @ 121..125
-                      LParen "(" @ 125..126
-                      FormalParameterList
-                        ReceiverParameter
-                          AnnotationList
-                            Annotation
-                              At "@" @ 126..127
-                              Name
-                                Identifier "Readonly" @ 127..135 trailing=[Whitespace " "]
-                          ClassType
-                            ClassTypeSegmentList
-                              ClassTypeSegmentNode
-                                AnnotationList
-                                Name
-                                  Identifier "ReceiverInner" @ 136..149 trailing=[Whitespace " "]
-                          ThisKw "this" @ 150..154
-                        Comma "," @ 154..155 trailing=[Whitespace " "]
-                        FormalParameter
-                          ParameterModifierList
-                          ClassType
-                            ClassTypeSegmentList
-                              ClassTypeSegmentNode
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 156..162 trailing=[Whitespace " "]
-                          AnnotationList
-                          Identifier "value" @ 163..168
-                      RParen ")" @ 168..169 trailing=[Whitespace " "]
-                      Block
-                        LBrace "{" @ 170..171
-                        BlockStatementList
-                        RBrace "}" @ 171..172 trailing=[Whitespace " "]
-                RBrace "}" @ 173..174 trailing=[Whitespace " "]
+                            Name
+                              Identifier "ReceiverOuter" @ 68..81 trailing=[Whitespace " "]
+                      Identifier "ReceiverOuter" @ 82..95
+                      Dot "." @ 95..96
+                      ThisKw "this" @ 96..100
+                    Comma "," @ 100..101 trailing=[Whitespace " "]
+                    FormalParameter
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 102..105 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "value" @ 106..111
+                  RParen ")" @ 111..112 trailing=[Whitespace " "]
+                  ConstructorBody
+                    LBrace "{" @ 113..114
+                    ConstructorBodyEntryList
+                    RBrace "}" @ 114..115 trailing=[Whitespace " "]
+                MethodDeclaration
+                  VoidType
+                    VoidKw "void" @ 116..120 trailing=[Whitespace " "]
+                  Identifier "bind" @ 121..125
+                  LParen "(" @ 125..126
+                  FormalParameterList
+                    ReceiverParameter
+                      AnnotationList
+                        Annotation
+                          At "@" @ 126..127
+                          Name
+                            Identifier "Readonly" @ 127..135 trailing=[Whitespace " "]
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "ReceiverInner" @ 136..149 trailing=[Whitespace " "]
+                      ThisKw "this" @ 150..154
+                    Comma "," @ 154..155 trailing=[Whitespace " "]
+                    FormalParameter
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 156..162 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "value" @ 163..168
+                  RParen ")" @ 168..169 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 170..171
+                    BlockStatementList
+                    RBrace "}" @ 171..172 trailing=[Whitespace " "]
+              RBrace "}" @ 173..174 trailing=[Whitespace " "]
         RBrace "}" @ 175..176
   Eof "" @ 177..177 leading=[Newline "\n"]
 

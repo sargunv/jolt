@@ -22,94 +22,91 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 16..17
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 22..26 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 27..33
-              LParen "(" @ 33..34
-              RParen ")" @ 34..35 trailing=[Whitespace " "]
-              ThrowsClause
-                ThrowsKw "throws" @ 36..42 trailing=[Whitespace " "]
-                TypeList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Exception" @ 43..52 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 53..54
-                BlockStatementList
-                  BlockStatement
-                    TryStatement
-                      TryWithResourcesStatement
-                        TryKw "try" @ 63..66 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                        ResourceSpecification
-                          LParen "(" @ 67..68
-                          ResourceList
-                            Resource
-                              LocalVariableDeclaration
-                                ParameterModifierList
-                                Identifier "var" @ 68..71 trailing=[Whitespace " "]
-                                VariableDeclaratorList
-                                  VariableDeclarator
-                                    Identifier "declared" @ 72..80 trailing=[Whitespace " "]
-                                    Assign "=" @ 81..82 trailing=[Whitespace " "]
-                                    VariableInitializer
-                                      MethodInvocationExpression
-                                        UnqualifiedMethodInvocation
-                                          NameExpression
-                                            Identifier "open" @ 83..87
-                                          ArgumentList
-                                            LParen "(" @ 87..88
-                                            ExpressionList
-                                            RParen ")" @ 88..89
-                            Semicolon ";" @ 89..90 trailing=[Whitespace " "]
-                            Resource
-                              VariableAccess
-                                NameExpression
-                                  Identifier "existing" @ 91..99
-                          RParen ")" @ 99..100 trailing=[Whitespace " "]
-                        Block
-                          LBrace "{" @ 101..102
-                          BlockStatementList
-                          RBrace "}" @ 102..103
-                        CatchClauseList
-                RBrace "}" @ 108..109 leading=[Newline "\n", Whitespace "    "]
-          ClassBodyDeclaration
-            MethodDeclaration
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "AutoCloseable" @ 115..128 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "open" @ 129..133
-              LParen "(" @ 133..134
-              RParen ")" @ 134..135 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 136..137 trailing=[Whitespace " "]
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 138..144 trailing=[Whitespace " "]
-                      LiteralExpression
-                        NullLiteral "null" @ 145..149
-                      Semicolon ";" @ 149..150 trailing=[Whitespace " "]
-                RBrace "}" @ 151..152
-          ClassBodyDeclaration
-            FieldDeclaration
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "AutoCloseable" @ 157..170 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "existing" @ 171..179
-              Semicolon ";" @ 179..180
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 22..26 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 27..33
+            LParen "(" @ 33..34
+            RParen ")" @ 34..35 trailing=[Whitespace " "]
+            ThrowsClause
+              ThrowsKw "throws" @ 36..42 trailing=[Whitespace " "]
+              TypeList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Exception" @ 43..52 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 53..54
+              BlockStatementList
+                BlockStatement
+                  TryStatement
+                    TryWithResourcesStatement
+                      TryKw "try" @ 63..66 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      ResourceSpecification
+                        LParen "(" @ 67..68
+                        ResourceList
+                          Resource
+                            LocalVariableDeclaration
+                              ParameterModifierList
+                              Identifier "var" @ 68..71 trailing=[Whitespace " "]
+                              VariableDeclaratorList
+                                VariableDeclarator
+                                  Identifier "declared" @ 72..80 trailing=[Whitespace " "]
+                                  Assign "=" @ 81..82 trailing=[Whitespace " "]
+                                  VariableInitializer
+                                    MethodInvocationExpression
+                                      UnqualifiedMethodInvocation
+                                        NameExpression
+                                          Identifier "open" @ 83..87
+                                        ArgumentList
+                                          LParen "(" @ 87..88
+                                          ExpressionList
+                                          RParen ")" @ 88..89
+                          Semicolon ";" @ 89..90 trailing=[Whitespace " "]
+                          Resource
+                            VariableAccess
+                              NameExpression
+                                Identifier "existing" @ 91..99
+                        RParen ")" @ 99..100 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 101..102
+                        BlockStatementList
+                        RBrace "}" @ 102..103
+                      CatchClauseList
+              RBrace "}" @ 108..109 leading=[Newline "\n", Whitespace "    "]
+          MethodDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "AutoCloseable" @ 115..128 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "open" @ 129..133
+            LParen "(" @ 133..134
+            RParen ")" @ 134..135 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 136..137 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 138..144 trailing=[Whitespace " "]
+                    LiteralExpression
+                      NullLiteral "null" @ 145..149
+                    Semicolon ";" @ 149..150 trailing=[Whitespace " "]
+              RBrace "}" @ 151..152
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "AutoCloseable" @ 157..170 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "existing" @ 171..179
+            Semicolon ";" @ 179..180
         RBrace "}" @ 181..182 leading=[Newline "\n"]
   Eof "" @ 183..183 leading=[Newline "\n"]
 

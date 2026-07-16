@@ -13,8 +13,8 @@ CompilationUnit
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
       Identifier "A" @ 6..7
       ClassBody
-        Semicolon ";" @ 7..8
         ClassBodyMemberList
+      Semicolon ";" @ 7..8
   Eof "" @ 8..8
 
 diagnostics:

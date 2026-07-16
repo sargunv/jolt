@@ -20,76 +20,75 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 14..15
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "Object" @ 16..22 leading=[Newline "\n"] trailing=[Whitespace " "]
-              Identifier "choose" @ 23..29
-              LParen "(" @ 29..30
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 30..36 trailing=[Whitespace " "]
+          MethodDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
                   AnnotationList
-                  Identifier "candidate" @ 37..46
-              RParen ")" @ 46..47 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 48..49
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "Object" @ 50..56 leading=[Newline "\n"] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "selectedValueWithNameLongEnoughToBreak" @ 57..95 trailing=[Whitespace " "]
-                          Assign "=" @ 96..97 trailing=[Whitespace " "]
-                          VariableInitializer
-                            ConditionalExpression
-                              BinaryExpression
-                                NameExpression
-                                  Identifier "candidate" @ 98..107 trailing=[Whitespace " "]
-                                BangEq "!=" @ 108..110 trailing=[Whitespace " "]
-                                LiteralExpression
-                                  NullLiteral "null" @ 111..115 trailing=[Whitespace " "]
-                              Question "?" @ 116..117 trailing=[Whitespace " "]
+                  Name
+                    Identifier "Object" @ 16..22 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "choose" @ 23..29
+            LParen "(" @ 29..30
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 30..36 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "candidate" @ 37..46
+            RParen ")" @ 46..47 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 48..49
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Object" @ 50..56 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "selectedValueWithNameLongEnoughToBreak" @ 57..95 trailing=[Whitespace " "]
+                        Assign "=" @ 96..97 trailing=[Whitespace " "]
+                        VariableInitializer
+                          ConditionalExpression
+                            BinaryExpression
                               NameExpression
-                                Identifier "candidate" @ 118..127 trailing=[Whitespace " "]
-                              Colon ":" @ 128..129 trailing=[Whitespace " "]
-                              ObjectCreationExpression
-                                NewKw "new" @ 130..133 trailing=[Whitespace " "]
-                                ClassType
-                                  ClassTypeSegmentList
-                                    ClassTypeSegmentNode
-                                      AnnotationList
-                                      Name
-                                        Identifier "Object" @ 134..140
-                                ArgumentList
-                                  LParen "(" @ 140..141
-                                  ExpressionList
-                                  RParen ")" @ 141..142
-                    Semicolon ";" @ 142..143
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 144..150 leading=[Newline "\n"] trailing=[Whitespace " "]
-                      NameExpression
-                        Identifier "selectedValueWithNameLongEnoughToBreak" @ 151..189
-                      Semicolon ";" @ 189..190
-                RBrace "}" @ 191..192 leading=[Newline "\n"]
+                                Identifier "candidate" @ 98..107 trailing=[Whitespace " "]
+                              BangEq "!=" @ 108..110 trailing=[Whitespace " "]
+                              LiteralExpression
+                                NullLiteral "null" @ 111..115 trailing=[Whitespace " "]
+                            Question "?" @ 116..117 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "candidate" @ 118..127 trailing=[Whitespace " "]
+                            Colon ":" @ 128..129 trailing=[Whitespace " "]
+                            ObjectCreationExpression
+                              NewKw "new" @ 130..133 trailing=[Whitespace " "]
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "Object" @ 134..140
+                              ArgumentList
+                                LParen "(" @ 140..141
+                                ExpressionList
+                                RParen ")" @ 141..142
+                  Semicolon ";" @ 142..143
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 144..150 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "selectedValueWithNameLongEnoughToBreak" @ 151..189
+                    Semicolon ";" @ 189..190
+              RBrace "}" @ 191..192 leading=[Newline "\n"]
         RBrace "}" @ 193..194 leading=[Newline "\n"]
   Eof "" @ 195..195 leading=[Newline "\n"]
 

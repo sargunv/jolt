@@ -96,132 +96,130 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 333..334
         ClassBodyMemberList
-          ClassBodyDeclaration
-            FieldDeclaration
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    QualifiedName
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  QualifiedName
+                    QualifiedNameSegmentNode
+                      AnnotationList
+                      Identifier "java" @ 337..341 leading=[Newline "\n", Whitespace "  "]
+                    Dot "." @ 341..342
+                    NameSegmentDotList
                       QualifiedNameSegmentNode
                         AnnotationList
-                        Identifier "java" @ 337..341 leading=[Newline "\n", Whitespace "  "]
-                      Dot "." @ 341..342
-                      NameSegmentDotList
-                        QualifiedNameSegmentNode
-                          AnnotationList
-                          Identifier "util" @ 342..346
-                        Dot "." @ 346..347
-                        QualifiedNameSegmentNode
-                          AnnotationList
-                          Identifier "Map" @ 347..350
-                    TypeArgumentList
-                      Lt "<" @ 350..351
-                      TypeArgumentSeparatedList
-                        TypeArgument
-                          AnnotationList
-                          ClassType
-                            ClassTypeSegmentList
-                              ClassTypeSegmentNode
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 396..402 leading=[Newline "\n", Whitespace "          ", BlockComment "/* JOLT-TRIVIA:map-key-leading */", Whitespace " "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:map-key-trailing */"]
-                        Comma "," @ 437..438
-                        TypeArgument
-                          AnnotationList
-                          ClassType
-                            ClassTypeSegmentList
-                              ClassTypeSegmentNode
-                                AnnotationList
-                                QualifiedName
+                        Identifier "util" @ 342..346
+                      Dot "." @ 346..347
+                      QualifiedNameSegmentNode
+                        AnnotationList
+                        Identifier "Map" @ 347..350
+                  TypeArgumentList
+                    Lt "<" @ 350..351
+                    TypeArgumentSeparatedList
+                      TypeArgument
+                        AnnotationList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 396..402 leading=[Newline "\n", Whitespace "          ", BlockComment "/* JOLT-TRIVIA:map-key-leading */", Whitespace " "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:map-key-trailing */"]
+                      Comma "," @ 437..438
+                      TypeArgument
+                        AnnotationList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              QualifiedName
+                                QualifiedNameSegmentNode
+                                  AnnotationList
+                                  Identifier "java" @ 449..453 leading=[Newline "\n", Whitespace "          "]
+                                Dot "." @ 453..454
+                                NameSegmentDotList
                                   QualifiedNameSegmentNode
                                     AnnotationList
-                                    Identifier "java" @ 449..453 leading=[Newline "\n", Whitespace "          "]
-                                  Dot "." @ 453..454
-                                  NameSegmentDotList
-                                    QualifiedNameSegmentNode
-                                      AnnotationList
-                                      Identifier "util" @ 454..458
-                                    Dot "." @ 458..459
-                                    QualifiedNameSegmentNode
-                                      AnnotationList
-                                      Identifier "List" @ 459..463
-                                TypeArgumentList
-                                  Lt "<" @ 463..464
-                                  TypeArgumentSeparatedList
-                                    TypeArgument
-                                      AnnotationList
-                                      ClassType
-                                        ClassTypeSegmentList
-                                          ClassTypeSegmentNode
-                                            AnnotationList
-                                            Name
-                                              Identifier "Integer" @ 464..471 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:list-arg-trailing */"]
-                                  Gt ">" @ 507..508 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:map-value-trailing */"]
-                      Gt ">" @ 545..546
-              VariableDeclaratorList
-                VariableDeclarator
-                  Identifier "values" @ 553..559 leading=[Newline "\n", Whitespace "      "]
-              Semicolon ";" @ 559..560
-          ClassBodyDeclaration
-            MethodDeclaration
-              TypeParameterList
-                Lt "<" @ 564..565 leading=[Newline "\n", Newline "\n", Whitespace "  "]
-                TypeParameterSeparatedList
-                  TypeParameter
-                    AnnotationList
-                    Identifier "U" @ 565..566 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:method-type-param */"]
-                Gt ">" @ 602..603 trailing=[Whitespace " "]
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "U" @ 604..605 trailing=[Whitespace " "]
-              Identifier "convert" @ 606..613
-              LParen "(" @ 613..614
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "U" @ 614..615 trailing=[Whitespace " "]
+                                    Identifier "util" @ 454..458
+                                  Dot "." @ 458..459
+                                  QualifiedNameSegmentNode
+                                    AnnotationList
+                                    Identifier "List" @ 459..463
+                              TypeArgumentList
+                                Lt "<" @ 463..464
+                                TypeArgumentSeparatedList
+                                  TypeArgument
+                                    AnnotationList
+                                    ClassType
+                                      ClassTypeSegmentList
+                                        ClassTypeSegmentNode
+                                          AnnotationList
+                                          Name
+                                            Identifier "Integer" @ 464..471 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:list-arg-trailing */"]
+                                Gt ">" @ 507..508 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:map-value-trailing */"]
+                    Gt ">" @ 545..546
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "values" @ 553..559 leading=[Newline "\n", Whitespace "      "]
+            Semicolon ";" @ 559..560
+          MethodDeclaration
+            TypeParameterList
+              Lt "<" @ 564..565 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+              TypeParameterSeparatedList
+                TypeParameter
                   AnnotationList
-                  Identifier "value" @ 616..621
-              RParen ")" @ 621..622
-              ThrowsClause
-                ThrowsKw "throws" @ 629..635 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:throws-leading */", Whitespace " "]
-                TypeList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        QualifiedName
+                  Identifier "U" @ 565..566 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:method-type-param */"]
+              Gt ">" @ 602..603 trailing=[Whitespace " "]
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "U" @ 604..605 trailing=[Whitespace " "]
+            Identifier "convert" @ 606..613
+            LParen "(" @ 613..614
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "U" @ 614..615 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 616..621
+            RParen ")" @ 621..622
+            ThrowsClause
+              ThrowsKw "throws" @ 629..635 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:throws-leading */", Whitespace " "]
+              TypeList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      QualifiedName
+                        QualifiedNameSegmentNode
+                          AnnotationList
+                          Identifier "java" @ 669..673
+                        Dot "." @ 673..674
+                        NameSegmentDotList
                           QualifiedNameSegmentNode
                             AnnotationList
-                            Identifier "java" @ 669..673
-                          Dot "." @ 673..674
-                          NameSegmentDotList
-                            QualifiedNameSegmentNode
-                              AnnotationList
-                              Identifier "io" @ 674..676
-                            Dot "." @ 676..677
-                            QualifiedNameSegmentNode
-                              AnnotationList
-                              Identifier "IOException" @ 677..688 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:throws-trailing */", Whitespace " "]
-              Block
-                LBrace "{" @ 723..724
-                BlockStatementList
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 729..735 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                      NameExpression
-                        Identifier "value" @ 736..741
-                      Semicolon ";" @ 741..742
-                RBrace "}" @ 745..746 leading=[Newline "\n", Whitespace "  "]
+                            Identifier "io" @ 674..676
+                          Dot "." @ 676..677
+                          QualifiedNameSegmentNode
+                            AnnotationList
+                            Identifier "IOException" @ 677..688 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:throws-trailing */", Whitespace " "]
+            Block
+              LBrace "{" @ 723..724
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 729..735 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "value" @ 736..741
+                    Semicolon ";" @ 741..742
+              RBrace "}" @ 745..746 leading=[Newline "\n", Whitespace "  "]
         RBrace "}" @ 747..748 leading=[Newline "\n"]
     AnnotationInterfaceDeclaration
       At "@" @ 750..751 leading=[Newline "\n", Newline "\n"]

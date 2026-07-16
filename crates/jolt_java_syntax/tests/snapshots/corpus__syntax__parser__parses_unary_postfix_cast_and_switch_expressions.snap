@@ -33,177 +33,176 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 22..23
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              PrimitiveType
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 28..31 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 32..38
+            LParen "(" @ 38..39
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 39..45 trailing=[Whitespace " "]
                 AnnotationList
-                IntKw "int" @ 28..31 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 32..38
-              LParen "(" @ 38..39
-              FormalParameterList
-                FormalParameter
-                  ParameterModifierList
-                  ClassType
-                    ClassTypeSegmentList
-                      ClassTypeSegmentNode
-                        AnnotationList
-                        Name
-                          Identifier "Object" @ 39..45 trailing=[Whitespace " "]
-                  AnnotationList
-                  Identifier "value" @ 46..51
-              RParen ")" @ 51..52 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 53..54
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 63..66 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "i" @ 67..68 trailing=[Whitespace " "]
-                          Assign "=" @ 69..70 trailing=[Whitespace " "]
-                          VariableInitializer
-                            LiteralExpression
-                              IntegerLiteral "0" @ 71..72
-                    Semicolon ";" @ 72..73
-                  BlockStatement
-                    ExpressionStatement
-                      UnaryExpression
-                        PlusPlus "++" @ 82..84 leading=[Newline "\n", Whitespace "        "]
-                        NameExpression
-                          Identifier "i" @ 84..85
-                      Semicolon ";" @ 85..86
-                  BlockStatement
-                    ExpressionStatement
-                      UnaryExpression
-                        MinusMinus "--" @ 95..97 leading=[Newline "\n", Whitespace "        "]
-                        NameExpression
-                          Identifier "i" @ 97..98
-                      Semicolon ";" @ 98..99
-                  BlockStatement
-                    ExpressionStatement
-                      PostfixExpression
-                        NameExpression
-                          Identifier "i" @ 108..109 leading=[Newline "\n", Whitespace "        "]
-                        PlusPlus "++" @ 109..111
-                      Semicolon ";" @ 111..112
-                  BlockStatement
-                    ExpressionStatement
-                      PostfixExpression
-                        NameExpression
-                          Identifier "i" @ 121..122 leading=[Newline "\n", Whitespace "        "]
-                        MinusMinus "--" @ 122..124
-                      Semicolon ";" @ 124..125
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 134..137 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "cast" @ 138..142 trailing=[Whitespace " "]
-                          Assign "=" @ 143..144 trailing=[Whitespace " "]
-                          VariableInitializer
-                            CastExpression
-                              LParen "(" @ 145..146
-                              PrimitiveType
-                                AnnotationList
-                                IntKw "int" @ 146..149
-                              RParen ")" @ 149..150 trailing=[Whitespace " "]
-                              NameExpression
-                                Identifier "value" @ 151..156
-                    Semicolon ";" @ 156..157
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 166..172 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      SwitchExpression
-                        SwitchKw "switch" @ 173..179 trailing=[Whitespace " "]
-                        LParen "(" @ 180..181
-                        NameExpression
-                          Identifier "value" @ 181..186
-                        RParen ")" @ 186..187 trailing=[Whitespace " "]
-                        SwitchBlock
-                          LBrace "{" @ 188..189
-                          SwitchEntryList
-                            SwitchRule
-                              SwitchLabel
-                                CaseKw "case" @ 202..206 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                SwitchLabelItemList
-                                  CasePattern
-                                    TypePattern
-                                      LocalVariableDeclaration
-                                        ParameterModifierList
-                                        ClassType
-                                          ClassTypeSegmentList
-                                            ClassTypeSegmentNode
-                                              AnnotationList
-                                              Name
-                                                Identifier "Integer" @ 207..214 trailing=[Whitespace " "]
-                                        VariableDeclaratorList
-                                          VariableDeclarator
-                                            Identifier "n" @ 215..216 trailing=[Whitespace " "]
-                              Arrow "->" @ 217..219 trailing=[Whitespace " "]
-                              Block
-                                LBrace "{" @ 220..221
-                                BlockStatementList
-                                  BlockStatement
-                                    YieldStatement
-                                      Identifier "yield" @ 238..243 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+                Identifier "value" @ 46..51
+            RParen ")" @ 51..52 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 53..54
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 63..66 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "i" @ 67..68 trailing=[Whitespace " "]
+                        Assign "=" @ 69..70 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "0" @ 71..72
+                  Semicolon ";" @ 72..73
+                BlockStatement
+                  ExpressionStatement
+                    UnaryExpression
+                      PlusPlus "++" @ 82..84 leading=[Newline "\n", Whitespace "        "]
+                      NameExpression
+                        Identifier "i" @ 84..85
+                    Semicolon ";" @ 85..86
+                BlockStatement
+                  ExpressionStatement
+                    UnaryExpression
+                      MinusMinus "--" @ 95..97 leading=[Newline "\n", Whitespace "        "]
+                      NameExpression
+                        Identifier "i" @ 97..98
+                    Semicolon ";" @ 98..99
+                BlockStatement
+                  ExpressionStatement
+                    PostfixExpression
+                      NameExpression
+                        Identifier "i" @ 108..109 leading=[Newline "\n", Whitespace "        "]
+                      PlusPlus "++" @ 109..111
+                    Semicolon ";" @ 111..112
+                BlockStatement
+                  ExpressionStatement
+                    PostfixExpression
+                      NameExpression
+                        Identifier "i" @ 121..122 leading=[Newline "\n", Whitespace "        "]
+                      MinusMinus "--" @ 122..124
+                    Semicolon ";" @ 124..125
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 134..137 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "cast" @ 138..142 trailing=[Whitespace " "]
+                        Assign "=" @ 143..144 trailing=[Whitespace " "]
+                        VariableInitializer
+                          CastExpression
+                            LParen "(" @ 145..146
+                            PrimitiveType
+                              AnnotationList
+                              IntKw "int" @ 146..149
+                            RParen ")" @ 149..150 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "value" @ 151..156
+                  Semicolon ";" @ 156..157
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 166..172 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    SwitchExpression
+                      SwitchKw "switch" @ 173..179 trailing=[Whitespace " "]
+                      LParen "(" @ 180..181
+                      NameExpression
+                        Identifier "value" @ 181..186
+                      RParen ")" @ 186..187 trailing=[Whitespace " "]
+                      SwitchBlock
+                        LBrace "{" @ 188..189
+                        SwitchEntryList
+                          SwitchRule
+                            SwitchLabel
+                              CaseKw "case" @ 202..206 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                                CasePattern
+                                  TypePattern
+                                    LocalVariableDeclaration
+                                      ParameterModifierList
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            Name
+                                              Identifier "Integer" @ 207..214 trailing=[Whitespace " "]
+                                      VariableDeclaratorList
+                                        VariableDeclarator
+                                          Identifier "n" @ 215..216 trailing=[Whitespace " "]
+                            Arrow "->" @ 217..219 trailing=[Whitespace " "]
+                            Block
+                              LBrace "{" @ 220..221
+                              BlockStatementList
+                                BlockStatement
+                                  YieldStatement
+                                    Identifier "yield" @ 238..243 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+                                    NameExpression
+                                      Identifier "n" @ 244..245
+                                    Semicolon ";" @ 245..246
+                              RBrace "}" @ 259..260 leading=[Newline "\n", Whitespace "            "]
+                          SwitchRule
+                            SwitchLabel
+                              CaseKw "case" @ 273..277 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                                CasePattern
+                                  TypePattern
+                                    LocalVariableDeclaration
+                                      ParameterModifierList
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            Name
+                                              Identifier "Character" @ 278..287 trailing=[Whitespace " "]
+                                      VariableDeclaratorList
+                                        VariableDeclarator
+                                          Identifier "c" @ 288..289 trailing=[Whitespace " "]
+                            Arrow "->" @ 290..292 trailing=[Whitespace " "]
+                            Block
+                              LBrace "{" @ 293..294
+                              BlockStatementList
+                                BlockStatement
+                                  YieldStatement
+                                    Identifier "yield" @ 311..316 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+                                    CastExpression
+                                      LParen "(" @ 317..318
+                                      PrimitiveType
+                                        AnnotationList
+                                        CharKw "char" @ 318..322
+                                      RParen ")" @ 322..323 trailing=[Whitespace " "]
                                       NameExpression
-                                        Identifier "n" @ 244..245
-                                      Semicolon ";" @ 245..246
-                                RBrace "}" @ 259..260 leading=[Newline "\n", Whitespace "            "]
-                            SwitchRule
-                              SwitchLabel
-                                CaseKw "case" @ 273..277 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                SwitchLabelItemList
-                                  CasePattern
-                                    TypePattern
-                                      LocalVariableDeclaration
-                                        ParameterModifierList
-                                        ClassType
-                                          ClassTypeSegmentList
-                                            ClassTypeSegmentNode
-                                              AnnotationList
-                                              Name
-                                                Identifier "Character" @ 278..287 trailing=[Whitespace " "]
-                                        VariableDeclaratorList
-                                          VariableDeclarator
-                                            Identifier "c" @ 288..289 trailing=[Whitespace " "]
-                              Arrow "->" @ 290..292 trailing=[Whitespace " "]
-                              Block
-                                LBrace "{" @ 293..294
-                                BlockStatementList
-                                  BlockStatement
-                                    YieldStatement
-                                      Identifier "yield" @ 311..316 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
-                                      CastExpression
-                                        LParen "(" @ 317..318
-                                        PrimitiveType
-                                          AnnotationList
-                                          CharKw "char" @ 318..322
-                                        RParen ")" @ 322..323 trailing=[Whitespace " "]
-                                        NameExpression
-                                          Identifier "c" @ 324..325
-                                      Semicolon ";" @ 325..326
-                                RBrace "}" @ 339..340 leading=[Newline "\n", Whitespace "            "]
-                            SwitchRule
-                              SwitchLabel
-                                DefaultKw "default" @ 353..360 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                SwitchLabelItemList
-                              Arrow "->" @ 361..363 trailing=[Whitespace " "]
-                              UnaryExpression
-                                Minus "-" @ 364..365
-                                NameExpression
-                                  Identifier "i" @ 365..366
-                              Semicolon ";" @ 366..367
-                          RBrace "}" @ 376..377 leading=[Newline "\n", Whitespace "        "]
-                      Semicolon ";" @ 377..378
-                RBrace "}" @ 383..384 leading=[Newline "\n", Whitespace "    "]
+                                        Identifier "c" @ 324..325
+                                    Semicolon ";" @ 325..326
+                              RBrace "}" @ 339..340 leading=[Newline "\n", Whitespace "            "]
+                          SwitchRule
+                            SwitchLabel
+                              DefaultKw "default" @ 353..360 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                            Arrow "->" @ 361..363 trailing=[Whitespace " "]
+                            UnaryExpression
+                              Minus "-" @ 364..365
+                              NameExpression
+                                Identifier "i" @ 365..366
+                            Semicolon ";" @ 366..367
+                        RBrace "}" @ 376..377 leading=[Newline "\n", Whitespace "        "]
+                    Semicolon ";" @ 377..378
+              RBrace "}" @ 383..384 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 385..386 leading=[Newline "\n"]
   Eof "" @ 387..387 leading=[Newline "\n"]
 

@@ -22,62 +22,61 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 26..27
         ClassBodyMemberList
-          ClassBodyDeclaration
-            MethodDeclaration
-              VoidType
-                VoidKw "void" @ 32..36 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "method" @ 37..43
-              LParen "(" @ 43..44
-              RParen ")" @ 44..45 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 46..47
-                BlockStatementList
-                  BlockStatement
-                    LocalVariableDeclaration
-                      ParameterModifierList
-                      PrimitiveType
-                        AnnotationList
-                        IntKw "int" @ 56..59 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      VariableDeclaratorList
-                        VariableDeclarator
-                          Identifier "value" @ 60..65 trailing=[Whitespace " "]
-                          Assign "=" @ 66..67 trailing=[Whitespace " "]
-                          VariableInitializer
-                            LiteralExpression
-                              IntegerLiteral "1" @ 68..69
-                    Semicolon ";" @ 69..70
-                  BlockStatement
-                    ExpressionStatement
-                      AssignmentExpression
-                        NameExpression
-                          Identifier "value" @ 79..84 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                        PlusEq "+=" @ 85..87 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "2" @ 88..89
-                      Semicolon ";" @ 89..90
-                  BlockStatement
-                    ExpressionStatement
-                      AssignmentExpression
-                        NameExpression
-                          Identifier "value" @ 99..104 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                        LShiftEq "<<=" @ 105..108 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "1" @ 109..110
-                      Semicolon ";" @ 110..111
-                  BlockStatement
-                    ExpressionStatement
-                      AssignmentExpression
-                        NameExpression
-                          Identifier "value" @ 120..125 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                        UnsignedRightShiftAssignmentOperator
-                          Gt ">" @ 126..127
-                          Gt ">" @ 127..128
-                          Gt ">" @ 128..129
-                          Assign "=" @ 129..130 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "1" @ 131..132
-                      Semicolon ";" @ 132..133
-                RBrace "}" @ 138..139 leading=[Newline "\n", Whitespace "    "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 32..36 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 37..43
+            LParen "(" @ 43..44
+            RParen ")" @ 44..45 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 46..47
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 56..59 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "value" @ 60..65 trailing=[Whitespace " "]
+                        Assign "=" @ 66..67 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "1" @ 68..69
+                  Semicolon ";" @ 69..70
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "value" @ 79..84 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      PlusEq "+=" @ 85..87 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "2" @ 88..89
+                    Semicolon ";" @ 89..90
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "value" @ 99..104 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      LShiftEq "<<=" @ 105..108 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "1" @ 109..110
+                    Semicolon ";" @ 110..111
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "value" @ 120..125 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      UnsignedRightShiftAssignmentOperator
+                        Gt ">" @ 126..127
+                        Gt ">" @ 127..128
+                        Gt ">" @ 128..129
+                        Assign "=" @ 129..130 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "1" @ 131..132
+                    Semicolon ";" @ 132..133
+              RBrace "}" @ 138..139 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 140..141 leading=[Newline "\n"]
   Eof "" @ 142..142 leading=[Newline "\n"]
 
