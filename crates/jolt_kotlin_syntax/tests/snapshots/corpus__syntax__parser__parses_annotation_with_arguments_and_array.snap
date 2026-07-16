@@ -32,11 +32,9 @@ KotlinFile
             StringTemplateExpression
               StringTemplateEntryList
                 StringTemplateEntry
-                  StringTemplateContent
-                    OpenQuote "\"" @ 14..15
+                  OpenQuote "\"" @ 14..15
                 StringTemplateEntry
-                  StringTemplateContent
-                    RegularStringPart "/items" @ 15..21
+                  RegularStringPart "/items" @ 15..21
               ClosingQuote "\"" @ 21..22
           Comma "," @ 22..23 trailing=[Whitespace " "]
           ValueArgument
@@ -52,11 +50,9 @@ KotlinFile
                   StringTemplateExpression
                     StringTemplateEntryList
                       StringTemplateEntry
-                        StringTemplateContent
-                          OpenQuote "\"" @ 35..36
+                        OpenQuote "\"" @ 35..36
                       StringTemplateEntry
-                        StringTemplateContent
-                          RegularStringPart "GET" @ 36..39
+                        RegularStringPart "GET" @ 36..39
                     ClosingQuote "\"" @ 39..40
                 Comma "," @ 40..41 trailing=[Whitespace " "]
                 ValueArgument
@@ -64,11 +60,9 @@ KotlinFile
                   StringTemplateExpression
                     StringTemplateEntryList
                       StringTemplateEntry
-                        StringTemplateContent
-                          OpenQuote "\"" @ 42..43
+                        OpenQuote "\"" @ 42..43
                       StringTemplateEntry
-                        StringTemplateContent
-                          RegularStringPart "POST" @ 43..47
+                        RegularStringPart "POST" @ 43..47
                     ClosingQuote "\"" @ 47..48
               RBracket "]" @ 48..49
         RParen ")" @ 49..50
@@ -101,9 +95,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 111..117
+                      Identifier "String" @ 111..117
             Comma "," @ 117..118
             ValueParameter
               ModifierList
@@ -115,9 +107,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Array" @ 136..141
+                      Identifier "Array" @ 136..141
                       TypeArgumentList
                         Lt "<" @ 141..142
                         TypeProjectionSeparatedList
@@ -125,9 +115,7 @@ KotlinFile
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "String" @ 142..148
+                                  Identifier "String" @ 142..148
                         Gt ">" @ 148..149
             Comma "," @ 149..150
           RParen ")" @ 151..152 leading=[Newline "\n"]

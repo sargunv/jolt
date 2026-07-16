@@ -89,9 +89,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Any" @ 28..31
+                    Identifier "Any" @ 28..31
           Comma "," @ 31..32 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -102,9 +100,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Boolean" @ 40..47
+                    Identifier "Boolean" @ 40..47
           Comma "," @ 47..48 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -115,9 +111,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "List" @ 56..60
+                    Identifier "List" @ 56..60
                     TypeArgumentList
                       Lt "<" @ 60..61
                       TypeProjectionSeparatedList
@@ -125,9 +119,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Any" @ 61..64
+                                Identifier "Any" @ 61..64
                       Gt ">" @ 64..65
         RParen ")" @ 65..66 trailing=[Whitespace " "]
       BlockBody
@@ -206,9 +198,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Throwable" @ 188..197
+                                Identifier "Throwable" @ 188..197
                         RParen ")" @ 197..198 trailing=[Whitespace " "]
                       Block
                         LBrace "{" @ 199..200
@@ -332,9 +322,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 397..400
+                    Identifier "Int" @ 397..400
         RParen ")" @ 400..401 trailing=[Whitespace " "]
       BlockBody
         Block
@@ -400,9 +388,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 512..515
+                    Identifier "Int" @ 512..515
         RParen ")" @ 515..516 trailing=[Whitespace " "]
       BlockBody
         Block
@@ -436,10 +422,8 @@ KotlinFile
                           BinaryExpression
                             LiteralExpression
                               IntegerLiteral "2" @ 565..566 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                            BinaryOperator
-                              Identifier "two" @ 567..570
-                            BinaryExpressionRight
-                              BogusExpression
+                            Identifier "two" @ 567..570
+                            BogusExpression
                       WhenEntryBody
                         BogusExpression
                     WhenEntry
@@ -523,9 +507,7 @@ KotlinFile
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "Throwable" @ 710..719
+                                  Identifier "Throwable" @ 710..719
                           RParen ")" @ 719..720 trailing=[Whitespace " "]
                         Block
                           LBrace "{" @ 721..722
@@ -552,9 +534,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "List" @ 753..757
+                    Identifier "List" @ 753..757
                     TypeArgumentList
                       Lt "<" @ 757..758
                       TypeProjectionSeparatedList
@@ -562,9 +542,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Any" @ 758..761
+                                Identifier "Any" @ 758..761
                       Gt ">" @ 761..762
           Comma "," @ 762..763 trailing=[Whitespace " "]
           ValueParameter
@@ -576,9 +554,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Boolean" @ 771..778
+                    Identifier "Boolean" @ 771..778
         RParen ")" @ 778..779 trailing=[Whitespace " "]
       BlockBody
         Block

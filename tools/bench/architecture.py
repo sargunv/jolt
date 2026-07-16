@@ -31,7 +31,7 @@ MODES = ("parse", "format", "end-to-end")
 
 def benchmark() -> int:
     machine = machine_metadata()
-    snapshot = measure(machine, samples=10, warmups=2)
+    snapshot = measure(machine, samples=20, warmups=2)
     output = report_path(str(machine["id"]))
     write_json(output, snapshot)
     print_summary(snapshot)

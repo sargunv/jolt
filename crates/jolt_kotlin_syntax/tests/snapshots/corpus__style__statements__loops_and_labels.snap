@@ -51,9 +51,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "List" @ 53..57
+                    Identifier "List" @ 53..57
                     TypeArgumentList
                       Lt "<" @ 57..58
                       TypeProjectionSeparatedList
@@ -61,9 +59,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "List" @ 58..62
+                                Identifier "List" @ 58..62
                                 TypeArgumentList
                                   Lt "<" @ 62..63
                                   TypeProjectionSeparatedList
@@ -71,9 +67,7 @@ KotlinFile
                                       UserType
                                         UserTypeSegmentList
                                           UserTypeSegment
-                                            AnnotationList
-                                            Name
-                                              Identifier "String" @ 63..69
+                                            Identifier "String" @ 63..69
                                   Gt ">" @ 69..70
                       Gt ">" @ 70..71
           Comma "," @ 71..72 trailing=[Whitespace " "]
@@ -86,9 +80,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 81..87
+                    Identifier "String" @ 81..87
         RParen ")" @ 87..88
       Colon ":" @ 88..89 trailing=[Whitespace " "]
       TypeReference
@@ -96,9 +88,7 @@ KotlinFile
           UserType
             UserTypeSegmentList
               UserTypeSegment
-                AnnotationList
-                Name
-                  Identifier "String" @ 90..96
+                Identifier "String" @ 90..96
           Question "?" @ 96..97 trailing=[Whitespace " "]
       BlockBody
         Block
@@ -148,11 +138,9 @@ KotlinFile
                                           BinaryExpression
                                             NameExpression
                                               Identifier "cell" @ 175..179 trailing=[Whitespace " "]
-                                            BinaryOperator
-                                              EqEq "==" @ 180..182 trailing=[Whitespace " "]
-                                            BinaryExpressionRight
-                                              NameExpression
-                                                Identifier "needle" @ 183..189
+                                            EqEq "==" @ 180..182 trailing=[Whitespace " "]
+                                            NameExpression
+                                              Identifier "needle" @ 183..189
                                           RParen ")" @ 189..190 trailing=[Whitespace " "]
                                         JumpExpression
                                           BreakKw "break" @ 191..196

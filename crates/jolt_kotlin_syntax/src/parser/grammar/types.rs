@@ -93,6 +93,7 @@ impl Parser<'_> {
     fn parse_type_atom(&mut self, stops: &[K], stop_position: Option<usize>) -> CompletedMarker {
         let marker = self.start();
         let prefix = self.start();
+        let prefix_start = self.position();
         self.parse_type_prefix_annotations();
 
         match self.current_kind() {
@@ -119,8 +120,13 @@ impl Parser<'_> {
                 self.complete(marker, K::ParenthesizedType)
             }
             kind if self.at_identifier_like() || is_literal_kind(kind) => {
-                let annotations = self.complete(prefix, K::AnnotationList);
-                let segment = self.precede(annotations);
+                let segment = if self.position() == prefix_start {
+                    self.abandon(prefix);
+                    self.start()
+                } else {
+                    let annotations = self.complete(prefix, K::AnnotationList);
+                    self.precede(annotations)
+                };
                 self.parse_user_type_tail(segment, stop_position);
                 self.complete(marker, K::UserType)
             }
@@ -181,9 +187,11 @@ impl Parser<'_> {
                 self.bump();
                 let crosses_line = self.newline_between(separator_position, self.position());
                 let segment = self.start();
-                let annotations = self.start();
-                self.parse_type_prefix_annotations();
-                self.complete(annotations, K::AnnotationList);
+                if self.at(K::At) || self.at(K::Hash) {
+                    let annotations = self.start();
+                    self.parse_type_prefix_annotations();
+                    self.complete(annotations, K::AnnotationList);
+                }
                 if !crosses_line
                     && (self.at_identifier_like() || is_literal_kind(self.current_kind()))
                 {
@@ -224,7 +232,7 @@ impl Parser<'_> {
 
     fn parse_user_type_segment_tail(&mut self, segment: jolt_syntax::Marker) -> CompletedMarker {
         if self.at_identifier_like() {
-            self.parse_name();
+            self.bump();
             if self.at(K::Lt) {
                 self.parse_type_argument_list();
             }

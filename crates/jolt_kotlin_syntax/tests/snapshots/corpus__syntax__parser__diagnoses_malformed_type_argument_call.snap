@@ -35,9 +35,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 37..43
+                    Identifier "String" @ 37..43
         RParen ")" @ 43..44 trailing=[Whitespace " "]
       BlockBody
         Block
@@ -55,10 +53,8 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "factory" @ 64..71
-                    NavigationOperator
-                      Dot "." @ 71..72
-                    NameExpression
-                      Identifier "create" @ 72..78
+                    Dot "." @ 71..72
+                    Identifier "create" @ 72..78
                   TypeArgumentListList
                     TypeArgumentList
                       Lt "<" @ 78..79
@@ -67,9 +63,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 79..85
+                                Identifier "String" @ 79..85
                         Comma "," @ 85..86
                         Comma "," @ 86..87 trailing=[Whitespace " "]
                         BogusTypeArgument
@@ -77,9 +71,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Int" @ 88..91
+                                Identifier "Int" @ 88..91
                       Gt ">" @ 91..92
                   ValueArgumentList
                     LParen "(" @ 92..93
@@ -103,38 +95,32 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "factory" @ 118..125
-                    NavigationOperator
-                      Dot "." @ 125..126
-                    NameExpression
-                      Identifier "create" @ 126..132
+                    Dot "." @ 125..126
+                    Identifier "create" @ 126..132
                   BogusExpression
-                  BinaryOperator
-                    Lt "<" @ 132..133
-                  BinaryExpressionRight
-                    CallExpression
-                      NameExpression
-                        Identifier "List" @ 133..137
-                      TypeArgumentListList
-                        TypeArgumentList
-                          Lt "<" @ 137..138
-                          TypeProjectionSeparatedList
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
-                                  UserTypeSegment
-                                    AnnotationList
-                                    Name
-                                      Identifier "String" @ 138..144
-                          Gt ">" @ 144..145
-                      ValueArgumentList
-                        LParen "(" @ 145..146
-                        ValueArgumentEntryList
-                          ValueArgument
-                            ValueArgumentPrefixList
-                            NameExpression
-                              Identifier "value" @ 146..151
-                        RParen ")" @ 151..152
-                      LambdaExpressionList
+                  Lt "<" @ 132..133
+                  CallExpression
+                    NameExpression
+                      Identifier "List" @ 133..137
+                    TypeArgumentListList
+                      TypeArgumentList
+                        Lt "<" @ 137..138
+                        TypeProjectionSeparatedList
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  Identifier "String" @ 138..144
+                        Gt ">" @ 144..145
+                    ValueArgumentList
+                      LParen "(" @ 145..146
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          NameExpression
+                            Identifier "value" @ 146..151
+                      RParen ")" @ 151..152
+                    LambdaExpressionList
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -166,25 +152,17 @@ KotlinFile
                     NavigationExpression
                       NameExpression
                         Identifier "factory" @ 240..247
-                      NavigationOperator
-                        Dot "." @ 247..248
-                      NameExpression
-                        Identifier "create" @ 248..254
-                    BinaryOperator
-                      Lt "<" @ 254..255
-                    BinaryExpressionRight
-                      NameExpression
-                        Identifier "Result" @ 255..261
-                  BinaryOperator
-                    Gt ">" @ 261..262
-                  BinaryExpressionRight
-                    NavigationExpression
-                      BogusExpression
-                        Question "?" @ 262..263 trailing=[Whitespace " ", BlockComment "/* gap */", Whitespace " "]
-                      NavigationOperator
-                        Dot "." @ 274..275
-                      NameExpression
-                        Identifier "value" @ 275..280
+                      Dot "." @ 247..248
+                      Identifier "create" @ 248..254
+                    Lt "<" @ 254..255
+                    NameExpression
+                      Identifier "Result" @ 255..261
+                  Gt ">" @ 261..262
+                  NavigationExpression
+                    BogusExpression
+                      Question "?" @ 262..263 trailing=[Whitespace " ", BlockComment "/* gap */", Whitespace " "]
+                    Dot "." @ 274..275
+                    Identifier "value" @ 275..280
               PropertyBodyMemberList
             Statement
               ExpressionStatement

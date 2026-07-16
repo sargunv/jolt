@@ -50,9 +50,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "List" @ 53..57
+                    Identifier "List" @ 53..57
                     TypeArgumentList
                       Lt "<" @ 57..58
                       TypeProjectionSeparatedList
@@ -60,9 +58,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Pair" @ 58..62
+                                Identifier "Pair" @ 58..62
                                 TypeArgumentList
                                   Lt "<" @ 62..63
                                   TypeProjectionSeparatedList
@@ -70,17 +66,13 @@ KotlinFile
                                       UserType
                                         UserTypeSegmentList
                                           UserTypeSegment
-                                            AnnotationList
-                                            Name
-                                              Identifier "String" @ 63..69
+                                            Identifier "String" @ 63..69
                                     Comma "," @ 69..70 trailing=[Whitespace " "]
                                     TypeReference
                                       UserType
                                         UserTypeSegmentList
                                           UserTypeSegment
-                                            AnnotationList
-                                            Name
-                                              Identifier "Int" @ 71..74
+                                            Identifier "Int" @ 71..74
                                   Gt ">" @ 74..75
                       Gt ">" @ 75..76
         RParen ")" @ 76..77
@@ -89,9 +81,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Map" @ 79..82
+              Identifier "Map" @ 79..82
               TypeArgumentList
                 Lt "<" @ 82..83
                 TypeProjectionSeparatedList
@@ -99,17 +89,13 @@ KotlinFile
                     UserType
                       UserTypeSegmentList
                         UserTypeSegment
-                          AnnotationList
-                          Name
-                            Identifier "String" @ 83..89
+                          Identifier "String" @ 83..89
                   Comma "," @ 89..90 trailing=[Whitespace " "]
                   TypeReference
                     UserType
                       UserTypeSegmentList
                         UserTypeSegment
-                          AnnotationList
-                          Name
-                            Identifier "Int" @ 91..94
+                          Identifier "Int" @ 91..94
                 Gt ">" @ 94..95 trailing=[Whitespace " "]
       BlockBody
         Block
@@ -134,17 +120,13 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 128..134
+                                Identifier "String" @ 128..134
                         Comma "," @ 134..135 trailing=[Whitespace " "]
                         TypeReference
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Int" @ 136..139
+                                Identifier "Int" @ 136..139
                       Gt ">" @ 139..140
                   ValueArgumentList
                     LParen "(" @ 140..141
@@ -205,17 +187,13 @@ KotlinFile
                                         NameExpression
                                           Identifier "name" @ 211..215
                                     RBracket "]" @ 215..216 trailing=[Whitespace " "]
-                                  BinaryOperator
-                                    Elvis "?:" @ 217..219 trailing=[Whitespace " "]
-                                  BinaryExpressionRight
-                                    LiteralExpression
-                                      IntegerLiteral "0" @ 220..221
+                                  Elvis "?:" @ 217..219 trailing=[Whitespace " "]
+                                  LiteralExpression
+                                    IntegerLiteral "0" @ 220..221
                                 RParen ")" @ 221..222 trailing=[Whitespace " "]
-                              BinaryOperator
-                                Plus "+" @ 223..224 trailing=[Whitespace " "]
-                              BinaryExpressionRight
-                                NameExpression
-                                  Identifier "count" @ 225..230
+                              Plus "+" @ 223..224 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "count" @ 225..230
                         TerminatorList
                     RBrace "}" @ 235..236 leading=[Newline "\n", Whitespace "    "]
               TerminatorList

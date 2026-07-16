@@ -508,6 +508,32 @@ an explicit bound, or generating exact slot-capacity metadata. They require a
 separate design and measurement decision. Eliding intentional physical lists or
 constructed syntax is not an optimization path.
 
+Phase 23 resolves the remaining Kotlin storage regression without weakening
+syntax ownership. A typed role does not require a one-child physical node:
+binary operator/right roles, navigation operators and identifier selectors, and
+string-template content are generated fields on their owning nodes. User-type
+segments remain physical because they group annotations, a name, and type
+arguments, but an absent annotation list has no node and the name is a typed
+source token. Physical lists, multi-role constructed syntax, malformed/bogus
+owners, and diagnostic-bearing recovery nodes remain unchanged.
+
+The same performance audit found two shared construction costs independent of
+the grammar model. Profiled token-kind queries crossed an uninlined
+already-buffered fast path, so the small cursor chain is forced inline in
+release builds. Parser-owned event streams also skip the low-level builder's
+external-input scan for its construction-only `Consumed` sentinel; the public
+builder retains the check, while the parser marker API cannot produce that
+sentinel. These are execution optimizations of the single uniform tree, not a
+second construction architecture.
+
+Formatter width measurement takes the same direct path for ASCII source before
+falling back to Unicode width decoding, and the compact-concat append hot path
+is forced inline. With two warmups and twenty recorded samples, the final
+same-machine report passes every incremental and Phase 3 cumulative time,
+allocation, peak-memory, and tree-size budget. Kotlin parse and format improve
+from Phase 3, end-to-end remains within the three-percent limit, and tree
+bytes/token are reduced by more than half.
+
 Phase 10 closes the shared migration layer rather than absorbing every syntax
 family's recovery migration. It deletes the test-only raw tree constructor, the
 Phase 7 dynamic schema matcher/static audit representation, and the red-tree

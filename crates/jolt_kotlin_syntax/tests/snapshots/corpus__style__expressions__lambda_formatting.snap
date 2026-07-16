@@ -55,9 +55,7 @@ KotlinFile
                     UserType
                       UserTypeSegmentList
                         UserTypeSegment
-                          AnnotationList
-                          Name
-                            Identifier "String" @ 59..65 trailing=[Whitespace " "]
+                          Identifier "String" @ 59..65 trailing=[Whitespace " "]
               Arrow "->" @ 66..68 trailing=[Whitespace " "]
             LambdaBodyItemList
               Statement
@@ -65,18 +63,14 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "value" @ 69..74 trailing=[Whitespace " "]
-                    BinaryOperator
-                      Plus "+" @ 75..76 trailing=[Whitespace " "]
-                    BinaryExpressionRight
-                      StringTemplateExpression
-                        StringTemplateEntryList
-                          StringTemplateEntry
-                            StringTemplateContent
-                              OpenQuote "\"" @ 77..78
-                          StringTemplateEntry
-                            StringTemplateContent
-                              RegularStringPart "!" @ 78..79
-                        ClosingQuote "\"" @ 79..80 trailing=[Whitespace " "]
+                    Plus "+" @ 75..76 trailing=[Whitespace " "]
+                    StringTemplateExpression
+                      StringTemplateEntryList
+                        StringTemplateEntry
+                          OpenQuote "\"" @ 77..78
+                        StringTemplateEntry
+                          RegularStringPart "!" @ 78..79
+                      ClosingQuote "\"" @ 79..80 trailing=[Whitespace " "]
                 TerminatorList
             RBrace "}" @ 81..82
       PropertyBodyMemberList
@@ -102,9 +96,7 @@ KotlinFile
                     UserType
                       UserTypeSegmentList
                         UserTypeSegment
-                          AnnotationList
-                          Name
-                            Identifier "Int" @ 102..105
+                          Identifier "Int" @ 102..105
                 Comma "," @ 105..106 trailing=[Whitespace " "]
                 LambdaParameter
                   LambdaParameterBinding
@@ -115,9 +107,7 @@ KotlinFile
                     UserType
                       UserTypeSegmentList
                         UserTypeSegment
-                          AnnotationList
-                          Name
-                            Identifier "Int" @ 114..117 trailing=[Whitespace " "]
+                          Identifier "Int" @ 114..117 trailing=[Whitespace " "]
               Arrow "->" @ 118..120
             LambdaBodyItemList
               Statement
@@ -125,11 +115,9 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "left" @ 125..129 leading=[Newline "\n", Whitespace "    "]
-                    BinaryOperator
-                      Plus "+" @ 129..130
-                    BinaryExpressionRight
-                      NameExpression
-                        Identifier "right" @ 130..135
+                    Plus "+" @ 129..130
+                    NameExpression
+                      Identifier "right" @ 130..135
                 TerminatorList
             RBrace "}" @ 136..137 leading=[Newline "\n"]
       PropertyBodyMemberList
@@ -160,26 +148,20 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Int" @ 158..161
+                                Identifier "Int" @ 158..161
                     RParen ")" @ 161..162 trailing=[Whitespace " "]
                   Arrow "->" @ 163..165 trailing=[Whitespace " "]
                   UserType
                     UserTypeSegmentList
                       UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "Int" @ 166..169
+                        Identifier "Int" @ 166..169
         RParen ")" @ 169..170
       Colon ":" @ 170..171 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Int" @ 172..175 trailing=[Whitespace " "]
+              Identifier "Int" @ 172..175 trailing=[Whitespace " "]
       ExpressionBody
         Assign "=" @ 176..177 trailing=[Whitespace " "]
         CallExpression
@@ -224,11 +206,9 @@ KotlinFile
                       BinaryExpression
                         NameExpression
                           Identifier "value" @ 220..225
-                        BinaryOperator
-                          Star "*" @ 225..226
-                        BinaryExpressionRight
-                          LiteralExpression
-                            IntegerLiteral "2" @ 226..227 trailing=[Whitespace " "]
+                        Star "*" @ 225..226
+                        LiteralExpression
+                          IntegerLiteral "2" @ 226..227 trailing=[Whitespace " "]
                     TerminatorList
                 RBrace "}" @ 228..229
       PropertyBodyMemberList

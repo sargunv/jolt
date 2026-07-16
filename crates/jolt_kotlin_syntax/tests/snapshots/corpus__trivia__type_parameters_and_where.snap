@@ -81,9 +81,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Any" @ 124..127
+                    Identifier "Any" @ 124..127
           Comma "," @ 127..128
           TypeParameter
             ModifierList
@@ -102,9 +100,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Source" @ 187..193
+                    Identifier "Source" @ 187..193
                     TypeArgumentList
                       Lt "<" @ 193..194
                       TypeProjectionSeparatedList
@@ -112,9 +108,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "R" @ 194..195
+                                Identifier "R" @ 194..195
                       Gt ">" @ 195..196 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:where-first */", Whitespace " "]
           Comma "," @ 227..228
           TypeConstraint
@@ -125,9 +119,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Sink" @ 237..241
+                    Identifier "Sink" @ 237..241
                     TypeArgumentList
                       Lt "<" @ 241..242
                       TypeProjectionSeparatedList
@@ -135,9 +127,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "R" @ 242..243
+                                Identifier "R" @ 242..243
                       Gt ">" @ 243..244 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:where-second */"]
     FunctionDeclaration
       ModifierList
@@ -166,18 +156,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "T" @ 335..336
+                    Identifier "T" @ 335..336
         RParen ")" @ 336..337
       Colon ":" @ 337..338 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "T" @ 339..340 trailing=[Whitespace " "]
+              Identifier "T" @ 339..340 trailing=[Whitespace " "]
       TypeConstraintList
         Identifier "where" @ 341..346 trailing=[Whitespace " "]
         TypeConstraintSeparatedList
@@ -189,9 +175,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "CharSequence" @ 351..363 trailing=[Whitespace " "]
+                    Identifier "CharSequence" @ 351..363 trailing=[Whitespace " "]
       ExpressionBody
         Assign "=" @ 364..365 trailing=[Whitespace " "]
         NameExpression

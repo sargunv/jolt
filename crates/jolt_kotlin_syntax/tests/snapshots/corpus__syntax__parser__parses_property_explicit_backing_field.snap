@@ -34,9 +34,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 43..49
+                      Identifier "String" @ 43..49
               PropertyBodyMemberList
                 ExplicitBackingField
                   Identifier "field" @ 58..63 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
@@ -44,11 +42,9 @@ KotlinFile
                   StringTemplateExpression
                     StringTemplateEntryList
                       StringTemplateEntry
-                        StringTemplateContent
-                          OpenQuote "\"" @ 66..67
+                        OpenQuote "\"" @ 66..67
                       StringTemplateEntry
-                        StringTemplateContent
-                          RegularStringPart "Paris" @ 67..72
+                        RegularStringPart "Paris" @ 67..72
                     ClosingQuote "\"" @ 72..73
         RBrace "}" @ 74..75 leading=[Newline "\n"]
   Eof "" @ 76..76 leading=[Newline "\n"]

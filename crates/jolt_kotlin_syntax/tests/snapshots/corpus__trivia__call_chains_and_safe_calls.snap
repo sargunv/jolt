@@ -64,9 +64,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 65..71
+                            Identifier "String" @ 65..71
                 RParen ")" @ 71..72 trailing=[Whitespace " "]
               ExpressionBody
                 Assign "=" @ 73..74 trailing=[Whitespace " "]
@@ -105,19 +103,15 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 120..126 trailing=[Whitespace " "]
+                      Identifier "String" @ 120..126 trailing=[Whitespace " "]
               ExpressionBody
                 Assign "=" @ 127..128 trailing=[Whitespace " "]
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"" @ 129..130
+                      OpenQuote "\"" @ 129..130
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "done" @ 130..134
+                      RegularStringPart "done" @ 130..134
                   ClosingQuote "\"" @ 134..135
         RBrace "}" @ 136..137 leading=[Newline "\n"]
     FunctionDeclaration
@@ -140,9 +134,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Builder" @ 158..165
+                      Identifier "Builder" @ 158..165
                 Question "?" @ 165..166
           Comma "," @ 166..167 trailing=[Whitespace " "]
           ValueParameter
@@ -154,9 +146,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 175..181
+                    Identifier "String" @ 175..181
         RParen ")" @ 181..182
       Colon ":" @ 182..183 trailing=[Whitespace " "]
       TypeReference
@@ -164,9 +154,7 @@ KotlinFile
           UserType
             UserTypeSegmentList
               UserTypeSegment
-                AnnotationList
-                Name
-                  Identifier "String" @ 184..190
+                Identifier "String" @ 184..190
           Question "?" @ 190..191 trailing=[Whitespace " "]
       ExpressionBody
         Assign "=" @ 192..193
@@ -178,12 +166,10 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "builder" @ 198..205 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:chain-target */"]
-                    NavigationOperator
-                      SplitSafeNavigationOperator
-                        Question "?" @ 245..246 leading=[Newline "\n", Whitespace "        "]
-                        Dot "." @ 246..247
-                    NameExpression
-                      Identifier "first" @ 247..252
+                    SplitSafeNavigationOperator
+                      Question "?" @ 245..246 leading=[Newline "\n", Whitespace "        "]
+                      Dot "." @ 246..247
+                    Identifier "first" @ 247..252
                   TypeArgumentListList
                   ValueArgumentList
                     LParen "(" @ 252..253 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:safe-call-open */", Whitespace " "]
@@ -194,24 +180,20 @@ KotlinFile
                           Identifier "value" @ 287..292 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:first-arg */"]
                     RParen ")" @ 320..321
                   LambdaExpressionList
-                NavigationOperator
-                  SplitSafeNavigationOperator
-                    Question "?" @ 330..331 leading=[Newline "\n", Whitespace "        "]
-                    Dot "." @ 331..332
-                NameExpression
-                  Identifier "second" @ 332..338
+                SplitSafeNavigationOperator
+                  Question "?" @ 330..331 leading=[Newline "\n", Whitespace "        "]
+                  Dot "." @ 331..332
+                Identifier "second" @ 332..338
               TypeArgumentListList
               ValueArgumentList
                 LParen "(" @ 338..339
                 ValueArgumentEntryList
                 RParen ")" @ 339..340 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:after-second */"]
               LambdaExpressionList
-            NavigationOperator
-              SplitSafeNavigationOperator
-                Question "?" @ 380..381 leading=[Newline "\n", Whitespace "        "]
-                Dot "." @ 381..382
-            NameExpression
-              Identifier "done" @ 382..386 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-ref-gap */", Whitespace " "]
+            SplitSafeNavigationOperator
+              Question "?" @ 380..381 leading=[Newline "\n", Whitespace "        "]
+              Dot "." @ 381..382
+            Identifier "done" @ 382..386 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-ref-gap */", Whitespace " "]
           TypeArgumentListList
           ValueArgumentList
             LParen "(" @ 422..423

@@ -46,20 +46,16 @@ KotlinFile
                 NavigationExpression
                   NameExpression
                     Identifier "AnnotationTarget" @ 42..58
-                  NavigationOperator
-                    Dot "." @ 58..59
-                  NameExpression
-                    Identifier "CLASS" @ 59..64
+                  Dot "." @ 58..59
+                  Identifier "CLASS" @ 59..64
               Comma "," @ 64..65 trailing=[Whitespace " "]
               ValueArgument
                 ValueArgumentPrefixList
                 NavigationExpression
                   NameExpression
                     Identifier "AnnotationTarget" @ 66..82
-                  NavigationOperator
-                    Dot "." @ 82..83
-                  NameExpression
-                    Identifier "FUNCTION" @ 83..91
+                  Dot "." @ 82..83
+                  Identifier "FUNCTION" @ 83..91
             RParen ")" @ 91..92
         Identifier "annotation" @ 93..103 leading=[Newline "\n"] trailing=[Whitespace " "]
       ModifierList
@@ -81,9 +77,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 128..134
+                      Identifier "String" @ 128..134
           RParen ")" @ 134..135
     ClassDeclaration
       ModifierList
@@ -101,11 +95,9 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"" @ 148..149
+                      OpenQuote "\"" @ 148..149
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "fixture" @ 149..156
+                      RegularStringPart "fixture" @ 149..156
                   ClosingQuote "\"" @ 156..157
             RParen ")" @ 157..158 trailing=[Whitespace " "]
         Identifier "sealed" @ 159..165 trailing=[Whitespace " "]
@@ -135,9 +127,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 210..216
+                      Identifier "String" @ 210..216
           RParen ")" @ 216..217 trailing=[Whitespace " "]
       DelegationClause
         Colon ":" @ 218..219 trailing=[Whitespace " "]
@@ -147,9 +137,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Result" @ 220..226
+                    Identifier "Result" @ 220..226
             ValueArgumentList
               LParen "(" @ 226..227
               ValueArgumentEntryList

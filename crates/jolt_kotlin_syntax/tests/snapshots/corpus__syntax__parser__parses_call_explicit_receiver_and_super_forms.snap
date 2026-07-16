@@ -50,9 +50,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 43..49
+                            Identifier "String" @ 43..49
                 RParen ")" @ 49..50 trailing=[Whitespace " "]
               BlockBody
                 Block
@@ -74,9 +72,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Base" @ 73..77
+                    Identifier "Base" @ 73..77
             ValueArgumentList
               LParen "(" @ 77..78
               ValueArgumentEntryList
@@ -105,9 +101,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 111..117
+                            Identifier "String" @ 111..117
                 RParen ")" @ 117..118 trailing=[Whitespace " "]
               BlockBody
                 Block
@@ -119,10 +113,8 @@ KotlinFile
                           NavigationExpression
                             ThisExpression
                               ThisKw "this" @ 129..133 leading=[Newline "\n", Whitespace "        "]
-                            NavigationOperator
-                              Dot "." @ 133..134
-                            NameExpression
-                              Identifier "call" @ 134..138
+                            Dot "." @ 133..134
+                            Identifier "call" @ 134..138
                           TypeArgumentListList
                           ValueArgumentList
                             LParen "(" @ 138..139
@@ -136,10 +128,8 @@ KotlinFile
                                   NavigationExpression
                                     NameExpression
                                       Identifier "value" @ 147..152
-                                    NavigationOperator
-                                      Dot "." @ 152..153
-                                    NameExpression
-                                      Identifier "trim" @ 153..157
+                                    Dot "." @ 152..153
+                                    Identifier "trim" @ 153..157
                                   TypeArgumentListList
                                   ValueArgumentList
                                     LParen "(" @ 157..158
@@ -155,10 +145,8 @@ KotlinFile
                           NavigationExpression
                             SuperExpression
                               SuperKw "super" @ 169..174 leading=[Newline "\n", Whitespace "        "]
-                            NavigationOperator
-                              Dot "." @ 174..175
-                            NameExpression
-                              Identifier "call" @ 175..179
+                            Dot "." @ 174..175
+                            Identifier "call" @ 175..179
                           TypeArgumentListList
                           ValueArgumentList
                             LParen "(" @ 179..180

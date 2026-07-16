@@ -55,11 +55,9 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 67..68
+                              OpenQuote "\"" @ 67..68
                             StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart " value " @ 68..75
+                              RegularStringPart " value " @ 68..75
                           ClosingQuote "\"" @ 75..76
                     RParen ")" @ 76..77
                   LambdaExpressionList
@@ -88,9 +86,7 @@ KotlinFile
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "String" @ 108..114
+                                  Identifier "String" @ 108..114
                         Gt ">" @ 114..115
                   TypeArgumentListList
                   ValueArgumentList
@@ -101,11 +97,9 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 116..117
+                              OpenQuote "\"" @ 116..117
                             StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "value" @ 117..122
+                              RegularStringPart "value" @ 117..122
                           ClosingQuote "\"" @ 122..123
                     RParen ")" @ 123..124
                   LambdaExpressionList

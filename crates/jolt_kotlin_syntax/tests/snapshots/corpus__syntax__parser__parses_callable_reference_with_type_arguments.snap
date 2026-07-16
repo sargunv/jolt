@@ -52,9 +52,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 69..75
+                                Identifier "String" @ 69..75
                       Gt ">" @ 75..76
               PropertyBodyMemberList
             PropertyDeclaration
@@ -70,10 +68,8 @@ KotlinFile
                     NavigationExpression
                       NameExpression
                         Identifier "Registry" @ 94..102
-                      NavigationOperator
-                        Dot "." @ 102..103
-                      NameExpression
-                        Identifier "Entry" @ 103..108
+                      Dot "." @ 102..103
+                      Identifier "Entry" @ 103..108
                   ColonColon "::" @ 108..110
                   CallableReferenceTarget
                     Identifier "from" @ 110..114
@@ -85,9 +81,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Int" @ 115..118
+                                Identifier "Int" @ 115..118
                       Gt ">" @ 118..119
               PropertyBodyMemberList
             Statement

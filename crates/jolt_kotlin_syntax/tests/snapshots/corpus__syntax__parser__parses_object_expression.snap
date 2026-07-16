@@ -32,9 +32,7 @@ KotlinFile
                   UserType
                     UserTypeSegmentList
                       UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "Runnable" @ 24..32 trailing=[Whitespace " "]
+                        Identifier "Runnable" @ 24..32 trailing=[Whitespace " "]
           ClassBody
             LBrace "{" @ 33..34
             ClassMemberList
@@ -69,11 +67,9 @@ KotlinFile
                                     StringTemplateExpression
                                       StringTemplateEntryList
                                         StringTemplateEntry
-                                          StringTemplateContent
-                                            OpenQuote "\"" @ 76..77
+                                          OpenQuote "\"" @ 76..77
                                         StringTemplateEntry
-                                          StringTemplateContent
-                                            RegularStringPart "tick" @ 77..81
+                                          RegularStringPart "tick" @ 77..81
                                       ClosingQuote "\"" @ 81..82
                                 RParen ")" @ 82..83
                               LambdaExpressionList

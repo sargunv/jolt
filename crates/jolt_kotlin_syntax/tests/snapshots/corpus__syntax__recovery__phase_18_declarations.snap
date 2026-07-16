@@ -114,9 +114,7 @@ KotlinFile
           UserType
             UserTypeSegmentList
               UserTypeSegment
-                AnnotationList
-                Name
-                  Identifier "Receiver" @ 43..51
+                Identifier "Receiver" @ 43..51
         Dot "." @ 51..52
         Name
           Identifier "member" @ 52..58
@@ -138,9 +136,7 @@ KotlinFile
           UserType
             UserTypeSegmentList
               UserTypeSegment
-                AnnotationList
-                Name
-                  Identifier "Receiver" @ 73..81
+                Identifier "Receiver" @ 73..81
         Dot "." @ 81..82
         Name
       ValueParameterList
@@ -162,9 +158,7 @@ KotlinFile
           UserType
             UserTypeSegmentList
               UserTypeSegment
-                AnnotationList
-                Name
-                  Identifier "MissingDot" @ 93..103 trailing=[Whitespace " "]
+                Identifier "MissingDot" @ 93..103 trailing=[Whitespace " "]
         Name
           Identifier "member" @ 104..110
       ValueParameterList
@@ -247,9 +241,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Int" @ 253..256
+              Identifier "Int" @ 253..256
       PropertyBodyMemberList
         ExplicitBackingField
           Identifier "field" @ 261..266 leading=[Newline "\n", Whitespace "    "]
@@ -304,9 +296,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Int" @ 362..365
+              Identifier "Int" @ 362..365
       PropertyBodyMemberList
         PropertyAccessor
           ModifierList
@@ -327,9 +317,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 395..401
+              Identifier "String" @ 395..401
     ClassDeclaration
       ModifierList
       ModifierList
@@ -343,9 +331,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Base" @ 417..421
+                    Identifier "Base" @ 417..421
             ValueArgumentList
               LParen "(" @ 421..422
               ValueArgumentEntryList
@@ -356,9 +342,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Other" @ 425..430 trailing=[Whitespace " "]
+                    Identifier "Other" @ 425..430 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 431..432
         ClassMemberList
@@ -406,9 +390,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Int" @ 496..499
+                      Identifier "Int" @ 496..499
               PropertyBodyMemberList
                 ExplicitBackingField
                   Identifier "field" @ 508..513 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
@@ -480,9 +462,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Base" @ 655..659 trailing=[Whitespace " "]
+                    Identifier "Base" @ 655..659 trailing=[Whitespace " "]
             DelegationByClause
               Identifier "by" @ 660..662 trailing=[Whitespace " "]
       ClassBody

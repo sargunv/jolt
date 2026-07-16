@@ -67,9 +67,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Parent" @ 61..67
+                    Identifier "Parent" @ 61..67
             ValueArgumentList
               LParen "(" @ 67..68
               ValueArgumentEntryList
@@ -108,9 +106,7 @@ KotlinFile
                               UserType
                                 UserTypeSegmentList
                                   UserTypeSegment
-                                    AnnotationList
-                                    Name
-                                      Identifier "List" @ 121..125
+                                    Identifier "List" @ 121..125
                                     TypeArgumentList
                                       Lt "<" @ 125..126
                                       TypeProjectionSeparatedList
@@ -118,9 +114,7 @@ KotlinFile
                                           UserType
                                             UserTypeSegmentList
                                               UserTypeSegment
-                                                AnnotationList
-                                                Name
-                                                  Identifier "String" @ 126..132
+                                                Identifier "String" @ 126..132
                                       Gt ">" @ 132..133
                         RParen ")" @ 133..134 trailing=[Whitespace " "]
                       BlockBody
@@ -156,10 +150,8 @@ KotlinFile
                                                   NavigationExpression
                                                     NameExpression
                                                       Identifier "item" @ 198..202
-                                                    NavigationOperator
-                                                      Dot "." @ 202..203
-                                                    NameExpression
-                                                      Identifier "isEmpty" @ 203..210
+                                                    Dot "." @ 202..203
+                                                    Identifier "isEmpty" @ 203..210
                                                   TypeArgumentListList
                                                   ValueArgumentList
                                                     LParen "(" @ 210..211
@@ -182,10 +174,8 @@ KotlinFile
                                                   LabelReference
                                                     At "@" @ 249..250
                                                     Identifier "Child" @ 250..255
-                                                NavigationOperator
-                                                  Dot "." @ 255..256
-                                                NameExpression
-                                                  Identifier "visit" @ 256..261
+                                                Dot "." @ 255..256
+                                                Identifier "visit" @ 256..261
                                               TypeArgumentListList
                                               ValueArgumentList
                                                 LParen "(" @ 261..262
@@ -206,14 +196,10 @@ KotlinFile
                                                         UserType
                                                           UserTypeSegmentList
                                                             UserTypeSegment
-                                                              AnnotationList
-                                                              Name
-                                                                Identifier "Parent" @ 286..292
+                                                              Identifier "Parent" @ 286..292
                                                     Gt ">" @ 292..293
-                                                NavigationOperator
-                                                  Dot "." @ 293..294
-                                                NameExpression
-                                                  Identifier "visit" @ 294..299
+                                                Dot "." @ 293..294
+                                                Identifier "visit" @ 294..299
                                               TypeArgumentListList
                                               ValueArgumentList
                                                 LParen "(" @ 299..300

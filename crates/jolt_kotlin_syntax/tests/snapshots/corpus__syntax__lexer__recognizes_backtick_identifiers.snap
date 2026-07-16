@@ -15,11 +15,9 @@ KotlinFile
         BinaryExpression
           NameExpression
             Identifier "`class`" @ 0..7 trailing=[Whitespace " "]
-          BinaryOperator
-            Identifier "`two words`" @ 8..19 trailing=[Whitespace " "]
-          BinaryExpressionRight
-            NameExpression
-              Identifier "`operator+`" @ 20..31
+          Identifier "`two words`" @ 8..19 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "`operator+`" @ 20..31
       TerminatorList
   Eof "" @ 32..32 leading=[Newline "\n"]
 

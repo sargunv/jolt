@@ -27,9 +27,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "First" @ 28..33
+                      Identifier "First" @ 28..33
             Comma "," @ 33..34 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
             Comma "," @ 48..49 trailing=[Whitespace " "]
             BogusFunctionTypeParameter
@@ -38,9 +36,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Second" @ 50..56
+                      Identifier "Second" @ 50..56
           RParen ")" @ 56..57 trailing=[Whitespace " "]
           FunctionType
             ArrowFunctionType
@@ -53,9 +49,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Unit" @ 64..68
+                    Identifier "Unit" @ 64..68
   Eof "" @ 69..69 leading=[Newline "\n"]
 
 diagnostics:

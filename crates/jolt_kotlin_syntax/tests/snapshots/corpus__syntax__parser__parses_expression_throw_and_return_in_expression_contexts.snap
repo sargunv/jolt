@@ -38,9 +38,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 27..33
+                      Identifier "String" @ 27..33
                 Question "?" @ 33..34
         RParen ")" @ 34..35
       Colon ":" @ 35..36 trailing=[Whitespace " "]
@@ -48,9 +46,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 37..43 trailing=[Whitespace " "]
+              Identifier "String" @ 37..43 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 44..45
@@ -66,20 +62,18 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "value" @ 64..69 trailing=[Whitespace " "]
-                  BinaryOperator
-                    Elvis "?:" @ 70..72 trailing=[Whitespace " "]
-                  BinaryExpressionRight
-                    ThrowExpression
-                      ThrowKw "throw" @ 73..78 trailing=[Whitespace " "]
-                      CallExpression
-                        NameExpression
-                          Identifier "MissingValue" @ 79..91
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 91..92
-                          ValueArgumentEntryList
-                          RParen ")" @ 92..93
-                        LambdaExpressionList
+                  Elvis "?:" @ 70..72 trailing=[Whitespace " "]
+                  ThrowExpression
+                    ThrowKw "throw" @ 73..78 trailing=[Whitespace " "]
+                    CallExpression
+                      NameExpression
+                        Identifier "MissingValue" @ 79..91
+                      TypeArgumentListList
+                      ValueArgumentList
+                        LParen "(" @ 91..92
+                        ValueArgumentEntryList
+                        RParen ")" @ 92..93
+                      LambdaExpressionList
               PropertyBodyMemberList
             Statement
               ExpressionStatement
@@ -90,10 +84,8 @@ KotlinFile
                       NavigationExpression
                         NameExpression
                           Identifier "checked" @ 105..112
-                        NavigationOperator
-                          Dot "." @ 112..113
-                        NameExpression
-                          Identifier "takeIf" @ 113..119 trailing=[Whitespace " "]
+                        Dot "." @ 112..113
+                        Identifier "takeIf" @ 113..119 trailing=[Whitespace " "]
                       TypeArgumentListList
                       LambdaExpressionList
                         LambdaExpression
@@ -106,10 +98,8 @@ KotlinFile
                                     NavigationExpression
                                       NameExpression
                                         Identifier "it" @ 122..124
-                                      NavigationOperator
-                                        Dot "." @ 124..125
-                                      NameExpression
-                                        Identifier "isNotEmpty" @ 125..135
+                                      Dot "." @ 124..125
+                                      Identifier "isNotEmpty" @ 125..135
                                     TypeArgumentListList
                                     ValueArgumentList
                                       LParen "(" @ 135..136
@@ -118,20 +108,16 @@ KotlinFile
                                     LambdaExpressionList
                                 TerminatorList
                             RBrace "}" @ 138..139 trailing=[Whitespace " "]
-                    BinaryOperator
-                      Elvis "?:" @ 140..142 trailing=[Whitespace " "]
-                    BinaryExpressionRight
-                      JumpExpression
-                        ReturnKw "return" @ 143..149 trailing=[Whitespace " "]
-                        StringTemplateExpression
-                          StringTemplateEntryList
-                            StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 150..151
-                            StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "empty" @ 151..156
-                          ClosingQuote "\"" @ 156..157
+                    Elvis "?:" @ 140..142 trailing=[Whitespace " "]
+                    JumpExpression
+                      ReturnKw "return" @ 143..149 trailing=[Whitespace " "]
+                      StringTemplateExpression
+                        StringTemplateEntryList
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 150..151
+                          StringTemplateEntry
+                            RegularStringPart "empty" @ 151..156
+                        ClosingQuote "\"" @ 156..157
               TerminatorList
           RBrace "}" @ 158..159 leading=[Newline "\n"]
     FunctionDeclaration
@@ -153,9 +139,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Boolean" @ 185..192
+                    Identifier "Boolean" @ 185..192
         RParen ")" @ 192..193 trailing=[Whitespace " "]
       BlockBody
         Block

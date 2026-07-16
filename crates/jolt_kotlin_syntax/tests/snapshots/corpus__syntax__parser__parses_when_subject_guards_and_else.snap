@@ -36,18 +36,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Token" @ 23..28
+                    Identifier "Token" @ 23..28
         RParen ")" @ 28..29
       Colon ":" @ 29..30 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 31..37 trailing=[Whitespace " "]
+              Identifier "String" @ 31..37 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 38..39
@@ -73,14 +69,10 @@ KotlinFile
                               UserType
                                 UserTypeSegmentList
                                   UserTypeSegment
-                                    AnnotationList
-                                    Name
-                                      Identifier "Token" @ 77..82
+                                    Identifier "Token" @ 77..82
                                   Dot "." @ 82..83
                                   UserTypeSegment
-                                    AnnotationList
-                                    Name
-                                      Identifier "Word" @ 83..87 trailing=[Whitespace " "]
+                                    Identifier "Word" @ 83..87 trailing=[Whitespace " "]
                         WhenGuard
                           IfKw "if" @ 88..90 trailing=[Whitespace " "]
                           CallExpression
@@ -88,14 +80,10 @@ KotlinFile
                               NavigationExpression
                                 NameExpression
                                   Identifier "token" @ 91..96
-                                NavigationOperator
-                                  Dot "." @ 96..97
-                                NameExpression
-                                  Identifier "text" @ 97..101
-                              NavigationOperator
-                                Dot "." @ 101..102
-                              NameExpression
-                                Identifier "isNotEmpty" @ 102..112
+                                Dot "." @ 96..97
+                                Identifier "text" @ 97..101
+                              Dot "." @ 101..102
+                              Identifier "isNotEmpty" @ 102..112
                             TypeArgumentListList
                             ValueArgumentList
                               LParen "(" @ 112..113
@@ -107,11 +95,9 @@ KotlinFile
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                StringTemplateContent
-                                  OpenQuote "\"" @ 118..119
+                                OpenQuote "\"" @ 118..119
                               StringTemplateEntry
-                                StringTemplateContent
-                                  RegularStringPart "word" @ 119..123
+                                RegularStringPart "word" @ 119..123
                             ClosingQuote "\"" @ 123..124
                       WhenEntry
                         WhenConditionSeparatedList
@@ -121,39 +107,29 @@ KotlinFile
                               UserType
                                 UserTypeSegmentList
                                   UserTypeSegment
-                                    AnnotationList
-                                    Name
-                                      Identifier "Token" @ 136..141
+                                    Identifier "Token" @ 136..141
                                   Dot "." @ 141..142
                                   UserTypeSegment
-                                    AnnotationList
-                                    Name
-                                      Identifier "Number" @ 142..148 trailing=[Whitespace " "]
+                                    Identifier "Number" @ 142..148 trailing=[Whitespace " "]
                         WhenGuard
                           IfKw "if" @ 149..151 trailing=[Whitespace " "]
                           BinaryExpression
                             NavigationExpression
                               NameExpression
                                 Identifier "token" @ 152..157
-                              NavigationOperator
-                                Dot "." @ 157..158
-                              NameExpression
-                                Identifier "value" @ 158..163 trailing=[Whitespace " "]
-                            BinaryOperator
-                              Gt ">" @ 164..165 trailing=[Whitespace " "]
-                            BinaryExpressionRight
-                              LiteralExpression
-                                IntegerLiteral "0" @ 166..167 trailing=[Whitespace " "]
+                              Dot "." @ 157..158
+                              Identifier "value" @ 158..163 trailing=[Whitespace " "]
+                            Gt ">" @ 164..165 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "0" @ 166..167 trailing=[Whitespace " "]
                         Arrow "->" @ 168..170 trailing=[Whitespace " "]
                         WhenEntryBody
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                StringTemplateContent
-                                  OpenQuote "\"" @ 171..172
+                                OpenQuote "\"" @ 171..172
                               StringTemplateEntry
-                                StringTemplateContent
-                                  RegularStringPart "number" @ 172..178
+                                RegularStringPart "number" @ 172..178
                             ClosingQuote "\"" @ 178..179
                       WhenEntry
                         WhenConditionSeparatedList
@@ -165,11 +141,9 @@ KotlinFile
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                StringTemplateContent
-                                  OpenQuote "\"" @ 196..197
+                                OpenQuote "\"" @ 196..197
                               StringTemplateEntry
-                                StringTemplateContent
-                                  RegularStringPart "missing" @ 197..204
+                                RegularStringPart "missing" @ 197..204
                             ClosingQuote "\"" @ 204..205
                       WhenEntry
                         ElseKw "else" @ 214..218 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
@@ -179,11 +153,9 @@ KotlinFile
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                StringTemplateContent
-                                  OpenQuote "\"" @ 222..223
+                                OpenQuote "\"" @ 222..223
                               StringTemplateEntry
-                                StringTemplateContent
-                                  RegularStringPart "other" @ 223..228
+                                RegularStringPart "other" @ 223..228
                             ClosingQuote "\"" @ 228..229
                     RBrace "}" @ 234..235 leading=[Newline "\n", Whitespace "    "]
               TerminatorList

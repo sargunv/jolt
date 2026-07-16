@@ -44,9 +44,7 @@ KotlinFile
                         UserType
                           UserTypeSegmentList
                             UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "String" @ 62..68
+                              Identifier "String" @ 62..68
                     Gt ">" @ 68..69
                   CallableReferenceTarget
                   TypeArgumentListList

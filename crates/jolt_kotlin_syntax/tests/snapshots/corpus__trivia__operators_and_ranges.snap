@@ -48,9 +48,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "List" @ 50..54
+                    Identifier "List" @ 50..54
                     TypeArgumentList
                       Lt "<" @ 54..55
                       TypeProjectionSeparatedList
@@ -58,9 +56,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Int" @ 55..58
+                                Identifier "Int" @ 55..58
                       Gt ">" @ 58..59
         RParen ")" @ 59..60
       Colon ":" @ 60..61 trailing=[Whitespace " "]
@@ -68,9 +64,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Boolean" @ 62..69 trailing=[Whitespace " "]
+              Identifier "Boolean" @ 62..69 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 70..71
@@ -86,11 +80,9 @@ KotlinFile
                 BinaryExpression
                   LiteralExpression
                     IntegerLiteral "1" @ 88..89 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:range-left */", Whitespace " "]
-                  BinaryOperator
-                    Range ".." @ 119..121 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:range-op */", Whitespace " "]
-                  BinaryExpressionRight
-                    LiteralExpression
-                      IntegerLiteral "10" @ 149..151
+                  Range ".." @ 119..121 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:range-op */", Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "10" @ 149..151
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -119,40 +111,32 @@ KotlinFile
                     BinaryExpression
                       NameExpression
                         Identifier "indexed" @ 221..228 trailing=[Whitespace " "]
-                      BinaryOperator
-                        InKw "in" @ 229..231 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:in-operator */", Whitespace " "]
-                      BinaryExpressionRight
+                      InKw "in" @ 229..231 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:in-operator */", Whitespace " "]
+                      NameExpression
+                        Identifier "range" @ 262..267 trailing=[Whitespace " "]
+                    AndAnd "&&" @ 268..270 trailing=[Whitespace " "]
+                    BinaryExpression
+                      NameExpression
+                        Identifier "indexed" @ 271..278 trailing=[Whitespace " "]
+                      NotIn "!in" @ 279..282 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:not-in-operator */", Whitespace " "]
+                      CallExpression
                         NameExpression
-                          Identifier "range" @ 262..267 trailing=[Whitespace " "]
-                    BinaryOperator
-                      AndAnd "&&" @ 268..270 trailing=[Whitespace " "]
-                    BinaryExpressionRight
-                      BinaryExpression
-                        NameExpression
-                          Identifier "indexed" @ 271..278 trailing=[Whitespace " "]
-                        BinaryOperator
-                          NotIn "!in" @ 279..282 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:not-in-operator */", Whitespace " "]
-                        BinaryExpressionRight
-                          CallExpression
-                            NameExpression
-                              Identifier "setOf" @ 317..322
-                            TypeArgumentListList
-                              TypeArgumentList
-                                Lt "<" @ 322..323
-                                TypeProjectionSeparatedList
-                                  TypeReference
-                                    UserType
-                                      UserTypeSegmentList
-                                        UserTypeSegment
-                                          AnnotationList
-                                          Name
-                                            Identifier "Int" @ 323..326
-                                Gt ">" @ 326..327
-                            ValueArgumentList
-                              LParen "(" @ 327..328
-                              ValueArgumentEntryList
-                              RParen ")" @ 328..329
-                            LambdaExpressionList
+                          Identifier "setOf" @ 317..322
+                        TypeArgumentListList
+                          TypeArgumentList
+                            Lt "<" @ 322..323
+                            TypeProjectionSeparatedList
+                              TypeReference
+                                UserType
+                                  UserTypeSegmentList
+                                    UserTypeSegment
+                                      Identifier "Int" @ 323..326
+                            Gt ">" @ 326..327
+                        ValueArgumentList
+                          LParen "(" @ 327..328
+                          ValueArgumentEntryList
+                          RParen ")" @ 328..329
+                        LambdaExpressionList
               TerminatorList
           RBrace "}" @ 330..331 leading=[Newline "\n"]
   Eof "" @ 332..332 leading=[Newline "\n"]

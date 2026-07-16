@@ -48,18 +48,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 51..54
+                    Identifier "Int" @ 51..54
         RParen ")" @ 54..55
       Colon ":" @ 55..56 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Int" @ 57..60 trailing=[Whitespace " "]
+              Identifier "Int" @ 57..60 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 61..62
@@ -75,11 +71,9 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "value" @ 79..84
-                  BinaryOperator
-                    Star "*" @ 84..85
-                  BinaryExpressionRight
-                    LiteralExpression
-                      IntegerLiteral "2" @ 85..86
+                  Star "*" @ 84..85
+                  LiteralExpression
+                    IntegerLiteral "2" @ 85..86
               PropertyBodyMemberList
             Statement
               ExpressionStatement
@@ -95,11 +89,9 @@ KotlinFile
                         BinaryExpression
                           NameExpression
                             Identifier "doubled" @ 99..106
-                          BinaryOperator
-                            Plus "+" @ 106..107
-                          BinaryExpressionRight
-                            LiteralExpression
-                              IntegerLiteral "1" @ 107..108
+                          Plus "+" @ 106..107
+                          LiteralExpression
+                            IntegerLiteral "1" @ 107..108
                     RParen ")" @ 108..109
                   LambdaExpressionList
               TerminatorList
@@ -110,11 +102,9 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "doubled" @ 121..128
-                    BinaryOperator
-                      Plus "+" @ 128..129
-                    BinaryExpressionRight
-                      LiteralExpression
-                        IntegerLiteral "1" @ 129..130
+                    Plus "+" @ 128..129
+                    LiteralExpression
+                      IntegerLiteral "1" @ 129..130
               TerminatorList
           RBrace "}" @ 131..132 leading=[Newline "\n"]
   Eof "" @ 133..133 leading=[Newline "\n"]

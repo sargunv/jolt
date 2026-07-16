@@ -52,9 +52,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "List" @ 51..55
+                    Identifier "List" @ 51..55
                     TypeArgumentList
                       Lt "<" @ 55..56
                       TypeProjectionSeparatedList
@@ -62,9 +60,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "List" @ 56..60
+                                Identifier "List" @ 56..60
                                 TypeArgumentList
                                   Lt "<" @ 60..61
                                   TypeProjectionSeparatedList
@@ -72,9 +68,7 @@ KotlinFile
                                       UserType
                                         UserTypeSegmentList
                                           UserTypeSegment
-                                            AnnotationList
-                                            Name
-                                              Identifier "String" @ 61..67
+                                            Identifier "String" @ 61..67
                                   Gt ">" @ 67..68
                       Gt ">" @ 68..69
           Comma "," @ 69..70 trailing=[Whitespace " "]
@@ -95,17 +89,13 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 78..84
+                                Identifier "String" @ 78..84
                     RParen ")" @ 84..85 trailing=[Whitespace " "]
                   Arrow "->" @ 86..88 trailing=[Whitespace " "]
                   UserType
                     UserTypeSegmentList
                       UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "Unit" @ 89..93
+                        Identifier "Unit" @ 89..93
         RParen ")" @ 93..94 trailing=[Whitespace " "]
       BlockBody
         Block
@@ -117,10 +107,8 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "groups" @ 101..107 leading=[Newline "\n", Whitespace "    "]
-                    NavigationOperator
-                      Dot "." @ 107..108
-                    NameExpression
-                      Identifier "forEach" @ 108..115 trailing=[Whitespace " "]
+                    Dot "." @ 107..108
+                    Identifier "forEach" @ 108..115 trailing=[Whitespace " "]
                   TypeArgumentListList
                   LambdaExpressionList
                     LambdaExpression
@@ -144,10 +132,8 @@ KotlinFile
                                     NavigationExpression
                                       NameExpression
                                         Identifier "group" @ 141..146 leading=[Newline "\n", Whitespace "        "]
-                                      NavigationOperator
-                                        Dot "." @ 146..147
-                                      NameExpression
-                                        Identifier "forEach" @ 147..154 trailing=[Whitespace " "]
+                                      Dot "." @ 146..147
+                                      Identifier "forEach" @ 147..154 trailing=[Whitespace " "]
                                     TypeArgumentListList
                                     LambdaExpressionList
                                       LambdaExpression
@@ -175,10 +161,8 @@ KotlinFile
                                                           NavigationExpression
                                                             NameExpression
                                                               Identifier "item" @ 187..191
-                                                            NavigationOperator
-                                                              Dot "." @ 191..192
-                                                            NameExpression
-                                                              Identifier "isBlank" @ 192..199
+                                                            Dot "." @ 191..192
+                                                            Identifier "isBlank" @ 192..199
                                                           TypeArgumentListList
                                                           ValueArgumentList
                                                             LParen "(" @ 199..200
@@ -201,18 +185,14 @@ KotlinFile
                                                         BinaryExpression
                                                           NameExpression
                                                             Identifier "item" @ 232..236 trailing=[Whitespace " "]
-                                                          BinaryOperator
-                                                            EqEq "==" @ 237..239 trailing=[Whitespace " "]
-                                                          BinaryExpressionRight
-                                                            StringTemplateExpression
-                                                              StringTemplateEntryList
-                                                                StringTemplateEntry
-                                                                  StringTemplateContent
-                                                                    OpenQuote "\"" @ 240..241
-                                                                StringTemplateEntry
-                                                                  StringTemplateContent
-                                                                    RegularStringPart "stop" @ 241..245
-                                                              ClosingQuote "\"" @ 245..246
+                                                          EqEq "==" @ 237..239 trailing=[Whitespace " "]
+                                                          StringTemplateExpression
+                                                            StringTemplateEntryList
+                                                              StringTemplateEntry
+                                                                OpenQuote "\"" @ 240..241
+                                                              StringTemplateEntry
+                                                                RegularStringPart "stop" @ 241..245
+                                                            ClosingQuote "\"" @ 245..246
                                                         RParen ")" @ 246..247 trailing=[Whitespace " "]
                                                       JumpExpression
                                                         ReturnKw "return" @ 248..254
@@ -235,10 +215,8 @@ KotlinFile
                                                               NavigationExpression
                                                                 NameExpression
                                                                   Identifier "item" @ 278..282
-                                                                NavigationOperator
-                                                                  Dot "." @ 282..283
-                                                                NameExpression
-                                                                  Identifier "trim" @ 283..287
+                                                                Dot "." @ 282..283
+                                                                Identifier "trim" @ 283..287
                                                               TypeArgumentListList
                                                               ValueArgumentList
                                                                 LParen "(" @ 287..288

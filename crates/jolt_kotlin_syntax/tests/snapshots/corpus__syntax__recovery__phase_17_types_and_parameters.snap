@@ -71,12 +71,9 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Alpha" @ 112..117
+              Identifier "Alpha" @ 112..117
             Dot "." @ 117..118
             BogusUserTypeSegment
-              AnnotationList
     TypeAliasDeclaration
       ModifierList
       ModifierList
@@ -88,9 +85,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Alpha" @ 146..151
+              Identifier "Alpha" @ 146..151
             BogusUserTypeSegment
               Range ".." @ 151..153
               Identifier "Beta" @ 153..157
@@ -105,9 +100,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Box" @ 182..185
+              Identifier "Box" @ 182..185
               TypeArgumentList
                 Lt "<" @ 185..186
                 TypeProjectionSeparatedList
@@ -117,9 +110,7 @@ KotlinFile
                     UserType
                       UserTypeSegmentList
                         UserTypeSegment
-                          AnnotationList
-                          Name
-                            Identifier "String" @ 188..194
+                          Identifier "String" @ 188..194
                   Comma "," @ 194..195 trailing=[Whitespace " "]
                   BogusTypeArgument
                     Star "*" @ 196..197
@@ -127,9 +118,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 197..203
+                            Identifier "String" @ 197..203
                   Comma "," @ 203..204 trailing=[Whitespace " "]
                   TypeProjection
                     Identifier "out" @ 205..208
@@ -142,9 +131,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "Number" @ 213..219
+                            Identifier "Number" @ 213..219
                   Comma "," @ 219..220 trailing=[Whitespace " "]
                   StarProjection
                     Star "*" @ 221..222
@@ -173,26 +160,20 @@ KotlinFile
                     UserType
                       UserTypeSegmentList
                         UserTypeSegment
-                          AnnotationList
-                          Name
-                            Identifier "String" @ 265..271
+                          Identifier "String" @ 265..271
                 Comma "," @ 271..272 trailing=[Whitespace " "]
                 FunctionTypeParameter
                   TypeReference
                     UserType
                       UserTypeSegmentList
                         UserTypeSegment
-                          AnnotationList
-                          Name
-                            Identifier "Int" @ 273..276
+                          Identifier "Int" @ 273..276
               RParen ")" @ 276..277 trailing=[Whitespace " "]
             Arrow "->" @ 278..280 trailing=[Whitespace " "]
             UserType
               UserTypeSegmentList
                 UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "Unit" @ 281..285
+                  Identifier "Unit" @ 281..285
     TypeAliasDeclaration
       ModifierList
       ModifierList
@@ -210,9 +191,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 322..328
+                      Identifier "String" @ 322..328
             Comma "," @ 328..329 trailing=[Whitespace " "]
             Comma "," @ 330..331 trailing=[Whitespace " "]
             BogusFunctionTypeParameter
@@ -224,9 +203,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Int" @ 339..342
+                      Identifier "Int" @ 339..342
           RParen ")" @ 342..343 trailing=[Whitespace " "]
           FunctionType
             ArrowFunctionType
@@ -242,17 +219,13 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 352..358
+                            Identifier "String" @ 352..358
                 RParen ")" @ 358..359 trailing=[Whitespace " "]
               Arrow "->" @ 360..362 trailing=[Whitespace " "]
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Unit" @ 363..367
+                    Identifier "Unit" @ 363..367
     FunctionDeclaration
       ModifierList
       ModifierList
@@ -270,9 +243,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Any" @ 378..381
+                    Identifier "Any" @ 378..381
           Comma "," @ 381..382 trailing=[Whitespace " "]
           TypeParameter
             ModifierList
@@ -297,9 +268,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 407..410 trailing=[Whitespace " "]
+                    Identifier "Int" @ 407..410 trailing=[Whitespace " "]
             LiteralExpression
               IntegerLiteral "1" @ 411..412
           Comma "," @ 412..413
@@ -315,9 +284,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 437..443
+                    Identifier "String" @ 437..443
           Comma "," @ 443..444
           ValueParameter
             ModifierList
@@ -338,9 +305,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Any" @ 468..471 trailing=[Whitespace " "]
+                    Identifier "Any" @ 468..471 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 472..473
@@ -375,9 +340,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Any" @ 507..510 trailing=[Whitespace " "]
+                    Identifier "Any" @ 507..510 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 511..512
@@ -413,9 +376,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Any" @ 550..553
+                    Identifier "Any" @ 550..553
           Comma "," @ 553..554 trailing=[Whitespace " "]
           BogusTypeConstraint
           Comma "," @ 555..556 trailing=[Whitespace " "]
@@ -427,9 +388,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Closeable" @ 561..570 trailing=[Whitespace " "]
+                    Identifier "Closeable" @ 561..570 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 571..572
@@ -446,9 +405,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 584..590
+                    Identifier "String" @ 584..590
           Comma "," @ 590..591 trailing=[Whitespace " "]
           ContextParameter
             Name
@@ -458,9 +415,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 599..602 trailing=[Whitespace " "]
+                    Identifier "Int" @ 599..602 trailing=[Whitespace " "]
             LiteralExpression
               IntegerLiteral "1" @ 603..604
           Comma "," @ 604..605 trailing=[Whitespace " "]
@@ -471,9 +426,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Other" @ 608..613
+                    Identifier "Other" @ 608..613
         RParen ")" @ 613..614
       ModifierList
       FunKw "fun" @ 615..618 leading=[Newline "\n"] trailing=[Whitespace " "]

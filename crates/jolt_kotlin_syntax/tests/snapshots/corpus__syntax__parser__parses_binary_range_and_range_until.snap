@@ -34,18 +34,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 18..21
+                    Identifier "Int" @ 18..21
         RParen ")" @ 21..22
       Colon ":" @ 22..23 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "List" @ 24..28
+              Identifier "List" @ 24..28
               TypeArgumentList
                 Lt "<" @ 28..29
                 TypeProjectionSeparatedList
@@ -53,9 +49,7 @@ KotlinFile
                     UserType
                       UserTypeSegmentList
                         UserTypeSegment
-                          AnnotationList
-                          Name
-                            Identifier "Int" @ 29..32
+                          Identifier "Int" @ 29..32
                 Gt ">" @ 32..33 trailing=[Whitespace " "]
       BlockBody
         Block
@@ -72,11 +66,9 @@ KotlinFile
                 BinaryExpression
                   LiteralExpression
                     IntegerLiteral "0" @ 53..54
-                  BinaryOperator
-                    Range ".." @ 54..56
-                  BinaryExpressionRight
-                    NameExpression
-                      Identifier "limit" @ 56..61
+                  Range ".." @ 54..56
+                  NameExpression
+                    Identifier "limit" @ 56..61
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -89,11 +81,9 @@ KotlinFile
                 BinaryExpression
                   LiteralExpression
                     IntegerLiteral "0" @ 77..78
-                  BinaryOperator
-                    RangeUntil "..<" @ 78..81
-                  BinaryExpressionRight
-                    NameExpression
-                      Identifier "limit" @ 81..86
+                  RangeUntil "..<" @ 78..81
+                  NameExpression
+                    Identifier "limit" @ 81..86
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -107,16 +97,12 @@ KotlinFile
                   BinaryExpression
                     LiteralExpression
                       IntegerLiteral "10" @ 105..107 trailing=[Whitespace " "]
-                    BinaryOperator
-                      Identifier "downTo" @ 108..114 trailing=[Whitespace " "]
-                    BinaryExpressionRight
-                      LiteralExpression
-                        IntegerLiteral "0" @ 115..116 trailing=[Whitespace " "]
-                  BinaryOperator
-                    Identifier "step" @ 117..121 trailing=[Whitespace " "]
-                  BinaryExpressionRight
+                    Identifier "downTo" @ 108..114 trailing=[Whitespace " "]
                     LiteralExpression
-                      IntegerLiteral "2" @ 122..123
+                      IntegerLiteral "0" @ 115..116 trailing=[Whitespace " "]
+                  Identifier "step" @ 117..121 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "2" @ 122..123
               PropertyBodyMemberList
             Statement
               ExpressionStatement
@@ -127,10 +113,8 @@ KotlinFile
                       NavigationExpression
                         NameExpression
                           Identifier "closed" @ 135..141
-                        NavigationOperator
-                          Dot "." @ 141..142
-                        NameExpression
-                          Identifier "filter" @ 142..148 trailing=[Whitespace " "]
+                        Dot "." @ 141..142
+                        Identifier "filter" @ 142..148 trailing=[Whitespace " "]
                       TypeArgumentListList
                       LambdaExpressionList
                         LambdaExpression
@@ -142,30 +126,24 @@ KotlinFile
                                   BinaryExpression
                                     NameExpression
                                       Identifier "it" @ 151..153 trailing=[Whitespace " "]
-                                    BinaryOperator
-                                      InKw "in" @ 154..156 trailing=[Whitespace " "]
-                                    BinaryExpressionRight
-                                      NameExpression
-                                        Identifier "open" @ 157..161 trailing=[Whitespace " "]
+                                    InKw "in" @ 154..156 trailing=[Whitespace " "]
+                                    NameExpression
+                                      Identifier "open" @ 157..161 trailing=[Whitespace " "]
                                 TerminatorList
                             RBrace "}" @ 162..163 trailing=[Whitespace " "]
-                    BinaryOperator
-                      Plus "+" @ 164..165 trailing=[Whitespace " "]
-                    BinaryExpressionRight
-                      CallExpression
-                        NavigationExpression
-                          NameExpression
-                            Identifier "stepped" @ 166..173
-                          NavigationOperator
-                            Dot "." @ 173..174
-                          NameExpression
-                            Identifier "toList" @ 174..180
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 180..181
-                          ValueArgumentEntryList
-                          RParen ")" @ 181..182
-                        LambdaExpressionList
+                    Plus "+" @ 164..165 trailing=[Whitespace " "]
+                    CallExpression
+                      NavigationExpression
+                        NameExpression
+                          Identifier "stepped" @ 166..173
+                        Dot "." @ 173..174
+                        Identifier "toList" @ 174..180
+                      TypeArgumentListList
+                      ValueArgumentList
+                        LParen "(" @ 180..181
+                        ValueArgumentEntryList
+                        RParen ")" @ 181..182
+                      LambdaExpressionList
               TerminatorList
           RBrace "}" @ 183..184 leading=[Newline "\n"]
   Eof "" @ 185..185 leading=[Newline "\n"]

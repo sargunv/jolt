@@ -1,3 +1,8 @@
+#![allow(
+    clippy::inline_always,
+    reason = "release profiles show these parser cursor fast paths regress without forced inlining"
+)]
+
 use std::ops::Range;
 
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
@@ -145,14 +150,17 @@ impl<'source, L: Language> Parser<'source, L> {
         self.current_kind() == L::eof_kind()
     }
 
+    #[inline(always)]
     pub fn current_kind(&mut self) -> L::Kind {
         self.cursor.kind(&mut self.buffer)
     }
 
+    #[inline(always)]
     pub fn nth_kind(&mut self, n: usize) -> L::Kind {
         self.cursor.nth_kind(&mut self.buffer, n)
     }
 
+    #[inline(always)]
     pub fn kind_at(&mut self, index: usize) -> L::Kind {
         self.buffer.kind_at(index)
     }
@@ -256,10 +264,12 @@ impl TokenCursor {
         self.pos
     }
 
+    #[inline(always)]
     pub fn kind<L: Language>(self, buffer: &mut TokenBuffer<'_, L>) -> L::Kind {
         buffer.kind_at(self.pos)
     }
 
+    #[inline(always)]
     pub fn nth_kind<L: Language>(self, buffer: &mut TokenBuffer<'_, L>, n: usize) -> L::Kind {
         buffer.kind_at(self.pos + n)
     }
@@ -318,6 +328,7 @@ impl<'source, L: Language> TokenBuffer<'source, L> {
         }
     }
 
+    #[inline(always)]
     fn kind_at(&mut self, index: usize) -> L::Kind {
         self.ensure(index);
         self.tokens
@@ -388,7 +399,11 @@ impl<'source, L: Language> TokenBuffer<'source, L> {
         left_has_newline || right_has_newline
     }
 
+    #[inline(always)]
     fn ensure(&mut self, index: usize) {
+        if index < self.tokens.len() {
+            return;
+        }
         while self.tokens.len() <= index
             && self
                 .tokens

@@ -38,9 +38,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "First" @ 18..23
+                                Identifier "First" @ 18..23
                         Comma "," @ 23..24 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
                         Comma "," @ 38..39 trailing=[Whitespace " "]
                         BogusTypeArgument
@@ -48,9 +46,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Second" @ 40..46
+                                Identifier "Second" @ 40..46
                       Gt ">" @ 46..47
                   ValueArgumentList
                     LParen "(" @ 47..48

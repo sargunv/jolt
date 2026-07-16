@@ -38,17 +38,13 @@ KotlinFile
                         UserType
                           UserTypeSegmentList
                             UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "String" @ 31..37
+                              Identifier "String" @ 31..37
                   RParen ")" @ 37..38 trailing=[Whitespace " "]
                 Arrow "->" @ 39..41 trailing=[Whitespace " "]
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Int" @ 42..45
+                      Identifier "Int" @ 42..45
     TypeAliasDeclaration
       ModifierList
       ModifierList
@@ -63,9 +59,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 73..79
+                    Identifier "String" @ 73..79
               Dot "." @ 79..80
               ParenthesizedType
                 AnnotationList
@@ -76,17 +70,13 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "Int" @ 81..84
+                            Identifier "Int" @ 81..84
                 RParen ")" @ 84..85 trailing=[Whitespace " "]
             Arrow "->" @ 86..88 trailing=[Whitespace " "]
             UserType
               UserTypeSegmentList
                 UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "Unit" @ 89..93
+                  Identifier "Unit" @ 89..93
     TypeAliasDeclaration
       ModifierList
       ModifierList
@@ -114,18 +104,14 @@ KotlinFile
                                 UserType
                                   UserTypeSegmentList
                                     UserTypeSegment
-                                      AnnotationList
-                                      Name
-                                        Identifier "String" @ 126..132
+                                      Identifier "String" @ 126..132
                                 Question "?" @ 132..133
                         RParen ")" @ 133..134 trailing=[Whitespace " "]
                       Arrow "->" @ 135..137 trailing=[Whitespace " "]
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "Unit" @ 138..142
+                            Identifier "Unit" @ 138..142
             RParen ")" @ 142..143
           Question "?" @ 143..144
     PropertyDeclaration
@@ -139,9 +125,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "ReceiverBlock" @ 165..178 trailing=[Whitespace " "]
+              Identifier "ReceiverBlock" @ 165..178 trailing=[Whitespace " "]
       PropertyInitializer
         Assign "=" @ 179..180 trailing=[Whitespace " "]
         LambdaExpression

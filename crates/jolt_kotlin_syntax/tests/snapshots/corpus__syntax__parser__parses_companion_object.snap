@@ -49,9 +49,7 @@ KotlinFile
                         UserType
                           UserTypeSegmentList
                             UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "Factory" @ 61..68 trailing=[Whitespace " "]
+                              Identifier "Factory" @ 61..68 trailing=[Whitespace " "]
                       ExpressionBody
                         Assign "=" @ 69..70 trailing=[Whitespace " "]
                         CallExpression

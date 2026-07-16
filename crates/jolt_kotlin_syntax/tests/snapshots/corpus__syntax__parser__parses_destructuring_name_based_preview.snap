@@ -33,9 +33,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "User" @ 29..33
+                    Identifier "User" @ 29..33
         RParen ")" @ 33..34 trailing=[Whitespace " "]
       BlockBody
         Block
@@ -95,10 +93,8 @@ KotlinFile
                 NavigationExpression
                   NameExpression
                     Identifier "user" @ 138..142
-                  NavigationOperator
-                    Dot "." @ 142..143
-                  NameExpression
-                    Identifier "profile" @ 143..150
+                  Dot "." @ 142..143
+                  Identifier "profile" @ 143..150
               PropertyBodyMemberList
             Statement
               ExpressionStatement

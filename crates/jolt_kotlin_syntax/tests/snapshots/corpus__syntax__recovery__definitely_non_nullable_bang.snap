@@ -39,9 +39,7 @@ KotlinFile
                   UserType
                     UserTypeSegmentList
                       UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "T" @ 37..38
+                        Identifier "T" @ 37..38
                   BangBang "!!" @ 38..40
         RParen ")" @ 40..41
       Colon ":" @ 41..42 trailing=[Whitespace " "]
@@ -49,9 +47,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "T" @ 43..44 trailing=[Whitespace " "]
+              Identifier "T" @ 43..44 trailing=[Whitespace " "]
       ExpressionBody
         Assign "=" @ 45..46 trailing=[Whitespace " "]
         NameExpression

@@ -79,9 +79,7 @@ KotlinFile
           UserType
             UserTypeSegmentList
               UserTypeSegment
-                AnnotationList
-                Name
-                  Identifier "T" @ 81..82
+                Identifier "T" @ 81..82
         Dot "." @ 82..83
         Name
           Identifier "cached" @ 83..89
@@ -90,9 +88,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "T" @ 91..92 trailing=[Whitespace " "]
+              Identifier "T" @ 91..92 trailing=[Whitespace " "]
       TypeConstraintList
         Identifier "where" @ 93..98 trailing=[Whitespace " "]
         TypeConstraintSeparatedList
@@ -104,9 +100,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Any" @ 103..106 trailing=[Whitespace " "]
+                    Identifier "Any" @ 103..106 trailing=[Whitespace " "]
       PropertyInitializer
         Identifier "by" @ 107..109 trailing=[Whitespace " "]
         CallExpression
@@ -157,9 +151,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "T" @ 152..153
+                    Identifier "T" @ 152..153
           Comma "," @ 153..154 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -170,18 +162,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "R" @ 162..163
+                    Identifier "R" @ 162..163
         RParen ")" @ 163..164
       Colon ":" @ 164..165 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "R" @ 166..167
+              Identifier "R" @ 166..167
       TypeConstraintList
         Identifier "where" @ 172..177 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
         TypeConstraintSeparatedList
@@ -193,9 +181,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Source" @ 182..188
+                    Identifier "Source" @ 182..188
                     TypeArgumentList
                       Lt "<" @ 188..189
                       TypeProjectionSeparatedList
@@ -203,9 +189,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "R" @ 189..190
+                                Identifier "R" @ 189..190
                       Gt ">" @ 190..191
           Comma "," @ 191..192
           TypeConstraint
@@ -216,9 +200,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Sink" @ 207..211
+                    Identifier "Sink" @ 207..211
                     TypeArgumentList
                       Lt "<" @ 211..212
                       TypeProjectionSeparatedList
@@ -226,9 +208,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "R" @ 212..213
+                                Identifier "R" @ 212..213
                       Gt ">" @ 213..214 trailing=[Whitespace " "]
       BlockBody
         Block

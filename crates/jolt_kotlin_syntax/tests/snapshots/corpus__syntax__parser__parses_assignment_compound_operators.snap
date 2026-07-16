@@ -37,9 +37,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Counter" @ 32..39
+                    Identifier "Counter" @ 32..39
           Comma "," @ 39..40 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -50,9 +48,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "MutableList" @ 49..60
+                    Identifier "MutableList" @ 49..60
                     TypeArgumentList
                       Lt "<" @ 60..61
                       TypeProjectionSeparatedList
@@ -60,9 +56,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Int" @ 61..64
+                                Identifier "Int" @ 61..64
                       Gt ">" @ 64..65
         RParen ")" @ 65..66 trailing=[Whitespace " "]
       BlockBody
@@ -90,10 +84,8 @@ KotlinFile
                     NavigationExpression
                       NameExpression
                         Identifier "counter" @ 100..107
-                      NavigationOperator
-                        Dot "." @ 107..108
-                      NameExpression
-                        Identifier "next" @ 108..112
+                      Dot "." @ 107..108
+                      Identifier "next" @ 108..112
                     TypeArgumentListList
                     ValueArgumentList
                       LParen "(" @ 112..113

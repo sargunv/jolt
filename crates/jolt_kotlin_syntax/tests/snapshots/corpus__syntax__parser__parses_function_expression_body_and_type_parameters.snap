@@ -40,18 +40,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "T" @ 24..25
+                    Identifier "T" @ 24..25
         RParen ")" @ 25..26
       Colon ":" @ 26..27 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "T" @ 28..29 trailing=[Whitespace " "]
+              Identifier "T" @ 28..29 trailing=[Whitespace " "]
       ExpressionBody
         Assign "=" @ 30..31 trailing=[Whitespace " "]
         NameExpression
@@ -72,9 +68,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Comparable" @ 48..58
+                    Identifier "Comparable" @ 48..58
                     TypeArgumentList
                       Lt "<" @ 58..59
                       TypeProjectionSeparatedList
@@ -82,9 +76,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "T" @ 59..60
+                                Identifier "T" @ 59..60
                       Gt ">" @ 60..61
         Gt ">" @ 61..62 trailing=[Whitespace " "]
       ModifierList
@@ -102,9 +94,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "T" @ 75..76
+                    Identifier "T" @ 75..76
           Comma "," @ 76..77 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -115,18 +105,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "T" @ 85..86
+                    Identifier "T" @ 85..86
         RParen ")" @ 86..87
       Colon ":" @ 87..88 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "T" @ 89..90 trailing=[Whitespace " "]
+              Identifier "T" @ 89..90 trailing=[Whitespace " "]
       ExpressionBody
         Assign "=" @ 91..92
         IfExpression
@@ -136,11 +122,9 @@ KotlinFile
             BinaryExpression
               NameExpression
                 Identifier "left" @ 101..105 trailing=[Whitespace " "]
-              BinaryOperator
-                GtEq ">=" @ 106..108 trailing=[Whitespace " "]
-              BinaryExpressionRight
-                NameExpression
-                  Identifier "right" @ 109..114
+              GtEq ">=" @ 106..108 trailing=[Whitespace " "]
+              NameExpression
+                Identifier "right" @ 109..114
             RParen ")" @ 114..115 trailing=[Whitespace " "]
           NameExpression
             Identifier "left" @ 116..120 trailing=[Whitespace " "]

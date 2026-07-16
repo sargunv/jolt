@@ -22,9 +22,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Int" @ 14..17 trailing=[Whitespace " "]
+              Identifier "Int" @ 14..17 trailing=[Whitespace " "]
       PropertyInitializer
         AssignmentExpression
           BogusExpression

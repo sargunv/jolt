@@ -31,9 +31,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Logger" @ 16..22
+                    Identifier "Logger" @ 16..22
         RParen ")" @ 22..23
       ModifierList
       FunKw "fun" @ 24..27 leading=[Newline "\n"] trailing=[Whitespace " "]
@@ -52,9 +50,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 48..54
+                    Identifier "String" @ 48..54
         RParen ")" @ 54..55 trailing=[Whitespace " "]
       BlockBody
         Block
@@ -66,10 +62,8 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "logger" @ 62..68 leading=[Newline "\n", Whitespace "    "]
-                    NavigationOperator
-                      Dot "." @ 68..69
-                    NameExpression
-                      Identifier "write" @ 69..74
+                    Dot "." @ 68..69
+                    Identifier "write" @ 69..74
                   TypeArgumentListList
                   ValueArgumentList
                     LParen "(" @ 74..75
@@ -111,9 +105,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 129..135
+                            Identifier "String" @ 129..135
                 RParen ")" @ 135..136
         RBrace "}" @ 137..138 leading=[Newline "\n"]
   Eof "" @ 139..139 leading=[Newline "\n"]

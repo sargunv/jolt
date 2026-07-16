@@ -41,9 +41,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Boolean" @ 24..31
+                    Identifier "Boolean" @ 24..31
           Comma "," @ 31..32 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -55,9 +53,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 40..46
+                      Identifier "String" @ 40..46
                 Question "?" @ 46..47
         RParen ")" @ 47..48
       Colon ":" @ 48..49 trailing=[Whitespace " "]
@@ -65,9 +61,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 50..56 trailing=[Whitespace " "]
+              Identifier "String" @ 50..56 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 57..58
@@ -96,25 +90,19 @@ KotlinFile
                       StringTemplateExpression
                         StringTemplateEntryList
                           StringTemplateEntry
-                            StringTemplateContent
-                              OpenQuote "\"" @ 98..99
+                            OpenQuote "\"" @ 98..99
                           StringTemplateEntry
-                            StringTemplateContent
-                              RegularStringPart "fallback" @ 99..107
+                            RegularStringPart "fallback" @ 99..107
                         ClosingQuote "\"" @ 107..108
                     RParen ")" @ 108..109 trailing=[Whitespace " "]
-                  BinaryOperator
-                    Elvis "?:" @ 110..112 trailing=[Whitespace " "]
-                  BinaryExpressionRight
-                    StringTemplateExpression
-                      StringTemplateEntryList
-                        StringTemplateEntry
-                          StringTemplateContent
-                            OpenQuote "\"" @ 113..114
-                        StringTemplateEntry
-                          StringTemplateContent
-                            RegularStringPart "empty" @ 114..119
-                      ClosingQuote "\"" @ 119..120
+                  Elvis "?:" @ 110..112 trailing=[Whitespace " "]
+                  StringTemplateExpression
+                    StringTemplateEntryList
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 113..114
+                      StringTemplateEntry
+                        RegularStringPart "empty" @ 114..119
+                    ClosingQuote "\"" @ 119..120
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -140,11 +128,9 @@ KotlinFile
                           BinaryExpression
                             LiteralExpression
                               IntegerLiteral "0" @ 152..153 trailing=[Whitespace " "]
-                            BinaryOperator
-                              Identifier "until" @ 154..159 trailing=[Whitespace " "]
-                            BinaryExpressionRight
-                              LiteralExpression
-                                IntegerLiteral "10" @ 160..162
+                            Identifier "until" @ 154..159 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "10" @ 160..162
                           RParen ")" @ 162..163 trailing=[Whitespace " "]
                         ElseKw "else" @ 164..168 trailing=[Whitespace " "]
                         ParenthesizedExpression
@@ -152,17 +138,13 @@ KotlinFile
                           BinaryExpression
                             LiteralExpression
                               IntegerLiteral "10" @ 170..172 trailing=[Whitespace " "]
-                            BinaryOperator
-                              Identifier "downTo" @ 173..179 trailing=[Whitespace " "]
-                            BinaryExpressionRight
-                              LiteralExpression
-                                IntegerLiteral "0" @ 180..181
+                            Identifier "downTo" @ 173..179 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "0" @ 180..181
                           RParen ")" @ 181..182
                       RParen ")" @ 182..183
-                    NavigationOperator
-                      Dot "." @ 183..184
-                    NameExpression
-                      Identifier "toList" @ 184..190
+                    Dot "." @ 183..184
+                    Identifier "toList" @ 184..190
                   TypeArgumentListList
                   ValueArgumentList
                     LParen "(" @ 190..191
@@ -188,11 +170,9 @@ KotlinFile
                           BinaryExpression
                             LiteralExpression
                               IntegerLiteral "0" @ 209..210 trailing=[Whitespace " "]
-                            BinaryOperator
-                              Identifier "until" @ 211..216 trailing=[Whitespace " "]
-                            BinaryExpressionRight
-                              LiteralExpression
-                                IntegerLiteral "10" @ 217..219
+                            Identifier "until" @ 211..216 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "10" @ 217..219
                           RParen ")" @ 219..220 trailing=[Whitespace " "]
                         ElseKw "else" @ 221..225 trailing=[Whitespace " "]
                         ParenthesizedExpression
@@ -200,17 +180,13 @@ KotlinFile
                           BinaryExpression
                             LiteralExpression
                               IntegerLiteral "10" @ 227..229 trailing=[Whitespace " "]
-                            BinaryOperator
-                              Identifier "downTo" @ 230..236 trailing=[Whitespace " "]
-                            BinaryExpressionRight
-                              LiteralExpression
-                                IntegerLiteral "0" @ 237..238
+                            Identifier "downTo" @ 230..236 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "0" @ 237..238
                           RParen ")" @ 238..239
                       RParen ")" @ 239..240
-                    NavigationOperator
-                      Dot "." @ 240..241
-                    NameExpression
-                      Identifier "forEach" @ 241..248 trailing=[Whitespace " "]
+                    Dot "." @ 240..241
+                    Identifier "forEach" @ 241..248 trailing=[Whitespace " "]
                   TypeArgumentListList
                   LambdaExpressionList
                     LambdaExpression
@@ -230,10 +206,8 @@ KotlinFile
                                 NavigationExpression
                                   NameExpression
                                     Identifier "index" @ 268..273 leading=[Newline "\n", Whitespace "        "]
-                                  NavigationOperator
-                                    Dot "." @ 273..274
-                                  NameExpression
-                                    Identifier "toString" @ 274..282
+                                  Dot "." @ 273..274
+                                  Identifier "toString" @ 274..282
                                 TypeArgumentListList
                                 ValueArgumentList
                                   LParen "(" @ 282..283
@@ -264,10 +238,8 @@ KotlinFile
                               NavigationExpression
                                 NameExpression
                                   Identifier "chosen" @ 326..332 leading=[Newline "\n", Whitespace "        "]
-                                NavigationOperator
-                                  Dot "." @ 332..333
-                                NameExpression
-                                  Identifier "trim" @ 333..337
+                                Dot "." @ 332..333
+                                Identifier "trim" @ 333..337
                               TypeArgumentListList
                               ValueArgumentList
                                 LParen "(" @ 337..338
@@ -289,9 +261,7 @@ KotlinFile
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "Throwable" @ 360..369
+                                  Identifier "Throwable" @ 360..369
                           RParen ")" @ 369..370 trailing=[Whitespace " "]
                         Block
                           LBrace "{" @ 371..372
@@ -301,11 +271,9 @@ KotlinFile
                                 StringTemplateExpression
                                   StringTemplateEntryList
                                     StringTemplateEntry
-                                      StringTemplateContent
-                                        OpenQuote "\"" @ 381..382 leading=[Newline "\n", Whitespace "        "]
+                                      OpenQuote "\"" @ 381..382 leading=[Newline "\n", Whitespace "        "]
                                     StringTemplateEntry
-                                      StringTemplateContent
-                                        RegularStringPart "error" @ 382..387
+                                      RegularStringPart "error" @ 382..387
                                   ClosingQuote "\"" @ 387..388
                               TerminatorList
                           RBrace "}" @ 393..394 leading=[Newline "\n", Whitespace "    "]

@@ -66,11 +66,9 @@ KotlinFile
                                   StringTemplateExpression
                                     StringTemplateEntryList
                                       StringTemplateEntry
-                                        StringTemplateContent
-                                          OpenQuote "\"" @ 99..100
+                                        OpenQuote "\"" @ 99..100
                                       StringTemplateEntry
-                                        StringTemplateContent
-                                          RegularStringPart "ready" @ 100..105
+                                        RegularStringPart "ready" @ 100..105
                                     ClosingQuote "\"" @ 105..106 trailing=[Whitespace " "]
                                 TerminatorList
                             RBrace "}" @ 107..108

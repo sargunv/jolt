@@ -85,20 +85,14 @@ impl Parser<'_> {
 
             let binary = self.precede(lhs);
             let operator = self.current_kind();
-            let operator_marker = self.start();
             if operator == K::Elvis && self.elvis_missing_rhs(stops) {
                 let diagnostic = self.expected_here("expected expression after operator");
                 self.bump();
-                self.complete(operator_marker, K::BinaryOperator);
-                let right = self.start();
                 let error = self.start();
                 self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(error.anchor()));
                 self.complete(error, K::BogusExpression);
-                self.complete(right, K::BinaryExpressionRight);
             } else if matches!(operator, K::AsKw | K::AsSafe | K::IsKw | K::NotIs) {
                 self.bump();
-                self.complete(operator_marker, K::BinaryOperator);
-                let right = self.start();
                 self.parse_type_reference_until(&[
                     K::Elvis,
                     K::OrOr,
@@ -113,11 +107,8 @@ impl Parser<'_> {
                     K::RBracket,
                     K::LongTemplateEntryEnd,
                 ]);
-                self.complete(right, K::BinaryExpressionRight);
             } else {
                 self.bump();
-                self.complete(operator_marker, K::BinaryOperator);
-                let right = self.start();
                 if self.at_expression_boundary(stops)
                     || self.at_expression_rhs_declaration_boundary()
                 {
@@ -128,7 +119,6 @@ impl Parser<'_> {
                 } else {
                     self.parse_binary_expression(stops, info.precedence + 1);
                 }
-                self.complete(right, K::BinaryExpressionRight);
             }
             lhs = self.complete(binary, K::BinaryExpression);
         }
@@ -241,7 +231,6 @@ impl Parser<'_> {
         split_safe_access: bool,
     ) -> CompletedMarker {
         let navigation = self.precede(expression);
-        let operator = self.start();
         if split_safe_access {
             let split = self.start();
             self.bump();
@@ -250,7 +239,6 @@ impl Parser<'_> {
         } else {
             self.bump();
         }
-        self.complete(operator, K::NavigationOperator);
         self.parse_navigation_member();
         self.complete(navigation, K::NavigationExpression)
     }
@@ -280,9 +268,7 @@ impl Parser<'_> {
 
     fn parse_navigation_member(&mut self) {
         if self.at_identifier_like() {
-            let selector = self.start();
             self.bump();
-            self.complete(selector, K::NameExpression);
         } else if self.at(K::ThisKw) {
             self.parse_this_expression();
         } else if self.at(K::SuperKw) {

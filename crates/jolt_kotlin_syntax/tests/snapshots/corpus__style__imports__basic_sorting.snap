@@ -84,9 +84,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Alpha" @ 127..132
+                      Identifier "Alpha" @ 127..132
             Comma "," @ 132..133 trailing=[Whitespace " "]
             ValueParameter
               ModifierList
@@ -98,9 +96,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Zed" @ 143..146
+                      Identifier "Zed" @ 143..146
             Comma "," @ 146..147 trailing=[Whitespace " "]
             ValueParameter
               ModifierList
@@ -112,9 +108,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "List" @ 159..163
+                      Identifier "List" @ 159..163
                       TypeArgumentList
                         Lt "<" @ 163..164
                         TypeProjectionSeparatedList
@@ -122,9 +116,7 @@ KotlinFile
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "String" @ 164..170
+                                  Identifier "String" @ 164..170
                         Gt ">" @ 170..171
           RParen ")" @ 171..172
   Eof "" @ 173..173 leading=[Newline "\n"]

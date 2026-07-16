@@ -104,9 +104,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "ToolFactory" @ 158..169
+                    Identifier "ToolFactory" @ 158..169
         RParen ")" @ 169..170 trailing=[Whitespace " "]
       BlockBody
         Block
@@ -127,10 +125,8 @@ KotlinFile
                           NavigationExpression
                             NameExpression
                               Identifier "factory" @ 181..188
-                            NavigationOperator
-                              Dot "." @ 188..189
-                            NameExpression
-                              Identifier "toString" @ 189..197
+                            Dot "." @ 188..189
+                            Identifier "toString" @ 189..197
                           TypeArgumentListList
                           ValueArgumentList
                             LParen "(" @ 197..198

@@ -51,18 +51,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 50..53
+                    Identifier "Int" @ 50..53
         RParen ")" @ 53..54
       Colon ":" @ 54..55 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 56..62 trailing=[Whitespace " "]
+              Identifier "String" @ 56..62 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 63..64
@@ -76,11 +72,9 @@ KotlinFile
                     BinaryExpression
                       NameExpression
                         Identifier "value" @ 73..78 trailing=[Whitespace " "]
-                      BinaryOperator
-                        Lt "<" @ 79..80 trailing=[Whitespace " "]
-                      BinaryExpressionRight
-                        LiteralExpression
-                          IntegerLiteral "0" @ 81..82
+                      Lt "<" @ 79..80 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "0" @ 81..82
                     RParen ")" @ 82..83 trailing=[Whitespace " "]
                   Block
                     LBrace "{" @ 84..85
@@ -92,11 +86,9 @@ KotlinFile
                             StringTemplateExpression
                               StringTemplateEntryList
                                 StringTemplateEntry
-                                  StringTemplateContent
-                                    OpenQuote "\"" @ 101..102
+                                  OpenQuote "\"" @ 101..102
                                 StringTemplateEntry
-                                  StringTemplateContent
-                                    RegularStringPart "negative" @ 102..110
+                                  RegularStringPart "negative" @ 102..110
                               ClosingQuote "\"" @ 110..111
                         TerminatorList
                     RBrace "}" @ 116..117 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
@@ -108,11 +100,9 @@ KotlinFile
                       BinaryExpression
                         NameExpression
                           Identifier "value" @ 127..132 trailing=[Whitespace " "]
-                        BinaryOperator
-                          EqEq "==" @ 133..135 trailing=[Whitespace " "]
-                        BinaryExpressionRight
-                          LiteralExpression
-                            IntegerLiteral "0" @ 136..137
+                        EqEq "==" @ 133..135 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "0" @ 136..137
                       RParen ")" @ 137..138 trailing=[Whitespace " "]
                     Block
                       LBrace "{" @ 139..140
@@ -124,11 +114,9 @@ KotlinFile
                               StringTemplateExpression
                                 StringTemplateEntryList
                                   StringTemplateEntry
-                                    StringTemplateContent
-                                      OpenQuote "\"" @ 156..157
+                                    OpenQuote "\"" @ 156..157
                                   StringTemplateEntry
-                                    StringTemplateContent
-                                      RegularStringPart "zero" @ 157..161
+                                    RegularStringPart "zero" @ 157..161
                                 ClosingQuote "\"" @ 161..162
                           TerminatorList
                       RBrace "}" @ 167..168 leading=[Newline "\n", Whitespace "    "]
@@ -140,11 +128,9 @@ KotlinFile
                   StringTemplateExpression
                     StringTemplateEntryList
                       StringTemplateEntry
-                        StringTemplateContent
-                          OpenQuote "\"" @ 180..181
+                        OpenQuote "\"" @ 180..181
                       StringTemplateEntry
-                        StringTemplateContent
-                          RegularStringPart "positive" @ 181..189
+                        RegularStringPart "positive" @ 181..189
                     ClosingQuote "\"" @ 189..190
               TerminatorList
           RBrace "}" @ 191..192 leading=[Newline "\n"]

@@ -33,9 +33,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 31..37
+                      Identifier "String" @ 31..37
                 Question "?" @ 37..38
         RParen ")" @ 38..39
       Colon ":" @ 39..40 trailing=[Whitespace " "]
@@ -43,9 +41,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 41..47 trailing=[Whitespace " "]
+              Identifier "String" @ 41..47 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 48..49
@@ -61,10 +57,8 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "value" @ 67..72 trailing=[Whitespace " "]
-                  BinaryOperator
-                    Elvis "?:" @ 73..75
-                  BinaryExpressionRight
-                    BogusExpression
+                  Elvis "?:" @ 73..75
+                  BogusExpression
               PropertyBodyMemberList
             Statement
               ExpressionStatement

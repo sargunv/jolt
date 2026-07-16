@@ -15,14 +15,11 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              StringTemplateContent
-                OpenQuote "\"\"\"" @ 0..3
+              OpenQuote "\"\"\"" @ 0..3
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "abc" @ 3..6
+              RegularStringPart "abc" @ 3..6
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "\n" @ 6..7
+              RegularStringPart "\n" @ 6..7
       TerminatorList
   Eof "" @ 7..7
 

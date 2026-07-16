@@ -35,9 +35,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "List" @ 38..42
+                      Identifier "List" @ 38..42
                       TypeArgumentList
                         Lt "<" @ 42..43
                         TypeProjectionSeparatedList
@@ -45,9 +43,7 @@ KotlinFile
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "String" @ 43..49
+                                  Identifier "String" @ 43..49
                         Gt ">" @ 49..50
           ClassMemberDeclaration
             PropertyDeclaration
@@ -61,9 +57,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Names" @ 67..72 trailing=[Whitespace " "]
+                      Identifier "Names" @ 67..72 trailing=[Whitespace " "]
               PropertyInitializer
                 Assign "=" @ 73..74 trailing=[Whitespace " "]
                 CallExpression

@@ -39,18 +39,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 24..30
+                    Identifier "String" @ 24..30
         RParen ")" @ 30..31
       Colon ":" @ 31..32 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 33..39 trailing=[Whitespace " "]
+              Identifier "String" @ 33..39 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 40..41
@@ -94,9 +90,7 @@ KotlinFile
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "MissingFile" @ 100..111
+                                  Identifier "MissingFile" @ 100..111
                           RParen ")" @ 111..112 trailing=[Whitespace " "]
                         Block
                           LBrace "{" @ 113..114
@@ -106,11 +100,9 @@ KotlinFile
                                 StringTemplateExpression
                                   StringTemplateEntryList
                                     StringTemplateEntry
-                                      StringTemplateContent
-                                        OpenQuote "\"" @ 123..124 leading=[Newline "\n", Whitespace "        "]
+                                      OpenQuote "\"" @ 123..124 leading=[Newline "\n", Whitespace "        "]
                                     StringTemplateEntry
-                                      StringTemplateContent
-                                        RegularStringPart "missing" @ 124..131
+                                      RegularStringPart "missing" @ 124..131
                                   ClosingQuote "\"" @ 131..132
                               TerminatorList
                           RBrace "}" @ 137..138 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
@@ -126,9 +118,7 @@ KotlinFile
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "Throwable" @ 153..162
+                                  Identifier "Throwable" @ 153..162
                           RParen ")" @ 162..163 trailing=[Whitespace " "]
                         Block
                           LBrace "{" @ 164..165
@@ -138,11 +128,9 @@ KotlinFile
                                 StringTemplateExpression
                                   StringTemplateEntryList
                                     StringTemplateEntry
-                                      StringTemplateContent
-                                        OpenQuote "\"" @ 174..175 leading=[Newline "\n", Whitespace "        "]
+                                      OpenQuote "\"" @ 174..175 leading=[Newline "\n", Whitespace "        "]
                                     StringTemplateEntry
-                                      StringTemplateContent
-                                        RegularStringPart "error" @ 175..180
+                                      RegularStringPart "error" @ 175..180
                                   ClosingQuote "\"" @ 180..181
                               TerminatorList
                           RBrace "}" @ 186..187 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]

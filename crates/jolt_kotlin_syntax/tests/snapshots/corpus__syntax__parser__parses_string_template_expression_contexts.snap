@@ -34,9 +34,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "User" @ 20..24
+                    Identifier "User" @ 20..24
           Comma "," @ 24..25 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -47,18 +45,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 33..36
+                    Identifier "Int" @ 33..36
         RParen ")" @ 36..37
       Colon ":" @ 37..38 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 39..45 trailing=[Whitespace " "]
+              Identifier "String" @ 39..45 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 46..47
@@ -74,17 +68,13 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"" @ 65..66
+                      OpenQuote "\"" @ 65..66
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "Hello, " @ 66..73
+                      RegularStringPart "Hello, " @ 66..73
                     StringTemplateEntry
-                      StringTemplateContent
-                        ShortTemplateEntryStart "$" @ 73..74
+                      ShortTemplateEntryStart "$" @ 73..74
                     StringTemplateEntry
-                      StringTemplateContent
-                        Identifier "user" @ 74..78
+                      Identifier "user" @ 74..78
                   ClosingQuote "\"" @ 78..79
               PropertyBodyMemberList
             PropertyDeclaration
@@ -98,24 +88,19 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"" @ 97..98
+                      OpenQuote "\"" @ 97..98
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "Next count is " @ 98..112
+                      RegularStringPart "Next count is " @ 98..112
                     StringTemplateEntry
-                      StringTemplateContent
-                        LongStringTemplateEntry
-                          LongTemplateEntryStart "${" @ 112..114
-                          BinaryExpression
-                            NameExpression
-                              Identifier "count" @ 114..119 trailing=[Whitespace " "]
-                            BinaryOperator
-                              Plus "+" @ 120..121 trailing=[Whitespace " "]
-                            BinaryExpressionRight
-                              LiteralExpression
-                                IntegerLiteral "1" @ 122..123
-                          LongTemplateEntryEnd "}" @ 123..124
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 112..114
+                        BinaryExpression
+                          NameExpression
+                            Identifier "count" @ 114..119 trailing=[Whitespace " "]
+                          Plus "+" @ 120..121 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "1" @ 122..123
+                        LongTemplateEntryEnd "}" @ 123..124
                   ClosingQuote "\"" @ 124..125
               PropertyBodyMemberList
             PropertyDeclaration
@@ -129,36 +114,27 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"" @ 143..144
+                      OpenQuote "\"" @ 143..144
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "Name: " @ 144..150
+                      RegularStringPart "Name: " @ 144..150
                     StringTemplateEntry
-                      StringTemplateContent
-                        LongStringTemplateEntry
-                          LongTemplateEntryStart "${" @ 150..152
-                          BinaryExpression
-                            NavigationExpression
-                              NameExpression
-                                Identifier "user" @ 152..156
-                              NavigationOperator
-                                Dot "." @ 156..157
-                              NameExpression
-                                Identifier "name" @ 157..161 trailing=[Whitespace " "]
-                            BinaryOperator
-                              Elvis "?:" @ 162..164 trailing=[Whitespace " "]
-                            BinaryExpressionRight
-                              StringTemplateExpression
-                                StringTemplateEntryList
-                                  StringTemplateEntry
-                                    StringTemplateContent
-                                      OpenQuote "\"" @ 165..166
-                                  StringTemplateEntry
-                                    StringTemplateContent
-                                      RegularStringPart "anonymous" @ 166..175
-                                ClosingQuote "\"" @ 175..176
-                          LongTemplateEntryEnd "}" @ 176..177
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 150..152
+                        BinaryExpression
+                          NavigationExpression
+                            NameExpression
+                              Identifier "user" @ 152..156
+                            Dot "." @ 156..157
+                            Identifier "name" @ 157..161 trailing=[Whitespace " "]
+                          Elvis "?:" @ 162..164 trailing=[Whitespace " "]
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                OpenQuote "\"" @ 165..166
+                              StringTemplateEntry
+                                RegularStringPart "anonymous" @ 166..175
+                            ClosingQuote "\"" @ 175..176
+                        LongTemplateEntryEnd "}" @ 176..177
                   ClosingQuote "\"" @ 177..178
               PropertyBodyMemberList
             Statement
@@ -168,32 +144,23 @@ KotlinFile
                   StringTemplateExpression
                     StringTemplateEntryList
                       StringTemplateEntry
-                        StringTemplateContent
-                          OpenQuote "\"" @ 190..191
+                        OpenQuote "\"" @ 190..191
                       StringTemplateEntry
-                        StringTemplateContent
-                          ShortTemplateEntryStart "$" @ 191..192
+                        ShortTemplateEntryStart "$" @ 191..192
                       StringTemplateEntry
-                        StringTemplateContent
-                          Identifier "simple" @ 192..198
+                        Identifier "simple" @ 192..198
                       StringTemplateEntry
-                        StringTemplateContent
-                          RegularStringPart "; " @ 198..200
+                        RegularStringPart "; " @ 198..200
                       StringTemplateEntry
-                        StringTemplateContent
-                          ShortTemplateEntryStart "$" @ 200..201
+                        ShortTemplateEntryStart "$" @ 200..201
                       StringTemplateEntry
-                        StringTemplateContent
-                          Identifier "braced" @ 201..207
+                        Identifier "braced" @ 201..207
                       StringTemplateEntry
-                        StringTemplateContent
-                          RegularStringPart "; " @ 207..209
+                        RegularStringPart "; " @ 207..209
                       StringTemplateEntry
-                        StringTemplateContent
-                          ShortTemplateEntryStart "$" @ 209..210
+                        ShortTemplateEntryStart "$" @ 209..210
                       StringTemplateEntry
-                        StringTemplateContent
-                          Identifier "nested" @ 210..216
+                        Identifier "nested" @ 210..216
                     ClosingQuote "\"" @ 216..217
               TerminatorList
           RBrace "}" @ 218..219 leading=[Newline "\n"]

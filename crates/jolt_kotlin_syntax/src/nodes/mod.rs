@@ -1211,6 +1211,31 @@ impl<'source> NavigationOperatorValue<'source> {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum NavigationSelectorSyntax<'source> {
+    Name(KotlinSyntaxToken<'source>),
+    This(ThisExpression<'source>),
+    Super(SuperExpression<'source>),
+    Bogus(BogusNavigationSelector<'source>),
+}
+
+impl<'source> NavigationSelectorValue<'source> {
+    #[allow(clippy::missing_errors_doc)]
+    pub fn classify(self) -> KotlinSyntaxResult<NavigationSelectorSyntax<'source>> {
+        if let Some(token) = self.token() {
+            Ok(NavigationSelectorSyntax::Name(token))
+        } else if let Some(value) = self.cast_node::<ThisExpression<'source>>() {
+            Ok(NavigationSelectorSyntax::This(value))
+        } else if let Some(value) = self.cast_node::<SuperExpression<'source>>() {
+            Ok(NavigationSelectorSyntax::Super(value))
+        } else if let Some(value) = self.cast_node::<BogusNavigationSelector<'source>>() {
+            Ok(NavigationSelectorSyntax::Bogus(value))
+        } else {
+            Err(invalid_role_projection(self.element.kind()))
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CallableReferenceReceiverSyntax<'source> {
     Expression(Expression<'source>),
     TypeReference(TypeReference<'source>),

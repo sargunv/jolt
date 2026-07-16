@@ -29,17 +29,12 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "example" @ 31..38
+                    Identifier "example" @ 31..38
                   Dot "." @ 38..39
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Type" @ 39..43
+                    Identifier "Type" @ 39..43
                   Dot "." @ 43..44
                   BogusUserTypeSegment
-                    AnnotationList
         RParen ")" @ 44..45 trailing=[Whitespace " "]
       ExpressionBody
         Assign "=" @ 46..47 trailing=[Whitespace " "]

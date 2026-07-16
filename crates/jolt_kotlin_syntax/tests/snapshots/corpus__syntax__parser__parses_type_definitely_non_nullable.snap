@@ -39,16 +39,12 @@ KotlinFile
                   UserType
                     UserTypeSegmentList
                       UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "T" @ 28..29 trailing=[Whitespace " "]
+                        Identifier "T" @ 28..29 trailing=[Whitespace " "]
                   Amp "&" @ 30..31 trailing=[Whitespace " "]
                   UserType
                     UserTypeSegmentList
                       UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "Any" @ 32..35
+                        Identifier "Any" @ 32..35
         RParen ")" @ 35..36
       Colon ":" @ 36..37 trailing=[Whitespace " "]
       TypeReference
@@ -57,16 +53,12 @@ KotlinFile
             UserType
               UserTypeSegmentList
                 UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "T" @ 38..39 trailing=[Whitespace " "]
+                  Identifier "T" @ 38..39 trailing=[Whitespace " "]
             Amp "&" @ 40..41 trailing=[Whitespace " "]
             UserType
               UserTypeSegmentList
                 UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "Any" @ 42..45 trailing=[Whitespace " "]
+                  Identifier "Any" @ 42..45 trailing=[Whitespace " "]
       ExpressionBody
         Assign "=" @ 46..47 trailing=[Whitespace " "]
         NameExpression

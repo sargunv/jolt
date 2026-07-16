@@ -29,81 +29,51 @@ KotlinFile
                                     BinaryExpression
                                       NameExpression
                                         Identifier "abstract" @ 0..8 trailing=[Whitespace " "]
-                                      BinaryOperator
-                                        Identifier "enum" @ 9..13 trailing=[Whitespace " "]
-                                      BinaryExpressionRight
-                                        NameExpression
-                                          Identifier "contract" @ 14..22 trailing=[Whitespace " "]
-                                    BinaryOperator
-                                      Identifier "open" @ 23..27 trailing=[Whitespace " "]
-                                    BinaryExpressionRight
+                                      Identifier "enum" @ 9..13 trailing=[Whitespace " "]
                                       NameExpression
-                                        Identifier "inner" @ 28..33 trailing=[Whitespace " "]
-                                  BinaryOperator
-                                    Identifier "override" @ 34..42 trailing=[Whitespace " "]
-                                  BinaryExpressionRight
+                                        Identifier "contract" @ 14..22 trailing=[Whitespace " "]
+                                    Identifier "open" @ 23..27 trailing=[Whitespace " "]
                                     NameExpression
-                                      Identifier "private" @ 43..50 trailing=[Whitespace " "]
-                                BinaryOperator
-                                  Identifier "public" @ 51..57 trailing=[Whitespace " "]
-                                BinaryExpressionRight
+                                      Identifier "inner" @ 28..33 trailing=[Whitespace " "]
+                                  Identifier "override" @ 34..42 trailing=[Whitespace " "]
                                   NameExpression
-                                    Identifier "internal" @ 58..66 trailing=[Whitespace " "]
-                              BinaryOperator
-                                Identifier "protected" @ 67..76 trailing=[Whitespace " "]
-                              BinaryExpressionRight
+                                    Identifier "private" @ 43..50 trailing=[Whitespace " "]
+                                Identifier "public" @ 51..57 trailing=[Whitespace " "]
                                 NameExpression
-                                  Identifier "out" @ 77..80 trailing=[Whitespace " "]
-                            BinaryOperator
-                              Identifier "vararg" @ 81..87 trailing=[Whitespace " "]
-                            BinaryExpressionRight
+                                  Identifier "internal" @ 58..66 trailing=[Whitespace " "]
+                              Identifier "protected" @ 67..76 trailing=[Whitespace " "]
                               NameExpression
-                                Identifier "reified" @ 88..95 trailing=[Whitespace " "]
-                          BinaryOperator
-                            Identifier "companion" @ 96..105 trailing=[Whitespace " "]
-                          BinaryExpressionRight
+                                Identifier "out" @ 77..80 trailing=[Whitespace " "]
+                            Identifier "vararg" @ 81..87 trailing=[Whitespace " "]
                             NameExpression
-                              Identifier "sealed" @ 106..112 trailing=[Whitespace " "]
-                        BinaryOperator
-                          Identifier "final" @ 113..118 trailing=[Whitespace " "]
-                        BinaryExpressionRight
+                              Identifier "reified" @ 88..95 trailing=[Whitespace " "]
+                          Identifier "companion" @ 96..105 trailing=[Whitespace " "]
                           NameExpression
-                            Identifier "lateinit" @ 119..127 trailing=[Whitespace " "]
-                      BinaryOperator
-                        Identifier "data" @ 128..132 trailing=[Whitespace " "]
-                      BinaryExpressionRight
+                            Identifier "sealed" @ 106..112 trailing=[Whitespace " "]
+                        Identifier "final" @ 113..118 trailing=[Whitespace " "]
                         NameExpression
-                          Identifier "value" @ 133..138 trailing=[Whitespace " "]
-                    BinaryOperator
-                      Identifier "inline" @ 139..145 trailing=[Whitespace " "]
-                    BinaryExpressionRight
+                          Identifier "lateinit" @ 119..127 trailing=[Whitespace " "]
+                      Identifier "data" @ 128..132 trailing=[Whitespace " "]
                       NameExpression
-                        Identifier "noinline" @ 146..154 trailing=[Whitespace " "]
-                  BinaryOperator
-                    Identifier "tailrec" @ 155..162 trailing=[Whitespace " "]
-                  BinaryExpressionRight
+                        Identifier "value" @ 133..138 trailing=[Whitespace " "]
+                    Identifier "inline" @ 139..145 trailing=[Whitespace " "]
                     NameExpression
-                      Identifier "external" @ 163..171 trailing=[Whitespace " "]
-                BinaryOperator
-                  Identifier "annotation" @ 172..182 trailing=[Whitespace " "]
-                BinaryExpressionRight
+                      Identifier "noinline" @ 146..154 trailing=[Whitespace " "]
+                  Identifier "tailrec" @ 155..162 trailing=[Whitespace " "]
                   NameExpression
-                    Identifier "crossinline" @ 183..194 trailing=[Whitespace " "]
-              BinaryOperator
-                Identifier "operator" @ 195..203 trailing=[Whitespace " "]
-              BinaryExpressionRight
+                    Identifier "external" @ 163..171 trailing=[Whitespace " "]
+                Identifier "annotation" @ 172..182 trailing=[Whitespace " "]
                 NameExpression
-                  Identifier "infix" @ 204..209 trailing=[Whitespace " "]
-            BinaryOperator
-              Identifier "const" @ 210..215 trailing=[Whitespace " "]
-            BinaryExpressionRight
+                  Identifier "crossinline" @ 183..194 trailing=[Whitespace " "]
+              Identifier "operator" @ 195..203 trailing=[Whitespace " "]
               NameExpression
-                Identifier "suspend" @ 216..223 trailing=[Whitespace " "]
-          BinaryOperator
-            Identifier "expect" @ 224..230 trailing=[Whitespace " "]
-          BinaryExpressionRight
+                Identifier "infix" @ 204..209 trailing=[Whitespace " "]
+            Identifier "const" @ 210..215 trailing=[Whitespace " "]
             NameExpression
-              Identifier "actual" @ 231..237
+              Identifier "suspend" @ 216..223 trailing=[Whitespace " "]
+          Identifier "expect" @ 224..230 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "actual" @ 231..237
       TerminatorList
   Eof "" @ 238..238 leading=[Newline "\n"]
 

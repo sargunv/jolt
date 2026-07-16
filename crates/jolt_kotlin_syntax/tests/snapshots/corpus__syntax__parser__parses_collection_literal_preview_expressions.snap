@@ -31,9 +31,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Any" @ 26..29 trailing=[Whitespace " "]
+              Identifier "Any" @ 26..29 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 30..31

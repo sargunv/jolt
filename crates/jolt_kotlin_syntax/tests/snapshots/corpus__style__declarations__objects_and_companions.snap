@@ -67,17 +67,13 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 90..96
+                                Identifier "String" @ 90..96
                         Comma "," @ 96..97 trailing=[Whitespace " "]
                         TypeReference
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 98..104
+                                Identifier "String" @ 98..104
                       Gt ">" @ 104..105
                   ValueArgumentList
                     LParen "(" @ 105..106
@@ -105,9 +101,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 126..132
+                            Identifier "String" @ 126..132
                   Comma "," @ 132..133 trailing=[Whitespace " "]
                   ValueParameter
                     ModifierList
@@ -118,9 +112,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 141..147
+                            Identifier "String" @ 141..147
                 RParen ")" @ 147..148 trailing=[Whitespace " "]
               BlockBody
                 Block
@@ -176,11 +168,9 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 258..259
+                              OpenQuote "\"" @ 258..259
                             StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "fixture" @ 259..266
+                              RegularStringPart "fixture" @ 259..266
                           ClosingQuote "\"" @ 266..267
                       PropertyBodyMemberList
                 RBrace "}" @ 272..273 leading=[Newline "\n", Whitespace "    "]

@@ -35,9 +35,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "List" @ 38..42
+                      Identifier "List" @ 38..42
                       TypeArgumentList
                         Lt "<" @ 42..43
                         TypeProjectionSeparatedList
@@ -47,9 +45,7 @@ KotlinFile
                               UserType
                                 UserTypeSegmentList
                                   UserTypeSegment
-                                    AnnotationList
-                                    Name
-                                      Identifier "Number" @ 47..53
+                                    Identifier "Number" @ 47..53
                         Gt ">" @ 53..54
             Comma "," @ 54..55
             ValueParameter
@@ -62,9 +58,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "MutableList" @ 72..83
+                      Identifier "MutableList" @ 72..83
                       TypeArgumentList
                         Lt "<" @ 83..84
                         TypeProjectionSeparatedList
@@ -74,9 +68,7 @@ KotlinFile
                               UserType
                                 UserTypeSegmentList
                                   UserTypeSegment
-                                    AnnotationList
-                                    Name
-                                      Identifier "Int" @ 87..90
+                                    Identifier "Int" @ 87..90
                         Gt ">" @ 90..91
             Comma "," @ 91..92
             ValueParameter
@@ -89,9 +81,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "List" @ 110..114
+                      Identifier "List" @ 110..114
                       TypeArgumentList
                         Lt "<" @ 114..115
                         TypeProjectionSeparatedList

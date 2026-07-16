@@ -29,21 +29,15 @@ KotlinFile
                           Bang "!" @ 12..13 trailing=[Whitespace " "]
                           BogusExpression
                             Slash "/" @ 14..15 trailing=[Whitespace " "]
-              BinaryOperator
-                Percent "%" @ 16..17 trailing=[Whitespace " "]
-              BinaryExpressionRight
-                BogusExpression
-                  Lt "<" @ 18..19 trailing=[Whitespace " "]
-            BinaryOperator
-              Gt ">" @ 20..21 trailing=[Whitespace " "]
-            BinaryExpressionRight
+              Percent "%" @ 16..17 trailing=[Whitespace " "]
               BogusExpression
-                LtEq "<=" @ 22..24 trailing=[Whitespace " "]
-          BinaryOperator
-            GtEq ">=" @ 25..27 trailing=[Whitespace " "]
-          BinaryExpressionRight
+                Lt "<" @ 18..19 trailing=[Whitespace " "]
+            Gt ">" @ 20..21 trailing=[Whitespace " "]
             BogusExpression
-              EqEqEq "===" @ 28..31 trailing=[Whitespace " "]
+              LtEq "<=" @ 22..24 trailing=[Whitespace " "]
+          GtEq ">=" @ 25..27 trailing=[Whitespace " "]
+          BogusExpression
+            EqEqEq "===" @ 28..31 trailing=[Whitespace " "]
         BogusExpression
           Arrow "->" @ 32..34 trailing=[Whitespace " "]
         BogusExpression

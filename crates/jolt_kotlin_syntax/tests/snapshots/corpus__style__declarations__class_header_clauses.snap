@@ -62,9 +62,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Any" @ 94..97
+                    Identifier "Any" @ 94..97
         Gt ">" @ 97..98
       PrimaryConstructor
         ModifierList
@@ -82,9 +80,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 122..128
+                      Identifier "String" @ 122..128
             Comma "," @ 128..129
             ValueParameter
               ModifierList
@@ -97,9 +93,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "MutableList" @ 153..164
+                      Identifier "MutableList" @ 153..164
                       TypeArgumentList
                         Lt "<" @ 164..165
                         TypeProjectionSeparatedList
@@ -107,9 +101,7 @@ KotlinFile
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "T" @ 165..166
+                                  Identifier "T" @ 165..166
                         Gt ">" @ 166..167
             Comma "," @ 167..168
           RParen ")" @ 169..170 leading=[Newline "\n"] trailing=[Whitespace " "]
@@ -121,18 +113,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Readable" @ 173..181
+                    Identifier "Readable" @ 173..181
           Comma "," @ 181..182
           DelegationSpecifier
             TypeReference
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Writable" @ 187..195 leading=[Newline "\n", Whitespace "    "]
+                    Identifier "Writable" @ 187..195 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 196..196 leading=[Newline "\n"]
 
 diagnostics:

@@ -38,9 +38,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Int" @ 66..69
+                      Identifier "Int" @ 66..69
               PropertyBodyMemberList
           ClassMemberDeclaration
             FunctionDeclaration
@@ -61,25 +59,19 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 101..107 trailing=[Whitespace " "]
+                      Identifier "String" @ 101..107 trailing=[Whitespace " "]
               ExpressionBody
                 Assign "=" @ 108..109 trailing=[Whitespace " "]
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"" @ 110..111
+                      OpenQuote "\"" @ 110..111
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "size=" @ 111..116
+                      RegularStringPart "size=" @ 111..116
                     StringTemplateEntry
-                      StringTemplateContent
-                        ShortTemplateEntryStart "$" @ 116..117
+                      ShortTemplateEntryStart "$" @ 116..117
                     StringTemplateEntry
-                      StringTemplateContent
-                        Identifier "size" @ 117..121
+                      Identifier "size" @ 117..121
                   ClosingQuote "\"" @ 121..122
         RBrace "}" @ 123..124 leading=[Newline "\n"]
   Eof "" @ 125..125 leading=[Newline "\n"]

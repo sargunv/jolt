@@ -35,9 +35,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 14..17
+                    Identifier "Int" @ 14..17
           Comma "," @ 17..18 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -48,18 +46,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 26..29
+                    Identifier "Int" @ 26..29
         RParen ")" @ 29..30
       Colon ":" @ 30..31 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Int" @ 32..35 trailing=[Whitespace " "]
+              Identifier "Int" @ 32..35 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 36..37
@@ -71,11 +65,9 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "left" @ 49..53 trailing=[Whitespace " "]
-                    BinaryOperator
-                      Plus "+" @ 54..55 trailing=[Whitespace " "]
-                    BinaryExpressionRight
-                      NameExpression
-                        Identifier "right" @ 56..61
+                    Plus "+" @ 54..55 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "right" @ 56..61
               TerminatorList
           RBrace "}" @ 62..63 leading=[Newline "\n"]
     FunctionDeclaration
@@ -94,9 +86,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Int" @ 78..81 trailing=[Whitespace " "]
+              Identifier "Int" @ 78..81 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 82..83

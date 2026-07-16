@@ -35,9 +35,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Record" @ 32..38
+                    Identifier "Record" @ 32..38
           Comma "," @ 38..39 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -48,9 +46,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "List" @ 46..50
+                    Identifier "List" @ 46..50
                     TypeArgumentList
                       Lt "<" @ 50..51
                       TypeProjectionSeparatedList
@@ -58,9 +54,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Record" @ 51..57
+                                Identifier "Record" @ 51..57
                       Gt ">" @ 57..58
         RParen ")" @ 58..59 trailing=[Whitespace " "]
       BlockBody
@@ -111,10 +105,8 @@ KotlinFile
                 NavigationExpression
                   NameExpression
                     Identifier "record" @ 126..132
-                  NavigationOperator
-                    Dot "." @ 132..133
-                  NameExpression
-                    Identifier "bounds" @ 133..139
+                  Dot "." @ 132..133
+                  Identifier "bounds" @ 133..139
               PropertyBodyMemberList
             Statement
               ExpressionStatement
@@ -138,11 +130,9 @@ KotlinFile
                           NameExpression
                             Identifier "value" @ 156..161
                       RBracket "]" @ 161..162 trailing=[Whitespace " "]
-                    BinaryOperator
-                      InKw "in" @ 163..165 trailing=[Whitespace " "]
-                    BinaryExpressionRight
-                      NameExpression
-                        Identifier "rows" @ 166..170
+                    InKw "in" @ 163..165 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "rows" @ 166..170
                   RParen ")" @ 170..171 trailing=[Whitespace " "]
                   Block
                     LBrace "{" @ 172..173

@@ -33,9 +33,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 36..39
+                    Identifier "Int" @ 36..39
         RParen ")" @ 39..40 trailing=[Whitespace " "]
       BlockBody
         Block
@@ -58,11 +56,9 @@ KotlinFile
                     BinaryExpression
                       NameExpression
                         Identifier "value" @ 61..66 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                      BinaryOperator
-                        Plus "+" @ 67..68 trailing=[Whitespace " "]
-                      BinaryExpressionRight
-                        LiteralExpression
-                          IntegerLiteral "1" @ 69..70 trailing=[Whitespace " "]
+                      Plus "+" @ 67..68 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "1" @ 69..70 trailing=[Whitespace " "]
                   Assign "=" @ 71..72 trailing=[Whitespace " "]
                   NameExpression
                     Identifier "value" @ 73..78

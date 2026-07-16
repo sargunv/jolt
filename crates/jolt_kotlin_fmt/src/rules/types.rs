@@ -260,7 +260,7 @@ fn format_user_type_segment<'source>(
     doc: &mut DocBuilder<'source>,
     segment: &UserTypeSegment<'source>,
 ) -> Doc<'source> {
-    let annotations = format_required_field(segment.annotations(), doc, |annotations, doc| {
+    let annotations = format_optional_field(segment.annotations(), doc, |annotations, doc| {
         doc.concat_list(|docs| {
             for part in annotations.parts() {
                 match resolve_list_part(part, docs) {
@@ -280,7 +280,14 @@ fn format_user_type_segment<'source>(
             }
         })
     });
-    let name = format_required_field(segment.name(), doc, |name, doc| format_name(doc, &name));
+    let name = format_required_field(segment.name(), doc, |name, doc| {
+        format_token(
+            doc,
+            &name,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        )
+    });
     let arguments = format_optional_field(segment.arguments(), doc, |arguments, doc| {
         format_type_argument_list(doc, &arguments)
     });

@@ -2,9 +2,9 @@ use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     CallExpression, CollectionLiteralExpression, Expression, IndexExpression, KotlinSyntaxField,
     KotlinSyntaxInvariantError, KotlinSyntaxListPart, KotlinSyntaxToken, NavigationExpression,
-    NavigationOperator, NavigationOperatorSyntax, NavigationSelector, ValueArgument,
-    ValueArgumentEntryList, ValueArgumentList, ValueArgumentListEntry, ValueArgumentPrefix,
-    ValueArgumentPrefixSyntax,
+    NavigationOperatorSyntax, NavigationOperatorValue, NavigationSelectorSyntax,
+    NavigationSelectorValue, ValueArgument, ValueArgumentEntryList, ValueArgumentList,
+    ValueArgumentListEntry, ValueArgumentPrefix, ValueArgumentPrefixSyntax,
 };
 
 use crate::helpers::comments::{
@@ -373,66 +373,67 @@ fn format_navigation_suffix<'source>(
 
 fn format_navigation_operator<'source>(
     doc: &mut DocBuilder<'source>,
-    operator: NavigationOperator<'source>,
+    operator: NavigationOperatorValue<'source>,
     leading: LeadingTrivia,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
-    format_required_field(operator.operator(), doc, |operator, doc| {
-        match operator.classify() {
-            Ok(NavigationOperatorSyntax::Token(token)) => {
-                format_token(doc, &token, leading, trailing)
-            }
-            Ok(NavigationOperatorSyntax::SplitSafe(split)) => {
-                let question = format_required_field(split.question(), doc, |token, doc| {
-                    format_token(
-                        doc,
-                        &token,
-                        leading,
-                        TrailingTrivia::RelocatedToEnclosingContext,
-                    )
-                });
-                let dot = format_required_field(split.dot(), doc, |token, doc| {
-                    format_token(doc, &token, LeadingTrivia::SuppressAlreadyHandled, trailing)
-                });
-                doc.concat([question, dot])
-            }
-            Err(error) => {
-                doc.block_on_invariant(error.to_string());
-                Doc::nil()
-            }
+    match operator.classify() {
+        Ok(NavigationOperatorSyntax::Token(token)) => format_token(doc, &token, leading, trailing),
+        Ok(NavigationOperatorSyntax::SplitSafe(split)) => {
+            let question = format_required_field(split.question(), doc, |token, doc| {
+                format_token(
+                    doc,
+                    &token,
+                    leading,
+                    TrailingTrivia::RelocatedToEnclosingContext,
+                )
+            });
+            let dot = format_required_field(split.dot(), doc, |token, doc| {
+                format_token(doc, &token, LeadingTrivia::SuppressAlreadyHandled, trailing)
+            });
+            doc.concat([question, dot])
         }
-    })
+        Err(error) => {
+            doc.block_on_invariant(error.to_string());
+            Doc::nil()
+        }
+    }
 }
 
 fn format_navigation_selector<'source>(
     doc: &mut DocBuilder<'source>,
-    selector: NavigationSelector<'source>,
+    selector: NavigationSelectorValue<'source>,
 ) -> Doc<'source> {
-    match selector {
-        NavigationSelector::NameExpression(selector) => format_expression_with_leading(
+    match selector.classify() {
+        Ok(NavigationSelectorSyntax::Name(selector)) => format_token(
             doc,
-            &Expression::NameExpression(selector),
+            &selector,
             LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
         ),
-        NavigationSelector::ThisExpression(selector) => format_expression_with_leading(
+        Ok(NavigationSelectorSyntax::This(selector)) => format_expression_with_leading(
             doc,
             &Expression::ThisExpression(selector),
             LeadingTrivia::Preserve,
         ),
-        NavigationSelector::SuperExpression(selector) => format_expression_with_leading(
+        Ok(NavigationSelectorSyntax::Super(selector)) => format_expression_with_leading(
             doc,
             &Expression::SuperExpression(selector),
             LeadingTrivia::Preserve,
         ),
-        NavigationSelector::BogusNavigationSelector(bogus) => {
+        Ok(NavigationSelectorSyntax::Bogus(bogus)) => {
             crate::helpers::recovery::format_malformed(&bogus, doc)
+        }
+        Err(error) => {
+            doc.block_on_invariant(error.to_string());
+            Doc::nil()
         }
     }
 }
 
 fn navigation_operator_has_leading_comments(navigation: &NavigationExpression<'_>) -> bool {
     present_required(navigation.operator())
-        .and_then(|operator| operator.first_token())
+        .and_then(jolt_kotlin_syntax::NavigationOperatorValue::first_token)
         .is_some_and(|operator| !operator.leading_comments().is_empty())
 }
 

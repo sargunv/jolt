@@ -54,10 +54,8 @@ KotlinFile
         BinaryExpression
           LiteralExpression
             IntegerLiteral "1" @ 21..22 trailing=[Whitespace " "]
-          BinaryOperator
-            Plus "+" @ 23..24
-          BinaryExpressionRight
-            BogusExpression
+          Plus "+" @ 23..24
+          BogusExpression
     PropertyDeclaration
       ModifierList
       ModifierList
@@ -90,8 +88,7 @@ KotlinFile
         NavigationExpression
           NameExpression
             Identifier "target" @ 75..81
-          NavigationOperator
-            Dot "." @ 81..82
+          Dot "." @ 81..82
           BogusNavigationSelector
     FunctionDeclaration
       ModifierList
@@ -325,17 +322,13 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              StringTemplateContent
-                OpenQuote "\"" @ 405..406
+              OpenQuote "\"" @ 405..406
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "value: " @ 406..413
+              RegularStringPart "value: " @ 406..413
             StringTemplateEntry
-              StringTemplateContent
-                ShortTemplateEntryStart "$" @ 413..414
+              ShortTemplateEntryStart "$" @ 413..414
             StringTemplateEntry
-              StringTemplateContent
-                Identifier "value" @ 414..419
+              Identifier "value" @ 414..419
           ClosingQuote "\"" @ 419..420
     FunctionDeclaration
       ModifierList
@@ -364,9 +357,7 @@ KotlinFile
                   UserType
                     UserTypeSegmentList
                       UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "Int" @ 450..453
+                        Identifier "Int" @ 450..453
             RParen ")" @ 453..454 trailing=[Whitespace " "]
           ExpressionBody
             Assign "=" @ 455..456 trailing=[Whitespace " "]
@@ -468,9 +459,7 @@ KotlinFile
                   UserType
                     UserTypeSegmentList
                       UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "Base" @ 651..655 trailing=[Whitespace " "]
+                        Identifier "Base" @ 651..655 trailing=[Whitespace " "]
                 DelegationByClause
                   Identifier "by" @ 656..658 trailing=[Whitespace " "]
                   NameExpression
@@ -510,9 +499,7 @@ KotlinFile
                   UserType
                     UserTypeSegmentList
                       UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "Base" @ 745..749
+                        Identifier "Base" @ 745..749
           ClassBody
             ClassMemberList
       PropertyBodyMemberList
@@ -549,9 +536,7 @@ KotlinFile
                   UserType
                     UserTypeSegmentList
                       UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "Base" @ 822..826 trailing=[Whitespace " "]
+                        Identifier "Base" @ 822..826 trailing=[Whitespace " "]
           ClassBody
             LBrace "{" @ 827..828
             ClassMemberList
@@ -614,9 +599,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Base" @ 950..954
+                      Identifier "Base" @ 950..954
             Gt ">" @ 954..955
           LabelReference
             At "@" @ 955..956

@@ -51,9 +51,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 100..106
+                      Identifier "String" @ 100..106
             Comma "," @ 106..107
             ValueParameter
               ModifierList
@@ -65,9 +63,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 153..159
+                      Identifier "String" @ 153..159
             Comma "," @ 159..160
           RParen ")" @ 161..162 leading=[Newline "\n"]
   Eof "" @ 163..163 leading=[Newline "\n"]

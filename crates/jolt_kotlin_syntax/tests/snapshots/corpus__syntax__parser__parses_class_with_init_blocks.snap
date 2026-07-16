@@ -36,9 +36,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Int" @ 25..28
+                      Identifier "Int" @ 25..28
           RParen ")" @ 28..29 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 30..31
@@ -55,9 +53,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Int" @ 49..52
+                      Identifier "Int" @ 49..52
               PropertyBodyMemberList
           ClassMemberDeclaration
             InitializerBlock
@@ -74,11 +70,9 @@ KotlinFile
                         BinaryExpression
                           NameExpression
                             Identifier "value" @ 83..88 trailing=[Whitespace " "]
-                          BinaryOperator
-                            Star "*" @ 89..90 trailing=[Whitespace " "]
-                          BinaryExpressionRight
-                            LiteralExpression
-                              IntegerLiteral "2" @ 91..92
+                          Star "*" @ 89..90 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "2" @ 91..92
                     TerminatorList
                 RBrace "}" @ 97..98 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 99..100 leading=[Newline "\n"]

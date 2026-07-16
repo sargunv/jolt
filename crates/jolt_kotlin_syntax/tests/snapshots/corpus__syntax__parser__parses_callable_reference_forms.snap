@@ -75,11 +75,9 @@ KotlinFile
                     StringTemplateExpression
                       StringTemplateEntryList
                         StringTemplateEntry
-                          StringTemplateContent
-                            OpenQuote "\"" @ 98..99
+                          OpenQuote "\"" @ 98..99
                         StringTemplateEntry
-                          StringTemplateContent
-                            RegularStringPart "value" @ 99..104
+                          RegularStringPart "value" @ 99..104
                       ClosingQuote "\"" @ 104..105
                   ColonColon "::" @ 105..107
                   CallableReferenceTarget

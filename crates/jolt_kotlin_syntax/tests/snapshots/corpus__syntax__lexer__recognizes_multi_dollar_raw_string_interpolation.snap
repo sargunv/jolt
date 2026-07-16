@@ -15,36 +15,27 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              StringTemplateContent
-                InterpolationPrefix "$$" @ 0..2
+              InterpolationPrefix "$$" @ 0..2
             StringTemplateEntry
-              StringTemplateContent
-                OpenQuote "\"\"\"" @ 2..5
+              OpenQuote "\"\"\"" @ 2..5
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "raw " @ 5..9
+              RegularStringPart "raw " @ 5..9
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "$" @ 9..10
+              RegularStringPart "$" @ 9..10
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "amount " @ 10..17
+              RegularStringPart "amount " @ 10..17
             StringTemplateEntry
-              StringTemplateContent
-                ShortTemplateEntryStart "$$" @ 17..19
+              ShortTemplateEntryStart "$$" @ 17..19
             StringTemplateEntry
-              StringTemplateContent
-                Identifier "name" @ 19..23
+              Identifier "name" @ 19..23
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart " " @ 23..24
+              RegularStringPart " " @ 23..24
             StringTemplateEntry
-              StringTemplateContent
-                LongStringTemplateEntry
-                  LongTemplateEntryStart "$${" @ 24..27
-                  NameExpression
-                    Identifier "expr" @ 27..31
-                  LongTemplateEntryEnd "}" @ 31..32
+              LongStringTemplateEntry
+                LongTemplateEntryStart "$${" @ 24..27
+                NameExpression
+                  Identifier "expr" @ 27..31
+                LongTemplateEntryEnd "}" @ 31..32
           ClosingQuote "\"\"\"" @ 32..35
       TerminatorList
   Eof "" @ 36..36 leading=[Newline "\n"]

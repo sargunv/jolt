@@ -39,5 +39,6 @@ pub use syntax_tree::{
 #[doc(hidden)]
 pub use syntax_tree::{
     FactoryNode, FactorySlot, ParsedChildren, SyntaxFactory, SyntaxTreeSink,
-    build_syntax_tree_with_factory, build_syntax_tree_with_factory_and_diagnostic_owners,
+    build_parser_syntax_tree, build_syntax_tree_with_factory,
+    build_syntax_tree_with_factory_and_diagnostic_owners,
 };

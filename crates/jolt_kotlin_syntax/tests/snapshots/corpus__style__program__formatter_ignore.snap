@@ -295,11 +295,9 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 467..468
+                              OpenQuote "\"" @ 467..468
                             StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "kept" @ 468..472
+                              RegularStringPart "kept" @ 468..472
                           ClosingQuote "\"" @ 472..473 trailing=[Whitespace " "]
                     RParen ")" @ 474..475
                   LambdaExpressionList

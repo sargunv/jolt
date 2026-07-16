@@ -137,23 +137,21 @@ fn format_string_template_entry<'source>(
     leading: LeadingTrivia,
 ) -> Doc<'source> {
     format_required_field(entry.content(), doc, |content, doc| {
-        format_required_field(content.content(), doc, |content, doc| {
-            match content.classify() {
-                Ok(StringTemplateContentSyntax::Token(token)) => {
-                    format_token(doc, &token, leading, TrailingTrivia::Preserve)
-                }
-                Ok(StringTemplateContentSyntax::Expression(expression)) => {
-                    format_expression_with_leading(doc, &expression, leading)
-                }
-                Ok(StringTemplateContentSyntax::LongEntry(long)) => {
-                    format_long_string_template_entry(doc, &long, leading)
-                }
-                Err(error) => {
-                    doc.block_on_invariant(error.to_string());
-                    Doc::nil()
-                }
+        match content.classify() {
+            Ok(StringTemplateContentSyntax::Token(token)) => {
+                format_token(doc, &token, leading, TrailingTrivia::Preserve)
             }
-        })
+            Ok(StringTemplateContentSyntax::Expression(expression)) => {
+                format_expression_with_leading(doc, &expression, leading)
+            }
+            Ok(StringTemplateContentSyntax::LongEntry(long)) => {
+                format_long_string_template_entry(doc, &long, leading)
+            }
+            Err(error) => {
+                doc.block_on_invariant(error.to_string());
+                Doc::nil()
+            }
+        }
     })
 }
 

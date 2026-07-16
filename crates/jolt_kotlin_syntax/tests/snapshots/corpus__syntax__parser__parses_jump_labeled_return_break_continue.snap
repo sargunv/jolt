@@ -39,9 +39,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "List" @ 18..22
+                    Identifier "List" @ 18..22
                     TypeArgumentList
                       Lt "<" @ 22..23
                       TypeProjectionSeparatedList
@@ -49,9 +47,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Int" @ 23..26
+                                Identifier "Int" @ 23..26
                       Gt ">" @ 26..27
         RParen ")" @ 27..28
       Colon ":" @ 28..29 trailing=[Whitespace " "]
@@ -59,9 +55,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Int" @ 30..33 trailing=[Whitespace " "]
+              Identifier "Int" @ 30..33 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 34..35
@@ -94,11 +88,9 @@ KotlinFile
                                 BinaryExpression
                                   NameExpression
                                     Identifier "value" @ 82..87 trailing=[Whitespace " "]
-                                  BinaryOperator
-                                    Lt "<" @ 88..89 trailing=[Whitespace " "]
-                                  BinaryExpressionRight
-                                    LiteralExpression
-                                      IntegerLiteral "0" @ 90..91
+                                  Lt "<" @ 88..89 trailing=[Whitespace " "]
+                                  LiteralExpression
+                                    IntegerLiteral "0" @ 90..91
                                 RParen ")" @ 91..92 trailing=[Whitespace " "]
                               JumpExpression
                                 ContinueKw "continue" @ 93..101
@@ -115,11 +107,9 @@ KotlinFile
                                 BinaryExpression
                                   NameExpression
                                     Identifier "value" @ 119..124 trailing=[Whitespace " "]
-                                  BinaryOperator
-                                    EqEq "==" @ 125..127 trailing=[Whitespace " "]
-                                  BinaryExpressionRight
-                                    LiteralExpression
-                                      IntegerLiteral "0" @ 128..129
+                                  EqEq "==" @ 125..127 trailing=[Whitespace " "]
+                                  LiteralExpression
+                                    IntegerLiteral "0" @ 128..129
                                 RParen ")" @ 129..130 trailing=[Whitespace " "]
                               JumpExpression
                                 BreakKw "break" @ 131..136
@@ -133,10 +123,8 @@ KotlinFile
                               NavigationExpression
                                 NameExpression
                                   Identifier "values" @ 150..156 leading=[Newline "\n", Whitespace "        "]
-                                NavigationOperator
-                                  Dot "." @ 156..157
-                                NameExpression
-                                  Identifier "forEach" @ 157..164 trailing=[Whitespace " "]
+                                Dot "." @ 156..157
+                                Identifier "forEach" @ 157..164 trailing=[Whitespace " "]
                               TypeArgumentListList
                               LambdaExpressionList
                                 LambdaExpression
@@ -156,11 +144,9 @@ KotlinFile
                                                   BinaryExpression
                                                     NameExpression
                                                       Identifier "it" @ 189..191 trailing=[Whitespace " "]
-                                                    BinaryOperator
-                                                      EqEq "==" @ 192..194 trailing=[Whitespace " "]
-                                                    BinaryExpressionRight
-                                                      NameExpression
-                                                        Identifier "value" @ 195..200
+                                                    EqEq "==" @ 192..194 trailing=[Whitespace " "]
+                                                    NameExpression
+                                                      Identifier "value" @ 195..200
                                                   RParen ")" @ 200..201 trailing=[Whitespace " "]
                                                 JumpExpression
                                                   ReturnKw "return" @ 202..208

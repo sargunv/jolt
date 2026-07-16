@@ -55,9 +55,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Array" @ 61..66
+                      Identifier "Array" @ 61..66
                       TypeArgumentList
                         Lt "<" @ 66..67
                         TypeProjectionSeparatedList
@@ -65,9 +63,7 @@ KotlinFile
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "String" @ 67..73
+                                  Identifier "String" @ 67..73
                         Gt ">" @ 73..74
           RParen ")" @ 74..75
     ClassDeclaration
@@ -91,11 +87,9 @@ KotlinFile
                       StringTemplateExpression
                         StringTemplateEntryList
                           StringTemplateEntry
-                            StringTemplateContent
-                              OpenQuote "\"" @ 127..128
+                            OpenQuote "\"" @ 127..128
                           StringTemplateEntry
-                            StringTemplateContent
-                              RegularStringPart "alpha" @ 128..133
+                            RegularStringPart "alpha" @ 128..133
                         ClosingQuote "\"" @ 133..134
                     Comma "," @ 134..135 trailing=[Whitespace " "]
                     ValueArgument
@@ -103,11 +97,9 @@ KotlinFile
                       StringTemplateExpression
                         StringTemplateEntryList
                           StringTemplateEntry
-                            StringTemplateContent
-                              OpenQuote "\"" @ 136..137
+                            OpenQuote "\"" @ 136..137
                           StringTemplateEntry
-                            StringTemplateContent
-                              RegularStringPart "beta" @ 137..141
+                            RegularStringPart "beta" @ 137..141
                         ClosingQuote "\"" @ 141..142 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:collection-literal-close */", Whitespace " "]
                   RBracket "]" @ 186..187
             RParen ")" @ 187..188
@@ -140,17 +132,13 @@ KotlinFile
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                StringTemplateContent
-                                  OpenQuote "\"" @ 242..243 leading=[Newline "\n", Whitespace "        "]
+                                OpenQuote "\"" @ 242..243 leading=[Newline "\n", Whitespace "        "]
                               StringTemplateEntry
-                                StringTemplateContent
-                                  RegularStringPart "one" @ 243..246
+                                RegularStringPart "one" @ 243..246
                             ClosingQuote "\"" @ 246..247 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:pair-key */", Whitespace " "]
-                          BinaryOperator
-                            Identifier "to" @ 275..277 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:to-call */", Whitespace " "]
-                          BinaryExpressionRight
-                            LiteralExpression
-                              IntegerLiteral "1" @ 304..305
+                          Identifier "to" @ 275..277 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:to-call */", Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "1" @ 304..305
                       Comma "," @ 305..306
                       ValueArgument
                         ValueArgumentPrefixList
@@ -158,17 +146,13 @@ KotlinFile
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                StringTemplateContent
-                                  OpenQuote "\"" @ 315..316 leading=[Newline "\n", Whitespace "        "]
+                                OpenQuote "\"" @ 315..316 leading=[Newline "\n", Whitespace "        "]
                               StringTemplateEntry
-                                StringTemplateContent
-                                  RegularStringPart "two" @ 316..319
+                                RegularStringPart "two" @ 316..319
                             ClosingQuote "\"" @ 319..320 trailing=[Whitespace " "]
-                          BinaryOperator
-                            Identifier "to" @ 321..323 trailing=[Whitespace " "]
-                          BinaryExpressionRight
-                            LiteralExpression
-                              IntegerLiteral "2" @ 324..325
+                          Identifier "to" @ 321..323 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "2" @ 324..325
                       Comma "," @ 325..326
                     RParen ")" @ 331..332 leading=[Newline "\n", Whitespace "    "]
                   LambdaExpressionList

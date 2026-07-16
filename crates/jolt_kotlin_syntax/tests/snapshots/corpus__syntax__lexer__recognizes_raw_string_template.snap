@@ -15,18 +15,15 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              StringTemplateContent
-                OpenQuote "\"\"\"" @ 0..3
+              OpenQuote "\"\"\"" @ 0..3
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "hello " @ 3..9
+              RegularStringPart "hello " @ 3..9
             StringTemplateEntry
-              StringTemplateContent
-                LongStringTemplateEntry
-                  LongTemplateEntryStart "${" @ 9..11
-                  NameExpression
-                    Identifier "name" @ 11..15
-                  LongTemplateEntryEnd "}" @ 15..16
+              LongStringTemplateEntry
+                LongTemplateEntryStart "${" @ 9..11
+                NameExpression
+                  Identifier "name" @ 11..15
+                LongTemplateEntryEnd "}" @ 15..16
           ClosingQuote "\"\"\"" @ 16..19
       TerminatorList
   Eof "" @ 20..20 leading=[Newline "\n"]

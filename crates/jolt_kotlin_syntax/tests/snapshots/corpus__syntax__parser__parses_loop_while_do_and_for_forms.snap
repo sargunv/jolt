@@ -42,9 +42,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Iterable" @ 18..26
+                    Identifier "Iterable" @ 18..26
                     TypeArgumentList
                       Lt "<" @ 26..27
                       TypeProjectionSeparatedList
@@ -52,9 +50,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 27..33
+                                Identifier "String" @ 27..33
                       Gt ">" @ 33..34
         RParen ")" @ 34..35 trailing=[Whitespace " "]
       BlockBody
@@ -178,10 +174,8 @@ KotlinFile
                     NavigationExpression
                       NameExpression
                         Identifier "values" @ 204..210
-                      NavigationOperator
-                        Dot "." @ 210..211
-                      NameExpression
-                        Identifier "withIndex" @ 211..220
+                      Dot "." @ 210..211
+                      Identifier "withIndex" @ 211..220
                     TypeArgumentListList
                     ValueArgumentList
                       LParen "(" @ 220..221

@@ -44,11 +44,9 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              StringTemplateContent
-                OpenQuote "\"" @ 42..43
+              OpenQuote "\"" @ 42..43
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "demo" @ 43..47
+              RegularStringPart "demo" @ 43..47
           ClosingQuote "\"" @ 47..48
       PropertyBodyMemberList
     FunctionDeclaration
@@ -67,11 +65,9 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              StringTemplateContent
-                OpenQuote "\"" @ 65..66
+              OpenQuote "\"" @ 65..66
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "hello" @ 66..71
+              RegularStringPart "hello" @ 66..71
           ClosingQuote "\"" @ 71..72
     ClassDeclaration
       ModifierList

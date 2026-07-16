@@ -45,9 +45,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 78..84
+                      Identifier "String" @ 78..84
           RParen ")" @ 84..85
     ClassDeclaration
       ModifierList

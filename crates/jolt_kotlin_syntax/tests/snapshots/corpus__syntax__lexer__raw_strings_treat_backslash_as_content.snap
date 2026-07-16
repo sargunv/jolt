@@ -15,23 +15,17 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              StringTemplateContent
-                OpenQuote "\"\"\"" @ 0..3
+              OpenQuote "\"\"\"" @ 0..3
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "C:" @ 3..5
+              RegularStringPart "C:" @ 3..5
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "\\" @ 5..6
+              RegularStringPart "\\" @ 5..6
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "tmp" @ 6..9
+              RegularStringPart "tmp" @ 6..9
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "\\" @ 9..10
+              RegularStringPart "\\" @ 9..10
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "file.txt" @ 10..18
+              RegularStringPart "file.txt" @ 10..18
           ClosingQuote "\"\"\"" @ 18..21
       TerminatorList
   Eof "" @ 22..22 leading=[Newline "\n"]

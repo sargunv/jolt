@@ -35,18 +35,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 22..25
+                    Identifier "Int" @ 22..25
         RParen ")" @ 25..26
       Colon ":" @ 26..27 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 28..34 trailing=[Whitespace " "]
+              Identifier "String" @ 28..34 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 35..36
@@ -93,11 +89,9 @@ KotlinFile
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                StringTemplateContent
-                                  OpenQuote "\"" @ 109..110
+                                OpenQuote "\"" @ 109..110
                               StringTemplateEntry
-                                StringTemplateContent
-                                  RegularStringPart "other" @ 110..115
+                                RegularStringPart "other" @ 110..115
                             ClosingQuote "\"" @ 115..116
                     RBrace "}" @ 121..122 leading=[Newline "\n", Whitespace "    "]
               TerminatorList

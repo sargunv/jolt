@@ -39,18 +39,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 30..33
+                    Identifier "Int" @ 30..33
         RParen ")" @ 33..34
       Colon ":" @ 34..35 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 36..42 trailing=[Whitespace " "]
+              Identifier "String" @ 36..42 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 43..44
@@ -68,81 +64,62 @@ KotlinFile
                     StringTemplateExpression
                       StringTemplateEntryList
                         StringTemplateEntry
-                          StringTemplateContent
-                            OpenQuote "\"\"\"" @ 59..62
+                          OpenQuote "\"\"\"" @ 59..62
                         StringTemplateEntry
-                          StringTemplateContent
-                            RegularStringPart "\n" @ 62..63
+                          RegularStringPart "\n" @ 62..63
                         StringTemplateEntry
-                          StringTemplateContent
-                            RegularStringPart "        total=" @ 63..77
+                          RegularStringPart "        total=" @ 63..77
                         StringTemplateEntry
-                          StringTemplateContent
-                            LongStringTemplateEntry
-                              LongTemplateEntryStart "${" @ 77..79
-                              BinaryExpression
-                                NameExpression
-                                  Identifier "total" @ 79..84 trailing=[Whitespace " "]
-                                BinaryOperator
-                                  Plus "+" @ 85..86 trailing=[Whitespace " "]
-                                BinaryExpressionRight
+                          LongStringTemplateEntry
+                            LongTemplateEntryStart "${" @ 77..79
+                            BinaryExpression
+                              NameExpression
+                                Identifier "total" @ 79..84 trailing=[Whitespace " "]
+                              Plus "+" @ 85..86 trailing=[Whitespace " "]
+                              LiteralExpression
+                                IntegerLiteral "1" @ 87..88
+                            LongTemplateEntryEnd "}" @ 88..89
+                        StringTemplateEntry
+                          RegularStringPart "\n" @ 89..90
+                        StringTemplateEntry
+                          RegularStringPart "        status=" @ 90..105
+                        StringTemplateEntry
+                          LongStringTemplateEntry
+                            LongTemplateEntryStart "${" @ 105..107
+                            IfExpression
+                              IfKw "if" @ 107..109 trailing=[Whitespace " "]
+                              ParenthesizedExpression
+                                LParen "(" @ 110..111
+                                BinaryExpression
+                                  NameExpression
+                                    Identifier "total" @ 111..116 trailing=[Whitespace " "]
+                                  Gt ">" @ 117..118 trailing=[Whitespace " "]
                                   LiteralExpression
-                                    IntegerLiteral "1" @ 87..88
-                              LongTemplateEntryEnd "}" @ 88..89
+                                    IntegerLiteral "0" @ 119..120
+                                RParen ")" @ 120..121 trailing=[Whitespace " "]
+                              StringTemplateExpression
+                                StringTemplateEntryList
+                                  StringTemplateEntry
+                                    OpenQuote "\"" @ 122..123
+                                  StringTemplateEntry
+                                    RegularStringPart "ready" @ 123..128
+                                ClosingQuote "\"" @ 128..129 trailing=[Whitespace " "]
+                              ElseKw "else" @ 130..134 trailing=[Whitespace " "]
+                              StringTemplateExpression
+                                StringTemplateEntryList
+                                  StringTemplateEntry
+                                    OpenQuote "\"" @ 135..136
+                                  StringTemplateEntry
+                                    RegularStringPart "empty" @ 136..141
+                                ClosingQuote "\"" @ 141..142
+                            LongTemplateEntryEnd "}" @ 142..143
                         StringTemplateEntry
-                          StringTemplateContent
-                            RegularStringPart "\n" @ 89..90
+                          RegularStringPart "\n" @ 143..144
                         StringTemplateEntry
-                          StringTemplateContent
-                            RegularStringPart "        status=" @ 90..105
-                        StringTemplateEntry
-                          StringTemplateContent
-                            LongStringTemplateEntry
-                              LongTemplateEntryStart "${" @ 105..107
-                              IfExpression
-                                IfKw "if" @ 107..109 trailing=[Whitespace " "]
-                                ParenthesizedExpression
-                                  LParen "(" @ 110..111
-                                  BinaryExpression
-                                    NameExpression
-                                      Identifier "total" @ 111..116 trailing=[Whitespace " "]
-                                    BinaryOperator
-                                      Gt ">" @ 117..118 trailing=[Whitespace " "]
-                                    BinaryExpressionRight
-                                      LiteralExpression
-                                        IntegerLiteral "0" @ 119..120
-                                  RParen ")" @ 120..121 trailing=[Whitespace " "]
-                                StringTemplateExpression
-                                  StringTemplateEntryList
-                                    StringTemplateEntry
-                                      StringTemplateContent
-                                        OpenQuote "\"" @ 122..123
-                                    StringTemplateEntry
-                                      StringTemplateContent
-                                        RegularStringPart "ready" @ 123..128
-                                  ClosingQuote "\"" @ 128..129 trailing=[Whitespace " "]
-                                ElseKw "else" @ 130..134 trailing=[Whitespace " "]
-                                StringTemplateExpression
-                                  StringTemplateEntryList
-                                    StringTemplateEntry
-                                      StringTemplateContent
-                                        OpenQuote "\"" @ 135..136
-                                    StringTemplateEntry
-                                      StringTemplateContent
-                                        RegularStringPart "empty" @ 136..141
-                                  ClosingQuote "\"" @ 141..142
-                              LongTemplateEntryEnd "}" @ 142..143
-                        StringTemplateEntry
-                          StringTemplateContent
-                            RegularStringPart "\n" @ 143..144
-                        StringTemplateEntry
-                          StringTemplateContent
-                            RegularStringPart "    " @ 144..148
+                          RegularStringPart "    " @ 144..148
                       ClosingQuote "\"\"\"" @ 148..151
-                    NavigationOperator
-                      Dot "." @ 151..152
-                    NameExpression
-                      Identifier "trimIndent" @ 152..162
+                    Dot "." @ 151..152
+                    Identifier "trimIndent" @ 152..162
                   TypeArgumentListList
                   ValueArgumentList
                     LParen "(" @ 162..163
@@ -161,41 +138,29 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        InterpolationPrefix "$$" @ 187..189
+                      InterpolationPrefix "$$" @ 187..189
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"\"\"" @ 189..192
+                      OpenQuote "\"\"\"" @ 189..192
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "\n" @ 192..193
+                      RegularStringPart "\n" @ 192..193
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "        literal " @ 193..209
+                      RegularStringPart "        literal " @ 193..209
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "$" @ 209..210
+                      RegularStringPart "$" @ 209..210
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "name" @ 210..214
+                      RegularStringPart "name" @ 210..214
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "\n" @ 214..215
+                      RegularStringPart "\n" @ 214..215
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "        interpolated " @ 215..236
+                      RegularStringPart "        interpolated " @ 215..236
                     StringTemplateEntry
-                      StringTemplateContent
-                        ShortTemplateEntryStart "$$" @ 236..238
+                      ShortTemplateEntryStart "$$" @ 236..238
                     StringTemplateEntry
-                      StringTemplateContent
-                        Identifier "total" @ 238..243
+                      Identifier "total" @ 238..243
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "\n" @ 243..244
+                      RegularStringPart "\n" @ 243..244
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "    " @ 244..248
+                      RegularStringPart "    " @ 244..248
                   ClosingQuote "\"\"\"" @ 248..251
               PropertyBodyMemberList
             Statement
@@ -205,11 +170,9 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "raw" @ 263..266 trailing=[Whitespace " "]
-                    BinaryOperator
-                      Plus "+" @ 267..268 trailing=[Whitespace " "]
-                    BinaryExpressionRight
-                      NameExpression
-                        Identifier "multiDollar" @ 269..280
+                    Plus "+" @ 267..268 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "multiDollar" @ 269..280
               TerminatorList
           RBrace "}" @ 281..282 leading=[Newline "\n"]
   Eof "" @ 283..283 leading=[Newline "\n"]

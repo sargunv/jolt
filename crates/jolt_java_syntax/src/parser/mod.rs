@@ -6,7 +6,7 @@ use std::{borrow::Cow, fmt};
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
 use jolt_syntax::{
     ParseEvents, SyntaxDiagnosticOwner, SyntaxTokenData, SyntaxTree, SyntaxTrivia,
-    build_syntax_tree_with_factory_and_diagnostic_owners,
+    build_parser_syntax_tree,
 };
 use jolt_text::{TextRange, TextSize};
 
@@ -87,6 +87,7 @@ impl JavaParse<'_> {
 
     /// Returns the parsed syntax tree root.
     #[must_use]
+    #[inline]
     pub fn syntax(&self) -> Option<CompilationUnit<'_>> {
         self.tree
             .as_ref()
@@ -146,6 +147,7 @@ fn fmt_diagnostic(f: &mut fmt::Formatter<'_>, diagnostic: &Diagnostic) -> fmt::R
 
 /// Parses a Java compilation unit.
 #[must_use]
+#[inline]
 pub fn parse_compilation_unit(source: &str) -> JavaParse<'_> {
     let mut normalized = normalize_unicode_escapes(source);
     let mut parse = Parser::new(normalized.source()).parse_compilation_unit();
@@ -211,7 +213,7 @@ fn finish_parse<'source>(
 ) -> JavaParse<'source> {
     let unicode_diagnostic_count = diagnostics.len();
     diagnostics.extend(parse.diagnostics);
-    let (tree, parse_diagnostic_owners) = match build_syntax_tree_with_factory_and_diagnostic_owners(
+    let (tree, parse_diagnostic_owners) = match build_parser_syntax_tree(
         &source,
         parse.events,
         parse.tokens,

@@ -15,17 +15,13 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              StringTemplateContent
-                OpenQuote "\"" @ 0..1
+              OpenQuote "\"" @ 0..1
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "hello " @ 1..7
+              RegularStringPart "hello " @ 1..7
             StringTemplateEntry
-              StringTemplateContent
-                ShortTemplateEntryStart "$" @ 7..8
+              ShortTemplateEntryStart "$" @ 7..8
             StringTemplateEntry
-              StringTemplateContent
-                Identifier "`class name`" @ 8..20
+              Identifier "`class name`" @ 8..20
           ClosingQuote "\"" @ 20..21
       TerminatorList
   Eof "" @ 22..22 leading=[Newline "\n"]

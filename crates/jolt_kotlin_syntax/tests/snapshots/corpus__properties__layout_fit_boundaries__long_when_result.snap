@@ -49,18 +49,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 51..54
+                    Identifier "Int" @ 51..54
         RParen ")" @ 54..55
       Colon ":" @ 55..56 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 57..63 trailing=[Whitespace " "]
+              Identifier "String" @ 57..63 trailing=[Whitespace " "]
       ExpressionBody
         Assign "=" @ 64..65
         WhenExpression
@@ -82,11 +78,9 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"" @ 99..100
+                      OpenQuote "\"" @ 99..100
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "request completed successfully with a compact success response" @ 100..162
+                      RegularStringPart "request completed successfully with a compact success response" @ 100..162
                   ClosingQuote "\"" @ 162..163
             WhenEntry
               WhenConditionSeparatedList
@@ -98,11 +92,9 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"" @ 179..180
+                      OpenQuote "\"" @ 179..180
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "resource was not found in the active workspace" @ 180..226
+                      RegularStringPart "resource was not found in the active workspace" @ 180..226
                   ClosingQuote "\"" @ 226..227
             WhenEntry
               ElseKw "else" @ 236..240 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
@@ -112,11 +104,9 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"" @ 244..245
+                      OpenQuote "\"" @ 244..245
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "unexpected status code returned from the service" @ 245..293
+                      RegularStringPart "unexpected status code returned from the service" @ 245..293
                   ClosingQuote "\"" @ 293..294
           RBrace "}" @ 299..300 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 301..301 leading=[Newline "\n"]

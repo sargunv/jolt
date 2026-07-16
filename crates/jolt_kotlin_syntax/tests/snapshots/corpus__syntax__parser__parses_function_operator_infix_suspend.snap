@@ -37,9 +37,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Int" @ 25..28
+                      Identifier "Int" @ 25..28
           RParen ")" @ 28..29 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 30..31
@@ -65,18 +63,14 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "Counter" @ 61..68
+                            Identifier "Counter" @ 61..68
                 RParen ")" @ 68..69
               Colon ":" @ 69..70 trailing=[Whitespace " "]
               TypeReference
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Counter" @ 71..78 trailing=[Whitespace " "]
+                      Identifier "Counter" @ 71..78 trailing=[Whitespace " "]
               ExpressionBody
                 Assign "=" @ 79..80 trailing=[Whitespace " "]
                 CallExpression
@@ -91,16 +85,12 @@ KotlinFile
                         BinaryExpression
                           NameExpression
                             Identifier "value" @ 89..94 trailing=[Whitespace " "]
-                          BinaryOperator
-                            Plus "+" @ 95..96 trailing=[Whitespace " "]
-                          BinaryExpressionRight
-                            NavigationExpression
-                              NameExpression
-                                Identifier "other" @ 97..102
-                              NavigationOperator
-                                Dot "." @ 102..103
-                              NameExpression
-                                Identifier "value" @ 103..108
+                          Plus "+" @ 95..96 trailing=[Whitespace " "]
+                          NavigationExpression
+                            NameExpression
+                              Identifier "other" @ 97..102
+                            Dot "." @ 102..103
+                            Identifier "value" @ 103..108
                     RParen ")" @ 108..109
                   LambdaExpressionList
           ClassMemberDeclaration
@@ -124,33 +114,25 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "Counter" @ 138..145
+                            Identifier "Counter" @ 138..145
                 RParen ")" @ 145..146
               Colon ":" @ 146..147 trailing=[Whitespace " "]
               TypeReference
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Boolean" @ 148..155 trailing=[Whitespace " "]
+                      Identifier "Boolean" @ 148..155 trailing=[Whitespace " "]
               ExpressionBody
                 Assign "=" @ 156..157 trailing=[Whitespace " "]
                 BinaryExpression
                   NameExpression
                     Identifier "value" @ 158..163 trailing=[Whitespace " "]
-                  BinaryOperator
-                    Gt ">" @ 164..165 trailing=[Whitespace " "]
-                  BinaryExpressionRight
-                    NavigationExpression
-                      NameExpression
-                        Identifier "other" @ 166..171
-                      NavigationOperator
-                        Dot "." @ 171..172
-                      NameExpression
-                        Identifier "value" @ 172..177
+                  Gt ">" @ 164..165 trailing=[Whitespace " "]
+                  NavigationExpression
+                    NameExpression
+                      Identifier "other" @ 166..171
+                    Dot "." @ 171..172
+                    Identifier "value" @ 172..177
         RBrace "}" @ 178..179 leading=[Newline "\n"]
     FunctionDeclaration
       ModifierList
@@ -169,19 +151,15 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 207..213 trailing=[Whitespace " "]
+              Identifier "String" @ 207..213 trailing=[Whitespace " "]
       ExpressionBody
         Assign "=" @ 214..215 trailing=[Whitespace " "]
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              StringTemplateContent
-                OpenQuote "\"" @ 216..217
+              OpenQuote "\"" @ 216..217
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "value" @ 217..222
+              RegularStringPart "value" @ 217..222
           ClosingQuote "\"" @ 222..223
   Eof "" @ 224..224 leading=[Newline "\n"]
 

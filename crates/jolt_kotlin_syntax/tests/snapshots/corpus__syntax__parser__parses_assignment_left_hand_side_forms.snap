@@ -34,9 +34,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Target" @ 30..36
+                    Identifier "Target" @ 30..36
           Comma "," @ 36..37 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -47,9 +45,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 45..48
+                    Identifier "Int" @ 45..48
           Comma "," @ 48..49 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -60,9 +56,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 57..63
+                    Identifier "String" @ 57..63
         RParen ")" @ 63..64 trailing=[Whitespace " "]
       BlockBody
         Block
@@ -74,10 +68,8 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "target" @ 71..77 leading=[Newline "\n", Whitespace "    "]
-                    NavigationOperator
-                      Dot "." @ 77..78
-                    NameExpression
-                      Identifier "name" @ 78..82 trailing=[Whitespace " "]
+                    Dot "." @ 77..78
+                    Identifier "name" @ 78..82 trailing=[Whitespace " "]
                   Assign "=" @ 83..84 trailing=[Whitespace " "]
                   NameExpression
                     Identifier "value" @ 85..90
@@ -107,15 +99,11 @@ KotlinFile
                       NavigationExpression
                         NameExpression
                           Identifier "target" @ 121..127 leading=[Newline "\n", Whitespace "    "]
-                        NavigationOperator
-                          Dot "." @ 127..128
-                        NameExpression
-                          Identifier "child" @ 128..133
+                        Dot "." @ 127..128
+                        Identifier "child" @ 128..133
                       BangBang "!!" @ 133..135
-                    NavigationOperator
-                      Dot "." @ 135..136
-                    NameExpression
-                      Identifier "name" @ 136..140 trailing=[Whitespace " "]
+                    Dot "." @ 135..136
+                    Identifier "name" @ 136..140 trailing=[Whitespace " "]
                   Assign "=" @ 141..142 trailing=[Whitespace " "]
                   NameExpression
                     Identifier "value" @ 143..148
@@ -128,10 +116,8 @@ KotlinFile
                       NavigationExpression
                         NameExpression
                           Identifier "target" @ 153..159 leading=[Newline "\n", Whitespace "    "]
-                        NavigationOperator
-                          Dot "." @ 159..160
-                        NameExpression
-                          Identifier "items" @ 160..165
+                        Dot "." @ 159..160
+                        Identifier "items" @ 160..165
                       LBracket "[" @ 165..166
                       ValueArgumentEntryList
                         ValueArgument
@@ -139,10 +125,8 @@ KotlinFile
                           NameExpression
                             Identifier "index" @ 166..171
                       RBracket "]" @ 171..172
-                    NavigationOperator
-                      Dot "." @ 172..173
-                    NameExpression
-                      Identifier "label" @ 173..178 trailing=[Whitespace " "]
+                    Dot "." @ 172..173
+                    Identifier "label" @ 173..178 trailing=[Whitespace " "]
                   Assign "=" @ 179..180 trailing=[Whitespace " "]
                   NameExpression
                     Identifier "value" @ 181..186

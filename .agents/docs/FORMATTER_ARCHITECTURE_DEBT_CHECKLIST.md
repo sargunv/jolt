@@ -1350,10 +1350,50 @@ run; Phase 23 is the designated cumulative performance gate.
 
 ### New Phase 23: Final Performance Gate
 
-Repeat the Phase 3 release benchmarks on the same machine and manifests. Reject
-per-node allocation, a release comment map, or a result exceeding the
-architecture's incremental or cumulative time, allocation, memory, or tree-byte
-budgets without an explicit approved architecture amendment.
+Status: complete.
+
+Repeat the Phase 3 release benchmarks on the same machine and manifests. The
+first measurement found a deterministic Kotlin-only regression: unchanged tokens
+and trivia produced 34,537 additional physical nodes, 48,924 additional slots,
+6.56% more reserved tree bytes/token, 9.01% more parse allocation bytes, and
+6.81% more parse time than the preceding report.
+
+The audit rejected capacity tuning as the primary answer because most of the
+growth was stored final syntax, not transient allocation. Single-slot roles now
+remain exhaustive typed schema fields without allocating a one-child node:
+binary operator/right roles, navigation operators and identifier selectors, and
+string-template content. User-type segments retain their meaningful grouping
+node while empty annotation lists are absent and the segment name is a typed
+source token rather than a one-token `Name` child. Multi-field constructed
+syntax, physical lists, malformed/bogus owners, and diagnostic-owning wrappers
+remain physical.
+
+A release profile showed the shared token-buffer `ensure` fast path as the
+hottest parse leaf because cursor kind queries crossed an uninlined call even
+for already-buffered tokens. The measured cursor chain is forced inline, with a
+documented Rust 1.96 lint exception. Parser-owned event streams also bypass the
+public builder's redundant scan for a construction-only `Consumed` sentinel that
+the marker API cannot emit; low-level external builder inputs retain that
+validation and its regression test. Literal-width measurement now uses bounded
+ASCII paths before Unicode width decoding, and the profiled compact-concat
+append fast path is forced inline. The single harness retains two warmups and
+uses twenty recorded samples so CPU ramp-up does not decide a three-percent
+release gate.
+
+Final same-machine results pass every incremental and cumulative budget. Against
+the preceding report, every Java and Kotlin stage improves by more than four
+percent. Against Phase 3, both languages' parse and format stages improve, Java
+end-to-end improves, and Kotlin end-to-end remains below the three-percent
+limit. Kotlin parse allocation count/bytes and reserved tree bytes/token improve
+both incrementally and cumulatively, with cumulative reductions above forty
+percent. All peak-memory results remain within five percent. The committed
+same-machine report is the exact numeric record.
+
+Quality audit: the full 148-test Java/Kotlin suite, imported idempotence, schema
+and diagnostic ownership audits, conservation, CLI/dprint tests, wasm checks,
+Rust 1.96 formatting and lints, the external-event validation regression,
+independent architecture review, report source-state verification, and
+`git diff --check` pass.
 
 ### New Phase 24: Clean Completion Proof
 

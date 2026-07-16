@@ -47,9 +47,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Boolean" @ 31..38
+                    Identifier "Boolean" @ 31..38
         RParen ")" @ 38..39 trailing=[Whitespace " "]
       BlockBody
         Block
@@ -79,11 +77,9 @@ KotlinFile
                             StringTemplateExpression
                               StringTemplateEntryList
                                 StringTemplateEntry
-                                  StringTemplateContent
-                                    OpenQuote "\"" @ 82..83
+                                  OpenQuote "\"" @ 82..83
                                 StringTemplateEntry
-                                  StringTemplateContent
-                                    RegularStringPart "OPT_IN_USAGE_ERROR" @ 83..101
+                                  RegularStringPart "OPT_IN_USAGE_ERROR" @ 83..101
                               ClosingQuote "\"" @ 101..102
                         RParen ")" @ 102..103 trailing=[Whitespace " ", LineComment "// createForProduction uses an internal opt-in"]
                   CallExpression
@@ -120,11 +116,9 @@ KotlinFile
                             StringTemplateExpression
                               StringTemplateEntryList
                                 StringTemplateEntry
-                                  StringTemplateContent
-                                    OpenQuote "\"" @ 215..216
+                                  OpenQuote "\"" @ 215..216
                                 StringTemplateEntry
-                                  StringTemplateContent
-                                    RegularStringPart "DEPRECATION" @ 216..227
+                                  RegularStringPart "DEPRECATION" @ 216..227
                               ClosingQuote "\"" @ 227..228
                         RParen ")" @ 228..229
                   WhenExpression
@@ -146,11 +140,9 @@ KotlinFile
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                StringTemplateContent
-                                  OpenQuote "\"" @ 272..273
+                                OpenQuote "\"" @ 272..273
                               StringTemplateEntry
-                                StringTemplateContent
-                                  RegularStringPart "yes" @ 273..276
+                                RegularStringPart "yes" @ 273..276
                             ClosingQuote "\"" @ 276..277
                       WhenEntry
                         WhenConditionSeparatedList
@@ -162,11 +154,9 @@ KotlinFile
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                StringTemplateContent
-                                  OpenQuote "\"" @ 299..300
+                                OpenQuote "\"" @ 299..300
                               StringTemplateEntry
-                                StringTemplateContent
-                                  RegularStringPart "no" @ 300..302
+                                RegularStringPart "no" @ 300..302
                             ClosingQuote "\"" @ 302..303
                     RBrace "}" @ 312..313 leading=[Newline "\n", Whitespace "        "]
               PropertyBodyMemberList
@@ -194,11 +184,9 @@ KotlinFile
                             StringTemplateExpression
                               StringTemplateEntryList
                                 StringTemplateEntry
-                                  StringTemplateContent
-                                    OpenQuote "\"" @ 350..351
+                                  OpenQuote "\"" @ 350..351
                                 StringTemplateEntry
-                                  StringTemplateContent
-                                    RegularStringPart "DEPRECATION" @ 351..362
+                                  RegularStringPart "DEPRECATION" @ 351..362
                               ClosingQuote "\"" @ 362..363
                         RParen ")" @ 363..364
                   NavigationExpression
@@ -221,11 +209,9 @@ KotlinFile
                             StringTemplateExpression
                               StringTemplateEntryList
                                 StringTemplateEntry
-                                  StringTemplateContent
-                                    OpenQuote "\"" @ 407..408
+                                  OpenQuote "\"" @ 407..408
                                 StringTemplateEntry
-                                  StringTemplateContent
-                                    RegularStringPart "yes" @ 408..411
+                                  RegularStringPart "yes" @ 408..411
                               ClosingQuote "\"" @ 411..412
                         WhenEntry
                           WhenConditionSeparatedList
@@ -237,17 +223,13 @@ KotlinFile
                             StringTemplateExpression
                               StringTemplateEntryList
                                 StringTemplateEntry
-                                  StringTemplateContent
-                                    OpenQuote "\"" @ 434..435
+                                  OpenQuote "\"" @ 434..435
                                 StringTemplateEntry
-                                  StringTemplateContent
-                                    RegularStringPart "no" @ 435..437
+                                  RegularStringPart "no" @ 435..437
                               ClosingQuote "\"" @ 437..438
                       RBrace "}" @ 447..448 leading=[Newline "\n", Whitespace "        "]
-                    NavigationOperator
-                      Dot "." @ 448..449
-                    NameExpression
-                      Identifier "length" @ 449..455
+                    Dot "." @ 448..449
+                    Identifier "length" @ 449..455
               PropertyBodyMemberList
           RBrace "}" @ 456..457 leading=[Newline "\n"]
   Eof "" @ 458..458 leading=[Newline "\n"]

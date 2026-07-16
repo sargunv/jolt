@@ -35,9 +35,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 14..17
+                    Identifier "Int" @ 14..17
           Comma "," @ 17..18 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -48,9 +46,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 22..25
+                    Identifier "Int" @ 22..25
           Comma "," @ 25..26 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -61,18 +57,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 30..33
+                    Identifier "Int" @ 30..33
         RParen ")" @ 33..34
       Colon ":" @ 34..35 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Int" @ 36..39 trailing=[Whitespace " "]
+              Identifier "Int" @ 36..39 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 40..41
@@ -101,11 +93,9 @@ KotlinFile
                             BinaryExpression
                               NameExpression
                                 Identifier "a" @ 69..70 trailing=[Whitespace " "]
-                              BinaryOperator
-                                Gt ">" @ 71..72 trailing=[Whitespace " "]
-                              BinaryExpressionRight
-                                NameExpression
-                                  Identifier "b" @ 73..74
+                              Gt ">" @ 71..72 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "b" @ 73..74
                             RParen ")" @ 74..75 trailing=[Whitespace " "]
                           NameExpression
                             Identifier "a" @ 76..77 trailing=[Whitespace " "]
@@ -131,11 +121,9 @@ KotlinFile
                       BinaryExpression
                         NameExpression
                           Identifier "a" @ 104..105 trailing=[Whitespace " "]
-                        BinaryOperator
-                          Gt ">" @ 106..107 trailing=[Whitespace " "]
-                        BinaryExpressionRight
-                          NameExpression
-                            Identifier "b" @ 108..109
+                        Gt ">" @ 106..107 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "b" @ 108..109
                       RParen ")" @ 109..110
                     IfExpression
                       IfKw "if" @ 119..121 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
@@ -144,11 +132,9 @@ KotlinFile
                         BinaryExpression
                           NameExpression
                             Identifier "a" @ 123..124 trailing=[Whitespace " "]
-                          BinaryOperator
-                            Gt ">" @ 125..126 trailing=[Whitespace " "]
-                          BinaryExpressionRight
-                            NameExpression
-                              Identifier "c" @ 127..128
+                          Gt ">" @ 125..126 trailing=[Whitespace " "]
+                          NameExpression
+                            Identifier "c" @ 127..128
                         RParen ")" @ 128..129 trailing=[Whitespace " "]
                       NameExpression
                         Identifier "a" @ 130..131 trailing=[Whitespace " "]
@@ -163,11 +149,9 @@ KotlinFile
                         BinaryExpression
                           NameExpression
                             Identifier "b" @ 160..161 trailing=[Whitespace " "]
-                          BinaryOperator
-                            Gt ">" @ 162..163 trailing=[Whitespace " "]
-                          BinaryExpressionRight
-                            NameExpression
-                              Identifier "c" @ 164..165
+                          Gt ">" @ 162..163 trailing=[Whitespace " "]
+                          NameExpression
+                            Identifier "c" @ 164..165
                         RParen ")" @ 165..166 trailing=[Whitespace " "]
                       NameExpression
                         Identifier "b" @ 167..168 trailing=[Whitespace " "]

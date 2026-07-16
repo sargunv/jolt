@@ -26,9 +26,7 @@ KotlinFile
           UserType
             UserTypeSegmentList
               UserTypeSegment
-                AnnotationList
-                Name
-                  Identifier "String" @ 4..10
+                Identifier "String" @ 4..10
         Dot "." @ 10..11
         Name
           Identifier "lastIndexOrZero" @ 11..26
@@ -37,9 +35,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Int" @ 28..31
+              Identifier "Int" @ 28..31
       PropertyBodyMemberList
         PropertyAccessor
           ModifierList
@@ -53,11 +49,9 @@ KotlinFile
             BinaryExpression
               NameExpression
                 Identifier "length" @ 44..50 trailing=[Whitespace " "]
-              BinaryOperator
-                Minus "-" @ 51..52 trailing=[Whitespace " "]
-              BinaryExpressionRight
-                LiteralExpression
-                  IntegerLiteral "1" @ 53..54
+              Minus "-" @ 51..52 trailing=[Whitespace " "]
+              LiteralExpression
+                IntegerLiteral "1" @ 53..54
     PropertyDeclaration
       ModifierList
       ModifierList
@@ -67,19 +61,13 @@ KotlinFile
           UserType
             UserTypeSegmentList
               UserTypeSegment
-                AnnotationList
-                Name
-                  Identifier "com" @ 60..63
+                Identifier "com" @ 60..63
               Dot "." @ 63..64
               UserTypeSegment
-                AnnotationList
-                Name
-                  Identifier "example" @ 64..71
+                Identifier "example" @ 64..71
               Dot "." @ 71..72
               UserTypeSegment
-                AnnotationList
-                Name
-                  Identifier "Scope" @ 72..77
+                Identifier "Scope" @ 72..77
         Dot "." @ 77..78
         Name
           Identifier "qualifiedTitle" @ 78..92
@@ -88,9 +76,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 94..100
+              Identifier "String" @ 94..100
       PropertyBodyMemberList
         PropertyAccessor
           ModifierList
@@ -119,9 +105,7 @@ KotlinFile
           UserType
             UserTypeSegmentList
               UserTypeSegment
-                AnnotationList
-                Name
-                  Identifier "MutableMap" @ 129..139
+                Identifier "MutableMap" @ 129..139
                 TypeArgumentList
                   Lt "<" @ 139..140
                   TypeProjectionSeparatedList
@@ -129,17 +113,13 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 140..146
+                            Identifier "String" @ 140..146
                     Comma "," @ 146..147 trailing=[Whitespace " "]
                     TypeReference
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "Expression" @ 148..158
+                            Identifier "Expression" @ 148..158
                             TypeArgumentList
                               Lt "<" @ 158..159
                               TypeProjectionSeparatedList
@@ -155,9 +135,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Int" @ 175..178
+              Identifier "Int" @ 175..178
       PropertyBodyMemberList
         PropertyAccessor
           ModifierList

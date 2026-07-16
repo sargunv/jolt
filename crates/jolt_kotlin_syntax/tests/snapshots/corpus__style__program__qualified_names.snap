@@ -65,14 +65,10 @@ KotlinFile
                     NavigationExpression
                       NameExpression
                         Identifier "kotlin" @ 100..106
-                      NavigationOperator
-                        Dot "." @ 106..107
-                      NameExpression
-                        Identifier "collections" @ 107..118
-                    NavigationOperator
-                      Dot "." @ 118..119
-                    NameExpression
-                      Identifier "mutableMapOf" @ 119..131
+                      Dot "." @ 106..107
+                      Identifier "collections" @ 107..118
+                    Dot "." @ 118..119
+                    Identifier "mutableMapOf" @ 119..131
                   TypeArgumentListList
                     TypeArgumentList
                       Lt "<" @ 131..132
@@ -81,27 +77,19 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 132..138
+                                Identifier "String" @ 132..138
                         Comma "," @ 138..139 trailing=[Whitespace " "]
                         TypeReference
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "kotlin" @ 140..146
+                                Identifier "kotlin" @ 140..146
                               Dot "." @ 146..147
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "collections" @ 147..158
+                                Identifier "collections" @ 147..158
                               Dot "." @ 158..159
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "List" @ 159..163
+                                Identifier "List" @ 159..163
                                 TypeArgumentList
                                   Lt "<" @ 163..164
                                   TypeProjectionSeparatedList
@@ -109,9 +97,7 @@ KotlinFile
                                       UserType
                                         UserTypeSegmentList
                                           UserTypeSegment
-                                            AnnotationList
-                                            Name
-                                              Identifier "String" @ 164..170
+                                            Identifier "String" @ 164..170
                                   Gt ">" @ 170..171
                       Gt ">" @ 171..172
                   ValueArgumentList

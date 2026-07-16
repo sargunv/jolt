@@ -713,6 +713,11 @@ impl<'source> ConcatAppender<'source> {
         }
     }
 
+    #[allow(
+        clippy::inline_always,
+        reason = "release profiles show concat append remains a hot out-of-line leaf"
+    )]
+    #[inline(always)]
     fn push(&mut self, doc: Doc<'source>, builder: &mut DocBuilder<'source>) {
         if doc.is_nil() {
             return;

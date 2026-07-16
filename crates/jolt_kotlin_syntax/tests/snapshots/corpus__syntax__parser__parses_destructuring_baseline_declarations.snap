@@ -35,9 +35,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Pair" @ 24..28
+                    Identifier "Pair" @ 24..28
                     TypeArgumentList
                       Lt "<" @ 28..29
                       TypeProjectionSeparatedList
@@ -45,17 +43,13 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 29..35
+                                Identifier "String" @ 29..35
                         Comma "," @ 35..36 trailing=[Whitespace " "]
                         TypeReference
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Int" @ 37..40
+                                Identifier "Int" @ 37..40
                       Gt ">" @ 40..41
           Comma "," @ 41..42 trailing=[Whitespace " "]
           ValueParameter
@@ -67,9 +61,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "List" @ 52..56
+                    Identifier "List" @ 52..56
                     TypeArgumentList
                       Lt "<" @ 56..57
                       TypeProjectionSeparatedList
@@ -77,9 +69,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Pair" @ 57..61
+                                Identifier "Pair" @ 57..61
                                 TypeArgumentList
                                   Lt "<" @ 61..62
                                   TypeProjectionSeparatedList
@@ -87,17 +77,13 @@ KotlinFile
                                       UserType
                                         UserTypeSegmentList
                                           UserTypeSegment
-                                            AnnotationList
-                                            Name
-                                              Identifier "String" @ 62..68
+                                            Identifier "String" @ 62..68
                                     Comma "," @ 68..69 trailing=[Whitespace " "]
                                     TypeReference
                                       UserType
                                         UserTypeSegmentList
                                           UserTypeSegment
-                                            AnnotationList
-                                            Name
-                                              Identifier "Int" @ 70..73
+                                            Identifier "Int" @ 70..73
                                   Gt ">" @ 73..74
                       Gt ">" @ 74..75
         RParen ")" @ 75..76 trailing=[Whitespace " "]

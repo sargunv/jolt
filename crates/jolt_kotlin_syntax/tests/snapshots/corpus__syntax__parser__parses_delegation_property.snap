@@ -33,9 +33,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 38..44 trailing=[Whitespace " "]
+                      Identifier "String" @ 38..44 trailing=[Whitespace " "]
               PropertyInitializer
                 Identifier "by" @ 45..47 trailing=[Whitespace " "]
                 CallExpression
@@ -52,11 +50,9 @@ KotlinFile
                               StringTemplateExpression
                                 StringTemplateEntryList
                                   StringTemplateEntry
-                                    StringTemplateContent
-                                      OpenQuote "\"" @ 55..56
+                                    OpenQuote "\"" @ 55..56
                                   StringTemplateEntry
-                                    StringTemplateContent
-                                      RegularStringPart "ready" @ 56..61
+                                    RegularStringPart "ready" @ 56..61
                                 ClosingQuote "\"" @ 61..62 trailing=[Whitespace " "]
                             TerminatorList
                         RBrace "}" @ 63..64

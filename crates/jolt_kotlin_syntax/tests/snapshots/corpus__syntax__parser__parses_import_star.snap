@@ -59,9 +59,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "List" @ 82..86
+                      Identifier "List" @ 82..86
                       TypeArgumentList
                         Lt "<" @ 86..87
                         TypeProjectionSeparatedList
@@ -69,9 +67,7 @@ KotlinFile
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "String" @ 87..93
+                                  Identifier "String" @ 87..93
                         Gt ">" @ 93..94
           RParen ")" @ 94..95
   Eof "" @ 96..96 leading=[Newline "\n"]

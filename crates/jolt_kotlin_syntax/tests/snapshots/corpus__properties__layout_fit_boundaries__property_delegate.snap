@@ -62,24 +62,18 @@ KotlinFile
                                 StringTemplateExpression
                                   StringTemplateEntryList
                                     StringTemplateEntry
-                                      StringTemplateContent
-                                        OpenQuote "\"" @ 74..75 leading=[Newline "\n", Whitespace "        "]
+                                      OpenQuote "\"" @ 74..75 leading=[Newline "\n", Whitespace "        "]
                                     StringTemplateEntry
-                                      StringTemplateContent
-                                        RegularStringPart "environment" @ 75..86
+                                      RegularStringPart "environment" @ 75..86
                                   ClosingQuote "\"" @ 86..87 trailing=[Whitespace " "]
-                                BinaryOperator
-                                  Identifier "to" @ 88..90 trailing=[Whitespace " "]
-                                BinaryExpressionRight
-                                  StringTemplateExpression
-                                    StringTemplateEntryList
-                                      StringTemplateEntry
-                                        StringTemplateContent
-                                          OpenQuote "\"" @ 91..92
-                                      StringTemplateEntry
-                                        StringTemplateContent
-                                          RegularStringPart "development" @ 92..103
-                                    ClosingQuote "\"" @ 103..104
+                                Identifier "to" @ 88..90 trailing=[Whitespace " "]
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 91..92
+                                    StringTemplateEntry
+                                      RegularStringPart "development" @ 92..103
+                                  ClosingQuote "\"" @ 103..104
                             Comma "," @ 104..105
                             ValueArgument
                               ValueArgumentPrefixList
@@ -87,24 +81,18 @@ KotlinFile
                                 StringTemplateExpression
                                   StringTemplateEntryList
                                     StringTemplateEntry
-                                      StringTemplateContent
-                                        OpenQuote "\"" @ 114..115 leading=[Newline "\n", Whitespace "        "]
+                                      OpenQuote "\"" @ 114..115 leading=[Newline "\n", Whitespace "        "]
                                     StringTemplateEntry
-                                      StringTemplateContent
-                                        RegularStringPart "feature" @ 115..122
+                                      RegularStringPart "feature" @ 115..122
                                   ClosingQuote "\"" @ 122..123 trailing=[Whitespace " "]
-                                BinaryOperator
-                                  Identifier "to" @ 124..126 trailing=[Whitespace " "]
-                                BinaryExpressionRight
-                                  StringTemplateExpression
-                                    StringTemplateEntryList
-                                      StringTemplateEntry
-                                        StringTemplateContent
-                                          OpenQuote "\"" @ 127..128
-                                      StringTemplateEntry
-                                        StringTemplateContent
-                                          RegularStringPart "layout-fit-boundary" @ 128..147
-                                    ClosingQuote "\"" @ 147..148
+                                Identifier "to" @ 124..126 trailing=[Whitespace " "]
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 127..128
+                                    StringTemplateEntry
+                                      RegularStringPart "layout-fit-boundary" @ 128..147
+                                  ClosingQuote "\"" @ 147..148
                             Comma "," @ 148..149
                           RParen ")" @ 154..155 leading=[Newline "\n", Whitespace "    "]
                         LambdaExpressionList

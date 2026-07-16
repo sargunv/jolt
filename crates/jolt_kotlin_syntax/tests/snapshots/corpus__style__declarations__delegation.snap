@@ -62,9 +62,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 72..78
+                            Identifier "String" @ 72..78
                 RParen ")" @ 78..79
         RBrace "}" @ 80..81 leading=[Newline "\n"]
     ClassDeclaration
@@ -81,9 +79,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Store" @ 103..108 trailing=[Whitespace " "]
+                    Identifier "Store" @ 103..108 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 109..110
         ClassMemberList
@@ -108,9 +104,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 140..146
+                            Identifier "String" @ 140..146
                 RParen ")" @ 146..147 trailing=[Whitespace " "]
               BlockBody
                 Block
@@ -140,9 +134,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Store" @ 195..200
+                      Identifier "Store" @ 195..200
           RParen ")" @ 200..201 trailing=[Whitespace " "]
       DelegationClause
         Colon ":" @ 202..203 trailing=[Whitespace " "]
@@ -152,9 +144,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Store" @ 204..209 trailing=[Whitespace " "]
+                    Identifier "Store" @ 204..209 trailing=[Whitespace " "]
             DelegationByClause
               Identifier "by" @ 210..212 trailing=[Whitespace " "]
               NameExpression

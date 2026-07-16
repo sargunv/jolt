@@ -51,9 +51,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Any" @ 47..50
+                      Identifier "Any" @ 47..50
                 Question "?" @ 50..51
         RParen ")" @ 51..52 trailing=[Whitespace " "]
       BlockBody
@@ -90,11 +88,9 @@ KotlinFile
                                 StringTemplateExpression
                                   StringTemplateEntryList
                                     StringTemplateEntry
-                                      StringTemplateContent
-                                        OpenQuote "\"" @ 98..99
+                                      OpenQuote "\"" @ 98..99
                                     StringTemplateEntry
-                                      StringTemplateContent
-                                        RegularStringPart "null" @ 99..103
+                                      RegularStringPart "null" @ 99..103
                                   ClosingQuote "\"" @ 103..104
                             RParen ")" @ 104..105
                           LambdaExpressionList
@@ -106,9 +102,7 @@ KotlinFile
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "String" @ 117..123 trailing=[Whitespace " "]
+                                  Identifier "String" @ 117..123 trailing=[Whitespace " "]
                       Arrow "->" @ 124..126 trailing=[Whitespace " "]
                       WhenEntryBody
                         CallExpression
@@ -123,10 +117,8 @@ KotlinFile
                                 NavigationExpression
                                   NameExpression
                                     Identifier "value" @ 135..140
-                                  NavigationOperator
-                                    Dot "." @ 140..141
-                                  NameExpression
-                                    Identifier "length" @ 141..147
+                                  Dot "." @ 140..141
+                                  Identifier "length" @ 141..147
                             RParen ")" @ 147..148
                           LambdaExpressionList
                     WhenEntry

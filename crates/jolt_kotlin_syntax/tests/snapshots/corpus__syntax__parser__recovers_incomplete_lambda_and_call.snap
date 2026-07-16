@@ -33,9 +33,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "List" @ 29..33
+                    Identifier "List" @ 29..33
                     TypeArgumentList
                       Lt "<" @ 33..34
                       TypeProjectionSeparatedList
@@ -43,9 +41,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Int" @ 34..37
+                                Identifier "Int" @ 34..37
                       Gt ">" @ 37..38
         RParen ")" @ 38..39 trailing=[Whitespace " "]
       BlockBody
@@ -58,10 +54,8 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "values" @ 46..52 leading=[Newline "\n", Whitespace "    "]
-                    NavigationOperator
-                      Dot "." @ 52..53
-                    NameExpression
-                      Identifier "map" @ 53..56 trailing=[Whitespace " "]
+                    Dot "." @ 52..53
+                    Identifier "map" @ 53..56 trailing=[Whitespace " "]
                   TypeArgumentListList
                   LambdaExpressionList
                     LambdaExpression
@@ -80,11 +74,9 @@ KotlinFile
                               BinaryExpression
                                 NameExpression
                                   Identifier "value" @ 76..81 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                                BinaryOperator
-                                  Plus "+" @ 82..83 trailing=[Whitespace " "]
-                                BinaryExpressionRight
-                                  LiteralExpression
-                                    IntegerLiteral "1" @ 84..85
+                                Plus "+" @ 82..83 trailing=[Whitespace " "]
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 84..85
                             TerminatorList
                           Statement
                             ExpressionStatement
@@ -92,10 +84,8 @@ KotlinFile
                                 NavigationExpression
                                   NameExpression
                                     Identifier "values" @ 90..96 leading=[Newline "\n", Whitespace "    "]
-                                  NavigationOperator
-                                    Dot "." @ 96..97
-                                  NameExpression
-                                    Identifier "filter" @ 97..103
+                                  Dot "." @ 96..97
+                                  Identifier "filter" @ 97..103
                                 TypeArgumentListList
                                 ValueArgumentList
                                   LParen "(" @ 103..104

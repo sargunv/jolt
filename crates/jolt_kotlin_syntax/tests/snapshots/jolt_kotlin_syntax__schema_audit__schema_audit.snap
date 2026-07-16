@@ -5,8 +5,8 @@ expression: audit.render()
 language = kotlin
 fixture_files = 253
 diagnostic_fixture_files = 69
-audited_nodes = 19307
-exact_valid_shapes = 18975
+audited_nodes = 16773
+exact_valid_shapes = 16441
 malformed_nodes = 194
 clean_missing_required_shapes = 10
 diagnostic_missing_required_shapes = 95
@@ -31,7 +31,7 @@ syntax__lexer__reports_unterminated_line_string_at_newline: StringTemplateExpres
 syntax__lexer__reports_unterminated_raw_string: StringTemplateExpression occurrence 1 (StringTemplateEntryList)
 syntax__parser__diagnoses_malformed_type_argument_call: TypeProjectionSeparatedList occurrence 1 (TypeReference Comma(",") Comma(",") BogusTypeArgument TypeReference)
 syntax__parser__parses_destructuring_square_preview: ForStatement occurrence 1 (ForKw("for") LParen("(") ForVariable BinaryExpression RParen(")") Block)
-syntax__parser__parses_destructuring_square_preview: Name occurrence 12 ()
+syntax__parser__parses_destructuring_square_preview: Name occurrence 9 ()
 syntax__parser__recovers_incomplete_lambda_and_call: Block occurrence 1 (LBrace("{") BlockItemList)
 syntax__parser__recovers_incomplete_lambda_and_call: LambdaBody occurrence 1 (LBrace("{") LambdaParameterList LambdaBodyItemList)
 syntax__parser__recovers_incomplete_lambda_and_call: ValueArgumentList occurrence 1 (LParen("(") ValueArgumentEntryList)
@@ -71,7 +71,7 @@ syntax__recovery__phase_17_types_and_parameters: TypeConstraintList occurrence 1
 syntax__recovery__phase_17_types_and_parameters: TypeConstraint occurrence 2 (Name TypeReference)
 syntax__recovery__phase_17_types_and_parameters: ContextParameterSeparatedList occurrence 1 (ContextParameter Comma(",") ContextParameter Comma(",") Comma(",") BogusContextParameter ContextParameter)
 syntax__recovery__phase_18_declarations: ValueParameterList occurrence 2 (ValueParameterSeparatedList)
-syntax__recovery__phase_18_declarations: Name occurrence 5 ()
+syntax__recovery__phase_18_declarations: Name occurrence 3 ()
 syntax__recovery__phase_18_declarations: CallableName occurrence 3 (TypeReference Name)
 syntax__recovery__phase_18_declarations: ExpressionBody occurrence 2 (Assign("="))
 syntax__recovery__phase_18_declarations: PropertyInitializer occurrence 4 (NameExpression)
@@ -83,7 +83,7 @@ syntax__recovery__phase_18_declarations: DelegationClause occurrence 1 (Delegati
 syntax__recovery__phase_18_declarations: ConstructorDelegation occurrence 1 (ConstructorDelegationCall)
 syntax__recovery__phase_18_declarations: ConstructorDelegationCall occurrence 2 ()
 syntax__recovery__phase_18_declarations: DelegationByClause occurrence 1 (Identifier("by"))
-syntax__recovery__phase_18_declarations: Name occurrence 31 ()
+syntax__recovery__phase_18_declarations: Name occurrence 21 ()
 syntax__recovery__phase_18_declarations: ClassBody occurrence 8 (LBrace("{") ClassMemberList)
 syntax__recovery__phase_19_expressions: CallableReferenceTarget occurrence 1 ()
 syntax__recovery__phase_19_expressions: ValueArgumentEntryList occurrence 1 (Comma(",") BogusValueArgument ValueArgument)
@@ -105,9 +105,9 @@ syntax__recovery__phase_20_statements_and_control_flow: WhenConditionSeparatedLi
 syntax__recovery__phase_20_statements_and_control_flow: WhenEntry occurrence 6 (WhenConditionSeparatedList WhenEntryBody)
 syntax__recovery__phase_20_statements_and_control_flow: Block occurrence 12 (BlockItemList)
 syntax__recovery__phase_20_statements_and_control_flow: CatchParameter occurrence 2 (ModifierList Name TypeReference)
-syntax__recovery__phase_20_statements_and_control_flow: Name occurrence 22 ()
+syntax__recovery__phase_20_statements_and_control_flow: Name occurrence 15 ()
 syntax__recovery__phase_20_statements_and_control_flow: TypeReference occurrence 8 ()
-syntax__recovery__phase_20_statements_and_control_flow: Name occurrence 31 ()
+syntax__recovery__phase_20_statements_and_control_flow: Name occurrence 20 ()
 syntax__recovery__phase_20_statements_and_control_flow: ParenthesizedExpression occurrence 5 (BogusExpression)
 syntax__recovery__phase_20_statements_and_control_flow: DoWhileStatement occurrence 2 (DoKw("do") Block ParenthesizedExpression)
 syntax__recovery__phase_20_statements_and_control_flow: LabelReference occurrence 2 (At("@"))
@@ -143,11 +143,11 @@ syntax__lexer__recognizes_unicode_identifiers: ExpressionStatement occurrence 1 
 syntax__lexer__reports_non_ascii_digit_as_unknown_start: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=5, tokens=2, children=2] (BogusExpression BogusExpression)
 syntax__lexer__reports_unknown_character: PropertyInitializer occurrence 1 has valid kind with direct malformed ownership [bytes=7, tokens=4, children=4] (Assign("=") LiteralExpression BogusExpression BogusExpression)
 syntax__lexer__reports_unterminated_backtick_identifier: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=13, tokens=2, children=2] (BogusExpression BogusExpression)
-syntax__lexer__reports_unterminated_line_string_at_newline: StringTemplateContent occurrence 4 has valid kind with direct malformed ownership [bytes=5, tokens=1, children=1] (ValKw("val"))
-syntax__lexer__reports_unterminated_line_string_at_newline: StringTemplateContent occurrence 6 has valid kind with direct malformed ownership [bytes=2, tokens=1, children=1] (Assign("="))
-syntax__lexer__reports_unterminated_line_string_at_newline: StringTemplateContent occurrence 7 has valid kind with direct malformed ownership [bytes=1, tokens=1, children=1] (IntegerLiteral("1"))
+syntax__lexer__reports_unterminated_line_string_at_newline: StringTemplateEntry occurrence 4 has valid kind with direct malformed ownership [bytes=5, tokens=1, children=1] (ValKw("val"))
+syntax__lexer__reports_unterminated_line_string_at_newline: StringTemplateEntry occurrence 6 has valid kind with direct malformed ownership [bytes=2, tokens=1, children=1] (Assign("="))
+syntax__lexer__reports_unterminated_line_string_at_newline: StringTemplateEntry occurrence 7 has valid kind with direct malformed ownership [bytes=1, tokens=1, children=1] (IntegerLiteral("1"))
 syntax__lexer__separates_not_in_and_not_is_from_identifier_prefixes: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=22, tokens=6, children=6] (BogusExpression BogusExpression BogusExpression BogusExpression BogusExpression BogusExpression)
-syntax__parser__diagnoses_malformed_type_argument_call: BinaryExpression occurrence 1 has valid kind with direct malformed ownership [bytes=34, tokens=11, children=4] (NavigationExpression BogusExpression BinaryOperator BinaryExpressionRight)
+syntax__parser__diagnoses_malformed_type_argument_call: BinaryExpression occurrence 1 has valid kind with direct malformed ownership [bytes=34, tokens=11, children=4] (NavigationExpression BogusExpression Lt("<") CallExpression)
 syntax__parser__diagnoses_malformed_type_argument_call: PropertyInitializer occurrence 3 has valid kind with direct malformed ownership [bytes=26, tokens=5, children=5] (Assign("=") NameExpression BogusExpression BogusExpression BogusExpression)
 syntax__parser__recovers_missing_when_arrow_and_body: WhenCondition occurrence 1 has valid kind with direct malformed ownership [bytes=17, tokens=4, children=4] (LiteralExpression BogusExpression BogusExpression BogusExpression)
 syntax__recovery__assignment_without_left: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=8, tokens=2, children=2] (BogusExpression BogusExpression)

@@ -32,11 +32,9 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              StringTemplateContent
-                OpenQuote "\"" @ 22..23
+              OpenQuote "\"" @ 22..23
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "dev" @ 23..26
+              RegularStringPart "dev" @ 23..26
           ClosingQuote "\"" @ 26..27
       PropertyBodyMemberList
     PropertyDeclaration
@@ -50,9 +48,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Int" @ 47..50 trailing=[Whitespace " "]
+              Identifier "Int" @ 47..50 trailing=[Whitespace " "]
       PropertyInitializer
         Assign "=" @ 51..52 trailing=[Whitespace " "]
         LiteralExpression
@@ -72,9 +68,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Config" @ 72..78
+                    Identifier "Config" @ 72..78
         RParen ")" @ 78..79
       ModifierList
       ValKw "val" @ 80..83 leading=[Newline "\n"] trailing=[Whitespace " "]
@@ -85,9 +79,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 100..106
+              Identifier "String" @ 100..106
       PropertyBodyMemberList
         PropertyAccessor
           ModifierList
@@ -101,10 +93,8 @@ KotlinFile
             NavigationExpression
               NameExpression
                 Identifier "config" @ 119..125
-              NavigationOperator
-                Dot "." @ 125..126
-              NameExpression
-                Identifier "name" @ 126..130
+              Dot "." @ 125..126
+              Identifier "name" @ 126..130
     InterfaceDeclaration
       ModifierList
       ModifierList
@@ -126,9 +116,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 165..171
+                      Identifier "String" @ 165..171
               PropertyBodyMemberList
         RBrace "}" @ 172..173 leading=[Newline "\n"]
   Eof "" @ 174..174 leading=[Newline "\n"]

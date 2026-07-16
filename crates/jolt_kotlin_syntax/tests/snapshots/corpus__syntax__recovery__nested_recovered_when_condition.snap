@@ -32,9 +32,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 40..43
+                    Identifier "Int" @ 40..43
         RParen ")" @ 43..44 trailing=[Whitespace " "]
       ExpressionBody
         Assign "=" @ 45..46 trailing=[Whitespace " "]
@@ -68,11 +66,9 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"" @ 87..88
+                      OpenQuote "\"" @ 87..88
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "other" @ 88..93
+                      RegularStringPart "other" @ 88..93
                   ClosingQuote "\"" @ 93..94
           RBrace "}" @ 95..96 leading=[Newline "\n"]
   Eof "" @ 97..97 leading=[Newline "\n"]

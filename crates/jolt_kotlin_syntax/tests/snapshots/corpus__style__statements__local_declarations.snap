@@ -48,9 +48,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 57..63
+                    Identifier "String" @ 57..63
         RParen ")" @ 63..64
       Colon ":" @ 64..65 trailing=[Whitespace " "]
       TypeReference
@@ -65,9 +63,7 @@ KotlinFile
             UserType
               UserTypeSegmentList
                 UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "String" @ 72..78 trailing=[Whitespace " "]
+                  Identifier "String" @ 72..78 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 79..80
@@ -94,9 +90,7 @@ KotlinFile
                         UserType
                           UserTypeSegmentList
                             UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "String" @ 113..119
+                              Identifier "String" @ 113..119
                   RParen ")" @ 119..120
             PropertyDeclaration
               ModifierList
@@ -119,10 +113,8 @@ KotlinFile
                           NavigationExpression
                             NameExpression
                               Identifier "prefix" @ 143..149
-                            NavigationOperator
-                              Dot "." @ 149..150
-                            NameExpression
-                              Identifier "trim" @ 150..154
+                            Dot "." @ 149..150
+                            Identifier "trim" @ 150..154
                           TypeArgumentListList
                           ValueArgumentList
                             LParen "(" @ 154..155
@@ -145,10 +137,8 @@ KotlinFile
                             NavigationExpression
                               NameExpression
                                 Identifier "local" @ 171..176
-                              NavigationOperator
-                                Dot "." @ 176..177
-                              NameExpression
-                                Identifier "value" @ 177..182 trailing=[Whitespace " "]
+                              Dot "." @ 176..177
+                              Identifier "value" @ 177..182 trailing=[Whitespace " "]
                           TerminatorList
                       RBrace "}" @ 183..184
               TerminatorList

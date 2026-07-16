@@ -36,9 +36,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 26..32
+                      Identifier "String" @ 26..32
           RParen ")" @ 32..33
     ClassDeclaration
       ModifierList
@@ -54,9 +52,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Base" @ 49..53 trailing=[Whitespace " "]
+                    Identifier "Base" @ 49..53 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 54..55
         ClassMemberList
@@ -77,9 +73,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 78..84
+                            Identifier "String" @ 78..84
                 RParen ")" @ 84..85 trailing=[Whitespace " "]
               ConstructorDelegation
                 Colon ":" @ 86..87 trailing=[Whitespace " "]

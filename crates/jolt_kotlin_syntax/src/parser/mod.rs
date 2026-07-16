@@ -4,9 +4,7 @@ mod source;
 use std::fmt;
 
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
-use jolt_syntax::{
-    SyntaxDiagnosticOwner, SyntaxTree, build_syntax_tree_with_factory_and_diagnostic_owners,
-};
+use jolt_syntax::{SyntaxDiagnosticOwner, SyntaxTree, build_parser_syntax_tree};
 
 use crate::{
     KotlinFile,
@@ -68,6 +66,7 @@ impl KotlinParse<'_> {
 
     /// Returns the parsed syntax tree root.
     #[must_use]
+    #[inline]
     pub fn syntax(&self) -> Option<KotlinFile<'_>> {
         self.tree
             .as_ref()
@@ -127,6 +126,7 @@ fn fmt_diagnostic(f: &mut fmt::Formatter<'_>, diagnostic: &Diagnostic) -> fmt::R
 
 /// Parses a Kotlin file.
 #[must_use]
+#[inline]
 pub fn parse_kotlin_file(source: &str) -> KotlinParse<'_> {
     let parse = Parser::new(source).parse_kotlin_file();
     finish_parse(source, parse)
@@ -134,7 +134,7 @@ pub fn parse_kotlin_file(source: &str) -> KotlinParse<'_> {
 
 fn finish_parse(source: &str, parse: source::ParseEvents) -> KotlinParse<'_> {
     let mut diagnostics = parse.diagnostics;
-    let (tree, diagnostic_owners) = match build_syntax_tree_with_factory_and_diagnostic_owners(
+    let (tree, diagnostic_owners) = match build_parser_syntax_tree(
         source,
         parse.events,
         parse.tokens,

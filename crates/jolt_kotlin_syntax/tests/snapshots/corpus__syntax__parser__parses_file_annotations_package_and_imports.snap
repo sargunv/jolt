@@ -36,11 +36,9 @@ KotlinFile
             StringTemplateExpression
               StringTemplateEntryList
                 StringTemplateEntry
-                  StringTemplateContent
-                    OpenQuote "\"" @ 17..18
+                  OpenQuote "\"" @ 17..18
                 StringTemplateEntry
-                  StringTemplateContent
-                    RegularStringPart "parser" @ 18..24
+                  RegularStringPart "parser" @ 18..24
               ClosingQuote "\"" @ 24..25
         RParen ")" @ 25..26
     Annotation
@@ -60,11 +58,9 @@ KotlinFile
             StringTemplateExpression
               StringTemplateEntryList
                 StringTemplateEntry
-                  StringTemplateContent
-                    OpenQuote "\"" @ 42..43
+                  OpenQuote "\"" @ 42..43
                 StringTemplateEntry
-                  StringTemplateContent
-                    RegularStringPart "unused" @ 43..49
+                  RegularStringPart "unused" @ 43..49
               ClosingQuote "\"" @ 49..50
         RParen ")" @ 50..51
   KotlinFileItemList
@@ -114,10 +110,8 @@ KotlinFile
                 NavigationExpression
                   NameExpression
                     Identifier "AnnotationTarget" @ 140..156
-                  NavigationOperator
-                    Dot "." @ 156..157
-                  NameExpression
-                    Identifier "FILE" @ 157..161
+                  Dot "." @ 156..157
+                  Identifier "FILE" @ 157..161
             RParen ")" @ 161..162
         Identifier "annotation" @ 163..173 leading=[Newline "\n"] trailing=[Whitespace " "]
       ModifierList
@@ -139,9 +133,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 202..208
+                      Identifier "String" @ 202..208
           RParen ")" @ 208..209
   Eof "" @ 210..210 leading=[Newline "\n"]
 

@@ -45,11 +45,9 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 32..33
+                              OpenQuote "\"" @ 32..33
                             StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "user" @ 33..37
+                              RegularStringPart "user" @ 33..37
                           ClosingQuote "\"" @ 37..38
                     RParen ")" @ 38..39
               ValKw "val" @ 44..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
@@ -60,9 +58,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 54..60
+                      Identifier "String" @ 54..60
             Comma "," @ 60..61
           RParen ")" @ 62..63 leading=[Newline "\n"]
     ClassDeclaration
@@ -87,9 +83,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 99..105
+                      Identifier "String" @ 99..105
           RParen ")" @ 105..106
   Eof "" @ 107..107 leading=[Newline "\n"]
 

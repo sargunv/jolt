@@ -49,9 +49,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Map" @ 46..49
+                      Identifier "Map" @ 46..49
                       TypeArgumentList
                         Lt "<" @ 49..50
                         TypeProjectionSeparatedList
@@ -59,17 +57,13 @@ KotlinFile
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "K" @ 50..51
+                                  Identifier "K" @ 50..51
                           Comma "," @ 51..52 trailing=[Whitespace " "]
                           TypeReference
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "V" @ 53..54
+                                  Identifier "V" @ 53..54
                         Gt ">" @ 54..55
             Comma "," @ 55..56
           RParen ")" @ 57..58 leading=[Newline "\n"] trailing=[Whitespace " "]
@@ -84,9 +78,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "CharSequence" @ 69..81
+                    Identifier "CharSequence" @ 69..81
           Comma "," @ 81..82 trailing=[Whitespace " "]
           TypeConstraint
             Name
@@ -96,9 +88,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Comparable" @ 87..97
+                    Identifier "Comparable" @ 87..97
                     TypeArgumentList
                       Lt "<" @ 97..98
                       TypeProjectionSeparatedList
@@ -106,9 +96,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "K" @ 98..99
+                                Identifier "K" @ 98..99
                       Gt ">" @ 99..100
           Comma "," @ 100..101 trailing=[Whitespace " "]
           TypeConstraint
@@ -119,9 +107,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Any" @ 106..109
+                    Identifier "Any" @ 106..109
     ClassDeclaration
       ModifierList
       ModifierList
@@ -153,9 +139,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 146..152
+                      Identifier "String" @ 146..152
           RParen ")" @ 152..153
   Eof "" @ 154..154 leading=[Newline "\n"]
 

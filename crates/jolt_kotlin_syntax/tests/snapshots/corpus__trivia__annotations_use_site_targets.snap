@@ -58,15 +58,12 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 60..66 trailing=[Whitespace " "]
+                      Identifier "String" @ 60..66 trailing=[Whitespace " "]
               Assign "=" @ 67..68 trailing=[Whitespace " "]
               StringTemplateExpression
                 StringTemplateEntryList
                   StringTemplateEntry
-                    StringTemplateContent
-                      OpenQuote "\"" @ 69..70
+                    OpenQuote "\"" @ 69..70
                 ClosingQuote "\"" @ 70..71
           RParen ")" @ 71..72
     ClassDeclaration
@@ -99,11 +96,9 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 147..148
+                              OpenQuote "\"" @ 147..148
                             StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "id" @ 148..150
+                              RegularStringPart "id" @ 148..150
                           ClosingQuote "\"" @ 150..151
                     RParen ")" @ 151..152
                 Annotation
@@ -123,11 +118,9 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 201..202
+                              OpenQuote "\"" @ 201..202
                             StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "field" @ 202..207
+                              RegularStringPart "field" @ 202..207
                           ClosingQuote "\"" @ 207..208
                     RParen ")" @ 208..209
                 Annotation
@@ -147,11 +140,9 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 254..255
+                              OpenQuote "\"" @ 254..255
                             StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "getter" @ 255..261
+                              RegularStringPart "getter" @ 255..261
                           ClosingQuote "\"" @ 261..262
                     RParen ")" @ 262..263
               ValKw "val" @ 268..271 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
@@ -162,9 +153,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 276..282
+                      Identifier "String" @ 276..282
             Comma "," @ 282..283
           RParen ")" @ 284..285 leading=[Newline "\n"] trailing=[Whitespace " "]
       ClassBody
@@ -190,11 +179,9 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 332..333
+                              OpenQuote "\"" @ 332..333
                             StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "setter" @ 333..339
+                              RegularStringPart "setter" @ 333..339
                           ClosingQuote "\"" @ 339..340
                     RParen ")" @ 340..341
                 Annotation
@@ -214,11 +201,9 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 396..397
+                              OpenQuote "\"" @ 396..397
                             StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "value" @ 397..402
+                              RegularStringPart "value" @ 397..402
                           ClosingQuote "\"" @ 402..403
                     RParen ")" @ 403..404
               ModifierList
@@ -230,9 +215,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 420..426 trailing=[Whitespace " "]
+                      Identifier "String" @ 420..426 trailing=[Whitespace " "]
               PropertyInitializer
                 Assign "=" @ 427..428 trailing=[Whitespace " "]
                 NameExpression

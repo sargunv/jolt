@@ -48,9 +48,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 48..54
+                    Identifier "String" @ 48..54
           Comma "," @ 54..55 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -61,18 +59,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 63..66
+                    Identifier "Int" @ 63..66
         RParen ")" @ 66..67
       Colon ":" @ 67..68 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 69..75 trailing=[Whitespace " "]
+              Identifier "String" @ 69..75 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 76..77
@@ -88,18 +82,15 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"" @ 95..96
+                      OpenQuote "\"" @ 95..96
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "Hello, " @ 96..103
+                      RegularStringPart "Hello, " @ 96..103
                     StringTemplateEntry
-                      StringTemplateContent
-                        LongStringTemplateEntry
-                          LongTemplateEntryStart "${" @ 103..105 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:template-name */", Whitespace " "]
-                          NameExpression
-                            Identifier "user" @ 138..142 trailing=[Whitespace " "]
-                          LongTemplateEntryEnd "}" @ 143..144
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 103..105 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:template-name */", Whitespace " "]
+                        NameExpression
+                          Identifier "user" @ 138..142 trailing=[Whitespace " "]
+                        LongTemplateEntryEnd "}" @ 143..144
                   ClosingQuote "\"" @ 144..145
               PropertyBodyMemberList
             PropertyDeclaration
@@ -113,24 +104,19 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"" @ 163..164
+                      OpenQuote "\"" @ 163..164
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "Total: " @ 164..171
+                      RegularStringPart "Total: " @ 164..171
                     StringTemplateEntry
-                      StringTemplateContent
-                        LongStringTemplateEntry
-                          LongTemplateEntryStart "${" @ 171..173 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:template-open */", Whitespace " "]
-                          BinaryExpression
-                            NameExpression
-                              Identifier "count" @ 206..211 trailing=[Whitespace " "]
-                            BinaryOperator
-                              Plus "+" @ 212..213 trailing=[Whitespace " "]
-                            BinaryExpressionRight
-                              LiteralExpression
-                                IntegerLiteral "1" @ 214..215 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:template-expression */", Whitespace " "]
-                          LongTemplateEntryEnd "}" @ 254..255
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 171..173 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:template-open */", Whitespace " "]
+                        BinaryExpression
+                          NameExpression
+                            Identifier "count" @ 206..211 trailing=[Whitespace " "]
+                          Plus "+" @ 212..213 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "1" @ 214..215 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:template-expression */", Whitespace " "]
+                        LongTemplateEntryEnd "}" @ 254..255
                   ClosingQuote "\"" @ 255..256
               PropertyBodyMemberList
             Statement
@@ -140,23 +126,17 @@ KotlinFile
                   StringTemplateExpression
                     StringTemplateEntryList
                       StringTemplateEntry
-                        StringTemplateContent
-                          OpenQuote "\"" @ 268..269
+                        OpenQuote "\"" @ 268..269
                       StringTemplateEntry
-                        StringTemplateContent
-                          ShortTemplateEntryStart "$" @ 269..270
+                        ShortTemplateEntryStart "$" @ 269..270
                       StringTemplateEntry
-                        StringTemplateContent
-                          Identifier "simple" @ 270..276
+                        Identifier "simple" @ 270..276
                       StringTemplateEntry
-                        StringTemplateContent
-                          RegularStringPart "; " @ 276..278
+                        RegularStringPart "; " @ 276..278
                       StringTemplateEntry
-                        StringTemplateContent
-                          ShortTemplateEntryStart "$" @ 278..279
+                        ShortTemplateEntryStart "$" @ 278..279
                       StringTemplateEntry
-                        StringTemplateContent
-                          Identifier "nested" @ 279..285
+                        Identifier "nested" @ 279..285
                     ClosingQuote "\"" @ 285..286
               TerminatorList
           RBrace "}" @ 287..288 leading=[Newline "\n"]

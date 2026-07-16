@@ -34,18 +34,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Counter" @ 19..26
+                    Identifier "Counter" @ 19..26
         RParen ")" @ 26..27
       Colon ":" @ 27..28 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Int" @ 29..32 trailing=[Whitespace " "]
+              Identifier "Int" @ 29..32 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 33..34
@@ -74,18 +70,14 @@ KotlinFile
                     PlusPlus "++" @ 70..72
                     NameExpression
                       Identifier "index" @ 72..77 trailing=[Whitespace " "]
-                  BinaryOperator
-                    Plus "+" @ 78..79 trailing=[Whitespace " "]
-                  BinaryExpressionRight
-                    PostfixExpression
-                      NavigationExpression
-                        NameExpression
-                          Identifier "counter" @ 80..87
-                        NavigationOperator
-                          Dot "." @ 87..88
-                        NameExpression
-                          Identifier "value" @ 88..93
-                      MinusMinus "--" @ 93..95
+                  Plus "+" @ 78..79 trailing=[Whitespace " "]
+                  PostfixExpression
+                    NavigationExpression
+                      NameExpression
+                        Identifier "counter" @ 80..87
+                      Dot "." @ 87..88
+                      Identifier "value" @ 88..93
+                    MinusMinus "--" @ 93..95
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -100,13 +92,11 @@ KotlinFile
                     Minus "-" @ 112..113
                     NameExpression
                       Identifier "before" @ 113..119 trailing=[Whitespace " "]
-                  BinaryOperator
-                    Plus "+" @ 120..121 trailing=[Whitespace " "]
-                  BinaryExpressionRight
-                    UnaryExpression
-                      Plus "+" @ 122..123
-                      NameExpression
-                        Identifier "index" @ 123..128
+                  Plus "+" @ 120..121 trailing=[Whitespace " "]
+                  UnaryExpression
+                    Plus "+" @ 122..123
+                    NameExpression
+                      Identifier "index" @ 123..128
               PropertyBodyMemberList
             Statement
               ExpressionStatement
@@ -121,10 +111,8 @@ KotlinFile
                         NavigationExpression
                           NameExpression
                             Identifier "counter" @ 145..152
-                          NavigationOperator
-                            Dot "." @ 152..153
-                          NameExpression
-                            Identifier "done" @ 153..157
+                          Dot "." @ 152..153
+                          Identifier "done" @ 153..157
                       RParen ")" @ 157..158 trailing=[Whitespace " "]
                     NameExpression
                       Identifier "after" @ 159..164 trailing=[Whitespace " "]

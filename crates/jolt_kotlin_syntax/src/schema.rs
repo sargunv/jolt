@@ -253,7 +253,6 @@ macro_rules! kotlin_syntax_schema {
                     StringTemplateEntry,
                 }
                 NavigationSelector => BogusNavigationSelector {
-                    NameExpression,
                     ThisExpression,
                     SuperExpression,
                 }
@@ -620,8 +619,8 @@ macro_rules! kotlin_syntax_schema {
                     segments: required (list UserTypeSegmentList);
                 }
                 UserTypeSegment => UserTypeSegment [user_type_segment valid] {
-                    annotations: required (list AnnotationList);
-                    name: required (node Name);
+                    annotations: optional (list AnnotationList);
+                    name: required (token_set [Identifier, FieldIdentifier]);
                     arguments: optional (node TypeArgumentList);
                 }
                 NullableType => NullableType [nullable_type valid] {
@@ -689,10 +688,6 @@ macro_rules! kotlin_syntax_schema {
                 }
                 BinaryExpression => BinaryExpression [binary_expression valid] {
                     left: required (category Expression);
-                    operator: required (node BinaryOperator);
-                    right: required (node BinaryExpressionRight);
-                }
-                BinaryOperator => BinaryOperator [binary_operator valid] {
                     operator: required (choice [
                         (token_set [
                             Star, Slash, Percent, Plus, Minus, Range, RangeUntil,
@@ -702,9 +697,7 @@ macro_rules! kotlin_syntax_schema {
                         ]),
                         (token Identifier)
                     ]) => BinaryOperatorValue;
-                }
-                BinaryExpressionRight => BinaryExpressionRight [binary_expression_right valid] {
-                    value: required (choice [(category Expression), (node TypeReference)]) => BinaryExpressionRightValue;
+                    right: required (choice [(category Expression), (node TypeReference)]) => BinaryExpressionRightValue;
                 }
                 UnaryExpression => UnaryExpression [unary_expression valid] {
                     operator: required (token_set [Plus, Minus, Bang, PlusPlus, MinusMinus, Star]);
@@ -728,11 +721,11 @@ macro_rules! kotlin_syntax_schema {
                 }
                 NavigationExpression => NavigationExpression [navigation_expression valid] {
                     receiver: required (category Expression);
-                    operator: required (node NavigationOperator);
-                    selector: required (category NavigationSelector);
-                }
-                NavigationOperator => NavigationOperator [navigation_operator valid] {
                     operator: required (choice [(token_set [Dot, SafeAccess]), (node SplitSafeNavigationOperator)]) => NavigationOperatorValue;
+                    selector: required (choice [
+                        (token_set [Identifier, FieldIdentifier]),
+                        (category NavigationSelector)
+                    ]) => NavigationSelectorValue;
                 }
                 CallableReferenceExpression => CallableReferenceExpression [callable_reference_expression valid] {
                     receiver: optional (node CallableReferenceReceiver);
@@ -748,9 +741,6 @@ macro_rules! kotlin_syntax_schema {
                     close_quote: required (token ClosingQuote);
                 }
                 StringTemplateEntry => StringTemplateEntry [string_template_entry valid] {
-                    content: required (node StringTemplateContent);
-                }
-                StringTemplateContent => StringTemplateContent [string_template_content valid] {
                     content: required (choice [
                         (token_set [
                             InterpolationPrefix, OpenQuote, RegularStringPart,

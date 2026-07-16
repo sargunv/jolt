@@ -37,16 +37,13 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 32..38 trailing=[Whitespace " "]
+                      Identifier "String" @ 32..38 trailing=[Whitespace " "]
               PropertyInitializer
                 Assign "=" @ 39..40 trailing=[Whitespace " "]
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"" @ 41..42
+                      OpenQuote "\"" @ 41..42
                   ClosingQuote "\"" @ 42..43
               PropertyBodyMemberList
                 PropertyAccessor
@@ -62,10 +59,8 @@ KotlinFile
                       NavigationExpression
                         NameExpression
                           Identifier "field" @ 60..65
-                        NavigationOperator
-                          Dot "." @ 65..66
-                        NameExpression
-                          Identifier "ifBlank" @ 66..73 trailing=[Whitespace " "]
+                        Dot "." @ 65..66
+                        Identifier "ifBlank" @ 66..73 trailing=[Whitespace " "]
                       TypeArgumentListList
                       LambdaExpressionList
                         LambdaExpression
@@ -77,11 +72,9 @@ KotlinFile
                                   StringTemplateExpression
                                     StringTemplateEntryList
                                       StringTemplateEntry
-                                        StringTemplateContent
-                                          OpenQuote "\"" @ 76..77
+                                        OpenQuote "\"" @ 76..77
                                       StringTemplateEntry
-                                        StringTemplateContent
-                                          RegularStringPart "unknown" @ 77..84
+                                        RegularStringPart "unknown" @ 77..84
                                     ClosingQuote "\"" @ 84..85 trailing=[Whitespace " "]
                                 TerminatorList
                             RBrace "}" @ 86..87
@@ -111,10 +104,8 @@ KotlinFile
                                 NavigationExpression
                                   NameExpression
                                     Identifier "value" @ 137..142
-                                  NavigationOperator
-                                    Dot "." @ 142..143
-                                  NameExpression
-                                    Identifier "trim" @ 143..147
+                                  Dot "." @ 142..143
+                                  Identifier "trim" @ 143..147
                                 TypeArgumentListList
                                 ValueArgumentList
                                   LParen "(" @ 147..148

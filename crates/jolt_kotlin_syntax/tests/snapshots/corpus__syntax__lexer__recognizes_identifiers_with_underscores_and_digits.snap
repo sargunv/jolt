@@ -15,11 +15,9 @@ KotlinFile
         BinaryExpression
           NameExpression
             Identifier "_" @ 0..1 trailing=[Whitespace " "]
-          BinaryOperator
-            Identifier "x0" @ 2..4 trailing=[Whitespace " "]
-          BinaryExpressionRight
-            NameExpression
-              Identifier "x_y" @ 5..8 trailing=[Whitespace " "]
+          Identifier "x0" @ 2..4 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "x_y" @ 5..8 trailing=[Whitespace " "]
         BogusExpression
           Identifier "a1_b2" @ 9..14
       TerminatorList

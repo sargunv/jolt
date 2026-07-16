@@ -36,9 +36,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Array" @ 25..30
+                    Identifier "Array" @ 25..30
                     TypeArgumentList
                       Lt "<" @ 30..31
                       TypeProjectionSeparatedList
@@ -46,9 +44,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 31..37
+                                Identifier "String" @ 31..37
                       Gt ">" @ 37..38
         RParen ")" @ 38..39 trailing=[Whitespace " "]
       BlockBody
@@ -72,11 +68,9 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 70..71
+                              OpenQuote "\"" @ 70..71
                             StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "one" @ 71..74
+                              RegularStringPart "one" @ 71..74
                           ClosingQuote "\"" @ 74..75
                       Comma "," @ 75..76
                       ValueArgument

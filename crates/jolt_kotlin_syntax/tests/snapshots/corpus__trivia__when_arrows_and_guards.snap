@@ -67,9 +67,7 @@ KotlinFile
                         UserType
                           UserTypeSegmentList
                             UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "Int" @ 86..89
+                              Identifier "Int" @ 86..89
                   RParen ")" @ 89..90 trailing=[Whitespace " "]
               DelegationClause
                 Colon ":" @ 91..92 trailing=[Whitespace " "]
@@ -79,9 +77,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "Event" @ 93..98
+                            Identifier "Event" @ 93..98
           ClassMemberDeclaration
             ObjectDeclaration
               ModifierList
@@ -98,9 +94,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "Event" @ 122..127
+                            Identifier "Event" @ 122..127
         RBrace "}" @ 128..129 leading=[Newline "\n"]
     FunctionDeclaration
       ModifierList
@@ -121,18 +115,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Event" @ 151..156
+                    Identifier "Event" @ 151..156
         RParen ")" @ 156..157
       Colon ":" @ 157..158 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 159..165 trailing=[Whitespace " "]
+              Identifier "String" @ 159..165 trailing=[Whitespace " "]
       ExpressionBody
         Assign "=" @ 166..167
         WhenExpression
@@ -152,39 +142,29 @@ KotlinFile
                     UserType
                       UserTypeSegmentList
                         UserTypeSegment
-                          AnnotationList
-                          Name
-                            Identifier "Event" @ 229..234
+                          Identifier "Event" @ 229..234
                         Dot "." @ 234..235
                         UserTypeSegment
-                          AnnotationList
-                          Name
-                            Identifier "Click" @ 235..240 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-condition */", Whitespace " "]
+                          Identifier "Click" @ 235..240 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-condition */", Whitespace " "]
               WhenGuard
                 IfKw "if" @ 274..276 trailing=[Whitespace " "]
                 BinaryExpression
                   NavigationExpression
                     NameExpression
                       Identifier "event" @ 277..282
-                    NavigationOperator
-                      Dot "." @ 282..283
-                    NameExpression
-                      Identifier "button" @ 283..289 trailing=[Whitespace " "]
-                  BinaryOperator
-                    EqEq "==" @ 290..292 trailing=[Whitespace " "]
-                  BinaryExpressionRight
-                    LiteralExpression
-                      IntegerLiteral "1" @ 293..294 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-guard */", Whitespace " "]
+                    Dot "." @ 282..283
+                    Identifier "button" @ 283..289 trailing=[Whitespace " "]
+                  EqEq "==" @ 290..292 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "1" @ 293..294 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-guard */", Whitespace " "]
               Arrow "->" @ 324..326 trailing=[Whitespace " "]
               WhenEntryBody
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"" @ 327..328
+                      OpenQuote "\"" @ 327..328
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "primary" @ 328..335
+                      RegularStringPart "primary" @ 328..335
                   ClosingQuote "\"" @ 335..336
             WhenEntry
               WhenConditionSeparatedList
@@ -192,20 +172,16 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "Event" @ 345..350 leading=[Newline "\n", Whitespace "        "]
-                    NavigationOperator
-                      Dot "." @ 350..351
-                    NameExpression
-                      Identifier "Idle" @ 351..355 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:object-case */", Whitespace " "]
+                    Dot "." @ 350..351
+                    Identifier "Idle" @ 351..355 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:object-case */", Whitespace " "]
               Arrow "->" @ 386..388 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:arrow-right */", Whitespace " "]
               WhenEntryBody
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"" @ 419..420
+                      OpenQuote "\"" @ 419..420
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "idle" @ 420..424
+                      RegularStringPart "idle" @ 420..424
                   ClosingQuote "\"" @ 424..425
           RBrace "}" @ 430..431 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 432..432 leading=[Newline "\n"]

@@ -44,9 +44,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 40..46
+                      Identifier "String" @ 40..46
         RBrace "}" @ 47..48 leading=[Newline "\n"]
     ClassDeclaration
       ModifierList
@@ -73,9 +71,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "Provider" @ 104..112 trailing=[Whitespace " "]
+                            Identifier "Provider" @ 104..112 trailing=[Whitespace " "]
               ClassBody
                 LBrace "{" @ 113..114
                 ClassMemberList
@@ -97,19 +93,15 @@ KotlinFile
                         UserType
                           UserTypeSegmentList
                             UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "String" @ 147..153 trailing=[Whitespace " "]
+                              Identifier "String" @ 147..153 trailing=[Whitespace " "]
                       ExpressionBody
                         Assign "=" @ 154..155 trailing=[Whitespace " "]
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 156..157
+                              OpenQuote "\"" @ 156..157
                             StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "default" @ 157..164
+                              RegularStringPart "default" @ 157..164
                           ClosingQuote "\"" @ 164..165
                 RBrace "}" @ 170..171 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 172..173 leading=[Newline "\n"]

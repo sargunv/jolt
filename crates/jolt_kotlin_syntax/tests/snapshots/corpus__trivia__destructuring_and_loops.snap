@@ -49,9 +49,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "List" @ 53..57
+                    Identifier "List" @ 53..57
                     TypeArgumentList
                       Lt "<" @ 57..58
                       TypeProjectionSeparatedList
@@ -59,9 +57,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Pair" @ 58..62
+                                Identifier "Pair" @ 58..62
                                 TypeArgumentList
                                   Lt "<" @ 62..63
                                   TypeProjectionSeparatedList
@@ -69,17 +65,13 @@ KotlinFile
                                       UserType
                                         UserTypeSegmentList
                                           UserTypeSegment
-                                            AnnotationList
-                                            Name
-                                              Identifier "String" @ 63..69
+                                            Identifier "String" @ 63..69
                                     Comma "," @ 69..70 trailing=[Whitespace " "]
                                     TypeReference
                                       UserType
                                         UserTypeSegmentList
                                           UserTypeSegment
-                                            AnnotationList
-                                            Name
-                                              Identifier "Int" @ 71..74
+                                            Identifier "Int" @ 71..74
                                   Gt ">" @ 74..75
                       Gt ">" @ 75..76
         RParen ")" @ 76..77 trailing=[Whitespace " "]
@@ -132,11 +124,9 @@ KotlinFile
                           BinaryExpression
                             NameExpression
                               Identifier "name" @ 246..250 trailing=[Whitespace " "]
-                            BinaryOperator
-                              Identifier "to" @ 251..253 trailing=[Whitespace " "]
-                            BinaryExpressionRight
-                              NameExpression
-                                Identifier "count" @ 254..259
+                            Identifier "to" @ 251..253 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "count" @ 254..259
                         PropertyBodyMemberList
                       Statement
                         ExpressionStatement
@@ -152,23 +142,17 @@ KotlinFile
                                   StringTemplateExpression
                                     StringTemplateEntryList
                                       StringTemplateEntry
-                                        StringTemplateContent
-                                          OpenQuote "\"" @ 276..277
+                                        OpenQuote "\"" @ 276..277
                                       StringTemplateEntry
-                                        StringTemplateContent
-                                          ShortTemplateEntryStart "$" @ 277..278
+                                        ShortTemplateEntryStart "$" @ 277..278
                                       StringTemplateEntry
-                                        StringTemplateContent
-                                          Identifier "first" @ 278..283
+                                        Identifier "first" @ 278..283
                                       StringTemplateEntry
-                                        StringTemplateContent
-                                          RegularStringPart ":" @ 283..284
+                                        RegularStringPart ":" @ 283..284
                                       StringTemplateEntry
-                                        StringTemplateContent
-                                          ShortTemplateEntryStart "$" @ 284..285
+                                        ShortTemplateEntryStart "$" @ 284..285
                                       StringTemplateEntry
-                                        StringTemplateContent
-                                          Identifier "second" @ 285..291
+                                        Identifier "second" @ 285..291
                                     ClosingQuote "\"" @ 291..292
                               RParen ")" @ 292..293
                             LambdaExpressionList

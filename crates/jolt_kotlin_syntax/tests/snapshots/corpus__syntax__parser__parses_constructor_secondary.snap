@@ -37,9 +37,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 57..63
+                      Identifier "String" @ 57..63
           RParen ")" @ 63..64 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 65..66
@@ -68,11 +66,9 @@ KotlinFile
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                StringTemplateContent
-                                  OpenQuote "\"" @ 92..93
+                                OpenQuote "\"" @ 92..93
                               StringTemplateEntry
-                                StringTemplateContent
-                                  RegularStringPart "default" @ 93..100
+                                RegularStringPart "default" @ 93..100
                             ClosingQuote "\"" @ 100..101
                       RParen ")" @ 101..102
                     LambdaExpressionList
@@ -93,9 +89,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "Int" @ 124..127
+                            Identifier "Int" @ 124..127
                 RParen ")" @ 127..128 trailing=[Whitespace " "]
               ConstructorDelegation
                 Colon ":" @ 129..130 trailing=[Whitespace " "]
@@ -113,10 +107,8 @@ KotlinFile
                             NavigationExpression
                               NameExpression
                                 Identifier "id" @ 136..138
-                              NavigationOperator
-                                Dot "." @ 138..139
-                              NameExpression
-                                Identifier "toString" @ 139..147
+                              Dot "." @ 138..139
+                              Identifier "toString" @ 139..147
                             TypeArgumentListList
                             ValueArgumentList
                               LParen "(" @ 147..148

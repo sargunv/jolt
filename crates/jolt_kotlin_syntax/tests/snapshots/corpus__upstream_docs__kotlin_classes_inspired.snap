@@ -50,9 +50,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 51..57
+                      Identifier "String" @ 51..57
           RParen ")" @ 57..58 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 59..60
@@ -69,9 +67,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Int" @ 77..80 trailing=[Whitespace " "]
+                      Identifier "Int" @ 77..80 trailing=[Whitespace " "]
               PropertyInitializer
                 Assign "=" @ 81..82 trailing=[Whitespace " "]
                 LiteralExpression
@@ -94,25 +90,19 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 103..109 trailing=[Whitespace " "]
+                      Identifier "String" @ 103..109 trailing=[Whitespace " "]
               ExpressionBody
                 Assign "=" @ 110..111 trailing=[Whitespace " "]
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      StringTemplateContent
-                        OpenQuote "\"" @ 112..113
+                      OpenQuote "\"" @ 112..113
                     StringTemplateEntry
-                      StringTemplateContent
-                        RegularStringPart "Welcome, " @ 113..122
+                      RegularStringPart "Welcome, " @ 113..122
                     StringTemplateEntry
-                      StringTemplateContent
-                        ShortTemplateEntryStart "$" @ 122..123
+                      ShortTemplateEntryStart "$" @ 122..123
                     StringTemplateEntry
-                      StringTemplateContent
-                        Identifier "name" @ 123..127
+                      Identifier "name" @ 123..127
                   ClosingQuote "\"" @ 127..128
         RBrace "}" @ 129..130 leading=[Newline "\n"]
   Eof "" @ 131..131 leading=[Newline "\n"]

@@ -68,9 +68,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 68..74
+                            Identifier "String" @ 68..74
                 RParen ")" @ 74..75
         RBrace "}" @ 76..77 leading=[Newline "\n"]
     ClassDeclaration
@@ -87,9 +85,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Logger" @ 101..107 trailing=[Whitespace " "]
+                    Identifier "Logger" @ 101..107 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 108..109
         ClassMemberList
@@ -114,9 +110,7 @@ KotlinFile
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 140..146
+                            Identifier "String" @ 140..146
                 RParen ")" @ 146..147 trailing=[Whitespace " "]
               BlockBody
                 Block
@@ -146,9 +140,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Logger" @ 193..199
+                      Identifier "Logger" @ 193..199
             Comma "," @ 199..200
           RParen ")" @ 201..202 leading=[Newline "\n"] trailing=[Whitespace " "]
       DelegationClause
@@ -159,9 +151,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Logger" @ 205..211 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:delegation-type */", Whitespace " "]
+                    Identifier "Logger" @ 205..211 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:delegation-type */", Whitespace " "]
             DelegationByClause
               Identifier "by" @ 246..248 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:delegation-by */", Whitespace " "]
               NameExpression
@@ -177,9 +167,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 301..307 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-delegate-type */", Whitespace " "]
+              Identifier "String" @ 301..307 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-delegate-type */", Whitespace " "]
       PropertyInitializer
         Identifier "by" @ 349..351 trailing=[Whitespace " "]
         CallExpression
@@ -196,11 +184,9 @@ KotlinFile
                       StringTemplateExpression
                         StringTemplateEntryList
                           StringTemplateEntry
-                            StringTemplateContent
-                              OpenQuote "\"" @ 393..394 leading=[Newline "\n", Whitespace "    "]
+                            OpenQuote "\"" @ 393..394 leading=[Newline "\n", Whitespace "    "]
                           StringTemplateEntry
-                            StringTemplateContent
-                              RegularStringPart "value" @ 394..399
+                            RegularStringPart "value" @ 394..399
                         ClosingQuote "\"" @ 399..400
                     TerminatorList
                 RBrace "}" @ 401..402 leading=[Newline "\n"]

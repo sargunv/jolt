@@ -35,9 +35,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 32..38
+                      Identifier "String" @ 32..38
               PropertyBodyMemberList
           ClassMemberDeclaration
             FunctionDeclaration
@@ -56,9 +54,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 59..65 trailing=[Whitespace " "]
+                      Identifier "String" @ 59..65 trailing=[Whitespace " "]
               ExpressionBody
                 Assign "=" @ 66..67 trailing=[Whitespace " "]
                 NameExpression

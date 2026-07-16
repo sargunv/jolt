@@ -16,26 +16,19 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              StringTemplateContent
-                OpenQuote "\"" @ 0..1
+              OpenQuote "\"" @ 0..1
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "abc" @ 1..4
+              RegularStringPart "abc" @ 1..4
             StringTemplateEntry
-              StringTemplateContent
-                DanglingNewline "" @ 4..4
+              DanglingNewline "" @ 4..4
             StringTemplateEntry
-              StringTemplateContent
-                ValKw "val" @ 5..8 leading=[Newline "\n"] trailing=[Whitespace " "]
+              ValKw "val" @ 5..8 leading=[Newline "\n"] trailing=[Whitespace " "]
             StringTemplateEntry
-              StringTemplateContent
-                Identifier "x" @ 9..10 trailing=[Whitespace " "]
+              Identifier "x" @ 9..10 trailing=[Whitespace " "]
             StringTemplateEntry
-              StringTemplateContent
-                Assign "=" @ 11..12 trailing=[Whitespace " "]
+              Assign "=" @ 11..12 trailing=[Whitespace " "]
             StringTemplateEntry
-              StringTemplateContent
-                IntegerLiteral "1" @ 13..14
+              IntegerLiteral "1" @ 13..14
       TerminatorList
   Eof "" @ 15..15 leading=[Newline "\n"]
 

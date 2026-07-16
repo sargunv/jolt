@@ -36,18 +36,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Source" @ 20..26
+                    Identifier "Source" @ 20..26
         RParen ")" @ 26..27
       Colon ":" @ 27..28 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Result" @ 29..35 trailing=[Whitespace " "]
+              Identifier "Result" @ 29..35 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 36..37
@@ -66,10 +62,8 @@ KotlinFile
                                 NavigationExpression
                                   NameExpression
                                     Identifier "source" @ 49..55
-                                  NavigationOperator
-                                    Dot "." @ 64..65 leading=[Newline "\n", Whitespace "        "]
-                                  NameExpression
-                                    Identifier "select" @ 65..71
+                                  Dot "." @ 64..65 leading=[Newline "\n", Whitespace "        "]
+                                  Identifier "select" @ 65..71
                                 TypeArgumentListList
                                 ValueArgumentList
                                   LParen "(" @ 71..72
@@ -79,18 +73,14 @@ KotlinFile
                                       StringTemplateExpression
                                         StringTemplateEntryList
                                           StringTemplateEntry
-                                            StringTemplateContent
-                                              OpenQuote "\"" @ 72..73
+                                            OpenQuote "\"" @ 72..73
                                           StringTemplateEntry
-                                            StringTemplateContent
-                                              RegularStringPart "name" @ 73..77
+                                            RegularStringPart "name" @ 73..77
                                         ClosingQuote "\"" @ 77..78
                                   RParen ")" @ 78..79
                                 LambdaExpressionList
-                              NavigationOperator
-                                Dot "." @ 88..89 leading=[Newline "\n", Whitespace "        "]
-                              NameExpression
-                                Identifier "filter" @ 89..95 trailing=[Whitespace " "]
+                              Dot "." @ 88..89 leading=[Newline "\n", Whitespace "        "]
+                              Identifier "filter" @ 89..95 trailing=[Whitespace " "]
                             TypeArgumentListList
                             LambdaExpressionList
                               LambdaExpression
@@ -102,10 +92,8 @@ KotlinFile
                                         NavigationExpression
                                           NameExpression
                                             Identifier "it" @ 98..100
-                                          NavigationOperator
-                                            Dot "." @ 100..101
-                                          NameExpression
-                                            Identifier "active" @ 101..107 trailing=[Whitespace " "]
+                                          Dot "." @ 100..101
+                                          Identifier "active" @ 101..107 trailing=[Whitespace " "]
                                       TerminatorList
                                   RBrace "}" @ 108..109
                           LBracket "[" @ 118..119 leading=[Newline "\n", Whitespace "        "]
@@ -115,28 +103,22 @@ KotlinFile
                               LiteralExpression
                                 IntegerLiteral "0" @ 119..120
                           RBracket "]" @ 120..121
-                        NavigationOperator
-                          SplitSafeNavigationOperator
-                            Question "?" @ 130..131 leading=[Newline "\n", Whitespace "        "]
-                            Dot "." @ 131..132
-                        NameExpression
-                          Identifier "build" @ 132..137
+                        SplitSafeNavigationOperator
+                          Question "?" @ 130..131 leading=[Newline "\n", Whitespace "        "]
+                          Dot "." @ 131..132
+                        Identifier "build" @ 132..137
                       TypeArgumentListList
                       ValueArgumentList
                         LParen "(" @ 137..138
                         ValueArgumentEntryList
                         RParen ")" @ 138..139
                       LambdaExpressionList
-                    BinaryOperator
-                      Elvis "?:" @ 148..150 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                    BinaryExpressionRight
-                      NavigationExpression
-                        NameExpression
-                          Identifier "Result" @ 151..157
-                        NavigationOperator
-                          Dot "." @ 157..158
-                        NameExpression
-                          Identifier "Empty" @ 158..163
+                    Elvis "?:" @ 148..150 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    NavigationExpression
+                      NameExpression
+                        Identifier "Result" @ 151..157
+                      Dot "." @ 157..158
+                      Identifier "Empty" @ 158..163
               TerminatorList
           RBrace "}" @ 164..165 leading=[Newline "\n"]
   Eof "" @ 166..166 leading=[Newline "\n"]

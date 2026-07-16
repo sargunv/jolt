@@ -15,26 +15,19 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              StringTemplateContent
-                OpenQuote "\"" @ 0..1
+              OpenQuote "\"" @ 0..1
             StringTemplateEntry
-              StringTemplateContent
-                RegularStringPart "a" @ 1..2
+              RegularStringPart "a" @ 1..2
             StringTemplateEntry
-              StringTemplateContent
-                EscapeSequence "\\n" @ 2..4
+              EscapeSequence "\\n" @ 2..4
             StringTemplateEntry
-              StringTemplateContent
-                EscapeSequence "\\t" @ 4..6
+              EscapeSequence "\\t" @ 4..6
             StringTemplateEntry
-              StringTemplateContent
-                EscapeSequence "\\\"" @ 6..8
+              EscapeSequence "\\\"" @ 6..8
             StringTemplateEntry
-              StringTemplateContent
-                EscapeSequence "\\\\" @ 8..10
+              EscapeSequence "\\\\" @ 8..10
             StringTemplateEntry
-              StringTemplateContent
-                EscapeSequence "\\u0041" @ 10..16
+              EscapeSequence "\\u0041" @ 10..16
           ClosingQuote "\"" @ 16..17
       TerminatorList
   Eof "" @ 18..18 leading=[Newline "\n"]

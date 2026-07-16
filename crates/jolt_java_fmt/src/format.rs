@@ -26,6 +26,7 @@ impl JavaFormatDiagnosticCode {
 }
 
 /// Formats Java source text into a render sink.
+#[inline]
 pub fn format_source_to_sink<S: RenderSink + ?Sized>(
     source: &str,
     options: &FormatOptions,

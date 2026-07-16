@@ -702,6 +702,7 @@ pub fn build_syntax_tree_with_factory(
     trivia: Vec<SyntaxTrivia>,
     factory: &impl SyntaxFactory,
 ) -> Result<SyntaxTree, BuildSyntaxTreeError> {
+    validate_external_events(&events)?;
     SyntaxTreeBuilder::new(tokens, trivia, events.len(), false)
         .build(source, events, factory)
         .map(|(tree, _)| tree)
@@ -709,6 +710,23 @@ pub fn build_syntax_tree_with_factory(
 
 #[doc(hidden)]
 pub fn build_syntax_tree_with_factory_and_diagnostic_owners(
+    source: &str,
+    events: Vec<Event>,
+    tokens: Vec<SyntaxTokenData>,
+    trivia: Vec<SyntaxTrivia>,
+    owners: &[Option<UnresolvedDiagnosticOwner>],
+    factory: &impl SyntaxFactory,
+) -> Result<(SyntaxTree, Vec<Option<SyntaxDiagnosticOwner>>), BuildSyntaxTreeError> {
+    validate_external_events(&events)?;
+    build_parser_syntax_tree(source, events, tokens, trivia, owners, factory)
+}
+
+/// Builds syntax from events produced by the shared parser marker API.
+///
+/// Parser-owned streams cannot contain the construction-only `Consumed`
+/// sentinel, so this skips the redundant external-input validation pass.
+#[doc(hidden)]
+pub fn build_parser_syntax_tree(
     source: &str,
     events: Vec<Event>,
     tokens: Vec<SyntaxTokenData>,
@@ -740,6 +758,15 @@ pub fn build_syntax_tree_with_factory_and_diagnostic_owners(
         }));
     }
     Ok((tree, resolved))
+}
+
+fn validate_external_events(events: &[Event]) -> Result<(), BuildSyntaxTreeError> {
+    for (position, event) in events.iter().enumerate() {
+        if matches!(event, Event::Consumed) {
+            return Err(BuildSyntaxTreeError::UnexpectedConsumedEvent { position });
+        }
+    }
+    Ok(())
 }
 
 struct SyntaxTreeBuilder {
@@ -787,17 +814,6 @@ impl SyntaxTreeBuilder {
         mut events: Vec<Event>,
         factory: &impl SyntaxFactory,
     ) -> Result<BuiltSyntaxTree, BuildSyntaxTreeError> {
-        for (position, event) in events.iter().enumerate() {
-            match event {
-                Event::Tombstone => {
-                    return Err(BuildSyntaxTreeError::UnresolvedMarker { position });
-                }
-                Event::Consumed => {
-                    return Err(BuildSyntaxTreeError::UnexpectedConsumedEvent { position });
-                }
-                Event::Start { .. } | Event::Token | Event::Finish => {}
-            }
-        }
         for position in 0..events.len() {
             match events[position] {
                 Event::Start {

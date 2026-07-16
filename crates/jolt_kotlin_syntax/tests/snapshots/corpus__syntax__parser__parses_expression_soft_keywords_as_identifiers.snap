@@ -38,9 +38,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 26..29
+                    Identifier "Int" @ 26..29
           Comma "," @ 29..30 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -51,9 +49,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 38..44
+                    Identifier "String" @ 38..44
           Comma "," @ 44..45 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -64,18 +60,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Boolean" @ 53..60
+                    Identifier "Boolean" @ 53..60
         RParen ")" @ 60..61
       Colon ":" @ 61..62 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 63..69 trailing=[Whitespace " "]
+              Identifier "String" @ 63..69 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 70..71
@@ -91,11 +83,9 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "context" @ 88..95 trailing=[Whitespace " "]
-                  BinaryOperator
-                    Plus "+" @ 96..97 trailing=[Whitespace " "]
-                  BinaryExpressionRight
-                    LiteralExpression
-                      IntegerLiteral "1" @ 98..99
+                  Plus "+" @ 96..97 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "1" @ 98..99
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -108,10 +98,8 @@ KotlinFile
                 NavigationExpression
                   NameExpression
                     Identifier "field" @ 113..118
-                  NavigationOperator
-                    Dot "." @ 118..119
-                  NameExpression
-                    Identifier "length" @ 119..125
+                  Dot "." @ 118..119
+                  Identifier "length" @ 119..125
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -124,17 +112,13 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "value" @ 140..145 trailing=[Whitespace " "]
-                  BinaryOperator
-                    AndAnd "&&" @ 146..148 trailing=[Whitespace " "]
-                  BinaryExpressionRight
-                    BinaryExpression
-                      NameExpression
-                        Identifier "where" @ 149..154 trailing=[Whitespace " "]
-                      BinaryOperator
-                        Gt ">" @ 155..156 trailing=[Whitespace " "]
-                      BinaryExpressionRight
-                        NameExpression
-                          Identifier "by" @ 157..159
+                  AndAnd "&&" @ 146..148 trailing=[Whitespace " "]
+                  BinaryExpression
+                    NameExpression
+                      Identifier "where" @ 149..154 trailing=[Whitespace " "]
+                    Gt ">" @ 155..156 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "by" @ 157..159
               PropertyBodyMemberList
             Statement
               ExpressionStatement
@@ -153,11 +137,9 @@ KotlinFile
                     StringTemplateExpression
                       StringTemplateEntryList
                         StringTemplateEntry
-                          StringTemplateContent
-                            OpenQuote "\"" @ 191..192
+                          OpenQuote "\"" @ 191..192
                         StringTemplateEntry
-                          StringTemplateContent
-                            RegularStringPart "none" @ 192..196
+                          RegularStringPart "none" @ 192..196
                       ClosingQuote "\"" @ 196..197
               TerminatorList
           RBrace "}" @ 198..199 leading=[Newline "\n"]
@@ -181,9 +163,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Node" @ 231..235
+                      Identifier "Node" @ 231..235
                 Question "?" @ 235..236
         RParen ")" @ 236..237 trailing=[Whitespace " "]
       BlockBody
@@ -196,12 +176,10 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "open" @ 244..248 leading=[Newline "\n", Whitespace "    "]
-                    NavigationOperator
-                      SplitSafeNavigationOperator
-                        Question "?" @ 248..249
-                        Dot "." @ 249..250
-                    NameExpression
-                      Identifier "member" @ 250..256
+                    SplitSafeNavigationOperator
+                      Question "?" @ 248..249
+                      Dot "." @ 249..250
+                    Identifier "member" @ 250..256
                   TypeArgumentListList
                   ValueArgumentList
                     LParen "(" @ 256..257

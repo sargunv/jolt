@@ -63,9 +63,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "KMutableMap" @ 108..119
+                      Identifier "KMutableMap" @ 108..119
                       TypeArgumentList
                         Lt "<" @ 119..120
                         TypeProjectionSeparatedList
@@ -73,17 +71,13 @@ KotlinFile
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "String" @ 120..126
+                                  Identifier "String" @ 120..126
                           Comma "," @ 126..127 trailing=[Whitespace " "]
                           TypeReference
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "Int" @ 128..131
+                                  Identifier "Int" @ 128..131
                         Gt ">" @ 131..132
           RParen ")" @ 132..133
   Eof "" @ 134..134 leading=[Newline "\n"]

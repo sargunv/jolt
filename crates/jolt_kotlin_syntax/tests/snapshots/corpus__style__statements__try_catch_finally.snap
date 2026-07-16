@@ -52,18 +52,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 54..60
+                    Identifier "String" @ 54..60
         RParen ")" @ 60..61
       Colon ":" @ 61..62 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Int" @ 63..66 trailing=[Whitespace " "]
+              Identifier "Int" @ 63..66 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 67..68
@@ -85,20 +81,16 @@ KotlinFile
                                   NavigationExpression
                                     NameExpression
                                       Identifier "text" @ 94..98 leading=[Newline "\n", Whitespace "        "]
-                                    NavigationOperator
-                                      Dot "." @ 98..99
-                                    NameExpression
-                                      Identifier "trim" @ 99..103
+                                    Dot "." @ 98..99
+                                    Identifier "trim" @ 99..103
                                   TypeArgumentListList
                                   ValueArgumentList
                                     LParen "(" @ 103..104
                                     ValueArgumentEntryList
                                     RParen ")" @ 104..105
                                   LambdaExpressionList
-                                NavigationOperator
-                                  Dot "." @ 105..106
-                                NameExpression
-                                  Identifier "toInt" @ 106..111
+                                Dot "." @ 105..106
+                                Identifier "toInt" @ 106..111
                               TypeArgumentListList
                               ValueArgumentList
                                 LParen "(" @ 111..112
@@ -120,9 +112,7 @@ KotlinFile
                             UserType
                               UserTypeSegmentList
                                 UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "NumberFormatException" @ 134..155
+                                  Identifier "NumberFormatException" @ 134..155
                           RParen ")" @ 155..156 trailing=[Whitespace " "]
                         Block
                           LBrace "{" @ 157..158
@@ -152,11 +142,9 @@ KotlinFile
                                         StringTemplateExpression
                                           StringTemplateEntryList
                                             StringTemplateEntry
-                                              StringTemplateContent
-                                                OpenQuote "\"" @ 201..202
+                                              OpenQuote "\"" @ 201..202
                                             StringTemplateEntry
-                                              StringTemplateContent
-                                                RegularStringPart "parsed" @ 202..208
+                                              RegularStringPart "parsed" @ 202..208
                                           ClosingQuote "\"" @ 208..209
                                     RParen ")" @ 209..210
                                   LambdaExpressionList

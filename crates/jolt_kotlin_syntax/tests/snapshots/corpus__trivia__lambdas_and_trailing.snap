@@ -62,17 +62,13 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 48..54
+                                Identifier "String" @ 48..54
                     RParen ")" @ 54..55 trailing=[Whitespace " "]
                   Arrow "->" @ 56..58 trailing=[Whitespace " "]
                   UserType
                     UserTypeSegmentList
                       UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "Unit" @ 59..63
+                        Identifier "Unit" @ 59..63
         RParen ")" @ 63..64 trailing=[Whitespace " "]
       BlockBody
         Block
@@ -98,9 +94,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 89..95
+                    Identifier "String" @ 89..95
           Comma "," @ 95..96 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -119,26 +113,20 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 105..111
+                                Identifier "String" @ 105..111
                     RParen ")" @ 111..112 trailing=[Whitespace " "]
                   Arrow "->" @ 113..115 trailing=[Whitespace " "]
                   UserType
                     UserTypeSegmentList
                       UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "String" @ 116..122
+                        Identifier "String" @ 116..122
         RParen ")" @ 122..123
       Colon ":" @ 123..124 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 125..131 trailing=[Whitespace " "]
+              Identifier "String" @ 125..131 trailing=[Whitespace " "]
       ExpressionBody
         Assign "=" @ 132..133 trailing=[Whitespace " "]
         CallExpression
@@ -225,11 +213,9 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 312..313
+                              OpenQuote "\"" @ 312..313
                             StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "name" @ 313..317
+                              RegularStringPart "name" @ 313..317
                           ClosingQuote "\"" @ 317..318
                     RParen ")" @ 318..319 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:before-trailing */", Whitespace " "]
                   LambdaExpressionList
@@ -243,10 +229,8 @@ KotlinFile
                                 NavigationExpression
                                   NameExpression
                                     Identifier "it" @ 364..366 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:implicit-it */", Whitespace " "]
-                                  NavigationOperator
-                                    Dot "." @ 397..398
-                                  NameExpression
-                                    Identifier "uppercase" @ 398..407
+                                  Dot "." @ 397..398
+                                  Identifier "uppercase" @ 398..407
                                 TypeArgumentListList
                                 ValueArgumentList
                                   LParen "(" @ 407..408

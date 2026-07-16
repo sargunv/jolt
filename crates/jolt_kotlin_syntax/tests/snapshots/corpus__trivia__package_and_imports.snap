@@ -38,11 +38,9 @@ KotlinFile
             StringTemplateExpression
               StringTemplateEntryList
                 StringTemplateEntry
-                  StringTemplateContent
-                    OpenQuote "\"" @ 45..46
+                  OpenQuote "\"" @ 45..46
                 StringTemplateEntry
-                  StringTemplateContent
-                    RegularStringPart "unused" @ 46..52
+                  RegularStringPart "unused" @ 46..52
               ClosingQuote "\"" @ 52..53
         RParen ")" @ 53..54 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:file-annotation */"]
   KotlinFileItemList
@@ -125,9 +123,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "List" @ 450..454
+                    Identifier "List" @ 450..454
                     TypeArgumentList
                       Lt "<" @ 454..455
                       TypeProjectionSeparatedList
@@ -135,9 +131,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 455..461
+                                Identifier "String" @ 455..461
                       Gt ">" @ 461..462
         RParen ")" @ 462..463 trailing=[Whitespace " "]
       BlockBody
@@ -159,10 +153,8 @@ KotlinFile
                           NavigationExpression
                             NameExpression
                               Identifier "names" @ 474..479
-                            NavigationOperator
-                              Dot "." @ 479..480
-                            NameExpression
-                              Identifier "joinToString" @ 480..492
+                            Dot "." @ 479..480
+                            Identifier "joinToString" @ 480..492
                           TypeArgumentListList
                           ValueArgumentList
                             LParen "(" @ 492..493

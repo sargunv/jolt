@@ -29,9 +29,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 16..22
+                    Identifier "String" @ 16..22
           Comma "," @ 22..23 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
           Comma "," @ 37..38 trailing=[Whitespace " "]
           BogusValueParameter
@@ -44,9 +42,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Int" @ 47..50
+                    Identifier "Int" @ 47..50
         RParen ")" @ 50..51 trailing=[Whitespace " "]
       BlockBody
         Block

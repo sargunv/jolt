@@ -32,8 +32,7 @@ KotlinFile
               ValueArgumentEntryList
               RParen ")" @ 10..11 trailing=[Whitespace " "]
             LambdaExpressionList
-          NavigationOperator
-            Dot "." @ 12..13 trailing=[Whitespace " "]
+          Dot "." @ 12..13 trailing=[Whitespace " "]
           BogusNavigationSelector
         BogusExpression
           Question "?" @ 14..15 trailing=[Whitespace " "]
@@ -49,11 +48,9 @@ KotlinFile
         BinaryExpression
           BogusExpression
             Range ".." @ 26..28 trailing=[Whitespace " "]
-          BinaryOperator
-            RangeUntil "..<" @ 29..32 trailing=[Whitespace " "]
-          BinaryExpressionRight
-            BogusExpression
-              Assign "=" @ 33..34 trailing=[Whitespace " "]
+          RangeUntil "..<" @ 29..32 trailing=[Whitespace " "]
+          BogusExpression
+            Assign "=" @ 33..34 trailing=[Whitespace " "]
         BogusExpression
           Hash "#" @ 35..36 trailing=[Whitespace " "]
         BogusExpression

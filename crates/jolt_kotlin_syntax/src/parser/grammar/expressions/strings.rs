@@ -13,7 +13,6 @@ impl Parser<'_> {
             K::ClosingQuote | K::Semicolon | K::DoubleSemicolon | K::RBrace | K::Eof
         ) {
             let entry = self.start();
-            let content = self.start();
             match self.current_kind() {
                 K::LongTemplateEntryStart => {
                     let long_entry = self.start();
@@ -33,7 +32,6 @@ impl Parser<'_> {
                 }
                 _ => self.bump(),
             }
-            self.complete(content, K::StringTemplateContent);
             self.complete(entry, K::StringTemplateEntry);
         }
         self.complete(parts, K::StringTemplateEntryList);

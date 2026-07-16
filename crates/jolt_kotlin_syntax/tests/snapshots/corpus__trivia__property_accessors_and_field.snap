@@ -55,9 +55,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Int" @ 61..64 trailing=[Whitespace " "]
+                      Identifier "Int" @ 61..64 trailing=[Whitespace " "]
               PropertyInitializer
                 Assign "=" @ 65..66 trailing=[Whitespace " "]
                 LiteralExpression
@@ -100,10 +98,8 @@ KotlinFile
                                 NavigationExpression
                                   NameExpression
                                     Identifier "value" @ 259..264
-                                  NavigationOperator
-                                    Dot "." @ 264..265
-                                  NameExpression
-                                    Identifier "coerceAtLeast" @ 265..278
+                                  Dot "." @ 264..265
+                                  Identifier "coerceAtLeast" @ 265..278
                                 TypeArgumentListList
                                 ValueArgumentList
                                   LParen "(" @ 278..279
@@ -128,9 +124,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Boolean" @ 308..315
+                      Identifier "Boolean" @ 308..315
               PropertyBodyMemberList
                 PropertyAccessor
                   ModifierList
@@ -144,11 +138,9 @@ KotlinFile
                     BinaryExpression
                       NameExpression
                         Identifier "count" @ 370..375 trailing=[Whitespace " "]
-                      BinaryOperator
-                        EqEq "==" @ 376..378 trailing=[Whitespace " "]
-                      BinaryExpressionRight
-                        LiteralExpression
-                          IntegerLiteral "0" @ 379..380
+                      EqEq "==" @ 376..378 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "0" @ 379..380
         RBrace "}" @ 381..382 leading=[Newline "\n"]
   Eof "" @ 383..383 leading=[Newline "\n"]
 

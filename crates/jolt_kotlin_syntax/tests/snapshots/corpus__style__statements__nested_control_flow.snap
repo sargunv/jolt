@@ -63,9 +63,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "List" @ 52..56
+                    Identifier "List" @ 52..56
                     TypeArgumentList
                       Lt "<" @ 56..57
                       TypeProjectionSeparatedList
@@ -73,9 +71,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "List" @ 57..61
+                                Identifier "List" @ 57..61
                                 TypeArgumentList
                                   Lt "<" @ 61..62
                                   TypeProjectionSeparatedList
@@ -83,9 +79,7 @@ KotlinFile
                                       UserType
                                         UserTypeSegmentList
                                           UserTypeSegment
-                                            AnnotationList
-                                            Name
-                                              Identifier "Int" @ 62..65
+                                            Identifier "Int" @ 62..65
                                   Gt ">" @ 65..66
                       Gt ">" @ 66..67
         RParen ")" @ 67..68
@@ -94,9 +88,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 70..76 trailing=[Whitespace " "]
+              Identifier "String" @ 70..76 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 77..78
@@ -169,11 +161,9 @@ KotlinFile
                                                     BinaryExpression
                                                       NameExpression
                                                         Identifier "value" @ 211..216 trailing=[Whitespace " "]
-                                                      BinaryOperator
-                                                        Lt "<" @ 217..218 trailing=[Whitespace " "]
-                                                      BinaryExpressionRight
-                                                        LiteralExpression
-                                                          IntegerLiteral "0" @ 219..220
+                                                      Lt "<" @ 217..218 trailing=[Whitespace " "]
+                                                      LiteralExpression
+                                                        IntegerLiteral "0" @ 219..220
                                                     RParen ")" @ 220..221 trailing=[Whitespace " "]
                                                   JumpExpression
                                                     ContinueKw "continue" @ 222..230
@@ -213,9 +203,7 @@ KotlinFile
                           UserType
                             UserTypeSegmentList
                               UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "IllegalStateException" @ 326..347
+                                Identifier "IllegalStateException" @ 326..347
                         RParen ")" @ 347..348 trailing=[Whitespace " "]
                       Block
                         LBrace "{" @ 349..350
@@ -227,11 +215,9 @@ KotlinFile
                                 StringTemplateExpression
                                   StringTemplateEntryList
                                     StringTemplateEntry
-                                      StringTemplateContent
-                                        OpenQuote "\"" @ 366..367
+                                      OpenQuote "\"" @ 366..367
                                     StringTemplateEntry
-                                      StringTemplateContent
-                                        RegularStringPart "error" @ 367..372
+                                      RegularStringPart "error" @ 367..372
                                   ClosingQuote "\"" @ 372..373
                             TerminatorList
                         RBrace "}" @ 378..379 leading=[Newline "\n", Whitespace "    "]
@@ -250,21 +236,17 @@ KotlinFile
                             BinaryExpression
                               NameExpression
                                 Identifier "total" @ 407..412 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                              BinaryOperator
-                                EqEq "==" @ 413..415 trailing=[Whitespace " "]
-                              BinaryExpressionRight
-                                LiteralExpression
-                                  IntegerLiteral "0" @ 416..417 trailing=[Whitespace " "]
+                              EqEq "==" @ 413..415 trailing=[Whitespace " "]
+                              LiteralExpression
+                                IntegerLiteral "0" @ 416..417 trailing=[Whitespace " "]
                         Arrow "->" @ 418..420 trailing=[Whitespace " "]
                         WhenEntryBody
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                StringTemplateContent
-                                  OpenQuote "\"" @ 421..422
+                                OpenQuote "\"" @ 421..422
                               StringTemplateEntry
-                                StringTemplateContent
-                                  RegularStringPart "empty" @ 422..427
+                                RegularStringPart "empty" @ 422..427
                             ClosingQuote "\"" @ 427..428
                       WhenEntry
                         WhenConditionSeparatedList
@@ -272,21 +254,17 @@ KotlinFile
                             BinaryExpression
                               NameExpression
                                 Identifier "total" @ 437..442 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                              BinaryOperator
-                                Gt ">" @ 443..444 trailing=[Whitespace " "]
-                              BinaryExpressionRight
-                                LiteralExpression
-                                  IntegerLiteral "10" @ 445..447 trailing=[Whitespace " "]
+                              Gt ">" @ 443..444 trailing=[Whitespace " "]
+                              LiteralExpression
+                                IntegerLiteral "10" @ 445..447 trailing=[Whitespace " "]
                         Arrow "->" @ 448..450 trailing=[Whitespace " "]
                         WhenEntryBody
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                StringTemplateContent
-                                  OpenQuote "\"" @ 451..452
+                                OpenQuote "\"" @ 451..452
                               StringTemplateEntry
-                                StringTemplateContent
-                                  RegularStringPart "large" @ 452..457
+                                RegularStringPart "large" @ 452..457
                             ClosingQuote "\"" @ 457..458
                       WhenEntry
                         ElseKw "else" @ 467..471 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
@@ -296,11 +274,9 @@ KotlinFile
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                StringTemplateContent
-                                  OpenQuote "\"" @ 475..476
+                                OpenQuote "\"" @ 475..476
                               StringTemplateEntry
-                                StringTemplateContent
-                                  RegularStringPart "small" @ 476..481
+                                RegularStringPart "small" @ 476..481
                             ClosingQuote "\"" @ 481..482
                     RBrace "}" @ 487..488 leading=[Newline "\n", Whitespace "    "]
               TerminatorList

@@ -40,9 +40,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Any" @ 25..28
+                    Identifier "Any" @ 25..28
           Comma "," @ 28..29 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
           BogusTypeConstraint
           Comma "," @ 43..44 trailing=[Whitespace " "]
@@ -54,9 +52,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Closeable" @ 49..58 trailing=[Whitespace " "]
+                    Identifier "Closeable" @ 49..58 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 59..60

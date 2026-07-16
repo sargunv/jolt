@@ -65,9 +65,7 @@ KotlinFile
                   UserType
                     UserTypeSegmentList
                       UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "Profile" @ 57..64
+                        Identifier "Profile" @ 57..64
                   Question "?" @ 64..65
           RParen ")" @ 65..66
     ClassDeclaration
@@ -92,9 +90,7 @@ KotlinFile
                   UserType
                     UserTypeSegmentList
                       UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "String" @ 92..98
+                        Identifier "String" @ 92..98
                   Question "?" @ 98..99
           RParen ")" @ 99..100
     FunctionDeclaration
@@ -117,9 +113,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "User" @ 118..122
+                      Identifier "User" @ 118..122
                 Question "?" @ 122..123
         RParen ")" @ 123..124
       Colon ":" @ 124..125 trailing=[Whitespace " "]
@@ -127,9 +121,7 @@ KotlinFile
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "String" @ 126..132 trailing=[Whitespace " "]
+              Identifier "String" @ 126..132 trailing=[Whitespace " "]
       ExpressionBody
         Assign "=" @ 133..134
         BinaryExpression
@@ -137,30 +129,22 @@ KotlinFile
             NavigationExpression
               NameExpression
                 Identifier "user" @ 139..143 leading=[Newline "\n", Whitespace "    "]
-              NavigationOperator
-                SplitSafeNavigationOperator
-                  Question "?" @ 143..144
-                  Dot "." @ 144..145
-              NameExpression
-                Identifier "profile" @ 145..152
-            NavigationOperator
               SplitSafeNavigationOperator
-                Question "?" @ 152..153
-                Dot "." @ 153..154
-            NameExpression
-              Identifier "email" @ 154..159
-          BinaryOperator
-            Elvis "?:" @ 168..170 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-          BinaryExpressionRight
-            StringTemplateExpression
-              StringTemplateEntryList
-                StringTemplateEntry
-                  StringTemplateContent
-                    OpenQuote "\"" @ 171..172
-                StringTemplateEntry
-                  StringTemplateContent
-                    RegularStringPart "missing@example.com" @ 172..191
-              ClosingQuote "\"" @ 191..192
+                Question "?" @ 143..144
+                Dot "." @ 144..145
+              Identifier "profile" @ 145..152
+            SplitSafeNavigationOperator
+              Question "?" @ 152..153
+              Dot "." @ 153..154
+            Identifier "email" @ 154..159
+          Elvis "?:" @ 168..170 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+          StringTemplateExpression
+            StringTemplateEntryList
+              StringTemplateEntry
+                OpenQuote "\"" @ 171..172
+              StringTemplateEntry
+                RegularStringPart "missing@example.com" @ 172..191
+            ClosingQuote "\"" @ 191..192
     ClassDeclaration
       ModifierList
       ModifierList
@@ -182,9 +166,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Progress" @ 219..227
+                      Identifier "Progress" @ 219..227
           RParen ")" @ 227..228
     ClassDeclaration
       ModifierList
@@ -213,9 +195,7 @@ KotlinFile
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Status" @ 270..276
+                      Identifier "Status" @ 270..276
           RParen ")" @ 276..277 trailing=[Whitespace " "]
       DelegationClause
         Colon ":" @ 278..279 trailing=[Whitespace " "]
@@ -225,9 +205,7 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Progress" @ 280..288
+                    Identifier "Progress" @ 280..288
             ValueArgumentList
               LParen "(" @ 288..289
               ValueArgumentEntryList
@@ -267,18 +245,14 @@ KotlinFile
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "Pack" @ 344..348
+                    Identifier "Pack" @ 344..348
         RParen ")" @ 348..349
       Colon ":" @ 349..350 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              AnnotationList
-              Name
-                Identifier "Status" @ 351..357 trailing=[Whitespace " "]
+              Identifier "Status" @ 351..357 trailing=[Whitespace " "]
       BlockBody
         Block
           LBrace "{" @ 358..359
@@ -299,39 +273,27 @@ KotlinFile
                         NavigationExpression
                           NameExpression
                             Identifier "pack" @ 378..382
-                          NavigationOperator
-                            Dot "." @ 382..383
-                          NameExpression
-                            Identifier "progress" @ 383..391 trailing=[Whitespace " "]
-                        BinaryOperator
-                          AsSafe "as?" @ 392..395 trailing=[Whitespace " "]
-                        BinaryExpressionRight
-                          TypeReference
-                            UserType
-                              UserTypeSegmentList
-                                UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "Healthy" @ 396..403
+                          Dot "." @ 382..383
+                          Identifier "progress" @ 383..391 trailing=[Whitespace " "]
+                        AsSafe "as?" @ 392..395 trailing=[Whitespace " "]
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                Identifier "Healthy" @ 396..403
                       RParen ")" @ 403..404
-                    NavigationOperator
-                      SplitSafeNavigationOperator
-                        Question "?" @ 413..414 leading=[Newline "\n", Whitespace "        "]
-                        Dot "." @ 414..415
-                    NameExpression
-                      Identifier "status" @ 415..421 trailing=[Whitespace " "]
-                  BinaryOperator
-                    Elvis "?:" @ 422..424 trailing=[Whitespace " "]
-                  BinaryExpressionRight
-                    JumpExpression
-                      ReturnKw "return" @ 425..431 trailing=[Whitespace " "]
-                      NavigationExpression
-                        NameExpression
-                          Identifier "Status" @ 432..438
-                        NavigationOperator
-                          Dot "." @ 438..439
-                        NameExpression
-                          Identifier "Unknown" @ 439..446
+                    SplitSafeNavigationOperator
+                      Question "?" @ 413..414 leading=[Newline "\n", Whitespace "        "]
+                      Dot "." @ 414..415
+                    Identifier "status" @ 415..421 trailing=[Whitespace " "]
+                  Elvis "?:" @ 422..424 trailing=[Whitespace " "]
+                  JumpExpression
+                    ReturnKw "return" @ 425..431 trailing=[Whitespace " "]
+                    NavigationExpression
+                      NameExpression
+                        Identifier "Status" @ 432..438
+                      Dot "." @ 438..439
+                      Identifier "Unknown" @ 439..446
               PropertyBodyMemberList
             Statement
               ExpressionStatement

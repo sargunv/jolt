@@ -1,8 +1,9 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    AssignmentExpression, BinaryExpression, BinaryExpressionRight, BinaryExpressionRightSyntax,
-    BinaryOperatorSyntax, Expression, KotlinSyntaxField, KotlinSyntaxKind, KotlinSyntaxToken,
-    KotlinSyntaxView, ParenthesizedExpression, PostfixExpression, UnaryExpression,
+    AssignmentExpression, BinaryExpression, BinaryExpressionRightSyntax,
+    BinaryExpressionRightValue, BinaryOperatorSyntax, Expression, KotlinSyntaxField,
+    KotlinSyntaxKind, KotlinSyntaxToken, KotlinSyntaxView, ParenthesizedExpression,
+    PostfixExpression, UnaryExpression,
 };
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, comment_forces_line, format_token};
@@ -135,24 +136,22 @@ fn format_binary_fields<'source>(
         format_expression_with_leading(doc, &left, leading)
     });
     let operator = format_required_field(expression.operator(), doc, |operator, doc| {
-        format_required_field(operator.operator(), doc, |operator, doc| {
-            let operator = match operator.classify() {
-                Ok(
-                    BinaryOperatorSyntax::Operator(operator)
-                    | BinaryOperatorSyntax::InfixFunction(operator),
-                ) => operator,
-                Err(error) => {
-                    doc.block_on_invariant(error.to_string());
-                    return Doc::nil();
-                }
-            };
-            format_token(
-                doc,
-                &operator,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::Preserve,
-            )
-        })
+        let operator = match operator.classify() {
+            Ok(
+                BinaryOperatorSyntax::Operator(operator)
+                | BinaryOperatorSyntax::InfixFunction(operator),
+            ) => operator,
+            Err(error) => {
+                doc.block_on_invariant(error.to_string());
+                return Doc::nil();
+            }
+        };
+        format_token(
+            doc,
+            &operator,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        )
     });
     let right = format_required_field(expression.right(), doc, |right, doc| {
         format_binary_right(doc, &right)
@@ -167,9 +166,9 @@ fn format_binary_fields<'source>(
 
 fn format_binary_right<'source>(
     doc: &mut DocBuilder<'source>,
-    right: &BinaryExpressionRight<'source>,
+    right: &BinaryExpressionRightValue<'source>,
 ) -> Doc<'source> {
-    format_required_field(right.value(), doc, |right, doc| match right.classify() {
+    match (*right).classify() {
         Ok(BinaryExpressionRightSyntax::Expression(expression)) => {
             format_expression(doc, &expression)
         }
@@ -178,13 +177,13 @@ fn format_binary_right<'source>(
             doc.block_on_invariant(error.to_string());
             Doc::nil()
         }
-    })
+    }
 }
 
 fn binary_right_expression<'source>(
-    right: &BinaryExpressionRight<'source>,
+    right: &BinaryExpressionRightValue<'source>,
 ) -> Option<Expression<'source>> {
-    match present(right.value())?.classify().ok()? {
+    match (*right).classify().ok()? {
         BinaryExpressionRightSyntax::Expression(expression) => Some(expression),
         BinaryExpressionRightSyntax::TypeReference(_) => None,
     }
@@ -193,10 +192,7 @@ fn binary_right_expression<'source>(
 fn binary_operator<'source>(
     expression: &BinaryExpression<'source>,
 ) -> Option<KotlinSyntaxToken<'source>> {
-    match present(present(expression.operator())?.operator())?
-        .classify()
-        .ok()?
-    {
+    match present(expression.operator())?.classify().ok()? {
         BinaryOperatorSyntax::Operator(operator)
         | BinaryOperatorSyntax::InfixFunction(operator) => Some(operator),
     }
