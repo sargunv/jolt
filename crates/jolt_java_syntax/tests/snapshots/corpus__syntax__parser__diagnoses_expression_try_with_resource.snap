@@ -40,28 +40,27 @@ CompilationUnit
               LBrace "{" @ 69..70
               BlockStatementList
                 BlockStatement
-                  TryStatement
-                    TryWithResourcesStatement
-                      TryKw "try" @ 79..82 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      ResourceSpecification
-                        LParen "(" @ 83..84
-                        ResourceList
-                          Resource
-                            ErrorNode
-                              MethodInvocationExpression
-                                UnqualifiedMethodInvocation
-                                  NameExpression
-                                    Identifier "open" @ 84..88
-                                  ArgumentList
-                                    LParen "(" @ 88..89
-                                    ExpressionList
-                                    RParen ")" @ 89..90
-                        RParen ")" @ 90..91 trailing=[Whitespace " "]
-                      Block
-                        LBrace "{" @ 92..93
-                        BlockStatementList
-                        RBrace "}" @ 93..94
-                      CatchClauseList
+                  TryWithResourcesStatement
+                    TryKw "try" @ 79..82 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    ResourceSpecification
+                      LParen "(" @ 83..84
+                      ResourceList
+                        Resource
+                          BogusResourceValue
+                            MethodInvocationExpression
+                              UnqualifiedMethodInvocation
+                                NameExpression
+                                  Identifier "open" @ 84..88
+                                ArgumentList
+                                  LParen "(" @ 88..89
+                                  ExpressionList
+                                  RParen ")" @ 89..90
+                      RParen ")" @ 90..91 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 92..93
+                      BlockStatementList
+                      RBrace "}" @ 93..94
+                    CatchClauseList
               RBrace "}" @ 99..100 leading=[Newline "\n", Whitespace "    "]
           MethodDeclaration
             ClassType

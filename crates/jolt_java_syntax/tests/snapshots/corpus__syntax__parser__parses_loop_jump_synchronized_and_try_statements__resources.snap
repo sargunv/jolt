@@ -41,40 +41,37 @@ CompilationUnit
               LBrace "{" @ 53..54
               BlockStatementList
                 BlockStatement
-                  TryStatement
-                    TryWithResourcesStatement
-                      TryKw "try" @ 63..66 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      ResourceSpecification
-                        LParen "(" @ 67..68
-                        ResourceList
-                          Resource
-                            LocalVariableDeclaration
-                              ParameterModifierList
-                              Identifier "var" @ 68..71 trailing=[Whitespace " "]
-                              VariableDeclaratorList
-                                VariableDeclarator
-                                  Identifier "declared" @ 72..80 trailing=[Whitespace " "]
-                                  Assign "=" @ 81..82 trailing=[Whitespace " "]
-                                  VariableInitializer
-                                    MethodInvocationExpression
-                                      UnqualifiedMethodInvocation
-                                        NameExpression
-                                          Identifier "open" @ 83..87
-                                        ArgumentList
-                                          LParen "(" @ 87..88
-                                          ExpressionList
-                                          RParen ")" @ 88..89
-                          Semicolon ";" @ 89..90 trailing=[Whitespace " "]
-                          Resource
-                            VariableAccess
-                              NameExpression
-                                Identifier "existing" @ 91..99
-                        RParen ")" @ 99..100 trailing=[Whitespace " "]
-                      Block
-                        LBrace "{" @ 101..102
-                        BlockStatementList
-                        RBrace "}" @ 102..103
-                      CatchClauseList
+                  TryWithResourcesStatement
+                    TryKw "try" @ 63..66 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    ResourceSpecification
+                      LParen "(" @ 67..68
+                      ResourceList
+                        Resource
+                          ResourceVariableDeclaration
+                            ParameterModifierList
+                            Identifier "var" @ 68..71 trailing=[Whitespace " "]
+                            Identifier "declared" @ 72..80 trailing=[Whitespace " "]
+                            Assign "=" @ 81..82 trailing=[Whitespace " "]
+                            VariableInitializer
+                              MethodInvocationExpression
+                                UnqualifiedMethodInvocation
+                                  NameExpression
+                                    Identifier "open" @ 83..87
+                                  ArgumentList
+                                    LParen "(" @ 87..88
+                                    ExpressionList
+                                    RParen ")" @ 88..89
+                        Semicolon ";" @ 89..90 trailing=[Whitespace " "]
+                        Resource
+                          VariableAccess
+                            NameExpression
+                              Identifier "existing" @ 91..99
+                      RParen ")" @ 99..100 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 101..102
+                      BlockStatementList
+                      RBrace "}" @ 102..103
+                    CatchClauseList
               RBrace "}" @ 108..109 leading=[Newline "\n", Whitespace "    "]
           MethodDeclaration
             ClassType

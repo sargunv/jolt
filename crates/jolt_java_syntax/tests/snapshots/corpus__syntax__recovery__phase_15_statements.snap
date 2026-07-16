@@ -1,0 +1,834 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Phase15Statements {
+  void enhancedFor(int[] values) {
+    for (int value = /* enhanced-initializer */ 0 : values) {}
+    for (int first, /* enhanced-extra */ second : values) {}
+    for (int value, /* enhanced-trailing */ : values) {}
+  }
+
+  void resources(AutoCloseable existing) {
+    try (AutoCloseable missing /* resource-initializer */) {}
+    try (AutoCloseable first = open(), /* resource-extra */ second = open()) {}
+    try (AutoCloseable first = open(), /* resource-trailing */) {}
+    try (/* resource-missing-access */) {}
+    try (existing /* resource-junk */ @) {}
+    try (call() /* resource-invalid-access */) {}
+    try {} catch (Exception exception /* catch-dimension */ []) {}
+  }
+
+  void switches(int value) {
+    switch (value) {
+      /* switch-unowned */ @;
+      case 1 when ready() -> use();
+      case 2 /* case-junk */ @ -> use();
+      case 3 -> /* switch-empty-rule */ ;
+      case 4:
+      /* switch-label-sibling */ case : use();
+    }
+  }
+
+  void missingIf(boolean value) { if (value) }
+  void missingElse(boolean value) { if (value) {} else }
+  void missingWhile(boolean value) { while (value) }
+  void missingDo(boolean value) { do while (value); }
+  void missingFor() { for (;;) }
+  void missingEnhancedFor(int[] values) { for (int value : values) }
+  void missingSwitch(int value) { switch (value) }
+  void missingSynchronized(Object lock) { synchronized (lock) }
+
+  void missingTry() {
+    try
+    catch (Exception exception)
+    finally
+  }
+
+  void missingResourceTry(AutoCloseable resource) {
+    try (resource)
+    catch (Exception exception) {}
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Phase15Statements" @ 6..23 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 24..25
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 28..32 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "enhancedFor" @ 33..44
+            LParen "(" @ 44..45
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ArrayType
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 45..48
+                  ArrayDimensions
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 48..49
+                      RBracket "]" @ 49..50 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "values" @ 51..57
+            RParen ")" @ 57..58 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 59..60
+              BlockStatementList
+                BlockStatement
+                  ForStatement
+                    EnhancedForStatement
+                      ForKw "for" @ 65..68 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      LParen "(" @ 69..70
+                      BogusEnhancedForVariable
+                        ParameterModifierList
+                        PrimitiveType
+                          AnnotationList
+                          IntKw "int" @ 70..73 trailing=[Whitespace " "]
+                        Identifier "value" @ 74..79 trailing=[Whitespace " "]
+                        Assign "=" @ 80..81 trailing=[Whitespace " ", BlockComment "/* enhanced-initializer */", Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "0" @ 109..110 trailing=[Whitespace " "]
+                      Colon ":" @ 111..112 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "values" @ 113..119
+                      RParen ")" @ 119..120 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 121..122
+                        BlockStatementList
+                        RBrace "}" @ 122..123
+                BlockStatement
+                  ForStatement
+                    EnhancedForStatement
+                      ForKw "for" @ 128..131 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      LParen "(" @ 132..133
+                      BogusEnhancedForVariable
+                        ParameterModifierList
+                        PrimitiveType
+                          AnnotationList
+                          IntKw "int" @ 133..136 trailing=[Whitespace " "]
+                        Identifier "first" @ 137..142
+                        Comma "," @ 142..143 trailing=[Whitespace " ", BlockComment "/* enhanced-extra */", Whitespace " "]
+                        VariableDeclarator
+                          Identifier "second" @ 165..171 trailing=[Whitespace " "]
+                      Colon ":" @ 172..173 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "values" @ 174..180
+                      RParen ")" @ 180..181 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 182..183
+                        BlockStatementList
+                        RBrace "}" @ 183..184
+                BlockStatement
+                  ForStatement
+                    EnhancedForStatement
+                      ForKw "for" @ 189..192 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      LParen "(" @ 193..194
+                      BogusEnhancedForVariable
+                        ParameterModifierList
+                        PrimitiveType
+                          AnnotationList
+                          IntKw "int" @ 194..197 trailing=[Whitespace " "]
+                        Identifier "value" @ 198..203
+                        Comma "," @ 203..204 trailing=[Whitespace " ", BlockComment "/* enhanced-trailing */", Whitespace " "]
+                      Colon ":" @ 229..230 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "values" @ 231..237
+                      RParen ")" @ 237..238 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 239..240
+                        BlockStatementList
+                        RBrace "}" @ 240..241
+              RBrace "}" @ 244..245 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 249..253 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "resources" @ 254..263
+            LParen "(" @ 263..264
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "AutoCloseable" @ 264..277 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "existing" @ 278..286
+            RParen ")" @ 286..287 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 288..289
+              BlockStatementList
+                BlockStatement
+                  TryWithResourcesStatement
+                    TryKw "try" @ 294..297 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ResourceSpecification
+                      LParen "(" @ 298..299
+                      ResourceList
+                        Resource
+                          BogusResourceValue
+                            ParameterModifierList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "AutoCloseable" @ 299..312 trailing=[Whitespace " "]
+                            Identifier "missing" @ 313..320 trailing=[Whitespace " ", BlockComment "/* resource-initializer */"]
+                      RParen ")" @ 347..348 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 349..350
+                      BlockStatementList
+                      RBrace "}" @ 350..351
+                    CatchClauseList
+                BlockStatement
+                  TryWithResourcesStatement
+                    TryKw "try" @ 356..359 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ResourceSpecification
+                      LParen "(" @ 360..361
+                      ResourceList
+                        Resource
+                          BogusResourceValue
+                            ParameterModifierList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "AutoCloseable" @ 361..374 trailing=[Whitespace " "]
+                            Identifier "first" @ 375..380 trailing=[Whitespace " "]
+                            Assign "=" @ 381..382 trailing=[Whitespace " "]
+                            VariableInitializer
+                              MethodInvocationExpression
+                                UnqualifiedMethodInvocation
+                                  NameExpression
+                                    Identifier "open" @ 383..387
+                                  ArgumentList
+                                    LParen "(" @ 387..388
+                                    ExpressionList
+                                    RParen ")" @ 388..389
+                            Comma "," @ 389..390 trailing=[Whitespace " ", BlockComment "/* resource-extra */", Whitespace " "]
+                            VariableDeclarator
+                              Identifier "second" @ 412..418 trailing=[Whitespace " "]
+                              Assign "=" @ 419..420 trailing=[Whitespace " "]
+                              VariableInitializer
+                                MethodInvocationExpression
+                                  UnqualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "open" @ 421..425
+                                    ArgumentList
+                                      LParen "(" @ 425..426
+                                      ExpressionList
+                                      RParen ")" @ 426..427
+                      RParen ")" @ 427..428 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 429..430
+                      BlockStatementList
+                      RBrace "}" @ 430..431
+                    CatchClauseList
+                BlockStatement
+                  TryWithResourcesStatement
+                    TryKw "try" @ 436..439 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ResourceSpecification
+                      LParen "(" @ 440..441
+                      ResourceList
+                        Resource
+                          BogusResourceValue
+                            ParameterModifierList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "AutoCloseable" @ 441..454 trailing=[Whitespace " "]
+                            Identifier "first" @ 455..460 trailing=[Whitespace " "]
+                            Assign "=" @ 461..462 trailing=[Whitespace " "]
+                            VariableInitializer
+                              MethodInvocationExpression
+                                UnqualifiedMethodInvocation
+                                  NameExpression
+                                    Identifier "open" @ 463..467
+                                  ArgumentList
+                                    LParen "(" @ 467..468
+                                    ExpressionList
+                                    RParen ")" @ 468..469
+                            Comma "," @ 469..470 trailing=[Whitespace " ", BlockComment "/* resource-trailing */"]
+                      RParen ")" @ 494..495 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 496..497
+                      BlockStatementList
+                      RBrace "}" @ 497..498
+                    CatchClauseList
+                BlockStatement
+                  TryWithResourcesStatement
+                    TryKw "try" @ 503..506 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ResourceSpecification
+                      LParen "(" @ 507..508 trailing=[BlockComment "/* resource-missing-access */"]
+                      ResourceList
+                        Resource
+                          BogusResourceValue
+                      RParen ")" @ 537..538 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 539..540
+                      BlockStatementList
+                      RBrace "}" @ 540..541
+                    CatchClauseList
+                BlockStatement
+                  TryWithResourcesStatement
+                    TryKw "try" @ 546..549 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ResourceSpecification
+                      LParen "(" @ 550..551
+                      ResourceList
+                        Resource
+                          BogusResourceValue
+                            NameExpression
+                              Identifier "existing" @ 551..559 trailing=[Whitespace " ", BlockComment "/* resource-junk */", Whitespace " "]
+                            At "@" @ 580..581
+                      RParen ")" @ 581..582 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 583..584
+                      BlockStatementList
+                      RBrace "}" @ 584..585
+                    CatchClauseList
+                BlockStatement
+                  TryWithResourcesStatement
+                    TryKw "try" @ 590..593 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ResourceSpecification
+                      LParen "(" @ 594..595
+                      ResourceList
+                        Resource
+                          BogusResourceValue
+                            MethodInvocationExpression
+                              UnqualifiedMethodInvocation
+                                NameExpression
+                                  Identifier "call" @ 595..599
+                                ArgumentList
+                                  LParen "(" @ 599..600
+                                  ExpressionList
+                                  RParen ")" @ 600..601 trailing=[Whitespace " ", BlockComment "/* resource-invalid-access */"]
+                      RParen ")" @ 631..632 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 633..634
+                      BlockStatementList
+                      RBrace "}" @ 634..635
+                    CatchClauseList
+                BlockStatement
+                  TryStatement
+                    TryKw "try" @ 640..643 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 644..645
+                      BlockStatementList
+                      RBrace "}" @ 645..646 trailing=[Whitespace " "]
+                    CatchClauseList
+                      CatchClause
+                        CatchKw "catch" @ 647..652 trailing=[Whitespace " "]
+                        LParen "(" @ 653..654
+                        CatchParameter
+                          ParameterModifierList
+                          CatchTypeList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "Exception" @ 654..663 trailing=[Whitespace " "]
+                          Identifier "exception" @ 664..673 trailing=[Whitespace " ", BlockComment "/* catch-dimension */", Whitespace " "]
+                          ArrayDimensions
+                            ArrayDimension
+                              AnnotationList
+                              LBracket "[" @ 696..697
+                              RBracket "]" @ 697..698
+                        RParen ")" @ 698..699 trailing=[Whitespace " "]
+                        Block
+                          LBrace "{" @ 700..701
+                          BlockStatementList
+                          RBrace "}" @ 701..702
+              RBrace "}" @ 705..706 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 710..714 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "switches" @ 715..723
+            LParen "(" @ 723..724
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 724..727 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 728..733
+            RParen ")" @ 733..734 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 735..736
+              BlockStatementList
+                BlockStatement
+                  SwitchStatement
+                    SwitchKw "switch" @ 741..747 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    LParen "(" @ 748..749
+                    NameExpression
+                      Identifier "value" @ 749..754
+                    RParen ")" @ 754..755 trailing=[Whitespace " "]
+                    SwitchBlock
+                      LBrace "{" @ 756..757
+                      SwitchEntryList
+                        BogusSwitchEntry
+                          BlockStatement
+                            ExpressionStatement
+                              BogusExpression
+                                AnnotationList
+                                  Annotation
+                                    At "@" @ 785..786 leading=[Newline "\n", Whitespace "      ", BlockComment "/* switch-unowned */", Whitespace " "]
+                              Semicolon ";" @ 786..787
+                        SwitchRule
+                          SwitchLabel
+                            CaseKw "case" @ 794..798 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                            SwitchLabelItemList
+                              CaseConstant
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 799..800 trailing=[Whitespace " "]
+                            BogusSwitchGuard
+                              Guard
+                                Identifier "when" @ 801..805 trailing=[Whitespace " "]
+                                MethodInvocationExpression
+                                  UnqualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "ready" @ 806..811
+                                    ArgumentList
+                                      LParen "(" @ 811..812
+                                      ExpressionList
+                                      RParen ")" @ 812..813 trailing=[Whitespace " "]
+                          Arrow "->" @ 814..816 trailing=[Whitespace " "]
+                          MethodInvocationExpression
+                            UnqualifiedMethodInvocation
+                              NameExpression
+                                Identifier "use" @ 817..820
+                              ArgumentList
+                                LParen "(" @ 820..821
+                                ExpressionList
+                                RParen ")" @ 821..822
+                          Semicolon ";" @ 822..823
+                        SwitchRule
+                          SwitchLabel
+                            CaseKw "case" @ 830..834 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                            SwitchLabelItemList
+                              BogusSwitchLabelItem
+                                LiteralExpression
+                                  IntegerLiteral "2" @ 835..836 trailing=[Whitespace " ", BlockComment "/* case-junk */", Whitespace " "]
+                                At "@" @ 853..854 trailing=[Whitespace " "]
+                          Arrow "->" @ 855..857 trailing=[Whitespace " "]
+                          MethodInvocationExpression
+                            UnqualifiedMethodInvocation
+                              NameExpression
+                                Identifier "use" @ 858..861
+                              ArgumentList
+                                LParen "(" @ 861..862
+                                ExpressionList
+                                RParen ")" @ 862..863
+                          Semicolon ";" @ 863..864
+                        SwitchRule
+                          SwitchLabel
+                            CaseKw "case" @ 871..875 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                            SwitchLabelItemList
+                              CaseConstant
+                                LiteralExpression
+                                  IntegerLiteral "3" @ 876..877 trailing=[Whitespace " "]
+                          Arrow "->" @ 878..880 trailing=[Whitespace " ", BlockComment "/* switch-empty-rule */", Whitespace " "]
+                          BogusExpression
+                          Semicolon ";" @ 905..906
+                        SwitchBlockStatementGroup
+                          SwitchLabelColonList
+                            SwitchLabel
+                              CaseKw "case" @ 913..917 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                                CaseConstant
+                                  LiteralExpression
+                                    IntegerLiteral "4" @ 918..919
+                            Colon ":" @ 919..920
+                            SwitchLabel
+                              CaseKw "case" @ 954..958 leading=[Newline "\n", Whitespace "      ", BlockComment "/* switch-label-sibling */", Whitespace " "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                            Colon ":" @ 959..960 trailing=[Whitespace " "]
+                          BlockStatementList
+                            BlockStatement
+                              ExpressionStatement
+                                MethodInvocationExpression
+                                  UnqualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "use" @ 961..964
+                                    ArgumentList
+                                      LParen "(" @ 964..965
+                                      ExpressionList
+                                      RParen ")" @ 965..966
+                                Semicolon ";" @ 966..967
+                      RBrace "}" @ 972..973 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 976..977 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 981..985 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "missingIf" @ 986..995
+            LParen "(" @ 995..996
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  BooleanKw "boolean" @ 996..1003 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 1004..1009
+            RParen ")" @ 1009..1010 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1011..1012 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  IfStatement
+                    IfKw "if" @ 1013..1015 trailing=[Whitespace " "]
+                    LParen "(" @ 1016..1017
+                    NameExpression
+                      Identifier "value" @ 1017..1022
+                    RParen ")" @ 1022..1023 trailing=[Whitespace " "]
+              RBrace "}" @ 1024..1025
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 1028..1032 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "missingElse" @ 1033..1044
+            LParen "(" @ 1044..1045
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  BooleanKw "boolean" @ 1045..1052 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 1053..1058
+            RParen ")" @ 1058..1059 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1060..1061 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  IfStatement
+                    IfKw "if" @ 1062..1064 trailing=[Whitespace " "]
+                    LParen "(" @ 1065..1066
+                    NameExpression
+                      Identifier "value" @ 1066..1071
+                    RParen ")" @ 1071..1072 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 1073..1074
+                      BlockStatementList
+                      RBrace "}" @ 1074..1075 trailing=[Whitespace " "]
+                    ElseKw "else" @ 1076..1080 trailing=[Whitespace " "]
+              RBrace "}" @ 1081..1082
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 1085..1089 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "missingWhile" @ 1090..1102
+            LParen "(" @ 1102..1103
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  BooleanKw "boolean" @ 1103..1110 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 1111..1116
+            RParen ")" @ 1116..1117 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1118..1119 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  WhileStatement
+                    WhileKw "while" @ 1120..1125 trailing=[Whitespace " "]
+                    LParen "(" @ 1126..1127
+                    NameExpression
+                      Identifier "value" @ 1127..1132
+                    RParen ")" @ 1132..1133 trailing=[Whitespace " "]
+              RBrace "}" @ 1134..1135
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 1138..1142 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "missingDo" @ 1143..1152
+            LParen "(" @ 1152..1153
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  BooleanKw "boolean" @ 1153..1160 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 1161..1166
+            RParen ")" @ 1166..1167 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1168..1169 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  DoStatement
+                    DoKw "do" @ 1170..1172 trailing=[Whitespace " "]
+                    WhileKw "while" @ 1173..1178 trailing=[Whitespace " "]
+                    LParen "(" @ 1179..1180
+                    NameExpression
+                      Identifier "value" @ 1180..1185
+                    RParen ")" @ 1185..1186
+                    Semicolon ";" @ 1186..1187 trailing=[Whitespace " "]
+              RBrace "}" @ 1188..1189
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 1192..1196 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "missingFor" @ 1197..1207
+            LParen "(" @ 1207..1208
+            RParen ")" @ 1208..1209 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1210..1211 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ForStatement
+                    BasicForStatement
+                      ForKw "for" @ 1212..1215 trailing=[Whitespace " "]
+                      LParen "(" @ 1216..1217
+                      Semicolon ";" @ 1217..1218
+                      Semicolon ";" @ 1218..1219
+                      RParen ")" @ 1219..1220 trailing=[Whitespace " "]
+              RBrace "}" @ 1221..1222
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 1225..1229 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "missingEnhancedFor" @ 1230..1248
+            LParen "(" @ 1248..1249
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ArrayType
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 1249..1252
+                  ArrayDimensions
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 1252..1253
+                      RBracket "]" @ 1253..1254 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "values" @ 1255..1261
+            RParen ")" @ 1261..1262 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1263..1264 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ForStatement
+                    EnhancedForStatement
+                      ForKw "for" @ 1265..1268 trailing=[Whitespace " "]
+                      LParen "(" @ 1269..1270
+                      EnhancedForVariable
+                        ParameterModifierList
+                        PrimitiveType
+                          AnnotationList
+                          IntKw "int" @ 1270..1273 trailing=[Whitespace " "]
+                        Identifier "value" @ 1274..1279 trailing=[Whitespace " "]
+                      Colon ":" @ 1280..1281 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "values" @ 1282..1288
+                      RParen ")" @ 1288..1289 trailing=[Whitespace " "]
+              RBrace "}" @ 1290..1291
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 1294..1298 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "missingSwitch" @ 1299..1312
+            LParen "(" @ 1312..1313
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 1313..1316 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 1317..1322
+            RParen ")" @ 1322..1323 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1324..1325 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  SwitchStatement
+                    SwitchKw "switch" @ 1326..1332 trailing=[Whitespace " "]
+                    LParen "(" @ 1333..1334
+                    NameExpression
+                      Identifier "value" @ 1334..1339
+                    RParen ")" @ 1339..1340 trailing=[Whitespace " "]
+              RBrace "}" @ 1341..1342
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 1345..1349 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "missingSynchronized" @ 1350..1369
+            LParen "(" @ 1369..1370
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 1370..1376 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "lock" @ 1377..1381
+            RParen ")" @ 1381..1382 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1383..1384 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  SynchronizedStatement
+                    SynchronizedKw "synchronized" @ 1385..1397 trailing=[Whitespace " "]
+                    LParen "(" @ 1398..1399
+                    NameExpression
+                      Identifier "lock" @ 1399..1403
+                    RParen ")" @ 1403..1404 trailing=[Whitespace " "]
+              RBrace "}" @ 1405..1406
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 1410..1414 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "missingTry" @ 1415..1425
+            LParen "(" @ 1425..1426
+            RParen ")" @ 1426..1427 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1428..1429
+              BlockStatementList
+                BlockStatement
+                  TryStatement
+                    TryKw "try" @ 1434..1437 leading=[Newline "\n", Whitespace "    "]
+                    CatchClauseList
+                      CatchClause
+                        CatchKw "catch" @ 1442..1447 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                        LParen "(" @ 1448..1449
+                        CatchParameter
+                          ParameterModifierList
+                          CatchTypeList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "Exception" @ 1449..1458 trailing=[Whitespace " "]
+                          Identifier "exception" @ 1459..1468
+                        RParen ")" @ 1468..1469
+                    FinallyClause
+                      FinallyKw "finally" @ 1474..1481 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 1484..1485 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 1489..1493 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "missingResourceTry" @ 1494..1512
+            LParen "(" @ 1512..1513
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "AutoCloseable" @ 1513..1526 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "resource" @ 1527..1535
+            RParen ")" @ 1535..1536 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1537..1538
+              BlockStatementList
+                BlockStatement
+                  TryWithResourcesStatement
+                    TryKw "try" @ 1543..1546 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ResourceSpecification
+                      LParen "(" @ 1547..1548
+                      ResourceList
+                        Resource
+                          VariableAccess
+                            NameExpression
+                              Identifier "resource" @ 1548..1556
+                      RParen ")" @ 1556..1557
+                    CatchClauseList
+                      CatchClause
+                        CatchKw "catch" @ 1562..1567 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                        LParen "(" @ 1568..1569
+                        CatchParameter
+                          ParameterModifierList
+                          CatchTypeList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "Exception" @ 1569..1578 trailing=[Whitespace " "]
+                          Identifier "exception" @ 1579..1588
+                        RParen ")" @ 1588..1589 trailing=[Whitespace " "]
+                        Block
+                          LBrace "{" @ 1590..1591
+                          BlockStatementList
+                          RBrace "}" @ 1591..1592
+              RBrace "}" @ 1595..1596 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 1597..1598 leading=[Newline "\n"]
+  Eof "" @ 1599..1599 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=109..110 message="enhanced for variable must not have an initializer"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=142..143 message="enhanced for statement must declare a single variable"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=203..204 message="enhanced for statement must declare a single variable"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=347..348 message="expected resource initializer"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=389..390 message="resource declaration must declare a single variable"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=469..470 message="resource declaration must declare a single variable"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=537..538 message="expected resource"
+  code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=580..581 message="unexpected token in resource variable access"
+  code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=631..632 message="expected resource variable declaration or variable access"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=785..786 message="expected switch label"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=786..787 message="expected identifier"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=786..787 message="expected expression after annotation"
+  code=java.parse.invalid_switch_guard severity=Error stage=Parser range=801..805 message="switch guard requires a pattern"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=853..854 message="unexpected token in case constant"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=905..906 message="expected expression"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=1024..1025 message="expected statement"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=1081..1082 message="expected statement"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=1134..1135 message="expected statement"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=1173..1178 message="expected statement"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=1221..1222 message="expected statement"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=1290..1291 message="expected statement"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=1341..1342 message="expected switch block"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=1405..1406 message="expected synchronized body"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=1442..1447 message="expected try body"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=1474..1481 message="expected catch body"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=1484..1485 message="expected finally body"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=1562..1567 message="expected try body"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(109), end: TextSize(110) }) message=enhanced for variable must not have an initializer
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(142), end: TextSize(143) }) message=enhanced for statement must declare a single variable
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(203), end: TextSize(204) }) message=enhanced for statement must declare a single variable
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(347), end: TextSize(348) }) message=expected resource initializer
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(389), end: TextSize(390) }) message=resource declaration must declare a single variable
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(469), end: TextSize(470) }) message=resource declaration must declare a single variable
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(537), end: TextSize(538) }) message=expected resource
+code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=Some(TextRange { start: TextSize(580), end: TextSize(581) }) message=unexpected token in resource variable access
+code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=Some(TextRange { start: TextSize(631), end: TextSize(632) }) message=expected resource variable declaration or variable access
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(785), end: TextSize(786) }) message=expected switch label
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(786), end: TextSize(787) }) message=expected identifier
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(786), end: TextSize(787) }) message=expected expression after annotation
+code=java.parse.invalid_switch_guard severity=Error stage=Parser range=Some(TextRange { start: TextSize(801), end: TextSize(805) }) message=switch guard requires a pattern
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(853), end: TextSize(854) }) message=unexpected token in case constant
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(905), end: TextSize(906) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1024), end: TextSize(1025) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1081), end: TextSize(1082) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1134), end: TextSize(1135) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1173), end: TextSize(1178) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1221), end: TextSize(1222) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1290), end: TextSize(1291) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1341), end: TextSize(1342) }) message=expected switch block
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1405), end: TextSize(1406) }) message=expected synchronized body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1442), end: TextSize(1447) }) message=expected try body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1474), end: TextSize(1481) }) message=expected catch body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1484), end: TextSize(1485) }) message=expected finally body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1562), end: TextSize(1567) }) message=expected try body

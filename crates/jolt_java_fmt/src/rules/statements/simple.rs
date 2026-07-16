@@ -7,8 +7,7 @@ use super::{
 };
 use crate::helpers::comments::{comment_is_star_block, format_comment};
 use crate::helpers::recovery::{
-    JavaFormatField, format_optional_field, format_or_verbatim, format_required_field,
-    resolve_optional_field,
+    JavaFormatField, format_optional_field, format_required_field, resolve_optional_field,
 };
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{Expression, JavaSyntaxField, JavaSyntaxInvariantError};
@@ -20,73 +19,67 @@ pub(super) fn format_labeled_statement<'source>(
     statement: &LabeledStatement<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(statement, doc, |doc| {
-        doc_concat!(
-            doc,
-            [
-                format_required_field(statement.label(), doc, |token, doc| {
-                    format_token_with_comments(doc, &token)
-                }),
-                format_required_field(statement.colon(), doc, |token, doc| {
-                    format_token_with_comments(doc, &token)
-                }),
-                doc.hard_line(),
-                format_required_field(statement.body(), doc, |body, doc| format_statement(
-                    &body, doc
-                )),
-            ]
-        )
-    })
+    doc_concat!(
+        doc,
+        [
+            format_required_field(statement.label(), doc, |token, doc| {
+                format_token_with_comments(doc, &token)
+            }),
+            format_required_field(statement.colon(), doc, |token, doc| {
+                format_token_with_comments(doc, &token)
+            }),
+            doc.hard_line(),
+            format_required_field(statement.body(), doc, |body, doc| format_statement(
+                &body, doc
+            )),
+        ]
+    )
 }
 
 pub(super) fn format_expression_statement<'source>(
     statement: &ExpressionStatement<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(statement, doc, |doc| {
-        doc_concat!(
-            doc,
-            [
-                format_required_field(statement.expression(), doc, |expression, doc| {
-                    format_expression(&expression, doc)
-                }),
-                format_statement_semicolon(statement.semicolon(), doc),
-            ]
-        )
-    })
+    doc_concat!(
+        doc,
+        [
+            format_required_field(statement.expression(), doc, |expression, doc| {
+                format_expression(&expression, doc)
+            }),
+            format_statement_semicolon(statement.semicolon(), doc),
+        ]
+    )
 }
 
 pub(super) fn format_assert_statement<'source>(
     statement: &AssertStatement<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(statement, doc, |doc| {
-        let message = format_optional_field(statement.message(), doc, |message, doc| {
-            doc_concat!(
-                doc,
-                [
-                    doc.space(),
-                    format_optional_field(statement.colon(), doc, |token, doc| {
-                        format_token_with_comments(doc, &token)
-                    }),
-                    doc.space(),
-                    format_expression(&message, doc),
-                ]
-            )
-        });
+    let message = format_optional_field(statement.message(), doc, |message, doc| {
         doc_concat!(
             doc,
             [
-                format_statement_keyword(statement.assert_keyword(), doc),
                 doc.space(),
-                format_required_field(statement.condition(), doc, |condition, doc| {
-                    format_expression(&condition, doc)
+                format_optional_field(statement.colon(), doc, |token, doc| {
+                    format_token_with_comments(doc, &token)
                 }),
-                message,
-                format_statement_semicolon(statement.semicolon(), doc),
+                doc.space(),
+                format_expression(&message, doc),
             ]
         )
-    })
+    });
+    doc_concat!(
+        doc,
+        [
+            format_statement_keyword(statement.assert_keyword(), doc),
+            doc.space(),
+            format_required_field(statement.condition(), doc, |condition, doc| {
+                format_expression(&condition, doc)
+            }),
+            message,
+            format_statement_semicolon(statement.semicolon(), doc),
+        ]
+    )
 }
 
 pub(super) fn format_return_statement<'source>(
@@ -94,7 +87,6 @@ pub(super) fn format_return_statement<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     format_keyword_expression_statement(
-        statement,
         statement.return_keyword(),
         statement.expression(),
         statement.semicolon(),
@@ -106,82 +98,73 @@ pub(super) fn format_throw_statement<'source>(
     statement: &ThrowStatement<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(statement, doc, |doc| {
-        format_required_keyword_expression_statement(
-            statement.throw_keyword(),
-            statement.expression(),
-            statement.semicolon(),
-            doc,
-        )
-    })
+    format_required_keyword_expression_statement(
+        statement.throw_keyword(),
+        statement.expression(),
+        statement.semicolon(),
+        doc,
+    )
 }
 
 pub(super) fn format_yield_statement<'source>(
     statement: &YieldStatement<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(statement, doc, |doc| {
-        format_required_keyword_expression_statement(
-            statement.yield_keyword(),
-            statement.expression(),
-            statement.semicolon(),
-            doc,
-        )
-    })
+    format_required_keyword_expression_statement(
+        statement.yield_keyword(),
+        statement.expression(),
+        statement.semicolon(),
+        doc,
+    )
 }
 
 fn format_keyword_expression_statement<'source>(
-    owner: &impl jolt_java_syntax::JavaSyntaxView<'source>,
     keyword: TokenField<'source>,
     expression: Result<JavaSyntaxField<'source, Expression<'source>>, JavaSyntaxInvariantError>,
     semicolon: TokenField<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(owner, doc, |doc| {
-        let keyword_token = match keyword {
-            Ok(JavaSyntaxField::Present(token)) => Some(token),
-            _ => None,
-        };
-        let head = format_statement_keyword_head(keyword, doc);
-        let expression = match resolve_optional_field(expression, doc) {
-            JavaFormatField::Present(Some(expression)) => {
-                let separator = format_keyword_expression_separator(keyword_token.as_ref(), doc);
-                let expression = doc_concat!(doc, [separator, format_expression(&expression, doc)]);
-                if keyword_token
-                    .as_ref()
-                    .is_some_and(trailing_comments_force_line)
-                {
-                    doc_indent!(doc, expression)
-                } else {
-                    expression
-                }
+    let keyword_token = match keyword {
+        Ok(JavaSyntaxField::Present(token)) => Some(token),
+        _ => None,
+    };
+    let head = format_statement_keyword_head(keyword, doc);
+    let expression = match resolve_optional_field(expression, doc) {
+        JavaFormatField::Present(Some(expression)) => {
+            let separator = format_keyword_expression_separator(keyword_token.as_ref(), doc);
+            let expression = doc_concat!(doc, [separator, format_expression(&expression, doc)]);
+            if keyword_token
+                .as_ref()
+                .is_some_and(trailing_comments_force_line)
+            {
+                doc_indent!(doc, expression)
+            } else {
+                expression
             }
-            JavaFormatField::Present(None) => {
-                keyword_token.as_ref().map_or_else(Doc::nil, |token| {
-                    if token.trailing_comments().is_empty() {
-                        Doc::nil()
-                    } else {
-                        doc_concat!(
-                            doc,
-                            [
-                                format_trailing_comments_before_line_break(doc, token),
-                                if trailing_comments_force_line(token) {
-                                    doc.hard_line()
-                                } else {
-                                    Doc::nil()
-                                },
-                            ]
-                        )
-                    }
-                })
+        }
+        JavaFormatField::Present(None) => keyword_token.as_ref().map_or_else(Doc::nil, |token| {
+            if token.trailing_comments().is_empty() {
+                Doc::nil()
+            } else {
+                doc_concat!(
+                    doc,
+                    [
+                        format_trailing_comments_before_line_break(doc, token),
+                        if trailing_comments_force_line(token) {
+                            doc.hard_line()
+                        } else {
+                            Doc::nil()
+                        },
+                    ]
+                )
             }
-            JavaFormatField::Malformed(recovery) => recovery,
-        };
-        doc_concat!(
-            doc,
-            [head, expression, format_statement_semicolon(semicolon, doc)]
-        )
-    })
+        }),
+        JavaFormatField::Malformed(recovery) => recovery,
+    };
+    doc_concat!(
+        doc,
+        [head, expression, format_statement_semicolon(semicolon, doc)]
+    )
 }
 
 fn format_required_keyword_expression_statement<'source>(

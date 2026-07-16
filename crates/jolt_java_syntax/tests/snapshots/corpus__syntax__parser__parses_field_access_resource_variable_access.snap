@@ -51,25 +51,24 @@ CompilationUnit
               LBrace "{" @ 92..93
               BlockStatementList
                 BlockStatement
-                  TryStatement
-                    TryWithResourcesStatement
-                      TryKw "try" @ 102..105 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      ResourceSpecification
-                        LParen "(" @ 106..107
-                        ResourceList
-                          Resource
-                            VariableAccess
-                              FieldAccessExpression
-                                ThisExpression
-                                  ThisKw "this" @ 107..111
-                                Dot "." @ 111..112
-                                Identifier "existing" @ 112..120
-                        RParen ")" @ 120..121 trailing=[Whitespace " "]
-                      Block
-                        LBrace "{" @ 122..123
-                        BlockStatementList
-                        RBrace "}" @ 123..124
-                      CatchClauseList
+                  TryWithResourcesStatement
+                    TryKw "try" @ 102..105 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    ResourceSpecification
+                      LParen "(" @ 106..107
+                      ResourceList
+                        Resource
+                          VariableAccess
+                            FieldAccessExpression
+                              ThisExpression
+                                ThisKw "this" @ 107..111
+                              Dot "." @ 111..112
+                              Identifier "existing" @ 112..120
+                      RParen ")" @ 120..121 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 122..123
+                      BlockStatementList
+                      RBrace "}" @ 123..124
+                    CatchClauseList
               RBrace "}" @ 129..130 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 131..132 leading=[Newline "\n"]
   Eof "" @ 133..133 leading=[Newline "\n"]

@@ -8,7 +8,7 @@
 schema = 1
 baseline_commit = "2197128"
 verified_date = "2026-07-12"
-fixture_count = 51
+fixture_count = 52
 inline_regression_count = 2
 parser_fix_count = 27
 corpus_gate_count = 1
@@ -538,6 +538,18 @@ owners = [
 ]
 
 [[fixture]]
+id = "phase-15-java-statements"
+language = "java"
+path = "fixtures/java/syntax/recovery/phase-15-statements.java"
+location = "current"
+owners = [
+  { phase = 15, scope = "enhanced-for initializer and multiple-declarator recovery" },
+  { phase = 15, scope = "resource initializer, declarator, variable-access, and trailing-token recovery" },
+  { phase = 15, scope = "switch orphan entries, labels, guards, constants, and empty rule bodies" },
+  { phase = 15, scope = "missing statement and block-body boundaries" },
+]
+
+[[fixture]]
 id = "old-p13-java-partial-replay-import"
 language = "java"
 path = "fixtures/java/syntax/recovery/phase-11-malformed-import-pieces.java"
@@ -809,7 +821,7 @@ old_phase = 11
 old_commit = "95d158c"
 path = "crates/jolt_java_syntax/src/parser/grammar/statements.rs"
 owner_phase = 15
-behavior = "Wrap orphan tokens between switch labels in an error node."
+behavior = "Own orphan tokens between switch labels as a BogusSwitchEntry."
 
 [[parser_fix]]
 id = "old-p11-java-recovered-lambda-lookahead"

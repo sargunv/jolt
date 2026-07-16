@@ -157,6 +157,20 @@ macro_rules! java_syntax_schema {
                     TryStatement,
                     TryWithResourcesStatement,
                 }
+                EnhancedForVariableSyntax => BogusEnhancedForVariable {
+                    EnhancedForVariable,
+                }
+                ResourceValueSyntax => BogusResourceValue {
+                    ResourceVariableDeclaration,
+                    VariableAccess,
+                }
+                SwitchEntrySyntax => BogusSwitchEntry {
+                    SwitchBlockStatementGroup,
+                    SwitchRule,
+                }
+                SwitchGuardSyntax => BogusSwitchGuard {
+                    Guard,
+                }
                 Expression => BogusExpression {
                     LiteralExpression,
                     TemplateExpression,
@@ -378,6 +392,9 @@ macro_rules! java_syntax_schema {
             nodes {
                 ErrorNode => ErrorNode [error_node malformed] {
                     elements: many (any_element) => ErrorElement;
+                }
+                BogusSwitchLabelItem => BogusSwitchLabelItem [bogus_switch_label_item malformed] {
+                    elements: many (any_element) => BogusSwitchLabelItemElement;
                 }
                 BogusModifier => BogusModifier [bogus_modifier malformed] {
                     elements: many (any_element) => BogusModifierElement;
@@ -788,13 +805,13 @@ macro_rules! java_syntax_schema {
                 SwitchLabel => SwitchLabel [switch_label valid] {
                     keyword: required (token_set [CaseKw, DefaultKw]);
                     items: required (list SwitchLabelItemList);
-                    guard: optional (node Guard);
+                    guard: optional (category SwitchGuardSyntax);
                 }
                 CaseConstant => CaseConstant [case_constant valid] {
                     expression: required (category Expression);
                 }
                 CasePattern => CasePattern [case_pattern valid] {
-                    pattern: required (node_set [TypePattern, RecordPattern]) => CasePatternValue;
+                    pattern: required (category Pattern);
                 }
                 Guard => Guard [guard valid] {
                     when_keyword: required (contextual "when");
@@ -835,11 +852,17 @@ macro_rules! java_syntax_schema {
                 EnhancedForStatement => EnhancedForStatement [enhanced_for_statement valid] {
                     for_keyword: required (token ForKw);
                     open_paren: required (token LParen);
-                    variable: required (node LocalVariableDeclaration);
+                    variable: required (category EnhancedForVariableSyntax);
                     colon: required (token Colon);
                     iterable: required (category Expression);
                     close_paren: required (token RParen);
                     body: required (category Statement);
+                }
+                EnhancedForVariable => EnhancedForVariable [enhanced_for_variable valid] {
+                    modifiers: required (list ParameterModifierList);
+                    r#type: required (choice [(category Type), (contextual "var")]) => EnhancedForVariableType;
+                    name: required (token_set [Identifier, UnderscoreKw]);
+                    dimensions: optional (list ArrayDimensions);
                 }
                 ForInitializer => ForInitializer [for_initializer valid] {
                     value: required (choice [(node LocalVariableDeclaration), (list StatementExpressionList)]) => ForInitializerValue;
@@ -883,10 +906,9 @@ macro_rules! java_syntax_schema {
                     body: required (node Block);
                 }
                 TryStatement => TryStatement [try_statement valid] {
-                    resources_form: optional (node TryWithResourcesStatement);
-                    try_keyword: optional (token TryKw);
-                    body: optional (node Block);
-                    catches: optional (list CatchClauseList);
+                    try_keyword: required (token TryKw);
+                    body: required (node Block);
+                    catches: required (list CatchClauseList);
                     finally: optional (node FinallyClause);
                 }
                 TryWithResourcesStatement => TryWithResourcesStatement [try_with_resources_statement valid] {
@@ -926,7 +948,15 @@ macro_rules! java_syntax_schema {
                     resources: one_or_more (node Resource) [separated (token Semicolon), minimum 1, trailing forbidden, recovery bogus_owner];
                 }
                 Resource => Resource [resource valid] {
-                    value: required (node_set [LocalVariableDeclaration, VariableAccess]) => ResourceValue;
+                    value: required (category ResourceValueSyntax);
+                }
+                ResourceVariableDeclaration => ResourceVariableDeclaration [resource_variable_declaration valid] {
+                    modifiers: required (list ParameterModifierList);
+                    r#type: required (choice [(category Type), (contextual "var")]) => ResourceVariableType;
+                    name: required (token_set [Identifier, UnderscoreKw]);
+                    dimensions: optional (list ArrayDimensions);
+                    assign: required (token Assign);
+                    initializer: required (node VariableInitializer);
                 }
                 VariableAccess => VariableAccess [variable_access valid] {
                     expression: required (node_set [NameExpression, FieldAccessExpression]) => VariableAccessExpression;
@@ -1268,13 +1298,13 @@ macro_rules! java_syntax_schema {
                     elements: many (node BlockStatement);
                 }
                 SwitchEntryList => SwitchEntryList [switch_entry_list list] {
-                    elements: many (node_set [SwitchBlockStatementGroup, SwitchRule]) => SwitchEntry;
+                    elements: many (category SwitchEntrySyntax);
                 }
                 SwitchLabelColonList => SwitchLabelColonList [switch_label_colon_list list] {
                     elements: many (node SwitchLabel) [separated (token Colon), minimum 0, trailing required, recovery bogus_owner];
                 }
                 SwitchLabelItemList => SwitchLabelItemList [switch_label_item_list list] {
-                    elements: many (element_set [CaseConstant, CasePattern, DefaultKw]) => SwitchLabelItem [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];
+                    elements: many (element_set [CaseConstant, CasePattern, BogusSwitchLabelItem, DefaultKw]) => SwitchLabelItem [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];
                 }
                 CatchClauseList => CatchClauseList [catch_clause_list list] {
                     elements: many (node CatchClause);

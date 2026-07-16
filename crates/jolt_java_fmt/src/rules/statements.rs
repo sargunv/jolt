@@ -26,7 +26,10 @@ use crate::rules::declarations::format_type_declaration;
 use crate::rules::expressions::format_expression;
 use crate::rules::patterns::format_pattern;
 use crate::rules::types::format_type;
-use crate::rules::variables::format_local_variable_declaration;
+use crate::rules::variables::{
+    format_enhanced_for_variable, format_local_variable_declaration,
+    format_resource_variable_declaration,
+};
 
 mod blocks;
 mod control_flow;

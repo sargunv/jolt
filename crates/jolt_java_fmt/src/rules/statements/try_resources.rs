@@ -3,113 +3,89 @@ use super::simple::format_statement_keyword;
 use super::{
     CatchClause, CatchParameter, Doc, FinallyClause, JavaSyntaxToken, LeadingTrivia, Resource,
     ResourceList, TrailingTrivia, TryStatement, TryWithResourcesStatement, format_annotation,
-    format_block, format_dangling_comments, format_expression, format_local_variable_declaration,
-    format_removed_comments, format_token, format_token_with_comments,
+    format_block, format_dangling_comments, format_expression, format_removed_comments,
+    format_resource_variable_declaration, format_token, format_token_with_comments,
     format_trailing_comments_before_line_break, format_type, trailing_comments_force_line,
 };
 use crate::helpers::recovery::{
-    JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_or_verbatim,
-    resolve_list_part, resolve_optional_field, resolve_required_delimiter, resolve_required_field,
+    JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_malformed, resolve_list_part,
+    resolve_optional_field, resolve_required_delimiter, resolve_required_field,
 };
+use crate::rules::types::format_array_dimensions;
 use jolt_fmt_ir::DocBuilder;
-use jolt_java_syntax::JavaSyntaxListPart;
+use jolt_java_syntax::{
+    JavaSyntaxListPart, PartitionedModifierItem, ResourceValueSyntax, VariableAccessSyntax,
+};
 
 pub(super) fn format_try_statement<'source>(
     statement: &TryStatement<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(statement, doc, |doc| {
-        let resources_recovery = match resolve_optional_field(statement.resources_form(), doc) {
-            JavaFormatField::Present(Some(resources)) => {
-                return format_try_with_resources_statement(&resources, doc);
-            }
-            JavaFormatField::Present(None) => Doc::nil(),
-            JavaFormatField::Malformed(malformed) => malformed,
-        };
-        let body = match resolve_optional_field(statement.body(), doc) {
-            JavaFormatField::Present(Some(body)) => format_block(&body, doc),
-            JavaFormatField::Present(None) => Doc::nil(),
-            JavaFormatField::Malformed(malformed) => malformed,
-        };
-        let catches = match resolve_required_field(statement.catches(), doc) {
-            JavaFormatField::Present(catches) => format_catch_clauses(catches.parts(), doc),
-            JavaFormatField::Malformed(malformed) => malformed,
-        };
-        let finally = match resolve_optional_field(statement.finally(), doc) {
-            JavaFormatField::Present(Some(finally)) => format_finally_clause(&finally, doc),
-            JavaFormatField::Present(None) => Doc::nil(),
-            JavaFormatField::Malformed(malformed) => malformed,
-        };
-        doc_concat!(
-            doc,
-            [
-                format_optional_try_keyword(statement.try_keyword(), doc),
-                doc.space(),
-                resources_recovery,
-                body,
-                catches,
-                finally,
-            ]
-        )
-    })
+    let body = match resolve_required_field(statement.body(), doc) {
+        JavaFormatField::Present(body) => format_block(&body, doc),
+        JavaFormatField::Malformed(malformed) => malformed,
+    };
+    let catches = match resolve_required_field(statement.catches(), doc) {
+        JavaFormatField::Present(catches) => format_catch_clauses(catches.parts(), doc),
+        JavaFormatField::Malformed(malformed) => malformed,
+    };
+    let finally = match resolve_optional_field(statement.finally(), doc) {
+        JavaFormatField::Present(Some(finally)) => format_finally_clause(&finally, doc),
+        JavaFormatField::Present(None) => Doc::nil(),
+        JavaFormatField::Malformed(malformed) => malformed,
+    };
+    doc_concat!(
+        doc,
+        [
+            format_statement_keyword(statement.try_keyword(), doc),
+            doc.space(),
+            body,
+            catches,
+            finally,
+        ]
+    )
 }
 
 pub(super) fn format_try_with_resources_statement<'source>(
     statement: &TryWithResourcesStatement<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(statement, doc, |doc| {
-        let (resources_doc, separator) = match resolve_required_field(statement.resources(), doc) {
-            JavaFormatField::Present(resources) => {
-                let close = resolve_required_delimiter(resources.close_paren(), doc);
-                let separator = format_statement_header_body_separator(close.source(), doc);
-                (
-                    format_resource_specification(&resources, close, doc),
-                    separator,
-                )
-            }
-            JavaFormatField::Malformed(malformed) => (malformed, doc.space()),
-        };
-        let body = match resolve_required_field(statement.body(), doc) {
-            JavaFormatField::Present(body) => format_block(&body, doc),
-            JavaFormatField::Malformed(malformed) => malformed,
-        };
-        let catches = match resolve_required_field(statement.catches(), doc) {
-            JavaFormatField::Present(catches) => format_catch_clauses(catches.parts(), doc),
-            JavaFormatField::Malformed(malformed) => malformed,
-        };
-        let finally = match resolve_optional_field(statement.finally(), doc) {
-            JavaFormatField::Present(Some(finally)) => format_finally_clause(&finally, doc),
-            JavaFormatField::Present(None) => Doc::nil(),
-            JavaFormatField::Malformed(malformed) => malformed,
-        };
-        doc_concat!(
-            doc,
-            [
-                format_statement_keyword(statement.try_keyword(), doc),
-                doc.space(),
-                resources_doc,
+    let (resources_doc, separator) = match resolve_required_field(statement.resources(), doc) {
+        JavaFormatField::Present(resources) => {
+            let close = resolve_required_delimiter(resources.close_paren(), doc);
+            let separator = format_statement_header_body_separator(close.source(), doc);
+            (
+                format_resource_specification(&resources, close, doc),
                 separator,
-                body,
-                catches,
-                finally,
-            ]
-        )
-    })
-}
-
-fn format_optional_try_keyword<'source>(
-    field: Result<
-        jolt_java_syntax::JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    match resolve_optional_field(field, doc) {
-        JavaFormatField::Present(Some(keyword)) => format_token_with_comments(doc, &keyword),
+            )
+        }
+        JavaFormatField::Malformed(malformed) => (malformed, doc.space()),
+    };
+    let body = match resolve_required_field(statement.body(), doc) {
+        JavaFormatField::Present(body) => format_block(&body, doc),
+        JavaFormatField::Malformed(malformed) => malformed,
+    };
+    let catches = match resolve_required_field(statement.catches(), doc) {
+        JavaFormatField::Present(catches) => format_catch_clauses(catches.parts(), doc),
+        JavaFormatField::Malformed(malformed) => malformed,
+    };
+    let finally = match resolve_optional_field(statement.finally(), doc) {
+        JavaFormatField::Present(Some(finally)) => format_finally_clause(&finally, doc),
         JavaFormatField::Present(None) => Doc::nil(),
         JavaFormatField::Malformed(malformed) => malformed,
-    }
+    };
+    doc_concat!(
+        doc,
+        [
+            format_statement_keyword(statement.try_keyword(), doc),
+            doc.space(),
+            resources_doc,
+            separator,
+            body,
+            catches,
+            finally,
+        ]
+    )
 }
 
 fn format_resource_specification<'source>(
@@ -281,39 +257,32 @@ fn format_resource<'source>(
     resource: &Resource<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(resource, doc, |doc| {
-        match resolve_required_field(resource.value(), doc) {
-            JavaFormatField::Present(value) => {
-                if let Some(declaration) =
-                    value.cast_node::<jolt_java_syntax::LocalVariableDeclaration<'source>>()
-                {
-                    format_local_variable_declaration(&declaration, doc)
-                } else if let Some(access) =
-                    value.cast_node::<jolt_java_syntax::VariableAccess<'source>>()
-                {
-                    match resolve_required_field(access.expression(), doc) {
-                        JavaFormatField::Present(expression) => expression
-                            .cast_node::<jolt_java_syntax::NameExpression<'source>>()
-                            .map(|value| format_expression(&value.into(), doc))
-                            .or_else(|| {
-                                expression
-                                    .cast_node::<jolt_java_syntax::FieldAccessExpression<'source>>()
-                                    .map(|value| format_expression(&value.into(), doc))
-                            })
-                            .unwrap_or_else(|| {
-                                doc.block_on_invariant("invalid resource access role");
-                                Doc::nil()
-                            }),
-                        JavaFormatField::Malformed(malformed) => malformed,
-                    }
-                } else {
-                    doc.block_on_invariant("invalid resource value role");
-                    Doc::nil()
+    match resolve_required_field(resource.value(), doc) {
+        JavaFormatField::Present(value) => match value {
+            ResourceValueSyntax::ResourceVariableDeclaration(declaration) => {
+                format_resource_variable_declaration(&declaration, doc)
+            }
+            ResourceValueSyntax::VariableAccess(access) => {
+                match resolve_required_field(access.expression(), doc) {
+                    JavaFormatField::Present(expression) => match expression.classify() {
+                        Ok(VariableAccessSyntax::NameExpression(value)) => {
+                            format_expression(&value.into(), doc)
+                        }
+                        Ok(VariableAccessSyntax::FieldAccessExpression(value)) => {
+                            format_expression(&value.into(), doc)
+                        }
+                        Err(error) => {
+                            doc.block_on_invariant(error.to_string());
+                            Doc::nil()
+                        }
+                    },
+                    JavaFormatField::Malformed(malformed) => malformed,
                 }
             }
-            JavaFormatField::Malformed(malformed) => malformed,
-        }
-    })
+            ResourceValueSyntax::BogusResourceValue(bogus) => format_malformed(&bogus, doc),
+        },
+        JavaFormatField::Malformed(malformed) => malformed,
+    }
 }
 
 fn format_catch_clauses<'source>(
@@ -344,29 +313,27 @@ fn format_catch_clause<'source>(
     clause: &CatchClause<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(clause, doc, |doc| {
-        let parameter = match resolve_required_field(clause.parameter(), doc) {
-            JavaFormatField::Present(value) => {
-                format_parenthesized_catch_parameter(clause, &value, doc)
-            }
-            JavaFormatField::Malformed(value) => value,
-        };
-        let body = match resolve_required_field(clause.body(), doc) {
-            JavaFormatField::Present(value) => format_block(&value, doc),
-            JavaFormatField::Malformed(value) => value,
-        };
-        doc_concat!(
-            doc,
-            [
-                doc.space(),
-                format_statement_keyword(clause.catch_keyword(), doc),
-                doc.space(),
-                parameter,
-                doc.space(),
-                body
-            ]
-        )
-    })
+    let parameter = match resolve_required_field(clause.parameter(), doc) {
+        JavaFormatField::Present(value) => {
+            format_parenthesized_catch_parameter(clause, &value, doc)
+        }
+        JavaFormatField::Malformed(value) => value,
+    };
+    let body = match resolve_required_field(clause.body(), doc) {
+        JavaFormatField::Present(value) => format_block(&value, doc),
+        JavaFormatField::Malformed(value) => value,
+    };
+    doc_concat!(
+        doc,
+        [
+            doc.space(),
+            format_statement_keyword(clause.catch_keyword(), doc),
+            doc.space(),
+            parameter,
+            doc.space(),
+            body
+        ]
+    )
 }
 
 fn format_parenthesized_catch_parameter<'source>(
@@ -393,21 +360,24 @@ fn format_catch_parameter<'source>(
     parameter: &CatchParameter<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(parameter, doc, |doc| {
-        let modifiers = match resolve_required_field(parameter.modifiers(), doc) {
-            JavaFormatField::Present(value) => format_parameter_modifiers(&value, doc),
-            JavaFormatField::Malformed(value) => value,
-        };
-        let types = match resolve_required_field(parameter.types(), doc) {
-            JavaFormatField::Present(value) => format_catch_type_list(&value, doc),
-            JavaFormatField::Malformed(value) => value,
-        };
-        let name = match resolve_required_field(parameter.name(), doc) {
-            JavaFormatField::Present(value) => format_token_with_comments(doc, &value),
-            JavaFormatField::Malformed(value) => value,
-        };
-        doc_concat!(doc, [modifiers, types, doc.space(), name])
-    })
+    let modifiers = match resolve_required_field(parameter.modifiers(), doc) {
+        JavaFormatField::Present(value) => format_parameter_modifiers(&value, doc),
+        JavaFormatField::Malformed(value) => value,
+    };
+    let types = match resolve_required_field(parameter.types(), doc) {
+        JavaFormatField::Present(value) => format_catch_type_list(&value, doc),
+        JavaFormatField::Malformed(value) => value,
+    };
+    let name = match resolve_required_field(parameter.name(), doc) {
+        JavaFormatField::Present(value) => format_token_with_comments(doc, &value),
+        JavaFormatField::Malformed(value) => value,
+    };
+    let dimensions = match resolve_optional_field(parameter.dimensions(), doc) {
+        JavaFormatField::Present(Some(dimensions)) => format_array_dimensions(&dimensions, doc),
+        JavaFormatField::Present(None) => Doc::nil(),
+        JavaFormatField::Malformed(value) => value,
+    };
+    doc_concat!(doc, [modifiers, types, doc.space(), name, dimensions])
 }
 
 fn format_parameter_modifiers<'source>(
@@ -416,24 +386,32 @@ fn format_parameter_modifiers<'source>(
 ) -> Doc<'source> {
     let mut has_items = false;
     let modifiers = doc.concat_list(|docs| {
-        for part in modifiers.parts() {
-            let item = match resolve_list_part(part, docs) {
-                JavaFormatListPart::Item(item) => {
-                    if let Some(annotation) =
-                        item.cast_node::<jolt_java_syntax::Annotation<'source>>()
-                    {
-                        format_annotation(&annotation, docs)
-                    } else if let Some(token) = item.token() {
-                        format_token_with_comments(docs, &token)
-                    } else {
-                        docs.block_on_invariant("invalid parameter modifier role");
-                        Doc::nil()
-                    }
+        for item in modifiers.partitioned_items() {
+            let item = match item {
+                Ok(
+                    PartitionedModifierItem::DeclarationAnnotation(annotation)
+                    | PartitionedModifierItem::TypeUseAnnotation(annotation),
+                ) => format_annotation(&annotation, docs),
+                Ok(
+                    PartitionedModifierItem::Token(token) | PartitionedModifierItem::Sealed(token),
+                ) => format_token_with_comments(docs, &token),
+                Ok(PartitionedModifierItem::NonSealed(modifier)) => {
+                    docs.block_on_invariant(format!(
+                        "unexpected non-sealed catch modifier at {:?}",
+                        modifier.text_range()
+                    ));
+                    Doc::nil()
                 }
-                JavaFormatListPart::Malformed(malformed) => malformed,
-                JavaFormatListPart::Separator(separator) => {
-                    docs.block_on_invariant("unseparated parameter modifier list had a separator");
-                    format_token_with_comments(docs, &separator)
+                Ok(PartitionedModifierItem::Bogus(bogus)) => format_malformed(&bogus, docs),
+                Ok(PartitionedModifierItem::Missing(missing)) => {
+                    crate::helpers::recovery::format_missing(&missing, docs)
+                }
+                Ok(PartitionedModifierItem::Malformed(malformed)) => {
+                    format_malformed(&malformed, docs)
+                }
+                Err(error) => {
+                    docs.block_on_invariant(error.to_string());
+                    Doc::nil()
                 }
             };
             if !docs.is_empty() {
@@ -456,39 +434,35 @@ fn format_catch_type_list<'source>(
     types: &jolt_java_syntax::CatchTypeList<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(types, doc, |doc| {
-        match resolve_required_field(types.types(), doc) {
-            JavaFormatField::Present(role) => role
-                .cast_family::<jolt_java_syntax::Type<'source>>()
-                .map(|ty| format_type(&ty, doc))
-                .unwrap_or_else(|| {
-                    doc.block_on_invariant("invalid catch type role");
-                    Doc::nil()
-                }),
-            JavaFormatField::Malformed(malformed) => malformed,
-        }
-    })
+    match resolve_required_field(types.types(), doc) {
+        JavaFormatField::Present(role) => role
+            .as_type()
+            .map(|ty| format_type(&ty, doc))
+            .unwrap_or_else(|error| {
+                doc.block_on_invariant(error.to_string());
+                Doc::nil()
+            }),
+        JavaFormatField::Malformed(malformed) => malformed,
+    }
 }
 
 fn format_finally_clause<'source>(
     clause: &FinallyClause<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(clause, doc, |doc| {
-        let body = match resolve_required_field(clause.body(), doc) {
-            JavaFormatField::Present(value) => format_block(&value, doc),
-            JavaFormatField::Malformed(value) => value,
-        };
-        doc_concat!(
-            doc,
-            [
-                doc.space(),
-                format_statement_keyword(clause.finally_keyword(), doc),
-                doc.space(),
-                body
-            ]
-        )
-    })
+    let body = match resolve_required_field(clause.body(), doc) {
+        JavaFormatField::Present(value) => format_block(&value, doc),
+        JavaFormatField::Malformed(value) => value,
+    };
+    doc_concat!(
+        doc,
+        [
+            doc.space(),
+            format_statement_keyword(clause.finally_keyword(), doc),
+            doc.space(),
+            body
+        ]
+    )
 }
 
 fn format_removed_resource_separator_comments<'source>(

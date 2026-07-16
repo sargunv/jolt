@@ -1,7 +1,10 @@
 use std::path::PathBuf;
 
 use jolt_java_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
-use jolt_java_syntax::{EmptyDeclaration, JavaNode, JavaSyntaxView, parse_compilation_unit};
+use jolt_java_syntax::{
+    EmptyDeclaration, EmptyStatement, Guard, JavaNode, JavaSyntaxView, LambdaExpression,
+    ParenthesizedExpression, ResourceSpecification, parse_compilation_unit,
+};
 use jolt_test_support::{
     DeferredReason, ImportedFormatterSummary, ObservedDeferredPath, RepresentedTokenRemoval,
     StringSink, assert_deferred_import_manifest, collect_java_files, read_to_string,
@@ -20,7 +23,7 @@ const CONSERVATION_PATHS: &[&str] = &[
 ];
 
 #[test]
-fn imported_fixture_inputs_format_idempotently_and_parse() {
+fn imported_fixture_inputs_format_idempotently_and_conserve_represented_syntax() {
     let mut deferred = Vec::new();
     let google_summary = assert_corpus("google-java-format", &mut deferred);
     let palantir_summary = assert_corpus("palantir-java-format", &mut deferred);
@@ -79,10 +82,6 @@ fn assert_corpus(
             reasons.push(DeferredReason::SyntaxReconstructionMismatch);
         }
         summary.record_diagnostics(parse.diagnostics());
-        if !parse.diagnostics().is_empty() {
-            summary.note_syntax_blocked();
-            reasons.push(DeferredReason::ParserDiagnostics);
-        }
         if !reasons.is_empty() {
             deferred.push(ObservedDeferredPath::new(
                 &suite_name,
@@ -104,13 +103,23 @@ fn assert_corpus(
         summary.note_formatted();
 
         let formatted_parse = parse_compilation_unit(&formatted);
-        assert!(
-            formatted_parse.diagnostics().is_empty(),
-            "formatted output did not parse cleanly for {}: {:#?}\n{}",
-            path.display(),
-            formatted_parse.diagnostics(),
-            formatted
-        );
+        if parse.diagnostics().is_empty() {
+            assert!(
+                formatted_parse.diagnostics().is_empty(),
+                "formatted clean input did not parse cleanly for {}: {:#?}\n{}",
+                path.display(),
+                formatted_parse.diagnostics(),
+                formatted
+            );
+        } else {
+            assert_eq!(
+                diagnostic_inventory(parse.diagnostics()),
+                diagnostic_inventory(formatted_parse.diagnostics()),
+                "formatting changed parser diagnostics for {}:\n{}",
+                path.display(),
+                formatted
+            );
+        }
         let formatted_syntax = formatted_parse.syntax().unwrap_or_else(|| {
             panic!(
                 "formatted output produced no syntax tree for {}",
@@ -123,7 +132,9 @@ fn assert_corpus(
             "formatted output did not reconstruct exactly for {}",
             path.display()
         );
-        if suite == "prettier-java" && CONSERVATION_PATHS.contains(&relative.as_str()) {
+        if !parse.diagnostics().is_empty()
+            || suite == "prettier-java" && CONSERVATION_PATHS.contains(&relative.as_str())
+        {
             let removals = syntax_authorized_removals(syntax);
             let token_loss = represented_token_loss_report(
                 syntax.token_iter(),
@@ -174,6 +185,23 @@ fn assert_corpus(
     summary
 }
 
+fn diagnostic_inventory(
+    diagnostics: &[jolt_diagnostics::Diagnostic],
+) -> std::collections::BTreeMap<String, usize> {
+    let mut inventory = std::collections::BTreeMap::new();
+    for diagnostic in diagnostics {
+        let key = format!(
+            "{:?}:{:?}:{}:{}",
+            diagnostic.stage,
+            diagnostic.severity,
+            diagnostic.code.as_str(),
+            diagnostic.message
+        );
+        *inventory.entry(key).or_default() += 1;
+    }
+    inventory
+}
+
 fn syntax_authorized_removals(
     syntax: jolt_java_syntax::CompilationUnit<'_>,
 ) -> Vec<RepresentedTokenRemoval> {
@@ -182,6 +210,8 @@ fn syntax_authorized_removals(
     };
     let mut stack = vec![root];
     let mut redundant_semicolons = 0usize;
+    let mut redundant_open_parentheses = 0usize;
+    let mut redundant_close_parentheses = 0usize;
     while let Some(node) = stack.pop() {
         stack.extend(node.children());
         if EmptyDeclaration::cast(node)
@@ -189,14 +219,45 @@ fn syntax_authorized_removals(
         {
             redundant_semicolons += 1;
         }
+        if EmptyStatement::cast(node).is_some_and(|empty| empty.separator_removal_claim().is_some())
+        {
+            redundant_semicolons += 1;
+        }
+        if ResourceSpecification::cast(node)
+            .is_some_and(|resources| resources.trailing_separator_removal_claim().is_some())
+        {
+            redundant_semicolons += 1;
+        }
+        let parentheses = if let Some(guard) = Guard::cast(node) {
+            Some(guard.redundant_parenthesis_removal_claims())
+        } else if let Some(lambda) = LambdaExpression::cast(node) {
+            Some(lambda.parameter_parenthesis_removal_claims())
+        } else {
+            ParenthesizedExpression::cast(node)
+                .map(|expression| expression.redundant_parenthesis_removal_claims())
+        };
+        if let Some(parentheses) = parentheses {
+            redundant_open_parentheses += usize::from(parentheses.open.is_some());
+            redundant_close_parentheses += usize::from(parentheses.close.is_some());
+        }
     }
-    (redundant_semicolons != 0)
-        .then_some(RepresentedTokenRemoval {
+    [
+        (redundant_semicolons != 0).then_some(RepresentedTokenRemoval {
             source: ";",
             count: redundant_semicolons,
-        })
-        .into_iter()
-        .collect()
+        }),
+        (redundant_open_parentheses != 0).then_some(RepresentedTokenRemoval {
+            source: "(",
+            count: redundant_open_parentheses,
+        }),
+        (redundant_close_parentheses != 0).then_some(RepresentedTokenRemoval {
+            source: ")",
+            count: redundant_close_parentheses,
+        }),
+    ]
+    .into_iter()
+    .flatten()
+    .collect()
 }
 
 fn format_source(

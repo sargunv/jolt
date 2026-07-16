@@ -137,9 +137,9 @@ reproductions do not by themselves close the broader architecture items below.
       `crates/jolt_kotlin_fmt/tests/corpus.rs:28-33`; route every represented
       tree through conservation and idempotence checks.
 - [x] Replace aggregate diagnostic-import skip counts with an exact
-      deferred-path manifest in Phase 5. Each vertical phase removes the paths
-      owned by its migrated syntax families only after their hard conservation
-      and idempotence gates pass. Phase 23 requires the manifest to be empty.
+      deferred-path manifest in Phase 5. Represented diagnostic trees now enter
+      the hard malformed-input conservation lane; only absent trees or
+      reconstruction mismatches may remain deferred. The manifest is empty.
 - [x] Keep imported corpus identity in the importer: upstream commits and the
       generated file manifest are pinned, and CI regenerates imports. Formatter
       tests do not duplicate that contract by rehashing imported files.
@@ -346,11 +346,13 @@ gates.
 
 This phase restores no historical regression fixture, adds no knowingly failing
 test, and changes no formatter recovery or layout rule. Record imported sources
-that cannot yet enter the hard formatter gate—including parser diagnostics and
-syntax-reconstruction mismatches—in an exact deferred-path manifest with a
-reason and owning replacement phase. That manifest is a migration queue, not a
-snapshot of accepted formatter loss. The Phase 5 commit must pass
-`mise run test` with no token-loss, comment-loss, or idempotence allowlist.
+that cannot produce an exactly reconstructing represented tree in an exact
+deferred-path manifest with a reason and owning replacement phase. Represented
+diagnostic trees belong in a malformed-input lane that preserves diagnostic
+identity, tokens, comments, determinism, and idempotence rather than in the
+deferred queue. That manifest is a migration queue, not a snapshot of accepted
+formatter loss. The Phase 5 commit must pass `mise run test` with no token-loss,
+comment-loss, or idempotence allowlist.
 
 ### New Phase 6: Tracked Verbatim Primitive
 
@@ -733,11 +735,13 @@ from `2197128`, down 583 lines from accepted Phase 9's net +2,315. The final
 roadmap remains responsible for crossing below zero.
 
 Every canonical-layout phase from 11 through 20 restores the historical fixture
-scopes assigned to it by `formatter-retained-regressions.toml` and removes the
-imported paths owned by its migrated families from Phase 5's deferred manifest.
-A path leaves the manifest only when its syntax reconstruction, conservation,
-represented-comment, reparse, and idempotence checks all pass. No phase commits
-a red test or snapshots a nonempty failure list.
+scopes assigned to it by `formatter-retained-regressions.toml`. Imported clean
+trees must reparse cleanly; imported diagnostic trees must retain their
+diagnostic inventory. Both lanes require exact reconstruction, authorized-
+normalization-aware token conservation, represented-comment conservation,
+determinism, and idempotence. Only absent or non-reconstructing trees may enter
+Phase 5's deferred manifest. No phase commits a red test or snapshots a nonempty
+failure list.
 
 ### New Phase 11: Java Programs, Modules, And Imports
 
@@ -899,10 +903,9 @@ member-chain and lambda-close comments, pattern recovery, and unary lexical
 safety. These cases pass exact token and represented-comment conservation,
 reparse, determinism, and idempotence. The prettier template-expression and
 text-block paths leave the deferred queue and enter the permanent conservation
-gate. The two arrow-parenthesis corpora and member-chain corpus remain deferred
-because they intentionally contain invalid standalone lambda statements, but
-their valid expression/comment sections now format idempotently and are captured
-by the focused fixture rather than hidden by the file-level diagnostic gate.
+gate. The two arrow-parenthesis corpora and member-chain corpus contain invalid
+standalone lambda statements; they now enter the permanent represented-
+diagnostic lane instead of being hidden by a file-level diagnostic skip.
 
 The Phase 14 review point is +28,123/-24,694 implementation lines, net +3,429
 from `2197128`: 921 lines above Phase 13. Java syntax and lossless source-range
@@ -922,6 +925,43 @@ architecture and crossing below zero.
 Vertically migrate simple statements, loops, switches, resources, catches, and
 remaining control-flow families. Delete Java's final bespoke recovery
 formatting.
+
+Implementation status: **implemented, gate-green, and uncommitted**. Java's
+statement grammar no longer constructs the generic `ErrorNode`. Enhanced-for
+variables, resource declarations and accesses, switch entries, switch guards,
+and malformed switch-label items now have exact category-compatible bogus
+owners. Missing statement and block bodies own their declared empty slots
+without consuming `else`, `while`, switch labels, closing braces, or EOF.
+Ordinary and resource `try` statements are separate represented forms rather
+than a resource statement nested inside an optional ordinary-try shell.
+
+Java statement formatting is now always structured for valid nodes. Phase 15
+removes all 29 remaining `format_or_verbatim` call sites, deletes that helper,
+removes broad malformed-container gates, and replaces formatter role probes with
+exhaustive typed projections. Only explicit bogus children and malformed list
+parts use tracked verbatim formatting. The focused `phase-15-statements.java`
+fixture passes reconstruction, token/comment conservation, reparse, determinism,
+and idempotence, as do the clean Java corpora. Catch-parameter array dimensions
+are now emitted structurally instead of being silently omitted.
+
+The prettier `try_catch` and `yield-statement` files intentionally contain
+invalid bare-name expression statements and forbidden unqualified `yield(...)`
+invocations. They now run through the permanent represented-diagnostic corpus
+lane without weakening those diagnostics. The lane requires stable diagnostic
+inventory, exact reconstruction, authorized-normalization-aware token
+conservation, represented-comment conservation, determinism, and idempotence.
+All previously parser-diagnostic-only Java paths enter the same lane, leaving
+the deferred manifest empty.
+
+The Phase 15 review point is +28,515/-24,679 implementation lines, net +3,836
+from `2197128`: 407 lines above Phase 14. The final Java syntax ownership and
+typed role surface add 339 net lines; deleting Java's last valid-node recovery
+dispatch while adding the dedicated enhanced-for/resource layout adds 11 net
+formatter lines. The permanent imported represented-diagnostic conservation lane
+adds 57 net test lines and empties the deferred manifest. Fixtures, snapshots,
+reports, and documentation are excluded; tests and test support are included.
+The later transitional-architecture deletion phase remains responsible for
+crossing below zero.
 
 ### New Phase 16: Kotlin Programs, Packages, Imports, And Names
 
@@ -979,16 +1019,16 @@ budgets without an explicit approved architecture amendment.
 Run macro-field exhaustiveness, bogus-category and diagnostic-ownership
 snapshots, token/comment tracking, valid zero-verbatim gates, deterministic
 mutations, in-repository and imported corpora, CLI/dprint tests, `mise run fix`,
-and `mise run test`. Require Phase 5's imported diagnostic deferred-path
-manifest to be empty. Scan for valid replay, untracked verbatim, raw-gap layout,
-repair synthesis, panic paths, unbounded algorithms, and formatter-side
-structural layers. Fail if P16-only ordered recovery parts or local replay loops
-were reintroduced. Report macro-schema, consumer, audit, and ordinary
-implementation LOC separately, prove with the architecture's explicit `:(glob)`
-pathspec command that all implementation code, including test support but
-excluding fixtures and snapshots, is net negative relative to `2197128`, and
-fail if two grammar-shape descriptions remain. Change status to `CLEAN` only
-when every correctness, size, and performance gate passes.
+and `mise run test`. Require Phase 5's imported deferred-path manifest to remain
+empty. Scan for valid replay, untracked verbatim, raw-gap layout, repair
+synthesis, panic paths, unbounded algorithms, and formatter-side structural
+layers. Fail if P16-only ordered recovery parts or local replay loops were
+reintroduced. Report macro-schema, consumer, audit, and ordinary implementation
+LOC separately, prove with the architecture's explicit `:(glob)` pathspec
+command that all implementation code, including test support but excluding
+fixtures and snapshots, is net negative relative to `2197128`, and fail if two
+grammar-shape descriptions remain. Change status to `CLEAN` only when every
+correctness, size, and performance gate passes.
 
 ## Kotlin Structural Recovery Debt
 

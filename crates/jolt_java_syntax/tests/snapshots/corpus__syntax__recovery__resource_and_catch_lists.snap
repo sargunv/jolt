@@ -25,60 +25,59 @@ CompilationUnit
               LBrace "{" @ 19..20 trailing=[Whitespace " "]
               BlockStatementList
                 BlockStatement
-                  TryStatement
-                    TryWithResourcesStatement
-                      TryKw "try" @ 21..24 trailing=[Whitespace " "]
-                      ResourceSpecification
-                        LParen "(" @ 25..26
-                        ResourceList
-                          Resource
-                            ErrorNode
-                              BinaryExpression
-                                NameExpression
-                                  Identifier "a" @ 26..27 trailing=[Whitespace " "]
-                                Plus "+" @ 28..29 trailing=[Whitespace " ", BlockComment "/* resource */", Whitespace " "]
-                                BogusExpression
-                          Semicolon ";" @ 45..46 trailing=[Whitespace " "]
-                          Resource
-                            VariableAccess
+                  TryWithResourcesStatement
+                    TryKw "try" @ 21..24 trailing=[Whitespace " "]
+                    ResourceSpecification
+                      LParen "(" @ 25..26
+                      ResourceList
+                        Resource
+                          BogusResourceValue
+                            BinaryExpression
                               NameExpression
-                                Identifier "b" @ 47..48
-                        RParen ")" @ 48..49 trailing=[Whitespace " "]
-                      Block
-                        LBrace "{" @ 50..51
-                        BlockStatementList
-                        RBrace "}" @ 51..52 trailing=[Whitespace " "]
-                      CatchClauseList
-                        CatchClause
-                          CatchKw "catch" @ 53..58 trailing=[Whitespace " "]
-                          LParen "(" @ 59..60
-                          CatchParameter
-                            ParameterModifierList
-                            CatchTypeList
-                              UnionType
+                                Identifier "a" @ 26..27 trailing=[Whitespace " "]
+                              Plus "+" @ 28..29 trailing=[Whitespace " ", BlockComment "/* resource */", Whitespace " "]
+                              BogusExpression
+                        Semicolon ";" @ 45..46 trailing=[Whitespace " "]
+                        Resource
+                          VariableAccess
+                            NameExpression
+                              Identifier "b" @ 47..48
+                      RParen ")" @ 48..49 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 50..51
+                      BlockStatementList
+                      RBrace "}" @ 51..52 trailing=[Whitespace " "]
+                    CatchClauseList
+                      CatchClause
+                        CatchKw "catch" @ 53..58 trailing=[Whitespace " "]
+                        LParen "(" @ 59..60
+                        CatchParameter
+                          ParameterModifierList
+                          CatchTypeList
+                            UnionType
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "A" @ 60..61 trailing=[Whitespace " "]
+                              Bar "|" @ 62..63 trailing=[Whitespace " ", BlockComment "/* catch */", Whitespace " "]
+                              TypeBarList
+                                BogusType
+                                  AnnotationList
+                                Bar "|" @ 76..77 trailing=[Whitespace " "]
                                 ClassType
                                   ClassTypeSegmentList
                                     ClassTypeSegmentNode
                                       AnnotationList
                                       Name
-                                        Identifier "A" @ 60..61 trailing=[Whitespace " "]
-                                Bar "|" @ 62..63 trailing=[Whitespace " ", BlockComment "/* catch */", Whitespace " "]
-                                TypeBarList
-                                  BogusType
-                                    AnnotationList
-                                  Bar "|" @ 76..77 trailing=[Whitespace " "]
-                                  ClassType
-                                    ClassTypeSegmentList
-                                      ClassTypeSegmentNode
-                                        AnnotationList
-                                        Name
-                                          Identifier "B" @ 78..79 trailing=[Whitespace " "]
-                            Identifier "e" @ 80..81
-                          RParen ")" @ 81..82 trailing=[Whitespace " "]
-                          Block
-                            LBrace "{" @ 83..84
-                            BlockStatementList
-                            RBrace "}" @ 84..85 trailing=[Whitespace " "]
+                                        Identifier "B" @ 78..79 trailing=[Whitespace " "]
+                          Identifier "e" @ 80..81
+                        RParen ")" @ 81..82 trailing=[Whitespace " "]
+                        Block
+                          LBrace "{" @ 83..84
+                          BlockStatementList
+                          RBrace "}" @ 84..85 trailing=[Whitespace " "]
               RBrace "}" @ 86..87 trailing=[Whitespace " "]
         RBrace "}" @ 88..89
   Eof "" @ 90..90 leading=[Newline "\n"]

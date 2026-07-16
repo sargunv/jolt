@@ -317,6 +317,11 @@ mod tests {
                         | JavaSyntaxKind::BogusAssignmentTarget
                         | JavaSyntaxKind::BogusObjectCreationType
                         | JavaSyntaxKind::BogusArrayCreationType
+                        | JavaSyntaxKind::BogusEnhancedForVariable
+                        | JavaSyntaxKind::BogusResourceValue
+                        | JavaSyntaxKind::BogusSwitchEntry
+                        | JavaSyntaxKind::BogusSwitchGuard
+                        | JavaSyntaxKind::BogusSwitchLabelItem
                 ) {
                     assert!(node.is_directly_malformed());
                     assert!(
@@ -429,5 +434,29 @@ mod tests {
         check("class C { boolean f(Object x) { return x instanceof var value; } }", expected, "expected reference type", JavaSyntaxKind::BogusType, None);
         check("class C { boolean f(Object x) { return x instanceof int(String s); } }", expected, "expected class or interface type", JavaSyntaxKind::BogusType, None);
         check("class C { boolean f(Object x) { return x instanceof Point(String s = value); } }", JavaParseDiagnosticCode::UnexpectedSyntax.id(), "invalid type pattern declaration", JavaSyntaxKind::BogusPattern, None);
+    }
+
+    #[test]
+    #[rustfmt::skip] // Keep the owner matrix one case per line.
+    fn phase_fifteen_diagnostics_own_the_declared_node_or_slot() {
+        let expected = JavaParseDiagnosticCode::ExpectedSyntax.id();
+        macro_rules! slot { ($src:literal, $msg:literal, $kind:ident, $shape:ident, $slot:ident) => {
+            check($src, expected, $msg, JavaSyntaxKind::$kind, Some(crate::shape::$shape::Slot::$slot as u16));
+        }; }
+
+        check("class C { void f(Object xs) { for (Object x = value : xs) {} } }", expected, "enhanced for variable must not have an initializer", JavaSyntaxKind::BogusEnhancedForVariable, None);
+        check("class C { void f() { try (Resource value) {} } }", expected, "expected resource initializer", JavaSyntaxKind::BogusResourceValue, None);
+        check("class C { void f() { try (make()) {} } }", JavaParseDiagnosticCode::InvalidResourceVariableAccess.id(), "expected resource variable declaration or variable access", JavaSyntaxKind::BogusResourceValue, None);
+        check("class C { void f() { try () {} } }", expected, "expected resource", JavaSyntaxKind::BogusResourceValue, None);
+        check("class C { void f(int x) { switch (x) { use(); case 1 -> use(); } } }", JavaParseDiagnosticCode::UnexpectedSyntax.id(), "expected switch label", JavaSyntaxKind::BogusSwitchEntry, None);
+        check("class C { void f(int x) { switch (x) { case 1 when ok -> use(); } } }", JavaParseDiagnosticCode::InvalidSwitchGuard.id(), "switch guard requires a pattern", JavaSyntaxKind::BogusSwitchGuard, None);
+        check("class C { void f(int x) { switch (x) { case 1 value -> use(); } } }", JavaParseDiagnosticCode::UnexpectedSyntax.id(), "unexpected token in case constant", JavaSyntaxKind::BogusSwitchLabelItem, None);
+        check("class C { void f() { try {} } }", expected, "expected `catch` or `finally` after try block", JavaSyntaxKind::BogusStatement, None);
+        slot!("class C { void f(boolean ok) { if (ok) else use(); } }", "expected statement", IfStatement, if_statement, then_branch);
+        slot!("class C { void f(boolean ok) { do while (ok); } }", "expected statement", DoStatement, do_statement, body);
+        slot!("class C { void f(Object lock) { synchronized (lock) } }", "expected synchronized body", SynchronizedStatement, synchronized_statement, body);
+        slot!("class C { void f(int x) { switch (x) } }", "expected switch block", SwitchStatement, switch_statement, body);
+        slot!("class C { void f() { try {} catch (Exception e) finally {} } }", "expected catch body", CatchClause, catch_clause, body);
+        slot!("class C { void f() { try {} finally } }", "expected finally body", FinallyClause, finally_clause, body);
     }
 }

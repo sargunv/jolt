@@ -3,16 +3,16 @@ source: crates/jolt_java_syntax/src/schema_audit.rs
 expression: audit.render()
 ---
 language = java
-fixture_files = 407
-diagnostic_fixture_files = 155
-audited_nodes = 24584
-exact_valid_shapes = 24276
-malformed_nodes = 195
+fixture_files = 408
+diagnostic_fixture_files = 156
+audited_nodes = 24946
+exact_valid_shapes = 24618
+malformed_nodes = 209
 clean_missing_required_shapes = 3
-diagnostic_missing_required_shapes = 108
+diagnostic_missing_required_shapes = 116
 clean_unexpected_shapes = 0
-diagnostic_unexpected_shapes = 2
-error_node_owners = 9
+diagnostic_unexpected_shapes = 0
+error_node_owners = 0
 
 [clean_missing_required]
 style__expressions__casts_instanceof_arrays: PrimitiveType occurrence 7 (IntKw("int"))
@@ -74,9 +74,6 @@ syntax__lexer__uses_longest_match_for_adjacent_minus_operators: FieldDeclaration
 syntax__lexer__uses_longest_match_for_adjacent_minus_operators: VariableDeclarator occurrence 1 ()
 syntax__lexer__uses_longest_match_for_keyword_and_literal_prefixes: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
 syntax__lexer__uses_longest_match_for_keyword_and_literal_prefixes: FieldDeclaration occurrence 2 (ClassType VariableDeclaratorList)
-syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclaratorList occurrence 2 (VariableDeclarator ErrorNode)
-syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclaratorList occurrence 3 (VariableDeclarator ErrorNode)
-syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclaratorList occurrence 4 (VariableDeclarator ErrorNode)
 syntax__parser__diagnoses_invalid_expression_forms: ParenthesizedExpression occurrence 1 (LParen("(") RParen(")"))
 syntax__parser__diagnoses_invalid_expression_forms: ObjectCreationExpression occurrence 2 (NewKw("new") ClassType)
 syntax__parser__diagnoses_invalid_expression_forms: ObjectCreationExpression occurrence 3 (NewKw("new") ClassType ClassBody)
@@ -87,7 +84,6 @@ syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: V
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: FieldDeclaration occurrence 2 (PrimitiveType VariableDeclaratorList)
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: VariableDeclarator occurrence 2 ()
 syntax__parser__diagnoses_missing_class_body: ClassBody occurrence 1 (ClassBodyMemberList)
-syntax__parser__disambiguates_when_in_switch_labels__invalid_guard: SwitchLabelItemList occurrence 1 (CaseConstant ErrorNode)
 syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: MethodDeclaration occurrence 1 (VoidType Identifier("method") LParen("(") FormalParameterList Block)
 syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: FormalParameter occurrence 1 (ParameterModifierList BogusType AnnotationList)
 syntax__parser__recovers_malformed_nested_generic_member: VariableDeclarator occurrence 1 ()
@@ -125,6 +121,18 @@ syntax__recovery__phase_14_expressions: ClassLiteralExpression occurrence 6 (Bog
 syntax__recovery__phase_14_expressions: ClassLiteralExpression occurrence 7 (BogusClassLiteralTarget ClassKw("class"))
 syntax__recovery__phase_14_expressions: TypePattern occurrence 4 (ParameterModifierList ClassType)
 syntax__recovery__phase_14_expressions: TypePattern occurrence 8 (ParameterModifierList ClassType)
+syntax__recovery__phase_15_statements: Annotation occurrence 1 (At("@"))
+syntax__recovery__phase_15_statements: IfStatement occurrence 1 (IfKw("if") LParen("(") NameExpression RParen(")"))
+syntax__recovery__phase_15_statements: WhileStatement occurrence 1 (WhileKw("while") LParen("(") NameExpression RParen(")"))
+syntax__recovery__phase_15_statements: DoStatement occurrence 1 (DoKw("do") WhileKw("while") LParen("(") NameExpression RParen(")") Semicolon(";"))
+syntax__recovery__phase_15_statements: BasicForStatement occurrence 1 (ForKw("for") LParen("(") Semicolon(";") Semicolon(";") RParen(")"))
+syntax__recovery__phase_15_statements: EnhancedForStatement occurrence 4 (ForKw("for") LParen("(") EnhancedForVariable Colon(":") NameExpression RParen(")"))
+syntax__recovery__phase_15_statements: SwitchStatement occurrence 2 (SwitchKw("switch") LParen("(") NameExpression RParen(")"))
+syntax__recovery__phase_15_statements: SynchronizedStatement occurrence 1 (SynchronizedKw("synchronized") LParen("(") NameExpression RParen(")"))
+syntax__recovery__phase_15_statements: TryStatement occurrence 2 (TryKw("try") CatchClauseList FinallyClause)
+syntax__recovery__phase_15_statements: CatchClause occurrence 2 (CatchKw("catch") LParen("(") CatchParameter RParen(")"))
+syntax__recovery__phase_15_statements: FinallyClause occurrence 1 (FinallyKw("finally"))
+syntax__recovery__phase_15_statements: TryWithResourcesStatement occurrence 7 (TryKw("try") ResourceSpecification CatchClauseList)
 syntax__recovery__switch_and_module_lists: SwitchLabelItemList occurrence 1 (CaseConstant Comma(",") Comma(",") CaseConstant)
 syntax__recovery__switch_and_module_lists: ModuleNameList occurrence 1 (Name Comma(",") Comma(",") Name)
 syntax__recovery__type_annotation_and_parameter_lists: TypeParameter occurrence 2 (AnnotationList)
@@ -132,16 +140,5 @@ syntax__recovery__type_annotation_and_parameter_lists: TypeParameter occurrence 
 [clean_unexpected]
 
 [diagnostic_unexpected]
-syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclarator occurrence 1 has valid kind with direct malformed ownership [bytes=13, tokens=3, children=3] (Identifier("value") Assign("=") ErrorNode)
-syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclarator occurrence 4 has valid kind with direct malformed ownership [bytes=7, tokens=1, children=2] (Identifier("missing") ErrorNode)
 
 [error_node_ownership]
-syntax__parser__diagnoses_expression_try_with_resource: ErrorNode occurrence 1 owned by Resource
-syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 1 owned by VariableDeclarator
-syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 2 owned by VariableDeclaratorList
-syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 3 owned by VariableDeclarator
-syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 4 owned by VariableDeclaratorList
-syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 5 owned by VariableDeclaratorList
-syntax__parser__disambiguates_when_in_switch_labels__invalid_guard: ErrorNode occurrence 1 owned by SwitchLabelItemList
-syntax__recovery__resource_and_catch_lists: ErrorNode occurrence 1 owned by Resource
-syntax__recovery__switch_block_unowned_tokens: ErrorNode occurrence 1 owned by SwitchEntryList

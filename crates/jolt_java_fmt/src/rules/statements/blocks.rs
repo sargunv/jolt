@@ -10,40 +10,36 @@ use crate::helpers::comments::{
     InlineLeadingTrivia, format_token_after_relocated_leading_comments,
     format_token_with_inline_leading_comments, has_removed_comments,
 };
-use crate::helpers::recovery::{
-    JavaFormatField, format_malformed, format_or_verbatim, resolve_required_field,
-};
+use crate::helpers::recovery::{JavaFormatField, format_malformed, resolve_required_field};
 use jolt_fmt_ir::DocBuilder;
-use jolt_java_syntax::{JavaSyntaxListPart, JavaSyntaxView};
+use jolt_java_syntax::{JavaSyntaxListPart, JavaSyntaxView, LocalTypeDeclarationSyntax};
 
 pub(crate) fn format_block<'source>(
     block: &Block<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(block, doc, |doc| {
-        let open = match resolve_required_field(block.open_brace(), doc) {
-            JavaFormatField::Present(open) => format_block_open_brace(&open, doc),
-            JavaFormatField::Malformed(malformed) => malformed,
-        };
-        let body = match format_block_statements_body(block, doc) {
-            BodyContent {
-                doc: body,
-                visible: true,
-                ..
-            } => {
-                let body = doc_concat!(doc, [doc.hard_line(), body]);
-                doc_concat!(doc, [doc_indent!(doc, body), doc.hard_line()])
-            }
-            BodyContent { doc: claims, .. } => doc_concat!(doc, [claims, doc.hard_line()]),
-        };
-        let close = match resolve_required_field(block.close_brace(), doc) {
-            JavaFormatField::Present(close) => {
-                format_token_after_relocated_leading_comments(doc, &close, TrailingTrivia::Preserve)
-            }
-            JavaFormatField::Malformed(malformed) => malformed,
-        };
-        doc_concat!(doc, [open, body, close])
-    })
+    let open = match resolve_required_field(block.open_brace(), doc) {
+        JavaFormatField::Present(open) => format_block_open_brace(&open, doc),
+        JavaFormatField::Malformed(malformed) => malformed,
+    };
+    let body = match format_block_statements_body(block, doc) {
+        BodyContent {
+            doc: body,
+            visible: true,
+            ..
+        } => {
+            let body = doc_concat!(doc, [doc.hard_line(), body]);
+            doc_concat!(doc, [doc_indent!(doc, body), doc.hard_line()])
+        }
+        BodyContent { doc: claims, .. } => doc_concat!(doc, [claims, doc.hard_line()]),
+    };
+    let close = match resolve_required_field(block.close_brace(), doc) {
+        JavaFormatField::Present(close) => {
+            format_token_after_relocated_leading_comments(doc, &close, TrailingTrivia::Preserve)
+        }
+        JavaFormatField::Malformed(malformed) => malformed,
+    };
+    doc_concat!(doc, [open, body, close])
 }
 
 fn format_block_open_brace<'source>(
@@ -234,9 +230,6 @@ pub(crate) fn format_block_statement_item<'source>(
     statement: &BlockStatement<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<BodyItem<'source>> {
-    if statement.is_malformed() {
-        return Some(BodyItem::new(format_malformed(statement, doc), false));
-    }
     let starts_after_blank_line = statement.starts_after_blank_line();
     let item = match resolve_required_field(statement.item(), doc) {
         JavaFormatField::Present(item) => item,
@@ -262,13 +255,21 @@ pub(crate) fn format_block_statement_item<'source>(
         ),
         BlockItem::LocalClassOrInterfaceDeclaration(declaration) => {
             match resolve_required_field(declaration.declaration(), doc) {
-                JavaFormatField::Present(declaration) => declaration
-                    .cast_family::<jolt_java_syntax::TypeDeclaration<'source>>()
-                    .map(|declaration| format_type_declaration(&declaration, doc))
-                    .unwrap_or_else(|| {
-                        doc.block_on_invariant("invalid local type declaration role");
+                JavaFormatField::Present(declaration) => match declaration.classify() {
+                    Ok(LocalTypeDeclarationSyntax::ClassDeclaration(declaration)) => {
+                        format_type_declaration(&declaration.into(), doc)
+                    }
+                    Ok(LocalTypeDeclarationSyntax::InterfaceDeclaration(declaration)) => {
+                        format_type_declaration(&declaration.into(), doc)
+                    }
+                    Ok(LocalTypeDeclarationSyntax::BogusTypeDeclaration(declaration)) => {
+                        format_type_declaration(&declaration.into(), doc)
+                    }
+                    Err(error) => {
+                        doc.block_on_invariant(error.to_string());
                         Doc::nil()
-                    }),
+                    }
+                },
                 JavaFormatField::Malformed(malformed) => malformed,
             }
         }

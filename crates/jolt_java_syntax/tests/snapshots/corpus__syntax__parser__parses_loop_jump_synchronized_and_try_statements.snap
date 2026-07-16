@@ -166,7 +166,7 @@ CompilationUnit
                     EnhancedForStatement
                       ForKw "for" @ 206..209 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                       LParen "(" @ 210..211
-                      LocalVariableDeclaration
+                      EnhancedForVariable
                         ParameterModifierList
                         ClassType
                           ClassTypeSegmentList
@@ -174,9 +174,7 @@ CompilationUnit
                               AnnotationList
                               Name
                                 Identifier "String" @ 211..217 trailing=[Whitespace " "]
-                        VariableDeclaratorList
-                          VariableDeclarator
-                            Identifier "value" @ 218..223 trailing=[Whitespace " "]
+                        Identifier "value" @ 218..223 trailing=[Whitespace " "]
                       Colon ":" @ 224..225 trailing=[Whitespace " "]
                       NameExpression
                         Identifier "values" @ 226..232
@@ -190,7 +188,7 @@ CompilationUnit
                     EnhancedForStatement
                       ForKw "for" @ 245..248 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                       LParen "(" @ 249..250
-                      LocalVariableDeclaration
+                      EnhancedForVariable
                         ParameterModifierList
                         ClassType
                           ClassTypeSegmentList
@@ -206,9 +204,7 @@ CompilationUnit
                                     WildcardType
                                       Question "?" @ 260..261
                                 Gt ">" @ 261..262 trailing=[Whitespace " "]
-                        VariableDeclaratorList
-                          VariableDeclarator
-                            Identifier "value" @ 263..268 trailing=[Whitespace " "]
+                        Identifier "value" @ 263..268 trailing=[Whitespace " "]
                       Colon ":" @ 269..270 trailing=[Whitespace " "]
                       NameExpression
                         Identifier "values" @ 271..277
@@ -316,40 +312,37 @@ CompilationUnit
                               Semicolon ";" @ 492..493
                         RBrace "}" @ 502..503 leading=[Newline "\n", Whitespace "        "]
                 BlockStatement
-                  TryStatement
-                    TryWithResourcesStatement
-                      TryKw "try" @ 512..515 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      ResourceSpecification
-                        LParen "(" @ 516..517
-                        ResourceList
-                          Resource
-                            LocalVariableDeclaration
-                              ParameterModifierList
-                              Identifier "var" @ 517..520 trailing=[Whitespace " "]
-                              VariableDeclaratorList
-                                VariableDeclarator
-                                  Identifier "ignored" @ 521..528 trailing=[Whitespace " "]
-                                  Assign "=" @ 529..530 trailing=[Whitespace " "]
-                                  VariableInitializer
-                                    MethodInvocationExpression
-                                      UnqualifiedMethodInvocation
-                                        NameExpression
-                                          Identifier "open" @ 531..535
-                                        ArgumentList
-                                          LParen "(" @ 535..536
-                                          ExpressionList
-                                          RParen ")" @ 536..537
-                          Semicolon ";" @ 537..538 trailing=[Whitespace " "]
-                          Resource
-                            VariableAccess
-                              NameExpression
-                                Identifier "existing" @ 539..547
-                        RParen ")" @ 547..548 trailing=[Whitespace " "]
-                      Block
-                        LBrace "{" @ 549..550
-                        BlockStatementList
-                        RBrace "}" @ 550..551
-                      CatchClauseList
+                  TryWithResourcesStatement
+                    TryKw "try" @ 512..515 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    ResourceSpecification
+                      LParen "(" @ 516..517
+                      ResourceList
+                        Resource
+                          ResourceVariableDeclaration
+                            ParameterModifierList
+                            Identifier "var" @ 517..520 trailing=[Whitespace " "]
+                            Identifier "ignored" @ 521..528 trailing=[Whitespace " "]
+                            Assign "=" @ 529..530 trailing=[Whitespace " "]
+                            VariableInitializer
+                              MethodInvocationExpression
+                                UnqualifiedMethodInvocation
+                                  NameExpression
+                                    Identifier "open" @ 531..535
+                                  ArgumentList
+                                    LParen "(" @ 535..536
+                                    ExpressionList
+                                    RParen ")" @ 536..537
+                        Semicolon ";" @ 537..538 trailing=[Whitespace " "]
+                        Resource
+                          VariableAccess
+                            NameExpression
+                              Identifier "existing" @ 539..547
+                      RParen ")" @ 547..548 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 549..550
+                      BlockStatementList
+                      RBrace "}" @ 550..551
+                    CatchClauseList
                 BlockStatement
                   ReturnStatement
                     ReturnKw "return" @ 560..566 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]

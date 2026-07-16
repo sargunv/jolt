@@ -63,28 +63,7 @@ impl Parser<'_> {
     pub(in crate::parser::grammar) fn starts_resource_local_variable_declaration(
         &mut self,
     ) -> bool {
-        if !self.starts_local_variable_declaration() {
-            return false;
-        }
-
-        let mut index = self.position();
-        while self.kind_at(index) != JavaSyntaxKind::Eof {
-            if let Some(next) = self.skip_balanced_delimiter_at(index) {
-                index = next;
-                continue;
-            }
-
-            match self.kind_at(index) {
-                JavaSyntaxKind::Assign => return true,
-                JavaSyntaxKind::Semicolon | JavaSyntaxKind::RParen | JavaSyntaxKind::RBracket => {
-                    return false;
-                }
-                _ => {}
-            }
-            index += 1;
-        }
-
-        false
+        self.starts_local_variable_declaration()
     }
 
     pub(in crate::parser::grammar) fn starts_labeled_statement(&mut self) -> bool {

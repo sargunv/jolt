@@ -74,7 +74,7 @@ CompilationUnit
                       EnhancedForStatement
                         ForKw "for" @ 76..79
                         LParen "(" @ 79..80 trailing=[BlockComment "/* each */", Whitespace " "]
-                        LocalVariableDeclaration
+                        EnhancedForVariable
                           ParameterModifierList
                           ClassType
                             ClassTypeSegmentList
@@ -82,9 +82,7 @@ CompilationUnit
                                 AnnotationList
                                 Name
                                   Identifier "String" @ 91..97 trailing=[Whitespace " "]
-                          VariableDeclaratorList
-                            VariableDeclarator
-                              Identifier "value" @ 98..103
+                          Identifier "value" @ 98..103
                         Colon ":" @ 103..104
                         NameExpression
                           Identifier "values" @ 104..110

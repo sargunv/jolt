@@ -1754,6 +1754,169 @@ define_family_projection! {
     }
 }
 
+macro_rules! define_node_role_projection {
+    ($role:ident => $value:ident { $($node:ident),+ $(,)? }) => {
+        #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+        pub enum $value<'source> {
+            $($node($node<'source>),)+
+        }
+
+        impl<'source> $role<'source> {
+            #[allow(clippy::missing_errors_doc)]
+            pub fn classify(self) -> JavaSyntaxResult<$value<'source>> {
+                $(if let Some(value) = self.cast_node::<$node<'source>>() {
+                    return Ok($value::$node(value));
+                })+
+                Err(JavaSyntaxInvariantError {
+                    node: self
+                        .first_token()
+                        .map_or(JavaSyntaxKind::ErrorNode, |token| token.kind()),
+                    slot: 0,
+                })
+            }
+        }
+    };
+}
+
+define_node_role_projection! {
+    ForStatementForm => ForStatementFormSyntax {
+        BasicForStatement,
+        EnhancedForStatement,
+    }
+}
+
+define_node_role_projection! {
+    ForInitializerValue => ForInitializerSyntax {
+        LocalVariableDeclaration,
+        StatementExpressionList,
+    }
+}
+
+define_node_role_projection! {
+    LocalTypeDeclaration => LocalTypeDeclarationSyntax {
+        ClassDeclaration,
+        InterfaceDeclaration,
+        BogusTypeDeclaration,
+    }
+}
+
+define_node_role_projection! {
+    VariableAccessExpression => VariableAccessSyntax {
+        NameExpression,
+        FieldAccessExpression,
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SwitchRuleBodySyntax<'source> {
+    Expression(Expression<'source>),
+    Block(Block<'source>),
+    ThrowStatement(ThrowStatement<'source>),
+}
+
+impl<'source> SwitchRuleBody<'source> {
+    #[allow(clippy::missing_errors_doc)]
+    pub fn classify(self) -> JavaSyntaxResult<SwitchRuleBodySyntax<'source>> {
+        if let Some(value) = self.cast_family::<Expression<'source>>() {
+            Ok(SwitchRuleBodySyntax::Expression(value))
+        } else if let Some(value) = self.cast_node::<Block<'source>>() {
+            Ok(SwitchRuleBodySyntax::Block(value))
+        } else if let Some(value) = self.cast_node::<ThrowStatement<'source>>() {
+            Ok(SwitchRuleBodySyntax::ThrowStatement(value))
+        } else {
+            Err(JavaSyntaxInvariantError {
+                node: self
+                    .first_token()
+                    .map_or(JavaSyntaxKind::ErrorNode, |token| token.kind()),
+                slot: 0,
+            })
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SwitchLabelItemSyntax<'source> {
+    CaseConstant(CaseConstant<'source>),
+    CasePattern(CasePattern<'source>),
+    BogusSwitchLabelItem(BogusSwitchLabelItem<'source>),
+    Default(JavaSyntaxToken<'source>),
+}
+
+impl<'source> SwitchLabelItem<'source> {
+    #[allow(clippy::missing_errors_doc)]
+    pub fn classify(self) -> JavaSyntaxResult<SwitchLabelItemSyntax<'source>> {
+        if let Some(value) = self.cast_node::<CaseConstant<'source>>() {
+            Ok(SwitchLabelItemSyntax::CaseConstant(value))
+        } else if let Some(value) = self.cast_node::<CasePattern<'source>>() {
+            Ok(SwitchLabelItemSyntax::CasePattern(value))
+        } else if let Some(value) = self.cast_node::<BogusSwitchLabelItem<'source>>() {
+            Ok(SwitchLabelItemSyntax::BogusSwitchLabelItem(value))
+        } else if let Some(token) = self.token()
+            && token.kind() == JavaSyntaxKind::DefaultKw
+        {
+            Ok(SwitchLabelItemSyntax::Default(token))
+        } else {
+            Err(JavaSyntaxInvariantError {
+                node: self
+                    .first_token()
+                    .map_or(JavaSyntaxKind::ErrorNode, |token| token.kind()),
+                slot: 0,
+            })
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum VariableTypeSyntax<'source> {
+    Type(Type<'source>),
+    Var(JavaSyntaxToken<'source>),
+}
+
+fn classify_variable_type(
+    element: JavaRoleElement<'_>,
+) -> JavaSyntaxResult<VariableTypeSyntax<'_>> {
+    if let Some(value) = element.cast_family::<Type<'_>>() {
+        Ok(VariableTypeSyntax::Type(value))
+    } else if let Some(token) = element.token() {
+        Ok(VariableTypeSyntax::Var(token))
+    } else {
+        Err(JavaSyntaxInvariantError {
+            node: JavaSyntaxKind::ErrorNode,
+            slot: 0,
+        })
+    }
+}
+
+macro_rules! impl_variable_type {
+    ($($role:ident),+ $(,)?) => {$(
+        impl<'source> $role<'source> {
+            #[allow(clippy::missing_errors_doc)]
+            pub fn classify(self) -> JavaSyntaxResult<VariableTypeSyntax<'source>> {
+                classify_variable_type(self.element)
+            }
+        }
+    )+};
+}
+
+impl_variable_type!(
+    LocalVariableType,
+    EnhancedForVariableType,
+    ResourceVariableType
+);
+
+impl<'source> CatchParameterTypes<'source> {
+    #[allow(clippy::missing_errors_doc)]
+    pub fn as_type(self) -> JavaSyntaxResult<Type<'source>> {
+        self.cast_family::<Type<'source>>()
+            .ok_or(JavaSyntaxInvariantError {
+                node: self
+                    .first_token()
+                    .map_or(JavaSyntaxKind::ErrorNode, |token| token.kind()),
+                slot: 0,
+            })
+    }
+}
+
 impl Expression<'_> {
     /// Returns this expression's grammar role from its parent's fixed slot.
     #[must_use]

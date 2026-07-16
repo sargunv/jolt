@@ -1,0 +1,182 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class Phase15Statements {
+  void enhancedFor(int[] values) {
+    for (int value = /* enhanced-initializer */ 0 : values) {}
+    for (int first, /* enhanced-extra */ second : values) {}
+    for (int value, /* enhanced-trailing */ : values) {}
+  }
+
+  void resources(AutoCloseable existing) {
+    try (AutoCloseable missing /* resource-initializer */) {}
+    try (AutoCloseable first = open(), /* resource-extra */ second = open()) {}
+    try (AutoCloseable first = open(), /* resource-trailing */) {}
+    try (/* resource-missing-access */) {}
+    try (existing /* resource-junk */ @) {}
+    try (call() /* resource-invalid-access */) {}
+    try {} catch (Exception exception /* catch-dimension */ []) {}
+  }
+
+  void switches(int value) {
+    switch (value) {
+      /* switch-unowned */ @;
+      case 1 when ready() -> use();
+      case 2 /* case-junk */ @ -> use();
+      case 3 -> /* switch-empty-rule */ ;
+      case 4:
+      /* switch-label-sibling */ case : use();
+    }
+  }
+
+  void missingIf(boolean value) { if (value) }
+  void missingElse(boolean value) { if (value) {} else }
+  void missingWhile(boolean value) { while (value) }
+  void missingDo(boolean value) { do while (value); }
+  void missingFor() { for (;;) }
+  void missingEnhancedFor(int[] values) { for (int value : values) }
+  void missingSwitch(int value) { switch (value) }
+  void missingSynchronized(Object lock) { synchronized (lock) }
+
+  void missingTry() {
+    try
+    catch (Exception exception)
+    finally
+  }
+
+  void missingResourceTry(AutoCloseable resource) {
+    try (resource)
+    catch (Exception exception) {}
+  }
+}
+
+formatted:
+class Phase15Statements {
+  void enhancedFor(int[] values) {
+    for (int value = /* enhanced-initializer */ 0 : values) {
+    }
+    for (int first, /* enhanced-extra */ second : values) {
+    }
+    for (int value, /* enhanced-trailing */ : values) {
+    }
+  }
+
+  void resources(AutoCloseable existing) {
+    try (
+      AutoCloseable missing /* resource-initializer */
+    ) {
+    }
+    try (
+      AutoCloseable first = open(), /* resource-extra */ second = open()
+    ) {
+    }
+    try (
+      AutoCloseable first = open(), /* resource-trailing */
+    ) {
+    }
+    try ( /* resource-missing-access */
+
+    ) {
+    }
+    try (
+      existing /* resource-junk */ @
+    ) {
+    }
+    try (
+      call() /* resource-invalid-access */
+    ) {
+    }
+    try {
+    } catch (Exception exception /* catch-dimension */[]) {
+    }
+  }
+
+  void switches(int value) {
+    switch (value) {
+      /* switch-unowned */
+      @;
+      case 1 when ready() -> use();
+      case  2 /* case-junk */ @ -> use();
+      case 3 -> /* switch-empty-rule */ ;
+      case 4:
+      /* switch-label-sibling */
+      case :
+        use();
+    }
+  }
+
+  void missingIf(boolean value) {
+    if (value) 
+  }
+
+  void missingElse(boolean value) {
+    if (value) {
+    }else
+  }
+
+  void missingWhile(boolean value) {
+    while (value) 
+  }
+
+  void missingDo(boolean value) {
+    do  while (value);
+  }
+
+  void missingFor() {
+    for (;;) 
+  }
+
+  void missingEnhancedFor(int[] values) {
+    for (int value : values) 
+  }
+
+  void missingSwitch(int value) {
+    switch (value) 
+  }
+
+  void missingSynchronized(Object lock) {
+    synchronized (lock) 
+  }
+
+  void missingTry() {
+    try  catch (Exception exception)  finally 
+  }
+
+  void missingResourceTry(AutoCloseable resource) {
+    try (
+      resource
+    )  catch (Exception exception) {
+    }
+  }
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(109), end: TextSize(110) }) message=enhanced for variable must not have an initializer
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(142), end: TextSize(143) }) message=enhanced for statement must declare a single variable
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(203), end: TextSize(204) }) message=enhanced for statement must declare a single variable
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(347), end: TextSize(348) }) message=expected resource initializer
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(389), end: TextSize(390) }) message=resource declaration must declare a single variable
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(469), end: TextSize(470) }) message=resource declaration must declare a single variable
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(537), end: TextSize(538) }) message=expected resource
+code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=Some(TextRange { start: TextSize(580), end: TextSize(581) }) message=unexpected token in resource variable access
+code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=Some(TextRange { start: TextSize(631), end: TextSize(632) }) message=expected resource variable declaration or variable access
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(785), end: TextSize(786) }) message=expected switch label
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(786), end: TextSize(787) }) message=expected identifier
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(786), end: TextSize(787) }) message=expected expression after annotation
+code=java.parse.invalid_switch_guard severity=Error stage=Parser range=Some(TextRange { start: TextSize(801), end: TextSize(805) }) message=switch guard requires a pattern
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(853), end: TextSize(854) }) message=unexpected token in case constant
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(905), end: TextSize(906) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1024), end: TextSize(1025) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1081), end: TextSize(1082) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1134), end: TextSize(1135) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1173), end: TextSize(1178) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1221), end: TextSize(1222) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1290), end: TextSize(1291) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1341), end: TextSize(1342) }) message=expected switch block
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1405), end: TextSize(1406) }) message=expected synchronized body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1442), end: TextSize(1447) }) message=expected try body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1474), end: TextSize(1481) }) message=expected catch body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1484), end: TextSize(1485) }) message=expected finally body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1562), end: TextSize(1567) }) message=expected try body

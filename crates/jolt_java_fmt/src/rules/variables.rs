@@ -1,7 +1,9 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
-    Annotation, FieldDeclaration, FormalParameter, LocalVariableDeclaration, ReceiverParameter,
-    RecordComponent, Type, VariableDeclarator, VariableDeclaratorList,
+    Annotation, EnhancedForVariable, FieldDeclaration, FormalParameter, JavaSyntaxField,
+    JavaSyntaxInvariantError, LocalVariableDeclaration, ParameterModifierList, ReceiverParameter,
+    RecordComponent, ResourceVariableDeclaration, VariableDeclarator, VariableDeclaratorList,
+    VariableTypeSyntax,
 };
 
 use crate::helpers::comments::{
@@ -80,15 +82,7 @@ pub(crate) fn format_local_variable_declaration<'source>(
     declaration: &LocalVariableDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let modifiers = match resolve_required_field(declaration.modifiers(), doc) {
-        JavaFormatField::Present(modifiers) => {
-            format_typed_parameter_modifier_prefix(&modifiers, doc)
-        }
-        JavaFormatField::Malformed(recovery) => TypedModifierPrefix {
-            declaration_prefix: recovery,
-            type_use_prefix: Doc::nil(),
-        },
-    };
+    let modifiers = format_required_parameter_modifiers(declaration.modifiers(), doc);
     let ty = local_variable_type(declaration, doc);
 
     if let Some(declarators) = present_required(declaration.declarators())
@@ -114,6 +108,72 @@ pub(crate) fn format_local_variable_declaration<'source>(
             ty,
             space,
             declarators,
+        ]
+    )
+}
+
+pub(crate) fn format_enhanced_for_variable<'source>(
+    variable: &EnhancedForVariable<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let modifiers = format_required_parameter_modifiers(variable.modifiers(), doc);
+    let ty = format_required_field(variable.r#type(), doc, |ty, doc| {
+        format_variable_type(ty.classify(), doc)
+    });
+    let name = format_required_field(variable.name(), doc, |name, doc| {
+        format_name_after_type_token(doc, &name)
+    });
+    let dimensions = format_optional_field(variable.dimensions(), doc, |dimensions, doc| {
+        format_array_dimensions(&dimensions, doc)
+    });
+    doc_concat!(
+        doc,
+        [
+            modifiers.declaration_prefix,
+            modifiers.type_use_prefix,
+            ty,
+            doc.space(),
+            name,
+            dimensions,
+        ]
+    )
+}
+
+pub(crate) fn format_resource_variable_declaration<'source>(
+    declaration: &ResourceVariableDeclaration<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let modifiers = format_required_parameter_modifiers(declaration.modifiers(), doc);
+    let ty = format_required_field(declaration.r#type(), doc, |ty, doc| {
+        format_variable_type(ty.classify(), doc)
+    });
+    let name = format_required_field(declaration.name(), doc, |name, doc| {
+        format_name_after_type_token(doc, &name)
+    });
+    let dimensions = format_optional_field(declaration.dimensions(), doc, |dimensions, doc| {
+        format_array_dimensions(&dimensions, doc)
+    });
+    let assign = format_required_field(declaration.assign(), doc, |assign, doc| {
+        format_token_with_comments(doc, &assign)
+    });
+    let initializer = format_required_field(declaration.initializer(), doc, |initializer, doc| {
+        format_required_field(initializer.value(), doc, |value, doc| {
+            format_variable_initializer_value(value, doc)
+        })
+    });
+    doc_concat!(
+        doc,
+        [
+            modifiers.declaration_prefix,
+            modifiers.type_use_prefix,
+            ty,
+            doc.space(),
+            name,
+            dimensions,
+            doc.space(),
+            assign,
+            doc.space(),
+            initializer,
         ]
     )
 }
@@ -360,15 +420,40 @@ fn local_variable_type<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     format_required_field(declaration.r#type(), doc, |ty, doc| {
-        if let Some(ty) = ty.cast_family::<Type<'source>>() {
-            format_type(&ty, doc)
-        } else if let Some(token) = ty.token() {
-            format_token_with_comments(doc, &token)
-        } else {
-            doc.block_on_invariant("local variable type had an unknown shape");
+        format_variable_type(ty.classify(), doc)
+    })
+}
+
+fn format_required_parameter_modifiers<'source>(
+    field: Result<
+        JavaSyntaxField<'source, ParameterModifierList<'source>>,
+        JavaSyntaxInvariantError,
+    >,
+    doc: &mut DocBuilder<'source>,
+) -> TypedModifierPrefix<'source> {
+    match resolve_required_field(field, doc) {
+        JavaFormatField::Present(modifiers) => {
+            format_typed_parameter_modifier_prefix(&modifiers, doc)
+        }
+        JavaFormatField::Malformed(recovery) => TypedModifierPrefix {
+            declaration_prefix: recovery,
+            type_use_prefix: Doc::nil(),
+        },
+    }
+}
+
+fn format_variable_type<'source>(
+    ty: Result<VariableTypeSyntax<'source>, JavaSyntaxInvariantError>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    match ty {
+        Ok(VariableTypeSyntax::Type(ty)) => format_type(&ty, doc),
+        Ok(VariableTypeSyntax::Var(token)) => format_token_with_comments(doc, &token),
+        Err(error) => {
+            doc.block_on_invariant(error.to_string());
             Doc::nil()
         }
-    })
+    }
 }
 
 fn format_variable_declarator_list<'source>(

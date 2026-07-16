@@ -29,23 +29,6 @@ pub(crate) fn format_malformed<'source>(
     format_malformed_with_boundary_comments(&core, fragment, doc)
 }
 
-/// Dispatches a typed Java view exactly once between structured and malformed
-/// formatting. Syntax invariant failures block the arena globally.
-pub(crate) fn format_or_verbatim<'source, V>(
-    view: &V,
-    doc: &mut DocBuilder<'source>,
-    structured: impl FnOnce(&mut DocBuilder<'source>) -> Doc<'source>,
-) -> Doc<'source>
-where
-    V: JavaSyntaxView<'source>,
-{
-    if view.is_malformed() {
-        format_malformed(view, doc)
-    } else {
-        structured(doc)
-    }
-}
-
 #[derive(Clone, Copy)]
 pub(crate) enum JavaFormatField<'source, T> {
     Present(T),

@@ -380,6 +380,7 @@ syntax/recovery/phase-11-program-containers.java
 syntax/recovery/phase-12-variable-declarators.java
 syntax/recovery/phase-13-declarations.java
 syntax/recovery/phase-14-expressions.java
+syntax/recovery/phase-15-statements.java
 syntax/recovery/qualifier-dots-without-qualifiers.java
 syntax/recovery/raw-unicode-escape-ranges.java
 syntax/recovery/recovered-declaration-names-and-modifiers.java

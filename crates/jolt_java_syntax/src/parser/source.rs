@@ -1,6 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
-use jolt_syntax::{CompletedMarker, DiagnosticMarker, NodeAnchor};
+use jolt_syntax::{DiagnosticMarker, NodeAnchor};
 
 use crate::JavaSyntaxKind;
 use crate::language::JavaLanguage;
@@ -38,10 +38,6 @@ impl<'source> Parser<'source> {
         self.0.tokens_are_adjacent(index, count)
     }
 
-    pub(super) fn completed_is_error_node(marker: &CompletedMarker) -> bool {
-        jolt_syntax::Parser::<JavaLanguage>::completed_is_error_node(marker)
-    }
-
     pub(super) fn expect_contextual_owned(
         &mut self,
         text: &str,
@@ -74,8 +70,8 @@ pub(super) trait JavaParserExt {
     fn eat_contextual(&mut self, text: &str) -> bool;
     fn at_contextual(&mut self, text: &str) -> bool;
     fn invalid_statement_expression_here(&mut self, message: &str) -> DiagnosticMarker;
-    fn invalid_resource_variable_access_here(&mut self, message: &str);
-    fn invalid_switch_guard_here(&mut self, message: &str);
+    fn invalid_resource_variable_access_here(&mut self, message: &str) -> DiagnosticMarker;
+    fn invalid_switch_guard_here(&mut self, message: &str) -> DiagnosticMarker;
     fn unqualified_yield_method_invocation_here(&mut self, message: &str) -> DiagnosticMarker;
     fn decimal_integer_boundary_literal_here(&mut self, message: &str);
     fn misplaced_receiver_parameter_here(&mut self, message: &str) -> DiagnosticMarker;
@@ -110,15 +106,15 @@ impl JavaParserExt for Parser<'_> {
         )
     }
 
-    fn invalid_resource_variable_access_here(&mut self, message: &str) {
+    fn invalid_resource_variable_access_here(&mut self, message: &str) -> DiagnosticMarker {
         self.error_here(
             JavaParseDiagnosticCode::InvalidResourceVariableAccess.id(),
             message,
-        );
+        )
     }
 
-    fn invalid_switch_guard_here(&mut self, message: &str) {
-        self.error_here(JavaParseDiagnosticCode::InvalidSwitchGuard.id(), message);
+    fn invalid_switch_guard_here(&mut self, message: &str) -> DiagnosticMarker {
+        self.error_here(JavaParseDiagnosticCode::InvalidSwitchGuard.id(), message)
     }
 
     fn unqualified_yield_method_invocation_here(&mut self, message: &str) -> DiagnosticMarker {

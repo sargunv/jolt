@@ -29,7 +29,7 @@ CompilationUnit
               LBrace "{" @ 34..35
               BlockStatementList
                 BlockStatement
-                  TryStatement
+                  BogusStatement
                     TryKw "try" @ 44..47 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                     Block
                       LBrace "{" @ 48..49

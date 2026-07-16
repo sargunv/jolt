@@ -109,7 +109,7 @@ CompilationUnit
                     EnhancedForStatement
                       ForKw "for" @ 128..131 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                       LParen "(" @ 132..133
-                      LocalVariableDeclaration
+                      BogusEnhancedForVariable
                         ParameterModifierList
                         ClassType
                           ClassTypeSegmentList
@@ -117,14 +117,11 @@ CompilationUnit
                               AnnotationList
                               Name
                                 Identifier "String" @ 133..139 trailing=[Whitespace " "]
-                        VariableDeclaratorList
-                          VariableDeclarator
-                            Identifier "value" @ 140..145 trailing=[Whitespace " "]
-                            Assign "=" @ 146..147 trailing=[Whitespace " "]
-                            ErrorNode
-                              VariableInitializer
-                                LiteralExpression
-                                  NullLiteral "null" @ 148..152 trailing=[Whitespace " "]
+                        Identifier "value" @ 140..145 trailing=[Whitespace " "]
+                        Assign "=" @ 146..147 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            NullLiteral "null" @ 148..152 trailing=[Whitespace " "]
                       Colon ":" @ 153..154 trailing=[Whitespace " "]
                       NameExpression
                         Identifier "values" @ 155..161
@@ -138,7 +135,7 @@ CompilationUnit
                     EnhancedForStatement
                       ForKw "for" @ 174..177 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                       LParen "(" @ 178..179
-                      LocalVariableDeclaration
+                      BogusEnhancedForVariable
                         ParameterModifierList
                         ClassType
                           ClassTypeSegmentList
@@ -146,13 +143,10 @@ CompilationUnit
                               AnnotationList
                               Name
                                 Identifier "String" @ 179..185 trailing=[Whitespace " "]
-                        VariableDeclaratorList
-                          VariableDeclarator
-                            Identifier "first" @ 186..191
-                          ErrorNode
-                            Comma "," @ 191..192 trailing=[Whitespace " "]
-                            VariableDeclarator
-                              Identifier "second" @ 193..199 trailing=[Whitespace " "]
+                        Identifier "first" @ 186..191
+                        Comma "," @ 191..192 trailing=[Whitespace " "]
+                        VariableDeclarator
+                          Identifier "second" @ 193..199 trailing=[Whitespace " "]
                       Colon ":" @ 200..201 trailing=[Whitespace " "]
                       NameExpression
                         Identifier "values" @ 202..208
@@ -162,94 +156,85 @@ CompilationUnit
                         BlockStatementList
                         RBrace "}" @ 211..212
                 BlockStatement
-                  TryStatement
-                    TryWithResourcesStatement
-                      TryKw "try" @ 221..224 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      ResourceSpecification
-                        LParen "(" @ 225..226
-                        ResourceList
-                          Resource
-                            LocalVariableDeclaration
-                              ParameterModifierList
-                              ClassType
-                                ClassTypeSegmentList
-                                  ClassTypeSegmentNode
-                                    AnnotationList
-                                    Name
-                                      Identifier "AutoCloseable" @ 226..239 trailing=[Whitespace " "]
-                              VariableDeclaratorList
-                                VariableDeclarator
-                                  Identifier "missing" @ 240..247
-                                  ErrorNode
-                                ErrorNode
-                                  Comma "," @ 247..248 trailing=[Whitespace " "]
-                                  VariableDeclarator
-                                    Identifier "second" @ 249..255 trailing=[Whitespace " "]
-                                    Assign "=" @ 256..257 trailing=[Whitespace " "]
-                                    VariableInitializer
-                                      MethodInvocationExpression
-                                        UnqualifiedMethodInvocation
-                                          NameExpression
-                                            Identifier "open" @ 258..262
-                                          ArgumentList
-                                            LParen "(" @ 262..263
-                                            ExpressionList
-                                            RParen ")" @ 263..264
-                        RParen ")" @ 264..265 trailing=[Whitespace " "]
-                      Block
-                        LBrace "{" @ 266..267
-                        BlockStatementList
-                        RBrace "}" @ 267..268
-                      CatchClauseList
+                  TryWithResourcesStatement
+                    TryKw "try" @ 221..224 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    ResourceSpecification
+                      LParen "(" @ 225..226
+                      ResourceList
+                        Resource
+                          BogusResourceValue
+                            ParameterModifierList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "AutoCloseable" @ 226..239 trailing=[Whitespace " "]
+                            Identifier "missing" @ 240..247
+                            Comma "," @ 247..248 trailing=[Whitespace " "]
+                            VariableDeclarator
+                              Identifier "second" @ 249..255 trailing=[Whitespace " "]
+                              Assign "=" @ 256..257 trailing=[Whitespace " "]
+                              VariableInitializer
+                                MethodInvocationExpression
+                                  UnqualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "open" @ 258..262
+                                    ArgumentList
+                                      LParen "(" @ 262..263
+                                      ExpressionList
+                                      RParen ")" @ 263..264
+                      RParen ")" @ 264..265 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 266..267
+                      BlockStatementList
+                      RBrace "}" @ 267..268
+                    CatchClauseList
                 BlockStatement
-                  TryStatement
-                    TryWithResourcesStatement
-                      TryKw "try" @ 277..280 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      ResourceSpecification
-                        LParen "(" @ 281..282
-                        ResourceList
-                          Resource
-                            LocalVariableDeclaration
-                              ParameterModifierList
-                              ClassType
-                                ClassTypeSegmentList
-                                  ClassTypeSegmentNode
-                                    AnnotationList
-                                    Name
-                                      Identifier "AutoCloseable" @ 282..295 trailing=[Whitespace " "]
-                              VariableDeclaratorList
-                                VariableDeclarator
-                                  Identifier "first" @ 296..301 trailing=[Whitespace " "]
-                                  Assign "=" @ 302..303 trailing=[Whitespace " "]
-                                  VariableInitializer
-                                    MethodInvocationExpression
-                                      UnqualifiedMethodInvocation
-                                        NameExpression
-                                          Identifier "open" @ 304..308
-                                        ArgumentList
-                                          LParen "(" @ 308..309
-                                          ExpressionList
-                                          RParen ")" @ 309..310
-                                ErrorNode
-                                  Comma "," @ 310..311 trailing=[Whitespace " "]
-                                  VariableDeclarator
-                                    Identifier "second" @ 312..318 trailing=[Whitespace " "]
-                                    Assign "=" @ 319..320 trailing=[Whitespace " "]
-                                    VariableInitializer
-                                      MethodInvocationExpression
-                                        UnqualifiedMethodInvocation
-                                          NameExpression
-                                            Identifier "open" @ 321..325
-                                          ArgumentList
-                                            LParen "(" @ 325..326
-                                            ExpressionList
-                                            RParen ")" @ 326..327
-                        RParen ")" @ 327..328 trailing=[Whitespace " "]
-                      Block
-                        LBrace "{" @ 329..330
-                        BlockStatementList
-                        RBrace "}" @ 330..331
-                      CatchClauseList
+                  TryWithResourcesStatement
+                    TryKw "try" @ 277..280 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    ResourceSpecification
+                      LParen "(" @ 281..282
+                      ResourceList
+                        Resource
+                          BogusResourceValue
+                            ParameterModifierList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "AutoCloseable" @ 282..295 trailing=[Whitespace " "]
+                            Identifier "first" @ 296..301 trailing=[Whitespace " "]
+                            Assign "=" @ 302..303 trailing=[Whitespace " "]
+                            VariableInitializer
+                              MethodInvocationExpression
+                                UnqualifiedMethodInvocation
+                                  NameExpression
+                                    Identifier "open" @ 304..308
+                                  ArgumentList
+                                    LParen "(" @ 308..309
+                                    ExpressionList
+                                    RParen ")" @ 309..310
+                            Comma "," @ 310..311 trailing=[Whitespace " "]
+                            VariableDeclarator
+                              Identifier "second" @ 312..318 trailing=[Whitespace " "]
+                              Assign "=" @ 319..320 trailing=[Whitespace " "]
+                              VariableInitializer
+                                MethodInvocationExpression
+                                  UnqualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "open" @ 321..325
+                                    ArgumentList
+                                      LParen "(" @ 325..326
+                                      ExpressionList
+                                      RParen ")" @ 326..327
+                      RParen ")" @ 327..328 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 329..330
+                      BlockStatementList
+                      RBrace "}" @ 330..331
+                    CatchClauseList
                 BlockStatement
                   TryStatement
                     TryKw "try" @ 340..343 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]

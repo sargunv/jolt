@@ -57,11 +57,11 @@ CompilationUnit
                                 CaseConstant
                                   LiteralExpression
                                     IntegerLiteral "1" @ 98..99 trailing=[Whitespace " "]
-                                ErrorNode
-                                  Guard
-                                    Identifier "when" @ 100..104 trailing=[Whitespace " "]
-                                    LiteralExpression
-                                      BooleanLiteral "true" @ 105..109
+                              BogusSwitchGuard
+                                Guard
+                                  Identifier "when" @ 100..104 trailing=[Whitespace " "]
+                                  LiteralExpression
+                                    BooleanLiteral "true" @ 105..109
                             Colon ":" @ 109..110
                           BlockStatementList
                             BlockStatement

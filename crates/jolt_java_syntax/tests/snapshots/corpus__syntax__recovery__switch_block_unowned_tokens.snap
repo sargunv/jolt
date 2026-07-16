@@ -42,7 +42,7 @@ CompilationUnit
                     SwitchBlock
                       LBrace "{" @ 45..46 trailing=[Whitespace " ", BlockComment "/* block */", Whitespace " "]
                       SwitchEntryList
-                        ErrorNode
+                        BogusSwitchEntry
                           BlockStatement
                             ExpressionStatement
                               BogusExpression
@@ -73,9 +73,11 @@ CompilationUnit
   Eof "" @ 86..86 leading=[Newline "\n"]
 
 diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=59..60 message="expected switch label"
   code=java.parse.expected_syntax severity=Error stage=Parser range=61..62 message="expected expression"
   code=java.parse.invalid_statement_expression severity=Error stage=Parser range=61..62 message="expected statement expression"
 
 diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(59), end: TextSize(60) }) message=expected switch label
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(61), end: TextSize(62) }) message=expected expression
 code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(61), end: TextSize(62) }) message=expected statement expression

@@ -23,7 +23,6 @@ fn fixture_java_inputs_parse_without_loss() {
             "prettier-java/input",
         ],
         &[
-            DeferredReason::ParserDiagnostics,
             DeferredReason::NoSyntaxTree,
             DeferredReason::SyntaxReconstructionMismatch,
         ],
@@ -56,9 +55,6 @@ fn assert_corpus(suite: &str, deferred: &mut Vec<ObservedDeferredPath>) -> Corpu
             reasons.push(DeferredReason::SyntaxReconstructionMismatch);
         }
         summary.record_diagnostics(parse.diagnostics());
-        if !parse.diagnostics().is_empty() {
-            reasons.push(DeferredReason::ParserDiagnostics);
-        }
         if !reasons.is_empty() {
             deferred.push(ObservedDeferredPath::new(
                 &suite_name,

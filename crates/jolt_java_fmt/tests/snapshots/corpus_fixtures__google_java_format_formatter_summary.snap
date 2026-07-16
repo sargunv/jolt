@@ -4,8 +4,8 @@ expression: google_summary.render()
 ---
 suite: google-java-format
 files: 209
-formatted: 208
-syntax blocked: 1
+formatted: 209
+syntax blocked: 0
 reconstructed changed: 0
 
 diagnostics:

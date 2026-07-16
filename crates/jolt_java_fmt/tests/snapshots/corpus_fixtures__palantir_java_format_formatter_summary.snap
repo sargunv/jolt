@@ -4,8 +4,8 @@ expression: palantir_summary.render()
 ---
 suite: palantir-java-format
 files: 226
-formatted: 224
-syntax blocked: 2
+formatted: 226
+syntax blocked: 0
 reconstructed changed: 0
 
 diagnostics:
