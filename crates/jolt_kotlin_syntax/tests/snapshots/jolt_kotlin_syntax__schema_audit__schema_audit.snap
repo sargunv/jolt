@@ -3,15 +3,15 @@ source: crates/jolt_kotlin_syntax/src/schema_audit.rs
 expression: audit.render()
 ---
 language = kotlin
-fixture_files = 252
-diagnostic_fixture_files = 68
-audited_nodes = 19276
-exact_valid_shapes = 18946
-malformed_nodes = 193
+fixture_files = 253
+diagnostic_fixture_files = 69
+audited_nodes = 19307
+exact_valid_shapes = 18975
+malformed_nodes = 194
 clean_missing_required_shapes = 10
 diagnostic_missing_required_shapes = 95
 clean_unexpected_shapes = 0
-diagnostic_unexpected_shapes = 32
+diagnostic_unexpected_shapes = 33
 error_node_owners = 0
 
 [clean_missing_required]
@@ -158,5 +158,6 @@ syntax__recovery__class_body: ExpressionStatement occurrence 1 has valid kind wi
 syntax__recovery__navigation_without_receiver: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=6, tokens=2, children=2] (BogusExpression BogusExpression)
 syntax__recovery__nested_recovered_when_condition: WhenCondition occurrence 1 has valid kind with direct malformed ownership [bytes=13, tokens=4, children=4] (LiteralExpression BogusExpression BogusExpression BogusExpression)
 syntax__recovery__phase_18_declarations: EnumEntry occurrence 1 has valid kind with direct malformed ownership [bytes=7, tokens=2, children=4] (ModifierList Name RParen(")") Comma(","))
+syntax__recovery__phase_21_normalization: TerminatorList occurrence 3 has valid kind with direct malformed ownership [bytes=2, tokens=1, children=1] (DoubleSemicolon(";;"))
 
 [error_node_ownership]

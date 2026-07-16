@@ -27,7 +27,10 @@ pub(super) fn format_if_statement<'source>(
         JavaFormatField::Present(branch) => {
             let forces_line = matches!(else_branch, JavaFormatField::Present(Some(_)))
                 && statement_body_trailing_comments_force_line(&branch);
-            (statement_as_block(&branch, doc), forces_line)
+            (
+                statement_as_block(&branch, statement.then_block_brace_claims(), doc),
+                forces_line,
+            )
         }
         JavaFormatField::Malformed(recovery) => (recovery, false),
     };
@@ -66,7 +69,7 @@ pub(super) fn format_if_statement<'source>(
                     format_token_with_comments(doc, &token)
                 }),
                 doc.space(),
-                statement_as_block(&branch, doc),
+                statement_as_block(&branch, statement.else_block_brace_claims(), doc),
             ]
         ),
         JavaFormatField::Present(None) => {
@@ -91,9 +94,10 @@ pub(super) fn format_if_statement<'source>(
 
 fn statement_as_block<'source>(
     statement: &Statement<'source>,
+    brace_claims: Option<jolt_java_syntax::JavaDelimiterSynthesis<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    statement_body_as_block(Ok(JavaSyntaxField::Present(*statement)), doc)
+    statement_body_as_block(Ok(JavaSyntaxField::Present(*statement)), brace_claims, doc)
 }
 
 pub(super) fn format_parenthesized_statement_expression<'source>(
@@ -224,7 +228,7 @@ pub(super) fn format_while_statement<'source>(
             doc.space(),
             condition,
             separator,
-            statement_body_as_block(statement.body(), doc),
+            statement_body_as_block(statement.body(), statement.body_block_brace_claims(), doc),
         ]
     )
 }
@@ -244,7 +248,7 @@ pub(super) fn format_do_statement<'source>(
         [
             format_statement_keyword(statement.do_keyword(), doc),
             doc.space(),
-            statement_body_as_block(statement.body(), doc),
+            statement_body_as_block(statement.body(), statement.body_block_brace_claims(), doc),
             doc.space(),
             format_statement_keyword(statement.while_keyword(), doc),
             doc.space(),
@@ -346,7 +350,7 @@ fn format_basic_for_statement<'source>(
         [
             header,
             separator,
-            statement_body_as_block(statement.body(), doc)
+            statement_body_as_block(statement.body(), statement.body_block_brace_claims(), doc)
         ]
     )
 }
@@ -467,7 +471,7 @@ fn format_enhanced_for_statement<'source>(
             doc.space(),
             header,
             separator,
-            statement_body_as_block(statement.body(), doc),
+            statement_body_as_block(statement.body(), statement.body_block_brace_claims(), doc),
         ]
     )
 }

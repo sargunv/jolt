@@ -22,7 +22,8 @@ pub use event::{CompletedMarker, Event, Marker, NodeAnchor};
 pub use kind::RawSyntaxKind;
 pub use language::Language;
 pub use normalization::{
-    NormalizedToken, RemovalClaim, RemovalReason, ReplacementClaim, SynthesisClaim,
+    NormalizedToken, RemovalClaim, RemovalReason, ReorderClaim, ReorderReason, ReplacementClaim,
+    SynthesisClaim,
 };
 pub use parser::{
     CursorCheckpoint, DiagnosticMarker, LanguageLexer, LexedToken, ParseEvents, Parser,

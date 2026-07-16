@@ -7,7 +7,7 @@ use jolt_java_syntax::{
 };
 
 use crate::helpers::comments::{
-    comments_from_tokens, format_comment, format_removed_comments, format_token_with_comments,
+    comments_from_tokens, format_comment, format_token_removal, format_token_with_comments,
     has_removed_comments,
 };
 use crate::helpers::formatter_ignore::{
@@ -16,7 +16,7 @@ use crate::helpers::formatter_ignore::{
 };
 use crate::helpers::recovery::{
     JavaFormatField, JavaFormatListPart, format_malformed, format_missing, format_required_field,
-    resolve_list_part,
+    resolve_list_part, resolve_required_field,
 };
 use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::{format_method_declaration, format_type_declaration};
@@ -346,17 +346,14 @@ fn format_program_item<'source>(
             format_method_declaration(&declaration, doc)
         }
         CompilationUnitItem::EmptyDeclaration(declaration) => {
-            match crate::helpers::recovery::resolve_required_field(declaration.semicolon(), doc) {
-                JavaFormatField::Present(_) => {
-                    let removed = declaration
-                        .separator_removal_claim()
-                        .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
-                    let comments = format_removed_comments(
+            match resolve_required_field(declaration.semicolon(), doc) {
+                JavaFormatField::Present(semicolon) => {
+                    let (normalized, _) = format_token_removal(
                         doc,
-                        comments_from_tokens(declaration.token_iter()),
-                    )
-                    .unwrap_or_else(Doc::nil);
-                    doc_concat!(doc, [removed, comments])
+                        &semicolon,
+                        declaration.separator_removal_claim(),
+                    );
+                    normalized
                 }
                 JavaFormatField::Malformed(recovery) => recovery,
             }

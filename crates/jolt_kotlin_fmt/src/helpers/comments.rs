@@ -145,7 +145,6 @@ pub(crate) fn format_removed_separator<'source>(
     space_before_comments: bool,
 ) -> Doc<'source> {
     let Some(claim) = claim else {
-        doc.block_on_invariant("Kotlin syntax did not authorize separator removal");
         return format_token(
             doc,
             token,

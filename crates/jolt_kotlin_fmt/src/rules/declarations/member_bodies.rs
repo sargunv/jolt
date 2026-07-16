@@ -176,17 +176,17 @@ fn push_class_body_part<'source>(
     part: &ClassBodyPart<'source>,
     previous_had_comments: &mut bool,
 ) {
-    if let ClassBodyPart::Member(member) = part {
-        *previous_had_comments = member
-            .last_token()
-            .is_some_and(|token| !token.trailing_comments().is_empty());
-        sections.push(ClassBodySection {
-            doc: format_class_member(doc, member),
-            hard_line_after: enum_entry_continues(member),
-        });
-        return;
-    }
     let physical = match part {
+        ClassBodyPart::Member(member) => {
+            *previous_had_comments = member
+                .last_token()
+                .is_some_and(|token| !token.trailing_comments().is_empty());
+            sections.push(ClassBodySection {
+                doc: format_class_member(doc, member),
+                hard_line_after: enum_entry_continues(member),
+            });
+            return;
+        }
         ClassBodyPart::Token(token) => format_token(
             doc,
             token,
@@ -194,7 +194,6 @@ fn push_class_body_part<'source>(
             TrailingTrivia::Preserve,
         ),
         ClassBodyPart::Recovery { doc, .. } => *doc,
-        ClassBodyPart::Member(_) => unreachable!("handled above"),
     };
     push_class_body_physical_doc(doc, sections, physical, *previous_had_comments);
 }

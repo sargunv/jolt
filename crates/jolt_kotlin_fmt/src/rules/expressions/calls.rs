@@ -29,13 +29,11 @@ pub(super) fn format_navigation_expression<'source>(
     expression: &NavigationExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let expression = Expression::NavigationExpression(*expression);
-    if let Some(chain) = format_member_chain(doc, expression, leading) {
+    if let Some(chain) =
+        format_member_chain(doc, Expression::NavigationExpression(*expression), leading)
+    {
         return chain;
     }
-    let Expression::NavigationExpression(expression) = expression else {
-        unreachable!()
-    };
     let receiver = format_required_field(expression.receiver(), doc, |receiver, doc| {
         format_expression_with_leading(doc, &receiver, leading)
     });
@@ -58,17 +56,14 @@ pub(super) fn format_call_expression<'source>(
     expression: &CallExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let expression = Expression::CallExpression(*expression);
-    if let Some(chain) = format_member_chain(doc, expression, leading) {
+    if let Some(chain) = format_member_chain(doc, Expression::CallExpression(*expression), leading)
+    {
         return chain;
     }
-    let Expression::CallExpression(expression) = expression else {
-        unreachable!()
-    };
     let callee = format_required_field(expression.callee(), doc, |callee, doc| {
         format_expression_with_leading(doc, &callee, leading)
     });
-    let suffix = format_call_arguments(doc, &expression);
+    let suffix = format_call_arguments(doc, expression);
     doc.concat([callee, suffix])
 }
 
@@ -271,7 +266,9 @@ fn member_chain<'source>(
     if suffix_count == 0 {
         return root;
     }
-    let first = first_suffix.expect("member chain suffix exists");
+    let Some(first) = first_suffix else {
+        return doc.concat([root, rest]);
+    };
     let head = if keep_first {
         doc.concat([root, first])
     } else {

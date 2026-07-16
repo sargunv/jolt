@@ -56,14 +56,32 @@ pub(super) fn format_enum_body_contents<'source>(
         };
     let has_constants = constants.iter().any(|constant| !constant.is_malformed);
     let has_constant_entries = !constants.is_empty();
+    let resolved_members = resolve_required_field(body.members(), doc);
+    let resolved_has_body_declarations = match &resolved_members {
+        JavaFormatField::Present(members) => members.parts().any(|part| match part {
+            Ok(jolt_java_syntax::JavaSyntaxListPart::Item(
+                jolt_java_syntax::ClassBodyMember::EmptyDeclaration(_),
+            )) => false,
+            Ok(
+                jolt_java_syntax::JavaSyntaxListPart::Item(_)
+                | jolt_java_syntax::JavaSyntaxListPart::Malformed(_),
+            ) => true,
+            _ => false,
+        }),
+        JavaFormatField::Malformed(_) => false,
+    };
+    let separator_has_structured_destination =
+        has_constant_entries || resolved_has_body_declarations;
     let open_dangling_comments = format_body_open_dangling_comments(open, doc);
     let semicolon_comments = body_declaration_separator.map(|separator| {
-        let removed = body
-            .redundant_body_separator_removal_claim()
-            .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
+        let token = match body.redundant_body_separator_removal_claim() {
+            Some(claim) => doc.removed_source(claim),
+            None if separator_has_structured_destination => Doc::nil(),
+            None => format_token_with_comments(doc, &separator),
+        };
         match format_removed_comments(doc, comments_from_tokens([separator])) {
-            Some(comments) => FormattedMember::comment(doc_concat!(doc, [removed, comments])),
-            None => FormattedMember::invisible(removed),
+            Some(comments) => FormattedMember::comment(doc_concat!(doc, [token, comments])),
+            None => FormattedMember::invisible(token),
         }
     });
     let open_comments = combine_comment_members(doc, open_dangling_comments, semicolon_comments);
@@ -75,30 +93,18 @@ pub(super) fn format_enum_body_contents<'source>(
         body.text_range().start().get(),
         body.token_iter(),
     );
-    let (members_doc, has_body_declarations) = match resolve_required_field(body.members(), doc) {
-        JavaFormatField::Present(members) => {
-            let has_declarations = members.parts().any(|part| match part {
-                Ok(jolt_java_syntax::JavaSyntaxListPart::Item(
-                    jolt_java_syntax::ClassBodyMember::EmptyDeclaration(_),
-                )) => false,
-                Ok(
-                    jolt_java_syntax::JavaSyntaxListPart::Item(_)
-                    | jolt_java_syntax::JavaSyntaxListPart::Malformed(_),
-                ) => true,
-                _ => false,
-            });
-            (
-                format_class_member_body(
-                    body.text_range().start().get(),
-                    &ignored_ranges,
-                    members.parts(),
-                    open_comments,
-                    close_comments,
-                    doc,
-                ),
-                has_declarations,
-            )
-        }
+    let (members_doc, has_body_declarations) = match resolved_members {
+        JavaFormatField::Present(members) => (
+            format_class_member_body(
+                body.text_range().start().get(),
+                &ignored_ranges,
+                members.parts(),
+                open_comments,
+                close_comments,
+                doc,
+            ),
+            resolved_has_body_declarations,
+        ),
         JavaFormatField::Malformed(recovery) => {
             let comments = combine_comment_members(doc, open_comments, close_comments)
                 .map(|comments| comments.doc);
@@ -154,9 +160,10 @@ pub(super) fn format_enum_body_contents<'source>(
     };
 
     let contents = match (constants_doc, members_doc) {
-        (Some(constants), Some(members)) => {
+        (Some(constants), Some(members)) if members_visible => {
             Some(doc_concat!(doc, [constants, doc.empty_line(), members]))
         }
+        (Some(constants), Some(members)) => Some(doc_concat!(doc, [constants, members])),
         (Some(constants), None) => Some(constants),
         (None, Some(members)) if has_body_declarations => Some(doc_concat!(
             doc,
@@ -350,16 +357,21 @@ fn format_enum_constant_separator<'source>(
                 } else {
                     NormalizedToken::EnumSemicolon
                 };
-                body.separator_replacement_claim(separator_token, normalized)
-                    .map_or_else(Doc::nil, |claim| {
-                        format_token_with_normalized_text(
-                            doc,
-                            separator_token,
-                            claim,
-                            LeadingTrivia::SuppressAlreadyHandled,
-                            TrailingTrivia::RelocatedToEnclosingContext,
-                        )
-                    })
+                match body.separator_replacement_claim(separator_token, normalized) {
+                    Some(claim) => format_token_with_normalized_text(
+                        doc,
+                        separator_token,
+                        claim,
+                        LeadingTrivia::SuppressAlreadyHandled,
+                        TrailingTrivia::RelocatedToEnclosingContext,
+                    ),
+                    None => format_token(
+                        doc,
+                        separator_token,
+                        LeadingTrivia::SuppressAlreadyHandled,
+                        TrailingTrivia::RelocatedToEnclosingContext,
+                    ),
+                }
             },
             if include_trailing_comments {
                 format_enum_separator_inline_trailing_comments(doc, separator_token)

@@ -1,0 +1,69 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import z.B unexpected
+import a.A
+
+fun recoveredNormalization() {
+    value;;
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ImportDirectiveList
+      ImportDirective
+        Identifier "import" @ 0..6 trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "z" @ 7..8
+            Dot "." @ 8..9
+            Name
+              Identifier "B" @ 9..10 trailing=[Whitespace " "]
+        BogusImportSuffix
+          Identifier "unexpected" @ 11..21
+        TerminatorList
+      ImportDirective
+        Identifier "import" @ 22..28 leading=[Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "a" @ 29..30
+            Dot "." @ 30..31
+            Name
+              Identifier "A" @ 31..32
+        TerminatorList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 34..37 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "recoveredNormalization" @ 38..60
+      ValueParameterList
+        LParen "(" @ 60..61
+        ValueParameterSeparatedList
+        RParen ")" @ 61..62 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 63..64
+          BlockItemList
+            Statement
+              ExpressionStatement
+                NameExpression
+                  Identifier "value" @ 69..74 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+                DoubleSemicolon ";;" @ 74..76
+          RBrace "}" @ 77..78 leading=[Newline "\n"]
+  Eof "" @ 79..79 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=11..21 message="unexpected token in import directive"
+
+diagnostics:
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(11), end: TextSize(21) }) message=unexpected token in import directive

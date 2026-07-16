@@ -113,7 +113,7 @@ impl<'source> FormattedImport<'source> {
     fn new(import: ImportDeclaration<'source>) -> Option<Self> {
         use jolt_java_syntax::JavaSyntaxField::{Malformed, Missing, Present};
 
-        if !import.is_recovery_free()
+        if import.canonical_reorder_claim().is_none()
             || !matches!(import.import_keyword(), Ok(Present(_)))
             || !matches!(import.module_keyword(), Ok(Present(_) | Missing(_)))
             || !matches!(import.static_keyword(), Ok(Present(_) | Missing(_)))

@@ -1,9 +1,13 @@
-use jolt_syntax::{NormalizedToken, RemovalClaim, RemovalReason, SourceIdentity, SynthesisClaim};
+use jolt_syntax::{
+    NormalizedToken, RemovalClaim, RemovalReason, ReorderClaim, ReorderReason, SourceIdentity,
+    SynthesisClaim,
+};
 
 use crate::language::{KotlinLanguage, NORMALIZATION_AUTHORITY};
 use crate::{
-    BlockItemList, Expression, KotlinFileItemList, KotlinSyntaxKind, KotlinSyntaxListPart,
-    KotlinSyntaxToken, KotlinSyntaxView, PropertyBodyMemberList, TerminatorList,
+    BlockItemList, Expression, ImportDirective, KotlinFileItemList, KotlinSyntaxKind,
+    KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView, PropertyBodyMemberList,
+    TerminatorList,
 };
 
 /// Paired source-free delimiters authorized by one valid Kotlin syntax owner.
@@ -86,3 +90,23 @@ impl_separator_removal_claim!(TerminatorList, [EolOrSemicolon, Semicolon]);
 impl_separator_removal_claim!(KotlinFileItemList, [EolOrSemicolon, Semicolon]);
 impl_separator_removal_claim!(BlockItemList, [EolOrSemicolon, Semicolon]);
 impl_separator_removal_claim!(PropertyBodyMemberList, [EolOrSemicolon, Semicolon]);
+
+impl<'source> ImportDirective<'source> {
+    /// Authorizes canonical ordering of this recovery-free import.
+    #[must_use]
+    pub fn canonical_reorder_claim(&self) -> Option<ReorderClaim<'source>> {
+        if !self.is_recovery_free() {
+            return None;
+        }
+        let syntax = self.syntax_node()?;
+        let anchor = syntax
+            .first_token()
+            .or_else(|| syntax.last_token())?
+            .source_id();
+        Some(ReorderClaim::authorized::<KotlinLanguage>(
+            NORMALIZATION_AUTHORITY,
+            anchor,
+            ReorderReason::Imports,
+        ))
+    }
+}

@@ -20,6 +20,9 @@ pub(crate) fn format_modifier_prefix<'source>(
     let Some(modifiers) = modifiers else {
         return Doc::nil();
     };
+    if modifiers.canonical_reorder_claim().is_none() {
+        return format_modifier_items_in_source_order(modifiers.partitioned_items(), true, doc);
+    }
 
     let entry_capacity = modifiers
         .partitioned_items()
@@ -97,6 +100,16 @@ pub(crate) fn format_typed_modifier_prefix<'source>(
             type_use_prefix: Doc::nil(),
         };
     };
+    if modifiers.canonical_reorder_claim().is_none() {
+        return TypedModifierPrefix {
+            declaration_prefix: format_modifier_items_in_source_order(
+                modifiers.partitioned_items(),
+                true,
+                doc,
+            ),
+            type_use_prefix: Doc::nil(),
+        };
+    }
 
     let parts = partition_modifier_items(&modifiers, doc);
     format_typed_modifier_prefix_from_split_parts(
@@ -111,6 +124,16 @@ pub(crate) fn format_typed_parameter_modifier_prefix<'source>(
     modifiers: &ParameterModifierList<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> TypedModifierPrefix<'source> {
+    if modifiers.canonical_reorder_claim().is_none() {
+        return TypedModifierPrefix {
+            declaration_prefix: format_modifier_items_in_source_order(
+                modifiers.partitioned_items(),
+                false,
+                doc,
+            ),
+            type_use_prefix: Doc::nil(),
+        };
+    }
     let parts = partition_parameter_modifier_items(modifiers, doc);
     format_typed_modifier_prefix_from_split_parts(
         parts.declaration_annotations,
@@ -124,6 +147,16 @@ pub(crate) fn format_inline_typed_parameter_modifier_prefix<'source>(
     modifiers: &ParameterModifierList<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> TypedModifierPrefix<'source> {
+    if modifiers.canonical_reorder_claim().is_none() {
+        return TypedModifierPrefix {
+            declaration_prefix: format_modifier_items_in_source_order(
+                modifiers.partitioned_items(),
+                false,
+                doc,
+            ),
+            type_use_prefix: Doc::nil(),
+        };
+    }
     let parts = partition_parameter_modifier_items(modifiers, doc);
     let type_use_is_first = parts.declaration_annotations.is_empty() && parts.entries.is_empty();
     let (type_use_forces_line, type_use_needs_line) =
@@ -177,6 +210,100 @@ struct PartitionedModifiers<'source> {
     declaration_annotations: Vec<Annotation<'source>>,
     type_use_annotations: Vec<Annotation<'source>>,
     entries: Vec<ModifierEntry<'source>>,
+}
+
+fn format_modifier_items_in_source_order<'source>(
+    items: impl IntoIterator<
+        Item = Result<PartitionedModifierItem<'source>, jolt_java_syntax::JavaSyntaxInvariantError>,
+    >,
+    annotations_break: bool,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let items = items
+        .into_iter()
+        .map(|item| match item {
+            Ok(
+                PartitionedModifierItem::DeclarationAnnotation(annotation)
+                | PartitionedModifierItem::TypeUseAnnotation(annotation),
+            ) => (format_annotation(&annotation, doc), true, true),
+            Ok(PartitionedModifierItem::Token(token)) => (
+                inline_modifier_prefix_from_docs(
+                    doc,
+                    std::iter::empty(),
+                    vec![ModifierEntry::Token(token)],
+                    false,
+                    true,
+                    false,
+                ),
+                true,
+                false,
+            ),
+            Ok(PartitionedModifierItem::Sealed(token)) => (
+                inline_modifier_prefix_from_docs(
+                    doc,
+                    std::iter::empty(),
+                    vec![ModifierEntry::Sealed(token)],
+                    false,
+                    true,
+                    false,
+                ),
+                true,
+                false,
+            ),
+            Ok(PartitionedModifierItem::NonSealed(non_sealed)) => (
+                inline_modifier_prefix_from_docs(
+                    doc,
+                    std::iter::empty(),
+                    vec![ModifierEntry::NonSealed(non_sealed)],
+                    false,
+                    true,
+                    false,
+                ),
+                true,
+                false,
+            ),
+            Ok(PartitionedModifierItem::Bogus(bogus)) => {
+                (format_malformed(&bogus, doc), false, false)
+            }
+            Ok(PartitionedModifierItem::Malformed(malformed)) => {
+                (format_malformed(&malformed, doc), false, false)
+            }
+            Ok(PartitionedModifierItem::Missing(missing)) => (
+                crate::helpers::recovery::format_missing(&missing, doc),
+                false,
+                false,
+            ),
+            Err(error) => {
+                doc.block_on_invariant(error.to_string());
+                (Doc::nil(), false, false)
+            }
+        })
+        .collect::<Vec<_>>();
+    doc.concat_list(|docs| {
+        let mut previous_structured = false;
+        let mut previous_annotation = false;
+        for (item, structured, annotation) in items {
+            if previous_structured && structured {
+                let separator = if annotations_break && previous_annotation {
+                    docs.hard_line()
+                } else {
+                    docs.space()
+                };
+                docs.push(separator);
+            }
+            docs.push(item);
+            previous_structured = structured;
+            previous_annotation = annotation;
+        }
+        if previous_structured {
+            let separator = if annotations_break && previous_annotation {
+                docs.hard_line()
+            } else {
+                docs.space()
+            };
+            docs.push(separator);
+        }
+    })
 }
 
 fn partition_parameter_modifier_items<'source>(

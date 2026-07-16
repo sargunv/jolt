@@ -1,0 +1,123 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import z.B unexpected;
+import a.A;
+
+static transient class RecoveredModifiers {
+    void parameter(final transient String value) {}
+
+    void controls() {
+        if () ;
+        while () ;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ImportDeclaration
+      ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "z" @ 7..8
+        Dot "." @ 8..9
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "B" @ 9..10 trailing=[Whitespace " "]
+      BogusImportSuffix
+        Identifier "unexpected" @ 11..21
+      Semicolon ";" @ 21..22
+    ImportDeclaration
+      ImportKw "import" @ 23..29 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "a" @ 30..31
+        Dot "." @ 31..32
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "A" @ 32..33
+      Semicolon ";" @ 33..34
+    ClassDeclaration
+      ModifierList
+        StaticKw "static" @ 36..42 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+        BogusModifier
+          TransientKw "transient" @ 43..52 trailing=[Whitespace " "]
+      ClassKw "class" @ 53..58 trailing=[Whitespace " "]
+      Identifier "RecoveredModifiers" @ 59..77 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 78..79
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 84..88 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "parameter" @ 89..98
+            LParen "(" @ 98..99
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                  FinalKw "final" @ 99..104 trailing=[Whitespace " "]
+                  BogusModifier
+                    TransientKw "transient" @ 105..114 trailing=[Whitespace " "]
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 115..121 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 122..127
+            RParen ")" @ 127..128 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 129..130
+              BlockStatementList
+              RBrace "}" @ 130..131
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 137..141 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "controls" @ 142..150
+            LParen "(" @ 150..151
+            RParen ")" @ 151..152 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 153..154
+              BlockStatementList
+                BlockStatement
+                  IfStatement
+                    IfKw "if" @ 163..165 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    LParen "(" @ 166..167
+                    BogusExpression
+                    RParen ")" @ 167..168 trailing=[Whitespace " "]
+                    EmptyStatement
+                      Semicolon ";" @ 169..170
+                BlockStatement
+                  WhileStatement
+                    WhileKw "while" @ 179..184 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    LParen "(" @ 185..186
+                    BogusExpression
+                    RParen ")" @ 186..187 trailing=[Whitespace " "]
+                    EmptyStatement
+                      Semicolon ";" @ 188..189
+              RBrace "}" @ 194..195 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 196..197 leading=[Newline "\n"]
+  Eof "" @ 198..198 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=11..21 message="unexpected token in import declaration"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=43..52 message="invalid type modifier"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=105..114 message="invalid parameter modifier"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=167..168 message="expected expression"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=186..187 message="expected expression"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(11), end: TextSize(21) }) message=unexpected token in import declaration
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(52) }) message=invalid type modifier
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(105), end: TextSize(114) }) message=invalid parameter modifier
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(167), end: TextSize(168) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(186), end: TextSize(187) }) message=expected expression

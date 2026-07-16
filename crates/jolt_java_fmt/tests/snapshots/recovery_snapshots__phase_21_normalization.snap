@@ -1,0 +1,37 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+import z.B unexpected;
+import a.A;
+
+static transient class RecoveredModifiers {
+    void parameter(final transient String value) {}
+
+    void controls() {
+        if () ;
+        while () ;
+    }
+}
+
+formatted:
+import z.B unexpected;
+import a.A;
+
+static transient class RecoveredModifiers {
+  void parameter(final transient String value) {
+  }
+
+  void controls() {
+    if () ;
+    while () ;
+  }
+}
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(11), end: TextSize(21) }) message=unexpected token in import declaration
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(52) }) message=invalid type modifier
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(105), end: TextSize(114) }) message=invalid parameter modifier
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(167), end: TextSize(168) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(186), end: TextSize(187) }) message=expected expression

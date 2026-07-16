@@ -1,13 +1,13 @@
 use super::{
     Block, BlockItem, BlockStatement, BodyItem, Doc, FormatterIgnoreRange, JavaSyntaxToken, Range,
     TrailingTrivia, comments_from_tokens, format_dangling_comments,
-    format_local_variable_declaration, format_removed_comments, format_statement,
-    format_statement_semicolon, format_type_declaration, formatter_ignore_ranges,
-    formatter_ignore_run_doc, formatter_ignore_runs, join_body_items, relative_token_range_between,
+    format_local_variable_declaration, format_statement, format_statement_semicolon,
+    format_type_declaration, formatter_ignore_ranges, formatter_ignore_run_doc,
+    formatter_ignore_runs, join_body_items, relative_token_range_between,
 };
 use crate::helpers::blocks::BodyContent;
 use crate::helpers::comments::{
-    InlineLeadingTrivia, format_token_after_relocated_leading_comments,
+    InlineLeadingTrivia, format_token_after_relocated_leading_comments, format_token_removal,
     format_token_with_inline_leading_comments, has_removed_comments,
 };
 use crate::helpers::recovery::{JavaFormatField, format_malformed, resolve_required_field};
@@ -309,13 +309,13 @@ fn format_removed_empty_statement<'source>(
     statement: &jolt_java_syntax::EmptyStatement<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> (Doc<'source>, bool) {
-    let visible = has_removed_comments(comments_from_tokens(statement.token_iter()));
-    let removed = statement
-        .separator_removal_claim()
-        .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
-    let comments = format_removed_comments(doc, comments_from_tokens(statement.token_iter()))
-        .unwrap_or_else(Doc::nil);
-    (doc_concat!(doc, [removed, comments]), visible)
+    let has_comments = has_removed_comments(comments_from_tokens(statement.token_iter()));
+    let Ok(jolt_java_syntax::JavaSyntaxField::Present(semicolon)) = statement.semicolon() else {
+        return (format_statement_semicolon(statement.semicolon(), doc), true);
+    };
+    let (normalized, removed) =
+        format_token_removal(doc, &semicolon, statement.separator_removal_claim());
+    (normalized, has_comments || !removed)
 }
 
 fn block_statement_token_range(

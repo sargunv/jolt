@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxToken};
+use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxToken, RemovalClaim};
 
 use crate::helpers::formatter_ignore::is_formatter_control_marker;
 
@@ -104,6 +104,24 @@ pub(crate) fn format_removed_comments<'source>(
     });
 
     has_claims.then_some(docs)
+}
+
+/// Removes a source token only when syntax issued the exact claim.
+///
+/// A denied claim is expected for malformed syntax and preserves the original
+/// token and trivia instead of treating recovery as a formatter invariant.
+pub(crate) fn format_token_removal<'source>(
+    doc: &mut DocBuilder<'source>,
+    token: &JavaSyntaxToken<'source>,
+    claim: Option<RemovalClaim<'source>>,
+) -> (Doc<'source>, bool) {
+    let Some(claim) = claim else {
+        return (format_token_with_comments(doc, token), false);
+    };
+    let removed = doc.removed_source(claim);
+    let comments =
+        format_removed_comments(doc, comments_from_tokens([*token])).unwrap_or_else(Doc::nil);
+    (doc.concat([removed, comments]), true)
 }
 
 pub(crate) fn format_leading_comments<'source>(

@@ -68,15 +68,15 @@ fn format_syntax_to_sink<S: RenderSink + ?Sized>(
             #[cfg(debug_assertions)]
             assert!(
                 !root.is_recovery_free()
-                    || outcome
-                        .completed_proof()
-                        .expect("completed render has a conservation proof")
+                    || outcome.completed_proof().is_some_and(|proof| proof
                         .rendered_fragments()
                         .iter()
-                        .all(|fragment| !matches!(
-                            fragment.kind,
-                            jolt_fmt_ir::SourceFragmentKind::MalformedVerbatim { .. }
-                        )),
+                        .all(|fragment| {
+                            !matches!(
+                                fragment.kind,
+                                jolt_fmt_ir::SourceFragmentKind::MalformedVerbatim { .. }
+                            )
+                        })),
                 "recovery-free Kotlin syntax rendered a malformed-verbatim fragment"
             );
             #[cfg(not(debug_assertions))]

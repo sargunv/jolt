@@ -1,4 +1,5 @@
 use jolt_kotlin_syntax::{KotlinSyntaxView, parse_kotlin_file};
+use jolt_syntax::SyntaxSlot;
 use jolt_test_support::{
     SnapshotBuilder, assert_bidirectional_diagnostic_ownership, collect_kotlin_files,
     fixture_manifest, fixture_snapshot_name, kotlin_fixture_root, read_to_string,
@@ -24,6 +25,10 @@ fn kotlin_corpus_syntax_snapshots() {
             "parser reconstruction changed source in {}",
             path.display()
         );
+        assert_recovery_cores(
+            syntax.syntax_node().expect("physical Kotlin root"),
+            path.display(),
+        );
         if path.ends_with("syntax/recovery/phase-16-program.kt")
             || path.ends_with("syntax/recovery/phase-17-types-and-parameters.kt")
             || path.ends_with("syntax/recovery/phase-18-declarations.kt")
@@ -46,5 +51,31 @@ fn kotlin_corpus_syntax_snapshots() {
             .finish();
 
         insta::assert_snapshot!(fixture_snapshot_name(&root, &path), snapshot);
+    }
+}
+
+fn assert_recovery_cores(
+    root: jolt_kotlin_syntax::KotlinSyntaxNode<'_>,
+    context: impl std::fmt::Display,
+) {
+    let mut stack = vec![root];
+    while let Some(node) = stack.pop() {
+        if node.is_directly_malformed() {
+            assert!(
+                node.malformed_verbatim_core().is_some(),
+                "directly malformed Kotlin node lacked verbatim recovery in {context}: {:?}",
+                node.kind(),
+            );
+        }
+        for slot in 0..node.slot_count() {
+            if matches!(node.slot_at(slot), Some(SyntaxSlot::Empty)) {
+                assert!(
+                    node.missing_verbatim_core(slot).is_some(),
+                    "missing Kotlin slot lacked zero-width recovery in {context}: {:?}[{slot}]",
+                    node.kind(),
+                );
+            }
+        }
+        stack.extend(node.children());
     }
 }

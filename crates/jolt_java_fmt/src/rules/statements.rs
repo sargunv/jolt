@@ -98,24 +98,25 @@ fn statement_body_as_block<'source>(
         jolt_java_syntax::JavaSyntaxField<'source, Statement<'source>>,
         jolt_java_syntax::JavaSyntaxInvariantError,
     >,
+    brace_claims: Option<jolt_java_syntax::JavaDelimiterSynthesis<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     match resolve_required_field(body, doc) {
         JavaFormatField::Present(Statement::Block(block)) => format_block(&block, doc),
         JavaFormatField::Present(Statement::EmptyStatement(statement)) => {
-            match statement.block_brace_claims() {
-                Some(claims) => {
+            match (brace_claims, statement.separator_removal_claim()) {
+                (Some(claims), Some(removal)) => {
                     let body = format_empty_statement_comments(&statement, doc);
-                    let removed = empty_statement_removal(&statement, doc);
+                    let removed = doc.removed_source(removal);
                     let block = inserted_braced_body(doc, body, claims);
                     doc_concat!(doc, [removed, block])
                 }
-                None => format_empty_statement(&statement, doc),
+                _ => format_empty_statement(&statement, doc),
             }
         }
         JavaFormatField::Present(statement) => {
             let body = format_statement(&statement, doc);
-            statement.block_brace_claims().map_or_else(
+            brace_claims.map_or_else(
                 || body,
                 |claims| inserted_braced_body(doc, Some(body), claims),
             )
@@ -129,15 +130,6 @@ fn format_empty_statement<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     format_statement_semicolon(statement.semicolon(), doc)
-}
-
-fn empty_statement_removal<'source>(
-    statement: &jolt_java_syntax::EmptyStatement<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    statement
-        .separator_removal_claim()
-        .map_or_else(Doc::nil, |claim| doc.removed_source(claim))
 }
 
 fn format_empty_statement_comments<'source>(

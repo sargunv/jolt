@@ -1,13 +1,16 @@
 use jolt_syntax::{
-    NormalizedToken, RemovalClaim, RemovalReason, ReplacementClaim, SourceIdentity, SynthesisClaim,
+    NormalizedToken, RemovalReason, ReorderReason, ReplacementClaim, SourceIdentity, SynthesisClaim,
 };
+pub use jolt_syntax::{RemovalClaim, ReorderClaim};
 
 use crate::language::{JavaLanguage, NORMALIZATION_AUTHORITY};
 use crate::{
-    AnnotationArrayInitializer, ArrayInitializer, ClassBodyMember, EmptyDeclaration,
-    EmptyStatement, EnumBody, Expression, Guard, JavaSyntaxField, JavaSyntaxListPart,
-    JavaSyntaxToken, JavaSyntaxView, LambdaExpression, LambdaParameter, ParenthesizedExpression,
-    ResourceSpecification, Statement,
+    AnnotationArrayInitializer, ArrayInitializer, BasicForStatement, ClassBodyMember, DoStatement,
+    EmptyDeclaration, EmptyStatement, EnhancedForStatement, EnumBody, Expression, Guard,
+    IfStatement, ImportDeclaration, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxToken,
+    JavaSyntaxView, LambdaExpression, LambdaParameter, ModifierList, ModuleDeclaration,
+    ParameterModifierList, ParenthesizedExpression, RequiresDirective, ResourceSpecification,
+    Statement, WhileStatement,
 };
 
 /// Paired source-free delimiters authorized by one valid Java syntax owner.
@@ -48,39 +51,115 @@ fn present<T>(field: Result<JavaSyntaxField<'_, T>, crate::JavaSyntaxInvariantEr
     }
 }
 
-impl<'source> Statement<'source> {
-    /// Authorizes canonical braces around a valid unbraced statement body.
-    #[must_use]
-    pub fn block_brace_claims(&self) -> Option<JavaDelimiterSynthesis<'source>> {
-        delimiter_synthesis(
-            self,
-            NormalizedToken::OpenBlockBrace,
-            NormalizedToken::CloseBlockBrace,
-        )
-    }
-}
-
 impl<'source> EmptyStatement<'source> {
-    /// Authorizes canonical braces around a represented valid empty body.
-    #[must_use]
-    pub fn block_brace_claims(&self) -> Option<JavaDelimiterSynthesis<'source>> {
-        present(self.semicolon())?;
-        delimiter_synthesis(
-            self,
-            NormalizedToken::OpenBlockBrace,
-            NormalizedToken::CloseBlockBrace,
-        )
-    }
-
     /// Authorizes omission of this redundant empty-statement separator.
     #[must_use]
     pub fn separator_removal_claim(&self) -> Option<RemovalClaim<'source>> {
+        if !self.is_recovery_free() {
+            return None;
+        }
         let token = present(self.semicolon())?;
         Some(RemovalClaim::authorized::<JavaLanguage>(
             NORMALIZATION_AUTHORITY,
             SourceIdentity::Token(token.source_id()),
             RemovalReason::RedundantSeparator,
         ))
+    }
+}
+
+fn control_body_brace_claims<'source>(
+    owner: &impl JavaSyntaxView<'source>,
+    body: Statement<'source>,
+) -> Option<JavaDelimiterSynthesis<'source>> {
+    if matches!(body, Statement::Block(_)) {
+        return None;
+    }
+    delimiter_synthesis(
+        owner,
+        NormalizedToken::OpenBlockBrace,
+        NormalizedToken::CloseBlockBrace,
+    )
+}
+
+impl<'source> IfStatement<'source> {
+    #[must_use]
+    pub fn then_block_brace_claims(&self) -> Option<JavaDelimiterSynthesis<'source>> {
+        control_body_brace_claims(self, present(self.then_branch())?)
+    }
+
+    #[must_use]
+    pub fn else_block_brace_claims(&self) -> Option<JavaDelimiterSynthesis<'source>> {
+        control_body_brace_claims(self, present(self.else_branch())?)
+    }
+}
+
+macro_rules! impl_control_body_brace_claims {
+    ($($owner:ident),+ $(,)?) => {
+        $(
+            impl<'source> $owner<'source> {
+                #[must_use]
+                pub fn body_block_brace_claims(
+                    &self,
+                ) -> Option<JavaDelimiterSynthesis<'source>> {
+                    control_body_brace_claims(self, present(self.body())?)
+                }
+            }
+        )+
+    };
+}
+
+impl_control_body_brace_claims!(
+    WhileStatement,
+    DoStatement,
+    BasicForStatement,
+    EnhancedForStatement,
+);
+
+fn reorder_claim<'source>(
+    owner: &impl JavaSyntaxView<'source>,
+    reason: ReorderReason,
+) -> Option<ReorderClaim<'source>> {
+    if !owner.is_recovery_free() {
+        return None;
+    }
+    let syntax = owner.syntax_node()?;
+    let anchor = syntax
+        .first_token()
+        .or_else(|| syntax.last_token())?
+        .source_id();
+    Some(ReorderClaim::authorized::<JavaLanguage>(
+        NORMALIZATION_AUTHORITY,
+        anchor,
+        reason,
+    ))
+}
+
+macro_rules! impl_reorder_claim {
+    ($owner:ident, $reason:ident) => {
+        impl<'source> $owner<'source> {
+            #[must_use]
+            pub fn canonical_reorder_claim(&self) -> Option<ReorderClaim<'source>> {
+                reorder_claim(self, ReorderReason::$reason)
+            }
+        }
+    };
+}
+
+impl_reorder_claim!(ImportDeclaration, Imports);
+impl_reorder_claim!(ModifierList, Modifiers);
+impl_reorder_claim!(ParameterModifierList, Modifiers);
+
+impl<'source> ModuleDeclaration<'source> {
+    #[must_use]
+    pub fn directive_reorder_claim(&self) -> Option<ReorderClaim<'source>> {
+        reorder_claim(self, ReorderReason::ModuleDirectives)
+    }
+}
+
+impl<'source> RequiresDirective<'source> {
+    #[must_use]
+    pub fn modifier_reorder_claim(&self) -> Option<ReorderClaim<'source>> {
+        reorder_claim(self, ReorderReason::RequiresModifiers)
     }
 }
 
@@ -112,21 +191,24 @@ impl<'source> Guard<'source> {
                 close: None,
             };
         }
+        let (Some(open), Some(close)) = (present(self.open_paren()), present(self.close_paren()))
+        else {
+            return JavaDelimiterRemoval {
+                open: None,
+                close: None,
+            };
+        };
         JavaDelimiterRemoval {
-            open: present(self.open_paren()).map(|token| {
-                RemovalClaim::authorized::<JavaLanguage>(
-                    NORMALIZATION_AUTHORITY,
-                    SourceIdentity::Token(token.source_id()),
-                    RemovalReason::RedundantDelimiter,
-                )
-            }),
-            close: present(self.close_paren()).map(|token| {
-                RemovalClaim::authorized::<JavaLanguage>(
-                    NORMALIZATION_AUTHORITY,
-                    SourceIdentity::Token(token.source_id()),
-                    RemovalReason::RedundantDelimiter,
-                )
-            }),
+            open: Some(RemovalClaim::authorized::<JavaLanguage>(
+                NORMALIZATION_AUTHORITY,
+                SourceIdentity::Token(open.source_id()),
+                RemovalReason::RedundantDelimiter,
+            )),
+            close: Some(RemovalClaim::authorized::<JavaLanguage>(
+                NORMALIZATION_AUTHORITY,
+                SourceIdentity::Token(close.source_id()),
+                RemovalReason::RedundantDelimiter,
+            )),
         }
     }
 }
@@ -135,6 +217,9 @@ impl<'source> EmptyDeclaration<'source> {
     /// Authorizes omission of this redundant empty-declaration separator.
     #[must_use]
     pub fn separator_removal_claim(&self) -> Option<RemovalClaim<'source>> {
+        if !self.is_recovery_free() {
+            return None;
+        }
         let token = present(self.semicolon())?;
         Some(RemovalClaim::authorized::<JavaLanguage>(
             NORMALIZATION_AUTHORITY,
@@ -179,7 +264,11 @@ impl<'source> ArrayInitializer<'source> {
     pub fn trailing_comma_claim(&self) -> Option<SynthesisClaim<'source>> {
         present(self.open_brace())?;
         let values = present(self.values())?;
-        if !values.is_recovery_free() {
+        if !values.is_recovery_free()
+            || !values
+                .parts()
+                .any(|part| matches!(part, Ok(JavaSyntaxListPart::Item(_))))
+        {
             return None;
         }
         present(self.close_brace())?;
@@ -192,7 +281,11 @@ impl<'source> AnnotationArrayInitializer<'source> {
     pub fn trailing_comma_claim(&self) -> Option<SynthesisClaim<'source>> {
         present(self.open_brace())?;
         let values = present(self.values())?;
-        if !values.is_recovery_free() {
+        if !values.is_recovery_free()
+            || !values
+                .parts()
+                .any(|part| matches!(part, Ok(JavaSyntaxListPart::Item(_))))
+        {
             return None;
         }
         present(self.close_brace())?;

@@ -1272,6 +1272,36 @@ malformed syntax is preserved verbatim rather than repaired. Resolve every
 normalization finding by distinguishing documented valid normalization from
 source loss without adding per-path exceptions.
 
+Status: complete.
+
+Implementation: the shared syntax layer now issues closed, language-authorized
+claims for canonical reordering as well as removal, replacement, and synthesis.
+Java import, modifier, module-directive, and `requires` ordering and Kotlin
+import ordering consume those recovery-free claims; denied claims retain source
+order. Java control-body brace synthesis is authorized by the complete enclosing
+control node, so a valid child can no longer normalize a malformed parent.
+Denied separator removal and replacement paths preserve their represented
+tokens, including malformed enum separators, and paired guard parentheses are
+removed only atomically. Empty array initializers no longer gain a synthesized
+trailing comma.
+
+Totality: production formatter rules contain no `panic!`, `expect`, `unwrap`, or
+`unreachable!` paths. Corpus-wide syntax proofs require every directly malformed
+node to expose a malformed verbatim core and every physical empty slot to expose
+a zero-width missing core. Focused recovery fixtures cover denied Java and
+Kotlin normalization, malformed reordering, and malformed control structures.
+
+Size: Phase 21 adds 968 and removes 217 implementation lines, net +751. The
+cumulative projection against `2197128` is +31,620/-25,050, net +6,570.
+Fixtures, snapshots, reports, and documentation are excluded. Phase 22 deletion
+and the Phase 24 net-negative completion gate remain binding.
+
+Quality audit: focused normalization authorization, recovery snapshots, imported
+Java and Kotlin idempotence, trivia conservation, syntax corpus and schema
+audits, malformed/missing totality proofs, production panic-path scans, Rust
+checks, `git diff --check`, `mise run fix`, and `mise run test` pass. No
+benchmark was run; Phase 23 remains the designated cumulative performance gate.
+
 ### New Phase 22: Delete Transitional Recovery Architecture
 
 Remove obsolete recovery accessors, filtered token fallbacks, source-range

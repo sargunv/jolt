@@ -1,0 +1,76 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+module recovered.normalization {
+    uses z.Service;
+    requires transitive + static a.module;
+    uses a.Service;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 0..6 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "recovered" @ 7..16
+        Dot "." @ 16..17
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "normalization" @ 17..30 trailing=[Whitespace " "]
+      LBrace "{" @ 31..32
+      ModuleDirectiveList
+        UsesDirective
+          Identifier "uses" @ 37..41 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "z" @ 42..43
+            Dot "." @ 43..44
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "Service" @ 44..51
+          Semicolon ";" @ 51..52
+        RequiresDirective
+          Identifier "requires" @ 57..65 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          RequiresModifierList
+            Identifier "transitive" @ 66..76 trailing=[Whitespace " "]
+        BogusModuleDirective
+          Plus "+" @ 77..78 trailing=[Whitespace " "]
+          StaticKw "static" @ 79..85 trailing=[Whitespace " "]
+          Identifier "a" @ 86..87
+          Dot "." @ 87..88
+          Identifier "module" @ 88..94
+          Semicolon ";" @ 94..95
+        UsesDirective
+          Identifier "uses" @ 100..104 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "a" @ 105..106
+            Dot "." @ 106..107
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "Service" @ 107..114
+          Semicolon ";" @ 114..115
+      RBrace "}" @ 116..117 leading=[Newline "\n"]
+  Eof "" @ 118..118 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=77..78 message="expected identifier"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=77..78 message="expected `;` after requires directive"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=77..78 message="unexpected token in module declaration"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(77), end: TextSize(78) }) message=expected identifier
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(77), end: TextSize(78) }) message=expected `;` after requires directive
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(77), end: TextSize(78) }) message=unexpected token in module declaration

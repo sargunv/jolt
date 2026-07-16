@@ -113,15 +113,16 @@ fn format_module_directives<'source>(
             module.text_range().start().get(),
             module.token_iter(),
         );
+        let allow_reorder = module.directive_reorder_claim().is_some();
         if ignored.is_empty() {
-            return format_directive_entries(entries, doc);
+            return format_directive_entries(entries, allow_reorder, doc);
         }
         let ranges = entries
             .iter()
             .map(|entry| entry.range(module.text_range().start().get()))
             .collect::<Vec<_>>();
         let runs = formatter_ignore_runs(&ignored, &ranges);
-        format_directive_entries_with_ignored(entries, &runs, doc)
+        format_directive_entries_with_ignored(entries, &runs, allow_reorder, doc)
     }
 }
 
@@ -157,6 +158,7 @@ impl DirectiveEntry<'_> {
 fn format_directive_entries_with_ignored<'source>(
     entries: Vec<DirectiveEntry<'source>>,
     runs: &[FormatterIgnoreRun<'source>],
+    allow_reorder: bool,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let entry_count = entries.len();
@@ -171,7 +173,7 @@ fn format_directive_entries_with_ignored<'source>(
         {
             if !retained.is_empty() {
                 sections.push((
-                    format_directive_entries(std::mem::take(&mut retained), doc),
+                    format_directive_entries(std::mem::take(&mut retained), allow_reorder, doc),
                     false,
                 ));
             }
@@ -190,7 +192,10 @@ fn format_directive_entries_with_ignored<'source>(
         retained.push(entry);
     }
     if !retained.is_empty() {
-        sections.push((format_directive_entries(retained, doc), false));
+        sections.push((
+            format_directive_entries(retained, allow_reorder, doc),
+            false,
+        ));
     }
     while let Some(run) = runs.get(run_index) {
         sections.push((formatter_ignore_run_doc(run, doc), true));
@@ -215,8 +220,12 @@ fn format_directive_entries_with_ignored<'source>(
 
 fn format_directive_entries<'source>(
     entries: Vec<DirectiveEntry<'source>>,
+    allow_reorder: bool,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    if !allow_reorder {
+        return format_directive_entries_in_source_order(entries, doc);
+    }
     let sortable = entries
         .iter()
         .map(|entry| match entry {
@@ -227,23 +236,7 @@ fn format_directive_entries<'source>(
         })
         .collect::<Option<Vec<_>>>();
     let Some(sortable) = sortable else {
-        return doc.concat_list(|docs| {
-            for entry in entries {
-                if !docs.is_empty() {
-                    let line = docs.hard_line();
-                    docs.push(line);
-                }
-                let entry = match entry {
-                    DirectiveEntry::Node(node) => format_directive_node(&node, docs),
-                    DirectiveEntry::Token(token) => format_token_with_comments(docs, &token),
-                    DirectiveEntry::Malformed(malformed) => format_malformed(&malformed, docs),
-                    DirectiveEntry::Missing(missing) => {
-                        crate::helpers::recovery::format_missing(&missing, docs)
-                    }
-                };
-                docs.push(entry);
-            }
-        });
+        return format_directive_entries_in_source_order(entries, doc);
     };
     let mut sections = Vec::new();
     let mut run = Vec::new();
@@ -260,6 +253,29 @@ fn format_directive_entries<'source>(
     }
     flush_directives(&mut run, &mut sections, doc);
     join_empty_lines(doc, sections)
+}
+
+fn format_directive_entries_in_source_order<'source>(
+    entries: Vec<DirectiveEntry<'source>>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    doc.concat_list(|docs| {
+        for entry in entries {
+            if !docs.is_empty() {
+                let line = docs.hard_line();
+                docs.push(line);
+            }
+            let entry = match entry {
+                DirectiveEntry::Node(node) => format_directive_node(&node, docs),
+                DirectiveEntry::Token(token) => format_token_with_comments(docs, &token),
+                DirectiveEntry::Malformed(malformed) => format_malformed(&malformed, docs),
+                DirectiveEntry::Missing(missing) => {
+                    crate::helpers::recovery::format_missing(&missing, docs)
+                }
+            };
+            docs.push(entry);
+        }
+    })
 }
 
 fn flush_directives<'source>(
@@ -502,31 +518,45 @@ fn format_requires<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     {
+        let has_module = matches!(
+            value.module(),
+            Ok(jolt_java_syntax::JavaSyntaxField::Present(ref module))
+                if module.first_token().is_some()
+        );
         let modifiers = format_required_field(value.modifiers(), doc, |list, doc| {
             let mut modifiers = list
                 .parts()
                 .map(|part| resolve_list_part(part, doc))
                 .collect::<Vec<_>>();
-            sort_requires_modifier_runs(&mut modifiers);
+            if value.modifier_reorder_claim().is_some() {
+                sort_requires_modifier_runs(&mut modifiers);
+            }
             doc.concat_list(|parts| {
+                let mut previous_was_structured = false;
                 for part in modifiers {
-                    match part {
+                    let (part, structured) = match part {
                         JavaFormatListPart::Item(item) => {
                             let Some(token) = item.token() else {
                                 parts.block_on_invariant("requires modifier was not a token");
                                 continue;
                             };
-                            let token = format_token_with_comments(parts, &token);
-                            parts.push(token);
-                            let space = parts.space();
-                            parts.push(space);
+                            (format_token_with_comments(parts, &token), true)
                         }
                         JavaFormatListPart::Separator(token) => {
-                            let token = format_token_with_comments(parts, &token);
-                            parts.push(token);
+                            (format_token_with_comments(parts, &token), false)
                         }
-                        JavaFormatListPart::Malformed(raw) => parts.push(raw),
+                        JavaFormatListPart::Malformed(raw) => (raw, false),
+                    };
+                    if previous_was_structured && structured {
+                        let space = parts.space();
+                        parts.push(space);
                     }
+                    parts.push(part);
+                    previous_was_structured = structured;
+                }
+                if previous_was_structured && has_module {
+                    let space = parts.space();
+                    parts.push(space);
                 }
             })
         });

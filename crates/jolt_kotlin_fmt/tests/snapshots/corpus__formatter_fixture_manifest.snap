@@ -223,6 +223,7 @@ skip syntax/recovery/phase-17-types-and-parameters.kt
 skip syntax/recovery/phase-18-declarations.kt
 skip syntax/recovery/phase-19-expressions.kt
 skip syntax/recovery/phase-20-statements-and-control-flow.kt
+skip syntax/recovery/phase-21-normalization.kt
 skip syntax/recovery/preserves-file-annotation-preamble.kt
 skip syntax/recovery/property-body-recovered-gap.kt
 skip syntax/recovery/source-gap-trivia-ownership.kt

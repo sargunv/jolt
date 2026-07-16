@@ -1,0 +1,22 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+import z.B unexpected
+import a.A
+
+fun recoveredNormalization() {
+    value;;
+}
+
+formatted:
+import z.B unexpected
+import a.A
+
+fun recoveredNormalization() {
+  value;;
+}
+
+diagnostics:
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(11), end: TextSize(21) }) message=unexpected token in import directive

@@ -10,6 +10,7 @@ use super::{
     relative_token_range_between,
 };
 use crate::helpers::blocks::BodyContent;
+use crate::helpers::comments::format_token_removal;
 use crate::helpers::formatter_ignore::is_formatter_control_marker;
 use crate::helpers::recovery::{
     JavaFormatField, format_malformed, resolve_optional_field, resolve_required_field,
@@ -636,13 +637,14 @@ fn format_empty_member<'source>(
     starts_after_blank_line: bool,
     doc: &mut DocBuilder<'source>,
 ) -> FormattedMember<'source> {
-    let visible = has_removed_comments(comments_from_tokens(empty.token_iter()));
-    let removed = empty
-        .separator_removal_claim()
-        .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
-    let comments = format_removed_comments(doc, comments_from_tokens(empty.token_iter()))
-        .unwrap_or_else(Doc::nil);
-    let member_doc = doc_concat!(doc, [removed, comments]);
+    let has_comments = has_removed_comments(comments_from_tokens(empty.token_iter()));
+    let semicolon = match resolve_required_field(empty.semicolon(), doc) {
+        JavaFormatField::Present(semicolon) => semicolon,
+        JavaFormatField::Malformed(recovery) => return FormattedMember::comment(recovery),
+    };
+    let (member_doc, removed) =
+        format_token_removal(doc, &semicolon, empty.separator_removal_claim());
+    let visible = has_comments || !removed;
     if visible {
         FormattedMember {
             category: None,

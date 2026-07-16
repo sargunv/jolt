@@ -107,7 +107,7 @@ fn format_lambda_body<'source>(
     }
 
     let count = body_doc.count;
-    let contents = body_doc.doc.expect("non-empty lambda body has a doc");
+    let contents = body_doc.doc;
     let block_parameters = if let Some(parameters) = parameters {
         let space = doc.space();
         doc.concat([space, parameters])
@@ -296,7 +296,7 @@ pub(super) fn lambda_body_doc<'source>(
         }
     };
     LambdaBodyDoc {
-        doc: (count > 0).then_some(body_doc),
+        doc: body_doc,
         count,
     }
 }
@@ -315,7 +315,7 @@ fn push_lambda_body_doc<'source>(
 }
 
 pub(super) struct LambdaBodyDoc<'source> {
-    pub(super) doc: Option<Doc<'source>>,
+    pub(super) doc: Doc<'source>,
     pub(super) count: usize,
 }
 

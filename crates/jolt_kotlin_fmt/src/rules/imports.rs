@@ -243,7 +243,7 @@ impl<'source> FormattedImport<'source> {
     fn new(import: ImportDirective<'source>) -> Option<Self> {
         use KotlinSyntaxField::{Missing, Present};
 
-        if !import.is_recovery_free()
+        if import.canonical_reorder_claim().is_none()
             || !matches!(import.import_token(), Ok(Present(_)))
             || !matches!(import.on_demand(), Ok(Present(_) | Missing(_)))
             || !matches!(import.alias(), Ok(Present(_) | Missing(_)))

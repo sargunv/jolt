@@ -38,6 +38,38 @@ pub enum RemovalReason {
     RedundantSeparator,
 }
 
+/// A closed semantics-preserving source-order normalization.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ReorderReason {
+    Imports,
+    Modifiers,
+    ModuleDirectives,
+    RequiresModifiers,
+}
+
+/// Syntax-authorized permission to reorder one recovery-free syntax owner.
+pub struct ReorderClaim<'tree> {
+    anchor: SourceTokenId<'tree>,
+    reason: ReorderReason,
+}
+
+impl<'tree> ReorderClaim<'tree> {
+    #[doc(hidden)]
+    pub const fn authorized<L: Language>(
+        _authority: L::NormalizationAuthority,
+        anchor: SourceTokenId<'tree>,
+        reason: ReorderReason,
+    ) -> Self {
+        Self { anchor, reason }
+    }
+
+    #[doc(hidden)]
+    #[must_use]
+    pub const fn into_parts(self) -> (SourceTokenId<'tree>, ReorderReason) {
+        (self.anchor, self.reason)
+    }
+}
+
 /// Syntax-authorized permission to replace one represented source token.
 pub struct ReplacementClaim<'tree> {
     source: SourceTokenId<'tree>,

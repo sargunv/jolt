@@ -3,13 +3,13 @@ source: crates/jolt_java_syntax/src/schema_audit.rs
 expression: audit.render()
 ---
 language = java
-fixture_files = 408
-diagnostic_fixture_files = 156
-audited_nodes = 24982
-exact_valid_shapes = 24649
-malformed_nodes = 213
+fixture_files = 410
+diagnostic_fixture_files = 158
+audited_nodes = 25058
+exact_valid_shapes = 24718
+malformed_nodes = 219
 clean_missing_required_shapes = 3
-diagnostic_missing_required_shapes = 117
+diagnostic_missing_required_shapes = 118
 clean_unexpected_shapes = 0
 diagnostic_unexpected_shapes = 0
 error_node_owners = 0
@@ -134,6 +134,7 @@ syntax__recovery__phase_15_statements: TryStatement occurrence 2 (TryKw("try") C
 syntax__recovery__phase_15_statements: CatchClause occurrence 2 (CatchKw("catch") LParen("(") CatchParameter RParen(")"))
 syntax__recovery__phase_15_statements: FinallyClause occurrence 1 (FinallyKw("finally"))
 syntax__recovery__phase_15_statements: TryWithResourcesStatement occurrence 8 (TryKw("try") ResourceSpecification CatchClauseList)
+syntax__recovery__phase_21_normalization_module: RequiresDirective occurrence 1 (Identifier("requires") RequiresModifierList)
 syntax__recovery__switch_and_module_lists: SwitchLabelItemList occurrence 1 (CaseConstant Comma(",") Comma(",") CaseConstant)
 syntax__recovery__switch_and_module_lists: ModuleNameList occurrence 1 (Name Comma(",") Comma(",") Name)
 syntax__recovery__type_annotation_and_parameter_lists: TypeParameter occurrence 2 (AnnotationList)
