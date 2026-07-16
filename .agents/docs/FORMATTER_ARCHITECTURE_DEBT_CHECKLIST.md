@@ -1657,6 +1657,38 @@ completion, and reason-tagged normalization. Full Java/Kotlin corpora prove
 exact token and comment conservation with no formatter bookkeeping outside the
 IR constructors and renderer.
 
+Status: implemented and quality-audited. Structured tokens and trivia,
+syntax-owned malformed cores, formatter-ignore ranges, replacements, removals,
+syntheses, and reorders now construct source-aware document nodes directly. The
+renderer creates and completes root conservation internally and visits proof
+metadata only on the selected branch. Formatter rules no longer attach arbitrary
+identity arrays, own root trackers, inspect a rendered-fragment ledger, or
+discard reorder authorization.
+
+Formatter-ignore ranges now carry a parser-branded range proof rather than a
+formatter-populated identity vector. The shared ignore constructor also derives
+both lexical boundaries and invokes the language lexical-safety policy before
+the raw range can rejoin structured output. Boundary derivation uses monotonic
+single-pass cursors, and each range proof stores the bounded token interval that
+rendering may visit; multiple ignore ranges therefore remain linear rather than
+rescanning the root. Exceptional proof markers render before any generated
+separator or source text, so foreign claims fail before the sink receives a
+byte. Generated layout text remains proof-free, and optimized builds erase
+source proof metadata and retain the 40-byte document-node ceiling.
+
+Focused IR tests cover structured plus malformed completion, line-comment
+terminator ownership, selected and unselected conditionals, source-looking
+ordinary text rejection, empty malformed dispatch, foreign synthesis and reorder
+rejection before output, reason-tagged synthesis and reorder nodes, and bounded
+lexical joins. The isolated Java/Kotlin formatter, recovery, corpus, imported,
+CLI/dprint/WASM, rustfmt, clippy, architecture, and release checks close the
+phase.
+
+Size: the isolated Phase 28 implementation projection is +33,883/-25,394 against
+`2197128`, net +8,489. Phase 28 adds 404 net implementation/test lines while
+deleting the public proof ledger and manual formatter claim paths; Phase 29's
+all-implementation net-negative gate remains binding.
+
 ### New Phase 29: Final Architecture Deletion And Size Closure
 
 Delete every API, test carrier, and compatibility path superseded by Phases

@@ -5,8 +5,8 @@ use jolt_text::{TextRange, TextSize};
 #[cfg(debug_assertions)]
 use crate::TriviaKind;
 use crate::{
-    Comments, Language, RawSyntaxKind, SourceTokenId, SourceTriviaPiece, SourceTriviaSide,
-    SyntaxTrivia,
+    Comments, Language, RawSyntaxKind, SourceRangeClaim, SourceTokenId, SourceTriviaPiece,
+    SourceTriviaSide, SyntaxTrivia,
     comment::{trivia_has_blank_line, trivia_iter_has_blank_line},
     conservation::source_trivia_pieces,
     syntax_tree::{SyntaxTree, TokenId},
@@ -65,6 +65,17 @@ impl<'tree, L: Language> SyntaxToken<'tree, L> {
             tree: self.tree,
             id: self.id,
         }
+    }
+
+    /// Brands a formatter-ignore range with this token's parse-owned tree.
+    #[doc(hidden)]
+    #[must_use]
+    pub fn source_range_claim(
+        &self,
+        range: TextRange,
+        include_line_ending_at_end: bool,
+    ) -> SourceRangeClaim<'tree> {
+        SourceRangeClaim::new(self, range, include_line_ending_at_end)
     }
 
     /// Returns the byte offset where this token starts, including leading trivia.

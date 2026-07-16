@@ -87,7 +87,7 @@ pub(crate) fn format_removed_comments<'source>(
     let docs = doc.concat_list(|docs| {
         for comment in comments {
             if is_formatter_control_marker(comment.text()) {
-                let claim = docs.claimed_trivia(Doc::nil(), comment.source_pieces());
+                let claim = docs.source_trivia(comment.source_pieces(), |_| Doc::nil());
                 docs.push(claim);
                 has_claims = true;
                 continue;
@@ -398,15 +398,14 @@ pub(crate) fn format_comment<'source>(
     doc: &mut DocBuilder<'source>,
     comment: &JavaComment<'source>,
 ) -> Doc<'source> {
-    let formatted = match comment.kind() {
+    doc.source_trivia(comment.source_pieces(), |doc| match comment.kind() {
         JavaCommentKind::Line => format_line_comment(doc, comment.text()),
         JavaCommentKind::Block if is_star_block_comment(comment.text()) => {
             format_star_block_comment(doc, comment.text())
         }
         JavaCommentKind::Block => format_block_comment(doc, comment.text()),
         JavaCommentKind::Doc => format_star_block_comment(doc, comment.text()),
-    };
-    doc.claimed_trivia(formatted, comment.source_pieces())
+    })
 }
 
 pub(crate) fn comment_forces_line(comment: &JavaComment<'_>) -> bool {

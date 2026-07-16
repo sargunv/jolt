@@ -23,8 +23,6 @@ pub(crate) fn format_modifier_prefix<'source>(
     let Some(authorization) = modifiers.canonical_reorder_claim() else {
         return format_modifier_items_in_source_order(modifiers.partitioned_items(), true, doc);
     };
-    let _authorization = authorization.into_parts();
-
     let entry_capacity = modifiers
         .partitioned_items()
         .filter(|item| {
@@ -88,7 +86,8 @@ pub(crate) fn format_modifier_prefix<'source>(
         }
     });
     let modifiers = modifier_prefix_from_docs(doc, std::iter::empty::<Doc<'source>>(), entries);
-    doc_concat!(doc, [annotations, modifiers])
+    let formatted = doc_concat!(doc, [annotations, modifiers]);
+    doc.reordered_source(formatted, authorization)
 }
 
 pub(crate) fn format_typed_modifier_prefix<'source>(
@@ -111,15 +110,14 @@ pub(crate) fn format_typed_modifier_prefix<'source>(
             type_use_prefix: Doc::nil(),
         };
     };
-    let _authorization = authorization.into_parts();
-
     let parts = partition_modifier_items(&modifiers, doc);
-    format_typed_modifier_prefix_from_split_parts(
+    let formatted = format_typed_modifier_prefix_from_split_parts(
         parts.declaration_annotations,
         parts.type_use_annotations,
         parts.entries,
         doc,
-    )
+    );
+    authorize_typed_prefix(&formatted, authorization, doc)
 }
 
 pub(crate) fn format_typed_parameter_modifier_prefix<'source>(
@@ -136,14 +134,14 @@ pub(crate) fn format_typed_parameter_modifier_prefix<'source>(
             type_use_prefix: Doc::nil(),
         };
     };
-    let _authorization = authorization.into_parts();
     let parts = partition_parameter_modifier_items(modifiers, doc);
-    format_typed_modifier_prefix_from_split_parts(
+    let formatted = format_typed_modifier_prefix_from_split_parts(
         parts.declaration_annotations,
         parts.type_use_annotations,
         parts.entries,
         doc,
-    )
+    );
+    authorize_typed_prefix(&formatted, authorization, doc)
 }
 
 pub(crate) fn format_inline_typed_parameter_modifier_prefix<'source>(
@@ -160,7 +158,6 @@ pub(crate) fn format_inline_typed_parameter_modifier_prefix<'source>(
             type_use_prefix: Doc::nil(),
         };
     };
-    let _authorization = authorization.into_parts();
     let parts = partition_parameter_modifier_items(modifiers, doc);
     let type_use_is_first = parts.declaration_annotations.is_empty() && parts.entries.is_empty();
     let (type_use_forces_line, type_use_needs_line) =
@@ -204,9 +201,24 @@ pub(crate) fn format_inline_typed_parameter_modifier_prefix<'source>(
             type_use_needs_line,
         )
     };
+    authorize_typed_prefix(
+        &TypedModifierPrefix {
+            declaration_prefix,
+            type_use_prefix,
+        },
+        authorization,
+        doc,
+    )
+}
+
+fn authorize_typed_prefix<'source>(
+    prefix: &TypedModifierPrefix<'source>,
+    authorization: jolt_java_syntax::ReorderClaim<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> TypedModifierPrefix<'source> {
     TypedModifierPrefix {
-        declaration_prefix,
-        type_use_prefix,
+        declaration_prefix: doc.reordered_source(prefix.declaration_prefix, authorization),
+        type_use_prefix: prefix.type_use_prefix,
     }
 }
 

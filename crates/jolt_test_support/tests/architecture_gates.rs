@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const IMPLEMENTATION_BASELINE: &str = "2197128";
-const MAX_IMPLEMENTATION_NET_DELTA: usize = 8_085;
+const MAX_IMPLEMENTATION_NET_DELTA: usize = 8_489;
 
 #[test]
 fn forbidden_architecture_patterns_do_not_regress() {
@@ -35,6 +35,12 @@ fn forbidden_architecture_patterns_do_not_regress() {
             "unexpected_owned_",
             "canonical_reorder_claim().is_none()",
             "canonical_reorder_claim().is_some()",
+            "claimed_source(",
+            "claimed_trivia(",
+            "render_to_tracked(",
+            "rendered_fragments(",
+            "RenderedSourceFragment",
+            "let _authorization =",
         ] {
             if source.contains(forbidden) {
                 failures.push(format!("{relative}: forbidden pattern {forbidden:?}"));
@@ -85,6 +91,45 @@ fn forbidden_architecture_patterns_do_not_regress() {
         }
     }
 
+    let formatter_ignore = read(&workspace.join("crates/jolt_fmt_ir/src/formatter_ignore.rs"));
+    for pattern in [
+        "Vec<SourceIdentity",
+        "populate_claims",
+        "range_separators(",
+        "source_document(",
+    ] {
+        if formatter_ignore.contains(pattern) {
+            failures.push(format!(
+                "crates/jolt_fmt_ir/src/formatter_ignore.rs: proof-carrying ignore ranges forbid \
+                 manual bookkeeping {pattern:?}"
+            ));
+        }
+    }
+
+    let conservation = read(&workspace.join("crates/jolt_syntax/src/conservation.rs"));
+    if conservation.contains("for index in 0..self.tree.token_count()") {
+        failures.push(
+            "crates/jolt_syntax/src/conservation.rs: source-range claims must visit only their \
+             bounded token interval"
+                .to_owned(),
+        );
+    }
+
+    for relative in [
+        "crates/jolt_java_fmt/src/format.rs",
+        "crates/jolt_kotlin_fmt/src/format.rs",
+    ] {
+        let source = read(&workspace.join(relative));
+        for pattern in ["RenderProof", "conservation_tracker()"] {
+            if source.contains(pattern) {
+                failures.push(format!(
+                    "{relative}: source render entry points must not own proof bookkeeping \
+                     {pattern:?}"
+                ));
+            }
+        }
+    }
+
     assert!(
         failures.is_empty(),
         "forbidden architecture patterns found:\n{}",
@@ -98,14 +143,14 @@ fn forbidden_architecture_patterns_do_not_regress() {
 /// construction. Untracked implementation files are added to the projection so
 /// a local `mise run test` cannot evade the gate before staging them.
 #[test]
-fn implementation_projection_stays_within_phase_twenty_seven_budget() {
+fn implementation_projection_stays_within_phase_twenty_eight_budget() {
     let workspace = workspace_root();
     let (additions, deletions) = implementation_projection(&workspace);
     let net = additions.saturating_sub(deletions);
 
     assert!(
         net <= MAX_IMPLEMENTATION_NET_DELTA,
-        "Phase 27 implementation projection against {IMPLEMENTATION_BASELINE} is \
+        "Phase 28 implementation projection against {IMPLEMENTATION_BASELINE} is \
          +{additions}/-{deletions}, net +{net}; maximum net delta is \
          +{MAX_IMPLEMENTATION_NET_DELTA}. The projection includes crates/**/*.rs and \
          tools/**/*.py, including tests and test support."

@@ -228,6 +228,7 @@ impl ExactSizeIterator for SourceTriviaPieces<'_> {}
 pub enum ConservationError {
     ForeignToken,
     ForeignTrivia,
+    ForeignSourceRange,
     UnownedTrivia {
         trivia: usize,
     },
@@ -261,6 +262,96 @@ pub enum ConservationError {
         kind: TriviaKind,
         range: TextRange,
     },
+}
+
+/// A syntax-tree-branded source range used by formatter-ignore output.
+///
+/// The formatter can select a parser-backed range, but it cannot enumerate or
+/// fabricate the identities that range conserves.
+#[derive(Clone, Copy)]
+pub struct SourceRangeClaim<'tree> {
+    #[cfg(debug_assertions)]
+    tree: &'tree SyntaxTree,
+    #[cfg(debug_assertions)]
+    range: TextRange,
+    #[cfg(debug_assertions)]
+    include_line_ending_at_end: bool,
+    #[cfg(debug_assertions)]
+    token_start: usize,
+    #[cfg(debug_assertions)]
+    token_end: usize,
+    #[cfg(not(debug_assertions))]
+    marker: std::marker::PhantomData<&'tree SyntaxTree>,
+}
+
+impl fmt::Debug for SourceRangeClaim<'_> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        #[cfg(debug_assertions)]
+        return formatter
+            .debug_tuple("SourceRangeClaim")
+            .field(&self.range)
+            .finish();
+        #[cfg(not(debug_assertions))]
+        formatter.write_str("SourceRangeClaim")
+    }
+}
+
+impl PartialEq for SourceRangeClaim<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        #[cfg(debug_assertions)]
+        return std::ptr::eq(self.tree, other.tree)
+            && self.range == other.range
+            && self.include_line_ending_at_end == other.include_line_ending_at_end
+            && self.token_start == other.token_start
+            && self.token_end == other.token_end;
+        #[cfg(not(debug_assertions))]
+        {
+            let _ = other;
+            true
+        }
+    }
+}
+
+impl Eq for SourceRangeClaim<'_> {}
+
+impl<'tree> SourceRangeClaim<'tree> {
+    pub(crate) fn new<L: Language>(
+        token: &SyntaxToken<'tree, L>,
+        range: TextRange,
+        include_line_ending_at_end: bool,
+    ) -> Self {
+        assert!(
+            range.end().get() <= token.source().len(),
+            "source claim range belongs to its syntax source"
+        );
+        #[cfg(debug_assertions)]
+        {
+            let tokens = token.source_id().tree.token_data();
+            let token_start =
+                tokens.partition_point(|token| token.full_text_range().end() <= range.start());
+            let token_end = tokens.partition_point(|token| {
+                if include_line_ending_at_end {
+                    token.full_text_range().start() <= range.end()
+                } else {
+                    token.full_text_range().start() < range.end()
+                }
+            });
+            Self {
+                tree: token.source_id().tree,
+                range,
+                include_line_ending_at_end,
+                token_start,
+                token_end,
+            }
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            let _ = (token, range, include_line_ending_at_end);
+            Self {
+                marker: std::marker::PhantomData,
+            }
+        }
+    }
 }
 
 impl fmt::Display for ConservationError {
@@ -456,6 +547,56 @@ impl<'tree> SyntaxConservationTracker<'tree> {
         }
         #[cfg(not(debug_assertions))]
         let _ = core;
+        Ok(())
+    }
+
+    /// Claims identities selected by one parser-backed formatter-ignore range.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the range belongs to a different syntax tree or
+    /// claims an unauthorized or already-consumed identity.
+    pub fn claim_source_range(
+        &mut self,
+        claim: SourceRangeClaim<'tree>,
+    ) -> Result<(), ConservationError> {
+        #[cfg(debug_assertions)]
+        {
+            if !std::ptr::eq(claim.tree, self.tree) {
+                return Err(ConservationError::ForeignSourceRange);
+            }
+            for index in claim.token_start..claim.token_end {
+                let token_id = SourceTokenId {
+                    tree: self.tree,
+                    id: TokenId::new(index),
+                };
+                let token = self.tree.token(token_id.id);
+                for piece in
+                    source_trivia_pieces(token_id, SourceTriviaSide::Leading, token.leading())
+                        .chain(source_trivia_pieces(
+                            token_id,
+                            SourceTriviaSide::Trailing,
+                            token.trailing(),
+                        ))
+                {
+                    let in_range = range_contains(claim.range, piece.text_range())
+                        || (claim.include_line_ending_at_end
+                            && piece.trivia().kind() == TriviaKind::Newline
+                            && piece.text_range().start() == claim.range.end());
+                    if in_range && is_conserved_trivia(piece.id()) {
+                        self.claim_trivia(piece.id())?;
+                    }
+                }
+                let token_range = token.token_text_range();
+                if token_range.start() != token_range.end()
+                    && range_contains(claim.range, token_range)
+                {
+                    self.claim_token(token_id)?;
+                }
+            }
+        }
+        #[cfg(not(debug_assertions))]
+        let _ = claim;
         Ok(())
     }
 

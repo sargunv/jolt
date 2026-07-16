@@ -15,8 +15,9 @@ mod red;
 
 pub use comment::{Comment, CommentKind, Comments};
 pub use conservation::{
-    ConservationError, SourceIdentity, SourceNodeId, SourceTokenId, SourceTriviaId,
-    SourceTriviaPiece, SourceTriviaSide, SyntaxConservationTracker, SyntaxVerbatimCore,
+    ConservationError, SourceIdentity, SourceNodeId, SourceRangeClaim, SourceTokenId,
+    SourceTriviaId, SourceTriviaPiece, SourceTriviaSide, SyntaxConservationTracker,
+    SyntaxVerbatimCore,
 };
 pub use event::{CompletedMarker, Event, Marker, NodeAnchor};
 pub use kind::RawSyntaxKind;

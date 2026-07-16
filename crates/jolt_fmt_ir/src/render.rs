@@ -1,12 +1,10 @@
 use std::error::Error;
 use std::fmt;
 
-use crate::document::{Doc, DocArena, DocNode, FlatLine, Line, LineMode, LiteralText};
-#[cfg(debug_assertions)]
-use crate::source_fragment::SourceFragment;
-use crate::source_fragment::{CompletedRenderProof, RenderProof};
+use crate::document::{Doc, DocArena, DocNode, DocumentText, FlatLine, Line, LineMode};
+use crate::source_fragment::RenderProof;
 use crate::width::{TextWidth, add_width};
-use jolt_syntax::ConservationError;
+use jolt_syntax::{ConservationError, Language, SyntaxNode};
 
 // A flat-fit probe can scan nested docs, the active render stack, and an overlay
 // stack for groups/indents. Cap the number of semantic commands each probe can
@@ -34,21 +32,22 @@ pub struct RenderOutcome {
     pub halted: bool,
 }
 
-/// The ordinary render result plus a completed source-conservation proof.
-pub struct TrackedRenderOutcome<'tree> {
+/// A completed source-aware render.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SourceRenderOutcome {
     halted: bool,
-    proof: Option<CompletedRenderProof<'tree>>,
+    used_malformed_verbatim: bool,
 }
 
-impl<'tree> TrackedRenderOutcome<'tree> {
+impl SourceRenderOutcome {
     #[must_use]
     pub const fn halted(&self) -> bool {
         self.halted
     }
 
     #[must_use]
-    pub const fn completed_proof(&self) -> Option<&CompletedRenderProof<'tree>> {
-        self.proof.as_ref()
+    pub const fn used_malformed_verbatim(&self) -> bool {
+        self.used_malformed_verbatim
     }
 }
 
@@ -142,38 +141,39 @@ pub fn render_to<S: RenderSink>(
     Ok(renderer.finish())
 }
 
-/// Renders a document while proving source conservation for the exceptional
-/// fragments that are actually emitted.
+/// Renders a source document while proving exact conservation for the selected
+/// document branches.
 ///
 /// # Errors
 ///
 /// Returns [`RenderError`] when the document is structurally invalid or a
 /// rendered fragment makes a duplicate or foreign source claim.
-pub fn render_to_tracked<'source, S: RenderSink>(
+pub fn render_source_to<'source, L: Language, S: RenderSink>(
     arena: &DocArena<'source>,
     doc: Doc<'source>,
     options: RenderOptions,
     sink: S,
-    mut proof: RenderProof<'source>,
-) -> Result<TrackedRenderOutcome<'source>, RenderError> {
+    root: &SyntaxNode<'source, L>,
+) -> Result<SourceRenderOutcome, RenderError> {
     if let Some(error) = arena.invariant_error() {
         return Err(RenderError::syntax_invariant(error));
     }
+    let mut proof = RenderProof::new(root.conservation_tracker());
     let mut renderer = Renderer::new(arena, options, sink, Some(&mut proof));
     renderer.render_doc(doc, Mode::Break)?;
     let render = renderer.finish();
     if render.halted {
-        return Ok(TrackedRenderOutcome {
+        return Ok(SourceRenderOutcome {
             halted: true,
-            proof: None,
+            used_malformed_verbatim: false,
         });
     }
-    let proof = proof.finish().map_err(|error| RenderError {
+    let used_malformed_verbatim = proof.finish().map_err(|error| RenderError {
         kind: RenderErrorKind::Conservation(error),
     })?;
-    Ok(TrackedRenderOutcome {
+    Ok(SourceRenderOutcome {
         halted: false,
-        proof: Some(proof),
+        used_malformed_verbatim,
     })
 }
 
@@ -317,31 +317,27 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         match arena.node(doc) {
             None => Ok(()),
             Some(DocNode::Text(text)) => {
-                if text.text == " " {
+                #[cfg(debug_assertions)]
+                if let Some(source) = &text.proof {
+                    if let Some(proof) = self.proof.as_mut() {
+                        proof
+                            .render_fragment(source, arena.source_claims(source))
+                            .map_err(|error| RenderError {
+                                kind: RenderErrorKind::Conservation(error),
+                            })?;
+                    } else {
+                        return Err(RenderError::missing_conservation_proof());
+                    }
+                }
+                if text.text == " " && !text.is_multiline() {
                     if self.horizontal_whitespace == HorizontalWhitespace::None {
                         self.horizontal_whitespace = HorizontalWhitespace::Pending;
                     }
+                } else if text.is_multiline() {
+                    self.write_literal(text);
                 } else {
-                    self.write_measured_str(&text.text, text.width);
+                    self.write_measured_str(&text.text, text.final_width());
                 }
-                Ok(())
-            }
-            Some(DocNode::LiteralText(text)) => {
-                self.write_literal(text);
-                Ok(())
-            }
-            #[cfg(debug_assertions)]
-            Some(DocNode::SourceFragment(fragment)) => {
-                if let Some(proof) = self.proof.as_mut() {
-                    proof
-                        .render_fragment(fragment, arena.source_claims(fragment))
-                        .map_err(|error| RenderError {
-                            kind: RenderErrorKind::Conservation(error),
-                        })?;
-                } else if !fragment.is_claim_marker() {
-                    return Err(RenderError::missing_conservation_proof());
-                }
-                self.write_source_fragment(fragment);
                 Ok(())
             }
             Some(DocNode::InlineConcat { docs, len }) => {
@@ -463,22 +459,10 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         self.add_width(width);
     }
 
-    fn write_literal(&mut self, literal: &LiteralText<'_>) {
+    fn write_literal(&mut self, literal: &DocumentText<'_>) {
         self.write_str(&literal.text);
         let final_width = literal.final_width();
         if literal.is_multiline() {
-            self.column = final_width;
-            self.measured_group_fits = false;
-        } else {
-            self.add_width(final_width);
-        }
-    }
-
-    #[cfg(debug_assertions)]
-    fn write_source_fragment(&mut self, fragment: &SourceFragment<'_, '_>) {
-        self.write_str(&fragment.text);
-        let final_width = fragment.final_width();
-        if fragment.is_multiline() {
             self.column = final_width;
             self.measured_group_fits = false;
         } else {
@@ -675,26 +659,17 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
         let arena = self.arena;
         match arena.node(doc) {
             None => FitResult::Continue,
-            Some(DocNode::Text(text)) if text.text == " " => {
+            Some(DocNode::Text(text)) if text.text == " " && !text.is_multiline() => {
                 if self.horizontal_whitespace == HorizontalWhitespace::None {
                     self.horizontal_whitespace = HorizontalWhitespace::Pending;
                 }
                 FitResult::Continue
             }
-            Some(DocNode::Text(text)) => self.text_width_result(&text.text, text.width),
-            Some(DocNode::LiteralText(text)) => {
+            Some(DocNode::Text(text)) => {
                 if text.is_multiline() {
                     FitResult::No
                 } else {
                     self.text_width_result(&text.text, text.final_width())
-                }
-            }
-            #[cfg(debug_assertions)]
-            Some(DocNode::SourceFragment(fragment)) => {
-                if fragment.is_multiline() {
-                    FitResult::No
-                } else {
-                    self.text_width_result(&fragment.text, fragment.final_width())
                 }
             }
             Some(DocNode::InlineConcat { docs, len }) => {
@@ -900,22 +875,30 @@ mod tests {
     use std::ops::Range;
 
     use jolt_diagnostics::{Diagnostic, DiagnosticCodeId};
-    use jolt_java_syntax::{JavaLanguage, JavaSyntaxKind};
+    use jolt_java_syntax::{JavaLanguage, JavaSyntaxKind, JavaSyntaxView, parse_compilation_unit};
     use jolt_syntax::{
         BuildSyntaxTreeError, Event, FactoryNode, Language, LanguageLexer, LexedToken,
-        ParsedChildren, RawSyntaxKind, SourceIdentity, SourceTokenId, SyntaxFactory, SyntaxNode,
-        SyntaxTokenData, SyntaxTreeSink, SyntaxTrivia, TriviaKind, build_syntax_tree_with_factory,
+        ParsedChildren, RawSyntaxKind, ReorderClaim, ReorderReason, SourceIdentity, SourceTokenId,
+        SyntaxFactory, SyntaxNode, SyntaxTokenData, SyntaxTreeSink, SyntaxTrivia, TriviaKind,
+        build_syntax_tree_with_factory,
     };
     use jolt_text::{TextRange, TextSize};
 
-    use crate::source_fragment::exceptional_separators;
+    #[cfg(not(debug_assertions))]
+    use crate::Doc;
+    #[cfg(debug_assertions)]
+    use crate::document::DocNode;
+    use crate::formatter_ignore::formatter_ignore_ranges_with_safety;
+    #[cfg(debug_assertions)]
+    use crate::source_fragment::SourceProofKind;
+    use crate::source_fragment::{ExceptionalSeparators, exceptional_separators};
     use crate::{
         DocBuilder, ExceptionalSeparator, FragmentBoundary, LexicalAtom, LexicalAtomKind,
-        LexicalSafety, NormalizedToken, RemovalClaim, RemovalReason, RenderControl, RenderProof,
-        RenderSink, ReplacementClaim, SourceFragmentKind, SynthesisClaim,
+        LexicalSafety, NormalizedToken, RemovalClaim, RemovalReason, RenderControl, RenderSink,
+        ReplacementClaim, SynthesisClaim,
     };
 
-    use super::{IndentStyle, RenderOptions, TextWidth, render_to, render_to_tracked};
+    use super::{IndentStyle, RenderOptions, TextWidth, render_source_to, render_to};
 
     #[derive(Default)]
     struct StringSink(String);
@@ -988,19 +971,44 @@ mod tests {
         }
     }
 
-    fn replacement_claim(
-        source: SourceTokenId<'_>,
+    fn replacement_claim<'tree>(
+        owner: &SyntaxNode<'tree, ClaimLanguage>,
+        source: SourceTokenId<'tree>,
         token: NormalizedToken,
-    ) -> ReplacementClaim<'_> {
-        ReplacementClaim::authorized::<ClaimLanguage>((), source, token)
+    ) -> ReplacementClaim<'tree> {
+        let owner = jolt_syntax::NormalizationOwner::authorized((), owner)
+            .expect("test owner is recovery-free");
+        ReplacementClaim::authorized::<ClaimLanguage>(owner, source, token)
     }
 
-    fn removal_claim(source: SourceIdentity<'_>, reason: RemovalReason) -> RemovalClaim<'_> {
-        RemovalClaim::authorized::<ClaimLanguage>((), source, reason)
+    fn removal_claim<'tree>(
+        owner: &SyntaxNode<'tree, ClaimLanguage>,
+        source: SourceIdentity<'tree>,
+        reason: RemovalReason,
+    ) -> RemovalClaim<'tree> {
+        let owner = jolt_syntax::NormalizationOwner::authorized((), owner)
+            .expect("test owner is recovery-free");
+        RemovalClaim::authorized::<ClaimLanguage>(owner, source, reason)
     }
 
-    fn synthesis_claim(anchor: SourceTokenId<'_>, token: NormalizedToken) -> SynthesisClaim<'_> {
-        SynthesisClaim::authorized::<ClaimLanguage>((), anchor, token)
+    fn synthesis_claim<'tree>(
+        owner: &SyntaxNode<'tree, ClaimLanguage>,
+        anchor: SourceTokenId<'tree>,
+        token: NormalizedToken,
+    ) -> SynthesisClaim<'tree> {
+        let owner = jolt_syntax::NormalizationOwner::authorized((), owner)
+            .expect("test owner is recovery-free");
+        SynthesisClaim::authorized::<ClaimLanguage>(owner, anchor, token)
+    }
+
+    fn reorder_claim<'tree>(
+        owner: &SyntaxNode<'tree, ClaimLanguage>,
+        anchor: SourceTokenId<'tree>,
+        reason: ReorderReason,
+    ) -> ReorderClaim<'tree> {
+        let owner = jolt_syntax::NormalizationOwner::authorized((), owner)
+            .expect("test owner is recovery-free");
+        ReorderClaim::authorized::<ClaimLanguage>(owner, anchor, reason)
     }
 
     impl RenderSink for StringSink {
@@ -1124,7 +1132,7 @@ mod tests {
     fn malformed_verbatim_is_one_tracked_borrowed_core() {
         let source = "a+b";
         let tree = bogus_syntax_tree(source);
-        let root = SyntaxNode::<JavaLanguage>::new_root(source, &tree);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
         let core = root
             .malformed_verbatim_core()
             .expect("error node owns a verbatim core");
@@ -1134,48 +1142,39 @@ mod tests {
         let document = builder.resolve_exceptional(fragment, None, None, &mut safety);
         let arena = builder.into_arena();
         let mut sink = StringSink::default();
-        let proof = RenderProof::new(root.conservation_tracker());
-
-        let outcome = render_to_tracked(&arena, document, options(), &mut sink, proof)
+        let outcome = render_source_to(&arena, document, options(), &mut sink, &root)
             .expect("verbatim document renders");
 
         assert_eq!(sink.0, source);
-        assert!(matches!(
-            outcome
-                .completed_proof()
-                .expect("render completed")
-                .rendered_fragments(),
-            [rendered]
-                if matches!(rendered.kind, SourceFragmentKind::MalformedVerbatim { .. })
-        ));
+        assert!(outcome.used_malformed_verbatim());
     }
 
     #[test]
     fn valid_node_cannot_construct_a_malformed_verbatim_core() {
         let source = "valid";
         let tree = syntax_tree(source);
-        let root = SyntaxNode::<JavaLanguage>::new_root(source, &tree);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
         assert!(root.malformed_verbatim_core().is_none());
     }
 
     #[test]
-    fn structured_token_and_bogus_core_complete_one_root_proof() {
+    fn structured_token_and_malformed_core_complete_one_source_render() {
         let source = "ab";
         let tree = mixed_syntax_tree();
-        let root = SyntaxNode::<JavaLanguage>::new_root(source, &tree);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
         let first = root.first_token().expect("structured token");
-        let bogus = root.children().next().expect("bogus child");
-        let core = bogus
+        let malformed = root.children().next().expect("malformed child");
+        let core = malformed
             .malformed_verbatim_core()
-            .expect("error child owns a verbatim core");
-        let atom_b = LexicalAtom::new(LexicalAtomKind::Identifier, "b");
+            .expect("child owns a verbatim core");
+        let atom = LexicalAtom::new(LexicalAtomKind::Identifier, "b");
         let mut builder = DocBuilder::new();
         let structured = builder.source_token(&first);
         let malformed = builder.malformed_verbatim(
             &core,
             FragmentBoundary {
-                first: Some(atom_b),
-                last: Some(atom_b),
+                first: Some(atom),
+                last: Some(atom),
                 ends_with_line_comment: false,
             },
         );
@@ -1184,68 +1183,71 @@ mod tests {
         let document = builder.concat([structured, malformed]);
         let arena = builder.into_arena();
         let mut sink = StringSink::default();
-        let proof = RenderProof::new(root.conservation_tracker());
 
-        let outcome = render_to_tracked(&arena, document, options(), &mut sink, proof)
-            .expect("mixed structured and bogus output completes");
+        let outcome = render_source_to(&arena, document, options(), &mut sink, &root)
+            .expect("structured and malformed source completes");
 
         assert_eq!(sink.0, "a b");
         assert_eq!(safety.0, 1);
-        assert!(matches!(
-            outcome
-                .completed_proof()
-                .expect("render completed")
-                .rendered_fragments(),
-            [rendered]
-                if matches!(rendered.kind, SourceFragmentKind::MalformedVerbatim { .. })
-        ));
+        assert!(outcome.used_malformed_verbatim());
     }
 
     #[test]
     fn structured_comment_claims_its_line_terminator() {
         let source = "x//c\n";
         let tree = syntax_tree_with_line_comment();
-        let root = SyntaxNode::<JavaLanguage>::new_root(source, &tree);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
         let token = root.first_token().expect("source token");
         let trivia = token.trailing_trivia_with_ids().collect::<Vec<_>>();
         let mut builder = DocBuilder::new();
         let token_doc = builder.source_token(&token);
-        let comment_doc = builder.source_trivia("//c", trivia);
+        let comment_doc = builder.source_trivia(trivia, |docs| docs.literal_text("//c"));
         let line = builder.hard_line();
         let document = builder.concat([token_doc, comment_doc, line]);
         let arena = builder.into_arena();
         let mut sink = StringSink::default();
-        let proof = RenderProof::new(root.conservation_tracker());
 
-        let outcome = render_to_tracked(&arena, document, options(), &mut sink, proof)
+        render_source_to(&arena, document, options(), &mut sink, &root)
             .expect("structured token and comment complete");
 
         assert_eq!(sink.0, source);
-        assert!(
-            outcome
-                .completed_proof()
-                .expect("render completed")
-                .rendered_fragments()
-                .is_empty()
-        );
     }
 
     #[test]
-    fn tracked_render_cannot_return_before_completion() {
+    fn source_looking_ordinary_text_cannot_complete_conservation() {
         let source = "x";
         let tree = syntax_tree(source);
-        let root = SyntaxNode::<JavaLanguage>::new_root(source, &tree);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
         let mut builder = DocBuilder::new();
-        let untracked = builder.text(source);
+        let ordinary = builder.text(source);
         let arena = builder.into_arena();
         let mut sink = StringSink::default();
-        let proof = RenderProof::new(root.conservation_tracker());
 
-        let Err(error) = render_to_tracked(&arena, untracked, options(), &mut sink, proof) else {
-            panic!("tracked render must reject a missing structured token claim");
-        };
+        let error = render_source_to(&arena, ordinary, options(), &mut sink, &root)
+            .expect_err("ordinary text cannot stand in for structured source");
 
         assert!(error.to_string().starts_with("MissingToken"));
+    }
+
+    #[test]
+    fn zero_token_malformed_core_records_dispatch() {
+        let source = "";
+        let tree = bogus_syntax_tree(source);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
+        let core = root
+            .malformed_verbatim_core()
+            .expect("empty malformed node owns a core");
+        let mut builder = DocBuilder::new();
+        let malformed = builder.malformed_verbatim(&core, empty_boundary());
+        let mut safety = CountingSafety::default();
+        let document = builder.resolve_exceptional(malformed, None, None, &mut safety);
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        let outcome = render_source_to(&arena, document, options(), &mut sink, &root)
+            .expect("empty malformed source completes");
+
+        assert!(outcome.used_malformed_verbatim());
     }
 
     #[test]
@@ -1265,7 +1267,7 @@ mod tests {
 
         let source = "x";
         let tree = syntax_tree(source);
-        let root = SyntaxNode::<JavaLanguage>::new_root(source, &tree);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
         let token = root.first_token().expect("source token");
         let mut builder = DocBuilder::new();
         let line = builder.hard_line();
@@ -1274,13 +1276,11 @@ mod tests {
         let document = builder.indent(contents);
         let arena = builder.into_arena();
         let mut sink = HaltOnIndent(String::new());
-        let proof = RenderProof::new(root.conservation_tracker());
-
-        let outcome = render_to_tracked(&arena, document, options(), &mut sink, proof)
+        let outcome = render_source_to(&arena, document, options(), &mut sink, &root)
             .expect("an intentional halt is not a conservation error");
 
         assert!(outcome.halted());
-        assert!(outcome.completed_proof().is_none());
+        assert!(!outcome.used_malformed_verbatim());
         assert_eq!(sink.0, "\n    ");
     }
 
@@ -1288,14 +1288,18 @@ mod tests {
     fn only_rendered_if_break_branch_consumes_claims() {
         let source = "ab";
         let tree = syntax_tree(source);
-        let root = SyntaxNode::<JavaLanguage>::new_root(source, &tree);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
         let mut tokens = root.tokens();
         let first = tokens.next().expect("first token").source_id();
         let second = tokens.next().expect("second token").source_id();
         let mut builder = DocBuilder::new();
-        let breaks =
-            builder.replaced_source(replacement_claim(first, NormalizedToken::ImportKeyword));
+        let breaks = builder.replaced_source(replacement_claim(
+            &root,
+            first,
+            NormalizedToken::ImportKeyword,
+        ));
         let flat = builder.replaced_source(replacement_claim(
+            &root,
             second,
             NormalizedToken::ImportAliasKeyword,
         ));
@@ -1305,114 +1309,40 @@ mod tests {
         let conditional = builder.if_break(breaks, flat);
         let conditional = builder.group(conditional);
         let removed = builder.removed_source(removal_claim(
+            &root,
             SourceIdentity::Token(first),
             RemovalReason::DuplicateImport,
         ));
         let document = builder.concat([conditional, removed]);
         let arena = builder.into_arena();
         let mut sink = StringSink::default();
-        let proof = RenderProof::new(root.conservation_tracker());
-
-        let outcome = render_to_tracked(&arena, document, options(), &mut sink, proof)
+        let outcome = render_source_to(&arena, document, options(), &mut sink, &root)
             .expect("selected branch renders without a duplicate claim");
 
         assert_eq!(sink.0, "as");
-        let fragments = outcome
-            .completed_proof()
-            .expect("render completed")
-            .rendered_fragments();
-        assert_eq!(fragments.len(), 2);
-        assert!(matches!(
-            fragments[0].kind,
-            SourceFragmentKind::Replaced {
-                token: NormalizedToken::ImportAliasKeyword
-            }
-        ));
-    }
-
-    #[test]
-    fn zero_token_malformed_core_still_records_dispatch() {
-        let source = "";
-        let tree = bogus_syntax_tree(source);
-        let root = SyntaxNode::<JavaLanguage>::new_root(source, &tree);
-        let core = root
-            .malformed_verbatim_core()
-            .expect("empty error node owns a verbatim core");
-        let mut builder = DocBuilder::new();
-        let fragment = builder.malformed_verbatim(&core, empty_boundary());
-        let mut safety = CountingSafety::default();
-        let document = builder.resolve_exceptional(fragment, None, None, &mut safety);
-        let arena = builder.into_arena();
-        let mut sink = StringSink::default();
-        let proof = RenderProof::new(root.conservation_tracker());
-
-        let outcome = render_to_tracked(&arena, document, options(), &mut sink, proof)
-            .expect("empty malformed fragment renders");
-
-        assert_eq!(
-            outcome
-                .completed_proof()
-                .expect("render completed")
-                .rendered_fragments()
-                .len(),
-            1
-        );
-    }
-
-    #[test]
-    fn synthesis_has_closed_provenance_and_a_source_anchor() {
-        let source = "x";
-        let tree = syntax_tree(source);
-        let root = SyntaxNode::<JavaLanguage>::new_root(source, &tree);
-        let token = root.first_token().expect("source token");
-        let mut builder = DocBuilder::new();
-        let source_doc = builder.source_token(&token);
-        let synthesized = builder.synthesized_source(synthesis_claim(
-            token.source_id(),
-            NormalizedToken::EnumSemicolon,
-        ));
-        let mut safety = CountingSafety::default();
-        let synthesized = builder.resolve_exceptional(synthesized, None, None, &mut safety);
-        let document = builder.concat([source_doc, synthesized]);
-        let arena = builder.into_arena();
-        let mut sink = StringSink::default();
-        let proof = RenderProof::new(root.conservation_tracker());
-
-        let outcome = render_to_tracked(&arena, document, options(), &mut sink, proof)
-            .expect("source-backed and synthesized fragments render");
-
-        assert_eq!(sink.0, "x;");
-        assert!(matches!(
-            outcome
-                .completed_proof()
-                .expect("render completed")
-                .rendered_fragments(),
-            [synthesized]
-                if matches!(synthesized.kind, SourceFragmentKind::Synthesized {
-                    token: NormalizedToken::EnumSemicolon,
-                    ..
-                })
-        ));
+        assert!(!outcome.used_malformed_verbatim());
     }
 
     #[test]
     fn synthesis_rejects_a_foreign_anchor() {
         let source = "x";
         let tree = syntax_tree(source);
-        let root = SyntaxNode::<JavaLanguage>::new_root(source, &tree);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
+        let local = root.first_token().expect("local token");
         let other_tree = syntax_tree("y");
-        let other_root = SyntaxNode::<JavaLanguage>::new_root("y", &other_tree);
+        let other_root = SyntaxNode::<ClaimLanguage>::new_root("y", &other_tree);
         let foreign = other_root.first_token().expect("foreign token").source_id();
         let mut builder = DocBuilder::new();
-        let synthesized =
-            builder.synthesized_source(synthesis_claim(foreign, NormalizedToken::EnumSemicolon));
+        let synthesized = builder.synthesized_source(synthesis_claim(
+            &other_root,
+            foreign,
+            NormalizedToken::EnumSemicolon,
+        ));
         let mut safety = CountingSafety::default();
-        let document = builder.resolve_exceptional(synthesized, None, None, &mut safety);
+        let document = builder.resolve_exceptional(synthesized, Some(&local), None, &mut safety);
         let arena = builder.into_arena();
         let mut sink = StringSink::default();
-        let proof = RenderProof::new(root.conservation_tracker());
-
-        let Err(error) = render_to_tracked(&arena, document, options(), &mut sink, proof) else {
+        let Err(error) = render_source_to(&arena, document, options(), &mut sink, &root) else {
             panic!("foreign synthesis anchor must be rejected");
         };
 
@@ -1424,16 +1354,18 @@ mod tests {
     fn exceptional_fragment_cannot_render_without_proof() {
         let source = "";
         let tree = bogus_syntax_tree(source);
-        let root = SyntaxNode::<JavaLanguage>::new_root(source, &tree);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
         let core = root
             .malformed_verbatim_core()
             .expect("error node owns a verbatim core");
         let mut builder = DocBuilder::new();
         let fragment = builder.malformed_verbatim(&core, empty_boundary());
+        let mut safety = CountingSafety::default();
+        let document = builder.resolve_exceptional(fragment, None, None, &mut safety);
         let arena = builder.into_arena();
         let mut sink = StringSink::default();
 
-        let error = render_to(&arena, fragment.doc(), options(), &mut sink)
+        let error = render_to(&arena, document, options(), &mut sink)
             .expect_err("untracked exceptional output must be rejected");
 
         assert_eq!(
@@ -1447,14 +1379,16 @@ mod tests {
     fn unselected_exceptional_branch_does_not_require_proof() {
         let source = "";
         let tree = bogus_syntax_tree(source);
-        let root = SyntaxNode::<JavaLanguage>::new_root(source, &tree);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
         let core = root
             .malformed_verbatim_core()
             .expect("error node owns a verbatim core");
         let mut builder = DocBuilder::new();
         let exceptional = builder.malformed_verbatim(&core, empty_boundary());
+        let mut safety = CountingSafety::default();
+        let exceptional = builder.resolve_exceptional(exceptional, None, None, &mut safety);
         let ordinary = builder.text("ordinary");
-        let conditional = builder.if_break(exceptional.doc(), ordinary);
+        let conditional = builder.if_break(exceptional, ordinary);
         let document = builder.group(conditional);
         let arena = builder.into_arena();
         let mut sink = StringSink::default();
@@ -1468,10 +1402,10 @@ mod tests {
     #[derive(Default)]
     struct CountingSafety(usize);
 
-    impl LexicalSafety<JavaLanguage> for CountingSafety {
+    impl LexicalSafety<ClaimLanguage> for CountingSafety {
         fn classify(
             &mut self,
-            _token: &jolt_syntax::SyntaxToken<'_, JavaLanguage>,
+            _token: &jolt_syntax::SyntaxToken<'_, ClaimLanguage>,
         ) -> LexicalAtomKind {
             LexicalAtomKind::Identifier
         }
@@ -1486,11 +1420,58 @@ mod tests {
         }
     }
 
+    #[derive(Default)]
+    struct CountingJavaSafety(usize);
+
+    impl LexicalSafety<JavaLanguage> for CountingJavaSafety {
+        fn classify(
+            &mut self,
+            _token: &jolt_syntax::SyntaxToken<'_, JavaLanguage>,
+        ) -> LexicalAtomKind {
+            self.0 += 1;
+            LexicalAtomKind::Identifier
+        }
+
+        fn separator(
+            &mut self,
+            _left: LexicalAtom<'_>,
+            _right: LexicalAtom<'_>,
+        ) -> ExceptionalSeparator {
+            ExceptionalSeparator::Space
+        }
+    }
+
+    #[test]
+    fn formatter_ignore_boundary_scan_is_linearly_bounded() {
+        let source = "class C {\n\
+            // @formatter:off\n\
+            int first=1;\n\
+            // @formatter:on\n\
+            // @formatter:off\n\
+            int second=2;\n\
+            // @formatter:on\n\
+            }\n";
+        let parse = parse_compilation_unit(source);
+        let syntax = parse.syntax().expect("test source parses");
+        let root = syntax.syntax_node().expect("test syntax has a root");
+        let token_count = root.tokens().count();
+        let mut safety = CountingJavaSafety::default();
+
+        let ranges = formatter_ignore_ranges_with_safety(source, 0, root.tokens(), &mut safety);
+
+        assert_eq!(ranges.len(), 2);
+        assert!(
+            safety.0 <= token_count * 4,
+            "{} classifications for {token_count} tokens",
+            safety.0
+        );
+    }
+
     #[test]
     fn exceptional_lexical_safety_is_bounded_and_line_comment_aware() {
         let source = "x";
         let tree = bogus_syntax_tree(source);
-        let root = SyntaxNode::<JavaLanguage>::new_root(source, &tree);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
         let core = root
             .malformed_verbatim_core()
             .expect("error node owns a verbatim core");
@@ -1507,7 +1488,7 @@ mod tests {
         let mut safety = CountingSafety::default();
 
         let separators =
-            exceptional_separators::<JavaLanguage>(Some(atom), fragment, Some(atom), &mut safety);
+            exceptional_separators::<ClaimLanguage>(Some(atom), fragment, Some(atom), &mut safety);
 
         assert_eq!(separators.before, ExceptionalSeparator::Space);
         assert_eq!(separators.after, ExceptionalSeparator::HardLine);
@@ -1521,14 +1502,18 @@ mod tests {
     fn adjacent_exceptional_fragments_share_one_safe_join() {
         let source = "ab";
         let tree = syntax_tree(source);
-        let root = SyntaxNode::<JavaLanguage>::new_root(source, &tree);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
         let mut tokens = root.tokens();
         let first = tokens.next().expect("first token").source_id();
         let second = tokens.next().expect("second token").source_id();
         let mut builder = DocBuilder::new();
-        let import =
-            builder.replaced_source(replacement_claim(first, NormalizedToken::ImportKeyword));
+        let import = builder.replaced_source(replacement_claim(
+            &root,
+            first,
+            NormalizedToken::ImportKeyword,
+        ));
         let alias = builder.replaced_source(replacement_claim(
+            &root,
             second,
             NormalizedToken::ImportAliasKeyword,
         ));
@@ -1537,50 +1522,155 @@ mod tests {
         let document = builder.resolve_exceptional(joined, None, None, &mut safety);
         let arena = builder.into_arena();
         let mut sink = StringSink::default();
-        let proof = RenderProof::new(root.conservation_tracker());
-
-        render_to_tracked(&arena, document, options(), &mut sink, proof)
+        render_source_to(&arena, document, options(), &mut sink, &root)
             .expect("joined exceptional fragments render");
 
         assert_eq!(sink.0, "import as");
         assert_eq!(safety.0, 1);
     }
 
+    #[cfg(debug_assertions)]
     #[test]
-    fn exceptional_join_after_line_comment_forces_a_hard_line() {
+    fn reorder_reason_is_carried_by_the_selected_document() {
         let source = "x";
-        let tree = bogus_syntax_tree(source);
-        let root = SyntaxNode::<JavaLanguage>::new_root(source, &tree);
+        let tree = syntax_tree(source);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
         let token = root.first_token().expect("source token");
-        let core = root
-            .malformed_verbatim_core()
-            .expect("error node owns a verbatim core");
-        let atom = LexicalAtom::new(LexicalAtomKind::Comment, source);
         let mut builder = DocBuilder::new();
-        let malformed = builder.malformed_verbatim(
-            &core,
-            FragmentBoundary {
-                first: Some(atom),
-                last: Some(atom),
-                ends_with_line_comment: true,
+        let token_doc = builder.source_token(&token);
+        let document = builder.reordered_source(
+            token_doc,
+            reorder_claim(&root, token.source_id(), ReorderReason::ModuleDirectives),
+        );
+        let arena = builder.into_arena();
+        let marker = match arena.node(document) {
+            Some(DocNode::InlineConcat { docs, .. }) => docs[0],
+            other => panic!("reorder wrapper must retain a branch-local marker: {other:?}"),
+        };
+        let Some(DocNode::Text(text)) = arena.node(marker) else {
+            panic!("reorder marker must be a source-aware text node");
+        };
+        assert!(matches!(
+            text.proof.as_ref().and_then(|proof| proof.kind),
+            Some(SourceProofKind::Reordered {
+                reason: ReorderReason::ModuleDirectives,
+                ..
+            })
+        ));
+        let mut sink = StringSink::default();
+        render_source_to(&arena, document, options(), &mut sink, &root)
+            .expect("reason-tagged reorder completes");
+        assert_eq!(sink.0, source);
+    }
+
+    #[test]
+    fn foreign_reorder_owner_is_rejected_before_output() {
+        let source = "x";
+        let tree = syntax_tree(source);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
+        let other_tree = syntax_tree("y");
+        let other_root = SyntaxNode::<ClaimLanguage>::new_root("y", &other_tree);
+        let foreign = other_root.first_token().expect("foreign token");
+        let mut builder = DocBuilder::new();
+        let contents = builder.text("generated");
+        let document = builder.reordered_source(
+            contents,
+            reorder_claim(&other_root, foreign.source_id(), ReorderReason::Imports),
+        );
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        let error = render_source_to(&arena, document, options(), &mut sink, &root)
+            .expect_err("foreign reorder authority must be rejected");
+
+        assert_eq!(error.to_string(), "ForeignToken");
+        assert!(sink.0.is_empty());
+    }
+
+    #[test]
+    fn foreign_formatter_ignore_range_is_rejected_before_separator_output() {
+        let source = "x";
+        let tree = syntax_tree(source);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
+        let other_tree = syntax_tree("y");
+        let foreign_root = SyntaxNode::<ClaimLanguage>::new_root("y", &other_tree);
+        let foreign = foreign_root.first_token().expect("foreign token");
+        let range = foreign.source_range_claim(foreign.token_text_range(), false);
+        let mut builder = DocBuilder::new();
+        let contents = builder.text("ignored");
+        let document = builder.formatter_ignore_source(
+            contents,
+            range,
+            ExceptionalSeparators {
+                before: ExceptionalSeparator::Space,
+                after: ExceptionalSeparator::None,
             },
         );
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        let error = render_source_to(&arena, document, options(), &mut sink, &root)
+            .expect_err("foreign ignore range must be rejected");
+
+        assert_eq!(error.to_string(), "ForeignSourceRange");
+        assert!(sink.0.is_empty());
+    }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    fn synthesis_reason_is_carried_by_the_selected_document() {
+        let source = "x";
+        let tree = syntax_tree(source);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
+        let token = root.first_token().expect("source token");
+        let mut builder = DocBuilder::new();
         let synthesized = builder.synthesized_source(synthesis_claim(
+            &root,
             token.source_id(),
             NormalizedToken::EnumSemicolon,
         ));
+        let synthesized_proof = synthesized.proof();
+        let source_doc = builder.source_token(&token);
         let mut safety = CountingSafety::default();
-        let joined = builder.join_exceptional(malformed, synthesized, &mut safety);
-        let document = builder.resolve_exceptional(joined, None, None, &mut safety);
+        let synthesized = builder.resolve_exceptional(synthesized, Some(&token), None, &mut safety);
+        let document = builder.concat([source_doc, synthesized]);
         let arena = builder.into_arena();
+        let Some(DocNode::Text(text)) = arena.node(synthesized_proof) else {
+            panic!("synthesis must be a source-aware text node");
+        };
+        assert!(matches!(
+            text.proof.as_ref().and_then(|proof| proof.kind),
+            Some(SourceProofKind::Synthesized {
+                token: NormalizedToken::EnumSemicolon,
+                ..
+            })
+        ));
         let mut sink = StringSink::default();
-        let proof = RenderProof::new(root.conservation_tracker());
+        render_source_to(&arena, document, options(), &mut sink, &root)
+            .expect("reason-tagged synthesis completes");
+        assert_eq!(sink.0, "x ;");
+    }
 
-        render_to_tracked(&arena, document, options(), &mut sink, proof)
-            .expect("line-comment boundary remains safe");
+    #[cfg(not(debug_assertions))]
+    #[test]
+    fn proof_metadata_allocates_no_release_documents() {
+        let source = "x";
+        let tree = syntax_tree(source);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
+        let token = root.first_token().expect("source token");
+        let mut builder = DocBuilder::new();
+        let reordered = builder.reordered_source(
+            Doc::nil(),
+            reorder_claim(&root, token.source_id(), ReorderReason::Imports),
+        );
+        let synthesized = builder.synthesized_source(synthesis_claim(
+            &root,
+            token.source_id(),
+            NormalizedToken::EnumSemicolon,
+        ));
 
-        assert_eq!(sink.0, "x\n;");
-        assert_eq!(safety.0, 0);
+        assert_eq!(reordered, Doc::nil());
+        assert_eq!(synthesized.proof(), Doc::nil());
     }
 
     #[test]

@@ -1,17 +1,12 @@
 #[cfg(debug_assertions)]
-use std::borrow::Cow;
-
-#[cfg(debug_assertions)]
 use jolt_syntax::SourceIdentity;
 use jolt_syntax::{
-    ConservationError, Language, NormalizedToken, RawSyntaxKind, RemovalReason, SourceTokenId,
-    SyntaxConservationTracker, SyntaxToken,
+    ConservationError, Language, NormalizedToken, RawSyntaxKind, RemovalReason, ReorderReason,
+    SourceRangeClaim, SourceTokenId, SyntaxConservationTracker, SyntaxToken,
 };
 use jolt_text::TextRange;
 
 use crate::Doc;
-#[cfg(debug_assertions)]
-use crate::width::{TextWidth, literal_text_metrics};
 
 /// The lexical class at one edge of an exceptional source fragment.
 ///
@@ -130,13 +125,27 @@ pub(crate) fn exceptional_separators<L: Language>(
 /// renderer nodes do not pay for metadata used only at exceptional joins.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExceptionalFragment<'source> {
+    proof: Doc<'source>,
     doc: Doc<'source>,
     boundary: FragmentBoundary<'source>,
 }
 
 impl<'source> ExceptionalFragment<'source> {
-    pub(crate) const fn new(doc: Doc<'source>, boundary: FragmentBoundary<'source>) -> Self {
-        Self { doc, boundary }
+    pub(crate) const fn new(
+        proof: Doc<'source>,
+        doc: Doc<'source>,
+        boundary: FragmentBoundary<'source>,
+    ) -> Self {
+        Self {
+            proof,
+            doc,
+            boundary,
+        }
+    }
+
+    #[must_use]
+    pub(crate) const fn proof(self) -> Doc<'source> {
+        self.proof
     }
 
     #[must_use]
@@ -152,7 +161,7 @@ impl<'source> ExceptionalFragment<'source> {
 
 /// The exceptional source operation represented by a fragment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum SourceFragmentKind<'tree> {
+pub(crate) enum SourceProofKind<'tree> {
     MalformedVerbatim {
         kind: RawSyntaxKind,
         range: TextRange,
@@ -167,13 +176,13 @@ pub enum SourceFragmentKind<'tree> {
         token: NormalizedToken,
         anchor: SourceTokenId<'tree>,
     },
-}
-
-/// Debug/test evidence emitted only for the exceptional fragments the renderer
-/// actually visits.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct RenderedSourceFragment<'tree> {
-    pub kind: SourceFragmentKind<'tree>,
+    Reordered {
+        reason: ReorderReason,
+        anchor: SourceTokenId<'tree>,
+    },
+    FormatterIgnore {
+        range: SourceRangeClaim<'tree>,
+    },
 }
 
 /// Render-time conservation proof and exceptional-fragment ledger.
@@ -181,128 +190,85 @@ pub struct RenderedSourceFragment<'tree> {
 /// The syntax tracker compiles to zero state in optimized builds. The fragment
 /// ledger likewise exists only with debug assertions, so ordinary release
 /// formatting adds no tracker or comment-map allocation.
-pub struct RenderProof<'tree> {
+pub(crate) struct RenderProof<'tree> {
     conservation: SyntaxConservationTracker<'tree>,
     #[cfg(debug_assertions)]
-    rendered: Vec<RenderedSourceFragment<'tree>>,
+    malformed_verbatim_count: usize,
 }
 
 impl<'tree> RenderProof<'tree> {
     #[must_use]
-    pub fn new(conservation: SyntaxConservationTracker<'tree>) -> Self {
+    pub(crate) fn new(conservation: SyntaxConservationTracker<'tree>) -> Self {
         Self {
             conservation,
             #[cfg(debug_assertions)]
-            rendered: Vec::new(),
+            malformed_verbatim_count: 0,
         }
     }
 
     #[cfg(debug_assertions)]
-    pub(crate) fn render_fragment<'source>(
+    pub(crate) fn render_fragment(
         &mut self,
-        fragment: &SourceFragment<'source, 'tree>,
+        fragment: &SourceProof<'tree>,
         claims: &[SourceIdentity<'tree>],
     ) -> Result<(), ConservationError> {
         #[cfg(not(debug_assertions))]
         let _ = fragment;
         #[cfg(debug_assertions)]
-        if let Some(SourceFragmentKind::Synthesized { anchor, .. }) = fragment.provenance {
+        if let Some(
+            SourceProofKind::Synthesized { anchor, .. } | SourceProofKind::Reordered { anchor, .. },
+        ) = fragment.kind
+        {
             self.conservation.validate_token(anchor)?;
+        }
+        if let Some(SourceProofKind::FormatterIgnore { range }) = fragment.kind {
+            self.conservation.claim_source_range(range)?;
         }
         for identity in claims {
             self.conservation.claim(*identity)?;
         }
         #[cfg(debug_assertions)]
-        if let Some(kind) = fragment.provenance {
-            self.rendered.push(RenderedSourceFragment { kind });
+        if matches!(
+            fragment.kind,
+            Some(SourceProofKind::MalformedVerbatim { .. })
+        ) {
+            self.malformed_verbatim_count += 1;
         }
         Ok(())
     }
 
-    pub(crate) fn finish(self) -> Result<CompletedRenderProof<'tree>, ConservationError> {
+    pub(crate) fn finish(self) -> Result<bool, ConservationError> {
         self.conservation.finish()?;
-        Ok(CompletedRenderProof {
-            #[cfg(debug_assertions)]
-            rendered: self.rendered,
-            #[cfg(not(debug_assertions))]
-            marker: std::marker::PhantomData,
-        })
-    }
-}
-
-/// A completed source-conservation proof returned by tracked rendering.
-pub struct CompletedRenderProof<'tree> {
-    #[cfg(debug_assertions)]
-    rendered: Vec<RenderedSourceFragment<'tree>>,
-    #[cfg(not(debug_assertions))]
-    marker: std::marker::PhantomData<&'tree ()>,
-}
-
-impl<'tree> CompletedRenderProof<'tree> {
-    #[must_use]
-    pub fn rendered_fragments(&self) -> &[RenderedSourceFragment<'tree>] {
         #[cfg(debug_assertions)]
         {
-            &self.rendered
+            Ok(self.malformed_verbatim_count != 0)
         }
         #[cfg(not(debug_assertions))]
         {
-            &[]
+            Ok(false)
         }
     }
 }
 
 #[cfg(debug_assertions)]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct SourceFragment<'source, 'tree> {
-    pub(crate) text: Cow<'source, str>,
-    #[cfg(debug_assertions)]
-    pub(crate) provenance: Option<SourceFragmentKind<'tree>>,
-    #[cfg(debug_assertions)]
+pub(crate) struct SourceProof<'tree> {
+    pub(crate) kind: Option<SourceProofKind<'tree>>,
     pub(crate) claims_start: u32,
-    #[cfg(debug_assertions)]
     pub(crate) claims_len: u32,
-    #[cfg(not(debug_assertions))]
-    marker: std::marker::PhantomData<&'tree ()>,
-    final_width: TextWidth,
-    line_count: usize,
 }
 
 #[cfg(debug_assertions)]
-impl<'source, 'tree> SourceFragment<'source, 'tree> {
-    pub(crate) fn new(
-        text: Cow<'source, str>,
-        provenance: Option<SourceFragmentKind<'tree>>,
-        #[cfg(debug_assertions)] claims_start: u32,
-        #[cfg(debug_assertions)] claims_len: u32,
+impl<'tree> SourceProof<'tree> {
+    pub(crate) const fn new(
+        kind: Option<SourceProofKind<'tree>>,
+        claims_start: u32,
+        claims_len: u32,
     ) -> Self {
-        let metrics = literal_text_metrics(&text);
-        #[cfg(not(debug_assertions))]
-        let _ = provenance;
         Self {
-            text,
-            #[cfg(debug_assertions)]
-            provenance,
-            #[cfg(debug_assertions)]
+            kind,
             claims_start,
-            #[cfg(debug_assertions)]
             claims_len,
-            #[cfg(not(debug_assertions))]
-            marker: std::marker::PhantomData,
-            final_width: metrics.final_width,
-            line_count: metrics.line_count,
         }
-    }
-
-    pub(crate) const fn final_width(&self) -> TextWidth {
-        self.final_width
-    }
-
-    pub(crate) const fn is_multiline(&self) -> bool {
-        self.line_count > 1
-    }
-
-    pub(crate) fn is_claim_marker(&self) -> bool {
-        self.provenance.is_none() && self.text.is_empty()
     }
 }

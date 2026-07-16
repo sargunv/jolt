@@ -11,15 +11,15 @@ mod width;
 pub use document::DocArenaMetrics;
 pub use document::{ConcatBuilder, Doc, DocArena, DocBuilder, DocId};
 pub use jolt_syntax::{
-    NormalizedToken, RemovalClaim, RemovalReason, ReplacementClaim, SynthesisClaim,
+    NormalizedToken, RemovalClaim, RemovalReason, ReorderClaim, ReplacementClaim, SynthesisClaim,
 };
 pub use options::{FormatOptions, FormatSinkResult};
 pub use render::{
     IndentStyle, RenderControl, RenderError, RenderOptions, RenderOutcome, RenderSink,
-    TrackedRenderOutcome, render_to, render_to_tracked,
+    SourceRenderOutcome, render_source_to, render_to,
 };
 pub use source_fragment::{
-    CompletedRenderProof, ExceptionalFragment, ExceptionalSeparator, FragmentBoundary, LexicalAtom,
-    LexicalAtomKind, LexicalSafety, RenderProof, RenderedSourceFragment, SourceFragmentKind,
+    ExceptionalFragment, ExceptionalSeparator, FragmentBoundary, LexicalAtom, LexicalAtomKind,
+    LexicalSafety,
 };
 pub use width::TextWidth;

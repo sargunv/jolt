@@ -123,8 +123,8 @@ impl<'source> FormattedImport<'source> {
 
     #[allow(clippy::redundant_closure_for_method_calls)]
     fn into_doc(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
-        let _authorization = self.reorder.into_parts();
-        format_import(&self.import, doc)
+        let formatted = format_import(&self.import, doc);
+        doc.reordered_source(formatted, self.reorder)
     }
 }
 

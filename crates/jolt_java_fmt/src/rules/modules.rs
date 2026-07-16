@@ -287,7 +287,6 @@ fn format_sorted_directives<'source>(
     let mut previous = None;
     doc.concat_list(|docs| {
         for directive in directives {
-            let _authorization = directive.reorder.into_parts();
             if !docs.is_empty() {
                 let separator = if previous == Some(directive.kind) {
                     docs.hard_line()
@@ -297,7 +296,8 @@ fn format_sorted_directives<'source>(
                 docs.push(separator);
             }
             previous = Some(directive.kind);
-            let directive = format_directive_node(&directive.node, docs);
+            let formatted = format_directive_node(&directive.node, docs);
+            let directive = docs.reordered_source(formatted, directive.reorder);
             docs.push(directive);
         }
     })
@@ -510,11 +510,11 @@ fn format_requires<'source>(
                 .parts()
                 .map(|part| resolve_list_part(part, doc))
                 .collect::<Vec<_>>();
-            if let Some(authorization) = list.canonical_reorder_claim() {
-                let _authorization = authorization.into_parts();
+            let authorization = list.canonical_reorder_claim();
+            if authorization.is_some() {
                 sort_requires_modifier_runs(&mut modifiers);
             }
-            doc.concat_list(|parts| {
+            let formatted = doc.concat_list(|parts| {
                 let mut previous_was_structured = false;
                 for part in modifiers {
                     let (part, structured) = match part {
@@ -541,7 +541,8 @@ fn format_requires<'source>(
                     let space = parts.space();
                     parts.push(space);
                 }
-            })
+            });
+            authorization.map_or(formatted, |claim| doc.reordered_source(formatted, claim))
         });
         let module =
             format_required_field(value.module(), doc, |name, doc| format_name(&name, doc));

@@ -1,7 +1,7 @@
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
 use jolt_fmt_ir::{
-    DocBuilder, FormatOptions, FormatSinkResult, IndentStyle, RenderOptions, RenderProof,
-    RenderSink, TextWidth, render_to_tracked,
+    DocBuilder, FormatOptions, FormatSinkResult, IndentStyle, RenderOptions, RenderSink, TextWidth,
+    render_source_to,
 };
 use jolt_java_syntax::{CompilationUnit, JavaSyntaxView, parse_compilation_unit};
 
@@ -62,22 +62,12 @@ fn format_syntax_to_sink<S: RenderSink + ?Sized>(
             DocBuilderMetrics::default(),
         );
     };
-    let proof = RenderProof::new(root.conservation_tracker());
-    let result = match render_to_tracked(&arena, doc, render_options, sink, proof) {
+    let result = match render_source_to(&arena, doc, render_options, sink, &root) {
         Ok(outcome) if outcome.halted() => FormatSinkResult::Halted,
         Ok(outcome) => {
             #[cfg(debug_assertions)]
             assert!(
-                !root.is_recovery_free()
-                    || outcome.completed_proof().is_some_and(|proof| proof
-                        .rendered_fragments()
-                        .iter()
-                        .all(|fragment| {
-                            !matches!(
-                                fragment.kind,
-                                jolt_fmt_ir::SourceFragmentKind::MalformedVerbatim { .. }
-                            )
-                        })),
+                !root.is_recovery_free() || !outcome.used_malformed_verbatim(),
                 "recovery-free Java syntax rendered a malformed-verbatim fragment"
             );
             #[cfg(not(debug_assertions))]

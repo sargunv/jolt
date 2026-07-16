@@ -3,16 +3,17 @@ use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
 #[cfg(debug_assertions)]
-use crate::source_fragment::SourceFragment;
+use crate::source_fragment::SourceProof;
 use crate::width::{TextWidth, display_width, literal_text_metrics};
 use crate::{
     ExceptionalFragment, ExceptionalSeparator, FragmentBoundary, LexicalAtom, LexicalSafety,
-    SourceFragmentKind,
-    source_fragment::{exceptional_separators, normalized_lexical_kind},
+    source_fragment::{
+        ExceptionalSeparators, SourceProofKind, exceptional_separators, normalized_lexical_kind,
+    },
 };
 use jolt_syntax::{
-    Language, RemovalClaim, ReplacementClaim, SourceIdentity, SourceTriviaPiece, SyntaxToken,
-    SyntaxVerbatimCore, SynthesisClaim,
+    Language, RemovalClaim, ReorderClaim, ReplacementClaim, SourceIdentity, SourceRangeClaim,
+    SourceTriviaPiece, SyntaxToken, SyntaxVerbatimCore, SynthesisClaim,
 };
 
 pub(crate) const INLINE_CONCAT_CAPACITY: usize = 4;
@@ -105,12 +106,9 @@ impl<'source> DocArena<'source> {
     }
 
     #[cfg(debug_assertions)]
-    pub(crate) fn source_claims(
-        &self,
-        fragment: &SourceFragment<'source, 'source>,
-    ) -> &[SourceIdentity<'source>] {
-        let start = usize::try_from(fragment.claims_start).expect("source claim index fits usize");
-        let len = usize::try_from(fragment.claims_len).expect("source claim length fits usize");
+    pub(crate) fn source_claims(&self, proof: &SourceProof<'source>) -> &[SourceIdentity<'source>] {
+        let start = usize::try_from(proof.claims_start).expect("source claim index fits usize");
+        let len = usize::try_from(proof.claims_len).expect("source claim length fits usize");
         &self.source_claims[start..start + len]
     }
 
@@ -192,8 +190,14 @@ impl<'source> DocBuilder<'source> {
     #[must_use]
     pub fn text(&mut self, value: impl Into<Cow<'source, str>>) -> Doc<'source> {
         let text = value.into();
-        let width = display_width(&text);
-        self.push_node(DocNode::Text(Text { text, width }))
+        let final_width = display_width(&text);
+        self.push_node(DocNode::Text(DocumentText {
+            text,
+            final_width,
+            line_count: 1,
+            #[cfg(debug_assertions)]
+            proof: None,
+        }))
     }
 
     #[must_use]
@@ -205,10 +209,12 @@ impl<'source> DocBuilder<'source> {
     pub fn literal_text(&mut self, value: impl Into<Cow<'source, str>>) -> Doc<'source> {
         let text = value.into();
         let metrics = literal_text_metrics(&text);
-        self.push_node(DocNode::LiteralText(LiteralText {
+        self.push_node(DocNode::Text(DocumentText {
             text,
             final_width: metrics.final_width,
             line_count: metrics.line_count,
+            #[cfg(debug_assertions)]
+            proof: None,
         }))
     }
 
@@ -222,55 +228,43 @@ impl<'source> DocBuilder<'source> {
         )
     }
 
-    /// Emits structured trivia output and claims its represented source pieces.
+    /// Builds structured trivia output together with its represented source.
+    ///
+    /// The closure keeps construction and ownership attachment atomic: callers
+    /// cannot build a source-backed trivia document and later forget its claim.
     #[must_use]
     pub fn source_trivia(
         &mut self,
-        text: impl Into<Cow<'source, str>>,
         pieces: impl IntoIterator<Item = SourceTriviaPiece<'source>>,
+        build: impl FnOnce(&mut Self) -> Doc<'source>,
     ) -> Doc<'source> {
-        self.source_fragment(
-            text.into(),
+        let contents = build(self);
+        let claim = self.source_fragment(
+            Cow::Borrowed(""),
             None,
             pieces
                 .into_iter()
                 .map(|piece| SourceIdentity::Trivia(piece.id())),
-        )
+        );
+        self.concat([claim, contents])
     }
 
-    /// Associates represented source identities with an arbitrary structured
-    /// document. Claims are consumed only when this document branch renders.
+    /// Emits one parser-backed formatter-ignore document.
     #[must_use]
-    pub fn claimed_source(
+    pub(crate) fn formatter_ignore_source(
         &mut self,
         contents: Doc<'source>,
-        claims: impl IntoIterator<Item = SourceIdentity<'source>>,
+        range: SourceRangeClaim<'source>,
+        separators: ExceptionalSeparators,
     ) -> Doc<'source> {
-        #[cfg(debug_assertions)]
-        {
-            let claim = self.source_fragment(Cow::Borrowed(""), None, claims);
-            self.concat([claim, contents])
-        }
-        #[cfg(not(debug_assertions))]
-        {
-            let _ = claims;
-            contents
-        }
-    }
-
-    /// Associates represented trivia with an arbitrary structured document.
-    #[must_use]
-    pub fn claimed_trivia(
-        &mut self,
-        contents: Doc<'source>,
-        pieces: impl IntoIterator<Item = SourceTriviaPiece<'source>>,
-    ) -> Doc<'source> {
-        self.claimed_source(
-            contents,
-            pieces
-                .into_iter()
-                .map(|piece| SourceIdentity::Trivia(piece.id())),
-        )
+        let claim = self.source_fragment(
+            Cow::Borrowed(""),
+            Some(SourceProofKind::FormatterIgnore { range }),
+            [],
+        );
+        let before = self.exceptional_separator(separators.before);
+        let after = self.exceptional_separator(separators.after);
+        self.concat([claim, before, contents, after])
     }
 
     /// Records a syntax/schema contradiction that must block the entire render.
@@ -289,15 +283,16 @@ impl<'source> DocBuilder<'source> {
         core: &SyntaxVerbatimCore<'source, L>,
         boundary: FragmentBoundary<'source>,
     ) -> ExceptionalFragment<'source> {
-        let doc = self.source_fragment(
-            Cow::Borrowed(core.text()),
-            Some(SourceFragmentKind::MalformedVerbatim {
+        let proof = self.source_fragment(
+            Cow::Borrowed(""),
+            Some(SourceProofKind::MalformedVerbatim {
                 kind: core.raw_kind(),
                 range: core.text_range(),
             }),
             core.identities(),
         );
-        ExceptionalFragment::new(doc, boundary)
+        let contents = self.literal_text(core.text());
+        ExceptionalFragment::new(proof, contents, boundary)
     }
 
     /// Emits malformed source and derives lexical boundaries from syntax.
@@ -326,14 +321,16 @@ impl<'source> DocBuilder<'source> {
     ) -> ExceptionalFragment<'source> {
         let (source, token) = claim.into_parts();
         let text = token.text();
-        let doc = self.source_fragment(
-            Cow::Borrowed(text),
-            Some(SourceFragmentKind::Replaced { token }),
+        let proof = self.source_fragment(
+            Cow::Borrowed(""),
+            Some(SourceProofKind::Replaced { token }),
             [SourceIdentity::Token(source)],
         );
+        let contents = self.literal_text(text);
         let atom = LexicalAtom::new(normalized_lexical_kind(token), text);
         ExceptionalFragment::new(
-            doc,
+            proof,
+            contents,
             FragmentBoundary {
                 first: Some(atom),
                 last: Some(atom),
@@ -348,7 +345,7 @@ impl<'source> DocBuilder<'source> {
         let (source, reason) = claim.into_parts();
         self.source_fragment(
             Cow::Borrowed(""),
-            Some(SourceFragmentKind::Removed { reason }),
+            Some(SourceProofKind::Removed { reason }),
             [source],
         )
     }
@@ -361,20 +358,38 @@ impl<'source> DocBuilder<'source> {
     ) -> ExceptionalFragment<'source> {
         let (anchor, token) = claim.into_parts();
         let text = token.text();
-        let doc = self.source_fragment(
-            Cow::Borrowed(text),
-            Some(SourceFragmentKind::Synthesized { token, anchor }),
+        let proof = self.source_fragment(
+            Cow::Borrowed(""),
+            Some(SourceProofKind::Synthesized { token, anchor }),
             [],
         );
+        let contents = self.literal_text(text);
         let atom = LexicalAtom::new(normalized_lexical_kind(token), text);
         ExceptionalFragment::new(
-            doc,
+            proof,
+            contents,
             FragmentBoundary {
                 first: Some(atom),
                 last: Some(atom),
                 ends_with_line_comment: false,
             },
         )
+    }
+
+    /// Marks a selected structured document as an authorized source reorder.
+    #[must_use]
+    pub fn reordered_source(
+        &mut self,
+        contents: Doc<'source>,
+        claim: ReorderClaim<'source>,
+    ) -> Doc<'source> {
+        let (anchor, reason) = claim.into_parts();
+        let marker = self.source_fragment(
+            Cow::Borrowed(""),
+            Some(SourceProofKind::Reordered { reason, anchor }),
+            [],
+        );
+        self.concat([marker, contents])
     }
 
     /// Resolves the only permitted lexical joins around an exceptional fragment.
@@ -391,7 +406,7 @@ impl<'source> DocBuilder<'source> {
         let separators = exceptional_separators(left, fragment, right, safety);
         let before = self.exceptional_separator(separators.before);
         let after = self.exceptional_separator(separators.after);
-        self.concat([before, fragment.doc(), after])
+        self.concat([fragment.proof(), before, fragment.doc(), after])
     }
 
     /// Joins two exceptional fragments while retaining their outer boundary.
@@ -416,9 +431,11 @@ impl<'source> DocBuilder<'source> {
             }
         };
         let separator = self.exceptional_separator(separator);
+        let proof = self.concat([left.proof(), right.proof()]);
         let doc = self.concat([left.doc(), separator, right.doc()]);
         let right_has_boundary = right_boundary.first.is_some() || right_boundary.last.is_some();
         ExceptionalFragment::new(
+            proof,
             doc,
             FragmentBoundary {
                 first: left_boundary.first.or(right_boundary.first),
@@ -566,7 +583,7 @@ impl<'source> DocBuilder<'source> {
     fn source_fragment(
         &mut self,
         text: Cow<'source, str>,
-        provenance: Option<SourceFragmentKind<'source>>,
+        kind: Option<SourceProofKind<'source>>,
         claims: impl IntoIterator<Item = SourceIdentity<'source>>,
     ) -> Doc<'source> {
         #[cfg(debug_assertions)]
@@ -581,17 +598,22 @@ impl<'source> DocBuilder<'source> {
         };
         #[cfg(debug_assertions)]
         {
-            self.push_node(DocNode::SourceFragment(SourceFragment::new(
+            let metrics = literal_text_metrics(&text);
+            self.push_node(DocNode::Text(DocumentText {
                 text,
-                provenance,
-                claims_start,
-                claims_len,
-            )))
+                final_width: metrics.final_width,
+                line_count: metrics.line_count,
+                proof: Some(SourceProof::new(kind, claims_start, claims_len)),
+            }))
         }
         #[cfg(not(debug_assertions))]
         {
-            let _ = (provenance, claims);
-            self.literal_text(text)
+            let _ = (kind, claims);
+            if text.is_empty() {
+                self.nil()
+            } else {
+                self.literal_text(text)
+            }
         }
     }
 
@@ -774,10 +796,7 @@ impl<'source> ConcatAppender<'source> {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) enum DocNode<'source> {
-    Text(Text<'source>),
-    LiteralText(LiteralText<'source>),
-    #[cfg(debug_assertions)]
-    SourceFragment(SourceFragment<'source, 'source>),
+    Text(DocumentText<'source>),
     InlineConcat {
         docs: [Doc<'source>; INLINE_CONCAT_CAPACITY],
         len: u8,
@@ -802,22 +821,18 @@ pub(crate) enum DocNode<'source> {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct Text<'source> {
-    pub(crate) text: Cow<'source, str>,
-    pub(crate) width: TextWidth,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct LiteralText<'source> {
+pub(crate) struct DocumentText<'source> {
     pub(crate) text: Cow<'source, str>,
     final_width: TextWidth,
     line_count: usize,
+    #[cfg(debug_assertions)]
+    pub(crate) proof: Option<SourceProof<'source>>,
 }
 
 #[cfg(not(debug_assertions))]
 const _: () = assert!(std::mem::size_of::<DocNode<'static>>() <= 40);
 
-impl LiteralText<'_> {
+impl DocumentText<'_> {
     pub(crate) const fn final_width(&self) -> TextWidth {
         self.final_width
     }

@@ -266,8 +266,8 @@ impl<'source> FormattedImport<'source> {
     }
 
     fn into_doc(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
-        let _authorization = self.reorder.into_parts();
-        format_import(doc, &self.import)
+        let formatted = format_import(doc, &self.import);
+        doc.reordered_source(formatted, self.reorder)
     }
 }
 

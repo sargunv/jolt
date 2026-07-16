@@ -7,21 +7,24 @@
 use std::borrow::Cow;
 use std::ops::Range;
 
-use jolt_syntax::{Comment, Language, SyntaxToken};
-#[cfg(debug_assertions)]
-use jolt_syntax::{SourceIdentity, TriviaKind};
+use jolt_syntax::{Comment, Language, SourceRangeClaim, SyntaxToken};
+use jolt_text::{TextRange, TextSize};
 
-use crate::{Doc, DocBuilder};
+use crate::source_fragment::{ExceptionalSeparators, exceptional_separators};
+use crate::{
+    Doc, DocBuilder, ExceptionalFragment, FragmentBoundary, LexicalAtom, LexicalAtomKind,
+    LexicalSafety,
+};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FormatterIgnoreRange<'source> {
     pub raw_text: &'source str,
     pub raw_text_with_on: &'source str,
     pub interior: Range<usize>,
-    #[cfg(debug_assertions)]
-    claims: Vec<SourceIdentity<'source>>,
-    #[cfg(debug_assertions)]
-    claims_with_on: Vec<SourceIdentity<'source>>,
+    claim_with_on: SourceRangeClaim<'source>,
+    claim_without_on: SourceRangeClaim<'source>,
+    separators_with_on: ExceptionalSeparators,
+    separators_without_on: ExceptionalSeparators,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -40,10 +43,11 @@ impl FormatterIgnoreRun<'_> {
     }
 }
 
-pub fn formatter_ignore_ranges<'source, L: Language>(
+pub fn formatter_ignore_ranges_with_safety<'source, L: Language>(
     source: &'source str,
     base_start: usize,
     tokens: impl IntoIterator<Item = SyntaxToken<'source, L>>,
+    safety: &mut impl LexicalSafety<L>,
 ) -> Vec<FormatterIgnoreRange<'source>> {
     // Formatter control markers are rare. Avoid walking every token and both
     // trivia lists for every file, block, and member body when the source
@@ -53,6 +57,9 @@ pub fn formatter_ignore_ranges<'source, L: Language>(
     }
 
     let tokens: Vec<_> = tokens.into_iter().collect();
+    let Some(claim_anchor) = tokens.first() else {
+        return Vec::new();
+    };
 
     let mut off_comment_start = None;
     let mut ranges = Vec::new();
@@ -79,10 +86,39 @@ pub fn formatter_ignore_ranges<'source, L: Language>(
                             &source[start..end_line.raw_end],
                         ),
                         interior: start..end,
-                        #[cfg(debug_assertions)]
-                        claims: Vec::new(),
-                        #[cfg(debug_assertions)]
-                        claims_with_on: Vec::new(),
+                        claim_with_on: claim_anchor.source_range_claim(
+                            TextRange::new(
+                                TextSize::new(base_start + start),
+                                TextSize::new(
+                                    base_start
+                                        + start
+                                        + strip_trailing_line_ending(
+                                            &source[start..end_line.raw_end],
+                                        )
+                                        .len(),
+                                ),
+                            ),
+                            true,
+                        ),
+                        claim_without_on: claim_anchor.source_range_claim(
+                            TextRange::new(
+                                TextSize::new(base_start + start),
+                                TextSize::new(
+                                    base_start
+                                        + start
+                                        + strip_trailing_line_ending(&source[start..end]).len(),
+                                ),
+                            ),
+                            false,
+                        ),
+                        separators_with_on: ExceptionalSeparators {
+                            before: crate::ExceptionalSeparator::None,
+                            after: crate::ExceptionalSeparator::None,
+                        },
+                        separators_without_on: ExceptionalSeparators {
+                            before: crate::ExceptionalSeparator::None,
+                            after: crate::ExceptionalSeparator::None,
+                        },
                     });
                 }
             } else if off_comment_start.is_none()
@@ -105,98 +141,166 @@ pub fn formatter_ignore_ranges<'source, L: Language>(
         }
     }
 
-    #[cfg(debug_assertions)]
-    populate_claims(&mut ranges, base_start, tokens);
+    populate_separators(&mut ranges, base_start, &tokens, safety);
 
     ranges
 }
 
-#[cfg(debug_assertions)]
-fn populate_claims<'source, L: Language>(
-    ranges: &mut [FormatterIgnoreRange<'source>],
-    base_start: usize,
-    tokens: impl IntoIterator<Item = SyntaxToken<'source, L>>,
-) {
-    if ranges.is_empty() {
-        return;
-    }
+#[derive(Clone, Copy, Default)]
+struct RangeBoundary<'source> {
+    first: Option<LexicalAtom<'source>>,
+    last: Option<LexicalAtom<'source>>,
+}
 
+#[derive(Clone, Copy, Default)]
+struct RangeBoundaries<'source> {
+    with_on: RangeBoundary<'source>,
+    without_on: RangeBoundary<'source>,
+}
+
+fn populate_separators<L: Language>(
+    ranges: &mut [FormatterIgnoreRange<'_>],
+    base_start: usize,
+    tokens: &[SyntaxToken<'_, L>],
+    safety: &mut impl LexicalSafety<L>,
+) {
+    let mut boundaries = vec![RangeBoundaries::default(); ranges.len()];
     let mut range_index = 0;
     for token in tokens {
-        for piece in token
-            .leading_comments()
-            .flat_map(|comment| comment.source_pieces())
-        {
-            append_identity(
+        let token_range = token.token_text_range();
+        for comment in token.leading_comments() {
+            record_boundary_atom(
                 ranges,
-                &mut range_index,
                 base_start,
-                piece.text_range().start().get()..piece.text_range().end().get(),
-                SourceIdentity::Trivia(piece.id()),
-                piece.trivia().kind() == TriviaKind::Newline,
+                &mut boundaries,
+                &mut range_index,
+                comment.text_range(),
+                LexicalAtom::new(LexicalAtomKind::Comment, comment.text()),
             );
         }
         if !token.text().is_empty() {
-            let range = token.token_text_range();
-            append_identity(
+            record_boundary_atom(
                 ranges,
-                &mut range_index,
                 base_start,
-                range.start().get()..range.end().get(),
-                SourceIdentity::Token(token.source_id()),
-                false,
+                &mut boundaries,
+                &mut range_index,
+                token_range,
+                LexicalAtom::new(safety.classify(token), token.text()),
             );
         }
-        for piece in token
-            .trailing_comments()
-            .flat_map(|comment| comment.source_pieces())
-        {
-            append_identity(
+        for comment in token.trailing_comments() {
+            record_boundary_atom(
                 ranges,
-                &mut range_index,
                 base_start,
-                piece.text_range().start().get()..piece.text_range().end().get(),
-                SourceIdentity::Trivia(piece.id()),
-                piece.trivia().kind() == TriviaKind::Newline,
+                &mut boundaries,
+                &mut range_index,
+                comment.text_range(),
+                LexicalAtom::new(LexicalAtomKind::Comment, comment.text()),
             );
         }
     }
+
+    let mut previous_cursor = 0;
+    let mut next_without_cursor = 0;
+    let mut next_with_cursor = 0;
+    let mut previous = None;
+    for (index, range) in ranges.iter_mut().enumerate() {
+        let start = TextSize::new(base_start + range.interior.start);
+        while let Some(token) = tokens.get(previous_cursor) {
+            if token.token_text_range().end() > start {
+                break;
+            }
+            if !token.text().is_empty() {
+                previous = Some(LexicalAtom::new(safety.classify(token), token.text()));
+            }
+            previous_cursor += 1;
+        }
+        let without_end = TextSize::new(start.get() + range.raw_text.len());
+        let with_end = TextSize::new(start.get() + range.raw_text_with_on.len());
+        let next_without = next_token_atom(tokens, &mut next_without_cursor, without_end, safety);
+        let next_with = next_token_atom(tokens, &mut next_with_cursor, with_end, safety);
+        range.separators_without_on =
+            separators(previous, boundaries[index].without_on, next_without, safety);
+        range.separators_with_on =
+            separators(previous, boundaries[index].with_on, next_with, safety);
+    }
 }
 
-#[cfg(debug_assertions)]
-fn append_identity<'source>(
-    ranges: &mut [FormatterIgnoreRange<'source>],
-    range_index: &mut usize,
+fn record_boundary_atom<'source>(
+    ranges: &[FormatterIgnoreRange<'source>],
     base_start: usize,
-    identity_range: Range<usize>,
-    identity: SourceIdentity<'source>,
-    is_line_ending: bool,
+    boundaries: &mut [RangeBoundaries<'source>],
+    range_index: &mut usize,
+    atom_range: TextRange,
+    atom: LexicalAtom<'source>,
 ) {
-    while *range_index < ranges.len() {
-        let with_on_end = base_start
-            + ranges[*range_index].interior.start
-            + ranges[*range_index].raw_text_with_on.len();
-        if with_on_end > identity_range.start
-            || (is_line_ending && with_on_end == identity_range.start)
-        {
+    while let Some(range) = ranges.get(*range_index) {
+        let start = TextSize::new(base_start + range.interior.start);
+        let with_end = TextSize::new(start.get() + range.raw_text_with_on.len());
+        if atom_range.start() < with_end {
             break;
         }
         *range_index += 1;
     }
-    let Some(range) = ranges.get_mut(*range_index) else {
+    let Some(range) = ranges.get(*range_index) else {
         return;
     };
-    let start = base_start + range.interior.start;
-    let without_on_end = start + range.raw_text.len();
-    let with_on_end = start + range.raw_text_with_on.len();
-    if start <= identity_range.start && identity_range.end <= without_on_end {
-        range.claims.push(identity);
+    let start = TextSize::new(base_start + range.interior.start);
+    let with_end = TextSize::new(start.get() + range.raw_text_with_on.len());
+    if start <= atom_range.start() && atom_range.end() <= with_end {
+        boundaries[*range_index].with_on.record(atom);
+        let without_end = TextSize::new(start.get() + range.raw_text.len());
+        if atom_range.end() <= without_end {
+            boundaries[*range_index].without_on.record(atom);
+        }
     }
-    if (start <= identity_range.start && identity_range.end <= with_on_end)
-        || (is_line_ending && identity_range.start == with_on_end)
-    {
-        range.claims_with_on.push(identity);
+}
+
+impl<'source> RangeBoundary<'source> {
+    fn record(&mut self, atom: LexicalAtom<'source>) {
+        self.first.get_or_insert(atom);
+        self.last = Some(atom);
     }
+}
+
+fn next_token_atom<'source, L: Language>(
+    tokens: &[SyntaxToken<'source, L>],
+    cursor: &mut usize,
+    end: TextSize,
+    safety: &mut impl LexicalSafety<L>,
+) -> Option<LexicalAtom<'source>> {
+    while let Some(token) = tokens.get(*cursor) {
+        if end <= token.token_text_range().start() && !token.text().is_empty() {
+            return Some(LexicalAtom::new(safety.classify(token), token.text()));
+        }
+        *cursor += 1;
+    }
+    None
+}
+
+fn separators<'source, L: Language>(
+    previous: Option<LexicalAtom<'source>>,
+    boundary: RangeBoundary<'source>,
+    next: Option<LexicalAtom<'source>>,
+    safety: &mut impl LexicalSafety<L>,
+) -> ExceptionalSeparators {
+    exceptional_separators(
+        previous,
+        ExceptionalFragment::new(
+            Doc::nil(),
+            Doc::nil(),
+            FragmentBoundary {
+                first: boundary.first,
+                last: boundary.last,
+                // Formatter-ignore runs are line-oriented section documents;
+                // their caller owns the terminating hard line. Lexical safety
+                // here only resolves fusing token/comment joins.
+                ends_with_line_comment: false,
+            },
+        ),
+        next,
+        safety,
+    )
 }
 
 #[must_use]
@@ -292,15 +396,17 @@ pub fn formatter_ignore_run_doc<'source>(
             })
         }
     };
-    #[cfg(debug_assertions)]
-    let claims = if run.include_on_marker {
-        run.range.claims_with_on.iter().copied()
+    let claim = if run.include_on_marker {
+        run.range.claim_with_on
     } else {
-        run.range.claims.iter().copied()
+        run.range.claim_without_on
     };
-    #[cfg(not(debug_assertions))]
-    let claims = std::iter::empty();
-    doc.claimed_source(contents, claims)
+    let separators = if run.include_on_marker {
+        run.range.separators_with_on
+    } else {
+        run.range.separators_without_on
+    };
+    doc.formatter_ignore_source(contents, claim, separators)
 }
 
 #[must_use]
