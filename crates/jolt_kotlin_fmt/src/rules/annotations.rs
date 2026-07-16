@@ -1,7 +1,7 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     Annotation, AnnotationArgumentList, AnnotationUseSiteTarget, KotlinRoleElement,
-    KotlinSyntaxView, Name, QualifiedName,
+    KotlinSyntaxView, Name, QualifiedName, ValueArgumentListEntry,
 };
 
 use crate::helpers::comments::{
@@ -141,11 +141,21 @@ fn annotation_argument_list_items<'source>(
     let mut items = Vec::new();
     for part in entries.parts() {
         match resolve_list_part(part, doc) {
-            KotlinFormatListPart::Item(argument) => items.push(CommaListItem {
-                doc: format_value_argument(doc, &argument),
-                comma: None,
-                layout_visible: true,
-            }),
+            KotlinFormatListPart::Item(argument) => {
+                let formatted = match argument {
+                    ValueArgumentListEntry::ValueArgument(argument) => {
+                        format_value_argument(doc, &argument)
+                    }
+                    ValueArgumentListEntry::BogusValueArgument(bogus) => {
+                        crate::helpers::recovery::format_malformed(&bogus, doc)
+                    }
+                };
+                items.push(CommaListItem {
+                    doc: formatted,
+                    comma: None,
+                    layout_visible: true,
+                });
+            }
             KotlinFormatListPart::Separator(comma) => {
                 if let Some(item) = items.iter_mut().rev().find(|item| item.layout_visible)
                     && item.comma.is_none()

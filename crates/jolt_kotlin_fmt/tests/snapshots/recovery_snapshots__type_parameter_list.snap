@@ -9,4 +9,4 @@ formatted:
 class Box<First, /* orphan */ , Second>
 
 diagnostics:
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(32), end: TextSize(38) }) message=expected type parameter between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(30), end: TextSize(31) }) message=expected type parameter between commas

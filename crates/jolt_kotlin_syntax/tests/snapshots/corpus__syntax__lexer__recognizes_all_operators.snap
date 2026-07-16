@@ -12,69 +12,69 @@ KotlinFile
   KotlinFileItemList
     Statement
       ExpressionStatement
-        BinaryExpression
-          BinaryExpression
-            BinaryExpression
-              UnaryExpression
-                PlusPlus "++" @ 0..2 trailing=[Whitespace " "]
-                UnaryExpression
-                  MinusMinus "--" @ 3..5 trailing=[Whitespace " "]
-                  UnaryExpression
-                    Star "*" @ 6..7 trailing=[Whitespace " "]
-                    UnaryExpression
-                      Plus "+" @ 8..9 trailing=[Whitespace " "]
-                      UnaryExpression
-                        Minus "-" @ 10..11 trailing=[Whitespace " "]
-                        UnaryExpression
-                          Bang "!" @ 12..13 trailing=[Whitespace " "]
-                          BogusExpression
-                            Slash "/" @ 14..15 trailing=[Whitespace " "]
-              Percent "%" @ 16..17 trailing=[Whitespace " "]
-              BogusExpression
-                Lt "<" @ 18..19 trailing=[Whitespace " "]
-            Gt ">" @ 20..21 trailing=[Whitespace " "]
-            BogusExpression
-              LtEq "<=" @ 22..24 trailing=[Whitespace " "]
-          GtEq ">=" @ 25..27 trailing=[Whitespace " "]
+        BogusExpression
           BogusExpression
-            EqEqEq "===" @ 28..31 trailing=[Whitespace " "]
-        BogusExpression
-          Arrow "->" @ 32..34 trailing=[Whitespace " "]
-        BogusExpression
-          DoubleArrow "=>" @ 35..37 trailing=[Whitespace " "]
-        BogusExpression
-          BangEqEqEq "!==" @ 38..41 trailing=[Whitespace " "]
-        BogusExpression
-          EqEq "==" @ 42..44 trailing=[Whitespace " "]
-        BogusExpression
-          BangEq "!=" @ 45..47 trailing=[Whitespace " "]
-        BogusExpression
-          BangBang "!!" @ 48..50 trailing=[Whitespace " "]
-        BogusExpression
-          AndAnd "&&" @ 51..53 trailing=[Whitespace " "]
-        BogusExpression
-          Amp "&" @ 54..55 trailing=[Whitespace " "]
-        BogusExpression
-          OrOr "||" @ 56..58 trailing=[Whitespace " "]
-        BogusExpression
-          Question "?" @ 59..60
-        BogusExpression
-          Dot "." @ 60..61 trailing=[Whitespace " "]
-        BogusExpression
-          Elvis "?:" @ 62..64 trailing=[Whitespace " "]
-        BogusExpression
-          StarEq "*=" @ 65..67 trailing=[Whitespace " "]
-        BogusExpression
-          SlashEq "/=" @ 68..70 trailing=[Whitespace " "]
-        BogusExpression
-          PercentEq "%=" @ 71..73 trailing=[Whitespace " "]
-        BogusExpression
-          PlusEq "+=" @ 74..76 trailing=[Whitespace " "]
-        BogusExpression
-          MinusEq "-=" @ 77..79 trailing=[Whitespace " "]
-        BogusExpression
-          NotIn "!in" @ 80..83 trailing=[Whitespace " "]
-        BogusExpression
+            BogusExpression
+              BogusExpression
+                BogusExpression
+                  BogusExpression
+                    BogusExpression
+                      BogusExpression
+                        BogusExpression
+                          BogusExpression
+                            BogusExpression
+                              BogusExpression
+                                BogusExpression
+                                  BogusExpression
+                                    BogusExpression
+                                      BogusExpression
+                                        BogusExpression
+                                          BogusExpression
+                                            BogusExpression
+                                              BinaryExpression
+                                                BinaryExpression
+                                                  BinaryExpression
+                                                    UnaryExpression
+                                                      PlusPlus "++" @ 0..2 trailing=[Whitespace " "]
+                                                      UnaryExpression
+                                                        MinusMinus "--" @ 3..5 trailing=[Whitespace " "]
+                                                        UnaryExpression
+                                                          Star "*" @ 6..7 trailing=[Whitespace " "]
+                                                          UnaryExpression
+                                                            Plus "+" @ 8..9 trailing=[Whitespace " "]
+                                                            UnaryExpression
+                                                              Minus "-" @ 10..11 trailing=[Whitespace " "]
+                                                              UnaryExpression
+                                                                Bang "!" @ 12..13 trailing=[Whitespace " "]
+                                                                BogusExpression
+                                                                  Slash "/" @ 14..15 trailing=[Whitespace " "]
+                                                    Percent "%" @ 16..17 trailing=[Whitespace " "]
+                                                    BogusExpression
+                                                      Lt "<" @ 18..19 trailing=[Whitespace " "]
+                                                  Gt ">" @ 20..21 trailing=[Whitespace " "]
+                                                  BogusExpression
+                                                    LtEq "<=" @ 22..24 trailing=[Whitespace " "]
+                                                GtEq ">=" @ 25..27 trailing=[Whitespace " "]
+                                                BogusExpression
+                                                  EqEqEq "===" @ 28..31 trailing=[Whitespace " "]
+                                              Arrow "->" @ 32..34 trailing=[Whitespace " "]
+                                            DoubleArrow "=>" @ 35..37 trailing=[Whitespace " "]
+                                          BangEqEqEq "!==" @ 38..41 trailing=[Whitespace " "]
+                                        EqEq "==" @ 42..44 trailing=[Whitespace " "]
+                                      BangEq "!=" @ 45..47 trailing=[Whitespace " "]
+                                    BangBang "!!" @ 48..50 trailing=[Whitespace " "]
+                                  AndAnd "&&" @ 51..53 trailing=[Whitespace " "]
+                                Amp "&" @ 54..55 trailing=[Whitespace " "]
+                              OrOr "||" @ 56..58 trailing=[Whitespace " "]
+                            Question "?" @ 59..60
+                          Dot "." @ 60..61 trailing=[Whitespace " "]
+                        Elvis "?:" @ 62..64 trailing=[Whitespace " "]
+                      StarEq "*=" @ 65..67 trailing=[Whitespace " "]
+                    SlashEq "/=" @ 68..70 trailing=[Whitespace " "]
+                  PercentEq "%=" @ 71..73 trailing=[Whitespace " "]
+                PlusEq "+=" @ 74..76 trailing=[Whitespace " "]
+              MinusEq "-=" @ 77..79 trailing=[Whitespace " "]
+            NotIn "!in" @ 80..83 trailing=[Whitespace " "]
           NotIs "!is" @ 84..87
       TerminatorList
   Eof "" @ 88..88 leading=[Newline "\n"]

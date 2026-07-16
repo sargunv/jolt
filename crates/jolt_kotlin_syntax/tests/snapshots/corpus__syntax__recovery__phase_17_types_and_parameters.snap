@@ -86,8 +86,8 @@ KotlinFile
           UserTypeSegmentList
             UserTypeSegment
               Identifier "Alpha" @ 146..151
-            BogusUserTypeSegment
-              Range ".." @ 151..153
+            Range ".." @ 151..153
+            UserTypeSegment
               Identifier "Beta" @ 153..157
     TypeAliasDeclaration
       ModifierList
@@ -104,8 +104,8 @@ KotlinFile
               TypeArgumentList
                 Lt "<" @ 185..186
                 TypeProjectionSeparatedList
-                  Comma "," @ 186..187 trailing=[Whitespace " "]
                   BogusTypeArgument
+                  Comma "," @ 186..187 trailing=[Whitespace " "]
                   TypeReference
                     UserType
                       UserTypeSegmentList
@@ -150,8 +150,8 @@ KotlinFile
               AnnotationList
               LParen "(" @ 255..256
               ParenthesizedTypeEntryList
-                Comma "," @ 256..257 trailing=[Whitespace " "]
                 BogusFunctionTypeParameter
+                Comma "," @ 256..257 trailing=[Whitespace " "]
                 FunctionTypeParameter
                   Name
                     Identifier "named" @ 258..263
@@ -193,8 +193,8 @@ KotlinFile
                     UserTypeSegment
                       Identifier "String" @ 322..328
             Comma "," @ 328..329 trailing=[Whitespace " "]
-            Comma "," @ 330..331 trailing=[Whitespace " "]
             BogusFunctionTypeParameter
+            Comma "," @ 330..331 trailing=[Whitespace " "]
             FunctionTypeParameter
               Name
                 Identifier "named" @ 332..337
@@ -233,8 +233,8 @@ KotlinFile
       TypeParameterList
         Lt "<" @ 373..374
         TypeParameterSeparatedList
-          Comma "," @ 374..375 trailing=[Whitespace " "]
           BogusTypeParameter
+          Comma "," @ 374..375 trailing=[Whitespace " "]
           TypeParameter
             ModifierList
             Name
@@ -272,8 +272,8 @@ KotlinFile
             LiteralExpression
               IntegerLiteral "1" @ 411..412
           Comma "," @ 412..413
-          Comma "," @ 418..419 leading=[Newline "\n", Whitespace "    "]
           BogusValueParameter
+          Comma "," @ 418..419 leading=[Newline "\n", Whitespace "    "]
           ValueParameter
             ModifierList
               Identifier "vararg" @ 424..430 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
@@ -419,8 +419,8 @@ KotlinFile
             LiteralExpression
               IntegerLiteral "1" @ 603..604
           Comma "," @ 604..605 trailing=[Whitespace " "]
-          Comma "," @ 606..607 trailing=[Whitespace " "]
           BogusContextParameter
+          Comma "," @ 606..607 trailing=[Whitespace " "]
           ContextParameter
             TypeReference
               UserType
@@ -449,41 +449,41 @@ diagnostics:
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=58..65 message="expected type"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=119..128 message="expected type segment"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=151..153 message="expected one '.' between type segments"
-  code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=188..194 message="malformed type argument list"
+  code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=186..187 message="malformed type argument list"
   code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=197..203 message="star projection cannot include a simultaneous type"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=208..209 message="expected type"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=258..263 message="expected function type parameter between commas"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=332..337 message="expected function type parameter between commas"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=376..377 message="expected type parameter between commas"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=256..257 message="expected function type parameter between commas"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=330..331 message="expected function type parameter between commas"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=374..375 message="expected type parameter between commas"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=378..381 message="expected ':' before type parameter bound"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=386..387 message="expected type"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=411..412 message="expected '=' before parameter default"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=424..430 message="expected value parameter between commas"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=418..419 message="expected value parameter between commas"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=461..462 message="expected type"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=465..466 message="expected 'where' before type constraints"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=507..510 message="expected ':' before type constraint bound"
   code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=555..556 message="expected type constraint between commas"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=603..604 message="expected '=' before context parameter default"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=608..613 message="expected context parameter"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=606..607 message="expected context parameter"
 
 diagnostics:
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(24), end: TextSize(33) }) message=expected type
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(58), end: TextSize(65) }) message=expected type
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(119), end: TextSize(128) }) message=expected type segment
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(151), end: TextSize(153) }) message=expected one '.' between type segments
-code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=Some(TextRange { start: TextSize(188), end: TextSize(194) }) message=malformed type argument list
+code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=Some(TextRange { start: TextSize(186), end: TextSize(187) }) message=malformed type argument list
 code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=Some(TextRange { start: TextSize(197), end: TextSize(203) }) message=star projection cannot include a simultaneous type
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(208), end: TextSize(209) }) message=expected type
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(258), end: TextSize(263) }) message=expected function type parameter between commas
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(332), end: TextSize(337) }) message=expected function type parameter between commas
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(376), end: TextSize(377) }) message=expected type parameter between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(256), end: TextSize(257) }) message=expected function type parameter between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(330), end: TextSize(331) }) message=expected function type parameter between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(374), end: TextSize(375) }) message=expected type parameter between commas
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(378), end: TextSize(381) }) message=expected ':' before type parameter bound
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(386), end: TextSize(387) }) message=expected type
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(411), end: TextSize(412) }) message=expected '=' before parameter default
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(424), end: TextSize(430) }) message=expected value parameter between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(418), end: TextSize(419) }) message=expected value parameter between commas
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(461), end: TextSize(462) }) message=expected type
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(465), end: TextSize(466) }) message=expected 'where' before type constraints
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(507), end: TextSize(510) }) message=expected ':' before type constraint bound
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(555), end: TextSize(556) }) message=expected type constraint between commas
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(603), end: TextSize(604) }) message=expected '=' before context parameter default
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(608), end: TextSize(613) }) message=expected context parameter
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(606), end: TextSize(607) }) message=expected context parameter

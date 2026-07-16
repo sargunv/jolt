@@ -62,7 +62,6 @@ KotlinFile
                           TerminatorList
                       RBrace "}" @ 45..46
                     ParenthesizedExpression
-                      BogusExpression
               TerminatorList
             Statement
               ExpressionStatement
@@ -80,12 +79,16 @@ KotlinFile
 
 diagnostics:
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=47..51 message="expected 'while' after do body"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=47..51 message="expected '(' before condition"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=47..51 message="expected condition after 'while'"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=47..51 message="expected ')' after condition"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=59..60 message="expected '{' after when subject"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=59..60 message="expected '}' after when"
 
 diagnostics:
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(51) }) message=expected 'while' after do body
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(51) }) message=expected '(' before condition
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(51) }) message=expected condition after 'while'
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(51) }) message=expected ')' after condition
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(59), end: TextSize(60) }) message=expected '{' after when subject
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(59), end: TextSize(60) }) message=expected '}' after when

@@ -1,5 +1,3 @@
-use jolt_syntax::UnresolvedDiagnosticOwner;
-
 use crate::KotlinSyntaxKind as K;
 
 use super::super::Parser;
@@ -28,7 +26,7 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn parse_object_tail(&mut self) {
-        self.expect(K::ObjectKw, "expected object");
+        debug_assert!(self.eat(K::ObjectKw));
         if !matches!(self.current_kind(), K::Colon | K::LBrace | K::Eof) {
             self.parse_name();
         }
@@ -45,7 +43,7 @@ impl Parser<'_> {
 
     pub(in crate::parser::grammar) fn parse_class_body(&mut self) {
         let marker = self.start();
-        self.expect(K::LBrace, "expected class body");
+        debug_assert!(self.eat(K::LBrace));
         let members = self.start();
         while !self.at_block_end() {
             if self.eat_optional_separators() && self.at_block_end() {
@@ -53,10 +51,10 @@ impl Parser<'_> {
             }
             if self.at(K::Comma) {
                 let member = self.start();
-                let diagnostic = self.unexpected_here("unexpected orphan class member comma");
-                self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(member.anchor()));
+                let diagnostic = self.pending_unexpected("unexpected orphan class member comma");
+
                 self.bump();
-                self.complete(member, K::BogusClassMember);
+                self.complete_recovery(member, K::BogusClassMember, [diagnostic]);
                 continue;
             }
             let before = self.position();
@@ -69,23 +67,20 @@ impl Parser<'_> {
                 )
             {
                 let member = self.start();
-                let diagnostic = self.unexpected_here("unexpected orphan class member");
-                self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(member.anchor()));
+                let diagnostic = self.pending_unexpected("unexpected orphan class member");
+
                 self.bump();
-                self.complete(member, K::BogusClassMember);
+                self.complete_recovery(member, K::BogusClassMember, [diagnostic]);
             } else {
                 let member = self.start();
                 self.parse_class_member_declaration_or_statement();
                 if self.position() == before {
-                    let diagnostic = self.unexpected_here("expected class member");
-                    self.own_diagnostic(
-                        diagnostic,
-                        UnresolvedDiagnosticOwner::node(member.anchor()),
-                    );
+                    let diagnostic = self.pending_unexpected("expected class member");
+
                     if !self.at_block_end() {
                         self.bump();
                     }
-                    self.complete(member, K::BogusClassMember);
+                    self.complete_recovery(member, K::BogusClassMember, [diagnostic]);
                 } else {
                     self.complete(member, K::ClassMemberDeclaration);
                 }
@@ -93,13 +88,11 @@ impl Parser<'_> {
         }
         self.complete(members, K::ClassMemberList);
         if !self.eat(K::RBrace) {
-            let diagnostic = self.expected_here("expected '}' after class body");
-            self.own_diagnostic(
-                diagnostic,
-                UnresolvedDiagnosticOwner::missing_slot(
-                    marker.anchor(),
-                    crate::shape::class_body::Slot::close_brace as u16,
-                ),
+            let diagnostic = self.pending_expected("expected '}' after class body");
+            self.missing_required_slot(
+                marker.anchor(),
+                crate::shape::class_body::Slot::close_brace as u16,
+                [diagnostic],
             );
         }
         self.complete(marker, K::ClassBody);
@@ -126,10 +119,11 @@ impl Parser<'_> {
             self.parse_name();
         } else {
             let name = self.start();
-            let diagnostic = self.expected_here("expected enum entry name");
-            self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(marker.anchor()));
-            self.complete(name, K::Name);
-            self.bump();
+            let diagnostic = self.pending_expected("expected enum entry name");
+            if !self.at_eof() {
+                self.bump();
+            }
+            self.complete_recovery(name, K::Name, [diagnostic]);
         }
         if self.at(K::LParen) {
             self.parse_value_argument_list();
@@ -145,13 +139,11 @@ impl Parser<'_> {
         let clause = self.start();
         if !self.eat(K::Colon) {
             debug_assert!(recovered);
-            let diagnostic = self.expected_here("expected ':' before delegation specifiers");
-            self.own_diagnostic(
-                diagnostic,
-                UnresolvedDiagnosticOwner::missing_slot(
-                    clause.anchor(),
-                    crate::shape::delegation_clause::Slot::colon as u16,
-                ),
+            let diagnostic = self.pending_expected("expected ':' before delegation specifiers");
+            self.missing_required_slot(
+                clause.anchor(),
+                crate::shape::delegation_clause::Slot::colon as u16,
+                [diagnostic],
             );
         }
         self.parse_delegation_specifier_entries();

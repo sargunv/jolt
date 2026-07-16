@@ -27,7 +27,7 @@ package first
 
 import z.Z
 
-package second
+ package second
 
 import z.Z
 import
@@ -36,11 +36,11 @@ import b.B
 
 class BeforeLateImport
 
-import c.C
+ import c.C
 
-package
+ package
 
-package broken..name.
+ package broken..name.
 
 import
 import direct*

@@ -12,10 +12,11 @@ KotlinFile
   KotlinFileItemList
     Statement
       ExpressionStatement
-        LiteralExpression
-          CharacterLiteral "'/'" @ 0..3 trailing=[Whitespace " "]
-        BogusExpression
-          CharacterLiteral "'*'" @ 4..7
+        BinaryExpression
+          LiteralExpression
+            CharacterLiteral "'/'" @ 0..3 trailing=[Whitespace " "]
+          LiteralExpression
+            CharacterLiteral "'*'" @ 4..7
       TerminatorList
   Eof "" @ 8..8 leading=[Newline "\n"]
 

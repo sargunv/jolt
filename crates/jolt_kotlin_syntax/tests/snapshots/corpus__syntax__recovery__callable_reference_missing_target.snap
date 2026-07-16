@@ -37,23 +37,23 @@ KotlinFile
                 Assign "=" @ 57..58 trailing=[Whitespace " "]
                 CallableReferenceExpression
                   ColonColon "::" @ 59..61
-                  TypeArgumentList
-                    Lt "<" @ 61..62
-                    TypeProjectionSeparatedList
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
-                            UserTypeSegment
-                              Identifier "String" @ 62..68
-                    Gt ">" @ 68..69
                   CallableReferenceTarget
                   TypeArgumentListList
+                    TypeArgumentList
+                      Lt "<" @ 61..62
+                      TypeProjectionSeparatedList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                Identifier "String" @ 62..68
+                      Gt ">" @ 68..69
               PropertyBodyMemberList
           RBrace "}" @ 70..71 leading=[Newline "\n"]
   Eof "" @ 72..72 leading=[Newline "\n"]
 
 diagnostics:
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=70..71 message="expected callable reference name"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=61..62 message="expected callable reference name"
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(70), end: TextSize(71) }) message=expected callable reference name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(61), end: TextSize(62) }) message=expected callable reference name

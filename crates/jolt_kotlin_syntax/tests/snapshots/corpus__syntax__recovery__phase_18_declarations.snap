@@ -98,7 +98,6 @@ KotlinFile
       Name
         Identifier "missingParameters" @ 16..33 trailing=[Whitespace " "]
       ValueParameterList
-        ValueParameterSeparatedList
       BlockBody
         Block
           LBrace "{" @ 34..35
@@ -506,7 +505,7 @@ KotlinFile
           EnumEntry
             ModifierList
             Name
-            RParen ")" @ 751..752 leading=[Newline "\n", Whitespace "    "]
+              RParen ")" @ 751..752 leading=[Newline "\n", Whitespace "    "]
             Comma "," @ 752..753
           EnumEntry
             ModifierList

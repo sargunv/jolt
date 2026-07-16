@@ -48,12 +48,6 @@ impl Parser<'_> {
             .is_some_and(is_annotation_use_site_target)
     }
 
-    pub(in crate::parser::grammar) fn expect_soft_keyword(&mut self, text: &str, message: &str) {
-        if !self.eat_soft_keyword(text) {
-            self.expected_here(message);
-        }
-    }
-
     pub(in crate::parser::grammar) fn eat_soft_keyword(&mut self, text: &str) -> bool {
         if self.at_soft_keyword(text) {
             self.bump();

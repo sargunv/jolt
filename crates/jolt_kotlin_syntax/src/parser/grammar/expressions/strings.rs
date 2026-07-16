@@ -1,4 +1,4 @@
-use jolt_syntax::{CompletedMarker, UnresolvedDiagnosticOwner};
+use jolt_syntax::CompletedMarker;
 
 use crate::KotlinSyntaxKind as K;
 
@@ -19,32 +19,46 @@ impl Parser<'_> {
                     self.bump();
                     self.parse_expression_until(&[K::LongTemplateEntryEnd]);
                     if !self.eat(K::LongTemplateEntryEnd) {
-                        let diagnostic = self.expected_here("expected '}' after string template");
-                        self.own_diagnostic(
-                            diagnostic,
-                            UnresolvedDiagnosticOwner::missing_slot(
-                                long_entry.anchor(),
-                                crate::shape::long_string_template_entry::Slot::close as u16,
-                            ),
+                        let diagnostic =
+                            self.pending_expected("expected '}' after string template");
+                        self.missing_required_slot(
+                            long_entry.anchor(),
+                            crate::shape::long_string_template_entry::Slot::close as u16,
+                            [diagnostic],
                         );
                     }
                     self.complete(long_entry, K::LongStringTemplateEntry);
+                    self.complete(entry, K::StringTemplateEntry);
                 }
-                _ => self.bump(),
+                K::InterpolationPrefix
+                | K::OpenQuote
+                | K::RegularStringPart
+                | K::EscapeSequence
+                | K::ShortTemplateEntryStart
+                | K::LongTemplateEntryEnd
+                | K::DanglingNewline
+                | K::Identifier
+                | K::ThisKw => {
+                    self.bump();
+                    self.complete(entry, K::StringTemplateEntry);
+                }
+                _ => {
+                    let diagnostic = self.pending_unexpected("unexpected token in string template");
+
+                    self.bump();
+                    self.complete_recovery(entry, K::BogusStringTemplatePart, [diagnostic]);
+                }
             }
-            self.complete(entry, K::StringTemplateEntry);
         }
         self.complete(parts, K::StringTemplateEntryList);
         if self.at(K::ClosingQuote) {
             self.bump();
         } else {
-            let diagnostic = self.expected_here("expected closing quote");
-            self.own_diagnostic(
-                diagnostic,
-                UnresolvedDiagnosticOwner::missing_slot(
-                    marker.anchor(),
-                    crate::shape::string_template_expression::Slot::close_quote as u16,
-                ),
+            let diagnostic = self.pending_expected("expected closing quote");
+            self.missing_required_slot(
+                marker.anchor(),
+                crate::shape::string_template_expression::Slot::close_quote as u16,
+                [diagnostic],
             );
         }
         self.complete(marker, K::StringTemplateExpression)

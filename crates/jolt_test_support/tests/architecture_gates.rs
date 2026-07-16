@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const IMPLEMENTATION_BASELINE: &str = "2197128";
-const MAX_IMPLEMENTATION_NET_DELTA: usize = 7_708;
+const MAX_IMPLEMENTATION_NET_DELTA: usize = 7_626;
 
 #[test]
 fn forbidden_architecture_patterns_do_not_regress() {
@@ -15,38 +15,44 @@ fn forbidden_architecture_patterns_do_not_regress() {
         let source = read(path);
         let relative = relative(&workspace, path);
         for forbidden in [
+            "DiagnosticMarker",
             "FormatterInsertedToken",
             "ReferenceSyntaxFactory",
             "build_reference_syntax_tree",
+            "build_syntax_tree_with_factory_and_diagnostic_owners",
             "completed_is_error_node",
             "error_node_kind",
             "ErrorNode",
+            "expect_owned(",
+            "expected_here(",
+            "expected_owned_",
+            "own_diagnostic(",
             "represented_range_is_trivia",
             "tokens_between",
+            "unexpected_here(",
+            "unexpected_owned_",
         ] {
             if source.contains(forbidden) {
                 failures.push(format!("{relative}: forbidden pattern {forbidden:?}"));
             }
         }
 
-        if relative.starts_with("crates/jolt_java_syntax/src/parser/") {
-            for forbidden in [
-                "own_diagnostic(",
-                "expected_owned_",
-                "unexpected_owned_",
-                "expect_owned(",
-                "UnresolvedDiagnosticOwner",
-                "DiagnosticMarker",
-                "complete_owned_",
-            ] {
+        if relative.starts_with("crates/jolt_java_syntax/src/parser/")
+            || relative.starts_with("crates/jolt_kotlin_syntax/src/parser/")
+        {
+            for forbidden in ["UnresolvedDiagnosticOwner", "complete_owned_"] {
                 if source.contains(forbidden) {
                     failures.push(format!(
-                        "{relative}: Java atomic recovery migration forbids {forbidden:?}"
+                        "{relative}: language atomic recovery migration forbids {forbidden:?}"
                     ));
                 }
             }
             if relative.contains("/grammar/") {
                 for forbidden in [
+                    "ensure_progress(",
+                    "error_here(",
+                    "expected_here(",
+                    "unexpected_here(",
                     "self.expect(",
                     "self.expect_contextual(",
                     "self.expect_variable_identifier(",
@@ -56,7 +62,7 @@ fn forbidden_architecture_patterns_do_not_regress() {
                 ] {
                     if source.contains(forbidden) {
                         failures.push(format!(
-                            "{relative}: Java grammar must classify structural diagnostics; \
+                            "{relative}: language grammar must classify structural diagnostics; \
                              forbidden ownerless path {forbidden:?}"
                         ));
                     }
@@ -88,14 +94,14 @@ fn forbidden_architecture_patterns_do_not_regress() {
 /// construction. Untracked implementation files are added to the projection so
 /// a local `mise run test` cannot evade the gate before staging them.
 #[test]
-fn implementation_projection_stays_within_phase_twenty_five_budget() {
+fn implementation_projection_stays_within_phase_twenty_six_budget() {
     let workspace = workspace_root();
     let (additions, deletions) = implementation_projection(&workspace);
     let net = additions.saturating_sub(deletions);
 
     assert!(
         net <= MAX_IMPLEMENTATION_NET_DELTA,
-        "Phase 25 implementation projection against {IMPLEMENTATION_BASELINE} is \
+        "Phase 26 implementation projection against {IMPLEMENTATION_BASELINE} is \
          +{additions}/-{deletions}, net +{net}; maximum net delta is \
          +{MAX_IMPLEMENTATION_NET_DELTA}. The projection includes crates/**/*.rs and \
          tools/**/*.py, including tests and test support."

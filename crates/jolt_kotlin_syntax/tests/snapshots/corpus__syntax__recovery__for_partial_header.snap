@@ -54,24 +54,27 @@ KotlinFile
                     Name
                       Identifier "item" @ 37..41 trailing=[Whitespace " "]
                   InKw "in" @ 42..44 trailing=[Whitespace " "]
-                  BinaryExpression
+                  NameExpression
+                    Identifier "items" @ 45..50 trailing=[Whitespace " "]
+                  CallExpression
                     NameExpression
-                      Identifier "items" @ 45..50 trailing=[Whitespace " "]
-                    Identifier "print" @ 51..56
-                    ParenthesizedExpression
+                      Identifier "print" @ 51..56
+                    TypeArgumentListList
+                    ValueArgumentList
                       LParen "(" @ 56..57
-                      NameExpression
-                        Identifier "item" @ 57..61
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          NameExpression
+                            Identifier "item" @ 57..61
                       RParen ")" @ 61..62 trailing=[Whitespace " "]
-                  BogusExpression
+                    LambdaExpressionList
               TerminatorList
           RBrace "}" @ 63..64
   Eof "" @ 65..65 leading=[Newline "\n"]
 
 diagnostics:
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=63..64 message="expected ')' after for header"
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=63..64 message="expected body after 'for' header"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=51..56 message="expected ')' after for header"
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=expected ')' after for header
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=expected body after 'for' header
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(51), end: TextSize(56) }) message=expected ')' after for header

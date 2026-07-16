@@ -17,4 +17,4 @@ fun demo() {
 }
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(44), end: TextSize(49) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(30), end: TextSize(31) }) message=expected list item

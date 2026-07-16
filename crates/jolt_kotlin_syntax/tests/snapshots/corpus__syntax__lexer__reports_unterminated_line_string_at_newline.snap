@@ -21,21 +21,27 @@ KotlinFile
               RegularStringPart "abc" @ 1..4
             StringTemplateEntry
               DanglingNewline "" @ 4..4
-            StringTemplateEntry
+            BogusStringTemplatePart
               ValKw "val" @ 5..8 leading=[Newline "\n"] trailing=[Whitespace " "]
             StringTemplateEntry
               Identifier "x" @ 9..10 trailing=[Whitespace " "]
-            StringTemplateEntry
+            BogusStringTemplatePart
               Assign "=" @ 11..12 trailing=[Whitespace " "]
-            StringTemplateEntry
+            BogusStringTemplatePart
               IntegerLiteral "1" @ 13..14
       TerminatorList
   Eof "" @ 15..15 leading=[Newline "\n"]
 
 diagnostics:
   code=kotlin.lex.unterminated_string_literal severity=Error stage=Lexer range=0..4 message="unterminated string literal"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=5..8 message="unexpected token in string template"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=11..12 message="unexpected token in string template"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=13..14 message="unexpected token in string template"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=15..15 message="expected closing quote"
 
 diagnostics:
 code=kotlin.lex.unterminated_string_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(4) }) message=unterminated string literal
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(5), end: TextSize(8) }) message=unexpected token in string template
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(11), end: TextSize(12) }) message=unexpected token in string template
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(13), end: TextSize(14) }) message=unexpected token in string template
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(15), end: TextSize(15) }) message=expected closing quote

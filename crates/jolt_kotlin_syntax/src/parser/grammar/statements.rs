@@ -1,5 +1,3 @@
-use jolt_syntax::UnresolvedDiagnosticOwner;
-
 use crate::KotlinSyntaxKind as K;
 
 use super::Parser;
@@ -26,22 +24,27 @@ impl Parser<'_> {
 
     pub(super) fn parse_block(&mut self) {
         let marker = self.start();
-        self.expect(K::LBrace, "expected block");
+        if !self.eat(K::LBrace) {
+            let diagnostic = self.pending_expected("expected block");
+            self.missing_required_slot(
+                marker.anchor(),
+                crate::shape::block::Slot::open_brace as u16,
+                [diagnostic],
+            );
+        }
         let items = self.start();
         while !matches!(self.current_kind(), K::RBrace | K::Eof) {
             let before = self.position();
             self.parse_declaration_or_statement();
-            self.ensure_progress(before, "expected statement");
+            debug_assert!(self.position() > before);
         }
         self.complete(items, K::BlockItemList);
         if !self.eat(K::RBrace) {
-            let diagnostic = self.expected_here("expected '}' after block");
-            self.own_diagnostic(
-                diagnostic,
-                UnresolvedDiagnosticOwner::missing_slot(
-                    marker.anchor(),
-                    crate::shape::block::Slot::close_brace as u16,
-                ),
+            let diagnostic = self.pending_expected("expected '}' after block");
+            self.missing_required_slot(
+                marker.anchor(),
+                crate::shape::block::Slot::close_brace as u16,
+                [diagnostic],
             );
         }
         self.complete(marker, K::Block);
@@ -49,10 +52,7 @@ impl Parser<'_> {
 
     pub(in crate::parser::grammar) fn complete_missing_block(&mut self, message: &'static str) {
         let block = self.start();
-        let diagnostic = self.expected_here(message);
-        self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(block.anchor()));
-        let items = self.start();
-        self.complete(items, K::BlockItemList);
-        self.complete(block, K::Block);
+        let diagnostic = self.pending_expected(message);
+        self.complete_recovery(block, K::Block, [diagnostic]);
     }
 }

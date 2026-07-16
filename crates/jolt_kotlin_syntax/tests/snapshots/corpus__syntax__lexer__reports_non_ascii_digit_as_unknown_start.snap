@@ -12,10 +12,11 @@ KotlinFile
   KotlinFileItemList
     Statement
       ExpressionStatement
-        BogusExpression
-          Unknown "١" @ 0..2
-        BogusExpression
-          Identifier "abc" @ 2..5
+        BinaryExpression
+          BogusExpression
+            Unknown "١" @ 0..2
+          NameExpression
+            Identifier "abc" @ 2..5
       TerminatorList
   Eof "" @ 6..6 leading=[Newline "\n"]
 

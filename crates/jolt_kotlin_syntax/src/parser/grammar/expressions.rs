@@ -1,4 +1,4 @@
-use jolt_syntax::{CompletedMarker, UnresolvedDiagnosticOwner};
+use jolt_syntax::CompletedMarker;
 
 use crate::KotlinSyntaxKind as K;
 
@@ -23,23 +23,40 @@ impl Parser<'_> {
         let stops = stops.into();
         if self.at_expression_boundary(stops) {
             let error = self.start();
-            let diagnostic = self.expected_here("expected expression");
-            self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(error.anchor()));
-            self.complete(error, K::BogusExpression);
+            let diagnostic = self.pending_expected("expected expression");
+
+            self.complete_recovery(error, K::BogusExpression, [diagnostic]);
             return;
         }
 
-        self.parse_assignment_expression(stops);
+        let mut expression = self.parse_assignment_expression(stops);
+        if self.at_expression_boundary(stops)
+            || self.at_semicolon_boundary() && !is_expression_continuation(self.current_kind())
+        {
+            return;
+        }
 
-        while !self.at_expression_boundary(stops) {
-            if self.at_semicolon_boundary() && !is_expression_continuation(self.current_kind()) {
-                break;
+        while expression_start_kind(self.current_kind())
+            && !self.at_expression_rhs_declaration_boundary()
+        {
+            let combined = self.precede(expression);
+            let diagnostic = self.pending_unexpected("unexpected token in expression");
+            self.parse_assignment_expression(stops);
+            expression = self.complete_recovery(combined, K::BinaryExpression, [diagnostic]);
+            if self.at_expression_boundary(stops)
+                || self.at_semicolon_boundary() && !is_expression_continuation(self.current_kind())
+            {
+                return;
             }
-            let error = self.start();
-            let diagnostic = self.unexpected_here("unexpected token in expression");
-            self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(error.anchor()));
+        }
+
+        while !self.at_expression_boundary(stops)
+            && (!self.at_semicolon_boundary() || is_expression_continuation(self.current_kind()))
+        {
+            let error = self.precede(expression);
+            let diagnostic = self.pending_unexpected("unexpected token in expression");
             self.bump();
-            self.complete(error, K::BogusExpression);
+            expression = self.complete_recovery(error, K::BogusExpression, [diagnostic]);
         }
     }
 
@@ -54,17 +71,17 @@ impl Parser<'_> {
         } else {
             let error = self.precede(lhs);
             let diagnostic = self.invalid_assignment_target_here("invalid assignment target");
-            self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(error.anchor()));
-            self.complete(error, K::BogusExpression)
+
+            self.complete_recovery(error, K::BogusExpression, [diagnostic])
         };
 
         let assignment = self.precede(lhs);
         self.bump();
         if self.at_expression_boundary(stops) || self.at_expression_rhs_declaration_boundary() {
             let rhs = self.start();
-            let diagnostic = self.expected_here("expected expression after operator");
-            self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(rhs.anchor()));
-            self.complete(rhs, K::BogusExpression);
+            let diagnostic = self.pending_expected("expected expression after operator");
+
+            self.complete_recovery(rhs, K::BogusExpression, [diagnostic]);
         } else {
             self.parse_assignment_expression(stops);
         }
@@ -86,11 +103,11 @@ impl Parser<'_> {
             let binary = self.precede(lhs);
             let operator = self.current_kind();
             if operator == K::Elvis && self.elvis_missing_rhs(stops) {
-                let diagnostic = self.expected_here("expected expression after operator");
+                let diagnostic = self.pending_expected("expected expression after operator");
                 self.bump();
                 let error = self.start();
-                self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(error.anchor()));
-                self.complete(error, K::BogusExpression);
+
+                self.complete_recovery(error, K::BogusExpression, [diagnostic]);
             } else if matches!(operator, K::AsKw | K::AsSafe | K::IsKw | K::NotIs) {
                 self.bump();
                 self.parse_type_reference_until(&[
@@ -113,9 +130,9 @@ impl Parser<'_> {
                     || self.at_expression_rhs_declaration_boundary()
                 {
                     let rhs = self.start();
-                    let diagnostic = self.expected_here("expected expression after operator");
-                    self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(rhs.anchor()));
-                    self.complete(rhs, K::BogusExpression);
+                    let diagnostic = self.pending_expected("expected expression after operator");
+
+                    self.complete_recovery(rhs, K::BogusExpression, [diagnostic]);
                 } else {
                     self.parse_binary_expression(stops, info.precedence + 1);
                 }
@@ -160,13 +177,11 @@ impl Parser<'_> {
                 }
                 K::Lt => {
                     if let Some(message) = self.type_argument_list_issue_ahead() {
-                        let error = self.start();
+                        let error = self.precede(expression);
                         let diagnostic = self.malformed_type_argument_list_here(message);
-                        self.own_diagnostic(
-                            diagnostic,
-                            UnresolvedDiagnosticOwner::node(error.anchor()),
-                        );
-                        self.complete(error, K::BogusExpression);
+
+                        expression =
+                            self.complete_recovery(error, K::BogusExpression, [diagnostic]);
                     }
                     break;
                 }
@@ -210,16 +225,14 @@ impl Parser<'_> {
 
     fn parse_index_suffix(&mut self, expression: CompletedMarker) -> CompletedMarker {
         let index = self.precede(expression);
-        self.expect(K::LBracket, "expected '['");
+        debug_assert!(self.eat(K::LBracket));
         self.parse_value_arguments_until(K::RBracket, K::ValueArgumentEntryList);
         if !self.eat(K::RBracket) {
-            let diagnostic = self.expected_here("expected ']'");
-            self.own_diagnostic(
-                diagnostic,
-                UnresolvedDiagnosticOwner::missing_slot(
-                    index.anchor(),
-                    crate::shape::index_expression::Slot::close_bracket as u16,
-                ),
+            let diagnostic = self.pending_expected("expected ']'");
+            self.missing_required_slot(
+                index.anchor(),
+                crate::shape::index_expression::Slot::close_bracket as u16,
+                [diagnostic],
             );
         }
         self.complete(index, K::IndexExpression)
@@ -248,9 +261,6 @@ impl Parser<'_> {
         let receiver = self.complete(receiver, K::CallableReferenceReceiver);
         let reference = self.precede(receiver);
         self.bump();
-        if self.at(K::Lt) && self.type_argument_list_is_call_suffix_ahead() {
-            self.parse_type_argument_list();
-        }
         if self.at_identifier_like() || matches!(self.current_kind(), K::ClassKw) {
             let target = self.start();
             self.bump();
@@ -275,12 +285,9 @@ impl Parser<'_> {
             self.parse_super_expression();
         } else {
             let selector = self.start();
-            let diagnostic = self.expected_here("expected member name");
-            self.own_diagnostic(
-                diagnostic,
-                UnresolvedDiagnosticOwner::node(selector.anchor()),
-            );
-            self.complete(selector, K::BogusNavigationSelector);
+            let diagnostic = self.pending_expected("expected member name");
+
+            self.complete_recovery(selector, K::BogusNavigationSelector, [diagnostic]);
         }
     }
 
@@ -339,12 +346,12 @@ impl Parser<'_> {
             }
             _ => {
                 let error = self.start();
-                let diagnostic = self.expected_here("expected expression");
+                let diagnostic = self.pending_expected("expected expression");
                 if !self.at_eof() && !stops.contains(self.current_kind(), self.position()) {
                     self.bump();
                 }
-                self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(error.anchor()));
-                self.complete(error, K::BogusExpression)
+
+                self.complete_recovery(error, K::BogusExpression, [diagnostic])
             }
         }
     }
@@ -370,9 +377,9 @@ impl Parser<'_> {
         self.complete(prefix, K::ModifierList);
         if self.at_expression_boundary(stops) {
             let error = self.start();
-            let diagnostic = self.expected_here("expected expression");
-            self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(error.anchor()));
-            self.complete(error, K::BogusExpression);
+            let diagnostic = self.pending_expected("expected expression");
+
+            self.complete_recovery(error, K::BogusExpression, [diagnostic]);
         } else {
             self.parse_assignment_expression(stops);
         }
@@ -381,14 +388,14 @@ impl Parser<'_> {
 
     fn parse_this_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
-        self.expect(K::ThisKw, "expected this");
+        debug_assert!(self.eat(K::ThisKw));
         self.parse_optional_typed_label_reference();
         self.complete(marker, K::ThisExpression)
     }
 
     fn parse_super_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
-        self.expect(K::SuperKw, "expected super");
+        debug_assert!(self.eat(K::SuperKw));
         if self.at(K::Lt) {
             self.parse_type_argument_list();
         }
@@ -398,16 +405,14 @@ impl Parser<'_> {
 
     pub(in crate::parser::grammar) fn parse_value_argument_list(&mut self) {
         let marker = self.start();
-        self.expect(K::LParen, "expected argument list");
+        debug_assert!(self.eat(K::LParen));
         self.parse_value_arguments_until(K::RParen, K::ValueArgumentEntryList);
         if !self.eat(K::RParen) {
-            let diagnostic = self.expected_here("expected ')' after arguments");
-            self.own_diagnostic(
-                diagnostic,
-                UnresolvedDiagnosticOwner::missing_slot(
-                    marker.anchor(),
-                    crate::shape::value_argument_list::Slot::close_paren as u16,
-                ),
+            let diagnostic = self.pending_expected("expected ')' after arguments");
+            self.missing_required_slot(
+                marker.anchor(),
+                crate::shape::value_argument_list::Slot::close_paren as u16,
+                [diagnostic],
             );
         }
         self.complete(marker, K::ValueArgumentList);
@@ -422,22 +427,20 @@ impl Parser<'_> {
         let mut expect_item = true;
         while !self.at(K::Eof) && !self.at(close) {
             let before = self.position();
-            if self.eat(K::Comma) {
+            if self.at(K::Comma) {
                 if expect_item {
                     let missing = self.start();
-                    let diagnostic = self.expected_here("expected list item");
-                    self.own_diagnostic(
-                        diagnostic,
-                        UnresolvedDiagnosticOwner::node(missing.anchor()),
-                    );
-                    self.complete(missing, K::BogusValueArgument);
+                    let diagnostic = self.pending_expected("expected list item");
+
+                    self.complete_recovery(missing, K::BogusValueArgument, [diagnostic]);
                 }
+                self.bump();
                 expect_item = true;
                 continue;
             }
             self.parse_value_argument(close);
             expect_item = false;
-            self.ensure_progress(before, "expected list item");
+            debug_assert!(self.position() > before);
         }
         self.complete(entries, list_kind);
     }
@@ -465,26 +468,21 @@ impl Parser<'_> {
 
     fn parse_parenthesized_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
-        self.expect(K::LParen, "expected '('");
+        debug_assert!(self.eat(K::LParen));
         if self.at(K::RParen) {
             let expression = self.start();
-            let diagnostic = self.expected_here("expected parenthesized expression");
-            self.own_diagnostic(
-                diagnostic,
-                UnresolvedDiagnosticOwner::node(expression.anchor()),
-            );
-            self.complete(expression, K::BogusExpression);
+            let diagnostic = self.pending_expected("expected parenthesized expression");
+
+            self.complete_recovery(expression, K::BogusExpression, [diagnostic]);
         } else {
             self.parse_expression_until(&[K::RParen]);
         }
         if !self.eat(K::RParen) {
-            let diagnostic = self.expected_here("expected ')' after expression");
-            self.own_diagnostic(
-                diagnostic,
-                UnresolvedDiagnosticOwner::missing_slot(
-                    marker.anchor(),
-                    crate::shape::parenthesized_expression::Slot::close_paren as u16,
-                ),
+            let diagnostic = self.pending_expected("expected ')' after expression");
+            self.missing_required_slot(
+                marker.anchor(),
+                crate::shape::parenthesized_expression::Slot::close_paren as u16,
+                [diagnostic],
             );
         }
         self.complete(marker, K::ParenthesizedExpression)
@@ -504,13 +502,10 @@ impl Parser<'_> {
             } else {
                 let expression = self.start();
                 let diagnostic =
-                    self.unexpected_here("break and continue do not accept an expression");
-                self.own_diagnostic(
-                    diagnostic,
-                    UnresolvedDiagnosticOwner::node(expression.anchor()),
-                );
+                    self.pending_unexpected("break and continue do not accept an expression");
+
                 self.parse_expression_until(stops.with_extra(K::RBrace));
-                self.complete(expression, K::BogusExpression);
+                self.complete_recovery(expression, K::BogusExpression, [diagnostic]);
             }
         }
         self.complete(marker, K::JumpExpression)
@@ -539,10 +534,7 @@ impl Parser<'_> {
 
     fn parse_callable_reference_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
-        self.expect(K::ColonColon, "expected callable reference");
-        if self.at(K::Lt) {
-            self.parse_type_argument_list();
-        }
+        debug_assert!(self.eat(K::ColonColon));
         if self.at_identifier_like() || matches!(self.current_kind(), K::ClassKw) {
             let target = self.start();
             self.bump();
@@ -560,13 +552,11 @@ impl Parser<'_> {
 
     fn complete_missing_callable_reference_target(&mut self) {
         let target = self.start();
-        let diagnostic = self.expected_here("expected callable reference name");
-        self.own_diagnostic(
-            diagnostic,
-            UnresolvedDiagnosticOwner::missing_slot(
-                target.anchor(),
-                crate::shape::callable_reference_target::Slot::target as u16,
-            ),
+        let diagnostic = self.pending_expected("expected callable reference name");
+        self.missing_required_slot(
+            target.anchor(),
+            crate::shape::callable_reference_target::Slot::target as u16,
+            [diagnostic],
         );
         self.complete(target, K::CallableReferenceTarget);
     }
@@ -692,7 +682,7 @@ impl Parser<'_> {
     fn parse_optional_label_definition(&mut self) {
         if self.at_identifier_like() || matches!(self.current_kind(), K::ThisKw | K::SuperKw) {
             self.bump();
-            self.expect(K::At, "expected label");
+            debug_assert!(self.eat(K::At));
         }
     }
 
@@ -706,13 +696,11 @@ impl Parser<'_> {
         if self.at(K::Identifier) {
             self.bump();
         } else {
-            let diagnostic = self.expected_here("expected label name");
-            self.own_diagnostic(
-                diagnostic,
-                UnresolvedDiagnosticOwner::missing_slot(
-                    label.anchor(),
-                    crate::shape::label_reference::Slot::label as u16,
-                ),
+            let diagnostic = self.pending_expected("expected label name");
+            self.missing_required_slot(
+                label.anchor(),
+                crate::shape::label_reference::Slot::label as u16,
+                [diagnostic],
             );
         }
         self.complete(label, K::LabelReference);
@@ -723,12 +711,9 @@ impl Parser<'_> {
         message: &'static str,
     ) -> CompletedMarker {
         let expression = self.start();
-        let diagnostic = self.expected_here(message);
-        self.own_diagnostic(
-            diagnostic,
-            UnresolvedDiagnosticOwner::node(expression.anchor()),
-        );
-        self.complete(expression, K::BogusExpression)
+        let diagnostic = self.pending_expected(message);
+
+        self.complete_recovery(expression, K::BogusExpression, [diagnostic])
     }
 
     pub(in crate::parser::grammar) fn complete_missing_parenthesized_expression(
@@ -736,13 +721,24 @@ impl Parser<'_> {
         message: &'static str,
     ) -> CompletedMarker {
         let condition = self.start();
-        let expression = self.start();
-        let diagnostic = self.expected_here(message);
-        self.own_diagnostic(
-            diagnostic,
-            UnresolvedDiagnosticOwner::node(expression.anchor()),
+        let open = self.pending_expected("expected '(' before condition");
+        self.missing_required_slot(
+            condition.anchor(),
+            crate::shape::parenthesized_expression::Slot::open_paren as u16,
+            [open],
         );
-        self.complete(expression, K::BogusExpression);
+        let expression = self.pending_expected(message);
+        self.missing_required_slot(
+            condition.anchor(),
+            crate::shape::parenthesized_expression::Slot::expression as u16,
+            [expression],
+        );
+        let close = self.pending_expected("expected ')' after condition");
+        self.missing_required_slot(
+            condition.anchor(),
+            crate::shape::parenthesized_expression::Slot::close_paren as u16,
+            [close],
+        );
         self.complete(condition, K::ParenthesizedExpression)
     }
 }

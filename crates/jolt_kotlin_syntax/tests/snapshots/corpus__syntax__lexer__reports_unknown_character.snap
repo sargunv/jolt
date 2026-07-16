@@ -18,11 +18,11 @@ KotlinFile
         Identifier "x" @ 4..5 trailing=[Whitespace " "]
       PropertyInitializer
         Assign "=" @ 6..7 trailing=[Whitespace " "]
-        LiteralExpression
-          IntegerLiteral "1" @ 8..9 trailing=[Whitespace " "]
         BogusExpression
-          Unknown "|" @ 10..11 trailing=[Whitespace " "]
-        BogusExpression
+          BogusExpression
+            LiteralExpression
+              IntegerLiteral "1" @ 8..9 trailing=[Whitespace " "]
+            Unknown "|" @ 10..11 trailing=[Whitespace " "]
           IntegerLiteral "2" @ 12..13
       PropertyBodyMemberList
   Eof "" @ 14..14 leading=[Newline "\n"]

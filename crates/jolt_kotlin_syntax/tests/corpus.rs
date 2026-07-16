@@ -1,3 +1,4 @@
+use jolt_diagnostics::{DiagnosticCodeId, DiagnosticStage};
 use jolt_kotlin_syntax::{KotlinSyntaxView, parse_kotlin_file};
 use jolt_syntax::SyntaxSlot;
 use jolt_test_support::{
@@ -29,20 +30,18 @@ fn kotlin_corpus_syntax_snapshots() {
             syntax.syntax_node().expect("physical Kotlin root"),
             path.display(),
         );
-        if path.ends_with("syntax/recovery/phase-16-program.kt")
-            || path.ends_with("syntax/recovery/phase-17-types-and-parameters.kt")
-            || path.ends_with("syntax/recovery/phase-18-declarations.kt")
-            || path.ends_with("syntax/recovery/phase-19-expressions.kt")
-            || path.ends_with("syntax/recovery/phase-20-statements-and-control-flow.kt")
-        {
-            assert_bidirectional_diagnostic_ownership(
-                syntax.syntax_node().expect("physical Kotlin root"),
-                parse.diagnostics(),
-                parse.structural_diagnostic_owners(),
-                |_| true,
-                path.display(),
-            );
-        }
+        assert_bidirectional_diagnostic_ownership(
+            syntax.syntax_node().expect("physical Kotlin root"),
+            parse.diagnostics(),
+            parse.structural_diagnostic_owners(),
+            |diagnostic| {
+                diagnostic.stage == DiagnosticStage::Parser
+                    && diagnostic.code != DiagnosticCodeId::new("kotlin.parse.invalid_when_guard")
+                    && diagnostic.code
+                        != DiagnosticCodeId::new("kotlin.parse.reserved_callable_reference_call")
+            },
+            path.display(),
+        );
 
         let snapshot = SnapshotBuilder::new()
             .section("input", &source)

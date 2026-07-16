@@ -1532,6 +1532,45 @@ then expose exactly one structural-diagnostic construction path, with searches
 and architecture gates rejecting the deleted ownership setters, repair maps,
 range inference, and ownerless malformed completion APIs.
 
+Implemented and quality-audited. Every Kotlin structural diagnostic now starts
+as a `PendingDiagnostic` and is consumed by `complete_recovery` or
+`missing_required_slot`; only the explicitly semantic invalid-when-guard and
+reserved-callable-reference diagnostics use `report_non_structural`. The shared
+post-hoc layer is deleted: `DiagnosticMarker`, `own_diagnostic`, the owned and
+ownerless `expect` helpers, and the external diagnostic-owner tree builder no
+longer exist. Architecture gates reject those paths globally and reject
+ownerless/progress diagnostic shortcuts in both language grammars.
+
+The full 253-fixture Kotlin proof now requires exact ownership for every parser
+structural diagnostic and checks malformed children against their declared typed
+matcher rather than accepting arbitrary recovery nodes. A complete-node cause
+may account for multiple required empty slots on that same node only;
+descendants remain independently proven. Recovery uses exact declared nodes,
+category-compatible bogus nodes, or exact required slots. The audit also fixed
+three schema facts exposed by the proof: bodyless functions are representable,
+double semicolons are terminators, and recovered annotation arguments use the
+value-argument-entry category.
+
+Recovery boundaries remain bounded and allocation-free. Missing `for` header
+closes use a 128-token balanced lookahead that preserves the body without
+changing valid headers. Invalid `..` type separators make the complete segment
+list malformed without allocating or fabricating dots. Adjacent expression atoms
+form an exact malformed binary owner; other unexpected expression tokens are
+consumed one at a time, preserving one diagnostic and one atomic recovery step
+per token. Character literal tokens and lexer-owned malformed-token diagnostics
+remain unchanged.
+
+Quality audit: the isolated Phase 26 stack passes shared and Java syntax tests,
+the complete Kotlin syntax corpus and exact ownership audit, imported ktfmt
+parsing, parser progress and normalization, canonical and recovery formatter
+snapshots, imported formatter idempotence and conservation, layout boundaries,
+CLI tests and snapshots, dprint handler and wasm smoke tests, the architecture
+gate, rustfmt, scoped Rust 1.96 clippy, and `git diff --check`.
+
+Size: the isolated implementation projection is +32,984/-25,358 against
+`2197128`, net +7,626. Phase 26 is net -82 lines from the Phase 25 boundary; the
+executable intermediate ceiling is updated accordingly.
+
 ### New Phase 27: Complete-Owner Normalization Authority
 
 Make every token removal, replacement, synthesis, and reorder request name the

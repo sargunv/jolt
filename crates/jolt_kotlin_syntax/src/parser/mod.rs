@@ -210,6 +210,16 @@ mod tests {
         );
     }
 
+    fn check_unowned(source: &str, code: KotlinParseDiagnosticCode) {
+        let parse = parse_kotlin_file(source);
+        let index = parse
+            .diagnostics()
+            .iter()
+            .position(|diagnostic| diagnostic.code == code.id())
+            .expect("expected diagnostic");
+        assert_eq!(parse.structural_diagnostic_owners()[index], None);
+    }
+
     #[test]
     #[rustfmt::skip]
     fn phase_sixteen_diagnostics_own_the_declared_node_or_slot() {
@@ -228,19 +238,19 @@ mod tests {
     fn phase_seventeen_diagnostics_own_the_declared_node_or_slot() {
         check("typealias T =\n", "expected type", KotlinSyntaxKind::BogusType, None);
         check("typealias T = A.\n", "expected type segment", KotlinSyntaxKind::BogusUserTypeSegment, None);
-        check("typealias T = A..B\n", "expected one '.' between type segments", KotlinSyntaxKind::BogusUserTypeSegment, None);
+        check("typealias T = A..B\n", "expected one '.' between type segments", KotlinSyntaxKind::UserTypeSegmentList, None);
         check_code("typealias T = Box<, A>\n", "malformed type argument list", KotlinParseDiagnosticCode::MalformedTypeArgumentList, KotlinSyntaxKind::BogusTypeArgument, None);
         check_code("typealias T = Box<*A>\n", "star projection cannot include a simultaneous type", KotlinParseDiagnosticCode::MalformedTypeArgumentList, KotlinSyntaxKind::BogusTypeArgument, None);
         check_code("fun <, T> f() {}\n", "expected type parameter between commas", KotlinParseDiagnosticCode::UnexpectedSyntax, KotlinSyntaxKind::BogusTypeParameter, None);
-        check("fun <T Any> f() {}\n", "expected ':' before type parameter bound", KotlinSyntaxKind::TypeParameter, Some(crate::shape::type_parameter::Slot::colon as u16));
+        check("fun <T Any> f() {}\n", "expected ':' before type parameter bound", KotlinSyntaxKind::TypeParameter, None);
         check("fun <T> f() T: Any {}\n", "expected 'where' before type constraints", KotlinSyntaxKind::TypeConstraintList, Some(crate::shape::type_constraint_list::Slot::where_token as u16));
         check("fun <T> f() where T Any {}\n", "expected ':' before type constraint bound", KotlinSyntaxKind::TypeConstraint, Some(crate::shape::type_constraint::Slot::colon as u16));
         check_code("fun <T> f() where T : Any, , T : Closeable {}\n", "expected type constraint between commas", KotlinParseDiagnosticCode::UnexpectedSyntax, KotlinSyntaxKind::BogusTypeConstraint, None);
         check_code("typealias T = (, A) -> Unit\n", "expected function type parameter between commas", KotlinParseDiagnosticCode::UnexpectedSyntax, KotlinSyntaxKind::BogusFunctionTypeParameter, None);
         check_code("context(, String) fun f() {}\n", "expected context parameter", KotlinParseDiagnosticCode::UnexpectedSyntax, KotlinSyntaxKind::BogusContextParameter, None);
         check_code("fun f(, x: Int) {}\n", "expected value parameter between commas", KotlinParseDiagnosticCode::UnexpectedSyntax, KotlinSyntaxKind::BogusValueParameter, None);
-        check("fun f(x: Int 1) {}\n", "expected '=' before parameter default", KotlinSyntaxKind::ValueParameter, Some(crate::shape::value_parameter::Slot::assign as u16));
-        check("context(named: Int 1) fun f() {}\n", "expected '=' before context parameter default", KotlinSyntaxKind::ContextParameter, Some(crate::shape::context_parameter::Slot::assign as u16));
+        check("fun f(x: Int 1) {}\n", "expected '=' before parameter default", KotlinSyntaxKind::ValueParameter, None);
+        check("context(named: Int 1) fun f() {}\n", "expected '=' before context parameter default", KotlinSyntaxKind::ContextParameter, None);
     }
 
     #[test]
@@ -268,7 +278,7 @@ mod tests {
         check_code("class C : Base, , Other {}\n", "expected delegation specifier between commas", KotlinParseDiagnosticCode::UnexpectedSyntax, KotlinSyntaxKind::BogusDelegationSpecifier, None);
         check("fun Receiver.() {}\n", "expected name", KotlinSyntaxKind::Name, Some(crate::shape::name::Slot::identifier as u16));
         check("fun Receiver member() {}\n", "expected receiver separator", KotlinSyntaxKind::CallableName, Some(crate::shape::callable_name::Slot::dot as u16));
-        check("enum class E { ), }\n", "expected enum entry name", KotlinSyntaxKind::EnumEntry, None);
+        check("enum class E { ), }\n", "expected enum entry name", KotlinSyntaxKind::Name, None);
         check("class C { + }\n", "unexpected orphan class member", KotlinSyntaxKind::BogusClassMember, None);
         check("class C { , }\n", "unexpected orphan class member comma", KotlinSyntaxKind::BogusClassMember, None);
         check("enum class E { A,,B }\n", "unexpected orphan class member comma", KotlinSyntaxKind::BogusClassMember, None);
@@ -330,7 +340,7 @@ mod tests {
     #[test]
     #[rustfmt::skip]
     fn phase_twenty_diagnostics_own_the_declared_node_or_slot() {
-        check("fun f() { if value }\n", "expected condition after 'if'", KotlinSyntaxKind::BogusExpression, None);
+        check("fun f() { if value }\n", "expected condition after 'if'", KotlinSyntaxKind::ParenthesizedExpression, Some(crate::shape::parenthesized_expression::Slot::expression as u16));
         check("fun f() { if (value) }\n", "expected branch after 'if' condition", KotlinSyntaxKind::BogusExpression, None);
         check("fun f() { if (value) else }\n", "expected branch after 'if' condition", KotlinSyntaxKind::BogusExpression, None);
         check("fun f() { if (value) else }\n", "expected branch after 'else'", KotlinSyntaxKind::BogusExpression, None);
@@ -339,7 +349,7 @@ mod tests {
         check("fun f() { when (value) }\n", "expected '{' after when subject", KotlinSyntaxKind::WhenExpression, Some(crate::shape::when_expression::Slot::open_brace as u16));
         check("fun f() { when (value) }\n", "expected '}' after when", KotlinSyntaxKind::WhenExpression, Some(crate::shape::when_expression::Slot::close_brace as u16));
         check_code("fun f() { when (value) { , one -> 1 } }\n", "expected when condition between commas", KotlinParseDiagnosticCode::UnexpectedSyntax, KotlinSyntaxKind::BogusWhenCondition, None);
-        check_code("fun f() { when { one if guard -> 1 } }\n", "when guard requires a subject", KotlinParseDiagnosticCode::InvalidWhenGuard, KotlinSyntaxKind::WhenGuard, None);
+        check_unowned("fun f() { when { one if guard -> 1 } }\n", KotlinParseDiagnosticCode::InvalidWhenGuard);
         check("fun f() { when (value) { one value\n two -> 2 } }\n", "expected '->' in when entry", KotlinSyntaxKind::WhenEntry, Some(crate::shape::when_entry::Slot::arrow as u16));
         check("fun f() { when (value) { one -> } }\n", "expected when entry body", KotlinSyntaxKind::BogusExpression, None);
         check("fun f() { try {} }\n", "expected 'catch' or 'finally' after try block", KotlinSyntaxKind::TryExpression, None);
@@ -351,7 +361,7 @@ mod tests {
         check("fun f() { for (in items) {} }\n", "expected loop variable", KotlinSyntaxKind::ForVariable, None);
         check("fun f() { for (item items) {} }\n", "expected 'in' after loop variable", KotlinSyntaxKind::ForStatement, Some(crate::shape::for_statement::Slot::in_token as u16));
         check("fun f() { for (item in) {} }\n", "expected loop iterable", KotlinSyntaxKind::BogusExpression, None);
-        check("fun f() { while body }\n", "expected condition after 'while'", KotlinSyntaxKind::BogusExpression, None);
+        check("fun f() { while body }\n", "expected condition after 'while'", KotlinSyntaxKind::ParenthesizedExpression, Some(crate::shape::parenthesized_expression::Slot::expression as u16));
         check("fun f() { do {} (ready) }\n", "expected 'while' after do body", KotlinSyntaxKind::DoWhileStatement, Some(crate::shape::do_while_statement::Slot::while_token as u16));
         check_code("fun f() { break value }\n", "break and continue do not accept an expression", KotlinParseDiagnosticCode::UnexpectedSyntax, KotlinSyntaxKind::BogusExpression, None);
         check("fun f() { return@ }\n", "expected label name", KotlinSyntaxKind::LabelReference, Some(crate::shape::label_reference::Slot::label as u16));

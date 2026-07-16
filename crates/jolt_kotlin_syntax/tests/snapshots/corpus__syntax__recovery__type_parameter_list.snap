@@ -24,8 +24,8 @@ KotlinFile
             Name
               Identifier "First" @ 10..15
           Comma "," @ 15..16 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
-          Comma "," @ 30..31 trailing=[Whitespace " "]
           BogusTypeParameter
+          Comma "," @ 30..31 trailing=[Whitespace " "]
           TypeParameter
             ModifierList
             Name
@@ -34,7 +34,7 @@ KotlinFile
   Eof "" @ 40..40 leading=[Newline "\n"]
 
 diagnostics:
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=32..38 message="expected type parameter between commas"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=30..31 message="expected type parameter between commas"
 
 diagnostics:
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(32), end: TextSize(38) }) message=expected type parameter between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(30), end: TextSize(31) }) message=expected type parameter between commas

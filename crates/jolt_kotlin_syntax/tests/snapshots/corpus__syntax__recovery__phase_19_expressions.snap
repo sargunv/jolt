@@ -130,8 +130,8 @@ KotlinFile
           ValueArgumentList
             LParen "(" @ 141..142
             ValueArgumentEntryList
-              Comma "," @ 142..143 trailing=[Whitespace " "]
               BogusValueArgument
+              Comma "," @ 142..143 trailing=[Whitespace " "]
               ValueArgument
                 ValueArgumentPrefixList
                 NameExpression
@@ -158,8 +158,8 @@ KotlinFile
           ValueArgumentList
             LParen "(" @ 180..181
             ValueArgumentEntryList
-              Comma "," @ 181..182
               BogusValueArgument
+              Comma "," @ 181..182
             RParen ")" @ 182..183
           LambdaExpressionList
     FunctionDeclaration
@@ -180,8 +180,8 @@ KotlinFile
             Identifier "value" @ 201..206
           LBracket "[" @ 206..207
           ValueArgumentEntryList
-            Comma "," @ 207..208 trailing=[Whitespace " "]
             BogusValueArgument
+            Comma "," @ 207..208 trailing=[Whitespace " "]
             ValueArgument
               ValueArgumentPrefixList
               NameExpression
@@ -205,8 +205,8 @@ KotlinFile
             LBrace "{" @ 234..235 trailing=[Whitespace " "]
             LambdaParameterList
               LambdaParameterSeparatedList
-                Comma "," @ 236..237 trailing=[Whitespace " "]
                 BogusLambdaParameter
+                Comma "," @ 236..237 trailing=[Whitespace " "]
                 LambdaParameter
                   LambdaParameterBinding
                     Name
@@ -237,8 +237,8 @@ KotlinFile
             LBrace "{" @ 278..279 trailing=[Whitespace " "]
             LambdaParameterList
               LambdaParameterSeparatedList
-                Comma "," @ 280..281 trailing=[Whitespace " "]
                 BogusLambdaParameter
+                Comma "," @ 280..281 trailing=[Whitespace " "]
               Arrow "->" @ 282..284 trailing=[Whitespace " "]
             LambdaBodyItemList
               Statement
@@ -280,8 +280,8 @@ KotlinFile
         CollectionLiteralExpression
           LBracket "[" @ 341..342
           ValueArgumentEntryList
-            Comma "," @ 342..343 trailing=[Whitespace " "]
             BogusValueArgument
+            Comma "," @ 342..343 trailing=[Whitespace " "]
             ValueArgument
               ValueArgumentPrefixList
               NameExpression
@@ -303,8 +303,8 @@ KotlinFile
         CollectionLiteralExpression
           LBracket "[" @ 378..379
           ValueArgumentEntryList
-            Comma "," @ 379..380
             BogusValueArgument
+            Comma "," @ 379..380
           RBracket "]" @ 380..381
     FunctionDeclaration
       ModifierList
@@ -390,7 +390,6 @@ KotlinFile
         AnonymousFunctionExpression
           FunKw "fun" @ 529..532 trailing=[Whitespace " "]
           ValueParameterList
-            ValueParameterSeparatedList
           BlockBody
             Block
               LBrace "{" @ 533..534
@@ -479,7 +478,6 @@ KotlinFile
         ObjectExpression
           ObjectKw "object" @ 696..702
           ClassBody
-            ClassMemberList
       PropertyBodyMemberList
     PropertyDeclaration
       ModifierList
@@ -501,7 +499,6 @@ KotlinFile
                       UserTypeSegment
                         Identifier "Base" @ 745..749
           ClassBody
-            ClassMemberList
       PropertyBodyMemberList
     PropertyDeclaration
       ModifierList
@@ -632,14 +629,14 @@ diagnostics:
   code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=47..48 message="invalid assignment target"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=83..86 message="expected member name"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=117..120 message="expected callable reference name"
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=144..149 message="expected list item"
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=182..183 message="expected list item"
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=209..214 message="expected list item"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=238..243 message="expected lambda parameter between commas"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=282..284 message="expected lambda parameter between commas"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=142..143 message="expected list item"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=181..182 message="expected list item"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=207..208 message="expected list item"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=236..237 message="expected lambda parameter between commas"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=280..281 message="expected lambda parameter between commas"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=317..318 message="expected parenthesized expression"
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=344..349 message="expected list item"
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=380..381 message="expected list item"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=342..343 message="expected list item"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=379..380 message="expected list item"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=496..499 message="expected anonymous function body"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=533..534 message="expected value parameter list"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=703..706 message="expected object body"
@@ -653,14 +650,14 @@ code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRan
 code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(48) }) message=invalid assignment target
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(83), end: TextSize(86) }) message=expected member name
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(117), end: TextSize(120) }) message=expected callable reference name
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(144), end: TextSize(149) }) message=expected list item
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(182), end: TextSize(183) }) message=expected list item
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(209), end: TextSize(214) }) message=expected list item
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(238), end: TextSize(243) }) message=expected lambda parameter between commas
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(282), end: TextSize(284) }) message=expected lambda parameter between commas
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(142), end: TextSize(143) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(181), end: TextSize(182) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(207), end: TextSize(208) }) message=expected list item
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(236), end: TextSize(237) }) message=expected lambda parameter between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(280), end: TextSize(281) }) message=expected lambda parameter between commas
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(317), end: TextSize(318) }) message=expected parenthesized expression
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(344), end: TextSize(349) }) message=expected list item
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(380), end: TextSize(381) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(342), end: TextSize(343) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(379), end: TextSize(380) }) message=expected list item
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(496), end: TextSize(499) }) message=expected anonymous function body
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(533), end: TextSize(534) }) message=expected value parameter list
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(703), end: TextSize(706) }) message=expected object body

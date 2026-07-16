@@ -44,10 +44,11 @@ impl Parser<'_> {
         if (!stop_at_line_break || !self.newline_before_current()) && self.at_identifier_like() {
             self.bump();
         } else {
-            self.expected_owned_slot(
-                "expected name",
+            let diagnostic = self.pending_expected("expected name");
+            self.missing_required_slot(
                 marker.anchor(),
                 crate::shape::name::Slot::identifier as u16,
+                [diagnostic],
             );
         }
         self.complete(marker, K::Name);

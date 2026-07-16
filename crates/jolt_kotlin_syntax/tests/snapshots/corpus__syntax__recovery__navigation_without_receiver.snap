@@ -27,10 +27,11 @@ KotlinFile
           BlockItemList
             Statement
               ExpressionStatement
-                BogusExpression
-                  Dot "." @ 13..14
-                BogusExpression
-                  Identifier "next" @ 14..18 trailing=[Whitespace " "]
+                BinaryExpression
+                  BogusExpression
+                    Dot "." @ 13..14
+                  NameExpression
+                    Identifier "next" @ 14..18 trailing=[Whitespace " "]
               TerminatorList
           RBrace "}" @ 19..20
   Eof "" @ 21..21 leading=[Newline "\n"]

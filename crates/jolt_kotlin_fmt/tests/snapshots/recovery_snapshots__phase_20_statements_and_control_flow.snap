@@ -124,10 +124,12 @@ fun missingNestedBlockClose() {
       value
 
 diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(339), end: TextSize(344) }) message=expected '(' before condition
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(339), end: TextSize(344) }) message=expected condition after 'if'
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(339), end: TextSize(344) }) message=expected ')' after condition
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(429), end: TextSize(430) }) message=expected '{' after when subject
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(459), end: TextSize(462) }) message=expected '}' after when
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(548), end: TextSize(549) }) message=expected when condition between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(546), end: TextSize(547) }) message=expected when condition between commas
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(579), end: TextSize(580) }) message=expected expression after operator
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(579), end: TextSize(580) }) message=expected '->' in when entry
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(579), end: TextSize(580) }) message=expected when entry body
@@ -137,7 +139,9 @@ code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRan
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(675), end: TextSize(676) }) message=expected catch parameter
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(724), end: TextSize(725) }) message=catch clause must precede finally
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(791), end: TextSize(793) }) message=expected loop variable
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(815), end: TextSize(817) }) message=expected '(' before condition
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(815), end: TextSize(817) }) message=expected condition after 'while'
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(815), end: TextSize(817) }) message=expected ')' after condition
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(821), end: TextSize(822) }) message=expected 'while' after do body
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(865), end: TextSize(870) }) message=break and continue do not accept an expression
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(884), end: TextSize(889) }) message=break and continue do not accept an expression

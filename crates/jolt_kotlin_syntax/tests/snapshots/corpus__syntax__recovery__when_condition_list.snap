@@ -52,8 +52,8 @@ KotlinFile
                           LiteralExpression
                             IntegerLiteral "1" @ 30..31
                         Comma "," @ 31..32 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
-                        Comma "," @ 46..47 trailing=[Whitespace " "]
                         BogusWhenCondition
+                        Comma "," @ 46..47 trailing=[Whitespace " "]
                         WhenCondition
                           LiteralExpression
                             IntegerLiteral "2" @ 48..49 trailing=[Whitespace " "]
@@ -74,7 +74,7 @@ KotlinFile
   Eof "" @ 63..63 leading=[Newline "\n"]
 
 diagnostics:
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=48..49 message="expected when condition between commas"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=46..47 message="expected when condition between commas"
 
 diagnostics:
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(48), end: TextSize(49) }) message=expected when condition between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(46), end: TextSize(47) }) message=expected when condition between commas

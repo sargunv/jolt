@@ -50,8 +50,8 @@ KotlinFile
                 CollectionLiteralExpression
                   LBracket "[" @ 30..31 trailing=[BlockComment "/* collection */", Whitespace " "]
                   ValueArgumentEntryList
-                    Comma "," @ 48..49 trailing=[Whitespace " "]
                     BogusValueArgument
+                    Comma "," @ 48..49 trailing=[Whitespace " "]
                     ValueArgument
                       ValueArgumentPrefixList
                       NameExpression
@@ -65,8 +65,8 @@ KotlinFile
                     Identifier "values" @ 57..63 leading=[Newline "\n"]
                   LBracket "[" @ 63..64 trailing=[BlockComment "/* index */", Whitespace " "]
                   ValueArgumentEntryList
-                    Comma "," @ 76..77 trailing=[Whitespace " "]
                     BogusValueArgument
+                    Comma "," @ 76..77 trailing=[Whitespace " "]
                     ValueArgument
                       ValueArgumentPrefixList
                       LiteralExpression
@@ -77,9 +77,9 @@ KotlinFile
   Eof "" @ 83..83 leading=[Newline "\n"]
 
 diagnostics:
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=50..55 message="expected list item"
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=78..79 message="expected list item"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=48..49 message="expected list item"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=76..77 message="expected list item"
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(50), end: TextSize(55) }) message=expected list item
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(78), end: TextSize(79) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(48), end: TextSize(49) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(76), end: TextSize(77) }) message=expected list item

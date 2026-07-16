@@ -22,16 +22,6 @@ pub struct UnresolvedDiagnosticOwner {
 }
 
 impl UnresolvedDiagnosticOwner {
-    /// Owns a diagnostic with an entire represented node.
-    #[must_use]
-    pub const fn node(node: NodeAnchor) -> Self {
-        Self {
-            node,
-            slot: None,
-            directly_malformed: false,
-        }
-    }
-
     const fn recovery_node(node: NodeAnchor) -> Self {
         Self {
             node,
@@ -42,7 +32,7 @@ impl UnresolvedDiagnosticOwner {
 
     /// Owns a diagnostic with one generated physical slot on a represented node.
     #[must_use]
-    pub const fn missing_slot(node: NodeAnchor, slot: u16) -> Self {
+    const fn missing_slot(node: NodeAnchor, slot: u16) -> Self {
         Self {
             node,
             slot: Some(slot),
@@ -50,10 +40,6 @@ impl UnresolvedDiagnosticOwner {
         }
     }
 }
-
-/// Handle used to assign structural ownership after emitting a diagnostic.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct DiagnosticMarker(usize);
 
 /// A parser diagnostic whose source range has been captured but whose
 /// structural consequence has not yet been selected.
@@ -151,45 +137,6 @@ impl<'source, L: Language> Parser<'source, L> {
         self.cursor.position()
     }
 
-    pub fn expect(&mut self, kind: L::Kind, message: &str) {
-        if !self.eat(kind) {
-            self.expected_here(message);
-        }
-    }
-
-    pub fn expect_owned(&mut self, kind: L::Kind, message: &str, owner: NodeAnchor, slot: u16) {
-        if !self.eat(kind) {
-            self.expected_owned_slot(message, owner, slot);
-        }
-    }
-
-    pub fn expected_owned_node(&mut self, message: &str, owner: NodeAnchor) {
-        let diagnostic = self.pending_expected(message);
-        self.record_recovery(
-            UnresolvedDiagnosticOwner::node(owner),
-            diagnostic,
-            std::iter::empty(),
-        );
-    }
-
-    pub fn expected_owned_slot(&mut self, message: &str, owner: NodeAnchor, slot: u16) {
-        let diagnostic = self.pending_expected(message);
-        self.record_recovery(
-            UnresolvedDiagnosticOwner::missing_slot(owner, slot),
-            diagnostic,
-            std::iter::empty(),
-        );
-    }
-
-    pub fn unexpected_owned_node(&mut self, message: &str, owner: NodeAnchor) {
-        let diagnostic = self.pending_unexpected(message);
-        self.record_recovery(
-            UnresolvedDiagnosticOwner::node(owner),
-            diagnostic,
-            std::iter::empty(),
-        );
-    }
-
     pub fn eat(&mut self, kind: L::Kind) -> bool {
         if self.at(kind) {
             self.bump();
@@ -241,26 +188,6 @@ impl<'source, L: Language> Parser<'source, L> {
 
     pub fn fork_cursor(&self) -> TokenCursor {
         self.cursor.fork()
-    }
-
-    pub fn expected_here(&mut self, message: &str) -> DiagnosticMarker {
-        let diagnostic = self.pending_expected(message);
-        self.report_non_structural(diagnostic)
-    }
-
-    pub fn unexpected_here(&mut self, message: &str) -> DiagnosticMarker {
-        let diagnostic = self.pending_unexpected(message);
-        self.report_non_structural(diagnostic)
-    }
-
-    /// Adds a parser error at the current token, or at the last token if the cursor is past EOF.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the parser token stream does not contain EOF.
-    pub fn error_here(&mut self, code: DiagnosticCodeId, message: &str) -> DiagnosticMarker {
-        let diagnostic = self.pending_error(code, message);
-        self.report_non_structural(diagnostic)
     }
 
     /// Captures an "expected syntax" diagnostic before recovery consumes input.
@@ -333,10 +260,8 @@ impl<'source, L: Language> Parser<'source, L> {
     }
 
     /// Reports a parser diagnostic that has no structural recovery consequence.
-    pub fn report_non_structural(&mut self, diagnostic: PendingDiagnostic) -> DiagnosticMarker {
-        let index = diagnostic.index;
+    pub fn report_non_structural(&mut self, diagnostic: PendingDiagnostic) {
         self.finalize_pending(diagnostic, DiagnosticOwnership::Ownerless);
-        DiagnosticMarker(index)
     }
 
     /// Completes a malformed node with the diagnostics that structurally caused
@@ -421,29 +346,6 @@ impl<'source, L: Language> Parser<'source, L> {
             "pending diagnostic consumed twice"
         );
         record.ownership = ownership;
-    }
-
-    /// Assigns exact structural ownership to a parser diagnostic.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the marker came from another parser or ownership was already
-    /// assigned to the diagnostic.
-    pub fn own_diagnostic(
-        &mut self,
-        diagnostic: DiagnosticMarker,
-        owner: UnresolvedDiagnosticOwner,
-    ) {
-        let diagnostic = self
-            .diagnostics
-            .get_mut(diagnostic.0)
-            .expect("diagnostic marker must belong to this parser");
-        assert_eq!(
-            diagnostic.ownership,
-            DiagnosticOwnership::Ownerless,
-            "diagnostic owner assigned twice"
-        );
-        diagnostic.ownership = DiagnosticOwnership::Structural(owner);
     }
 
     pub fn start(&mut self) -> Marker {

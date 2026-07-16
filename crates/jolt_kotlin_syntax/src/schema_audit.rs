@@ -1,9 +1,12 @@
+use jolt_diagnostics::{Diagnostic, DiagnosticStage};
 use jolt_test_support::{
-    PhysicalNodeAudit, SchemaAudit, collect_kotlin_files, fixture_snapshot_name,
-    kotlin_fixture_root, read_to_string,
+    PhysicalNodeAudit, SchemaAudit, assert_exact_structural_ownership_requiring,
+    collect_kotlin_files, fixture_snapshot_name, kotlin_fixture_root, read_to_string,
 };
 
-use crate::{KotlinSyntaxKind, KotlinSyntaxView, parse_kotlin_file};
+use crate::{
+    KotlinSyntaxKind, KotlinSyntaxView, parse_kotlin_file, parser::KotlinParseDiagnosticCode,
+};
 
 macro_rules! kotlin_audit_matches {
     ($slot:ident, (token $kind:ident)) => {
@@ -52,7 +55,6 @@ macro_rules! kotlin_audit_fixed_field {
     ($slot:ident, $missing:ident, required, $matcher:tt) => {
         match $slot {
             jolt_syntax::SyntaxSlot::Empty => $missing = true,
-            jolt_syntax::SyntaxSlot::Node(node) if node.is_directly_malformed() => {}
             _ if kotlin_audit_matches!($slot, $matcher) => {}
             _ => return PhysicalNodeAudit::Unexpected,
         }
@@ -63,6 +65,15 @@ macro_rules! kotlin_audit_fixed_field {
             _ if kotlin_audit_matches!($slot, $matcher) => {}
             _ => return PhysicalNodeAudit::Unexpected,
         }
+    };
+}
+
+macro_rules! kotlin_audit_required {
+    (required) => {
+        true
+    };
+    ($cardinality:ident) => {
+        false
     };
 }
 
@@ -95,7 +106,6 @@ macro_rules! kotlin_audit_node {
             let slot = $node.slot_at(index).expect("physical list slot");
             match slot {
                 jolt_syntax::SyntaxSlot::Empty => missing = true,
-                jolt_syntax::SyntaxSlot::Node(child) if child.is_directly_malformed() => {}
                 _ if kotlin_audit_matches!(slot, $matcher) => {}
                 _ => return PhysicalNodeAudit::Unexpected,
             }
@@ -116,9 +126,7 @@ macro_rules! kotlin_audit_node {
             if matches!(slot, jolt_syntax::SyntaxSlot::Empty) {
                 missing = true;
             } else if index % 2 == 0 {
-                if !matches!(slot, jolt_syntax::SyntaxSlot::Node(child) if child.is_directly_malformed())
-                    && !kotlin_audit_matches!(slot, $matcher)
-                {
+                if !kotlin_audit_matches!(slot, $matcher) {
                     return PhysicalNodeAudit::Unexpected;
                 }
             } else if !kotlin_audit_matches!(slot, $separator) {
@@ -133,6 +141,24 @@ macro_rules! kotlin_audit_node {
     }};
     ($node:ident, malformed; $($fields:tt)*) => {
         PhysicalNodeAudit::Malformed
+    };
+}
+
+macro_rules! kotlin_required_slot {
+    ($slot:ident, valid; $($field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)? $([$($policy:tt)*])?;)*) => {
+        [$(kotlin_audit_required!($cardinality)),*]
+            .get($slot)
+            .copied()
+            .unwrap_or(false)
+    };
+    ($slot:ident, constructed; $($fields:tt)*) => {
+        kotlin_required_slot!($slot, valid; $($fields)*)
+    };
+    ($slot:ident, list; $($fields:tt)*) => {
+        true
+    };
+    ($slot:ident, malformed; $($fields:tt)*) => {
+        false
     };
 }
 
@@ -160,6 +186,17 @@ macro_rules! define_kotlin_physical_audit {
                 _ => PhysicalNodeAudit::Unexpected,
             }
         }
+
+        fn is_required_slot(
+            node: jolt_syntax::SyntaxNode<'_, crate::KotlinLanguage>,
+            slot: usize,
+        ) -> bool {
+            match node.kind() {
+                $(KotlinSyntaxKind::$kind => kotlin_required_slot!(slot, $class; $($fields)*),)*
+                $(KotlinSyntaxKind::$bogus => false,)*
+                _ => false,
+            }
+        }
     };
 }
 
@@ -185,9 +222,29 @@ fn declared_schema_matches_represented_corpus() {
             !parse.diagnostics().is_empty(),
             audit_physical_node,
         );
+        assert_exact_structural_ownership_requiring(
+            syntax
+                .syntax_node()
+                .expect("typed Kotlin root must have a physical syntax node"),
+            parse.diagnostics(),
+            parse.structural_diagnostic_owners(),
+            is_required_slot,
+            diagnostic_requires_owner,
+            path.display(),
+        );
     }
 
     insta::with_settings!({ snapshot_path => "../tests/snapshots" }, {
         insta::assert_snapshot!("schema_audit", audit.render());
     });
+}
+
+fn diagnostic_requires_owner(diagnostic: &Diagnostic) -> bool {
+    diagnostic.stage == DiagnosticStage::Parser
+        && !matches!(
+            diagnostic.code,
+            code
+                if code == KotlinParseDiagnosticCode::InvalidWhenGuard.id()
+                    || code == KotlinParseDiagnosticCode::ReservedCallableReferenceCall.id()
+        )
 }

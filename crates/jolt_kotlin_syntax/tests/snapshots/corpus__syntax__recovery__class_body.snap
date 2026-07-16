@@ -41,16 +41,17 @@ KotlinFile
           ClassMemberDeclaration
             Statement
               ExpressionStatement
-                UnaryExpression
-                  Plus "+" @ 38..39 leading=[Newline "\n", BlockComment "/* orphan */", Whitespace " "]
-                  BogusExpression
-                    ValKw "val" @ 40..43 leading=[Newline "\n"] trailing=[Whitespace " "]
-                BogusExpression
-                  Identifier "value" @ 44..49 trailing=[Whitespace " "]
-                BogusExpression
-                  Assign "=" @ 50..51 trailing=[Whitespace " "]
-                BogusExpression
-                  IntegerLiteral "1" @ 52..53 trailing=[Whitespace " "]
+                BinaryExpression
+                  UnaryExpression
+                    Plus "+" @ 38..39 leading=[Newline "\n", BlockComment "/* orphan */", Whitespace " "]
+                    BogusExpression
+                      ValKw "val" @ 40..43 leading=[Newline "\n"] trailing=[Whitespace " "]
+                  AssignmentExpression
+                    NameExpression
+                      Identifier "value" @ 44..49 trailing=[Whitespace " "]
+                    Assign "=" @ 50..51 trailing=[Whitespace " "]
+                    LiteralExpression
+                      IntegerLiteral "1" @ 52..53 trailing=[Whitespace " "]
               TerminatorList
         RBrace "}" @ 54..55
   Eof "" @ 56..56 leading=[Newline "\n"]
@@ -58,11 +59,7 @@ KotlinFile
 diagnostics:
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=40..43 message="expected expression"
   code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=44..49 message="unexpected token in expression"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=50..51 message="unexpected token in expression"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=52..53 message="unexpected token in expression"
 
 diagnostics:
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(40), end: TextSize(43) }) message=expected expression
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(44), end: TextSize(49) }) message=unexpected token in expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(50), end: TextSize(51) }) message=unexpected token in expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(52), end: TextSize(53) }) message=unexpected token in expression

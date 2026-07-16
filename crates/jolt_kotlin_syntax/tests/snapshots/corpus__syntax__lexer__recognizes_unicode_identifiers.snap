@@ -13,13 +13,14 @@ KotlinFile
     Statement
       ExpressionStatement
         BinaryExpression
+          BinaryExpression
+            NameExpression
+              Identifier "café" @ 0..5 trailing=[Whitespace " "]
+            Identifier "Δelta" @ 6..12 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "名称" @ 13..19 trailing=[Whitespace " "]
           NameExpression
-            Identifier "café" @ 0..5 trailing=[Whitespace " "]
-          Identifier "Δelta" @ 6..12 trailing=[Whitespace " "]
-          NameExpression
-            Identifier "名称" @ 13..19 trailing=[Whitespace " "]
-        BogusExpression
-          Identifier "_привет" @ 20..33
+            Identifier "_привет" @ 20..33
       TerminatorList
   Eof "" @ 34..34 leading=[Newline "\n"]
 

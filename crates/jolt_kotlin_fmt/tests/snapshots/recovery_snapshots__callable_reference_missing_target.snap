@@ -13,4 +13,4 @@ fun callableReferenceMissingTarget() {
 }
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(70), end: TextSize(71) }) message=expected callable reference name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(61), end: TextSize(62) }) message=expected callable reference name

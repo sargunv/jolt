@@ -13,28 +13,30 @@ KotlinFile
     Statement
       ExpressionStatement
         BogusExpression
-          AsSafe "as?" @ 0..3 trailing=[Whitespace " "]
-        BogusExpression
-          Identifier "a" @ 4..5
-        BogusExpression
-          Question "?" @ 5..6
-        BogusExpression
-          Dot "." @ 6..7
-        BogusExpression
-          Identifier "b" @ 7..8 trailing=[Whitespace " "]
-        BogusExpression
-          Identifier "a" @ 9..10 trailing=[Whitespace " "]
-        BogusExpression
-          Elvis "?:" @ 11..13 trailing=[Whitespace " "]
-        BogusExpression
-          Identifier "b" @ 14..15 trailing=[Whitespace " "]
-        BogusExpression
-          Identifier "T" @ 16..17
-        BogusExpression
-          Question "?" @ 17..18 trailing=[Whitespace " "]
-        BogusExpression
-          ColonColon "::" @ 19..21
-        BogusExpression
+          BogusExpression
+            BogusExpression
+              BinaryExpression
+                BinaryExpression
+                  BinaryExpression
+                    BogusExpression
+                      AsSafe "as?" @ 0..3 trailing=[Whitespace " "]
+                    NavigationExpression
+                      NameExpression
+                        Identifier "a" @ 4..5
+                      SplitSafeNavigationOperator
+                        Question "?" @ 5..6
+                        Dot "." @ 6..7
+                      Identifier "b" @ 7..8 trailing=[Whitespace " "]
+                  BinaryExpression
+                    NameExpression
+                      Identifier "a" @ 9..10 trailing=[Whitespace " "]
+                    Elvis "?:" @ 11..13 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "b" @ 14..15 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "T" @ 16..17
+              Question "?" @ 17..18 trailing=[Whitespace " "]
+            ColonColon "::" @ 19..21
           Identifier "ref" @ 21..24
       TerminatorList
   Eof "" @ 25..25 leading=[Newline "\n"]
@@ -42,12 +44,7 @@ KotlinFile
 diagnostics:
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=0..3 message="expected expression"
   code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=4..5 message="unexpected token in expression"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=5..6 message="unexpected token in expression"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=6..7 message="unexpected token in expression"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=7..8 message="unexpected token in expression"
   code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=9..10 message="unexpected token in expression"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=11..13 message="unexpected token in expression"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=14..15 message="unexpected token in expression"
   code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=16..17 message="unexpected token in expression"
   code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=17..18 message="unexpected token in expression"
   code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=19..21 message="unexpected token in expression"
@@ -56,12 +53,7 @@ diagnostics:
 diagnostics:
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(3) }) message=expected expression
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(4), end: TextSize(5) }) message=unexpected token in expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(5), end: TextSize(6) }) message=unexpected token in expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(6), end: TextSize(7) }) message=unexpected token in expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(7), end: TextSize(8) }) message=unexpected token in expression
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(9), end: TextSize(10) }) message=unexpected token in expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(11), end: TextSize(13) }) message=unexpected token in expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(15) }) message=unexpected token in expression
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(16), end: TextSize(17) }) message=unexpected token in expression
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(17), end: TextSize(18) }) message=unexpected token in expression
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(19), end: TextSize(21) }) message=unexpected token in expression

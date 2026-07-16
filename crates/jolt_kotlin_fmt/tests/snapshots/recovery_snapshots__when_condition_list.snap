@@ -13,4 +13,4 @@ fun demo(x: Int) {
 }
 
 diagnostics:
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(48), end: TextSize(49) }) message=expected when condition between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(46), end: TextSize(47) }) message=expected when condition between commas

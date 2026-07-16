@@ -708,19 +708,6 @@ pub fn build_syntax_tree_with_factory(
         .map(|(tree, _)| tree)
 }
 
-#[doc(hidden)]
-pub fn build_syntax_tree_with_factory_and_diagnostic_owners(
-    source: &str,
-    events: Vec<Event>,
-    tokens: Vec<SyntaxTokenData>,
-    trivia: Vec<SyntaxTrivia>,
-    owners: &[Option<UnresolvedDiagnosticOwner>],
-    factory: &impl SyntaxFactory,
-) -> Result<(SyntaxTree, Vec<Option<SyntaxDiagnosticOwner>>), BuildSyntaxTreeError> {
-    validate_external_events(&events)?;
-    build_parser_syntax_tree(source, events, tokens, trivia, owners, factory)
-}
-
 /// Builds syntax from events produced by the shared parser marker API.
 ///
 /// Parser-owned streams cannot contain the construction-only `Consumed`

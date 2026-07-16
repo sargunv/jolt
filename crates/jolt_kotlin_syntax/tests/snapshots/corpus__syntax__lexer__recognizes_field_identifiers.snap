@@ -12,10 +12,11 @@ KotlinFile
   KotlinFileItemList
     Statement
       ExpressionStatement
-        NameExpression
-          FieldIdentifier "$field" @ 0..6 trailing=[Whitespace " "]
-        BogusExpression
-          FieldIdentifier "$`strange field`" @ 7..23
+        BinaryExpression
+          NameExpression
+            FieldIdentifier "$field" @ 0..6 trailing=[Whitespace " "]
+          NameExpression
+            FieldIdentifier "$`strange field`" @ 7..23
       TerminatorList
   Eof "" @ 24..24 leading=[Newline "\n"]
 

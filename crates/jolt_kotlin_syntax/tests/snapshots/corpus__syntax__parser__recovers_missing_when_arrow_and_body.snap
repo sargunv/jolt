@@ -63,14 +63,16 @@ KotlinFile
                       WhenEntry
                         WhenConditionSeparatedList
                           WhenCondition
-                            LiteralExpression
-                              IntegerLiteral "0" @ 71..72 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                            BogusExpression
-                              OpenQuote "\"" @ 73..74
-                            BogusExpression
-                              RegularStringPart "zero" @ 74..78
-                            BogusExpression
-                              ClosingQuote "\"" @ 78..79
+                            BinaryExpression
+                              LiteralExpression
+                                IntegerLiteral "0" @ 71..72 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                              StringTemplateExpression
+                                StringTemplateEntryList
+                                  StringTemplateEntry
+                                    OpenQuote "\"" @ 73..74
+                                  StringTemplateEntry
+                                    RegularStringPart "zero" @ 74..78
+                                ClosingQuote "\"" @ 78..79
                         WhenEntryBody
                           BogusExpression
                       WhenEntry
@@ -100,16 +102,12 @@ KotlinFile
 
 diagnostics:
   code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=73..74 message="unexpected token in expression"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=74..78 message="unexpected token in expression"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=78..79 message="unexpected token in expression"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=88..89 message="expected '->' in when entry"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=88..89 message="expected when entry body"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=101..105 message="expected when entry body"
 
 diagnostics:
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(73), end: TextSize(74) }) message=unexpected token in expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(74), end: TextSize(78) }) message=unexpected token in expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(78), end: TextSize(79) }) message=unexpected token in expression
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(88), end: TextSize(89) }) message=expected '->' in when entry
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(88), end: TextSize(89) }) message=expected when entry body
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(101), end: TextSize(105) }) message=expected when entry body

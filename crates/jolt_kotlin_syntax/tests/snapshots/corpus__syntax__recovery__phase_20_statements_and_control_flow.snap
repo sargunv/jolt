@@ -287,7 +287,6 @@ KotlinFile
                 IfExpression
                   IfKw "if" @ 336..338 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                   ParenthesizedExpression
-                    BogusExpression
                   NameExpression
                     Identifier "value" @ 339..344
               TerminatorList
@@ -407,8 +406,8 @@ KotlinFile
                   WhenEntryList
                     WhenEntry
                       WhenConditionSeparatedList
-                        Comma "," @ 546..547 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                         BogusWhenCondition
+                        Comma "," @ 546..547 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                         WhenCondition
                           LiteralExpression
                             IntegerLiteral "1" @ 548..549 trailing=[Whitespace " "]
@@ -476,14 +475,10 @@ KotlinFile
                 TryExpression
                   TryKw "try" @ 661..664 leading=[Newline "\n", Whitespace "    "]
                   Block
-                    BlockItemList
                   TryClauseList
                     CatchClause
                       Identifier "catch" @ 669..674 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                       CatchParameter
-                        ModifierList
-                        Name
-                        TypeReference
                       Block
                         LBrace "{" @ 675..676
                         BlockItemList
@@ -566,8 +561,6 @@ KotlinFile
                   ForKw "for" @ 786..789 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                   LParen "(" @ 790..791
                   ForVariable
-                    ModifierList
-                    Name
                   InKw "in" @ 791..793 trailing=[Whitespace " "]
                   NameExpression
                     Identifier "items" @ 794..799
@@ -575,7 +568,6 @@ KotlinFile
                   WhileStatement
                     WhileKw "while" @ 805..810 leading=[Newline "\n", Whitespace "    "]
                     ParenthesizedExpression
-                      BogusExpression
                     DoWhileStatement
                       DoKw "do" @ 815..817 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                       Block
@@ -694,10 +686,12 @@ KotlinFile
   Eof "" @ 1027..1027 leading=[Newline "\n"]
 
 diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=339..344 message="expected '(' before condition"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=339..344 message="expected condition after 'if'"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=339..344 message="expected ')' after condition"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=429..430 message="expected '{' after when subject"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=459..462 message="expected '}' after when"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=548..549 message="expected when condition between commas"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=546..547 message="expected when condition between commas"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=579..580 message="expected expression after operator"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=579..580 message="expected '->' in when entry"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=579..580 message="expected when entry body"
@@ -707,7 +701,9 @@ diagnostics:
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=675..676 message="expected catch parameter"
   code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=724..725 message="catch clause must precede finally"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=791..793 message="expected loop variable"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=815..817 message="expected '(' before condition"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=815..817 message="expected condition after 'while'"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=815..817 message="expected ')' after condition"
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=821..822 message="expected 'while' after do body"
   code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=865..870 message="break and continue do not accept an expression"
   code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=884..889 message="break and continue do not accept an expression"
@@ -718,10 +714,12 @@ diagnostics:
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=1027..1027 message="expected '}' after block"
 
 diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(339), end: TextSize(344) }) message=expected '(' before condition
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(339), end: TextSize(344) }) message=expected condition after 'if'
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(339), end: TextSize(344) }) message=expected ')' after condition
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(429), end: TextSize(430) }) message=expected '{' after when subject
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(459), end: TextSize(462) }) message=expected '}' after when
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(548), end: TextSize(549) }) message=expected when condition between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(546), end: TextSize(547) }) message=expected when condition between commas
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(579), end: TextSize(580) }) message=expected expression after operator
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(579), end: TextSize(580) }) message=expected '->' in when entry
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(579), end: TextSize(580) }) message=expected when entry body
@@ -731,7 +729,9 @@ code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRan
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(675), end: TextSize(676) }) message=expected catch parameter
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(724), end: TextSize(725) }) message=catch clause must precede finally
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(791), end: TextSize(793) }) message=expected loop variable
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(815), end: TextSize(817) }) message=expected '(' before condition
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(815), end: TextSize(817) }) message=expected condition after 'while'
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(815), end: TextSize(817) }) message=expected ')' after condition
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(821), end: TextSize(822) }) message=expected 'while' after do body
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(865), end: TextSize(870) }) message=break and continue do not accept an expression
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(884), end: TextSize(889) }) message=break and continue do not accept an expression

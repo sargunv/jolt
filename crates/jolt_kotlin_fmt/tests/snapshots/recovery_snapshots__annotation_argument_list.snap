@@ -15,4 +15,4 @@ formatted:
 class Demo
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(21), end: TextSize(26) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(19), end: TextSize(20) }) message=expected list item

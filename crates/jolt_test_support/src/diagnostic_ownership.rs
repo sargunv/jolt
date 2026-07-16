@@ -77,7 +77,7 @@ pub fn assert_exact_structural_ownership_requiring<L>(
                 }
             }
         }
-        if node.is_directly_malformed() {
+        let has_node_owner = if node.is_directly_malformed() {
             let has_node_owner = owner_counts
                 .remove(&(node.id(), None))
                 .is_some_and(|count| count > 0);
@@ -86,9 +86,12 @@ pub fn assert_exact_structural_ownership_requiring<L>(
                 "directly malformed node must have an exact node or required-empty-slot \
                  diagnostic owner in {context}: {node:#?}"
             );
-        }
+            has_node_owner
+        } else {
+            false
+        };
         assert!(
-            !has_required_empty || has_required_empty_owner,
+            !has_required_empty || has_required_empty_owner || has_node_owner,
             "node with schema-required empty shape has no exact diagnostic owner in \
              {context}: {node:#?}; owners={:?}; slots={:?}",
             owner_counts

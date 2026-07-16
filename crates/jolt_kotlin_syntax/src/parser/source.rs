@@ -2,6 +2,8 @@ use std::ops::{Deref, DerefMut};
 
 use crate::KotlinSyntaxKind as K;
 use crate::language::KotlinLanguage;
+use jolt_syntax::PendingDiagnostic;
+
 use crate::parser::KotlinParseDiagnosticCode;
 
 pub(super) type ParseEvents = jolt_syntax::ParseEvents;
@@ -59,47 +61,32 @@ impl<'source> Parser<'source> {
         ate || self.at_semicolon_boundary()
     }
 
-    pub(super) fn ensure_progress(&mut self, before: usize, message: &str) {
-        if self.position() == before {
-            self.unexpected_here(message);
-            if !self.at_eof() {
-                self.bump();
-            }
-        }
-    }
-
-    pub(super) fn invalid_assignment_target_here(
-        &mut self,
-        message: &str,
-    ) -> jolt_syntax::DiagnosticMarker {
-        self.error_here(
+    pub(super) fn invalid_assignment_target_here(&mut self, message: &str) -> PendingDiagnostic {
+        self.pending_error(
             KotlinParseDiagnosticCode::InvalidAssignmentTarget.id(),
             message,
         )
     }
 
-    pub(super) fn malformed_type_argument_list_here(
-        &mut self,
-        message: &str,
-    ) -> jolt_syntax::DiagnosticMarker {
-        self.error_here(
+    pub(super) fn malformed_type_argument_list_here(&mut self, message: &str) -> PendingDiagnostic {
+        self.pending_error(
             KotlinParseDiagnosticCode::MalformedTypeArgumentList.id(),
             message,
         )
     }
 
-    pub(super) fn invalid_when_guard_here(
-        &mut self,
-        message: &str,
-    ) -> jolt_syntax::DiagnosticMarker {
-        self.error_here(KotlinParseDiagnosticCode::InvalidWhenGuard.id(), message)
+    pub(super) fn invalid_when_guard_here(&mut self, message: &str) {
+        let diagnostic =
+            self.pending_error(KotlinParseDiagnosticCode::InvalidWhenGuard.id(), message);
+        self.report_non_structural(diagnostic);
     }
 
     pub(super) fn reserved_callable_reference_call_here(&mut self, message: &str) {
-        self.error_here(
+        let diagnostic = self.pending_error(
             KotlinParseDiagnosticCode::ReservedCallableReferenceCall.id(),
             message,
         );
+        self.report_non_structural(diagnostic);
     }
 }
 

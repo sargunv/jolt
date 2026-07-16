@@ -26,8 +26,8 @@ pub use normalization::{
     SynthesisClaim,
 };
 pub use parser::{
-    CursorCheckpoint, DiagnosticMarker, LanguageLexer, LexedToken, ParseEvents, Parser,
-    PendingDiagnostic, TokenBuffer, TokenCursor, UnresolvedDiagnosticOwner,
+    CursorCheckpoint, LanguageLexer, LexedToken, ParseEvents, Parser, PendingDiagnostic,
+    TokenBuffer, TokenCursor, UnresolvedDiagnosticOwner,
 };
 pub use red::{SyntaxElement, SyntaxNode, SyntaxSlot, SyntaxToken, tokens_have_blank_line_between};
 #[cfg(feature = "bench")]
@@ -40,5 +40,4 @@ pub use syntax_tree::{
 pub use syntax_tree::{
     FactoryNode, FactorySlot, ParsedChildren, SyntaxFactory, SyntaxTreeSink,
     build_parser_syntax_tree, build_syntax_tree_with_factory,
-    build_syntax_tree_with_factory_and_diagnostic_owners,
 };

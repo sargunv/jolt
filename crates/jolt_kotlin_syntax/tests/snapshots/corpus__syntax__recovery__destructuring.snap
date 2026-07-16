@@ -21,8 +21,8 @@ KotlinFile
             Name
               Identifier "first" @ 5..10
           Comma "," @ 10..11 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
-          Comma "," @ 25..26 trailing=[Whitespace " "]
           BogusDestructuringEntry
+          Comma "," @ 25..26 trailing=[Whitespace " "]
           DestructuringEntry
             Name
               Identifier "second" @ 27..33
@@ -35,7 +35,7 @@ KotlinFile
   Eof "" @ 42..42 leading=[Newline "\n"]
 
 diagnostics:
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=27..33 message="expected destructuring entry between commas"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=25..26 message="expected destructuring entry between commas"
 
 diagnostics:
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(27), end: TextSize(33) }) message=expected destructuring entry between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(25), end: TextSize(26) }) message=expected destructuring entry between commas

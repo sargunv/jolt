@@ -12,50 +12,50 @@ KotlinFile
   KotlinFileItemList
     Statement
       ExpressionStatement
-        NavigationExpression
-          CallExpression
-            CallExpression
-              CollectionLiteralExpression
-                LBracket "[" @ 0..1 trailing=[Whitespace " "]
-                ValueArgumentEntryList
-                RBracket "]" @ 2..3 trailing=[Whitespace " "]
-              TypeArgumentListList
-              LambdaExpressionList
-                LambdaExpression
-                  LambdaBody
-                    LBrace "{" @ 4..5 trailing=[Whitespace " "]
-                    LambdaBodyItemList
-                    RBrace "}" @ 6..7 trailing=[Whitespace " "]
-            TypeArgumentListList
-            ValueArgumentList
-              LParen "(" @ 8..9 trailing=[Whitespace " "]
-              ValueArgumentEntryList
-              RParen ")" @ 10..11 trailing=[Whitespace " "]
-            LambdaExpressionList
-          Dot "." @ 12..13 trailing=[Whitespace " "]
-          BogusNavigationSelector
         BogusExpression
-          Question "?" @ 14..15 trailing=[Whitespace " "]
-        BogusExpression
-          ColonColon "::" @ 16..18 trailing=[Whitespace " "]
-        BogusExpression
+          BogusExpression
+            BogusExpression
+              NavigationExpression
+                CallExpression
+                  CallExpression
+                    CollectionLiteralExpression
+                      LBracket "[" @ 0..1 trailing=[Whitespace " "]
+                      ValueArgumentEntryList
+                      RBracket "]" @ 2..3 trailing=[Whitespace " "]
+                    TypeArgumentListList
+                    LambdaExpressionList
+                      LambdaExpression
+                        LambdaBody
+                          LBrace "{" @ 4..5 trailing=[Whitespace " "]
+                          LambdaBodyItemList
+                          RBrace "}" @ 6..7 trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 8..9 trailing=[Whitespace " "]
+                    ValueArgumentEntryList
+                    RParen ")" @ 10..11 trailing=[Whitespace " "]
+                  LambdaExpressionList
+                Dot "." @ 12..13 trailing=[Whitespace " "]
+                BogusNavigationSelector
+              Question "?" @ 14..15 trailing=[Whitespace " "]
+            ColonColon "::" @ 16..18 trailing=[Whitespace " "]
           Colon ":" @ 19..20 trailing=[Whitespace " "]
       TerminatorList
         Semicolon ";" @ 21..22 trailing=[Whitespace " "]
         DoubleSemicolon ";;" @ 23..25 trailing=[Whitespace " "]
     Statement
       ExpressionStatement
-        BinaryExpression
+        BogusExpression
           BogusExpression
-            Range ".." @ 26..28 trailing=[Whitespace " "]
-          RangeUntil "..<" @ 29..32 trailing=[Whitespace " "]
-          BogusExpression
-            Assign "=" @ 33..34 trailing=[Whitespace " "]
-        BogusExpression
-          Hash "#" @ 35..36 trailing=[Whitespace " "]
-        BogusExpression
-          At "@" @ 37..38 trailing=[Whitespace " "]
-        BogusExpression
+            BogusExpression
+              BinaryExpression
+                BogusExpression
+                  Range ".." @ 26..28 trailing=[Whitespace " "]
+                RangeUntil "..<" @ 29..32 trailing=[Whitespace " "]
+                BogusExpression
+                  Assign "=" @ 33..34 trailing=[Whitespace " "]
+              Hash "#" @ 35..36 trailing=[Whitespace " "]
+            At "@" @ 37..38 trailing=[Whitespace " "]
           Comma "," @ 39..40
       TerminatorList
   Eof "" @ 41..41 leading=[Newline "\n"]

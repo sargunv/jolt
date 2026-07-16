@@ -1,4 +1,4 @@
-use jolt_syntax::{CompletedMarker, UnresolvedDiagnosticOwner};
+use jolt_syntax::CompletedMarker;
 
 use crate::KotlinSyntaxKind as K;
 
@@ -8,24 +8,22 @@ impl Parser<'_> {
     pub(super) fn parse_lambda_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
         let body = self.start();
-        self.expect(K::LBrace, "expected lambda");
+        debug_assert!(self.eat(K::LBrace));
         if self.lambda_has_parameter_arrow() {
             let params = self.start();
             let parameters = self.start();
             let mut expect_parameter = true;
             while !matches!(self.current_kind(), K::Arrow | K::RBrace | K::Eof) {
                 let before = self.position();
-                if self.eat(K::Comma) {
+                if self.at(K::Comma) {
                     if expect_parameter {
                         let error = self.start();
                         let diagnostic =
-                            self.unexpected_here("expected lambda parameter between commas");
-                        self.own_diagnostic(
-                            diagnostic,
-                            UnresolvedDiagnosticOwner::node(error.anchor()),
-                        );
-                        self.complete(error, K::BogusLambdaParameter);
+                            self.pending_unexpected("expected lambda parameter between commas");
+
+                        self.complete_recovery(error, K::BogusLambdaParameter, [diagnostic]);
                     }
+                    self.bump();
                     expect_parameter = true;
                     continue;
                 }
@@ -38,17 +36,15 @@ impl Parser<'_> {
                 }
                 self.complete(parameter, K::LambdaParameter);
                 expect_parameter = false;
-                self.ensure_progress(before, "expected lambda parameter");
+                debug_assert!(self.position() > before);
             }
             self.complete(parameters, K::LambdaParameterSeparatedList);
             if !self.eat(K::Arrow) {
-                let diagnostic = self.expected_here("expected '->' after lambda parameters");
-                self.own_diagnostic(
-                    diagnostic,
-                    UnresolvedDiagnosticOwner::missing_slot(
-                        params.anchor(),
-                        crate::shape::lambda_parameter_list::Slot::arrow as u16,
-                    ),
+                let diagnostic = self.pending_expected("expected '->' after lambda parameters");
+                self.missing_required_slot(
+                    params.anchor(),
+                    crate::shape::lambda_parameter_list::Slot::arrow as u16,
+                    [diagnostic],
                 );
             }
             self.complete(params, K::LambdaParameterList);
@@ -57,17 +53,15 @@ impl Parser<'_> {
         while !matches!(self.current_kind(), K::RBrace | K::Eof) {
             let before = self.position();
             self.parse_declaration_or_statement();
-            self.ensure_progress(before, "expected lambda body statement");
+            debug_assert!(self.position() > before);
         }
         self.complete(items, K::LambdaBodyItemList);
         if !self.eat(K::RBrace) {
-            let diagnostic = self.expected_here("expected '}' after lambda");
-            self.own_diagnostic(
-                diagnostic,
-                UnresolvedDiagnosticOwner::missing_slot(
-                    body.anchor(),
-                    crate::shape::lambda_body::Slot::close_brace as u16,
-                ),
+            let diagnostic = self.pending_expected("expected '}' after lambda");
+            self.missing_required_slot(
+                body.anchor(),
+                crate::shape::lambda_body::Slot::close_brace as u16,
+                [diagnostic],
             );
         }
         self.complete(body, K::LambdaBody);
@@ -85,16 +79,14 @@ impl Parser<'_> {
 
     pub(super) fn parse_collection_literal_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
-        self.expect(K::LBracket, "expected collection literal");
+        debug_assert!(self.eat(K::LBracket));
         self.parse_value_arguments_until(K::RBracket, K::ValueArgumentEntryList);
         if !self.eat(K::RBracket) {
-            let diagnostic = self.expected_here("expected ']' after collection literal");
-            self.own_diagnostic(
-                diagnostic,
-                UnresolvedDiagnosticOwner::missing_slot(
-                    marker.anchor(),
-                    crate::shape::collection_literal_expression::Slot::close_bracket as u16,
-                ),
+            let diagnostic = self.pending_expected("expected ']' after collection literal");
+            self.missing_required_slot(
+                marker.anchor(),
+                crate::shape::collection_literal_expression::Slot::close_bracket as u16,
+                [diagnostic],
             );
         }
         self.complete(marker, K::CollectionLiteralExpression)

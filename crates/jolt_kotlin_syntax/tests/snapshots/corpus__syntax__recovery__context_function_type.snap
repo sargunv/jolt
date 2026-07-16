@@ -29,8 +29,8 @@ KotlinFile
                     UserTypeSegment
                       Identifier "First" @ 28..33
             Comma "," @ 33..34 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
-            Comma "," @ 48..49 trailing=[Whitespace " "]
             BogusFunctionTypeParameter
+            Comma "," @ 48..49 trailing=[Whitespace " "]
             FunctionTypeParameter
               TypeReference
                 UserType
@@ -53,7 +53,7 @@ KotlinFile
   Eof "" @ 69..69 leading=[Newline "\n"]
 
 diagnostics:
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=50..56 message="expected function type parameter between commas"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=48..49 message="expected function type parameter between commas"
 
 diagnostics:
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(50), end: TextSize(56) }) message=expected function type parameter between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(48), end: TextSize(49) }) message=expected function type parameter between commas

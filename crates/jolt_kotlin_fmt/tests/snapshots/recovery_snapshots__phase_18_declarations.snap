@@ -135,7 +135,6 @@ class OrphanComma {
 
 enum class Choice {
   ),
-
   First(1) {
   },
   Second,

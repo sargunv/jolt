@@ -1,4 +1,4 @@
-use jolt_syntax::{CompletedMarker, UnresolvedDiagnosticOwner};
+use jolt_syntax::CompletedMarker;
 
 use crate::KotlinSyntaxKind as K;
 
@@ -108,7 +108,11 @@ impl Parser<'_> {
             _ if self.at_soft_keyword("context") && self.nth_kind(1) == K::LParen => {
                 self.abandon(prefix);
                 self.bump();
-                self.parse_parenthesized_type_contents(K::FunctionTypeParameterSeparatedList);
+                self.parse_parenthesized_type_contents(
+                    K::FunctionTypeParameterSeparatedList,
+                    marker.anchor(),
+                    crate::shape::context_function_type::Slot::close_paren as u16,
+                );
                 if !self.at_type_stop(stops, stop_position) && !self.at_eof() {
                     self.parse_type_until(stops, stop_position);
                 }
@@ -116,7 +120,11 @@ impl Parser<'_> {
             }
             K::LParen => {
                 self.complete(prefix, K::AnnotationList);
-                self.parse_parenthesized_type_contents(K::ParenthesizedTypeEntryList);
+                self.parse_parenthesized_type_contents(
+                    K::ParenthesizedTypeEntryList,
+                    marker.anchor(),
+                    crate::shape::parenthesized_type::Slot::close_paren as u16,
+                );
                 self.complete(marker, K::ParenthesizedType)
             }
             kind if self.at_identifier_like() || is_literal_kind(kind) => {
@@ -132,12 +140,12 @@ impl Parser<'_> {
             }
             _ => {
                 self.abandon(prefix);
-                let diagnostic = self.expected_here("expected type");
+                let diagnostic = self.pending_expected("expected type");
                 if !self.at_type_stop(stops, stop_position) && !self.at_eof() {
                     self.bump();
                 }
-                self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(marker.anchor()));
-                self.complete(marker, K::BogusType)
+
+                self.complete_recovery(marker, K::BogusType, [diagnostic])
             }
         }
     }
@@ -146,7 +154,7 @@ impl Parser<'_> {
         while self.at(K::At) || self.at(K::Hash) {
             let before = self.position();
             self.parse_type_prefix_annotation();
-            self.ensure_progress(before, "expected type annotation");
+            debug_assert!(self.position() > before);
         }
     }
 
@@ -181,6 +189,7 @@ impl Parser<'_> {
     ) {
         let first_segment = self.parse_user_type_segment_tail(first_segment);
         let segments = self.precede(first_segment);
+        let mut list_recovery = None;
         while !self.at_position_stop(stop_position) {
             if self.at(K::Dot) && self.nth_kind(1) != K::LParen {
                 let separator_position = self.position();
@@ -197,37 +206,39 @@ impl Parser<'_> {
                 {
                     self.parse_user_type_segment_tail(segment);
                 } else {
-                    let diagnostic = self.expected_here("expected type segment");
-                    self.own_diagnostic(
-                        diagnostic,
-                        UnresolvedDiagnosticOwner::node(segment.anchor()),
-                    );
-                    self.complete(segment, K::BogusUserTypeSegment);
+                    let diagnostic = self.pending_expected("expected type segment");
+
+                    self.complete_recovery(segment, K::BogusUserTypeSegment, [diagnostic]);
                     break;
                 }
             } else if self.at(K::Range) {
-                let segment = self.start();
-                let diagnostic = self.expected_here("expected one '.' between type segments");
+                if list_recovery.is_none() {
+                    list_recovery =
+                        Some(self.pending_expected("expected one '.' between type segments"));
+                }
                 self.bump();
+                let segment = self.start();
                 self.parse_type_prefix_annotations();
                 if self.at_identifier_like() || is_literal_kind(self.current_kind()) {
-                    self.bump();
-                    if self.at(K::Lt) {
-                        self.parse_type_argument_list();
-                    }
-                } else if self.at(K::Lt) {
-                    self.parse_type_argument_list();
+                    self.parse_user_type_segment_tail(segment);
+                } else {
+                    let diagnostic = self.pending_expected("expected type segment");
+                    self.missing_required_slot(
+                        segment.anchor(),
+                        crate::shape::user_type_segment::Slot::name as u16,
+                        [diagnostic],
+                    );
+                    self.complete(segment, K::UserTypeSegment);
                 }
-                self.own_diagnostic(
-                    diagnostic,
-                    UnresolvedDiagnosticOwner::node(segment.anchor()),
-                );
-                self.complete(segment, K::BogusUserTypeSegment);
             } else {
                 break;
             }
         }
-        self.complete(segments, K::UserTypeSegmentList);
+        if let Some(diagnostic) = list_recovery {
+            self.complete_recovery(segments, K::UserTypeSegmentList, [diagnostic]);
+        } else {
+            self.complete(segments, K::UserTypeSegmentList);
+        }
     }
 
     fn parse_user_type_segment_tail(&mut self, segment: jolt_syntax::Marker) -> CompletedMarker {
@@ -238,42 +249,45 @@ impl Parser<'_> {
             }
             self.complete(segment, K::UserTypeSegment)
         } else {
-            let diagnostic = self.unexpected_here("expected identifier in type segment");
+            let diagnostic = self.pending_unexpected("expected identifier in type segment");
             self.bump();
-            self.own_diagnostic(
-                diagnostic,
-                UnresolvedDiagnosticOwner::node(segment.anchor()),
-            );
-            self.complete(segment, K::BogusUserTypeSegment)
+
+            self.complete_recovery(segment, K::BogusUserTypeSegment, [diagnostic])
         }
     }
 
-    fn parse_parenthesized_type_contents(&mut self, entries_kind: K) {
-        self.expect(K::LParen, "expected '(' in type");
+    fn parse_parenthesized_type_contents(
+        &mut self,
+        entries_kind: K,
+        owner: jolt_syntax::NodeAnchor,
+        close_slot: u16,
+    ) {
+        debug_assert!(self.eat(K::LParen));
         let entries = self.start();
         let mut expect_parameter = true;
         while !matches!(self.current_kind(), K::RParen | K::Eof) {
             let before = self.position();
-            if self.eat(K::Comma) {
-                if expect_parameter && !matches!(self.current_kind(), K::RParen | K::Eof) {
+            if self.at(K::Comma) {
+                if expect_parameter && !matches!(self.nth_kind(1), K::RParen | K::Eof) {
                     let error = self.start();
                     let diagnostic =
-                        self.unexpected_here("expected function type parameter between commas");
-                    self.own_diagnostic(
-                        diagnostic,
-                        UnresolvedDiagnosticOwner::node(error.anchor()),
-                    );
-                    self.complete(error, K::BogusFunctionTypeParameter);
+                        self.pending_unexpected("expected function type parameter between commas");
+
+                    self.complete_recovery(error, K::BogusFunctionTypeParameter, [diagnostic]);
                 }
+                self.bump();
                 expect_parameter = true;
                 continue;
             }
             self.parse_function_type_parameter();
             expect_parameter = false;
-            self.ensure_progress(before, "expected type");
+            debug_assert!(self.position() > before);
         }
         self.complete(entries, entries_kind);
-        self.expect(K::RParen, "expected ')' in type");
+        if !self.eat(K::RParen) {
+            let diagnostic = self.pending_expected("expected ')' in type");
+            self.missing_required_slot(owner, close_slot, [diagnostic]);
+        }
     }
 
     fn parse_function_type_parameter(&mut self) {
@@ -309,22 +323,20 @@ impl Parser<'_> {
 
     pub(super) fn parse_type_argument_list(&mut self) {
         let marker = self.start();
-        self.expect(K::Lt, "expected type argument list");
+        debug_assert!(self.eat(K::Lt));
         let entries = self.start();
         let mut expect_argument = true;
         while !matches!(self.current_kind(), K::Gt | K::Eof) {
             let before = self.position();
-            if self.eat(K::Comma) {
-                if expect_argument && !matches!(self.current_kind(), K::Gt | K::Eof) {
+            if self.at(K::Comma) {
+                if expect_argument && !matches!(self.nth_kind(1), K::Gt | K::Eof) {
                     let error = self.start();
                     let diagnostic =
                         self.malformed_type_argument_list_here("malformed type argument list");
-                    self.own_diagnostic(
-                        diagnostic,
-                        UnresolvedDiagnosticOwner::node(error.anchor()),
-                    );
-                    self.complete(error, K::BogusTypeArgument);
+
+                    self.complete_recovery(error, K::BogusTypeArgument, [diagnostic]);
                 }
+                self.bump();
                 expect_argument = true;
                 continue;
             }
@@ -338,11 +350,8 @@ impl Parser<'_> {
                         "star projection cannot include a simultaneous type",
                     );
                     self.parse_type_reference_until(&[K::Comma, K::Gt]);
-                    self.own_diagnostic(
-                        diagnostic,
-                        UnresolvedDiagnosticOwner::node(argument.anchor()),
-                    );
-                    self.complete(argument, K::BogusTypeArgument);
+
+                    self.complete_recovery(argument, K::BogusTypeArgument, [diagnostic]);
                 }
                 expect_argument = false;
                 continue;
@@ -356,21 +365,25 @@ impl Parser<'_> {
                 self.parse_type_reference_until(&[K::Comma, K::Gt]);
             }
             expect_argument = false;
-            self.ensure_progress(before, "expected type argument");
+            debug_assert!(self.position() > before);
         }
         self.complete(entries, K::TypeProjectionSeparatedList);
-        self.expect(K::Gt, "expected '>' after type arguments");
+        if !self.eat(K::Gt) {
+            let diagnostic = self.pending_expected("expected '>' after type arguments");
+            self.missing_required_slot(
+                marker.anchor(),
+                crate::shape::type_argument_list::Slot::close_angle as u16,
+                [diagnostic],
+            );
+        }
         self.complete(marker, K::TypeArgumentList);
     }
 
     fn complete_missing_type(&mut self) {
         let missing = self.start();
-        let diagnostic = self.expected_here("expected type");
-        self.own_diagnostic(
-            diagnostic,
-            UnresolvedDiagnosticOwner::node(missing.anchor()),
-        );
-        self.complete(missing, K::BogusType);
+        let diagnostic = self.pending_expected("expected type");
+
+        self.complete_recovery(missing, K::BogusType, [diagnostic]);
     }
 }
 

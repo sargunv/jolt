@@ -7,9 +7,8 @@ fun demo(items: List<String>) { for (item in items print(item) }
 
 formatted:
 fun demo(items: List<String>) {
-  for (item in items print (item)
+  for (item in items print(item)
 }
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=expected ')' after for header
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=expected body after 'for' header
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(51), end: TextSize(56) }) message=expected ')' after for header

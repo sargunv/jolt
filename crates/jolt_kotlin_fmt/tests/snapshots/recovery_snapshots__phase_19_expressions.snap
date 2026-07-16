@@ -102,14 +102,14 @@ code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRan
 code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(48) }) message=invalid assignment target
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(83), end: TextSize(86) }) message=expected member name
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(117), end: TextSize(120) }) message=expected callable reference name
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(144), end: TextSize(149) }) message=expected list item
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(182), end: TextSize(183) }) message=expected list item
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(209), end: TextSize(214) }) message=expected list item
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(238), end: TextSize(243) }) message=expected lambda parameter between commas
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(282), end: TextSize(284) }) message=expected lambda parameter between commas
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(142), end: TextSize(143) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(181), end: TextSize(182) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(207), end: TextSize(208) }) message=expected list item
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(236), end: TextSize(237) }) message=expected lambda parameter between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(280), end: TextSize(281) }) message=expected lambda parameter between commas
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(317), end: TextSize(318) }) message=expected parenthesized expression
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(344), end: TextSize(349) }) message=expected list item
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(380), end: TextSize(381) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(342), end: TextSize(343) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(379), end: TextSize(380) }) message=expected list item
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(496), end: TextSize(499) }) message=expected anonymous function body
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(533), end: TextSize(534) }) message=expected value parameter list
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(703), end: TextSize(706) }) message=expected object body

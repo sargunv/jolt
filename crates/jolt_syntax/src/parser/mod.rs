@@ -3,6 +3,6 @@ mod source;
 
 pub use lexer::{LanguageLexer, LexedToken};
 pub use source::{
-    CursorCheckpoint, DiagnosticMarker, ParseEvents, Parser, PendingDiagnostic, TokenBuffer,
-    TokenCursor, UnresolvedDiagnosticOwner,
+    CursorCheckpoint, ParseEvents, Parser, PendingDiagnostic, TokenBuffer, TokenCursor,
+    UnresolvedDiagnosticOwner,
 };

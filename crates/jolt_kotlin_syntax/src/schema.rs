@@ -519,7 +519,7 @@ macro_rules! kotlin_syntax_schema {
                     return_colon: optional (token Colon);
                     return_type: optional (node TypeReference);
                     constraints: optional (node TypeConstraintList);
-                    body: required (category DeclarationBody);
+                    body: optional (category DeclarationBody);
                 }
                 PropertyDeclaration => PropertyDeclaration [property_declaration valid] {
                     leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
@@ -994,7 +994,7 @@ macro_rules! kotlin_syntax_schema {
                     items: many (choice [(category KotlinFileItem), (token_set [EolOrSemicolon, Semicolon])]);
                 }
                 TerminatorList => TerminatorList [terminator_list list] {
-                    terminators: many (token_set [EolOrSemicolon, Semicolon]);
+                    terminators: many (token_set [EolOrSemicolon, Semicolon, DoubleSemicolon]);
                 }
                 ImportDirectiveList => ImportDirectiveList [import_directive_list list] {
                     directives: one_or_more (node ImportDirective);
@@ -1021,7 +1021,7 @@ macro_rules! kotlin_syntax_schema {
                     ]);
                 }
                 ValueArgumentSeparatedList => ValueArgumentSeparatedList [value_argument_separated_list list] {
-                    entries: many (node ValueArgument) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];
+                    entries: many (category ValueArgumentListEntry) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];
                 }
                 ValueArgumentEntryList => ValueArgumentEntryList [value_argument_entry_list list] {
                     entries: many (category ValueArgumentListEntry) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];
@@ -1051,7 +1051,7 @@ macro_rules! kotlin_syntax_schema {
                     entries: one_or_more (category DelegationSpecifierEntry) [separated (token Comma), minimum 1, trailing optional, recovery bogus_owner];
                 }
                 UserTypeSegmentList => UserTypeSegmentList [user_type_segment_list list] {
-                    segments: one_or_more (category UserTypeSegmentSyntax) [separated (token Dot), minimum 1, trailing forbidden, recovery bogus_owner];
+                    segments: one_or_more (category UserTypeSegmentSyntax) [separated (token_set [Dot, Range]), minimum 1, trailing forbidden, recovery bogus_owner];
                 }
                 FunctionTypeParameterSeparatedList => FunctionTypeParameterSeparatedList [function_type_parameter_separated_list list] {
                     entries: one_or_more (category FunctionTypeParameterListEntry) [separated (token Comma), minimum 1, trailing optional, recovery bogus_owner];

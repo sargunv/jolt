@@ -12,14 +12,17 @@ KotlinFile
   KotlinFileItemList
     Statement
       ExpressionStatement
-        LiteralExpression
-          IntegerLiteral "0xCAFE" @ 0..6 trailing=[Whitespace " "]
-        BogusExpression
-          IntegerLiteral "0Xdead_BEEF" @ 7..18 trailing=[Whitespace " "]
-        BogusExpression
-          IntegerLiteral "0b1010" @ 19..25 trailing=[Whitespace " "]
-        BogusExpression
-          IntegerLiteral "0B1111" @ 26..32
+        BinaryExpression
+          BinaryExpression
+            BinaryExpression
+              LiteralExpression
+                IntegerLiteral "0xCAFE" @ 0..6 trailing=[Whitespace " "]
+              LiteralExpression
+                IntegerLiteral "0Xdead_BEEF" @ 7..18 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "0b1010" @ 19..25 trailing=[Whitespace " "]
+          LiteralExpression
+            IntegerLiteral "0B1111" @ 26..32
       TerminatorList
   Eof "" @ 33..33 leading=[Newline "\n"]
 

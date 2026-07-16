@@ -19,8 +19,8 @@ KotlinFile
       AnnotationArgumentList
         LParen "(" @ 5..6 trailing=[BlockComment "/* orphan */", Whitespace " "]
         ValueArgumentSeparatedList
-          Comma "," @ 19..20 trailing=[Whitespace " "]
           BogusValueArgument
+          Comma "," @ 19..20 trailing=[Whitespace " "]
           ValueArgument
             ValueArgumentPrefixList
             NameExpression
@@ -36,7 +36,7 @@ KotlinFile
   Eof "" @ 39..39 leading=[Newline "\n"]
 
 diagnostics:
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=21..26 message="expected list item"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=19..20 message="expected list item"
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(21), end: TextSize(26) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(19), end: TextSize(20) }) message=expected list item

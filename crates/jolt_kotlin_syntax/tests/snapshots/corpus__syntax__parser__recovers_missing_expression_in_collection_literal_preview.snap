@@ -50,8 +50,8 @@ KotlinFile
                       LiteralExpression
                         IntegerLiteral "1" @ 56..57
                     Comma "," @ 57..58 trailing=[Whitespace " "]
-                    Comma "," @ 59..60 trailing=[Whitespace " "]
                     BogusValueArgument
+                    Comma "," @ 59..60 trailing=[Whitespace " "]
                     ValueArgument
                       ValueArgumentPrefixList
                       LiteralExpression
@@ -69,7 +69,7 @@ KotlinFile
   Eof "" @ 84..84 leading=[Newline "\n"]
 
 diagnostics:
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=61..62 message="expected list item"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=59..60 message="expected list item"
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(61), end: TextSize(62) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(59), end: TextSize(60) }) message=expected list item
