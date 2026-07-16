@@ -133,8 +133,10 @@ KotlinFile
                             ForStatement
                               ForKw "for" @ 138..141 trailing=[Whitespace " "]
                               LParen "(" @ 142..143
-                              NameExpression
-                                Identifier "row" @ 143..146 trailing=[Whitespace " "]
+                              ForVariable
+                                ModifierList
+                                Name
+                                  Identifier "row" @ 143..146 trailing=[Whitespace " "]
                               InKw "in" @ 147..149 trailing=[Whitespace " "]
                               NameExpression
                                 Identifier "rows" @ 150..154
@@ -147,8 +149,10 @@ KotlinFile
                                       ForStatement
                                         ForKw "for" @ 170..173 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
                                         LParen "(" @ 174..175
-                                        NameExpression
-                                          Identifier "value" @ 175..180 trailing=[Whitespace " "]
+                                        ForVariable
+                                          ModifierList
+                                          Name
+                                            Identifier "value" @ 175..180 trailing=[Whitespace " "]
                                         InKw "in" @ 181..183 trailing=[Whitespace " "]
                                         NameExpression
                                           Identifier "row" @ 184..187
@@ -173,8 +177,9 @@ KotlinFile
                                                     RParen ")" @ 220..221 trailing=[Whitespace " "]
                                                   JumpExpression
                                                     ContinueKw "continue" @ 222..230
-                                                    At "@" @ 230..231
-                                                    Identifier "outer" @ 231..236
+                                                    LabelReference
+                                                      At "@" @ 230..231
+                                                      Identifier "outer" @ 231..236
                                               TerminatorList
                                             Statement
                                               ExpressionStatement
@@ -195,24 +200,22 @@ KotlinFile
                             Identifier "count" @ 300..305 leading=[Newline "\n", Whitespace "        "]
                         TerminatorList
                     RBrace "}" @ 310..311 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                  CatchClauseList
+                  TryClauseList
                     CatchClause
                       Identifier "catch" @ 312..317 trailing=[Whitespace " "]
-                      ValueParameterList
+                      CatchParameter
                         LParen "(" @ 318..319
-                        ValueParameterSeparatedList
-                          ValueParameter
-                            ModifierList
-                            Name
-                              Identifier "error" @ 319..324
-                            Colon ":" @ 324..325 trailing=[Whitespace " "]
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
-                                  UserTypeSegment
-                                    AnnotationList
-                                    Name
-                                      Identifier "IllegalStateException" @ 326..347
+                        ModifierList
+                        Name
+                          Identifier "error" @ 319..324
+                        Colon ":" @ 324..325 trailing=[Whitespace " "]
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "IllegalStateException" @ 326..347
                         RParen ")" @ 347..348 trailing=[Whitespace " "]
                       Block
                         LBrace "{" @ 349..350
@@ -253,15 +256,16 @@ KotlinFile
                                 LiteralExpression
                                   IntegerLiteral "0" @ 416..417 trailing=[Whitespace " "]
                         Arrow "->" @ 418..420 trailing=[Whitespace " "]
-                        StringTemplateExpression
-                          StringTemplateEntryList
-                            StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 421..422
-                            StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "empty" @ 422..427
-                          ClosingQuote "\"" @ 427..428
+                        WhenEntryBody
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 421..422
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  RegularStringPart "empty" @ 422..427
+                            ClosingQuote "\"" @ 427..428
                       WhenEntry
                         WhenConditionSeparatedList
                           WhenCondition
@@ -274,28 +278,30 @@ KotlinFile
                                 LiteralExpression
                                   IntegerLiteral "10" @ 445..447 trailing=[Whitespace " "]
                         Arrow "->" @ 448..450 trailing=[Whitespace " "]
-                        StringTemplateExpression
-                          StringTemplateEntryList
-                            StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 451..452
-                            StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "large" @ 452..457
-                          ClosingQuote "\"" @ 457..458
+                        WhenEntryBody
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 451..452
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  RegularStringPart "large" @ 452..457
+                            ClosingQuote "\"" @ 457..458
                       WhenEntry
                         ElseKw "else" @ 467..471 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                         WhenConditionSeparatedList
                         Arrow "->" @ 472..474 trailing=[Whitespace " "]
-                        StringTemplateExpression
-                          StringTemplateEntryList
-                            StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 475..476
-                            StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "small" @ 476..481
-                          ClosingQuote "\"" @ 481..482
+                        WhenEntryBody
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 475..476
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  RegularStringPart "small" @ 476..481
+                            ClosingQuote "\"" @ 481..482
                     RBrace "}" @ 487..488 leading=[Newline "\n", Whitespace "    "]
               TerminatorList
           RBrace "}" @ 489..490 leading=[Newline "\n"]

@@ -157,17 +157,19 @@ KotlinFile
                 ForStatement
                   ForKw "for" @ 147..150 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                   LParen "(" @ 151..152
-                  DestructuringDeclaration
-                    LParen "(" @ 152..153
-                    DestructuringEntrySeparatedList
-                      DestructuringEntry
-                        Name
-                          Identifier "name" @ 153..157
-                      Comma "," @ 157..158 trailing=[Whitespace " "]
-                      DestructuringEntry
-                        Name
-                          Identifier "count" @ 159..164
-                    RParen ")" @ 164..165 trailing=[Whitespace " "]
+                  ForVariable
+                    ModifierList
+                    DestructuringDeclaration
+                      LParen "(" @ 152..153
+                      DestructuringEntrySeparatedList
+                        DestructuringEntry
+                          Name
+                            Identifier "name" @ 153..157
+                        Comma "," @ 157..158 trailing=[Whitespace " "]
+                        DestructuringEntry
+                          Name
+                            Identifier "count" @ 159..164
+                      RParen ")" @ 164..165 trailing=[Whitespace " "]
                   InKw "in" @ 166..168 trailing=[Whitespace " "]
                   NameExpression
                     Identifier "entries" @ 169..176

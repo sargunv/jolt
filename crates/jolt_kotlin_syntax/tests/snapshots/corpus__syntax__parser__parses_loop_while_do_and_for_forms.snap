@@ -126,8 +126,10 @@ KotlinFile
                 ForStatement
                   ForKw "for" @ 123..126 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                   LParen "(" @ 127..128
-                  NameExpression
-                    Identifier "value" @ 128..133 trailing=[Whitespace " "]
+                  ForVariable
+                    ModifierList
+                    Name
+                      Identifier "value" @ 128..133 trailing=[Whitespace " "]
                   InKw "in" @ 134..136 trailing=[Whitespace " "]
                   NameExpression
                     Identifier "values" @ 137..143
@@ -158,17 +160,19 @@ KotlinFile
                 ForStatement
                   ForKw "for" @ 181..184 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                   LParen "(" @ 185..186
-                  DestructuringDeclaration
-                    LParen "(" @ 186..187
-                    DestructuringEntrySeparatedList
-                      DestructuringEntry
-                        Name
-                          Identifier "index" @ 187..192
-                      Comma "," @ 192..193 trailing=[Whitespace " "]
-                      DestructuringEntry
-                        Name
-                          Identifier "value" @ 194..199
-                    RParen ")" @ 199..200 trailing=[Whitespace " "]
+                  ForVariable
+                    ModifierList
+                    DestructuringDeclaration
+                      LParen "(" @ 186..187
+                      DestructuringEntrySeparatedList
+                        DestructuringEntry
+                          Name
+                            Identifier "index" @ 187..192
+                        Comma "," @ 192..193 trailing=[Whitespace " "]
+                        DestructuringEntry
+                          Name
+                            Identifier "value" @ 194..199
+                      RParen ")" @ 199..200 trailing=[Whitespace " "]
                   InKw "in" @ 201..203 trailing=[Whitespace " "]
                   CallExpression
                     NavigationExpression

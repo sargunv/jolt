@@ -74,8 +74,10 @@ KotlinFile
                   ForStatement
                     ForKw "for" @ 46..49 trailing=[Whitespace " "]
                     LParen "(" @ 50..51
-                    NameExpression
-                      Identifier "value" @ 51..56 trailing=[Whitespace " "]
+                    ForVariable
+                      ModifierList
+                      Name
+                        Identifier "value" @ 51..56 trailing=[Whitespace " "]
                     InKw "in" @ 57..59 trailing=[Whitespace " "]
                     NameExpression
                       Identifier "values" @ 60..66
@@ -100,8 +102,9 @@ KotlinFile
                                 RParen ")" @ 91..92 trailing=[Whitespace " "]
                               JumpExpression
                                 ContinueKw "continue" @ 93..101
-                                At "@" @ 101..102
-                                Identifier "loop" @ 102..106
+                                LabelReference
+                                  At "@" @ 101..102
+                                  Identifier "loop" @ 102..106
                           TerminatorList
                         Statement
                           ExpressionStatement
@@ -120,8 +123,9 @@ KotlinFile
                                 RParen ")" @ 129..130 trailing=[Whitespace " "]
                               JumpExpression
                                 BreakKw "break" @ 131..136
-                                At "@" @ 136..137
-                                Identifier "loop" @ 137..141
+                                LabelReference
+                                  At "@" @ 136..137
+                                  Identifier "loop" @ 137..141
                           TerminatorList
                         Statement
                           ExpressionStatement
@@ -160,8 +164,9 @@ KotlinFile
                                                   RParen ")" @ 200..201 trailing=[Whitespace " "]
                                                 JumpExpression
                                                   ReturnKw "return" @ 202..208
-                                                  At "@" @ 208..209
-                                                  Identifier "inner" @ 209..214
+                                                  LabelReference
+                                                    At "@" @ 208..209
+                                                    Identifier "inner" @ 209..214
                                             TerminatorList
                                         RBrace "}" @ 223..224 leading=[Newline "\n", Whitespace "        "]
                           TerminatorList

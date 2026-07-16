@@ -276,24 +276,22 @@ KotlinFile
                               LambdaExpressionList
                           TerminatorList
                       RBrace "}" @ 344..345 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                    CatchClauseList
+                    TryClauseList
                       CatchClause
                         Identifier "catch" @ 346..351 trailing=[Whitespace " "]
-                        ValueParameterList
+                        CatchParameter
                           LParen "(" @ 352..353
-                          ValueParameterSeparatedList
-                            ValueParameter
-                              ModifierList
-                              Name
-                                Identifier "error" @ 353..358
-                              Colon ":" @ 358..359 trailing=[Whitespace " "]
-                              TypeReference
-                                UserType
-                                  UserTypeSegmentList
-                                    UserTypeSegment
-                                      AnnotationList
-                                      Name
-                                        Identifier "Throwable" @ 360..369
+                          ModifierList
+                          Name
+                            Identifier "error" @ 353..358
+                          Colon ":" @ 358..359 trailing=[Whitespace " "]
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
+                                    Identifier "Throwable" @ 360..369
                           RParen ")" @ 369..370 trailing=[Whitespace " "]
                         Block
                           LBrace "{" @ 371..372

@@ -80,28 +80,30 @@ KotlinFile
                               LiteralExpression
                                 IntegerLiteral "10" @ 100..102 trailing=[Whitespace " "]
                         Arrow "->" @ 103..105 trailing=[Whitespace " "]
-                        StringTemplateExpression
-                          StringTemplateEntryList
-                            StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 106..107
-                            StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "small" @ 107..112
-                          ClosingQuote "\"" @ 112..113
+                        WhenEntryBody
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 106..107
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  RegularStringPart "small" @ 107..112
+                            ClosingQuote "\"" @ 112..113
                       WhenEntry
                         ElseKw "else" @ 122..126 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                         WhenConditionSeparatedList
                         Arrow "->" @ 127..129 trailing=[Whitespace " "]
-                        StringTemplateExpression
-                          StringTemplateEntryList
-                            StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 130..131
-                            StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "other" @ 131..136
-                          ClosingQuote "\"" @ 136..137
+                        WhenEntryBody
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 130..131
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  RegularStringPart "other" @ 131..136
+                            ClosingQuote "\"" @ 136..137
                     RBrace "}" @ 142..143 leading=[Newline "\n", Whitespace "    "]
               TerminatorList
           RBrace "}" @ 144..145 leading=[Newline "\n"]

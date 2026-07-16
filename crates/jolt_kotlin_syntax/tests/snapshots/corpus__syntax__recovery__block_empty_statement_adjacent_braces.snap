@@ -26,15 +26,14 @@ KotlinFile
           LBrace "{" @ 10..11
           BlockItemList
             Statement
-              ExpressionStatement
-                ErrorNode
-                  Semicolon ";" @ 11..12
+              EmptyStatement
+                Semicolon ";" @ 11..12
               TerminatorList
           RBrace "}" @ 12..13
   Eof "" @ 14..14 leading=[Newline "\n"]
 
 diagnostics:
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=11..12 message="expected expression"
+  (none)
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(11), end: TextSize(12) }) message=expected expression
+(none)

@@ -162,6 +162,16 @@ fn finish_parse(source: &str, parse: source::ParseEvents) -> KotlinParse<'_> {
     }
 }
 
+fn invalid_event_stream_diagnostic(error: &jolt_syntax::BuildSyntaxTreeError) -> Diagnostic {
+    Diagnostic {
+        code: KotlinParseDiagnosticCode::InvalidEventStream.id(),
+        severity: Severity::InternalError,
+        stage: DiagnosticStage::Parser,
+        message: format!("Jolt parser produced an invalid event stream: {error:?}"),
+        range: None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use jolt_test_support::assert_exact_diagnostic_owner;
@@ -316,14 +326,57 @@ mod tests {
             );
         }
     }
-}
 
-fn invalid_event_stream_diagnostic(error: &jolt_syntax::BuildSyntaxTreeError) -> Diagnostic {
-    Diagnostic {
-        code: KotlinParseDiagnosticCode::InvalidEventStream.id(),
-        severity: Severity::InternalError,
-        stage: DiagnosticStage::Parser,
-        message: format!("Jolt parser produced an invalid event stream: {error:?}"),
-        range: None,
+    #[test]
+    #[rustfmt::skip]
+    fn phase_twenty_diagnostics_own_the_declared_node_or_slot() {
+        check("fun f() { if value }\n", "expected condition after 'if'", KotlinSyntaxKind::BogusExpression, None);
+        check("fun f() { if (value) }\n", "expected branch after 'if' condition", KotlinSyntaxKind::BogusExpression, None);
+        check("fun f() { if (value) else }\n", "expected branch after 'if' condition", KotlinSyntaxKind::BogusExpression, None);
+        check("fun f() { if (value) else }\n", "expected branch after 'else'", KotlinSyntaxKind::BogusExpression, None);
+        check("fun f() { when () {} }\n", "expected when subject expression", KotlinSyntaxKind::BogusExpression, None);
+        check("fun f() { when (val value) {} }\n", "expected '=' in when subject", KotlinSyntaxKind::WhenSubject, Some(crate::shape::when_subject::Slot::assign as u16));
+        check("fun f() { when (value) }\n", "expected '{' after when subject", KotlinSyntaxKind::WhenExpression, Some(crate::shape::when_expression::Slot::open_brace as u16));
+        check("fun f() { when (value) }\n", "expected '}' after when", KotlinSyntaxKind::WhenExpression, Some(crate::shape::when_expression::Slot::close_brace as u16));
+        check_code("fun f() { when (value) { , one -> 1 } }\n", "expected when condition between commas", KotlinParseDiagnosticCode::UnexpectedSyntax, KotlinSyntaxKind::BogusWhenCondition, None);
+        check_code("fun f() { when { one if guard -> 1 } }\n", "when guard requires a subject", KotlinParseDiagnosticCode::InvalidWhenGuard, KotlinSyntaxKind::WhenGuard, None);
+        check("fun f() { when (value) { one value\n two -> 2 } }\n", "expected '->' in when entry", KotlinSyntaxKind::WhenEntry, Some(crate::shape::when_entry::Slot::arrow as u16));
+        check("fun f() { when (value) { one -> } }\n", "expected when entry body", KotlinSyntaxKind::BogusExpression, None);
+        check("fun f() { try {} }\n", "expected 'catch' or 'finally' after try block", KotlinSyntaxKind::TryExpression, None);
+        check("fun f() { try catch {} }\n", "expected block after 'try'", KotlinSyntaxKind::Block, None);
+        check("fun f() { try {} catch {} }\n", "expected catch parameter", KotlinSyntaxKind::CatchParameter, None);
+        check("fun f() { try {} catch (cause Throwable) {} }\n", "expected ':' in catch parameter", KotlinSyntaxKind::CatchParameter, Some(crate::shape::catch_parameter::Slot::colon as u16));
+        check("fun f() { try {} catch (cause: Throwable) }\n", "expected block after 'catch'", KotlinSyntaxKind::Block, None);
+        check_code("fun f() { try {} finally {} catch (late: Throwable) {} }\n", "catch clause must precede finally", KotlinParseDiagnosticCode::UnexpectedSyntax, KotlinSyntaxKind::BogusTryClause, None);
+        check("fun f() { for (in items) {} }\n", "expected loop variable", KotlinSyntaxKind::ForVariable, None);
+        check("fun f() { for (item items) {} }\n", "expected 'in' after loop variable", KotlinSyntaxKind::ForStatement, Some(crate::shape::for_statement::Slot::in_token as u16));
+        check("fun f() { for (item in) {} }\n", "expected loop iterable", KotlinSyntaxKind::BogusExpression, None);
+        check("fun f() { while body }\n", "expected condition after 'while'", KotlinSyntaxKind::BogusExpression, None);
+        check("fun f() { do {} (ready) }\n", "expected 'while' after do body", KotlinSyntaxKind::DoWhileStatement, Some(crate::shape::do_while_statement::Slot::while_token as u16));
+        check_code("fun f() { break value }\n", "break and continue do not accept an expression", KotlinParseDiagnosticCode::UnexpectedSyntax, KotlinSyntaxKind::BogusExpression, None);
+        check("fun f() { return@ }\n", "expected label name", KotlinSyntaxKind::LabelReference, Some(crate::shape::label_reference::Slot::label as u16));
+        check("fun f() { throw\nval next = 1 }\n", "expected expression after 'throw'", KotlinSyntaxKind::BogusExpression, None);
+        check("fun f() { if (true) { value }\n", "expected '}' after block", KotlinSyntaxKind::Block, Some(crate::shape::block::Slot::close_brace as u16));
+    }
+
+    #[test]
+    fn phase_twenty_valid_control_flow_is_diagnostic_free() {
+        for source in [
+            "fun f() { ; }\n",
+            "fun f() { if (ready); else {} }\n",
+            "fun f() { when (value) {\none, -> 1\nelse -> 0\n} }\n",
+            "fun f() { when (value) {\nfirst(value)\n  && second(value)\n  && third(value) -> 1\nelse -> 0\n} }\n",
+            "fun f() { when (var value: Any = source) {} }\n",
+            "fun f() { try {} catch (cause: Throwable) {} finally {} }\n",
+            "fun f() {\nfor (item in items) {}\nwhile (ready);\ndo {} while (ready)\n}\n",
+            "fun f() { return@owner value }\n",
+        ] {
+            let parse = parse_kotlin_file(source);
+            assert!(
+                parse.diagnostics().is_empty(),
+                "valid control flow produced diagnostics for {source:?}: {:?}",
+                parse.diagnostics(),
+            );
+        }
     }
 }

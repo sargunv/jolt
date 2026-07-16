@@ -1003,6 +1003,158 @@ fn invalid_role_projection(
     }
 }
 
+macro_rules! define_kotlin_role_projection {
+    (
+        $role:ident => $value:ident {
+            families { $($family_variant:ident => $family:ident),* $(,)? }
+            nodes { $($node_variant:ident => $node:ident),* $(,)? }
+        }
+    ) => {
+        #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+        pub enum $value<'source> {
+            $($family_variant($family<'source>),)*
+            $($node_variant($node<'source>),)*
+        }
+
+        impl<'source> $role<'source> {
+            #[allow(clippy::missing_errors_doc)]
+            pub fn classify(self) -> KotlinSyntaxResult<$value<'source>> {
+                $(if let Some(value) = self.cast_family::<$family<'source>>() {
+                    return Ok($value::$family_variant(value));
+                })*
+                $(if let Some(value) = self.cast_node::<$node<'source>>() {
+                    return Ok($value::$node_variant(value));
+                })*
+                Err(invalid_role_projection(self.first_token()))
+            }
+        }
+    };
+}
+
+define_kotlin_role_projection! {
+    StatementContentValue => StatementContentSyntax {
+        families {
+            Statement => StatementSyntax,
+            Expression => Expression,
+            Declaration => Declaration,
+        }
+        nodes {}
+    }
+}
+
+define_kotlin_role_projection! {
+    IfThenBranchValue => IfThenBranchSyntax {
+        families { Expression => Expression }
+        nodes { Block => Block, EmptyStatement => EmptyStatement }
+    }
+}
+
+define_kotlin_role_projection! {
+    IfElseBranchValue => IfElseBranchSyntax {
+        families { Expression => Expression }
+        nodes { Block => Block, EmptyStatement => EmptyStatement }
+    }
+}
+
+define_kotlin_role_projection! {
+    WhenEntryBodyValue => WhenEntryBodySyntax {
+        families { Expression => Expression }
+        nodes { Block => Block }
+    }
+}
+
+define_kotlin_role_projection! {
+    WhenConditionValue => WhenConditionValueSyntax {
+        families { Expression => Expression }
+        nodes { TypeReference => TypeReference }
+    }
+}
+
+define_kotlin_role_projection! {
+    ForVariableBindingValue => ForVariableSyntax {
+        families {}
+        nodes { Name => Name, Destructuring => DestructuringDeclaration }
+    }
+}
+
+define_kotlin_role_projection! {
+    ForBodyValue => ForBodySyntax {
+        families { Expression => Expression }
+        nodes { Block => Block, EmptyStatement => EmptyStatement }
+    }
+}
+
+define_kotlin_role_projection! {
+    WhileBodyValue => WhileBodySyntax {
+        families { Expression => Expression }
+        nodes { Block => Block, EmptyStatement => EmptyStatement }
+    }
+}
+
+define_kotlin_role_projection! {
+    DoWhileBodyValue => DoWhileBodySyntax {
+        families { Expression => Expression }
+        nodes { Block => Block, EmptyStatement => EmptyStatement }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BlockItemListElementSyntax<'source> {
+    Item(BlockItem<'source>),
+    Terminator(KotlinSyntaxToken<'source>),
+}
+
+impl<'source> BlockItemListElement<'source> {
+    #[allow(clippy::missing_errors_doc)]
+    pub fn classify(self) -> KotlinSyntaxResult<BlockItemListElementSyntax<'source>> {
+        if let Some(value) = self.cast_family::<BlockItem<'source>>() {
+            Ok(BlockItemListElementSyntax::Item(value))
+        } else if let Some(token) = self.token() {
+            Ok(BlockItemListElementSyntax::Terminator(token))
+        } else {
+            Err(invalid_role_projection(self.first_token()))
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LambdaBodyItemSyntax<'source> {
+    Item(BlockItem<'source>),
+    Terminator(KotlinSyntaxToken<'source>),
+}
+
+impl<'source> LambdaBodyItem<'source> {
+    #[allow(clippy::missing_errors_doc)]
+    pub fn classify(self) -> KotlinSyntaxResult<LambdaBodyItemSyntax<'source>> {
+        if let Some(value) = self.cast_family::<BlockItem<'source>>() {
+            Ok(LambdaBodyItemSyntax::Item(value))
+        } else if let Some(token) = self.token() {
+            Ok(LambdaBodyItemSyntax::Terminator(token))
+        } else {
+            Err(invalid_role_projection(self.first_token()))
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum WhenEntryListElementSyntax<'source> {
+    Entry(WhenEntry<'source>),
+    Terminator(KotlinSyntaxToken<'source>),
+}
+
+impl<'source> WhenEntryListElement<'source> {
+    #[allow(clippy::missing_errors_doc)]
+    pub fn classify(self) -> KotlinSyntaxResult<WhenEntryListElementSyntax<'source>> {
+        if let Some(value) = self.cast_node::<WhenEntry<'source>>() {
+            Ok(WhenEntryListElementSyntax::Entry(value))
+        } else if let Some(token) = self.token() {
+            Ok(WhenEntryListElementSyntax::Terminator(token))
+        } else {
+            Err(invalid_role_projection(self.first_token()))
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BinaryOperatorSyntax<'source> {
     Operator(KotlinSyntaxToken<'source>),

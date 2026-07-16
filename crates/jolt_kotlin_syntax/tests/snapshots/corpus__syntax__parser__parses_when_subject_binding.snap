@@ -84,19 +84,21 @@ KotlinFile
                             LiteralExpression
                               NullKw "null" @ 94..98 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                         Arrow "->" @ 99..101 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "0" @ 102..103
+                        WhenEntryBody
+                          LiteralExpression
+                            IntegerLiteral "0" @ 102..103
                       WhenEntry
                         ElseKw "else" @ 112..116 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                         WhenConditionSeparatedList
                         Arrow "->" @ 117..119 trailing=[Whitespace " "]
-                        NavigationExpression
-                          NameExpression
-                            Identifier "text" @ 120..124
-                          NavigationOperator
-                            Dot "." @ 124..125
-                          NameExpression
-                            Identifier "length" @ 125..131
+                        WhenEntryBody
+                          NavigationExpression
+                            NameExpression
+                              Identifier "text" @ 120..124
+                            NavigationOperator
+                              Dot "." @ 124..125
+                            NameExpression
+                              Identifier "length" @ 125..131
                     RBrace "}" @ 136..137 leading=[Newline "\n", Whitespace "    "]
               TerminatorList
           RBrace "}" @ 138..139 leading=[Newline "\n"]

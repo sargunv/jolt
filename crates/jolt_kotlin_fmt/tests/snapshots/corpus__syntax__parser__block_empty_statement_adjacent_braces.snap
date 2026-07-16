@@ -1,0 +1,11 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun demo() {
+  ;
+}
+
+diagnostics:
+(none)

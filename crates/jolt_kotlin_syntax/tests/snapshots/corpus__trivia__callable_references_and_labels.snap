@@ -129,8 +129,9 @@ KotlinFile
                                       RParen ")" @ 274..275 trailing=[Whitespace " "]
                                     JumpExpression
                                       ReturnKw "return" @ 276..282
-                                      At "@" @ 282..283
-                                      Identifier "outer" @ 283..288 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:labeled-return */"]
+                                      LabelReference
+                                        At "@" @ 282..283
+                                        Identifier "outer" @ 283..288 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:labeled-return */"]
                                 TerminatorList
                               Statement
                                 ExpressionStatement

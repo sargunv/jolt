@@ -11,7 +11,7 @@ fun nestedRecoveredWhenCondition(value: Int) = when (value) {
 formatted:
 fun nestedRecoveredWhenCondition(value: Int) = when (value) {
   0 "zero"
-    else -> "other"
+  else -> "other"
 }
 
 diagnostics:
@@ -19,8 +19,4 @@ code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextR
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(69), end: TextSize(73) }) message=unexpected token in expression
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(73), end: TextSize(74) }) message=unexpected token in expression
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(79), end: TextSize(83) }) message=expected '->' in when entry
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(79), end: TextSize(83) }) message=expected expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(84), end: TextSize(86) }) message=unexpected token in expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(87), end: TextSize(88) }) message=unexpected token in expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(88), end: TextSize(93) }) message=unexpected token in expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(93), end: TextSize(94) }) message=unexpected token in expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(79), end: TextSize(83) }) message=expected when entry body

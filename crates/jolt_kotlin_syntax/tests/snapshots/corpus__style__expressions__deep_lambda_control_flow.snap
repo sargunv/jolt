@@ -205,8 +205,9 @@ KotlinFile
                                                 ExpressionStatement
                                                   JumpExpression
                                                     ReturnKw "return" @ 234..240 leading=[Newline "\n", Whitespace "                "]
-                                                    At "@" @ 240..241
-                                                    Identifier "map" @ 241..244 trailing=[Whitespace " "]
+                                                    LabelReference
+                                                      At "@" @ 240..241
+                                                      Identifier "map" @ 241..244 trailing=[Whitespace " "]
                                                     LiteralExpression
                                                       IntegerLiteral "0" @ 245..246
                                                 TerminatorList

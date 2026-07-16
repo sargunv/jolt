@@ -1214,6 +1214,56 @@ cumulative performance gate.
 Vertically migrate branches, loops, `when`, `try`, and remaining statements and
 blocks. Delete Kotlin's final bespoke recovery formatting.
 
+Implementation status: **complete and gate-green**. Statements, expression
+statements, local declarations, blocks, lambda bodies, `if`, `when`, `try`,
+`for`, `while`, `do`, labels, jumps, and throws now expose typed physical roles.
+The final parser `ErrorNode` construction is replaced by represented
+`EmptyStatement`; statement content, block/lambda list elements, branches,
+control bodies, loop variables, when values/bodies, and try clauses use named
+projections plus syntax-owned exhaustive classifiers.
+
+Required conditions, bodies, delimiters, arrows, loop headers, catch parameters,
+and block closes have exact owners. `ForVariable` represents its actual
+modifier/name-or-destructuring/type shape rather than accepting an arbitrary
+expression. Catch uses an exact single `CatchParameter`. Jump forms distinguish
+return's optional value from invalid break/continue tails and share typed
+`LabelReference`; throw recovery stops before a following declaration.
+
+`WhenExpression` retains missing-brace entries in its ordered entry list.
+Bounded newline lookahead separates a missing-arrow/body entry from the next
+physical arrow-bearing entry while preserving multiline conditions whose
+operators continue across lines. Condition comma gaps use `BogusWhenCondition`,
+and legal trailing commas remain valid. `TryExpression` contains an ordered
+`TryClauseList`; late catches, duplicate finally clauses, and other invalid
+clause orderings remain represented as owned bogus clauses instead of escaping
+into generic expression recovery. Missing `while` in a do-while retains the
+following parenthesized condition.
+
+The formatter removes all 23 remaining statement/control-flow whole-node
+fallbacks, deletes `LoopExpression`, duplicate destructuring logic, delimiter
+recovery helpers, do/while presence state, and the block-local generic Recovery
+variant. Formatter-ignore range bookkeeping remains, but block, lambda, when,
+try, and loop contents are formatted from typed ordered parts. Missing closing
+braces no longer grow blank lines across passes; zero-token roles add no
+trailing whitespace; valid empty bodies format compactly as `if (condition);`
+and `while (condition);`. Long or heavily commented when entries keep the
+condition and arrow together and break the body after `->`, preserving a
+parser-valid layout.
+
+Phase 20 adds 761 net implementation lines, moving the cumulative baseline delta
+to +5,819. The formatter's five Phase 20 source files grow by 43 net lines; most
+growth is exact ordered parser recovery, schema roles/classifiers, ownership
+proofs, and focused progress coverage. Fixtures and mechanically changed
+snapshots are excluded. Phase 22 and the Phase 24 net-negative gate remain
+binding.
+
+Quality audit: Rust checks, focused and imported Kotlin parse/format corpora,
+recovery and trivia conservation, idempotence, schema exactness, parser
+progress, bidirectional diagnostic ownership, exhaustive projection review,
+ordered when/try recovery, bounded-algorithm review, valid formatter snapshot
+review, and `git diff --check` pass. No benchmark was run; Phase 23 remains the
+designated cumulative performance gate.
+
 ### New Phase 21: Normalization And Totality Audit
 
 Audit every spelling/reordering/synthetic normalization and every panic or empty

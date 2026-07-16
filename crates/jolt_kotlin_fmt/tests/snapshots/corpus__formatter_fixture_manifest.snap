@@ -89,7 +89,7 @@ skip syntax/lexer/reports-unterminated-line-string-at-newline.kt
 skip syntax/lexer/reports-unterminated-raw-string.kt
 skip syntax/lexer/separates-not-in-and-not-is-from-identifier-prefixes.kt
 skip syntax/lexer/soft-keyword-spellings-remain-identifiers.kt
-audit diagnostics syntax/parser/block-empty-statement-adjacent-braces.kt
+format syntax/parser/block-empty-statement-adjacent-braces.kt
 audit diagnostics syntax/parser/diagnoses-callable-reference-call-like-reserved-form.kt
 audit diagnostics syntax/parser/diagnoses-invalid-assignment-targets.kt
 audit diagnostics syntax/parser/diagnoses-malformed-type-argument-call.kt
@@ -126,7 +126,7 @@ format syntax/parser/parses-delegation-class-and-interface.kt
 format syntax/parser/parses-delegation-property.kt
 format syntax/parser/parses-destructuring-baseline-declarations.kt
 format syntax/parser/parses-destructuring-name-based-preview.kt
-format syntax/parser/parses-destructuring-square-preview.kt
+audit diagnostics syntax/parser/parses-destructuring-square-preview.kt
 format syntax/parser/parses-enum-entries-and-body.kt
 format syntax/parser/parses-enum-entry-class-body.kt
 format syntax/parser/parses-expression-annotations.kt
@@ -222,6 +222,7 @@ skip syntax/recovery/phase-16-program.kt
 skip syntax/recovery/phase-17-types-and-parameters.kt
 skip syntax/recovery/phase-18-declarations.kt
 skip syntax/recovery/phase-19-expressions.kt
+skip syntax/recovery/phase-20-statements-and-control-flow.kt
 skip syntax/recovery/preserves-file-annotation-preamble.kt
 skip syntax/recovery/property-body-recovered-gap.kt
 skip syntax/recovery/source-gap-trivia-ownership.kt

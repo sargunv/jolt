@@ -54,15 +54,16 @@ KotlinFile
                           LiteralExpression
                             IntegerLiteral "1" @ 38..39 trailing=[Whitespace " "]
                       Arrow "->" @ 40..42 trailing=[Whitespace " "]
-                      CallExpression
-                        NameExpression
-                          Identifier "one" @ 43..46
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 46..47
-                          ValueArgumentEntryList
-                          RParen ")" @ 47..48
-                        LambdaExpressionList
+                      WhenEntryBody
+                        CallExpression
+                          NameExpression
+                            Identifier "one" @ 43..46
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 46..47
+                            ValueArgumentEntryList
+                            RParen ")" @ 47..48
+                          LambdaExpressionList
               TerminatorList
   Eof "" @ 49..49 leading=[Newline "\n"]
 

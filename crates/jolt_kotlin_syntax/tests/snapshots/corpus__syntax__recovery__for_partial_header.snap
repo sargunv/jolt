@@ -53,8 +53,10 @@ KotlinFile
                 ForStatement
                   ForKw "for" @ 32..35 trailing=[Whitespace " "]
                   LParen "(" @ 36..37
-                  NameExpression
-                    Identifier "item" @ 37..41 trailing=[Whitespace " "]
+                  ForVariable
+                    ModifierList
+                    Name
+                      Identifier "item" @ 37..41 trailing=[Whitespace " "]
                   InKw "in" @ 42..44 trailing=[Whitespace " "]
                   BinaryExpression
                     NameExpression
@@ -74,8 +76,8 @@ KotlinFile
 
 diagnostics:
   code=kotlin.parse.expected_syntax severity=Error stage=Parser range=63..64 message="expected ')' after for header"
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=63..64 message="expected expression"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=63..64 message="expected body after 'for' header"
 
 diagnostics:
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=expected ')' after for header
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=expected expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=expected body after 'for' header

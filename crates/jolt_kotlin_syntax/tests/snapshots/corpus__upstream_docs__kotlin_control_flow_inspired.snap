@@ -84,30 +84,31 @@ KotlinFile
                           Name
                             Identifier "String" @ 91..97 trailing=[Whitespace " "]
               Arrow "->" @ 98..100 trailing=[Whitespace " "]
-              StringTemplateExpression
-                StringTemplateEntryList
-                  StringTemplateEntry
-                    StringTemplateContent
-                      OpenQuote "\"" @ 101..102
-                  StringTemplateEntry
-                    StringTemplateContent
-                      RegularStringPart "text with " @ 102..112
-                  StringTemplateEntry
-                    StringTemplateContent
-                      LongStringTemplateEntry
-                        LongTemplateEntryStart "${" @ 112..114
-                        NavigationExpression
-                          NameExpression
-                            Identifier "value" @ 114..119
-                          NavigationOperator
-                            Dot "." @ 119..120
-                          NameExpression
-                            Identifier "length" @ 120..126
-                        LongTemplateEntryEnd "}" @ 126..127
-                  StringTemplateEntry
-                    StringTemplateContent
-                      RegularStringPart " chars" @ 127..133
-                ClosingQuote "\"" @ 133..134
+              WhenEntryBody
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      StringTemplateContent
+                        OpenQuote "\"" @ 101..102
+                    StringTemplateEntry
+                      StringTemplateContent
+                        RegularStringPart "text with " @ 102..112
+                    StringTemplateEntry
+                      StringTemplateContent
+                        LongStringTemplateEntry
+                          LongTemplateEntryStart "${" @ 112..114
+                          NavigationExpression
+                            NameExpression
+                              Identifier "value" @ 114..119
+                            NavigationOperator
+                              Dot "." @ 119..120
+                            NameExpression
+                              Identifier "length" @ 120..126
+                          LongTemplateEntryEnd "}" @ 126..127
+                    StringTemplateEntry
+                      StringTemplateContent
+                        RegularStringPart " chars" @ 127..133
+                  ClosingQuote "\"" @ 133..134
             WhenEntry
               WhenConditionSeparatedList
                 WhenCondition
@@ -120,34 +121,36 @@ KotlinFile
                           Name
                             Identifier "Int" @ 146..149 trailing=[Whitespace " "]
               Arrow "->" @ 150..152 trailing=[Whitespace " "]
-              StringTemplateExpression
-                StringTemplateEntryList
-                  StringTemplateEntry
-                    StringTemplateContent
-                      OpenQuote "\"" @ 153..154
-                  StringTemplateEntry
-                    StringTemplateContent
-                      RegularStringPart "number " @ 154..161
-                  StringTemplateEntry
-                    StringTemplateContent
-                      ShortTemplateEntryStart "$" @ 161..162
-                  StringTemplateEntry
-                    StringTemplateContent
-                      Identifier "value" @ 162..167
-                ClosingQuote "\"" @ 167..168
+              WhenEntryBody
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      StringTemplateContent
+                        OpenQuote "\"" @ 153..154
+                    StringTemplateEntry
+                      StringTemplateContent
+                        RegularStringPart "number " @ 154..161
+                    StringTemplateEntry
+                      StringTemplateContent
+                        ShortTemplateEntryStart "$" @ 161..162
+                    StringTemplateEntry
+                      StringTemplateContent
+                        Identifier "value" @ 162..167
+                  ClosingQuote "\"" @ 167..168
             WhenEntry
               ElseKw "else" @ 177..181 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
               WhenConditionSeparatedList
               Arrow "->" @ 182..184 trailing=[Whitespace " "]
-              StringTemplateExpression
-                StringTemplateEntryList
-                  StringTemplateEntry
-                    StringTemplateContent
-                      OpenQuote "\"" @ 185..186
-                  StringTemplateEntry
-                    StringTemplateContent
-                      RegularStringPart "unknown" @ 186..193
-                ClosingQuote "\"" @ 193..194
+              WhenEntryBody
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      StringTemplateContent
+                        OpenQuote "\"" @ 185..186
+                    StringTemplateEntry
+                      StringTemplateContent
+                        RegularStringPart "unknown" @ 186..193
+                  ClosingQuote "\"" @ 193..194
           RBrace "}" @ 199..200 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 201..201 leading=[Newline "\n"]
 

@@ -11,4 +11,4 @@ fun demo() {
 }
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(11), end: TextSize(12) }) message=expected expression
+(none)

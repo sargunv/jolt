@@ -57,6 +57,17 @@ fn repeated_malformed_generic_call_suffixes_make_bounded_progress() {
     );
 }
 
+#[test]
+fn repeated_malformed_control_flow_makes_bounded_progress() {
+    let small = assert_reconstructs(&malformed_control_flow_case(32));
+    let large = assert_reconstructs(&malformed_control_flow_case(128));
+
+    assert!(
+        large < small * 6,
+        "parser debug tree grew nonlinearly for repeated malformed control flow"
+    );
+}
+
 fn progress_case(repeated_commas: usize) -> String {
     format!(
         "{}\n{}\n{}\n{}\n",
@@ -125,6 +136,17 @@ fn malformed_generic_call_suffix_case(count: usize) -> String {
             .expect("writing to a String should not fail");
         writeln!(source, "    val reference{index} = target::<,>member")
             .expect("writing to a String should not fail");
+    }
+    source.push_str("}\n");
+    source
+}
+
+fn malformed_control_flow_case(count: usize) -> String {
+    let mut source = String::from("fun malformed(value: Any) {\n");
+    for _ in 0..count {
+        source.push_str("when (value) { , value missing\nnext -> }\n");
+        source.push_str("try {} finally {} catch {}\n");
+        source.push_str("for (in) while do {} (value)\n");
     }
     source.push_str("}\n");
     source

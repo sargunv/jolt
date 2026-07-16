@@ -773,17 +773,19 @@ KotlinFile
                 ForStatement
                   ForKw "for" @ 4058..4061 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:for-keyword */", Whitespace " "]
                   LParen "(" @ 4092..4093 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:for-open */", Whitespace " "]
-                  DestructuringDeclaration
-                    LParen "(" @ 4121..4122
-                    DestructuringEntrySeparatedList
-                      DestructuringEntry
-                        Name
-                          Identifier "index" @ 4122..4127 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:loop-index */", Whitespace " "]
-                      Comma "," @ 4157..4158 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:loop-comma */", Whitespace " "]
-                      DestructuringEntry
-                        Name
-                          Identifier "item" @ 4188..4192 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:loop-value */"]
-                    RParen ")" @ 4221..4222 trailing=[Whitespace " "]
+                  ForVariable
+                    ModifierList
+                    DestructuringDeclaration
+                      LParen "(" @ 4121..4122
+                      DestructuringEntrySeparatedList
+                        DestructuringEntry
+                          Name
+                            Identifier "index" @ 4122..4127 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:loop-index */", Whitespace " "]
+                        Comma "," @ 4157..4158 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:loop-comma */", Whitespace " "]
+                        DestructuringEntry
+                          Name
+                            Identifier "item" @ 4188..4192 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:loop-value */"]
+                      RParen ")" @ 4221..4222 trailing=[Whitespace " "]
                   InKw "in" @ 4223..4225 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:loop-in */", Whitespace " "]
                   CallExpression
                     NavigationExpression
@@ -865,26 +867,27 @@ KotlinFile
                                   OpenQuote "\"" @ 4543..4544 leading=[Newline "\n", Whitespace "        "]
                             ClosingQuote "\"" @ 4544..4545 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-empty-condition */", Whitespace " "]
                       Arrow "->" @ 4585..4587 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-empty-arrow */", Whitespace " "]
-                      CallExpression
-                        NameExpression
-                          Identifier "emit" @ 4623..4627
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 4627..4628
-                          ValueArgumentEntryList
-                            ValueArgument
-                              ValueArgumentPrefixList
-                              StringTemplateExpression
-                                StringTemplateEntryList
-                                  StringTemplateEntry
-                                    StringTemplateContent
-                                      OpenQuote "\"" @ 4628..4629
-                                  StringTemplateEntry
-                                    StringTemplateContent
-                                      RegularStringPart "blank" @ 4629..4634
-                                ClosingQuote "\"" @ 4634..4635
-                          RParen ")" @ 4635..4636
-                        LambdaExpressionList
+                      WhenEntryBody
+                        CallExpression
+                          NameExpression
+                            Identifier "emit" @ 4623..4627
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 4627..4628
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      StringTemplateContent
+                                        OpenQuote "\"" @ 4628..4629
+                                    StringTemplateEntry
+                                      StringTemplateContent
+                                        RegularStringPart "blank" @ 4629..4634
+                                  ClosingQuote "\"" @ 4634..4635
+                            RParen ")" @ 4635..4636
+                          LambdaExpressionList
                     WhenEntry
                       WhenConditionSeparatedList
                         WhenCondition
@@ -908,36 +911,38 @@ KotlinFile
                               RParen ")" @ 4694..4695 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-list */", Whitespace " "]
                             LambdaExpressionList
                       Arrow "->" @ 4724..4726 trailing=[Whitespace " "]
-                      CallExpression
-                        NameExpression
-                          Identifier "emit" @ 4727..4731
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 4731..4732
-                          ValueArgumentEntryList
-                            ValueArgument
-                              ValueArgumentPrefixList
-                              NameExpression
-                                Identifier "text" @ 4732..4736
-                          RParen ")" @ 4736..4737
-                        LambdaExpressionList
+                      WhenEntryBody
+                        CallExpression
+                          NameExpression
+                            Identifier "emit" @ 4727..4731
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 4731..4732
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "text" @ 4732..4736
+                            RParen ")" @ 4736..4737
+                          LambdaExpressionList
                     WhenEntry
                       ElseKw "else" @ 4746..4750 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:else-condition */", Whitespace " "]
                       WhenConditionSeparatedList
                       Arrow "->" @ 4784..4786 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:else-arrow */", Whitespace " "]
-                      CallExpression
-                        NameExpression
-                          Identifier "emit" @ 4816..4820
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 4820..4821
-                          ValueArgumentEntryList
-                            ValueArgument
-                              ValueArgumentPrefixList
-                              NameExpression
-                                Identifier "text" @ 4821..4825
-                          RParen ")" @ 4825..4826
-                        LambdaExpressionList
+                      WhenEntryBody
+                        CallExpression
+                          NameExpression
+                            Identifier "emit" @ 4816..4820
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 4820..4821
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "text" @ 4821..4825
+                            RParen ")" @ 4825..4826
+                          LambdaExpressionList
                   RBrace "}" @ 4831..4832 leading=[Newline "\n", Whitespace "    "]
               TerminatorList
             Statement
@@ -1035,8 +1040,9 @@ KotlinFile
                                           ExpressionStatement
                                             JumpExpression
                                               ReturnKw "return" @ 5168..5174 leading=[Newline "\n", Whitespace "            "]
-                                              At "@" @ 5174..5175
-                                              Identifier "joinToString" @ 5175..5187 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:labeled-return */", Whitespace " "]
+                                              LabelReference
+                                                At "@" @ 5174..5175
+                                                Identifier "joinToString" @ 5175..5187 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:labeled-return */", Whitespace " "]
                                               NameExpression
                                                 Identifier "fallback" @ 5221..5229
                                           TerminatorList

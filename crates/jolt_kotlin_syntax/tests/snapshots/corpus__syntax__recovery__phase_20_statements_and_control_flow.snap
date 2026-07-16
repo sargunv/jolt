@@ -1,0 +1,766 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun validControlFlow(value: Any, ready: Boolean, items: List<Any>) {
+    ;
+    if (ready); else {}
+    when (value) {
+        1, -> one
+        else -> zero
+    }
+    try {} catch (cause: Throwable) {} finally {}
+    for (item in items) {}
+    while (ready);
+    do {} while (ready)
+    return@owner value
+}
+
+fun missingIfParts() {
+    if value
+    val afterIf = 1
+}
+
+fun missingWhenBraces(value: Int) {
+    when (value)
+        1 -> one
+        2 -> two
+    val afterWhen = 1
+}
+
+fun malformedWhenEntries(value: Int) {
+    when (value) {
+        , 1 -> one
+        2 two
+        3 -> three
+        4 if -> four
+        else ->
+    }
+}
+
+fun malformedTry() {
+    try
+    catch {}
+    finally {}
+    catch (late: Throwable) {}
+}
+
+fun malformedLoops(items: List<Any>, ready: Boolean) {
+    for (in items)
+    while
+    do {} (ready)
+}
+
+fun malformedJumps() {
+    break value
+    continue value
+    return@
+    throw
+    val afterThrow = 1
+}
+
+fun missingNestedBlockClose() {
+    if (true) {
+        while (true) {
+            value
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "validControlFlow" @ 4..20
+      ValueParameterList
+        LParen "(" @ 20..21
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "value" @ 21..26
+            Colon ":" @ 26..27 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Any" @ 28..31
+          Comma "," @ 31..32 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "ready" @ 33..38
+            Colon ":" @ 38..39 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Boolean" @ 40..47
+          Comma "," @ 47..48 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "items" @ 49..54
+            Colon ":" @ 54..55 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "List" @ 56..60
+                    TypeArgumentList
+                      Lt "<" @ 60..61
+                      TypeProjectionSeparatedList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "Any" @ 61..64
+                      Gt ">" @ 64..65
+        RParen ")" @ 65..66 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 67..68
+          BlockItemList
+            Statement
+              EmptyStatement
+                Semicolon ";" @ 73..74 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+            Statement
+              ExpressionStatement
+                IfExpression
+                  IfKw "if" @ 79..81 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 82..83
+                    NameExpression
+                      Identifier "ready" @ 83..88
+                    RParen ")" @ 88..89
+                  EmptyStatement
+                    Semicolon ";" @ 89..90 trailing=[Whitespace " "]
+                  ElseKw "else" @ 91..95 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 96..97
+                    BlockItemList
+                    RBrace "}" @ 97..98
+              TerminatorList
+            Statement
+              ExpressionStatement
+                WhenExpression
+                  WhenKw "when" @ 103..107 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  WhenSubject
+                    LParen "(" @ 108..109
+                    NameExpression
+                      Identifier "value" @ 109..114
+                    RParen ")" @ 114..115 trailing=[Whitespace " "]
+                  LBrace "{" @ 116..117
+                  WhenEntryList
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          LiteralExpression
+                            IntegerLiteral "1" @ 126..127 leading=[Newline "\n", Whitespace "        "]
+                        Comma "," @ 127..128 trailing=[Whitespace " "]
+                      Arrow "->" @ 129..131 trailing=[Whitespace " "]
+                      WhenEntryBody
+                        NameExpression
+                          Identifier "one" @ 132..135
+                    WhenEntry
+                      ElseKw "else" @ 144..148 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      WhenConditionSeparatedList
+                      Arrow "->" @ 149..151 trailing=[Whitespace " "]
+                      WhenEntryBody
+                        NameExpression
+                          Identifier "zero" @ 152..156
+                  RBrace "}" @ 161..162 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+            Statement
+              ExpressionStatement
+                TryExpression
+                  TryKw "try" @ 167..170 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 171..172
+                    BlockItemList
+                    RBrace "}" @ 172..173 trailing=[Whitespace " "]
+                  TryClauseList
+                    CatchClause
+                      Identifier "catch" @ 174..179 trailing=[Whitespace " "]
+                      CatchParameter
+                        LParen "(" @ 180..181
+                        ModifierList
+                        Name
+                          Identifier "cause" @ 181..186
+                        Colon ":" @ 186..187 trailing=[Whitespace " "]
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "Throwable" @ 188..197
+                        RParen ")" @ 197..198 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 199..200
+                        BlockItemList
+                        RBrace "}" @ 200..201 trailing=[Whitespace " "]
+                    FinallyClause
+                      Identifier "finally" @ 202..209 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 210..211
+                        BlockItemList
+                        RBrace "}" @ 211..212
+              TerminatorList
+            Statement
+              ExpressionStatement
+                ForStatement
+                  ForKw "for" @ 217..220 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  LParen "(" @ 221..222
+                  ForVariable
+                    ModifierList
+                    Name
+                      Identifier "item" @ 222..226 trailing=[Whitespace " "]
+                  InKw "in" @ 227..229 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "items" @ 230..235
+                  RParen ")" @ 235..236 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 237..238
+                    BlockItemList
+                    RBrace "}" @ 238..239
+              TerminatorList
+            Statement
+              ExpressionStatement
+                WhileStatement
+                  WhileKw "while" @ 244..249 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 250..251
+                    NameExpression
+                      Identifier "ready" @ 251..256
+                    RParen ")" @ 256..257
+                  EmptyStatement
+                    Semicolon ";" @ 257..258
+              TerminatorList
+            Statement
+              ExpressionStatement
+                DoWhileStatement
+                  DoKw "do" @ 263..265 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 266..267
+                    BlockItemList
+                    RBrace "}" @ 267..268 trailing=[Whitespace " "]
+                  WhileKw "while" @ 269..274 trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 275..276
+                    NameExpression
+                      Identifier "ready" @ 276..281
+                    RParen ")" @ 281..282
+              TerminatorList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 287..293 leading=[Newline "\n", Whitespace "    "]
+                  LabelReference
+                    At "@" @ 293..294
+                    Identifier "owner" @ 294..299 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "value" @ 300..305
+              TerminatorList
+          RBrace "}" @ 306..307 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 309..312 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "missingIfParts" @ 313..327
+      ValueParameterList
+        LParen "(" @ 327..328
+        ValueParameterSeparatedList
+        RParen ")" @ 328..329 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 330..331
+          BlockItemList
+            Statement
+              ExpressionStatement
+                IfExpression
+                  IfKw "if" @ 336..338 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    BogusExpression
+                  NameExpression
+                    Identifier "value" @ 339..344
+              TerminatorList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 349..352 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "afterIf" @ 353..360 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 361..362 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "1" @ 363..364
+              PropertyBodyMemberList
+          RBrace "}" @ 365..366 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 368..371 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "missingWhenBraces" @ 372..389
+      ValueParameterList
+        LParen "(" @ 389..390
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "value" @ 390..395
+            Colon ":" @ 395..396 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Int" @ 397..400
+        RParen ")" @ 400..401 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 402..403
+          BlockItemList
+            Statement
+              ExpressionStatement
+                WhenExpression
+                  WhenKw "when" @ 408..412 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  WhenSubject
+                    LParen "(" @ 413..414
+                    NameExpression
+                      Identifier "value" @ 414..419
+                    RParen ")" @ 419..420
+                  WhenEntryList
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          LiteralExpression
+                            IntegerLiteral "1" @ 429..430 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      Arrow "->" @ 431..433 trailing=[Whitespace " "]
+                      WhenEntryBody
+                        NameExpression
+                          Identifier "one" @ 434..437
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          LiteralExpression
+                            IntegerLiteral "2" @ 446..447 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      Arrow "->" @ 448..450 trailing=[Whitespace " "]
+                      WhenEntryBody
+                        NameExpression
+                          Identifier "two" @ 451..454
+              TerminatorList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 459..462 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "afterWhen" @ 463..472 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 473..474 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "1" @ 475..476
+              PropertyBodyMemberList
+          RBrace "}" @ 477..478 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 480..483 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "malformedWhenEntries" @ 484..504
+      ValueParameterList
+        LParen "(" @ 504..505
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "value" @ 505..510
+            Colon ":" @ 510..511 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Int" @ 512..515
+        RParen ")" @ 515..516 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 517..518
+          BlockItemList
+            Statement
+              ExpressionStatement
+                WhenExpression
+                  WhenKw "when" @ 523..527 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  WhenSubject
+                    LParen "(" @ 528..529
+                    NameExpression
+                      Identifier "value" @ 529..534
+                    RParen ")" @ 534..535 trailing=[Whitespace " "]
+                  LBrace "{" @ 536..537
+                  WhenEntryList
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        Comma "," @ 546..547 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                        BogusWhenCondition
+                        WhenCondition
+                          LiteralExpression
+                            IntegerLiteral "1" @ 548..549 trailing=[Whitespace " "]
+                      Arrow "->" @ 550..552 trailing=[Whitespace " "]
+                      WhenEntryBody
+                        NameExpression
+                          Identifier "one" @ 553..556
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          BinaryExpression
+                            LiteralExpression
+                              IntegerLiteral "2" @ 565..566 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                            BinaryOperator
+                              Identifier "two" @ 567..570
+                            BinaryExpressionRight
+                              BogusExpression
+                      WhenEntryBody
+                        BogusExpression
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          LiteralExpression
+                            IntegerLiteral "3" @ 579..580 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      Arrow "->" @ 581..583 trailing=[Whitespace " "]
+                      WhenEntryBody
+                        NameExpression
+                          Identifier "three" @ 584..589
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          LiteralExpression
+                            IntegerLiteral "4" @ 598..599 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      WhenGuard
+                        IfKw "if" @ 600..602 trailing=[Whitespace " "]
+                        BogusExpression
+                      Arrow "->" @ 603..605 trailing=[Whitespace " "]
+                      WhenEntryBody
+                        NameExpression
+                          Identifier "four" @ 606..610
+                    WhenEntry
+                      ElseKw "else" @ 619..623 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      WhenConditionSeparatedList
+                      Arrow "->" @ 624..626
+                      WhenEntryBody
+                        BogusExpression
+                  RBrace "}" @ 631..632 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+          RBrace "}" @ 633..634 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 636..639 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "malformedTry" @ 640..652
+      ValueParameterList
+        LParen "(" @ 652..653
+        ValueParameterSeparatedList
+        RParen ")" @ 653..654 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 655..656
+          BlockItemList
+            Statement
+              ExpressionStatement
+                TryExpression
+                  TryKw "try" @ 661..664 leading=[Newline "\n", Whitespace "    "]
+                  Block
+                    BlockItemList
+                  TryClauseList
+                    CatchClause
+                      Identifier "catch" @ 669..674 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      CatchParameter
+                        ModifierList
+                        Name
+                        TypeReference
+                      Block
+                        LBrace "{" @ 675..676
+                        BlockItemList
+                        RBrace "}" @ 676..677
+                    FinallyClause
+                      Identifier "finally" @ 682..689 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 690..691
+                        BlockItemList
+                        RBrace "}" @ 691..692
+                    BogusTryClause
+                      CatchClause
+                        Identifier "catch" @ 697..702 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                        CatchParameter
+                          LParen "(" @ 703..704
+                          ModifierList
+                          Name
+                            Identifier "late" @ 704..708
+                          Colon ":" @ 708..709 trailing=[Whitespace " "]
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
+                                    Identifier "Throwable" @ 710..719
+                          RParen ")" @ 719..720 trailing=[Whitespace " "]
+                        Block
+                          LBrace "{" @ 721..722
+                          BlockItemList
+                          RBrace "}" @ 722..723
+              TerminatorList
+          RBrace "}" @ 724..725 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 727..730 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "malformedLoops" @ 731..745
+      ValueParameterList
+        LParen "(" @ 745..746
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "items" @ 746..751
+            Colon ":" @ 751..752 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "List" @ 753..757
+                    TypeArgumentList
+                      Lt "<" @ 757..758
+                      TypeProjectionSeparatedList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "Any" @ 758..761
+                      Gt ">" @ 761..762
+          Comma "," @ 762..763 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "ready" @ 764..769
+            Colon ":" @ 769..770 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Boolean" @ 771..778
+        RParen ")" @ 778..779 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 780..781
+          BlockItemList
+            Statement
+              ExpressionStatement
+                ForStatement
+                  ForKw "for" @ 786..789 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  LParen "(" @ 790..791
+                  ForVariable
+                    ModifierList
+                    Name
+                  InKw "in" @ 791..793 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "items" @ 794..799
+                  RParen ")" @ 799..800
+                  WhileStatement
+                    WhileKw "while" @ 805..810 leading=[Newline "\n", Whitespace "    "]
+                    ParenthesizedExpression
+                      BogusExpression
+                    DoWhileStatement
+                      DoKw "do" @ 815..817 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 818..819
+                        BlockItemList
+                        RBrace "}" @ 819..820 trailing=[Whitespace " "]
+                      ParenthesizedExpression
+                        LParen "(" @ 821..822
+                        NameExpression
+                          Identifier "ready" @ 822..827
+                        RParen ")" @ 827..828
+              TerminatorList
+          RBrace "}" @ 829..830 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 832..835 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "malformedJumps" @ 836..850
+      ValueParameterList
+        LParen "(" @ 850..851
+        ValueParameterSeparatedList
+        RParen ")" @ 851..852 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 853..854
+          BlockItemList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  BreakKw "break" @ 859..864 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  BogusExpression
+                    NameExpression
+                      Identifier "value" @ 865..870
+              TerminatorList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ContinueKw "continue" @ 875..883 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  BogusExpression
+                    NameExpression
+                      Identifier "value" @ 884..889
+              TerminatorList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 894..900 leading=[Newline "\n", Whitespace "    "]
+                  LabelReference
+                    At "@" @ 900..901
+              TerminatorList
+            Statement
+              ExpressionStatement
+                ThrowExpression
+                  ThrowKw "throw" @ 906..911 leading=[Newline "\n", Whitespace "    "]
+                  BogusExpression
+              TerminatorList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 916..919 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "afterThrow" @ 920..930 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 931..932 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "1" @ 933..934
+              PropertyBodyMemberList
+          RBrace "}" @ 935..936 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 938..941 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "missingNestedBlockClose" @ 942..965
+      ValueParameterList
+        LParen "(" @ 965..966
+        ValueParameterSeparatedList
+        RParen ")" @ 966..967 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 968..969
+          BlockItemList
+            Statement
+              ExpressionStatement
+                IfExpression
+                  IfKw "if" @ 974..976 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 977..978
+                    LiteralExpression
+                      TrueKw "true" @ 978..982
+                    RParen ")" @ 982..983 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 984..985
+                    BlockItemList
+                      Statement
+                        ExpressionStatement
+                          WhileStatement
+                            WhileKw "while" @ 994..999 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                            ParenthesizedExpression
+                              LParen "(" @ 1000..1001
+                              LiteralExpression
+                                TrueKw "true" @ 1001..1005
+                              RParen ")" @ 1005..1006 trailing=[Whitespace " "]
+                            Block
+                              LBrace "{" @ 1007..1008
+                              BlockItemList
+                                Statement
+                                  ExpressionStatement
+                                    NameExpression
+                                      Identifier "value" @ 1021..1026 leading=[Newline "\n", Whitespace "            "]
+                                  TerminatorList
+                        TerminatorList
+              TerminatorList
+  Eof "" @ 1027..1027 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=339..344 message="expected condition after 'if'"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=429..430 message="expected '{' after when subject"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=459..462 message="expected '}' after when"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=548..549 message="expected when condition between commas"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=579..580 message="expected expression after operator"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=579..580 message="expected '->' in when entry"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=579..580 message="expected when entry body"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=603..605 message="expected expression after when guard"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=631..632 message="expected when entry body"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=669..674 message="expected block after 'try'"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=675..676 message="expected catch parameter"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=724..725 message="catch clause must precede finally"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=791..793 message="expected loop variable"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=815..817 message="expected condition after 'while'"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=821..822 message="expected 'while' after do body"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=865..870 message="break and continue do not accept an expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=884..889 message="break and continue do not accept an expression"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=906..911 message="expected label name"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=916..919 message="expected expression after 'throw'"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=1027..1027 message="expected '}' after block"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=1027..1027 message="expected '}' after block"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=1027..1027 message="expected '}' after block"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(339), end: TextSize(344) }) message=expected condition after 'if'
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(429), end: TextSize(430) }) message=expected '{' after when subject
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(459), end: TextSize(462) }) message=expected '}' after when
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(548), end: TextSize(549) }) message=expected when condition between commas
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(579), end: TextSize(580) }) message=expected expression after operator
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(579), end: TextSize(580) }) message=expected '->' in when entry
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(579), end: TextSize(580) }) message=expected when entry body
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(603), end: TextSize(605) }) message=expected expression after when guard
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(631), end: TextSize(632) }) message=expected when entry body
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(669), end: TextSize(674) }) message=expected block after 'try'
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(675), end: TextSize(676) }) message=expected catch parameter
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(724), end: TextSize(725) }) message=catch clause must precede finally
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(791), end: TextSize(793) }) message=expected loop variable
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(815), end: TextSize(817) }) message=expected condition after 'while'
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(821), end: TextSize(822) }) message=expected 'while' after do body
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(865), end: TextSize(870) }) message=break and continue do not accept an expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(884), end: TextSize(889) }) message=break and continue do not accept an expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(906), end: TextSize(911) }) message=expected label name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(916), end: TextSize(919) }) message=expected expression after 'throw'
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1027), end: TextSize(1027) }) message=expected '}' after block
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1027), end: TextSize(1027) }) message=expected '}' after block
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1027), end: TextSize(1027) }) message=expected '}' after block

@@ -75,15 +75,16 @@ KotlinFile
                             LiteralExpression
                               IntegerLiteral "1" @ 77..78 trailing=[Whitespace " "]
                         Arrow "->" @ 79..81 trailing=[Whitespace " "]
-                        StringTemplateExpression
-                          StringTemplateEntryList
-                            StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 82..83
-                            StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "small" @ 83..88
-                          ClosingQuote "\"" @ 88..89
+                        WhenEntryBody
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 82..83
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  RegularStringPart "small" @ 83..88
+                            ClosingQuote "\"" @ 88..89
                       WhenEntry
                         WhenConditionSeparatedList
                           WhenCondition
@@ -97,15 +98,16 @@ KotlinFile
                                 LiteralExpression
                                   IntegerLiteral "10" @ 104..106 trailing=[Whitespace " "]
                         Arrow "->" @ 107..109 trailing=[Whitespace " "]
-                        StringTemplateExpression
-                          StringTemplateEntryList
-                            StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 110..111
-                            StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "medium" @ 111..117
-                          ClosingQuote "\"" @ 117..118
+                        WhenEntryBody
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 110..111
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  RegularStringPart "medium" @ 111..117
+                            ClosingQuote "\"" @ 117..118
                       WhenEntry
                         WhenConditionSeparatedList
                           WhenCondition
@@ -119,28 +121,30 @@ KotlinFile
                                 LiteralExpression
                                   IntegerLiteral "20" @ 136..138 trailing=[Whitespace " "]
                         Arrow "->" @ 139..141 trailing=[Whitespace " "]
-                        StringTemplateExpression
-                          StringTemplateEntryList
-                            StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 142..143
-                            StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "outside" @ 143..150
-                          ClosingQuote "\"" @ 150..151
+                        WhenEntryBody
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 142..143
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  RegularStringPart "outside" @ 143..150
+                            ClosingQuote "\"" @ 150..151
                       WhenEntry
                         ElseKw "else" @ 160..164 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                         WhenConditionSeparatedList
                         Arrow "->" @ 165..167 trailing=[Whitespace " "]
-                        StringTemplateExpression
-                          StringTemplateEntryList
-                            StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 168..169
-                            StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "large" @ 169..174
-                          ClosingQuote "\"" @ 174..175
+                        WhenEntryBody
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 168..169
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  RegularStringPart "large" @ 169..174
+                            ClosingQuote "\"" @ 174..175
                     RBrace "}" @ 180..181 leading=[Newline "\n", Whitespace "    "]
               TerminatorList
           RBrace "}" @ 182..183 leading=[Newline "\n"]

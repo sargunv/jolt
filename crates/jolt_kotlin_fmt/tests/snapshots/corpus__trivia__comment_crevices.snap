@@ -88,12 +88,15 @@ fun Scope /* JOLT-TRIVIA:receiver-type */. /* JOLT-TRIVIA:receiver-dot */comment
   }
 
   when /* JOLT-TRIVIA:when-keyword */ ( /* JOLT-TRIVIA:when-open */val text /* JOLT-TRIVIA:when-subject-name */ = /* JOLT-TRIVIA:when-subject-equals */ rendered /* JOLT-TRIVIA:when-close */) {
-    "" /* JOLT-TRIVIA:when-empty-condition */ -> /* JOLT-TRIVIA:when-empty-arrow */ emit("blank")
+    "" /* JOLT-TRIVIA:when-empty-condition */ -> /* JOLT-TRIVIA:when-empty-arrow */
+      emit("blank")
     in /* JOLT-TRIVIA:when-in */ listOf(
       first,
       second
-    ) /* JOLT-TRIVIA:when-list */ -> emit(text)
-    else /* JOLT-TRIVIA:else-condition */ -> /* JOLT-TRIVIA:else-arrow */ emit(text)
+    ) /* JOLT-TRIVIA:when-list */ ->
+      emit(text)
+    else /* JOLT-TRIVIA:else-condition */ -> /* JOLT-TRIVIA:else-arrow */
+      emit(text)
   }
 
   return input.joinToString /* JOLT-TRIVIA:trailing-lambda-call */(

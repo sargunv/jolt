@@ -570,7 +570,7 @@ impl Parser<'_> {
         self.complete(marker, K::ValueParameterList);
     }
 
-    fn parse_value_parameter_modifier_list(&mut self) {
+    pub(in crate::parser::grammar) fn parse_value_parameter_modifier_list(&mut self) {
         let modifiers = self.start();
         while self.at_modifier_or_annotation() && !self.at(K::VarargKw) {
             let before = self.position();

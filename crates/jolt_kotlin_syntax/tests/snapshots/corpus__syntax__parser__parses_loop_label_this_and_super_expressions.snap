@@ -135,8 +135,10 @@ KotlinFile
                                   ForStatement
                                     ForKw "for" @ 156..159 trailing=[Whitespace " "]
                                     LParen "(" @ 160..161
-                                    NameExpression
-                                      Identifier "item" @ 161..165 trailing=[Whitespace " "]
+                                    ForVariable
+                                      ModifierList
+                                      Name
+                                        Identifier "item" @ 161..165 trailing=[Whitespace " "]
                                     InKw "in" @ 166..168 trailing=[Whitespace " "]
                                     NameExpression
                                       Identifier "items" @ 169..174
@@ -167,8 +169,9 @@ KotlinFile
                                                 RParen ")" @ 212..213 trailing=[Whitespace " "]
                                               JumpExpression
                                                 ContinueKw "continue" @ 214..222
-                                                At "@" @ 222..223
-                                                Identifier "outer" @ 223..228
+                                                LabelReference
+                                                  At "@" @ 222..223
+                                                  Identifier "outer" @ 223..228
                                           TerminatorList
                                         Statement
                                           ExpressionStatement

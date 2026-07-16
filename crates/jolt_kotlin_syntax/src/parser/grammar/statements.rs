@@ -1,3 +1,5 @@
+use jolt_syntax::UnresolvedDiagnosticOwner;
+
 use crate::KotlinSyntaxKind as K;
 
 use super::Parser;
@@ -8,16 +10,13 @@ impl Parser<'_> {
             let local = self.start();
             self.parse_property_tail();
             self.complete(local, K::LocalDeclaration);
+        } else if matches!(self.current_kind(), K::Semicolon | K::DoubleSemicolon) {
+            let empty = self.start();
+            self.bump();
+            self.complete(empty, K::EmptyStatement);
         } else {
             let expression = self.start();
-            if matches!(self.current_kind(), K::Semicolon | K::DoubleSemicolon) {
-                self.expected_here("expected expression");
-                let malformed = self.start();
-                self.bump();
-                self.complete(malformed, K::ErrorNode);
-            } else {
-                self.parse_expression_until(&[K::Semicolon, K::DoubleSemicolon, K::RBrace]);
-            }
+            self.parse_expression_until(&[K::Semicolon, K::DoubleSemicolon, K::RBrace]);
             self.complete(expression, K::ExpressionStatement);
         }
         let tail = self.start();
@@ -35,7 +34,25 @@ impl Parser<'_> {
             self.ensure_progress(before, "expected statement");
         }
         self.complete(items, K::BlockItemList);
-        self.expect(K::RBrace, "expected '}' after block");
+        if !self.eat(K::RBrace) {
+            let diagnostic = self.expected_here("expected '}' after block");
+            self.own_diagnostic(
+                diagnostic,
+                UnresolvedDiagnosticOwner::missing_slot(
+                    marker.anchor(),
+                    crate::shape::block::Slot::close_brace as u16,
+                ),
+            );
+        }
         self.complete(marker, K::Block);
+    }
+
+    pub(in crate::parser::grammar) fn complete_missing_block(&mut self, message: &'static str) {
+        let block = self.start();
+        let diagnostic = self.expected_here(message);
+        self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(block.anchor()));
+        let items = self.start();
+        self.complete(items, K::BlockItemList);
+        self.complete(block, K::Block);
     }
 }

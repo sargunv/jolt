@@ -155,15 +155,16 @@ KotlinFile
                     NameExpression
                       Identifier "Ready" @ 217..222 trailing=[Whitespace " "]
               Arrow "->" @ 223..225 trailing=[Whitespace " "]
-              StringTemplateExpression
-                StringTemplateEntryList
-                  StringTemplateEntry
-                    StringTemplateContent
-                      OpenQuote "\"" @ 226..227
-                  StringTemplateEntry
-                    StringTemplateContent
-                      RegularStringPart "ready" @ 227..232
-                ClosingQuote "\"" @ 232..233
+              WhenEntryBody
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      StringTemplateContent
+                        OpenQuote "\"" @ 226..227
+                    StringTemplateEntry
+                      StringTemplateContent
+                        RegularStringPart "ready" @ 227..232
+                  ClosingQuote "\"" @ 232..233
             WhenEntry
               WhenConditionSeparatedList
                 WhenCondition
@@ -181,27 +182,28 @@ KotlinFile
                           Name
                             Identifier "Failed" @ 252..258 trailing=[Whitespace " "]
               Arrow "->" @ 259..261 trailing=[Whitespace " "]
-              StringTemplateExpression
-                StringTemplateEntryList
-                  StringTemplateEntry
-                    StringTemplateContent
-                      OpenQuote "\"" @ 262..263
-                  StringTemplateEntry
-                    StringTemplateContent
-                      RegularStringPart "failed: " @ 263..271
-                  StringTemplateEntry
-                    StringTemplateContent
-                      LongStringTemplateEntry
-                        LongTemplateEntryStart "${" @ 271..273
-                        NavigationExpression
-                          NameExpression
-                            Identifier "status" @ 273..279
-                          NavigationOperator
-                            Dot "." @ 279..280
-                          NameExpression
-                            Identifier "reason" @ 280..286
-                        LongTemplateEntryEnd "}" @ 286..287
-                ClosingQuote "\"" @ 287..288
+              WhenEntryBody
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      StringTemplateContent
+                        OpenQuote "\"" @ 262..263
+                    StringTemplateEntry
+                      StringTemplateContent
+                        RegularStringPart "failed: " @ 263..271
+                    StringTemplateEntry
+                      StringTemplateContent
+                        LongStringTemplateEntry
+                          LongTemplateEntryStart "${" @ 271..273
+                          NavigationExpression
+                            NameExpression
+                              Identifier "status" @ 273..279
+                            NavigationOperator
+                              Dot "." @ 279..280
+                            NameExpression
+                              Identifier "reason" @ 280..286
+                          LongTemplateEntryEnd "}" @ 286..287
+                  ClosingQuote "\"" @ 287..288
           RBrace "}" @ 293..294 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 295..295 leading=[Newline "\n"]
 

@@ -121,20 +121,28 @@ KotlinFile
                 ForStatement
                   ForKw "for" @ 144..147 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                   LParen "(" @ 148..149
-                  DestructuringDeclaration
-                    LBracket "[" @ 149..150
-                    DestructuringEntrySeparatedList
-                      DestructuringEntry
-                        Name
-                          Identifier "name" @ 150..154
-                      Comma "," @ 154..155 trailing=[Whitespace " "]
-                      DestructuringEntry
-                        Name
-                          Identifier "value" @ 156..161
-                    RBracket "]" @ 161..162 trailing=[Whitespace " "]
-                  InKw "in" @ 163..165 trailing=[Whitespace " "]
-                  NameExpression
-                    Identifier "rows" @ 166..170
+                  ForVariable
+                    ModifierList
+                    Name
+                  BinaryExpression
+                    CollectionLiteralExpression
+                      LBracket "[" @ 149..150
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          NameExpression
+                            Identifier "name" @ 150..154
+                        Comma "," @ 154..155 trailing=[Whitespace " "]
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          NameExpression
+                            Identifier "value" @ 156..161
+                      RBracket "]" @ 161..162 trailing=[Whitespace " "]
+                    BinaryOperator
+                      InKw "in" @ 163..165 trailing=[Whitespace " "]
+                    BinaryExpressionRight
+                      NameExpression
+                        Identifier "rows" @ 166..170
                   RParen ")" @ 170..171 trailing=[Whitespace " "]
                   Block
                     LBrace "{" @ 172..173
@@ -191,7 +199,9 @@ KotlinFile
   Eof "" @ 246..246 leading=[Newline "\n"]
 
 diagnostics:
-  (none)
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=149..150 message="expected name"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=149..150 message="expected 'in' after loop variable"
 
 diagnostics:
-(none)
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(149), end: TextSize(150) }) message=expected name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(149), end: TextSize(150) }) message=expected 'in' after loop variable

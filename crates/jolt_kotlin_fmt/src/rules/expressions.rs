@@ -1,11 +1,8 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_kotlin_syntax::{AnnotatedExpression, Expression, KotlinRoleElement};
+use jolt_kotlin_syntax::{AnnotatedExpression, Expression};
 
-use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
-use crate::helpers::recovery::{
-    KotlinFormatField, format_malformed, format_or_verbatim, resolve_optional_field,
-    resolve_required_field,
-};
+use crate::helpers::comments::LeadingTrivia;
+use crate::helpers::recovery::{KotlinFormatField, format_malformed, resolve_required_field};
 use crate::rules::declarations::format_modifier_list_with_leading;
 
 mod calls;
@@ -111,7 +108,6 @@ fn format_expression_with_leading<'source>(
         Expression::DoWhileStatement(expression) => {
             format_do_while_statement(doc, expression, leading)
         }
-        Expression::LoopExpression(expression) => format_loop_expression(doc, expression, leading),
         Expression::JumpExpression(expression) => format_jump_expression(doc, expression, leading),
         Expression::ThrowExpression(expression) => {
             format_throw_expression(doc, expression, leading)
@@ -132,40 +128,6 @@ fn format_expression_with_leading<'source>(
     }
 }
 
-fn format_loop_expression<'source>(
-    doc: &mut DocBuilder<'source>,
-    expression: &jolt_kotlin_syntax::LoopExpression<'source>,
-    leading: LeadingTrivia,
-) -> Doc<'source> {
-    format_or_verbatim(expression, doc, |doc| {
-        let keyword = match resolve_required_field(expression.loop_token(), doc) {
-            KotlinFormatField::Present(keyword) => {
-                format_token(doc, &keyword, leading, TrailingTrivia::Preserve)
-            }
-            KotlinFormatField::Malformed(recovery) => recovery,
-        };
-        let condition = match resolve_optional_field(expression.condition(), doc) {
-            KotlinFormatField::Present(Some(condition)) => {
-                let space = doc.space();
-                let condition = format_expression(doc, &condition);
-                doc.concat([space, condition])
-            }
-            KotlinFormatField::Present(None) => Doc::nil(),
-            KotlinFormatField::Malformed(recovery) => recovery,
-        };
-        let body = match resolve_optional_field(expression.body(), doc) {
-            KotlinFormatField::Present(Some(body)) => {
-                let space = doc.space();
-                let body = format_expression_body_role(doc, body);
-                doc.concat([space, body])
-            }
-            KotlinFormatField::Present(None) => Doc::nil(),
-            KotlinFormatField::Malformed(recovery) => recovery,
-        };
-        doc.concat([keyword, condition, body])
-    })
-}
-
 fn format_annotated_expression<'source>(
     doc: &mut DocBuilder<'source>,
     expression: &AnnotatedExpression<'source>,
@@ -182,18 +144,4 @@ fn format_annotated_expression<'source>(
         KotlinFormatField::Malformed(recovery) => recovery,
     };
     doc.concat([prefix, inner])
-}
-
-fn format_expression_body_role<'source>(
-    doc: &mut DocBuilder<'source>,
-    body: KotlinRoleElement<'source>,
-) -> Doc<'source> {
-    if let Some(block) = body.cast_node::<jolt_kotlin_syntax::Block<'source>>() {
-        crate::rules::statements::format_block(doc, &block)
-    } else if let Some(expression) = body.cast_family::<Expression<'source>>() {
-        format_expression(doc, &expression)
-    } else {
-        doc.block_on_invariant("Kotlin loop body contained an unsupported generated element");
-        Doc::nil()
-    }
 }

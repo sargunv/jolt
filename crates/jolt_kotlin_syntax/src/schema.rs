@@ -231,7 +231,6 @@ macro_rules! kotlin_syntax_schema {
                     IfExpression,
                     WhenExpression,
                     TryExpression,
-                    LoopExpression,
                     ForStatement,
                     WhileStatement,
                     DoWhileStatement,
@@ -245,6 +244,10 @@ macro_rules! kotlin_syntax_schema {
                 WhenConditionSyntax => BogusWhenCondition {
                     WhenCondition,
                     WhenGuard,
+                }
+                TryClause => BogusTryClause {
+                    CatchClause,
+                    FinallyClause,
                 }
                 StringTemplatePart => BogusStringTemplatePart {
                     StringTemplateEntry,
@@ -318,12 +321,14 @@ macro_rules! kotlin_syntax_schema {
                     Statement,
                     ExpressionStatement,
                     LocalDeclaration,
+                    EmptyStatement,
                     Block,
                 }
                 BlockItem => BogusBlockItem {
                     Statement,
                     ExpressionStatement,
                     LocalDeclaration,
+                    EmptyStatement,
                     Block,
                     ClassDeclaration,
                     InterfaceDeclaration,
@@ -668,7 +673,7 @@ macro_rules! kotlin_syntax_schema {
                     close_brace: required (token RBrace);
                 }
                 Statement => Statement [statement valid] {
-                    statement: required (choice [(category StatementSyntax), (category Expression), (category Declaration)]);
+                    statement: required (choice [(category StatementSyntax), (category Expression), (category Declaration)]) => StatementContentValue;
                     tail: required (list TerminatorList);
                 }
                 ExpressionStatement => ExpressionStatement [expression_statement valid] {
@@ -676,6 +681,9 @@ macro_rules! kotlin_syntax_schema {
                 }
                 LocalDeclaration => LocalDeclaration [local_declaration valid] {
                     declaration: required (node PropertyDeclaration);
+                }
+                EmptyStatement => EmptyStatement [empty_statement valid] {
+                    terminator: required (token_set [Semicolon, DoubleSemicolon]);
                 }
                 AssignmentExpression => AssignmentExpression [assignment_expression valid] {
                     left: required (category Expression);
@@ -787,9 +795,9 @@ macro_rules! kotlin_syntax_schema {
                 IfExpression => IfExpression [if_expression valid] {
                     if_token: required (token IfKw);
                     condition: required (node ParenthesizedExpression);
-                    then_branch: required (choice [(category Expression), (node Block)]);
+                    then_branch: required (choice [(category Expression), (node_set [Block, EmptyStatement])]) => IfThenBranchValue;
                     else_token: optional (token ElseKw);
-                    else_branch: optional (choice [(category Expression), (node Block)]);
+                    else_branch: optional (choice [(category Expression), (node_set [Block, EmptyStatement])]) => IfElseBranchValue;
                 }
                 WhenExpression => WhenExpression [when_expression valid] {
                     when_token: required (token WhenKw);
@@ -800,8 +808,10 @@ macro_rules! kotlin_syntax_schema {
                 }
                 WhenSubject => WhenSubject [when_subject valid] {
                     open_paren: required (token LParen);
-                    val_token: optional (token ValKw);
+                    val_token: optional (token_set [ValKw, VarKw]);
                     name: optional (node Name);
+                    colon: optional (token Colon);
+                    r#type: optional (node TypeReference);
                     assign: optional (token Assign);
                     expression: required (category Expression);
                     close_paren: required (token RParen);
@@ -811,11 +821,14 @@ macro_rules! kotlin_syntax_schema {
                     conditions: required (list WhenConditionSeparatedList);
                     guard: optional (node WhenGuard);
                     arrow: required (token Arrow);
-                    body: required (choice [(category Expression), (node Block)]);
+                    body: required (node WhenEntryBody);
+                }
+                WhenEntryBody => WhenEntryBody [when_entry_body valid] {
+                    value: required (choice [(category Expression), (node Block)]) => WhenEntryBodyValue;
                 }
                 WhenCondition => WhenCondition [when_condition valid] {
                     keyword: optional (token_set [InKw, NotIn, IsKw, NotIs]);
-                    value: required (choice [(node TypeReference), (category Expression)]);
+                    value: required (choice [(node TypeReference), (category Expression)]) => WhenConditionValue;
                 }
                 WhenGuard => WhenGuard [when_guard valid] {
                     if_token: required (token IfKw);
@@ -824,47 +837,54 @@ macro_rules! kotlin_syntax_schema {
                 TryExpression => TryExpression [try_expression valid] {
                     try_token: required (token TryKw);
                     block: required (node Block);
-                    catches: required (list CatchClauseList);
-                    finally: optional (node FinallyClause);
+                    clauses: required (list TryClauseList);
                 }
                 CatchClause => CatchClause [catch_clause valid] {
                     catch_token: required (contextual "catch");
-                    parameters: required (node ValueParameterList);
+                    parameter: required (node CatchParameter);
                     block: required (node Block);
+                }
+                CatchParameter => CatchParameter [catch_parameter valid] {
+                    open_paren: required (token LParen);
+                    modifiers: required (list ModifierList);
+                    name: required (node Name);
+                    colon: required (token Colon);
+                    r#type: required (node TypeReference);
+                    close_paren: required (token RParen);
                 }
                 FinallyClause => FinallyClause [finally_clause valid] {
                     finally_token: required (contextual "finally");
                     block: required (node Block);
                 }
-                LoopExpression => LoopExpression [loop_expression valid] {
-                    loop_token: required (token_set [ForKw, WhileKw, DoKw]);
-                    condition: optional (category Expression) [disambiguate leftmost_longest];
-                    body: optional (choice [(node Block), (category Expression)]);
-                }
                 ForStatement => ForStatement [for_statement valid] {
                     for_token: required (token ForKw);
                     open_paren: required (token LParen);
-                    variable: required (choice [(node DestructuringDeclaration), (category Expression)]);
+                    variable: required (node ForVariable);
                     in_token: required (token InKw);
                     iterable: required (category Expression);
                     close_paren: required (token RParen);
-                    body: optional (choice [(node Block), (category Expression)]);
+                    body: required (choice [(node_set [Block, EmptyStatement]), (category Expression)]) => ForBodyValue;
+                }
+                ForVariable => ForVariable [for_variable valid] {
+                    modifiers: required (list ModifierList);
+                    binding: required (node_set [Name, DestructuringDeclaration]) => ForVariableBindingValue;
+                    colon: optional (token Colon);
+                    r#type: optional (node TypeReference);
                 }
                 WhileStatement => WhileStatement [while_statement valid] {
                     while_token: required (token WhileKw);
                     condition: required (node ParenthesizedExpression);
-                    body: optional (choice [(node Block), (category Expression)]);
+                    body: required (choice [(node_set [Block, EmptyStatement]), (category Expression)]) => WhileBodyValue;
                 }
                 DoWhileStatement => DoWhileStatement [do_while_statement valid] {
                     do_token: required (token DoKw);
-                    body: optional (choice [(node Block), (category Expression)]);
+                    body: required (choice [(node_set [Block, EmptyStatement]), (category Expression)]) => DoWhileBodyValue;
                     while_token: required (token WhileKw);
                     condition: required (node ParenthesizedExpression);
                 }
                 JumpExpression => JumpExpression [jump_expression valid] {
                     keyword: required (token_set [ReturnKw, BreakKw, ContinueKw]);
-                    at: optional (token At);
-                    label: optional (token Identifier);
+                    label: optional (node LabelReference);
                     expression: optional (category Expression);
                 }
                 ThrowExpression => ThrowExpression [throw_expression valid] {
@@ -1059,7 +1079,7 @@ macro_rules! kotlin_syntax_schema {
                     entries: one_or_more (category TypeArgumentListEntry) [separated (token Comma), minimum 1, trailing optional, recovery bogus_owner];
                 }
                 BlockItemList => BlockItemList [block_item_list list] {
-                    items: many (choice [(category BlockItem), (token_set [EolOrSemicolon, Semicolon])]);
+                    items: many (choice [(category BlockItem), (token_set [EolOrSemicolon, Semicolon])]) => BlockItemListElement;
                 }
                 TypeArgumentListList => TypeArgumentListList [type_argument_list_list list] {
                     lists: many (node TypeArgumentList);
@@ -1071,16 +1091,16 @@ macro_rules! kotlin_syntax_schema {
                     entries: one_or_more (category StringTemplatePart);
                 }
                 WhenEntryList => WhenEntryList [when_entry_list list] {
-                    entries: many (choice [(node WhenEntry), (token_set [EolOrSemicolon, Semicolon, DoubleSemicolon])]);
+                    entries: many (choice [(node WhenEntry), (token_set [EolOrSemicolon, Semicolon, DoubleSemicolon])]) => WhenEntryListElement;
                 }
                 WhenConditionSeparatedList => WhenConditionSeparatedList [when_condition_separated_list list] {
-                    conditions: many (node WhenCondition) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];
+                    conditions: many (category WhenConditionSyntax) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];
                 }
-                CatchClauseList => CatchClauseList [catch_clause_list list] {
-                    clauses: many (node CatchClause);
+                TryClauseList => TryClauseList [try_clause_list list] {
+                    clauses: many (category TryClause);
                 }
                 LambdaBodyItemList => LambdaBodyItemList [lambda_body_item_list list] {
-                    items: many (choice [(category BlockItem), (token_set [EolOrSemicolon, Semicolon, DoubleSemicolon])]);
+                    items: many (choice [(category BlockItem), (token_set [EolOrSemicolon, Semicolon, DoubleSemicolon])]) => LambdaBodyItem;
                 }
                 LambdaParameterSeparatedList => LambdaParameterSeparatedList [lambda_parameter_separated_list list] {
                     parameters: many (category LambdaParameterListEntry) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];

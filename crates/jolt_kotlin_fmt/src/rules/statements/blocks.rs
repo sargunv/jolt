@@ -1,7 +1,7 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    Block, BlockItem, BlockItemList, KotlinCommentKind, KotlinRoleElement,
-    KotlinSyntaxInvariantError, KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView,
+    Block, BlockItem, BlockItemList, BlockItemListElement, BlockItemListElementSyntax,
+    KotlinCommentKind, KotlinSyntaxInvariantError, KotlinSyntaxListPart, KotlinSyntaxToken,
 };
 use jolt_syntax::tokens_have_blank_line_between;
 
@@ -15,8 +15,7 @@ use crate::helpers::formatter_ignore::{
     relative_token_range_between,
 };
 use crate::helpers::recovery::{
-    KotlinFormatDelimiter, KotlinFormatField, format_malformed, format_missing, format_or_verbatim,
-    resolve_required_delimiter, resolve_required_field,
+    KotlinFormatDelimiter, KotlinFormatField, resolve_required_delimiter, resolve_required_field,
 };
 
 use super::format_block_item;
@@ -25,12 +24,10 @@ pub(crate) fn format_block<'source>(
     doc: &mut DocBuilder<'source>,
     block: &Block<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(block, doc, |doc| {
-        let open = resolve_required_delimiter(block.open_brace(), doc);
-        let close = resolve_required_delimiter(block.close_brace(), doc);
-        let contents = format_block_contents(doc, block, close.source());
-        format_braced_body(doc, open, close, contents.doc, contents.empty)
-    })
+    let open = resolve_required_delimiter(block.open_brace(), doc);
+    let close = resolve_required_delimiter(block.close_brace(), doc);
+    let contents = format_block_contents(doc, block, close.source());
+    format_braced_body(doc, open, close, contents.doc, contents.empty)
 }
 
 struct BlockContents<'source> {
@@ -89,11 +86,6 @@ enum BlockPart<'source> {
         removed: Doc<'source>,
         visible: bool,
     },
-    Recovery {
-        doc: Doc<'source>,
-        first: Option<KotlinSyntaxToken<'source>>,
-        last: Option<KotlinSyntaxToken<'source>>,
-    },
 }
 
 impl<'source> BlockPart<'source> {
@@ -101,7 +93,6 @@ impl<'source> BlockPart<'source> {
         match self {
             Self::Item(item) => item.first_token(),
             Self::Separator { token, .. } => Some(*token),
-            Self::Recovery { first, .. } => *first,
         }
     }
 
@@ -109,7 +100,6 @@ impl<'source> BlockPart<'source> {
         match self {
             Self::Item(item) => item.last_token(),
             Self::Separator { token, .. } => Some(*token),
-            Self::Recovery { last, .. } => *last,
         }
     }
 }
@@ -120,24 +110,15 @@ fn collect_block_parts<'source>(
 ) -> Vec<BlockPart<'source>> {
     items
         .parts()
-        .map(|part| match part {
+        .filter_map(|part| match part {
             Ok(KotlinSyntaxListPart::Item(element)) => block_element_part(doc, items, element),
-            Ok(KotlinSyntaxListPart::Separator(token)) => separator_part(doc, items, token),
-            Ok(KotlinSyntaxListPart::Missing(missing)) => BlockPart::Recovery {
-                doc: format_missing(&missing, doc),
-                first: None,
-                last: None,
-            },
-            Ok(KotlinSyntaxListPart::Malformed(malformed)) => {
-                let first = malformed.first_token();
-                let last = malformed
-                    .syntax_node()
-                    .and_then(|syntax| syntax.last_token());
-                BlockPart::Recovery {
-                    doc: format_malformed(&malformed, doc),
-                    first,
-                    last,
-                }
+            Ok(
+                KotlinSyntaxListPart::Separator(_)
+                | KotlinSyntaxListPart::Missing(_)
+                | KotlinSyntaxListPart::Malformed(_),
+            ) => {
+                doc.block_on_invariant("typed Kotlin block list exposed a non-item part");
+                None
             }
             Err(error) => invariant_block_part(doc, error),
         })
@@ -147,18 +128,16 @@ fn collect_block_parts<'source>(
 fn block_element_part<'source>(
     doc: &mut DocBuilder<'source>,
     items: &BlockItemList<'source>,
-    element: KotlinRoleElement<'source>,
-) -> BlockPart<'source> {
-    if let Some(item) = element.cast_family::<BlockItem<'source>>() {
-        BlockPart::Item(item)
-    } else if let Some(token) = element.token() {
-        separator_part(doc, items, token)
-    } else {
-        doc.block_on_invariant("Kotlin block list contained an unsupported generated element");
-        BlockPart::Recovery {
-            doc: Doc::nil(),
-            first: None,
-            last: None,
+    element: BlockItemListElement<'source>,
+) -> Option<BlockPart<'source>> {
+    match element.classify() {
+        Ok(BlockItemListElementSyntax::Item(item)) => Some(BlockPart::Item(item)),
+        Ok(BlockItemListElementSyntax::Terminator(token)) => {
+            Some(separator_part(doc, items, token))
+        }
+        Err(error) => {
+            doc.block_on_invariant(error.to_string());
+            None
         }
     }
 }
@@ -180,13 +159,9 @@ fn separator_part<'source>(
 fn invariant_block_part<'source>(
     doc: &mut DocBuilder<'source>,
     error: KotlinSyntaxInvariantError,
-) -> BlockPart<'source> {
+) -> Option<BlockPart<'source>> {
     doc.block_on_invariant(error.to_string());
-    BlockPart::Recovery {
-        doc: Doc::nil(),
-        first: None,
-        last: None,
-    }
+    None
 }
 
 fn block_body_parts<'source>(
@@ -219,7 +194,6 @@ fn block_body_part<'source>(
             }
             *removed
         }
-        BlockPart::Recovery { doc, .. } => *doc,
     };
     BodyItem::new(part_doc, block_item_separator(previous, part.first_token()))
 }
@@ -316,6 +290,7 @@ fn format_braced_body<'source>(
     body: Option<Doc<'source>>,
     empty: bool,
 ) -> Doc<'source> {
+    let has_close = close.source().is_some();
     let open = format_delimiter(doc, open, LeadingTrivia::Preserve, TrailingTrivia::Preserve);
     if empty {
         let close = format_delimiter(
@@ -330,8 +305,12 @@ fn format_braced_body<'source>(
         let line = doc.hard_line();
         let body = doc.concat([line, body]);
         let body = doc.indent(body);
-        let line = doc.hard_line();
-        doc.concat([body, line])
+        if has_close {
+            let line = doc.hard_line();
+            doc.concat([body, line])
+        } else {
+            body
+        }
     } else {
         doc.hard_line()
     };

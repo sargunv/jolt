@@ -188,8 +188,9 @@ KotlinFile
                                                         RParen ")" @ 201..202 trailing=[Whitespace " "]
                                                       JumpExpression
                                                         ReturnKw "return" @ 203..209
-                                                        At "@" @ 209..210
-                                                        Identifier "inner" @ 210..215
+                                                        LabelReference
+                                                          At "@" @ 209..210
+                                                          Identifier "inner" @ 210..215
                                                   TerminatorList
                                                 Statement
                                                   ExpressionStatement
@@ -215,8 +216,9 @@ KotlinFile
                                                         RParen ")" @ 246..247 trailing=[Whitespace " "]
                                                       JumpExpression
                                                         ReturnKw "return" @ 248..254
-                                                        At "@" @ 254..255
-                                                        Identifier "outer" @ 255..260
+                                                        LabelReference
+                                                          At "@" @ 254..255
+                                                          Identifier "outer" @ 255..260
                                                   TerminatorList
                                                 Statement
                                                   ExpressionStatement

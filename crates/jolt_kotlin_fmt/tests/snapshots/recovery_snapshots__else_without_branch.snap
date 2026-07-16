@@ -11,4 +11,4 @@ fun demo(flag: Boolean) {
 }
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(48) }) message=expected expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(48) }) message=expected branch after 'else'

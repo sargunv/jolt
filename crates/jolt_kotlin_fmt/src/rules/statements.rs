@@ -1,13 +1,15 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    BlockItem, Declaration, Expression, ExpressionStatement, KotlinRoleElement, Statement,
-    StatementSyntax,
+    BlockItem, Declaration, ExpressionStatement, Statement, StatementContentSyntax,
+    StatementContentValue, StatementSyntax,
 };
 
 mod blocks;
 
-use crate::helpers::comments::{LeadingTrivia, format_terminator_list};
-use crate::helpers::recovery::{format_malformed, format_or_verbatim, format_required_field};
+use crate::helpers::comments::{
+    LeadingTrivia, TrailingTrivia, format_terminator_list, format_token,
+};
+use crate::helpers::recovery::{format_malformed, format_required_field};
 use crate::rules::expressions::{format_expression, format_expression_without_leading};
 pub(crate) use blocks::format_block;
 
@@ -51,6 +53,7 @@ pub(crate) fn format_block_item<'source>(
             format_statement_syntax(doc, &StatementSyntax::LocalDeclaration(*declaration))
         }
         BlockItem::Block(block) => format_block(doc, block),
+        BlockItem::EmptyStatement(statement) => format_empty_statement(doc, statement),
         BlockItem::BogusBlockItem(item) => format_malformed(item, doc),
     }
 }
@@ -87,18 +90,31 @@ fn format_statement_owned<'source>(
             format_expression_statement(doc, statement, leading)
         }
         StatementSyntax::LocalDeclaration(declaration) => {
-            format_or_verbatim(declaration, doc, |doc| {
-                format_required_field(declaration.declaration(), doc, |declaration, doc| {
-                    crate::rules::declarations::format_declaration(
-                        doc,
-                        &Declaration::PropertyDeclaration(declaration),
-                    )
-                })
+            format_required_field(declaration.declaration(), doc, |declaration, doc| {
+                crate::rules::declarations::format_declaration(
+                    doc,
+                    &Declaration::PropertyDeclaration(declaration),
+                )
             })
         }
         StatementSyntax::Block(block) => format_block(doc, block),
+        StatementSyntax::EmptyStatement(statement) => format_empty_statement(doc, statement),
         StatementSyntax::BogusStatement(statement) => format_malformed(statement, doc),
     }
+}
+
+fn format_empty_statement<'source>(
+    doc: &mut DocBuilder<'source>,
+    statement: &jolt_kotlin_syntax::EmptyStatement<'source>,
+) -> Doc<'source> {
+    format_required_field(statement.terminator(), doc, |terminator, doc| {
+        format_token(
+            doc,
+            &terminator,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        )
+    })
 }
 
 fn format_statement_node<'source>(
@@ -106,38 +122,38 @@ fn format_statement_node<'source>(
     statement: &Statement<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    format_or_verbatim(statement, doc, |doc| {
-        let statement_doc = format_required_field(statement.statement(), doc, |inner, doc| {
-            format_statement_role(doc, inner, leading)
-        });
-        let tail = format_required_field(statement.tail(), doc, |tail, doc| {
-            format_terminator_list(doc, &tail, true)
-        });
-        doc.concat([statement_doc, tail])
-    })
+    let statement_doc = format_required_field(statement.statement(), doc, |inner, doc| {
+        format_statement_role(doc, inner, leading)
+    });
+    let tail = format_required_field(statement.tail(), doc, |tail, doc| {
+        format_terminator_list(doc, &tail, true)
+    });
+    doc.concat([statement_doc, tail])
 }
 
 fn format_statement_role<'source>(
     doc: &mut DocBuilder<'source>,
-    inner: KotlinRoleElement<'source>,
+    inner: StatementContentValue<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    if let Some(statement) = inner.cast_family::<StatementSyntax<'source>>() {
-        return format_statement_owned(doc, &statement, leading);
-    }
-    if let Some(expression) = inner.cast_family::<Expression<'source>>() {
-        return match leading {
+    match inner.classify() {
+        Ok(StatementContentSyntax::Statement(statement)) => {
+            format_statement_owned(doc, &statement, leading)
+        }
+        Ok(StatementContentSyntax::Expression(expression)) => match leading {
             LeadingTrivia::Preserve => format_expression(doc, &expression),
             LeadingTrivia::SuppressAlreadyHandled => {
                 format_expression_without_leading(doc, &expression)
             }
-        };
+        },
+        Ok(StatementContentSyntax::Declaration(declaration)) => {
+            crate::rules::declarations::format_declaration(doc, &declaration)
+        }
+        Err(error) => {
+            doc.block_on_invariant(error.to_string());
+            Doc::nil()
+        }
     }
-    if let Some(declaration) = inner.cast_family::<Declaration<'source>>() {
-        return crate::rules::declarations::format_declaration(doc, &declaration);
-    }
-    doc.block_on_invariant("Kotlin statement role had an unsupported generated element");
-    Doc::nil()
 }
 
 fn format_expression_statement<'source>(
@@ -145,16 +161,14 @@ fn format_expression_statement<'source>(
     statement: &ExpressionStatement<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    format_or_verbatim(statement, doc, |doc| {
-        format_required_field(
-            statement.expression(),
-            doc,
-            |expression, doc| match leading {
-                LeadingTrivia::Preserve => format_expression(doc, &expression),
-                LeadingTrivia::SuppressAlreadyHandled => {
-                    format_expression_without_leading(doc, &expression)
-                }
-            },
-        )
-    })
+    format_required_field(
+        statement.expression(),
+        doc,
+        |expression, doc| match leading {
+            LeadingTrivia::Preserve => format_expression(doc, &expression),
+            LeadingTrivia::SuppressAlreadyHandled => {
+                format_expression_without_leading(doc, &expression)
+            }
+        },
+    )
 }

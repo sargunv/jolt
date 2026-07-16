@@ -506,12 +506,26 @@ impl Parser<'_> {
 
     fn parse_jump_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
         let marker = self.start();
+        let keyword = self.current_kind();
         self.bump();
-        self.parse_optional_label_reference();
+        self.parse_optional_typed_label_reference();
         if !self.at_semicolon_boundary()
             && !self.at_expression_boundary(stops.with_extra(K::RBrace))
+            && !self.at_expression_rhs_declaration_boundary()
         {
-            self.parse_expression_until(stops.with_extra(K::RBrace));
+            if keyword == K::ReturnKw {
+                self.parse_expression_until(stops.with_extra(K::RBrace));
+            } else {
+                let expression = self.start();
+                let diagnostic =
+                    self.unexpected_here("break and continue do not accept an expression");
+                self.own_diagnostic(
+                    diagnostic,
+                    UnresolvedDiagnosticOwner::node(expression.anchor()),
+                );
+                self.parse_expression_until(stops.with_extra(K::RBrace));
+                self.complete(expression, K::BogusExpression);
+            }
         }
         self.complete(marker, K::JumpExpression)
     }
@@ -519,7 +533,14 @@ impl Parser<'_> {
     fn parse_throw_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
         let marker = self.start();
         self.bump();
-        self.parse_expression_until(stops.with_extra(K::RBrace));
+        if self.at_semicolon_boundary()
+            || self.at_expression_boundary(stops.with_extra(K::RBrace))
+            || self.at_expression_rhs_declaration_boundary()
+        {
+            self.complete_missing_expression("expected expression after 'throw'");
+        } else {
+            self.parse_expression_until(stops.with_extra(K::RBrace));
+        }
         self.complete(marker, K::ThrowExpression)
     }
 
@@ -689,24 +710,14 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_optional_label_reference(&mut self) {
-        if self.eat(K::At) {
-            if self.at_identifier_like() || matches!(self.current_kind(), K::ThisKw | K::SuperKw) {
-                self.bump();
-            } else {
-                self.expected_here("expected label name");
-            }
-        }
-    }
-
-    fn parse_optional_typed_label_reference(&mut self) {
+    pub(in crate::parser::grammar) fn parse_optional_typed_label_reference(&mut self) {
         if !self.at(K::At) {
             return;
         }
 
         let label = self.start();
         self.bump();
-        if self.at_identifier_like() {
+        if self.at(K::Identifier) {
             self.bump();
         } else {
             let diagnostic = self.expected_here("expected label name");
@@ -719,6 +730,34 @@ impl Parser<'_> {
             );
         }
         self.complete(label, K::LabelReference);
+    }
+
+    pub(in crate::parser::grammar) fn complete_missing_expression(
+        &mut self,
+        message: &'static str,
+    ) -> CompletedMarker {
+        let expression = self.start();
+        let diagnostic = self.expected_here(message);
+        self.own_diagnostic(
+            diagnostic,
+            UnresolvedDiagnosticOwner::node(expression.anchor()),
+        );
+        self.complete(expression, K::BogusExpression)
+    }
+
+    pub(in crate::parser::grammar) fn complete_missing_parenthesized_expression(
+        &mut self,
+        message: &'static str,
+    ) -> CompletedMarker {
+        let condition = self.start();
+        let expression = self.start();
+        let diagnostic = self.expected_here(message);
+        self.own_diagnostic(
+            diagnostic,
+            UnresolvedDiagnosticOwner::node(expression.anchor()),
+        );
+        self.complete(expression, K::BogusExpression);
+        self.complete(condition, K::ParenthesizedExpression)
     }
 }
 

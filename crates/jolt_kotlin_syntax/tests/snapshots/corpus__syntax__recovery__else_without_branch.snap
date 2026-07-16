@@ -62,7 +62,7 @@ KotlinFile
   Eof "" @ 49..49 leading=[Newline "\n"]
 
 diagnostics:
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=47..48 message="expected expression"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=47..48 message="expected branch after 'else'"
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(48) }) message=expected expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(48) }) message=expected branch after 'else'

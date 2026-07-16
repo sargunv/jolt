@@ -92,17 +92,19 @@ KotlinFile
                 ForStatement
                   ForKw "for" @ 84..87 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                   LParen "(" @ 88..89
-                  DestructuringDeclaration
-                    LParen "(" @ 89..90
-                    DestructuringEntrySeparatedList
-                      DestructuringEntry
-                        Name
-                          Identifier "name" @ 90..94 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:first-component */", Whitespace " "]
-                      Comma "," @ 129..130 trailing=[Whitespace " "]
-                      DestructuringEntry
-                        Name
-                          Identifier "count" @ 131..136
-                    RParen ")" @ 136..137 trailing=[Whitespace " "]
+                  ForVariable
+                    ModifierList
+                    DestructuringDeclaration
+                      LParen "(" @ 89..90
+                      DestructuringEntrySeparatedList
+                        DestructuringEntry
+                          Name
+                            Identifier "name" @ 90..94 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:first-component */", Whitespace " "]
+                        Comma "," @ 129..130 trailing=[Whitespace " "]
+                        DestructuringEntry
+                          Name
+                            Identifier "count" @ 131..136
+                      RParen ")" @ 136..137 trailing=[Whitespace " "]
                   InKw "in" @ 138..140 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:in-keyword */", Whitespace " "]
                   NameExpression
                     Identifier "entries" @ 170..177

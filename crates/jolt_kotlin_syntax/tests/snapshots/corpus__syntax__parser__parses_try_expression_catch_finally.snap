@@ -81,24 +81,22 @@ KotlinFile
                               LambdaExpressionList
                           TerminatorList
                       RBrace "}" @ 82..83 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                    CatchClauseList
+                    TryClauseList
                       CatchClause
                         Identifier "catch" @ 84..89 trailing=[Whitespace " "]
-                        ValueParameterList
+                        CatchParameter
                           LParen "(" @ 90..91
-                          ValueParameterSeparatedList
-                            ValueParameter
-                              ModifierList
-                              Name
-                                Identifier "missing" @ 91..98
-                              Colon ":" @ 98..99 trailing=[Whitespace " "]
-                              TypeReference
-                                UserType
-                                  UserTypeSegmentList
-                                    UserTypeSegment
-                                      AnnotationList
-                                      Name
-                                        Identifier "MissingFile" @ 100..111
+                          ModifierList
+                          Name
+                            Identifier "missing" @ 91..98
+                          Colon ":" @ 98..99 trailing=[Whitespace " "]
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
+                                    Identifier "MissingFile" @ 100..111
                           RParen ")" @ 111..112 trailing=[Whitespace " "]
                         Block
                           LBrace "{" @ 113..114
@@ -118,21 +116,19 @@ KotlinFile
                           RBrace "}" @ 137..138 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                       CatchClause
                         Identifier "catch" @ 139..144 trailing=[Whitespace " "]
-                        ValueParameterList
+                        CatchParameter
                           LParen "(" @ 145..146
-                          ValueParameterSeparatedList
-                            ValueParameter
-                              ModifierList
-                              Name
-                                Identifier "error" @ 146..151
-                              Colon ":" @ 151..152 trailing=[Whitespace " "]
-                              TypeReference
-                                UserType
-                                  UserTypeSegmentList
-                                    UserTypeSegment
-                                      AnnotationList
-                                      Name
-                                        Identifier "Throwable" @ 153..162
+                          ModifierList
+                          Name
+                            Identifier "error" @ 146..151
+                          Colon ":" @ 151..152 trailing=[Whitespace " "]
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
+                                    Identifier "Throwable" @ 153..162
                           RParen ")" @ 162..163 trailing=[Whitespace " "]
                         Block
                           LBrace "{" @ 164..165
@@ -150,28 +146,28 @@ KotlinFile
                                   ClosingQuote "\"" @ 180..181
                               TerminatorList
                           RBrace "}" @ 186..187 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                    FinallyClause
-                      Identifier "finally" @ 188..195 trailing=[Whitespace " "]
-                      Block
-                        LBrace "{" @ 196..197
-                        BlockItemList
-                          Statement
-                            ExpressionStatement
-                              CallExpression
-                                NameExpression
-                                  Identifier "close" @ 206..211 leading=[Newline "\n", Whitespace "        "]
-                                TypeArgumentListList
-                                ValueArgumentList
-                                  LParen "(" @ 211..212
-                                  ValueArgumentEntryList
-                                    ValueArgument
-                                      ValueArgumentPrefixList
-                                      NameExpression
-                                        Identifier "path" @ 212..216
-                                  RParen ")" @ 216..217
-                                LambdaExpressionList
-                            TerminatorList
-                        RBrace "}" @ 222..223 leading=[Newline "\n", Whitespace "    "]
+                      FinallyClause
+                        Identifier "finally" @ 188..195 trailing=[Whitespace " "]
+                        Block
+                          LBrace "{" @ 196..197
+                          BlockItemList
+                            Statement
+                              ExpressionStatement
+                                CallExpression
+                                  NameExpression
+                                    Identifier "close" @ 206..211 leading=[Newline "\n", Whitespace "        "]
+                                  TypeArgumentListList
+                                  ValueArgumentList
+                                    LParen "(" @ 211..212
+                                    ValueArgumentEntryList
+                                      ValueArgument
+                                        ValueArgumentPrefixList
+                                        NameExpression
+                                          Identifier "path" @ 212..216
+                                    RParen ")" @ 216..217
+                                  LambdaExpressionList
+                              TerminatorList
+                          RBrace "}" @ 222..223 leading=[Newline "\n", Whitespace "    "]
               TerminatorList
           RBrace "}" @ 224..225 leading=[Newline "\n"]
   Eof "" @ 226..226 leading=[Newline "\n"]

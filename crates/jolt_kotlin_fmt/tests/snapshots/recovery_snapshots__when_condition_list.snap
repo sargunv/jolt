@@ -8,9 +8,9 @@ fun demo(x: Int) { when (x) { 1, /* orphan */ , 2 -> hit() } }
 formatted:
 fun demo(x: Int) {
   when (x) {
-    1, /* orphan */  , 2 -> hit()
+    1, /* orphan */  ,   2 -> hit()
   }
 }
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(46), end: TextSize(47) }) message=expected expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(48), end: TextSize(49) }) message=expected when condition between commas

@@ -54,29 +54,29 @@ KotlinFile
                           LiteralExpression
                             IntegerLiteral "1" @ 30..31
                         Comma "," @ 31..32 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
-                        WhenCondition
-                          BogusExpression
                         Comma "," @ 46..47 trailing=[Whitespace " "]
+                        BogusWhenCondition
                         WhenCondition
                           LiteralExpression
                             IntegerLiteral "2" @ 48..49 trailing=[Whitespace " "]
                       Arrow "->" @ 50..52 trailing=[Whitespace " "]
-                      CallExpression
-                        NameExpression
-                          Identifier "hit" @ 53..56
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 56..57
-                          ValueArgumentEntryList
-                          RParen ")" @ 57..58 trailing=[Whitespace " "]
-                        LambdaExpressionList
+                      WhenEntryBody
+                        CallExpression
+                          NameExpression
+                            Identifier "hit" @ 53..56
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 56..57
+                            ValueArgumentEntryList
+                            RParen ")" @ 57..58 trailing=[Whitespace " "]
+                          LambdaExpressionList
                   RBrace "}" @ 59..60 trailing=[Whitespace " "]
               TerminatorList
           RBrace "}" @ 61..62
   Eof "" @ 63..63 leading=[Newline "\n"]
 
 diagnostics:
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=46..47 message="expected expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=48..49 message="expected when condition between commas"
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(46), end: TextSize(47) }) message=expected expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(48), end: TextSize(49) }) message=expected when condition between commas

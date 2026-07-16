@@ -9,7 +9,6 @@ formatted:
 fun demo() {
   run { value(1) 
 
-
 diagnostics:
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(28), end: TextSize(28) }) message=expected '}' after lambda
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(28), end: TextSize(28) }) message=expected '}' after block

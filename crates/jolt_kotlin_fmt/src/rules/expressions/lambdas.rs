@@ -1,7 +1,8 @@
 use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    BlockItem, KotlinSyntaxView, LabeledLambdaExpression, LambdaBody, LambdaExpression, LambdaForm,
-    LambdaParameter, LambdaParameterBindingSyntax, LambdaParameterList, LambdaParameterListEntry,
+    KotlinSyntaxView, LabeledLambdaExpression, LambdaBody, LambdaBodyItemSyntax, LambdaExpression,
+    LambdaForm, LambdaParameter, LambdaParameterBindingSyntax, LambdaParameterList,
+    LambdaParameterListEntry,
 };
 
 use crate::helpers::comments::{
@@ -255,21 +256,19 @@ pub(super) fn lambda_body_doc<'source>(
         KotlinFormatField::Present(items) => doc.concat_list(|docs| {
             for part in items.parts() {
                 let item = match resolve_list_part(part, docs) {
-                    KotlinFormatListPart::Item(role) => {
-                        if let Some(item) = role.cast_family::<BlockItem<'source>>() {
-                            format_block_item(docs, &item)
-                        } else if let Some(token) = role.token() {
-                            format_token(
-                                docs,
-                                &token,
-                                LeadingTrivia::Preserve,
-                                TrailingTrivia::Preserve,
-                            )
-                        } else {
-                            docs.block_on_invariant("invalid lambda-body item");
+                    KotlinFormatListPart::Item(role) => match role.classify() {
+                        Ok(LambdaBodyItemSyntax::Item(item)) => format_block_item(docs, &item),
+                        Ok(LambdaBodyItemSyntax::Terminator(token)) => format_token(
+                            docs,
+                            &token,
+                            LeadingTrivia::Preserve,
+                            TrailingTrivia::Preserve,
+                        ),
+                        Err(error) => {
+                            docs.block_on_invariant(error.to_string());
                             Doc::nil()
                         }
-                    }
+                    },
                     KotlinFormatListPart::Separator(separator) => {
                         docs.block_on_invariant(format!(
                             "unexpected lambda-body separator: {:?}",

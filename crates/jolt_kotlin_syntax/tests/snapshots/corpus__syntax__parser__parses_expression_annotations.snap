@@ -142,30 +142,32 @@ KotlinFile
                             LiteralExpression
                               TrueKw "true" @ 264..268 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
                         Arrow "->" @ 269..271 trailing=[Whitespace " "]
-                        StringTemplateExpression
-                          StringTemplateEntryList
-                            StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 272..273
-                            StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "yes" @ 273..276
-                          ClosingQuote "\"" @ 276..277
+                        WhenEntryBody
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 272..273
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  RegularStringPart "yes" @ 273..276
+                            ClosingQuote "\"" @ 276..277
                       WhenEntry
                         WhenConditionSeparatedList
                           WhenCondition
                             LiteralExpression
                               FalseKw "false" @ 290..295 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
                         Arrow "->" @ 296..298 trailing=[Whitespace " "]
-                        StringTemplateExpression
-                          StringTemplateEntryList
-                            StringTemplateEntry
-                              StringTemplateContent
-                                OpenQuote "\"" @ 299..300
-                            StringTemplateEntry
-                              StringTemplateContent
-                                RegularStringPart "no" @ 300..302
-                          ClosingQuote "\"" @ 302..303
+                        WhenEntryBody
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 299..300
+                              StringTemplateEntry
+                                StringTemplateContent
+                                  RegularStringPart "no" @ 300..302
+                            ClosingQuote "\"" @ 302..303
                     RBrace "}" @ 312..313 leading=[Newline "\n", Whitespace "        "]
               PropertyBodyMemberList
             PropertyDeclaration
@@ -215,30 +217,32 @@ KotlinFile
                               LiteralExpression
                                 TrueKw "true" @ 399..403 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
                           Arrow "->" @ 404..406 trailing=[Whitespace " "]
-                          StringTemplateExpression
-                            StringTemplateEntryList
-                              StringTemplateEntry
-                                StringTemplateContent
-                                  OpenQuote "\"" @ 407..408
-                              StringTemplateEntry
-                                StringTemplateContent
-                                  RegularStringPart "yes" @ 408..411
-                            ClosingQuote "\"" @ 411..412
+                          WhenEntryBody
+                            StringTemplateExpression
+                              StringTemplateEntryList
+                                StringTemplateEntry
+                                  StringTemplateContent
+                                    OpenQuote "\"" @ 407..408
+                                StringTemplateEntry
+                                  StringTemplateContent
+                                    RegularStringPart "yes" @ 408..411
+                              ClosingQuote "\"" @ 411..412
                         WhenEntry
                           WhenConditionSeparatedList
                             WhenCondition
                               LiteralExpression
                                 FalseKw "false" @ 425..430 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
                           Arrow "->" @ 431..433 trailing=[Whitespace " "]
-                          StringTemplateExpression
-                            StringTemplateEntryList
-                              StringTemplateEntry
-                                StringTemplateContent
-                                  OpenQuote "\"" @ 434..435
-                              StringTemplateEntry
-                                StringTemplateContent
-                                  RegularStringPart "no" @ 435..437
-                            ClosingQuote "\"" @ 437..438
+                          WhenEntryBody
+                            StringTemplateExpression
+                              StringTemplateEntryList
+                                StringTemplateEntry
+                                  StringTemplateContent
+                                    OpenQuote "\"" @ 434..435
+                                StringTemplateEntry
+                                  StringTemplateContent
+                                    RegularStringPart "no" @ 435..437
+                              ClosingQuote "\"" @ 437..438
                       RBrace "}" @ 447..448 leading=[Newline "\n", Whitespace "        "]
                     NavigationOperator
                       Dot "." @ 448..449

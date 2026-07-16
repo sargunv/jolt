@@ -88,8 +88,11 @@ impl<'source> Parser<'source> {
         )
     }
 
-    pub(super) fn invalid_when_guard_here(&mut self, message: &str) {
-        self.error_here(KotlinParseDiagnosticCode::InvalidWhenGuard.id(), message);
+    pub(super) fn invalid_when_guard_here(
+        &mut self,
+        message: &str,
+    ) -> jolt_syntax::DiagnosticMarker {
+        self.error_here(KotlinParseDiagnosticCode::InvalidWhenGuard.id(), message)
     }
 
     pub(super) fn reserved_callable_reference_call_here(&mut self, message: &str) {
