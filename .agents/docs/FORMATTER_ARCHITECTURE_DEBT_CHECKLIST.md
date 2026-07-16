@@ -1110,6 +1110,51 @@ Vertically migrate properties, functions, constructors, accessors, type aliases,
 classes, objects, interfaces, enum entries, delegation, and member bodies.
 Delete prefix/header/tail partitioning and declaration recovery loops.
 
+Implementation status: **complete and gate-green**. Callable and property names,
+property initializers, function and accessor bodies, constructor delegation,
+class delegation, enum entries, class members, property body members, and
+missing required declaration roles now have generated typed shapes. The parser
+owns the smallest complete malformed declaration role and its exact diagnostic
+owner instead of constructing generic `ErrorNode` tails or leaving the formatter
+to infer structure from source order.
+
+Property and accessor expression recovery uses a bounded next-accessor stop, so
+a missing `=` cannot absorb the following accessor. Missing initializer
+operators retain the represented expression inside the property. Constructor and
+class delegation preserve missing colons, calls, specifiers, comma gaps, and
+partial `by` clauses as typed slots or category-compatible bogus entries.
+Malformed enum entries and orphan class members likewise have exact owners, and
+missing class braces remain physical empty slots. The existing 256-token
+declaration lookahead remains finite; replacing it requires a separately
+reviewed forked-cursor design with a linear cost proof.
+
+The formatter consumes the typed declaration roles directly. It deletes all
+in-scope whole-node fallback, prefix/header/tail partitioning, declaration
+recovery loops, and formatter-side `fun interface` pairing. Class and property
+members retain syntax order, formatter-ignore ranges remain idempotent, and
+zero-token missing roles do not create trailing whitespace or synthetic layout.
+The only declaration-file `format_or_verbatim` call left formats object
+expressions and belongs to Phase 19.
+
+The focused recovery fixture covers missing function names and parameter lists,
+callable receiver pieces, property bindings and initializers, backing fields,
+accessor bodies, type-alias assignments, constructor and class delegation,
+orphan members and separators, enum entries, and missing class braces. A clean
+fixture also proves terminal and annotated enum entries use the typed path.
+Phase 18 adds 368 net implementation lines, moving the cumulative baseline delta
+to +4,850. The four formatter source files shrink by 99 net lines; the remaining
+growth is typed syntax, parser recovery ownership, and its tests. Fixtures and
+mechanically changed snapshots are excluded. Phase 22 and the Phase 24
+net-negative gate remain binding.
+
+Quality audit: Rust checks, focused and imported Kotlin parse/format corpora,
+recovery conservation and idempotence, trivia conservation, schema exactness,
+parser progress, bidirectional diagnostic ownership, bounded-algorithm review,
+and `git diff --check` pass. Valid formatting changes are limited to typed class
+body layout, compact enum-entry runs with an attached terminating semicolon, and
+the structured property-accessor layout. No benchmark was run; Phase 23 remains
+the designated cumulative performance gate.
+
 ### New Phase 19: Kotlin Expressions And Calls
 
 Vertically migrate operators, strings, lambdas, collections, callable

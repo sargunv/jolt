@@ -22,10 +22,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "chained" @ 4..11
+      Name
+        Identifier "chained" @ 4..11
       ValueParameterList
         LParen "(" @ 11..12
         ValueParameterSeparatedList
@@ -50,82 +48,83 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Result" @ 29..35 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 36..37
-        BlockItemList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 42..48 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                BinaryExpression
-                  CallExpression
+      BlockBody
+        Block
+          LBrace "{" @ 36..37
+          BlockItemList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 42..48 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  BinaryExpression
+                    CallExpression
+                      NavigationExpression
+                        IndexExpression
+                          CallExpression
+                            NavigationExpression
+                              CallExpression
+                                NavigationExpression
+                                  NameExpression
+                                    Identifier "source" @ 49..55
+                                  Dot "." @ 64..65 leading=[Newline "\n", Whitespace "        "]
+                                  Identifier "select" @ 65..71
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 71..72
+                                  ValueArgumentEntryList
+                                    ValueArgument
+                                      ValueArgumentPrefixList
+                                      StringTemplateExpression
+                                        StringTemplateEntryList
+                                          StringTemplateEntry
+                                            OpenQuote "\"" @ 72..73
+                                          StringTemplateEntry
+                                            RegularStringPart "name" @ 73..77
+                                        ClosingQuote "\"" @ 77..78
+                                  RParen ")" @ 78..79
+                                LambdaExpressionList
+                              Dot "." @ 88..89 leading=[Newline "\n", Whitespace "        "]
+                              Identifier "filter" @ 89..95 trailing=[Whitespace " "]
+                            TypeArgumentListList
+                            LambdaExpressionList
+                              LambdaExpression
+                                LambdaBody
+                                  LBrace "{" @ 96..97 trailing=[Whitespace " "]
+                                  LambdaBodyItemList
+                                    Statement
+                                      ExpressionStatement
+                                        NavigationExpression
+                                          NameExpression
+                                            Identifier "it" @ 98..100
+                                          Dot "." @ 100..101
+                                          Identifier "active" @ 101..107 trailing=[Whitespace " "]
+                                      TerminatorList
+                                  RBrace "}" @ 108..109
+                          LBracket "[" @ 118..119 leading=[Newline "\n", Whitespace "        "]
+                          ValueArgumentSeparatedList
+                            ValueArgument
+                              ValueArgumentPrefixList
+                              LiteralExpression
+                                IntegerLiteral "0" @ 119..120
+                          RBracket "]" @ 120..121
+                        SplitSafeNavigationOperator
+                          Question "?" @ 130..131 leading=[Newline "\n", Whitespace "        "]
+                          Dot "." @ 131..132
+                        Identifier "build" @ 132..137
+                      TypeArgumentListList
+                      ValueArgumentList
+                        LParen "(" @ 137..138
+                        ValueArgumentEntryList
+                        RParen ")" @ 138..139
+                      LambdaExpressionList
+                    Elvis "?:" @ 148..150 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                     NavigationExpression
-                      IndexExpression
-                        CallExpression
-                          NavigationExpression
-                            CallExpression
-                              NavigationExpression
-                                NameExpression
-                                  Identifier "source" @ 49..55
-                                Dot "." @ 64..65 leading=[Newline "\n", Whitespace "        "]
-                                Identifier "select" @ 65..71
-                              TypeArgumentListList
-                              ValueArgumentList
-                                LParen "(" @ 71..72
-                                ValueArgumentEntryList
-                                  ValueArgument
-                                    ValueArgumentPrefixList
-                                    StringTemplateExpression
-                                      StringTemplateEntryList
-                                        StringTemplateEntry
-                                          OpenQuote "\"" @ 72..73
-                                        StringTemplateEntry
-                                          RegularStringPart "name" @ 73..77
-                                      ClosingQuote "\"" @ 77..78
-                                RParen ")" @ 78..79
-                              LambdaExpressionList
-                            Dot "." @ 88..89 leading=[Newline "\n", Whitespace "        "]
-                            Identifier "filter" @ 89..95 trailing=[Whitespace " "]
-                          TypeArgumentListList
-                          LambdaExpressionList
-                            LambdaExpression
-                              LambdaBody
-                                LBrace "{" @ 96..97 trailing=[Whitespace " "]
-                                LambdaBodyItemList
-                                  Statement
-                                    ExpressionStatement
-                                      NavigationExpression
-                                        NameExpression
-                                          Identifier "it" @ 98..100
-                                        Dot "." @ 100..101
-                                        Identifier "active" @ 101..107 trailing=[Whitespace " "]
-                                    TerminatorList
-                                RBrace "}" @ 108..109
-                        LBracket "[" @ 118..119 leading=[Newline "\n", Whitespace "        "]
-                        ValueArgumentSeparatedList
-                          ValueArgument
-                            ValueArgumentPrefixList
-                            LiteralExpression
-                              IntegerLiteral "0" @ 119..120
-                        RBracket "]" @ 120..121
-                      SplitSafeNavigationOperator
-                        Question "?" @ 130..131 leading=[Newline "\n", Whitespace "        "]
-                        Dot "." @ 131..132
-                      Identifier "build" @ 132..137
-                    TypeArgumentListList
-                    ValueArgumentList
-                      LParen "(" @ 137..138
-                      ValueArgumentEntryList
-                      RParen ")" @ 138..139
-                    LambdaExpressionList
-                  Elvis "?:" @ 148..150 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                  NavigationExpression
-                    NameExpression
-                      Identifier "Result" @ 151..157
-                    Dot "." @ 157..158
-                    Identifier "Empty" @ 158..163
-            TerminatorList
-        RBrace "}" @ 164..165 leading=[Newline "\n"]
+                      NameExpression
+                        Identifier "Result" @ 151..157
+                      Dot "." @ 157..158
+                      Identifier "Empty" @ 158..163
+              TerminatorList
+          RBrace "}" @ 164..165 leading=[Newline "\n"]
   Eof "" @ 166..166 leading=[Newline "\n"]
 
 diagnostics:

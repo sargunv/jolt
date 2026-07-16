@@ -28,17 +28,16 @@ KotlinFile
               Name
                 Identifier "ReceiverMark" @ 14..26 trailing=[Whitespace " "]
       CallableName
-        CallableNamePartList
-          TypeReference
-            UserType
-              UserTypeSegmentList
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "String" @ 27..33
-          Dot "." @ 33..34
-          Name
-            Identifier "trimmed" @ 34..41
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "String" @ 27..33
+        Dot "." @ 33..34
+        Name
+          Identifier "trimmed" @ 34..41
       ValueParameterList
         LParen "(" @ 41..42
         ValueParameterSeparatedList
@@ -57,16 +56,17 @@ KotlinFile
                         Identifier "TypeMark" @ 46..54 trailing=[Whitespace " "]
               Name
                 Identifier "String" @ 55..61 trailing=[Whitespace " "]
-      Assign "=" @ 62..63 trailing=[Whitespace " "]
-      CallExpression
-        NameExpression
-          Identifier "trim" @ 64..68
-        TypeArgumentListList
-        ValueArgumentList
-          LParen "(" @ 68..69
-          ValueArgumentEntryList
-          RParen ")" @ 69..70
-        LambdaExpressionList
+      ExpressionBody
+        Assign "=" @ 62..63 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "trim" @ 64..68
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 68..69
+            ValueArgumentEntryList
+            RParen ")" @ 69..70
+          LambdaExpressionList
     ClassDeclaration
       ModifierList
         Identifier "annotation" @ 72..82 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]

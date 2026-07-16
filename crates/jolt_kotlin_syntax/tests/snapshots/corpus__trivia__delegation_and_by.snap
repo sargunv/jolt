@@ -54,10 +54,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 51..54 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "log" @ 55..58
+              Name
+                Identifier "log" @ 55..58
               ValueParameterList
                 LParen "(" @ 58..59
                 ValueParameterSeparatedList
@@ -81,8 +79,8 @@ KotlinFile
       ClassKw "class" @ 79..84 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "ConsoleLogger" @ 85..98 trailing=[Whitespace " "]
-      Colon ":" @ 99..100 trailing=[Whitespace " "]
-      DelegationSpecifierList
+      DelegationClause
+        Colon ":" @ 99..100 trailing=[Whitespace " "]
         DelegationSpecifierSeparatedList
           DelegationSpecifier
             TypeReference
@@ -102,10 +100,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 123..126 trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "log" @ 127..130
+              Name
+                Identifier "log" @ 127..130
               ValueParameterList
                 LParen "(" @ 130..131
                 ValueParameterSeparatedList
@@ -122,10 +118,11 @@ KotlinFile
                             Name
                               Identifier "String" @ 140..146
                 RParen ")" @ 146..147 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 148..149
-                BlockItemList
-                RBrace "}" @ 149..150
+              BlockBody
+                Block
+                  LBrace "{" @ 148..149
+                  BlockItemList
+                  RBrace "}" @ 149..150
         RBrace "}" @ 151..152 leading=[Newline "\n"]
     ClassDeclaration
       ModifierList
@@ -154,8 +151,8 @@ KotlinFile
                         Identifier "Logger" @ 193..199
             Comma "," @ 199..200
           RParen ")" @ 201..202 leading=[Newline "\n"] trailing=[Whitespace " "]
-      Colon ":" @ 203..204 trailing=[Whitespace " "]
-      DelegationSpecifierList
+      DelegationClause
+        Colon ":" @ 203..204 trailing=[Whitespace " "]
         DelegationSpecifierSeparatedList
           DelegationSpecifier
             TypeReference
@@ -165,17 +162,16 @@ KotlinFile
                     AnnotationList
                     Name
                       Identifier "Logger" @ 205..211 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:delegation-type */", Whitespace " "]
-            Identifier "by" @ 246..248 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:delegation-by */", Whitespace " "]
-            NameExpression
-              Identifier "logger" @ 281..287
+            DelegationByClause
+              Identifier "by" @ 246..248 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:delegation-by */", Whitespace " "]
+              NameExpression
+                Identifier "logger" @ 281..287
     PropertyDeclaration
       ModifierList
       ModifierList
       ValKw "val" @ 289..292 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "cached" @ 293..299
+      Name
+        Identifier "cached" @ 293..299
       Colon ":" @ 299..300 trailing=[Whitespace " "]
       TypeReference
         UserType
@@ -184,27 +180,28 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "String" @ 301..307 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-delegate-type */", Whitespace " "]
-      Identifier "by" @ 349..351 trailing=[Whitespace " "]
-      CallExpression
-        NameExpression
-          Identifier "lazy" @ 352..356 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-by */", Whitespace " "]
-        TypeArgumentListList
-        LambdaExpressionList
-          LambdaExpression
-            LambdaBody
-              LBrace "{" @ 387..388
-              LambdaBodyItemList
-                Statement
-                  ExpressionStatement
-                    StringTemplateExpression
-                      StringTemplateEntryList
-                        StringTemplateEntry
-                          OpenQuote "\"" @ 393..394 leading=[Newline "\n", Whitespace "    "]
-                        StringTemplateEntry
-                          RegularStringPart "value" @ 394..399
-                      ClosingQuote "\"" @ 399..400
-                  TerminatorList
-              RBrace "}" @ 401..402 leading=[Newline "\n"]
+      PropertyInitializer
+        Identifier "by" @ 349..351 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "lazy" @ 352..356 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-by */", Whitespace " "]
+          TypeArgumentListList
+          LambdaExpressionList
+            LambdaExpression
+              LambdaBody
+                LBrace "{" @ 387..388
+                LambdaBodyItemList
+                  Statement
+                    ExpressionStatement
+                      StringTemplateExpression
+                        StringTemplateEntryList
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 393..394 leading=[Newline "\n", Whitespace "    "]
+                          StringTemplateEntry
+                            RegularStringPart "value" @ 394..399
+                        ClosingQuote "\"" @ 399..400
+                    TerminatorList
+                RBrace "}" @ 401..402 leading=[Newline "\n"]
       PropertyBodyMemberList
   Eof "" @ 403..403 leading=[Newline "\n"]
 

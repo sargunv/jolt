@@ -3,16 +3,16 @@ source: crates/jolt_kotlin_syntax/src/schema_audit.rs
 expression: audit.render()
 ---
 language = kotlin
-fixture_files = 248
-diagnostic_fixture_files = 66
-audited_nodes = 17102
-exact_valid_shapes = 16856
-malformed_nodes = 170
+fixture_files = 250
+diagnostic_fixture_files = 67
+audited_nodes = 17111
+exact_valid_shapes = 16844
+malformed_nodes = 173
 clean_missing_required_shapes = 0
-diagnostic_missing_required_shapes = 40
+diagnostic_missing_required_shapes = 59
 clean_unexpected_shapes = 0
-diagnostic_unexpected_shapes = 36
-error_node_owners = 140
+diagnostic_unexpected_shapes = 35
+error_node_owners = 135
 
 [clean_missing_required]
 
@@ -34,6 +34,9 @@ syntax__recovery__collection_and_index_lists: ValueArgumentSeparatedList occurre
 syntax__recovery__context_function_type: FunctionTypeParameterSeparatedList occurrence 1 (FunctionTypeParameter Comma(",") Comma(",") BogusFunctionTypeParameter FunctionTypeParameter)
 syntax__recovery__control_flow_missing_children: DoWhileStatement occurrence 1 (DoKw("do") Block)
 syntax__recovery__control_flow_missing_children: WhenExpression occurrence 1 (WhenKw("when") WhenSubject WhenEntryList)
+syntax__recovery__declaration_tails: ExpressionBody occurrence 1 (Assign("="))
+syntax__recovery__declaration_tails: PropertyInitializer occurrence 1 (Assign("="))
+syntax__recovery__declaration_tails: PropertyInitializer occurrence 2 (Identifier("by"))
 syntax__recovery__destructuring: DestructuringEntrySeparatedList occurrence 1 (DestructuringEntry Comma(",") Comma(",") BogusDestructuringEntry DestructuringEntry)
 syntax__recovery__lambda_missing_close: Block occurrence 1 (LBrace("{") BlockItemList)
 syntax__recovery__lambda_missing_close: LambdaBody occurrence 1 (LBrace("{") LambdaBodyItemList)
@@ -52,6 +55,22 @@ syntax__recovery__phase_17_types_and_parameters: ValueParameterSeparatedList occ
 syntax__recovery__phase_17_types_and_parameters: TypeConstraintList occurrence 1 (TypeConstraintSeparatedList)
 syntax__recovery__phase_17_types_and_parameters: TypeConstraint occurrence 2 (Name TypeReference)
 syntax__recovery__phase_17_types_and_parameters: ContextParameterSeparatedList occurrence 1 (ContextParameter Comma(",") ContextParameter Comma(",") Comma(",") BogusContextParameter ContextParameter)
+syntax__recovery__phase_18_declarations: ValueParameterList occurrence 2 (ValueParameterSeparatedList)
+syntax__recovery__phase_18_declarations: Name occurrence 5 ()
+syntax__recovery__phase_18_declarations: CallableName occurrence 3 (TypeReference Name)
+syntax__recovery__phase_18_declarations: ExpressionBody occurrence 2 (Assign("="))
+syntax__recovery__phase_18_declarations: PropertyInitializer occurrence 4 (NameExpression)
+syntax__recovery__phase_18_declarations: ExplicitBackingField occurrence 1 (Identifier("field"))
+syntax__recovery__phase_18_declarations: ExpressionBody occurrence 3 (NameExpression)
+syntax__recovery__phase_18_declarations: ExpressionBody occurrence 5 (Assign("="))
+syntax__recovery__phase_18_declarations: TypeAliasDeclaration occurrence 1 (ModifierList ModifierList TypeAliasKw("typealias") Name TypeReference)
+syntax__recovery__phase_18_declarations: DelegationClause occurrence 1 (DelegationSpecifierSeparatedList)
+syntax__recovery__phase_18_declarations: ConstructorDelegation occurrence 1 (ConstructorDelegationCall)
+syntax__recovery__phase_18_declarations: ConstructorDelegationCall occurrence 2 ()
+syntax__recovery__phase_18_declarations: DelegationByClause occurrence 1 (Identifier("by"))
+syntax__recovery__phase_18_declarations: Name occurrence 31 ()
+syntax__recovery__phase_18_declarations: ClassBody occurrence 8 (LBrace("{") ClassMemberList)
+syntax__recovery__property_body_recovered_gap: PropertyInitializer occurrence 1 (AssignmentExpression)
 syntax__recovery__type_argument_list: TypeProjectionSeparatedList occurrence 1 (TypeReference Comma(",") Comma(",") BogusTypeArgument TypeReference)
 syntax__recovery__type_parameter_list: TypeParameterSeparatedList occurrence 1 (TypeParameter Comma(",") Comma(",") BogusTypeParameter TypeParameter)
 syntax__recovery__value_parameter_list: ValueParameterSeparatedList occurrence 1 (ValueParameter Comma(",") Comma(",") BogusValueParameter ValueParameter)
@@ -77,26 +96,25 @@ syntax__lexer__recognizes_integer_suffixes: ExpressionStatement occurrence 1 has
 syntax__lexer__recognizes_safe_cast_and_question_operators: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=24, tokens=12, children=12] (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
 syntax__lexer__recognizes_unicode_identifiers: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=33, tokens=4, children=2] (BinaryExpression ErrorNode)
 syntax__lexer__reports_non_ascii_digit_as_unknown_start: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=5, tokens=2, children=2] (ErrorNode ErrorNode)
-syntax__lexer__reports_unknown_character: PropertyDeclaration occurrence 1 has valid kind with direct malformed ownership [bytes=13, tokens=6, children=9] (ModifierList ModifierList ValKw("val") CallableName Assign("=") LiteralExpression ErrorNode ErrorNode PropertyBodyMemberList)
+syntax__lexer__reports_unknown_character: PropertyInitializer occurrence 1 has valid kind with direct malformed ownership [bytes=7, tokens=4, children=4] (Assign("=") LiteralExpression ErrorNode ErrorNode)
 syntax__lexer__reports_unterminated_backtick_identifier: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=13, tokens=2, children=2] (ErrorNode ErrorNode)
 syntax__lexer__reports_unterminated_line_string_at_newline: StringTemplateEntry occurrence 4 has valid kind with direct malformed ownership [bytes=5, tokens=1, children=1] (ValKw("val"))
 syntax__lexer__reports_unterminated_line_string_at_newline: StringTemplateEntry occurrence 6 has valid kind with direct malformed ownership [bytes=2, tokens=1, children=1] (Assign("="))
 syntax__lexer__reports_unterminated_line_string_at_newline: StringTemplateEntry occurrence 7 has valid kind with direct malformed ownership [bytes=1, tokens=1, children=1] (IntegerLiteral("1"))
 syntax__lexer__separates_not_in_and_not_is_from_identifier_prefixes: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=22, tokens=6, children=6] (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
 syntax__parser__diagnoses_malformed_type_argument_call: BinaryExpression occurrence 1 has valid kind with direct malformed ownership [bytes=34, tokens=11, children=4] (NavigationExpression ErrorNode Lt("<") CallExpression)
-syntax__parser__diagnoses_malformed_type_argument_call: PropertyDeclaration occurrence 3 has valid kind with direct malformed ownership [bytes=50, tokens=7, children=10] (ModifierList ModifierList ValKw("val") CallableName Assign("=") NameExpression ErrorNode ErrorNode ErrorNode PropertyBodyMemberList)
+syntax__parser__diagnoses_malformed_type_argument_call: PropertyInitializer occurrence 3 has valid kind with direct malformed ownership [bytes=26, tokens=5, children=5] (Assign("=") NameExpression ErrorNode ErrorNode ErrorNode)
 syntax__parser__recovers_missing_when_arrow_and_body: WhenEntry occurrence 1 has valid kind with direct malformed ownership [bytes=30, tokens=6, children=3] (WhenConditionSeparatedList LiteralExpression ErrorNode)
 syntax__parser__recovers_missing_when_arrow_and_body: WhenCondition occurrence 1 has valid kind with direct malformed ownership [bytes=17, tokens=4, children=4] (LiteralExpression ErrorNode ErrorNode ErrorNode)
 syntax__recovery__assignment_without_left: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=8, tokens=2, children=2] (ErrorNode ErrorNode)
 syntax__recovery__call_without_callee: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=16, tokens=6, children=6] (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
 syntax__recovery__callable_reference_missing_target: CallableReferenceExpression occurrence 1 has valid kind with direct malformed ownership [bytes=10, tokens=4, children=3] (ColonColon("::") TypeArgumentList TypeArgumentListList)
 syntax__recovery__class_body: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=30, tokens=5, children=4] (UnaryExpression ErrorNode ErrorNode ErrorNode)
-syntax__recovery__declaration_tails: FunctionDeclaration occurrence 1 has valid kind with direct malformed ownership [bytes=26, tokens=8, children=10] (ModifierList ModifierList FunKw("fun") ModifierList CallableName ValueParameterList Assign("=") ErrorNode ErrorNode ErrorNode)
-syntax__recovery__declaration_tails: PropertyDeclaration occurrence 1 has valid kind with direct malformed ownership [bytes=17, tokens=3, children=7] (ModifierList ModifierList ValKw("val") CallableName Identifier("by") ErrorNode PropertyBodyMemberList)
 syntax__recovery__else_without_branch: IfExpression occurrence 1 has valid kind with direct malformed ownership [bytes=21, tokens=8, children=5] (IfKw("if") ParenthesizedExpression CallExpression ElseKw("else") ErrorNode)
 syntax__recovery__navigation_without_receiver: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=6, tokens=2, children=2] (ErrorNode ErrorNode)
 syntax__recovery__nested_recovered_when_condition: WhenEntry occurrence 1 has valid kind with direct malformed ownership [bytes=33, tokens=9, children=6] (WhenConditionSeparatedList ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
 syntax__recovery__nested_recovered_when_condition: WhenCondition occurrence 1 has valid kind with direct malformed ownership [bytes=13, tokens=4, children=4] (LiteralExpression ErrorNode ErrorNode ErrorNode)
+syntax__recovery__phase_18_declarations: EnumEntry occurrence 1 has valid kind with direct malformed ownership [bytes=7, tokens=2, children=4] (ModifierList Name RParen(")") Comma(","))
 
 [error_node_ownership]
 syntax__lexer__comment_markers_inside_character_literals_are_literal_content: ErrorNode occurrence 1 owned by ExpressionStatement
@@ -173,8 +191,8 @@ syntax__lexer__recognizes_safe_cast_and_question_operators: ErrorNode occurrence
 syntax__lexer__recognizes_unicode_identifiers: ErrorNode occurrence 1 owned by ExpressionStatement
 syntax__lexer__reports_non_ascii_digit_as_unknown_start: ErrorNode occurrence 1 owned by ExpressionStatement
 syntax__lexer__reports_non_ascii_digit_as_unknown_start: ErrorNode occurrence 2 owned by ExpressionStatement
-syntax__lexer__reports_unknown_character: ErrorNode occurrence 1 owned by PropertyDeclaration
-syntax__lexer__reports_unknown_character: ErrorNode occurrence 2 owned by PropertyDeclaration
+syntax__lexer__reports_unknown_character: ErrorNode occurrence 1 owned by PropertyInitializer
+syntax__lexer__reports_unknown_character: ErrorNode occurrence 2 owned by PropertyInitializer
 syntax__lexer__reports_unterminated_backtick_identifier: ErrorNode occurrence 1 owned by ExpressionStatement
 syntax__lexer__reports_unterminated_backtick_identifier: ErrorNode occurrence 2 owned by ExpressionStatement
 syntax__lexer__separates_not_in_and_not_is_from_identifier_prefixes: ErrorNode occurrence 1 owned by ExpressionStatement
@@ -188,9 +206,9 @@ syntax__parser__diagnoses_invalid_assignment_targets: ErrorNode occurrence 1 own
 syntax__parser__diagnoses_invalid_assignment_targets: ErrorNode occurrence 2 owned by AssignmentExpression
 syntax__parser__diagnoses_invalid_assignment_targets: ErrorNode occurrence 3 owned by AssignmentExpression
 syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 1 owned by BinaryExpression
-syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 2 owned by PropertyDeclaration
-syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 3 owned by PropertyDeclaration
-syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 4 owned by PropertyDeclaration
+syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 2 owned by PropertyInitializer
+syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 3 owned by PropertyInitializer
+syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 4 owned by PropertyInitializer
 syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 5 owned by NavigationExpression
 syntax__parser__recovers_incomplete_lambda_and_call: ErrorNode occurrence 1 owned by ValueArgument
 syntax__parser__recovers_missing_expression_after_elvis: ErrorNode occurrence 1 owned by BinaryExpression
@@ -213,17 +231,12 @@ syntax__recovery__call_without_callee: ErrorNode occurrence 3 owned by Expressio
 syntax__recovery__call_without_callee: ErrorNode occurrence 4 owned by ExpressionStatement
 syntax__recovery__call_without_callee: ErrorNode occurrence 5 owned by ExpressionStatement
 syntax__recovery__call_without_callee: ErrorNode occurrence 6 owned by ExpressionStatement
-syntax__recovery__class_body_with_formatter_ignore: ErrorNode occurrence 1 owned by UnaryExpression
 syntax__recovery__class_body: ErrorNode occurrence 1 owned by UnaryExpression
 syntax__recovery__class_body: ErrorNode occurrence 2 owned by ExpressionStatement
 syntax__recovery__class_body: ErrorNode occurrence 3 owned by ExpressionStatement
 syntax__recovery__class_body: ErrorNode occurrence 4 owned by ExpressionStatement
 syntax__recovery__collection_and_index_lists: ErrorNode occurrence 1 owned by ValueArgumentSeparatedList
 syntax__recovery__collection_and_index_lists: ErrorNode occurrence 2 owned by ValueArgumentSeparatedList
-syntax__recovery__declaration_tails: ErrorNode occurrence 1 owned by FunctionDeclaration
-syntax__recovery__declaration_tails: ErrorNode occurrence 2 owned by FunctionDeclaration
-syntax__recovery__declaration_tails: ErrorNode occurrence 3 owned by FunctionDeclaration
-syntax__recovery__declaration_tails: ErrorNode occurrence 4 owned by PropertyDeclaration
 syntax__recovery__else_without_branch: ErrorNode occurrence 1 owned by IfExpression
 syntax__recovery__for_partial_header: ErrorNode occurrence 1 owned by ForStatement
 syntax__recovery__lambda_parameter_list: ErrorNode occurrence 1 owned by LambdaParameterSeparatedList

@@ -11,14 +11,14 @@ use crate::helpers::formatter_ignore::{
     relative_token_range_between,
 };
 use crate::helpers::recovery::{
-    KotlinFormatDelimiter, KotlinFormatField, format_malformed, format_missing, format_or_verbatim,
+    KotlinFormatDelimiter, KotlinFormatField, format_malformed, format_missing,
     resolve_optional_field, resolve_required_delimiter, resolve_required_field,
 };
 
 use super::{
-    format_declaration, format_enum_entry_with_separator, format_explicit_backing_field,
-    format_function_declaration, format_initializer_block, format_property_accessor,
-    format_property_declaration, format_secondary_constructor, format_type_alias_declaration,
+    format_declaration, format_explicit_backing_field, format_function_declaration,
+    format_initializer_block, format_property_accessor, format_property_declaration,
+    format_secondary_constructor, format_type_alias_declaration,
 };
 
 pub(super) fn format_class_body<'source>(
@@ -28,14 +28,20 @@ pub(super) fn format_class_body<'source>(
     let Some(body) = body else {
         return doc.nil();
     };
-    format_or_verbatim(&body, doc, |doc| {
-        let open = resolve_required_delimiter(body.open_brace(), doc);
-        let close = resolve_required_delimiter(body.close_brace(), doc);
-        let contents = format_class_body_contents(doc, &body);
-        let space = doc.space();
-        let body = format_class_braced_body(doc, open, close, contents);
-        doc.concat([space, body])
-    })
+    let has_close = matches!(
+        body.close_brace(),
+        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(_))
+    ) || matches!(
+        body.close_brace(),
+        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Malformed(ref malformed))
+            if malformed.first_token().is_some()
+    );
+    let open = resolve_required_delimiter(body.open_brace(), doc);
+    let close = resolve_required_delimiter(body.close_brace(), doc);
+    let contents = format_class_body_contents(doc, &body);
+    let space = doc.space();
+    let body = format_class_braced_body(doc, open, close, contents, has_close);
+    doc.concat([space, body])
 }
 
 fn format_class_body_contents<'source>(
@@ -176,7 +182,7 @@ fn push_class_body_part<'source>(
             .is_some_and(|token| !token.trailing_comments().is_empty());
         sections.push(ClassBodySection {
             doc: format_class_member(doc, member),
-            hard_line_after: false,
+            hard_line_after: enum_entry_continues(member),
         });
         return;
     }
@@ -191,6 +197,16 @@ fn push_class_body_part<'source>(
         ClassBodyPart::Member(_) => unreachable!("handled above"),
     };
     push_class_body_physical_doc(doc, sections, physical, *previous_had_comments);
+}
+
+fn enum_entry_continues(member: &ClassMember<'_>) -> bool {
+    let ClassMember::EnumEntry(entry) = member else {
+        return false;
+    };
+    matches!(
+        entry.comma(),
+        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(_))
+    )
 }
 
 fn class_body_sections_with_ignored<'source>(
@@ -258,6 +274,14 @@ fn push_class_body_physical_doc<'source>(
             doc: doc.concat([line, physical]),
             hard_line_after: false,
         });
+    } else if sections
+        .last()
+        .is_some_and(|previous| previous.hard_line_after)
+    {
+        sections.push(ClassBodySection {
+            doc: physical,
+            hard_line_after: false,
+        });
     } else if let Some(previous) = sections.last_mut() {
         previous.doc = doc.concat([std::mem::replace(&mut previous.doc, Doc::nil()), physical]);
     } else {
@@ -303,30 +327,29 @@ fn format_class_member_declaration<'source>(
     doc: &mut DocBuilder<'source>,
     member: &ClassMemberDeclaration<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(member, doc, |doc| {
-        let comma = resolve_optional_field(member.comma(), doc);
-        let (comma, comma_recovery) = match comma {
-            KotlinFormatField::Present(comma) => (comma, Doc::nil()),
-            KotlinFormatField::Malformed(recovery) => (None, recovery),
-        };
-        let contents = match resolve_required_field(member.member(), doc) {
-            KotlinFormatField::Present(element) => format_class_member_element(doc, element, comma),
-            KotlinFormatField::Malformed(recovery) => recovery,
-        };
-        doc.concat([contents, comma_recovery])
-    })
+    let contents = match resolve_required_field(member.member(), doc) {
+        KotlinFormatField::Present(element) => format_class_member_element(doc, element),
+        KotlinFormatField::Malformed(recovery) => recovery,
+    };
+    let comma = match resolve_optional_field(member.comma(), doc) {
+        KotlinFormatField::Present(Some(comma)) => format_token(
+            doc,
+            &comma,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        ),
+        KotlinFormatField::Present(None) => Doc::nil(),
+        KotlinFormatField::Malformed(recovery) => recovery,
+    };
+    doc.concat([contents, comma])
 }
 
 fn format_class_member_element<'source>(
     doc: &mut DocBuilder<'source>,
     element: KotlinRoleElement<'source>,
-    comma: Option<KotlinSyntaxToken<'source>>,
 ) -> Doc<'source> {
     if let Some(declaration) = element.cast_family::<Declaration<'source>>() {
-        return match declaration {
-            Declaration::EnumEntry(entry) => format_enum_entry_with_separator(doc, &entry, comma),
-            _ => format_declaration(doc, &declaration),
-        };
+        return format_declaration(doc, &declaration);
     }
     if let Some(statement) = element.cast_node::<jolt_kotlin_syntax::Statement<'source>>() {
         return format_class_statement(doc, &statement);
@@ -361,14 +384,19 @@ fn format_class_braced_body<'source>(
     open: KotlinFormatDelimiter<'source>,
     close: KotlinFormatDelimiter<'source>,
     body: Option<Doc<'source>>,
+    has_close: bool,
 ) -> Doc<'source> {
     let open = format_delimiter(doc, open, LeadingTrivia::Preserve);
     let contents = if let Some(body) = body {
         let line = doc.hard_line();
         let body = doc.concat([line, body]);
         let body = doc.indent(body);
-        let line = doc.hard_line();
-        doc.concat([body, line])
+        if has_close {
+            let line = doc.hard_line();
+            doc.concat([body, line])
+        } else {
+            body
+        }
     } else {
         doc.hard_line()
     };

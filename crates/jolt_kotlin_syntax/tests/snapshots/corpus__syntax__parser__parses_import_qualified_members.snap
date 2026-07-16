@@ -48,16 +48,15 @@ KotlinFile
       ModifierList
       ModifierList
       ValKw "val" @ 72..75 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "timeout" @ 76..83 trailing=[Whitespace " "]
-      Assign "=" @ 84..85 trailing=[Whitespace " "]
-      NavigationExpression
-        LiteralExpression
-          IntegerLiteral "5" @ 86..87
-        Dot "." @ 87..88
-        Identifier "seconds" @ 88..95
+      Name
+        Identifier "timeout" @ 76..83 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 84..85 trailing=[Whitespace " "]
+        NavigationExpression
+          LiteralExpression
+            IntegerLiteral "5" @ 86..87
+          Dot "." @ 87..88
+          Identifier "seconds" @ 88..95
       PropertyBodyMemberList
   Eof "" @ 96..96 leading=[Newline "\n"]
 

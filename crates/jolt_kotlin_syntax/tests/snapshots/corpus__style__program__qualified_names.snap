@@ -42,99 +42,97 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 60..63 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "useQualifiedName" @ 64..80
+      Name
+        Identifier "useQualifiedName" @ 64..80
       ValueParameterList
         LParen "(" @ 80..81
         ValueParameterSeparatedList
         RParen ")" @ 81..82 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 83..84
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 89..92 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "name" @ 93..97 trailing=[Whitespace " "]
-            Assign "=" @ 98..99 trailing=[Whitespace " "]
-            CallExpression
-              NavigationExpression
-                NavigationExpression
-                  NameExpression
-                    Identifier "kotlin" @ 100..106
-                  Dot "." @ 106..107
-                  Identifier "collections" @ 107..118
-                Dot "." @ 118..119
-                Identifier "mutableMapOf" @ 119..131
-              TypeArgumentListList
-                TypeArgumentList
-                  Lt "<" @ 131..132
-                  TypeProjectionSeparatedList
-                    TypeReference
-                      UserType
-                        UserTypeSegmentList
-                          UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 132..138
-                    Comma "," @ 138..139 trailing=[Whitespace " "]
-                    TypeReference
-                      UserType
-                        UserTypeSegmentList
-                          UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "kotlin" @ 140..146
-                          Dot "." @ 146..147
-                          UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "collections" @ 147..158
-                          Dot "." @ 158..159
-                          UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "List" @ 159..163
-                            TypeArgumentList
-                              Lt "<" @ 163..164
-                              TypeProjectionSeparatedList
-                                TypeReference
-                                  UserType
-                                    UserTypeSegmentList
-                                      UserTypeSegment
-                                        AnnotationList
-                                        Name
-                                          Identifier "String" @ 164..170
-                              Gt ">" @ 170..171
-                  Gt ">" @ 171..172
-              ValueArgumentList
-                LParen "(" @ 172..173
-                ValueArgumentEntryList
-                RParen ")" @ 173..174
-              LambdaExpressionList
-            PropertyBodyMemberList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NameExpression
-                  Identifier "println" @ 179..186 leading=[Newline "\n", Whitespace "    "]
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 186..187
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
+      BlockBody
+        Block
+          LBrace "{" @ 83..84
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 89..92 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "name" @ 93..97 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 98..99 trailing=[Whitespace " "]
+                CallExpression
+                  NavigationExpression
+                    NavigationExpression
                       NameExpression
-                        Identifier "name" @ 187..191
-                  RParen ")" @ 191..192
-                LambdaExpressionList
-            TerminatorList
-        RBrace "}" @ 193..194 leading=[Newline "\n"]
+                        Identifier "kotlin" @ 100..106
+                      Dot "." @ 106..107
+                      Identifier "collections" @ 107..118
+                    Dot "." @ 118..119
+                    Identifier "mutableMapOf" @ 119..131
+                  TypeArgumentListList
+                    TypeArgumentList
+                      Lt "<" @ 131..132
+                      TypeProjectionSeparatedList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 132..138
+                        Comma "," @ 138..139 trailing=[Whitespace " "]
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "kotlin" @ 140..146
+                              Dot "." @ 146..147
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "collections" @ 147..158
+                              Dot "." @ 158..159
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "List" @ 159..163
+                                TypeArgumentList
+                                  Lt "<" @ 163..164
+                                  TypeProjectionSeparatedList
+                                    TypeReference
+                                      UserType
+                                        UserTypeSegmentList
+                                          UserTypeSegment
+                                            AnnotationList
+                                            Name
+                                              Identifier "String" @ 164..170
+                                  Gt ">" @ 170..171
+                      Gt ">" @ 171..172
+                  ValueArgumentList
+                    LParen "(" @ 172..173
+                    ValueArgumentEntryList
+                    RParen ")" @ 173..174
+                  LambdaExpressionList
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "println" @ 179..186 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 186..187
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "name" @ 187..191
+                    RParen ")" @ 191..192
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 193..194 leading=[Newline "\n"]
   Eof "" @ 195..195 leading=[Newline "\n"]
 
 diagnostics:

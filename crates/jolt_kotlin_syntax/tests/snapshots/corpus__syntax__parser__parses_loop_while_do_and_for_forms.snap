@@ -28,10 +28,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "loops" @ 4..9
+      Name
+        Identifier "loops" @ 4..9
       ValueParameterList
         LParen "(" @ 9..10
         ValueParameterSeparatedList
@@ -59,158 +57,159 @@ KotlinFile
                                   Identifier "String" @ 27..33
                       Gt ">" @ 33..34
         RParen ")" @ 34..35 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 36..37
-        BlockItemList
-          Statement
-            ExpressionStatement
-              WhileStatement
-                WhileKw "while" @ 42..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                ParenthesizedExpression
-                  LParen "(" @ 48..49
+      BlockBody
+        Block
+          LBrace "{" @ 36..37
+          BlockItemList
+            Statement
+              ExpressionStatement
+                WhileStatement
+                  WhileKw "while" @ 42..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 48..49
+                    CallExpression
+                      NameExpression
+                        Identifier "hasNext" @ 49..56
+                      TypeArgumentListList
+                      ValueArgumentList
+                        LParen "(" @ 56..57
+                        ValueArgumentEntryList
+                        RParen ")" @ 57..58
+                      LambdaExpressionList
+                    RParen ")" @ 58..59 trailing=[Whitespace " "]
                   CallExpression
                     NameExpression
-                      Identifier "hasNext" @ 49..56
+                      Identifier "advance" @ 60..67
                     TypeArgumentListList
                     ValueArgumentList
-                      LParen "(" @ 56..57
+                      LParen "(" @ 67..68
                       ValueArgumentEntryList
-                      RParen ")" @ 57..58
+                      RParen ")" @ 68..69
                     LambdaExpressionList
-                  RParen ")" @ 58..59 trailing=[Whitespace " "]
-                CallExpression
+              TerminatorList
+            Statement
+              ExpressionStatement
+                DoWhileStatement
+                  DoKw "do" @ 74..76 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 77..78
+                    BlockItemList
+                      Statement
+                        ExpressionStatement
+                          CallExpression
+                            NameExpression
+                              Identifier "tick" @ 87..91 leading=[Newline "\n", Whitespace "        "]
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 91..92
+                              ValueArgumentEntryList
+                              RParen ")" @ 92..93
+                            LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 98..99 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  WhileKw "while" @ 100..105 trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 106..107
+                    CallExpression
+                      NameExpression
+                        Identifier "pending" @ 107..114
+                      TypeArgumentListList
+                      ValueArgumentList
+                        LParen "(" @ 114..115
+                        ValueArgumentEntryList
+                        RParen ")" @ 115..116
+                      LambdaExpressionList
+                    RParen ")" @ 116..117
+              TerminatorList
+            Statement
+              ExpressionStatement
+                ForStatement
+                  ForKw "for" @ 123..126 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  LParen "(" @ 127..128
                   NameExpression
-                    Identifier "advance" @ 60..67
-                  TypeArgumentListList
-                  ValueArgumentList
-                    LParen "(" @ 67..68
-                    ValueArgumentEntryList
-                    RParen ")" @ 68..69
-                  LambdaExpressionList
-            TerminatorList
-          Statement
-            ExpressionStatement
-              DoWhileStatement
-                DoKw "do" @ 74..76 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 77..78
-                  BlockItemList
-                    Statement
-                      ExpressionStatement
-                        CallExpression
-                          NameExpression
-                            Identifier "tick" @ 87..91 leading=[Newline "\n", Whitespace "        "]
-                          TypeArgumentListList
-                          ValueArgumentList
-                            LParen "(" @ 91..92
-                            ValueArgumentEntryList
-                            RParen ")" @ 92..93
-                          LambdaExpressionList
-                      TerminatorList
-                  RBrace "}" @ 98..99 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                WhileKw "while" @ 100..105 trailing=[Whitespace " "]
-                ParenthesizedExpression
-                  LParen "(" @ 106..107
+                    Identifier "value" @ 128..133 trailing=[Whitespace " "]
+                  InKw "in" @ 134..136 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "values" @ 137..143
+                  RParen ")" @ 143..144 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 145..146
+                    BlockItemList
+                      Statement
+                        ExpressionStatement
+                          CallExpression
+                            NameExpression
+                              Identifier "consume" @ 155..162 leading=[Newline "\n", Whitespace "        "]
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 162..163
+                              ValueArgumentEntryList
+                                ValueArgument
+                                  ValueArgumentPrefixList
+                                  NameExpression
+                                    Identifier "value" @ 163..168
+                              RParen ")" @ 168..169
+                            LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 174..175 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+            Statement
+              ExpressionStatement
+                ForStatement
+                  ForKw "for" @ 181..184 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  LParen "(" @ 185..186
+                  DestructuringDeclaration
+                    LParen "(" @ 186..187
+                    DestructuringEntrySeparatedList
+                      DestructuringEntry
+                        Name
+                          Identifier "index" @ 187..192
+                      Comma "," @ 192..193 trailing=[Whitespace " "]
+                      DestructuringEntry
+                        Name
+                          Identifier "value" @ 194..199
+                    RParen ")" @ 199..200 trailing=[Whitespace " "]
+                  InKw "in" @ 201..203 trailing=[Whitespace " "]
                   CallExpression
-                    NameExpression
-                      Identifier "pending" @ 107..114
+                    NavigationExpression
+                      NameExpression
+                        Identifier "values" @ 204..210
+                      Dot "." @ 210..211
+                      Identifier "withIndex" @ 211..220
                     TypeArgumentListList
                     ValueArgumentList
-                      LParen "(" @ 114..115
+                      LParen "(" @ 220..221
                       ValueArgumentEntryList
-                      RParen ")" @ 115..116
+                      RParen ")" @ 221..222
                     LambdaExpressionList
-                  RParen ")" @ 116..117
-            TerminatorList
-          Statement
-            ExpressionStatement
-              ForStatement
-                ForKw "for" @ 123..126 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                LParen "(" @ 127..128
-                NameExpression
-                  Identifier "value" @ 128..133 trailing=[Whitespace " "]
-                InKw "in" @ 134..136 trailing=[Whitespace " "]
-                NameExpression
-                  Identifier "values" @ 137..143
-                RParen ")" @ 143..144 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 145..146
-                  BlockItemList
-                    Statement
-                      ExpressionStatement
-                        CallExpression
-                          NameExpression
-                            Identifier "consume" @ 155..162 leading=[Newline "\n", Whitespace "        "]
-                          TypeArgumentListList
-                          ValueArgumentList
-                            LParen "(" @ 162..163
-                            ValueArgumentEntryList
-                              ValueArgument
-                                ValueArgumentPrefixList
-                                NameExpression
-                                  Identifier "value" @ 163..168
-                            RParen ")" @ 168..169
-                          LambdaExpressionList
-                      TerminatorList
-                  RBrace "}" @ 174..175 leading=[Newline "\n", Whitespace "    "]
-            TerminatorList
-          Statement
-            ExpressionStatement
-              ForStatement
-                ForKw "for" @ 181..184 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                LParen "(" @ 185..186
-                DestructuringDeclaration
-                  LParen "(" @ 186..187
-                  DestructuringEntrySeparatedList
-                    DestructuringEntry
-                      Name
-                        Identifier "index" @ 187..192
-                    Comma "," @ 192..193 trailing=[Whitespace " "]
-                    DestructuringEntry
-                      Name
-                        Identifier "value" @ 194..199
-                  RParen ")" @ 199..200 trailing=[Whitespace " "]
-                InKw "in" @ 201..203 trailing=[Whitespace " "]
-                CallExpression
-                  NavigationExpression
-                    NameExpression
-                      Identifier "values" @ 204..210
-                    Dot "." @ 210..211
-                    Identifier "withIndex" @ 211..220
-                  TypeArgumentListList
-                  ValueArgumentList
-                    LParen "(" @ 220..221
-                    ValueArgumentEntryList
-                    RParen ")" @ 221..222
-                  LambdaExpressionList
-                RParen ")" @ 222..223 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 224..225
-                  BlockItemList
-                    Statement
-                      ExpressionStatement
-                        CallExpression
-                          NameExpression
-                            Identifier "consume" @ 234..241 leading=[Newline "\n", Whitespace "        "]
-                          TypeArgumentListList
-                          ValueArgumentList
-                            LParen "(" @ 241..242
-                            ValueArgumentEntryList
-                              ValueArgument
-                                ValueArgumentPrefixList
-                                NameExpression
-                                  Identifier "index" @ 242..247
-                              Comma "," @ 247..248 trailing=[Whitespace " "]
-                              ValueArgument
-                                ValueArgumentPrefixList
-                                NameExpression
-                                  Identifier "value" @ 249..254
-                            RParen ")" @ 254..255
-                          LambdaExpressionList
-                      TerminatorList
-                  RBrace "}" @ 260..261 leading=[Newline "\n", Whitespace "    "]
-            TerminatorList
-        RBrace "}" @ 262..263 leading=[Newline "\n"]
+                  RParen ")" @ 222..223 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 224..225
+                    BlockItemList
+                      Statement
+                        ExpressionStatement
+                          CallExpression
+                            NameExpression
+                              Identifier "consume" @ 234..241 leading=[Newline "\n", Whitespace "        "]
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 241..242
+                              ValueArgumentEntryList
+                                ValueArgument
+                                  ValueArgumentPrefixList
+                                  NameExpression
+                                    Identifier "index" @ 242..247
+                                Comma "," @ 247..248 trailing=[Whitespace " "]
+                                ValueArgument
+                                  ValueArgumentPrefixList
+                                  NameExpression
+                                    Identifier "value" @ 249..254
+                              RParen ")" @ 254..255
+                            LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 260..261 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+          RBrace "}" @ 262..263 leading=[Newline "\n"]
   Eof "" @ 264..264 leading=[Newline "\n"]
 
 diagnostics:

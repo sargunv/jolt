@@ -24,10 +24,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "softKeywords" @ 4..16
+      Name
+        Identifier "softKeywords" @ 4..16
       ValueParameterList
         LParen "(" @ 16..17
         ValueParameterSeparatedList
@@ -78,92 +76,88 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "String" @ 63..69 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 70..71
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 76..79 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "where" @ 80..85 trailing=[Whitespace " "]
-            Assign "=" @ 86..87 trailing=[Whitespace " "]
-            BinaryExpression
-              NameExpression
-                Identifier "context" @ 88..95 trailing=[Whitespace " "]
-              Plus "+" @ 96..97 trailing=[Whitespace " "]
-              LiteralExpression
-                IntegerLiteral "1" @ 98..99
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 104..107 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "by" @ 108..110 trailing=[Whitespace " "]
-            Assign "=" @ 111..112 trailing=[Whitespace " "]
-            NavigationExpression
-              NameExpression
-                Identifier "field" @ 113..118
-              Dot "." @ 118..119
-              Identifier "length" @ 119..125
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 130..133 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "all" @ 134..137 trailing=[Whitespace " "]
-            Assign "=" @ 138..139 trailing=[Whitespace " "]
-            BinaryExpression
-              NameExpression
-                Identifier "value" @ 140..145 trailing=[Whitespace " "]
-              AndAnd "&&" @ 146..148 trailing=[Whitespace " "]
-              BinaryExpression
-                NameExpression
-                  Identifier "where" @ 149..154 trailing=[Whitespace " "]
-                Gt ">" @ 155..156 trailing=[Whitespace " "]
-                NameExpression
-                  Identifier "by" @ 157..159
-            PropertyBodyMemberList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 164..170 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                IfExpression
-                  IfKw "if" @ 171..173 trailing=[Whitespace " "]
-                  ParenthesizedExpression
-                    LParen "(" @ 174..175
-                    NameExpression
-                      Identifier "all" @ 175..178
-                    RParen ")" @ 178..179 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 70..71
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 76..79 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "where" @ 80..85 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 86..87 trailing=[Whitespace " "]
+                BinaryExpression
                   NameExpression
-                    Identifier "field" @ 180..185 trailing=[Whitespace " "]
-                  ElseKw "else" @ 186..190 trailing=[Whitespace " "]
-                  StringTemplateExpression
-                    StringTemplateEntryList
-                      StringTemplateEntry
-                        OpenQuote "\"" @ 191..192
-                      StringTemplateEntry
-                        RegularStringPart "none" @ 192..196
-                    ClosingQuote "\"" @ 196..197
-            TerminatorList
-        RBrace "}" @ 198..199 leading=[Newline "\n"]
+                    Identifier "context" @ 88..95 trailing=[Whitespace " "]
+                  Plus "+" @ 96..97 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "1" @ 98..99
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 104..107 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "by" @ 108..110 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 111..112 trailing=[Whitespace " "]
+                NavigationExpression
+                  NameExpression
+                    Identifier "field" @ 113..118
+                  Dot "." @ 118..119
+                  Identifier "length" @ 119..125
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 130..133 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "all" @ 134..137 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 138..139 trailing=[Whitespace " "]
+                BinaryExpression
+                  NameExpression
+                    Identifier "value" @ 140..145 trailing=[Whitespace " "]
+                  AndAnd "&&" @ 146..148 trailing=[Whitespace " "]
+                  BinaryExpression
+                    NameExpression
+                      Identifier "where" @ 149..154 trailing=[Whitespace " "]
+                    Gt ">" @ 155..156 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "by" @ 157..159
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 164..170 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  IfExpression
+                    IfKw "if" @ 171..173 trailing=[Whitespace " "]
+                    ParenthesizedExpression
+                      LParen "(" @ 174..175
+                      NameExpression
+                        Identifier "all" @ 175..178
+                      RParen ")" @ 178..179 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "field" @ 180..185 trailing=[Whitespace " "]
+                    ElseKw "else" @ 186..190 trailing=[Whitespace " "]
+                    StringTemplateExpression
+                      StringTemplateEntryList
+                        StringTemplateEntry
+                          OpenQuote "\"" @ 191..192
+                        StringTemplateEntry
+                          RegularStringPart "none" @ 192..196
+                      ClosingQuote "\"" @ 196..197
+              TerminatorList
+          RBrace "}" @ 198..199 leading=[Newline "\n"]
     FunctionDeclaration
       ModifierList
       ModifierList
       FunKw "fun" @ 201..204 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "softKeywordSafeCall" @ 205..224
+      Name
+        Identifier "softKeywordSafeCall" @ 205..224
       ValueParameterList
         LParen "(" @ 224..225
         ValueParameterSeparatedList
@@ -182,27 +176,28 @@ KotlinFile
                         Identifier "Node" @ 231..235
                 Question "?" @ 235..236
         RParen ")" @ 236..237 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 238..239
-        BlockItemList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NavigationExpression
-                  NameExpression
-                    Identifier "open" @ 244..248 leading=[Newline "\n", Whitespace "    "]
-                  SplitSafeNavigationOperator
-                    Question "?" @ 248..249
-                    Dot "." @ 249..250
-                  Identifier "member" @ 250..256
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 256..257
-                  ValueArgumentEntryList
-                  RParen ")" @ 257..258
-                LambdaExpressionList
-            TerminatorList
-        RBrace "}" @ 259..260 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 238..239
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NavigationExpression
+                    NameExpression
+                      Identifier "open" @ 244..248 leading=[Newline "\n", Whitespace "    "]
+                    SplitSafeNavigationOperator
+                      Question "?" @ 248..249
+                      Dot "." @ 249..250
+                    Identifier "member" @ 250..256
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 256..257
+                    ValueArgumentEntryList
+                    RParen ")" @ 257..258
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 259..260 leading=[Newline "\n"]
   Eof "" @ 261..261 leading=[Newline "\n"]
 
 diagnostics:

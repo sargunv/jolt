@@ -26,6 +26,7 @@ fn kotlin_corpus_syntax_snapshots() {
         );
         if path.ends_with("syntax/recovery/phase-16-program.kt")
             || path.ends_with("syntax/recovery/phase-17-types-and-parameters.kt")
+            || path.ends_with("syntax/recovery/phase-18-declarations.kt")
         {
             assert_bidirectional_diagnostic_ownership(
                 syntax.syntax_node().expect("physical Kotlin root"),

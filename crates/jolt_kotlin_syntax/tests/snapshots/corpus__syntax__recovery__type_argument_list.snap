@@ -15,51 +15,50 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "demo" @ 4..8
+      Name
+        Identifier "demo" @ 4..8
       ValueParameterList
         LParen "(" @ 8..9
         ValueParameterSeparatedList
         RParen ")" @ 9..10 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 11..12 trailing=[Whitespace " "]
-        BlockItemList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NameExpression
-                  Identifier "call" @ 13..17
-                TypeArgumentListList
-                  TypeArgumentList
-                    Lt "<" @ 17..18
-                    TypeProjectionSeparatedList
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
-                            UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "First" @ 18..23
-                      Comma "," @ 23..24 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
-                      Comma "," @ 38..39 trailing=[Whitespace " "]
-                      BogusTypeArgument
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
-                            UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "Second" @ 40..46
-                    Gt ">" @ 46..47
-                ValueArgumentList
-                  LParen "(" @ 47..48
-                  ValueArgumentEntryList
-                  RParen ")" @ 48..49 trailing=[Whitespace " "]
-                LambdaExpressionList
-            TerminatorList
-        RBrace "}" @ 50..51
+      BlockBody
+        Block
+          LBrace "{" @ 11..12 trailing=[Whitespace " "]
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "call" @ 13..17
+                  TypeArgumentListList
+                    TypeArgumentList
+                      Lt "<" @ 17..18
+                      TypeProjectionSeparatedList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "First" @ 18..23
+                        Comma "," @ 23..24 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
+                        Comma "," @ 38..39 trailing=[Whitespace " "]
+                        BogusTypeArgument
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "Second" @ 40..46
+                      Gt ">" @ 46..47
+                  ValueArgumentList
+                    LParen "(" @ 47..48
+                    ValueArgumentEntryList
+                    RParen ")" @ 48..49 trailing=[Whitespace " "]
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 50..51
   Eof "" @ 52..52 leading=[Newline "\n"]
 
 diagnostics:

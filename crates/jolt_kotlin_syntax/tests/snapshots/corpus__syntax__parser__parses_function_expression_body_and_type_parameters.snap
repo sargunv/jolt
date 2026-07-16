@@ -26,10 +26,8 @@ KotlinFile
               Identifier "T" @ 5..6
         Gt ">" @ 6..7 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "identity" @ 8..16
+      Name
+        Identifier "identity" @ 8..16
       ValueParameterList
         LParen "(" @ 16..17
         ValueParameterSeparatedList
@@ -54,9 +52,10 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "T" @ 28..29 trailing=[Whitespace " "]
-      Assign "=" @ 30..31 trailing=[Whitespace " "]
-      NameExpression
-        Identifier "value" @ 32..37
+      ExpressionBody
+        Assign "=" @ 30..31 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "value" @ 32..37
     FunctionDeclaration
       ModifierList
       ModifierList
@@ -89,10 +88,8 @@ KotlinFile
                       Gt ">" @ 60..61
         Gt ">" @ 61..62 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "maxOf" @ 63..68
+      Name
+        Identifier "maxOf" @ 63..68
       ValueParameterList
         LParen "(" @ 68..69
         ValueParameterSeparatedList
@@ -130,23 +127,24 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "T" @ 89..90 trailing=[Whitespace " "]
-      Assign "=" @ 91..92
-      IfExpression
-        IfKw "if" @ 97..99 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        ParenthesizedExpression
-          LParen "(" @ 100..101
-          BinaryExpression
-            NameExpression
-              Identifier "left" @ 101..105 trailing=[Whitespace " "]
-            GtEq ">=" @ 106..108 trailing=[Whitespace " "]
-            NameExpression
-              Identifier "right" @ 109..114
-          RParen ")" @ 114..115 trailing=[Whitespace " "]
-        NameExpression
-          Identifier "left" @ 116..120 trailing=[Whitespace " "]
-        ElseKw "else" @ 121..125 trailing=[Whitespace " "]
-        NameExpression
-          Identifier "right" @ 126..131
+      ExpressionBody
+        Assign "=" @ 91..92
+        IfExpression
+          IfKw "if" @ 97..99 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          ParenthesizedExpression
+            LParen "(" @ 100..101
+            BinaryExpression
+              NameExpression
+                Identifier "left" @ 101..105 trailing=[Whitespace " "]
+              GtEq ">=" @ 106..108 trailing=[Whitespace " "]
+              NameExpression
+                Identifier "right" @ 109..114
+            RParen ")" @ 114..115 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "left" @ 116..120 trailing=[Whitespace " "]
+          ElseKw "else" @ 121..125 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "right" @ 126..131
   Eof "" @ 132..132 leading=[Newline "\n"]
 
 diagnostics:

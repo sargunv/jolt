@@ -44,10 +44,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 24..27 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "call" @ 28..32
+              Name
+                Identifier "call" @ 28..32
               ValueParameterList
                 LParen "(" @ 32..33
                 ValueParameterSeparatedList
@@ -67,8 +65,8 @@ KotlinFile
       ClassKw "class" @ 46..51 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "ServiceImpl" @ 52..63 trailing=[Whitespace " "]
-      Colon ":" @ 64..65 trailing=[Whitespace " "]
-      DelegationSpecifierList
+      DelegationClause
+        Colon ":" @ 64..65 trailing=[Whitespace " "]
         DelegationSpecifierSeparatedList
           DelegationSpecifier
             TypeReference
@@ -88,10 +86,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 89..92 trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "call" @ 93..97
+              Name
+                Identifier "call" @ 93..97
               ValueParameterList
                 LParen "(" @ 97..98
                 ValueParameterSeparatedList
@@ -104,14 +100,15 @@ KotlinFile
                       AnnotationList
                       Name
                         Identifier "String" @ 101..107 trailing=[Whitespace " "]
-              Assign "=" @ 108..109 trailing=[Whitespace " "]
-              StringTemplateExpression
-                StringTemplateEntryList
-                  StringTemplateEntry
-                    OpenQuote "\"" @ 110..111
-                  StringTemplateEntry
-                    RegularStringPart "ok" @ 111..113
-                ClosingQuote "\"" @ 113..114
+              ExpressionBody
+                Assign "=" @ 108..109 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 110..111
+                    StringTemplateEntry
+                      RegularStringPart "ok" @ 111..113
+                  ClosingQuote "\"" @ 113..114
         RBrace "}" @ 115..116 leading=[Newline "\n"]
     ClassDeclaration
       ModifierList
@@ -139,8 +136,8 @@ KotlinFile
                       Name
                         Identifier "Service" @ 163..170
           RParen ")" @ 170..171 trailing=[Whitespace " "]
-      Colon ":" @ 172..173 trailing=[Whitespace " "]
-      DelegationSpecifierList
+      DelegationClause
+        Colon ":" @ 172..173 trailing=[Whitespace " "]
         DelegationSpecifierSeparatedList
           DelegationSpecifier
             TypeReference
@@ -150,9 +147,10 @@ KotlinFile
                     AnnotationList
                     Name
                       Identifier "Service" @ 174..181 trailing=[Whitespace " "]
-            Identifier "by" @ 182..184 trailing=[Whitespace " "]
-            NameExpression
-              Identifier "service" @ 185..192
+            DelegationByClause
+              Identifier "by" @ 182..184 trailing=[Whitespace " "]
+              NameExpression
+                Identifier "service" @ 185..192
     InterfaceDeclaration
       ModifierList
       ModifierList
@@ -173,8 +171,8 @@ KotlinFile
             Name
               Identifier "U" @ 243..244
         Gt ">" @ 244..245 trailing=[Whitespace " "]
-      Colon ":" @ 246..247
-      DelegationSpecifierList
+      DelegationClause
+        Colon ":" @ 246..247
         DelegationSpecifierSeparatedList
           DelegationSpecifier
             TypeReference
@@ -247,8 +245,8 @@ KotlinFile
       ClassKw "class" @ 349..354 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "LayerNode" @ 355..364 trailing=[Whitespace " "]
-      Colon ":" @ 365..366 trailing=[Whitespace " "]
-      DelegationSpecifierList
+      DelegationClause
+        Colon ":" @ 365..366 trailing=[Whitespace " "]
         DelegationSpecifierSeparatedList
           DelegationSpecifier
             TypeReference
@@ -271,16 +269,17 @@ KotlinFile
                     AnnotationList
                     Name
                       Identifier "Service" @ 378..385 trailing=[Whitespace " "]
-            Identifier "by" @ 386..388 trailing=[Whitespace " "]
-            CallExpression
-              NameExpression
-                Identifier "ServiceImpl" @ 389..400
-              TypeArgumentListList
-              ValueArgumentList
-                LParen "(" @ 400..401
-                ValueArgumentEntryList
-                RParen ")" @ 401..402
-              LambdaExpressionList
+            DelegationByClause
+              Identifier "by" @ 386..388 trailing=[Whitespace " "]
+              CallExpression
+                NameExpression
+                  Identifier "ServiceImpl" @ 389..400
+                TypeArgumentListList
+                ValueArgumentList
+                  LParen "(" @ 400..401
+                  ValueArgumentEntryList
+                  RParen ")" @ 401..402
+                LambdaExpressionList
   Eof "" @ 403..403 leading=[Newline "\n"]
 
 diagnostics:

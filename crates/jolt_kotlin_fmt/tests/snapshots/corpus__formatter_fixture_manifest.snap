@@ -8,6 +8,7 @@ format properties/layout-fit-boundaries/property-delegate.kt
 format style/declarations/annotations-and-modifiers.kt
 format style/declarations/class-header-clauses.kt
 format style/declarations/delegation.kt
+format style/declarations/enum-entries.kt
 format style/declarations/explicit-backing-fields.kt
 format style/declarations/objects-and-companions.kt
 format style/declarations/primary-constructor-comments.kt
@@ -219,6 +220,7 @@ skip syntax/recovery/normalizes-package-import-spacing.kt
 skip syntax/recovery/object-delegation.kt
 skip syntax/recovery/phase-16-program.kt
 skip syntax/recovery/phase-17-types-and-parameters.kt
+skip syntax/recovery/phase-18-declarations.kt
 skip syntax/recovery/preserves-file-annotation-preamble.kt
 skip syntax/recovery/property-body-recovered-gap.kt
 skip syntax/recovery/source-gap-trivia-ownership.kt

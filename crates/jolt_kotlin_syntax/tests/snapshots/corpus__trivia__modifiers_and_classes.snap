@@ -75,8 +75,8 @@ KotlinFile
                                 Identifier "String" @ 204..210
                     Comma "," @ 210..211
                   RParen ")" @ 216..217 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Colon ":" @ 218..219 trailing=[Whitespace " "]
-              DelegationSpecifierList
+              DelegationClause
+                Colon ":" @ 218..219 trailing=[Whitespace " "]
                 DelegationSpecifierSeparatedList
                   DelegationSpecifier
                     TypeReference
@@ -99,8 +99,8 @@ KotlinFile
               ClassKw "class" @ 288..293 trailing=[Whitespace " "]
               Name
                 Identifier "Branch" @ 294..300 trailing=[Whitespace " "]
-              Colon ":" @ 301..302 trailing=[Whitespace " "]
-              DelegationSpecifierList
+              DelegationClause
+                Colon ":" @ 301..302 trailing=[Whitespace " "]
                 DelegationSpecifierSeparatedList
                   DelegationSpecifier
                     TypeReference
@@ -131,10 +131,8 @@ KotlinFile
                 Identifier "lateinit" @ 380..388 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lateinit-modifier */", Whitespace " "]
               ModifierList
               VarKw "var" @ 425..428 trailing=[Whitespace " "]
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "current" @ 429..436
+              Name
+                Identifier "current" @ 429..436
               Colon ":" @ 436..437 trailing=[Whitespace " "]
               TypeReference
                 UserType

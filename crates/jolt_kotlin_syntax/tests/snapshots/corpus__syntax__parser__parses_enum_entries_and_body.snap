@@ -58,49 +58,43 @@ KotlinFile
       ClassBody
         LBrace "{" @ 47..48
         ClassMemberList
-          ClassMemberDeclaration
-            EnumEntry
-              CallExpression
-                NameExpression
-                  Identifier "North" @ 53..58 leading=[Newline "\n", Whitespace "    "]
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 58..59
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      LiteralExpression
-                        IntegerLiteral "0" @ 59..60
-                    Comma "," @ 60..61 trailing=[Whitespace " "]
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      UnaryExpression
-                        Minus "-" @ 62..63
-                        LiteralExpression
-                          IntegerLiteral "1" @ 63..64
-                  RParen ")" @ 64..65
-                LambdaExpressionList
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "North" @ 53..58 leading=[Newline "\n", Whitespace "    "]
+            ValueArgumentList
+              LParen "(" @ 58..59
+              ValueArgumentEntryList
+                ValueArgument
+                  ValueArgumentPrefixList
+                  LiteralExpression
+                    IntegerLiteral "0" @ 59..60
+                Comma "," @ 60..61 trailing=[Whitespace " "]
+                ValueArgument
+                  ValueArgumentPrefixList
+                  UnaryExpression
+                    Minus "-" @ 62..63
+                    LiteralExpression
+                      IntegerLiteral "1" @ 63..64
+              RParen ")" @ 64..65
             Comma "," @ 65..66
-          ClassMemberDeclaration
-            EnumEntry
-              CallExpression
-                NameExpression
-                  Identifier "South" @ 71..76 leading=[Newline "\n", Whitespace "    "]
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 76..77
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      LiteralExpression
-                        IntegerLiteral "0" @ 77..78
-                    Comma "," @ 78..79 trailing=[Whitespace " "]
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      LiteralExpression
-                        IntegerLiteral "1" @ 80..81
-                  RParen ")" @ 81..82
-                LambdaExpressionList
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "South" @ 71..76 leading=[Newline "\n", Whitespace "    "]
+            ValueArgumentList
+              LParen "(" @ 76..77
+              ValueArgumentEntryList
+                ValueArgument
+                  ValueArgumentPrefixList
+                  LiteralExpression
+                    IntegerLiteral "0" @ 77..78
+                Comma "," @ 78..79 trailing=[Whitespace " "]
+                ValueArgument
+                  ValueArgumentPrefixList
+                  LiteralExpression
+                    IntegerLiteral "1" @ 80..81
+              RParen ")" @ 81..82
           Semicolon ";" @ 82..83
           ClassMemberDeclaration
             FunctionDeclaration
@@ -108,10 +102,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 89..92 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "vertical" @ 93..101
+              Name
+                Identifier "vertical" @ 93..101
               ValueParameterList
                 LParen "(" @ 101..102
                 ValueParameterSeparatedList
@@ -124,13 +116,14 @@ KotlinFile
                       AnnotationList
                       Name
                         Identifier "Boolean" @ 105..112 trailing=[Whitespace " "]
-              Assign "=" @ 113..114 trailing=[Whitespace " "]
-              BinaryExpression
-                NameExpression
-                  Identifier "dx" @ 115..117 trailing=[Whitespace " "]
-                EqEq "==" @ 118..120 trailing=[Whitespace " "]
-                LiteralExpression
-                  IntegerLiteral "0" @ 121..122
+              ExpressionBody
+                Assign "=" @ 113..114 trailing=[Whitespace " "]
+                BinaryExpression
+                  NameExpression
+                    Identifier "dx" @ 115..117 trailing=[Whitespace " "]
+                  EqEq "==" @ 118..120 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "0" @ 121..122
         RBrace "}" @ 123..124 leading=[Newline "\n"]
   Eof "" @ 125..125 leading=[Newline "\n"]
 

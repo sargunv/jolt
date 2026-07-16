@@ -49,10 +49,8 @@ KotlinFile
               ModifierList
               ModifierList
               ValKw "val" @ 55..58 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "city" @ 59..63
+              Name
+                Identifier "city" @ 59..63
               Colon ":" @ 63..64 trailing=[Whitespace " "]
               TypeReference
                 UserType
@@ -77,10 +75,8 @@ KotlinFile
               ModifierList
               ModifierList
               VarKw "var" @ 101..104 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "country" @ 105..112
+              Name
+                Identifier "country" @ 105..112
               Colon ":" @ 112..113 trailing=[Whitespace " "]
               TypeReference
                 UserType
@@ -107,19 +103,20 @@ KotlinFile
                     LParen "(" @ 153..154
                     ValueParameterSeparatedList
                     RParen ")" @ 154..155 trailing=[Whitespace " "]
-                  Assign "=" @ 156..157 trailing=[Whitespace " "]
-                  CallExpression
-                    NavigationExpression
-                      NameExpression
-                        Identifier "field" @ 158..163
-                      Dot "." @ 163..164
-                      Identifier "uppercase" @ 164..173
-                    TypeArgumentListList
-                    ValueArgumentList
-                      LParen "(" @ 173..174
-                      ValueArgumentEntryList
-                      RParen ")" @ 174..175
-                    LambdaExpressionList
+                  ExpressionBody
+                    Assign "=" @ 156..157 trailing=[Whitespace " "]
+                    CallExpression
+                      NavigationExpression
+                        NameExpression
+                          Identifier "field" @ 158..163
+                        Dot "." @ 163..164
+                        Identifier "uppercase" @ 164..173
+                      TypeArgumentListList
+                      ValueArgumentList
+                        LParen "(" @ 173..174
+                        ValueArgumentEntryList
+                        RParen ")" @ 174..175
+                      LambdaExpressionList
                 PropertyAccessor
                   ModifierList
                   Identifier "set" @ 184..187 leading=[Newline "\n", Whitespace "        "]
@@ -131,29 +128,30 @@ KotlinFile
                         Name
                           Identifier "value" @ 188..193
                     RParen ")" @ 193..194 trailing=[Whitespace " "]
-                  Block
-                    LBrace "{" @ 195..196
-                    BlockItemList
-                      Statement
-                        ExpressionStatement
-                          AssignmentExpression
-                            NameExpression
-                              Identifier "field" @ 209..214 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                            Assign "=" @ 215..216 trailing=[Whitespace " "]
-                            CallExpression
-                              NavigationExpression
-                                NameExpression
-                                  Identifier "value" @ 217..222
-                                Dot "." @ 222..223
-                                Identifier "trim" @ 223..227
-                              TypeArgumentListList
-                              ValueArgumentList
-                                LParen "(" @ 227..228
-                                ValueArgumentEntryList
-                                RParen ")" @ 228..229
-                              LambdaExpressionList
-                        TerminatorList
-                    RBrace "}" @ 238..239 leading=[Newline "\n", Whitespace "        "]
+                  BlockBody
+                    Block
+                      LBrace "{" @ 195..196
+                      BlockItemList
+                        Statement
+                          ExpressionStatement
+                            AssignmentExpression
+                              NameExpression
+                                Identifier "field" @ 209..214 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              Assign "=" @ 215..216 trailing=[Whitespace " "]
+                              CallExpression
+                                NavigationExpression
+                                  NameExpression
+                                    Identifier "value" @ 217..222
+                                  Dot "." @ 222..223
+                                  Identifier "trim" @ 223..227
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 227..228
+                                  ValueArgumentEntryList
+                                  RParen ")" @ 228..229
+                                LambdaExpressionList
+                          TerminatorList
+                      RBrace "}" @ 238..239 leading=[Newline "\n", Whitespace "        "]
         RBrace "}" @ 240..241 leading=[Newline "\n"]
   Eof "" @ 242..242 leading=[Newline "\n"]
 

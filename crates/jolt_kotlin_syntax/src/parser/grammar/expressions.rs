@@ -276,7 +276,7 @@ impl Parser<'_> {
             _ => {
                 let error = self.start();
                 self.expected_here("expected expression");
-                if !self.at_eof() && !stops.contains(self.current_kind()) {
+                if !self.at_eof() && !stops.contains(self.current_kind(), self.position()) {
                     self.bump();
                 }
                 self.complete(error, K::ErrorNode)
@@ -440,7 +440,7 @@ impl Parser<'_> {
     fn elvis_missing_rhs(&mut self, stops: StopSet<'_>) -> bool {
         let next = self.nth_kind(1);
         next == K::Eof
-            || stops.contains(next)
+            || stops.contains(next, self.position() + 1)
             || matches!(
                 next,
                 K::Semicolon | K::DoubleSemicolon | K::RBrace | K::RParen | K::LongTemplateEntryEnd
@@ -450,7 +450,7 @@ impl Parser<'_> {
     }
 
     fn at_expression_boundary(&mut self, stops: StopSet<'_>) -> bool {
-        self.at_eof() || stops.contains(self.current_kind())
+        self.at_eof() || stops.contains(self.current_kind(), self.position())
     }
 
     fn binary_operator_info(&mut self, stops: StopSet<'_>) -> Option<BinaryOperatorInfo> {

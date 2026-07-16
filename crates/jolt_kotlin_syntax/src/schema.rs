@@ -276,6 +276,26 @@ macro_rules! kotlin_syntax_schema {
                     Name,
                     DestructuringDeclaration,
                 }
+                CallableDeclarationName => BogusCallableDeclarationName {
+                    Name,
+                    CallableName,
+                }
+                PropertyBinding => BogusPropertyBinding {
+                    Name,
+                    CallableName,
+                    DestructuringDeclaration,
+                }
+                DeclarationBody => BogusDeclarationBody {
+                    BlockBody,
+                    ExpressionBody,
+                }
+                PropertyBodyMember => BogusPropertyBodyMember {
+                    ExplicitBackingField,
+                    PropertyAccessor,
+                }
+                DelegationSpecifierEntry => BogusDelegationSpecifier {
+                    DelegationSpecifier,
+                }
                 UserTypeSegmentSyntax => BogusUserTypeSegment {
                     UserTypeSegment,
                 }
@@ -381,7 +401,9 @@ macro_rules! kotlin_syntax_schema {
                     segments: required (list QualifiedNameSegmentList);
                 }
                 CallableName => CallableName [callable_name valid] {
-                    parts: required (list CallableNamePartList);
+                    receiver: required (node TypeReference);
+                    dot: required (token Dot);
+                    name: required (node Name);
                 }
                 TypeArgumentList => TypeArgumentList [type_argument_list valid] {
                     open_angle: required (token Lt);
@@ -396,8 +418,7 @@ macro_rules! kotlin_syntax_schema {
                     name: required (node Name);
                     type_parameters: optional (node TypeParameterList);
                     primary_constructor: optional (node PrimaryConstructor);
-                    colon: optional (token Colon);
-                    delegation: optional (node DelegationSpecifierList);
+                    delegation: optional (node DelegationClause);
                     constraints: optional (node TypeConstraintList);
                     body: optional (node ClassBody);
                 }
@@ -405,11 +426,11 @@ macro_rules! kotlin_syntax_schema {
                     leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
                     context: optional (node ContextParameterClause);
                     post_context_modifiers: required (list ModifierList);
+                    fun_token: optional (token FunKw);
                     interface_token: required (token InterfaceKw);
                     name: required (node Name);
                     type_parameters: optional (node TypeParameterList);
-                    colon: optional (token Colon);
-                    delegation: optional (node DelegationSpecifierList);
+                    delegation: optional (node DelegationClause);
                     constraints: optional (node TypeConstraintList);
                     body: optional (node ClassBody);
                 }
@@ -419,8 +440,7 @@ macro_rules! kotlin_syntax_schema {
                     post_context_modifiers: required (list ModifierList);
                     object_token: required (token ObjectKw);
                     name: optional (node Name);
-                    colon: optional (token Colon);
-                    delegation: optional (node DelegationSpecifierList);
+                    delegation: optional (node DelegationClause);
                     body: optional (node ClassBody);
                 }
                 CompanionObject => CompanionObject [companion_object valid] {
@@ -430,13 +450,15 @@ macro_rules! kotlin_syntax_schema {
                     companion_token: required (contextual "companion");
                     object_token: optional (token ObjectKw);
                     name: optional (node Name);
-                    colon: optional (token Colon);
-                    delegation: optional (node DelegationSpecifierList);
+                    delegation: optional (node DelegationClause);
                     body: optional (node ClassBody);
                 }
                 EnumEntry => EnumEntry [enum_entry valid] {
-                    expression: required (category Expression);
+                    modifiers: required (list ModifierList);
+                    name: required (node Name);
+                    arguments: optional (node ValueArgumentList);
                     body: optional (node ClassBody);
+                    comma: optional (token Comma);
                 }
                 ClassBody => ClassBody [class_body valid] {
                     open_brace: required (token LBrace);
@@ -458,9 +480,12 @@ macro_rules! kotlin_syntax_schema {
                     post_context_modifiers: required (list ModifierList);
                     constructor_token: required (contextual "constructor");
                     parameters: required (node ValueParameterList);
-                    colon: optional (token Colon);
-                    delegation_call: optional (node ConstructorDelegationCall);
+                    delegation: optional (node ConstructorDelegation);
                     body: optional (node Block);
+                }
+                ConstructorDelegation => ConstructorDelegation [constructor_delegation valid] {
+                    colon: required (token Colon);
+                    call: required (node ConstructorDelegationCall);
                 }
                 ConstructorDelegationCall => ConstructorDelegationCall [constructor_delegation_call valid] {
                     expression: required (category Expression);
@@ -476,13 +501,12 @@ macro_rules! kotlin_syntax_schema {
                     fun_token: required (token FunKw);
                     type_parameters: optional (node TypeParameterList);
                     receiver_modifiers: required (list ModifierList);
-                    name: optional (node_set [CallableName, Name]);
-                    parameters: optional (node ValueParameterList);
+                    name: required (category CallableDeclarationName);
+                    parameters: required (node ValueParameterList);
                     return_colon: optional (token Colon);
                     return_type: optional (node TypeReference);
                     constraints: optional (node TypeConstraintList);
-                    assign: optional (token Assign);
-                    body: optional (choice [(node Block), (category Expression)]);
+                    body: optional (category DeclarationBody);
                 }
                 PropertyDeclaration => PropertyDeclaration [property_declaration valid] {
                     leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
@@ -490,12 +514,11 @@ macro_rules! kotlin_syntax_schema {
                     post_context_modifiers: required (list ModifierList);
                     binding_keyword: required (token_set [ValKw, VarKw]);
                     type_parameters: optional (node TypeParameterList);
-                    binding: required (node_set [CallableName, Name, DestructuringDeclaration]);
+                    binding: required (category PropertyBinding);
                     type_colon: optional (token Colon);
                     r#type: optional (node TypeReference);
                     constraints: optional (node TypeConstraintList);
-                    initializer_operator: optional (choice [(token Assign), (contextual "by")]);
-                    initializer: optional (category Expression);
+                    initializer: optional (node PropertyInitializer);
                     body_members: required (list PropertyBodyMemberList);
                 }
                 PropertyAccessor => PropertyAccessor [property_accessor valid] {
@@ -504,8 +527,18 @@ macro_rules! kotlin_syntax_schema {
                     parameters: optional (node ValueParameterList);
                     return_colon: optional (token Colon);
                     return_type: optional (node TypeReference);
-                    assign: optional (token Assign);
-                    body: optional (choice [(node Block), (category Expression)]);
+                    body: optional (category DeclarationBody);
+                }
+                BlockBody => BlockBody [block_body valid] {
+                    block: required (node Block);
+                }
+                ExpressionBody => ExpressionBody [expression_body valid] {
+                    assign: required (token Assign);
+                    expression: required (category Expression);
+                }
+                PropertyInitializer => PropertyInitializer [property_initializer valid] {
+                    operator: required (choice [(token Assign), (contextual "by")]);
+                    expression: required (category Expression);
                 }
                 ExplicitBackingField => ExplicitBackingField [explicit_backing_field valid] {
                     field_token: required (choice [(contextual "field"), (token FieldIdentifier)]);
@@ -559,11 +592,18 @@ macro_rules! kotlin_syntax_schema {
                 DelegationSpecifierList => DelegationSpecifierList [delegation_specifier_list valid] {
                     entries: required (list DelegationSpecifierSeparatedList);
                 }
+                DelegationClause => DelegationClause [delegation_clause valid] {
+                    colon: required (token Colon);
+                    specifiers: required (list DelegationSpecifierSeparatedList);
+                }
                 DelegationSpecifier => DelegationSpecifier [delegation_specifier valid] {
                     r#type: required (node TypeReference);
                     arguments: optional (node ValueArgumentList);
-                    by_token: optional (contextual "by");
-                    delegate: optional (category Expression);
+                    by_clause: optional (node DelegationByClause);
+                }
+                DelegationByClause => DelegationByClause [delegation_by_clause valid] {
+                    by_token: required (contextual "by");
+                    delegate: required (category Expression);
                 }
                 UserType => UserType [user_type valid] {
                     segments: required (list UserTypeSegmentList);
@@ -955,14 +995,11 @@ macro_rules! kotlin_syntax_schema {
                 QualifiedNameSegmentList => QualifiedNameSegmentList [qualified_name_segment_list list] {
                     segments: one_or_more (category QualifiedNameSegment) [separated (token Dot), minimum 1, trailing forbidden, recovery bogus_owner];
                 }
-                CallableNamePartList => CallableNamePartList [callable_name_part_list list] {
-                    parts: many (choice [(node_set [Name, TypeReference]), (token Dot)]);
-                }
                 ClassMemberList => ClassMemberList [class_member_list list] {
-                    members: many (choice [(category ClassMember), (token_set [Comma, EolOrSemicolon, Semicolon, DoubleSemicolon])]);
+                    members: many (choice [(category ClassMember), (token_set [EolOrSemicolon, Semicolon, DoubleSemicolon])]);
                 }
                 PropertyBodyMemberList => PropertyBodyMemberList [property_body_member_list list] {
-                    members: many (choice [(node_set [ExplicitBackingField, PropertyAccessor]), (token_set [EolOrSemicolon, Semicolon])]);
+                    members: many (choice [(category PropertyBodyMember), (token_set [EolOrSemicolon, Semicolon])]);
                 }
                 TypeParameterSeparatedList => TypeParameterSeparatedList [type_parameter_separated_list list] {
                     entries: one_or_more (category TypeParameterListEntry) [separated (token Comma), minimum 1, trailing optional, recovery bogus_owner];
@@ -974,7 +1011,7 @@ macro_rules! kotlin_syntax_schema {
                     entries: one_or_more (category ContextParameterListEntry) [separated (token Comma), minimum 1, trailing optional, recovery bogus_owner];
                 }
                 DelegationSpecifierSeparatedList => DelegationSpecifierSeparatedList [delegation_specifier_separated_list list] {
-                    entries: one_or_more (node DelegationSpecifier) [separated (token Comma), minimum 1, trailing optional, recovery bogus_owner];
+                    entries: one_or_more (category DelegationSpecifierEntry) [separated (token Comma), minimum 1, trailing optional, recovery bogus_owner];
                 }
                 UserTypeSegmentList => UserTypeSegmentList [user_type_segment_list list] {
                     segments: one_or_more (category UserTypeSegmentSyntax) [separated (token Dot), minimum 1, trailing forbidden, recovery bogus_owner];

@@ -31,10 +31,8 @@ KotlinFile
                 Identifier "abstract" @ 47..55 trailing=[Whitespace " "]
               ModifierList
               ValKw "val" @ 56..59 trailing=[Whitespace " "]
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "size" @ 60..64
+              Name
+                Identifier "size" @ 60..64
               Colon ":" @ 64..65 trailing=[Whitespace " "]
               TypeReference
                 UserType
@@ -52,10 +50,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 88..91 trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "label" @ 92..97
+              Name
+                Identifier "label" @ 92..97
               ValueParameterList
                 LParen "(" @ 97..98
                 ValueParameterSeparatedList
@@ -68,18 +64,19 @@ KotlinFile
                       AnnotationList
                       Name
                         Identifier "String" @ 101..107 trailing=[Whitespace " "]
-              Assign "=" @ 108..109 trailing=[Whitespace " "]
-              StringTemplateExpression
-                StringTemplateEntryList
-                  StringTemplateEntry
-                    OpenQuote "\"" @ 110..111
-                  StringTemplateEntry
-                    RegularStringPart "size=" @ 111..116
-                  StringTemplateEntry
-                    ShortTemplateEntryStart "$" @ 116..117
-                  StringTemplateEntry
-                    Identifier "size" @ 117..121
-                ClosingQuote "\"" @ 121..122
+              ExpressionBody
+                Assign "=" @ 108..109 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 110..111
+                    StringTemplateEntry
+                      RegularStringPart "size=" @ 111..116
+                    StringTemplateEntry
+                      ShortTemplateEntryStart "$" @ 116..117
+                    StringTemplateEntry
+                      Identifier "size" @ 117..121
+                  ClosingQuote "\"" @ 121..122
         RBrace "}" @ 123..124 leading=[Newline "\n"]
   Eof "" @ 125..125 leading=[Newline "\n"]
 

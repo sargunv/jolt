@@ -19,114 +19,111 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "invalidCallableReferenceCall" @ 4..32
+      Name
+        Identifier "invalidCallableReferenceCall" @ 4..32
       ValueParameterList
         LParen "(" @ 32..33
         ValueParameterSeparatedList
         RParen ")" @ 33..34 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 35..36
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 41..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "direct" @ 45..51 trailing=[Whitespace " "]
-            Assign "=" @ 52..53 trailing=[Whitespace " "]
-            CallExpression
-              CallableReferenceExpression
-                NameExpression
-                  Identifier "String" @ 54..60
-                ColonColon "::" @ 60..62
-                Identifier "trim" @ 62..66
-                TypeArgumentListList
-              TypeArgumentListList
-              ValueArgumentList
-                LParen "(" @ 66..67
-                ValueArgumentEntryList
-                  ValueArgument
-                    ValueArgumentPrefixList
-                    StringTemplateExpression
-                      StringTemplateEntryList
-                        StringTemplateEntry
-                          OpenQuote "\"" @ 67..68
-                        StringTemplateEntry
-                          RegularStringPart " value " @ 68..75
-                      ClosingQuote "\"" @ 75..76
-                RParen ")" @ 76..77
-              LambdaExpressionList
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 82..85 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "generic" @ 86..93 trailing=[Whitespace " "]
-            Assign "=" @ 94..95 trailing=[Whitespace " "]
-            CallExpression
-              CallableReferenceExpression
-                NameExpression
-                  Identifier "Box" @ 96..99
-                ColonColon "::" @ 99..101
-                Identifier "create" @ 101..107
-                TypeArgumentListList
-                  TypeArgumentList
-                    Lt "<" @ 107..108
-                    TypeProjectionSeparatedList
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
-                            UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "String" @ 108..114
-                    Gt ">" @ 114..115
-              TypeArgumentListList
-              ValueArgumentList
-                LParen "(" @ 115..116
-                ValueArgumentEntryList
-                  ValueArgument
-                    ValueArgumentPrefixList
-                    StringTemplateExpression
-                      StringTemplateEntryList
-                        StringTemplateEntry
-                          OpenQuote "\"" @ 116..117
-                        StringTemplateEntry
-                          RegularStringPart "value" @ 117..122
-                      ClosingQuote "\"" @ 122..123
-                RParen ")" @ 123..124
-              LambdaExpressionList
-            PropertyBodyMemberList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NameExpression
-                  Identifier "consume" @ 129..136 leading=[Newline "\n", Whitespace "    "]
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 136..137
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      NameExpression
-                        Identifier "direct" @ 137..143
-                    Comma "," @ 143..144 trailing=[Whitespace " "]
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      NameExpression
-                        Identifier "generic" @ 145..152
-                  RParen ")" @ 152..153
-                LambdaExpressionList
-            TerminatorList
-        RBrace "}" @ 154..155 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 35..36
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 41..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "direct" @ 45..51 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 52..53 trailing=[Whitespace " "]
+                CallExpression
+                  CallableReferenceExpression
+                    NameExpression
+                      Identifier "String" @ 54..60
+                    ColonColon "::" @ 60..62
+                    Identifier "trim" @ 62..66
+                    TypeArgumentListList
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 66..67
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 67..68
+                            StringTemplateEntry
+                              RegularStringPart " value " @ 68..75
+                          ClosingQuote "\"" @ 75..76
+                    RParen ")" @ 76..77
+                  LambdaExpressionList
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 82..85 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "generic" @ 86..93 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 94..95 trailing=[Whitespace " "]
+                CallExpression
+                  CallableReferenceExpression
+                    NameExpression
+                      Identifier "Box" @ 96..99
+                    ColonColon "::" @ 99..101
+                    Identifier "create" @ 101..107
+                    TypeArgumentListList
+                      TypeArgumentList
+                        Lt "<" @ 107..108
+                        TypeProjectionSeparatedList
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
+                                    Identifier "String" @ 108..114
+                        Gt ">" @ 114..115
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 115..116
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 116..117
+                            StringTemplateEntry
+                              RegularStringPart "value" @ 117..122
+                          ClosingQuote "\"" @ 122..123
+                    RParen ")" @ 123..124
+                  LambdaExpressionList
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "consume" @ 129..136 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 136..137
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "direct" @ 137..143
+                      Comma "," @ 143..144 trailing=[Whitespace " "]
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "generic" @ 145..152
+                    RParen ")" @ 152..153
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 154..155 leading=[Newline "\n"]
   Eof "" @ 156..156 leading=[Newline "\n"]
 
 diagnostics:

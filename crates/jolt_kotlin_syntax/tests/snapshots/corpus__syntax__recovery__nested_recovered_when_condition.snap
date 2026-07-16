@@ -18,10 +18,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "nestedRecoveredWhenCondition" @ 4..32
+      Name
+        Identifier "nestedRecoveredWhenCondition" @ 4..32
       ValueParameterList
         LParen "(" @ 32..33
         ValueParameterSeparatedList
@@ -38,38 +36,39 @@ KotlinFile
                     Name
                       Identifier "Int" @ 40..43
         RParen ")" @ 43..44 trailing=[Whitespace " "]
-      Assign "=" @ 45..46 trailing=[Whitespace " "]
-      WhenExpression
-        WhenKw "when" @ 47..51 trailing=[Whitespace " "]
-        WhenSubject
-          LParen "(" @ 52..53
-          NameExpression
-            Identifier "value" @ 53..58
-          RParen ")" @ 58..59 trailing=[Whitespace " "]
-        LBrace "{" @ 60..61
-        WhenEntryList
-          WhenEntry
-            WhenConditionSeparatedList
-              WhenCondition
-                LiteralExpression
-                  IntegerLiteral "0" @ 66..67 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                ErrorNode
-                  OpenQuote "\"" @ 68..69
-                ErrorNode
-                  RegularStringPart "zero" @ 69..73
-                ErrorNode
-                  ClosingQuote "\"" @ 73..74
-            ErrorNode
-              ElseKw "else" @ 79..83 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            ErrorNode
-              Arrow "->" @ 84..86 trailing=[Whitespace " "]
-            ErrorNode
-              OpenQuote "\"" @ 87..88
-            ErrorNode
-              RegularStringPart "other" @ 88..93
-            ErrorNode
-              ClosingQuote "\"" @ 93..94
-        RBrace "}" @ 95..96 leading=[Newline "\n"]
+      ExpressionBody
+        Assign "=" @ 45..46 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 47..51 trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 52..53
+            NameExpression
+              Identifier "value" @ 53..58
+            RParen ")" @ 58..59 trailing=[Whitespace " "]
+          LBrace "{" @ 60..61
+          WhenEntryList
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  LiteralExpression
+                    IntegerLiteral "0" @ 66..67 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  ErrorNode
+                    OpenQuote "\"" @ 68..69
+                  ErrorNode
+                    RegularStringPart "zero" @ 69..73
+                  ErrorNode
+                    ClosingQuote "\"" @ 73..74
+              ErrorNode
+                ElseKw "else" @ 79..83 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ErrorNode
+                Arrow "->" @ 84..86 trailing=[Whitespace " "]
+              ErrorNode
+                OpenQuote "\"" @ 87..88
+              ErrorNode
+                RegularStringPart "other" @ 88..93
+              ErrorNode
+                ClosingQuote "\"" @ 93..94
+          RBrace "}" @ 95..96 leading=[Newline "\n"]
   Eof "" @ 97..97 leading=[Newline "\n"]
 
 diagnostics:

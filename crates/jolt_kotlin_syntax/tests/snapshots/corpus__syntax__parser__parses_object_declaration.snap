@@ -27,18 +27,17 @@ KotlinFile
                 Identifier "const" @ 22..27 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
               ValKw "val" @ 28..31 trailing=[Whitespace " "]
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "Name" @ 32..36 trailing=[Whitespace " "]
-              Assign "=" @ 37..38 trailing=[Whitespace " "]
-              StringTemplateExpression
-                StringTemplateEntryList
-                  StringTemplateEntry
-                    OpenQuote "\"" @ 39..40
-                  StringTemplateEntry
-                    RegularStringPart "jolt" @ 40..44
-                ClosingQuote "\"" @ 44..45
+              Name
+                Identifier "Name" @ 32..36 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 37..38 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 39..40
+                    StringTemplateEntry
+                      RegularStringPart "jolt" @ 40..44
+                  ClosingQuote "\"" @ 44..45
               PropertyBodyMemberList
         RBrace "}" @ 46..47 leading=[Newline "\n"]
   Eof "" @ 48..48 leading=[Newline "\n"]

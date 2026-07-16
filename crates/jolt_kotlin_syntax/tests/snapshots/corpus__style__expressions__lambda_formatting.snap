@@ -37,104 +37,100 @@ KotlinFile
       ModifierList
       ModifierList
       ValKw "val" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "shout" @ 37..42 trailing=[Whitespace " "]
-      Assign "=" @ 43..44 trailing=[Whitespace " "]
-      LambdaExpression
-        LambdaBody
-          LBrace "{" @ 45..46 trailing=[Whitespace " "]
-          LambdaParameterList
-            LambdaParameterSeparatedList
-              LambdaParameter
-                Name
-                  Identifier "value" @ 47..52 trailing=[Whitespace "   "]
-                Colon ":" @ 55..56 trailing=[Whitespace "   "]
-                TypeReference
-                  UserType
-                    UserTypeSegmentList
-                      UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "String" @ 59..65 trailing=[Whitespace " "]
-            Arrow "->" @ 66..68 trailing=[Whitespace " "]
-          LambdaBodyItemList
-            Statement
-              ExpressionStatement
-                BinaryExpression
-                  NameExpression
-                    Identifier "value" @ 69..74 trailing=[Whitespace " "]
-                  Plus "+" @ 75..76 trailing=[Whitespace " "]
-                  StringTemplateExpression
-                    StringTemplateEntryList
-                      StringTemplateEntry
-                        OpenQuote "\"" @ 77..78
-                      StringTemplateEntry
-                        RegularStringPart "!" @ 78..79
-                    ClosingQuote "\"" @ 79..80 trailing=[Whitespace " "]
-              TerminatorList
-          RBrace "}" @ 81..82
+      Name
+        Identifier "shout" @ 37..42 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 43..44 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 45..46 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  Name
+                    Identifier "value" @ 47..52 trailing=[Whitespace "   "]
+                  Colon ":" @ 55..56 trailing=[Whitespace "   "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "String" @ 59..65 trailing=[Whitespace " "]
+              Arrow "->" @ 66..68 trailing=[Whitespace " "]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  BinaryExpression
+                    NameExpression
+                      Identifier "value" @ 69..74 trailing=[Whitespace " "]
+                    Plus "+" @ 75..76 trailing=[Whitespace " "]
+                    StringTemplateExpression
+                      StringTemplateEntryList
+                        StringTemplateEntry
+                          OpenQuote "\"" @ 77..78
+                        StringTemplateEntry
+                          RegularStringPart "!" @ 78..79
+                      ClosingQuote "\"" @ 79..80 trailing=[Whitespace " "]
+                TerminatorList
+            RBrace "}" @ 81..82
       PropertyBodyMemberList
     PropertyDeclaration
       ModifierList
       ModifierList
       ValKw "val" @ 84..87 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "sum" @ 88..91 trailing=[Whitespace " "]
-      Assign "=" @ 92..93 trailing=[Whitespace " "]
-      LambdaExpression
-        LambdaBody
-          LBrace "{" @ 94..95 trailing=[Whitespace " "]
-          LambdaParameterList
-            LambdaParameterSeparatedList
-              LambdaParameter
-                Name
-                  Identifier "left" @ 96..100
-                Colon ":" @ 100..101 trailing=[Whitespace " "]
-                TypeReference
-                  UserType
-                    UserTypeSegmentList
-                      UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "Int" @ 102..105
-              Comma "," @ 105..106 trailing=[Whitespace " "]
-              LambdaParameter
-                Name
-                  Identifier "right" @ 107..112
-                Colon ":" @ 112..113 trailing=[Whitespace " "]
-                TypeReference
-                  UserType
-                    UserTypeSegmentList
-                      UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "Int" @ 114..117 trailing=[Whitespace " "]
-            Arrow "->" @ 118..120
-          LambdaBodyItemList
-            Statement
-              ExpressionStatement
-                BinaryExpression
-                  NameExpression
-                    Identifier "left" @ 125..129 leading=[Newline "\n", Whitespace "    "]
-                  Plus "+" @ 129..130
-                  NameExpression
-                    Identifier "right" @ 130..135
-              TerminatorList
-          RBrace "}" @ 136..137 leading=[Newline "\n"]
+      Name
+        Identifier "sum" @ 88..91 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 92..93 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 94..95 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  Name
+                    Identifier "left" @ 96..100
+                  Colon ":" @ 100..101 trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "Int" @ 102..105
+                Comma "," @ 105..106 trailing=[Whitespace " "]
+                LambdaParameter
+                  Name
+                    Identifier "right" @ 107..112
+                  Colon ":" @ 112..113 trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "Int" @ 114..117 trailing=[Whitespace " "]
+              Arrow "->" @ 118..120
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  BinaryExpression
+                    NameExpression
+                      Identifier "left" @ 125..129 leading=[Newline "\n", Whitespace "    "]
+                    Plus "+" @ 129..130
+                    NameExpression
+                      Identifier "right" @ 130..135
+                TerminatorList
+            RBrace "}" @ 136..137 leading=[Newline "\n"]
       PropertyBodyMemberList
     FunctionDeclaration
       ModifierList
       ModifierList
       FunKw "fun" @ 139..142 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "invoke" @ 143..149
+      Name
+        Identifier "invoke" @ 143..149
       ValueParameterList
         LParen "(" @ 149..150
         ValueParameterSeparatedList
@@ -175,54 +171,54 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Int" @ 172..175 trailing=[Whitespace " "]
-      Assign "=" @ 176..177 trailing=[Whitespace " "]
-      CallExpression
-        NameExpression
-          Identifier "block" @ 178..183
-        TypeArgumentListList
-        ValueArgumentList
-          LParen "(" @ 183..184
-          ValueArgumentEntryList
-            ValueArgument
-              ValueArgumentPrefixList
-              LiteralExpression
-                IntegerLiteral "1" @ 184..185
-          RParen ")" @ 185..186
-        LambdaExpressionList
+      ExpressionBody
+        Assign "=" @ 176..177 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "block" @ 178..183
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 183..184
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                LiteralExpression
+                  IntegerLiteral "1" @ 184..185
+            RParen ")" @ 185..186
+          LambdaExpressionList
     PropertyDeclaration
       ModifierList
       ModifierList
       ValKw "val" @ 188..191 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "doubled" @ 192..199 trailing=[Whitespace " "]
-      Assign "=" @ 200..201 trailing=[Whitespace " "]
-      CallExpression
-        NameExpression
-          Identifier "invoke" @ 202..208 trailing=[Whitespace " "]
-        TypeArgumentListList
-        LambdaExpressionList
-          LambdaExpression
-            LambdaBody
-              LBrace "{" @ 209..210 trailing=[Whitespace " "]
-              LambdaParameterList
-                LambdaParameterSeparatedList
-                  LambdaParameter
-                    Name
-                      Identifier "value" @ 211..216 trailing=[Whitespace " "]
-                Arrow "->" @ 217..219 trailing=[Whitespace " "]
-              LambdaBodyItemList
-                Statement
-                  ExpressionStatement
-                    BinaryExpression
-                      NameExpression
-                        Identifier "value" @ 220..225
-                      Star "*" @ 225..226
-                      LiteralExpression
-                        IntegerLiteral "2" @ 226..227 trailing=[Whitespace " "]
-                  TerminatorList
-              RBrace "}" @ 228..229
+      Name
+        Identifier "doubled" @ 192..199 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 200..201 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "invoke" @ 202..208 trailing=[Whitespace " "]
+          TypeArgumentListList
+          LambdaExpressionList
+            LambdaExpression
+              LambdaBody
+                LBrace "{" @ 209..210 trailing=[Whitespace " "]
+                LambdaParameterList
+                  LambdaParameterSeparatedList
+                    LambdaParameter
+                      Name
+                        Identifier "value" @ 211..216 trailing=[Whitespace " "]
+                  Arrow "->" @ 217..219 trailing=[Whitespace " "]
+                LambdaBodyItemList
+                  Statement
+                    ExpressionStatement
+                      BinaryExpression
+                        NameExpression
+                          Identifier "value" @ 220..225
+                        Star "*" @ 225..226
+                        LiteralExpression
+                          IntegerLiteral "2" @ 226..227 trailing=[Whitespace " "]
+                    TerminatorList
+                RBrace "}" @ 228..229
       PropertyBodyMemberList
   Eof "" @ 230..230 leading=[Newline "\n"]
 

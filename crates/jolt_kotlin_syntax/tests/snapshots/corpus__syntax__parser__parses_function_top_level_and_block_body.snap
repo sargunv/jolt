@@ -21,10 +21,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "sum" @ 4..7
+      Name
+        Identifier "sum" @ 4..7
       ValueParameterList
         LParen "(" @ 7..8
         ValueParameterSeparatedList
@@ -62,30 +60,29 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Int" @ 32..35 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 36..37
-        BlockItemList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 42..48 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                BinaryExpression
-                  NameExpression
-                    Identifier "left" @ 49..53 trailing=[Whitespace " "]
-                  Plus "+" @ 54..55 trailing=[Whitespace " "]
-                  NameExpression
-                    Identifier "right" @ 56..61
-            TerminatorList
-        RBrace "}" @ 62..63 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 36..37
+          BlockItemList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 42..48 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  BinaryExpression
+                    NameExpression
+                      Identifier "left" @ 49..53 trailing=[Whitespace " "]
+                    Plus "+" @ 54..55 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "right" @ 56..61
+              TerminatorList
+          RBrace "}" @ 62..63 leading=[Newline "\n"]
     FunctionDeclaration
       ModifierList
       ModifierList
       FunKw "fun" @ 65..68 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "value" @ 69..74
+      Name
+        Identifier "value" @ 69..74
       ValueParameterList
         LParen "(" @ 74..75
         ValueParameterSeparatedList
@@ -98,17 +95,18 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Int" @ 78..81 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 82..83
-        BlockItemList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 88..94 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                LiteralExpression
-                  IntegerLiteral "0" @ 95..96
-            TerminatorList
-        RBrace "}" @ 97..98 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 82..83
+          BlockItemList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 88..94 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "0" @ 95..96
+              TerminatorList
+          RBrace "}" @ 97..98 leading=[Newline "\n"]
   Eof "" @ 99..99 leading=[Newline "\n"]
 
 diagnostics:

@@ -15,43 +15,42 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "demo" @ 4..8
+      Name
+        Identifier "demo" @ 4..8
       ValueParameterList
         LParen "(" @ 8..9
         ValueParameterSeparatedList
         RParen ")" @ 9..10 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 11..12 trailing=[Whitespace " "]
-        BlockItemList
-          Statement
-            ExpressionStatement
-              LambdaExpression
-                LambdaBody
-                  LBrace "{" @ 13..14 trailing=[Whitespace " "]
-                  LambdaParameterList
-                    LambdaParameterSeparatedList
-                      LambdaParameter
-                        Name
-                          Identifier "first" @ 15..20
-                      Comma "," @ 20..21 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
-                      Comma "," @ 35..36 trailing=[Whitespace " "]
-                      ErrorNode
-                      LambdaParameter
-                        Name
-                          Identifier "second" @ 37..43 trailing=[Whitespace " "]
-                    Arrow "->" @ 44..46 trailing=[Whitespace " "]
-                  LambdaBodyItemList
-                    Statement
-                      ExpressionStatement
-                        NameExpression
-                          Identifier "first" @ 47..52 trailing=[Whitespace " "]
-                      TerminatorList
-                  RBrace "}" @ 53..54 trailing=[Whitespace " "]
-            TerminatorList
-        RBrace "}" @ 55..56
+      BlockBody
+        Block
+          LBrace "{" @ 11..12 trailing=[Whitespace " "]
+          BlockItemList
+            Statement
+              ExpressionStatement
+                LambdaExpression
+                  LambdaBody
+                    LBrace "{" @ 13..14 trailing=[Whitespace " "]
+                    LambdaParameterList
+                      LambdaParameterSeparatedList
+                        LambdaParameter
+                          Name
+                            Identifier "first" @ 15..20
+                        Comma "," @ 20..21 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
+                        Comma "," @ 35..36 trailing=[Whitespace " "]
+                        ErrorNode
+                        LambdaParameter
+                          Name
+                            Identifier "second" @ 37..43 trailing=[Whitespace " "]
+                      Arrow "->" @ 44..46 trailing=[Whitespace " "]
+                    LambdaBodyItemList
+                      Statement
+                        ExpressionStatement
+                          NameExpression
+                            Identifier "first" @ 47..52 trailing=[Whitespace " "]
+                        TerminatorList
+                    RBrace "}" @ 53..54 trailing=[Whitespace " "]
+              TerminatorList
+          RBrace "}" @ 55..56
   Eof "" @ 57..57 leading=[Newline "\n"]
 
 diagnostics:

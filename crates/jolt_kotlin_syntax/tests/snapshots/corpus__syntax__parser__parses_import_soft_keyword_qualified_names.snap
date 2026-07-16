@@ -69,17 +69,16 @@ KotlinFile
       ModifierList
       ModifierList
       ValKw "val" @ 105..108 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "imported" @ 109..117 trailing=[Whitespace " "]
-      Assign "=" @ 118..119 trailing=[Whitespace " "]
-      CallableReferenceExpression
-        NameExpression
-          Identifier "Accessors" @ 120..129
-        ColonColon "::" @ 129..131
-        ClassKw "class" @ 131..136
-        TypeArgumentListList
+      Name
+        Identifier "imported" @ 109..117 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 118..119 trailing=[Whitespace " "]
+        CallableReferenceExpression
+          NameExpression
+            Identifier "Accessors" @ 120..129
+          ColonColon "::" @ 129..131
+          ClassKw "class" @ 131..136
+          TypeArgumentListList
       PropertyBodyMemberList
   Eof "" @ 137..137 leading=[Newline "\n"]
 

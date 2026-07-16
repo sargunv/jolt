@@ -48,10 +48,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 56..59 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "save" @ 60..64
+              Name
+                Identifier "save" @ 60..64
               ValueParameterList
                 LParen "(" @ 64..65
                 ValueParameterSeparatedList
@@ -75,8 +73,8 @@ KotlinFile
       ClassKw "class" @ 83..88 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "MemoryStore" @ 89..100 trailing=[Whitespace " "]
-      Colon ":" @ 101..102 trailing=[Whitespace " "]
-      DelegationSpecifierList
+      DelegationClause
+        Colon ":" @ 101..102 trailing=[Whitespace " "]
         DelegationSpecifierSeparatedList
           DelegationSpecifier
             TypeReference
@@ -96,10 +94,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 124..127 trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "save" @ 128..132
+              Name
+                Identifier "save" @ 128..132
               ValueParameterList
                 LParen "(" @ 132..133
                 ValueParameterSeparatedList
@@ -116,10 +112,11 @@ KotlinFile
                             Name
                               Identifier "String" @ 140..146
                 RParen ")" @ 146..147 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 148..149
-                BlockItemList
-                RBrace "}" @ 149..150
+              BlockBody
+                Block
+                  LBrace "{" @ 148..149
+                  BlockItemList
+                  RBrace "}" @ 149..150
         RBrace "}" @ 151..152 leading=[Newline "\n"]
     ClassDeclaration
       ModifierList
@@ -147,8 +144,8 @@ KotlinFile
                       Name
                         Identifier "Store" @ 195..200
           RParen ")" @ 200..201 trailing=[Whitespace " "]
-      Colon ":" @ 202..203 trailing=[Whitespace " "]
-      DelegationSpecifierList
+      DelegationClause
+        Colon ":" @ 202..203 trailing=[Whitespace " "]
         DelegationSpecifierSeparatedList
           DelegationSpecifier
             TypeReference
@@ -158,9 +155,10 @@ KotlinFile
                     AnnotationList
                     Name
                       Identifier "Store" @ 204..209 trailing=[Whitespace " "]
-            Identifier "by" @ 210..212 trailing=[Whitespace " "]
-            NameExpression
-              Identifier "delegate" @ 213..221
+            DelegationByClause
+              Identifier "by" @ 210..212 trailing=[Whitespace " "]
+              NameExpression
+                Identifier "delegate" @ 213..221
   Eof "" @ 222..222 leading=[Newline "\n"]
 
 diagnostics:

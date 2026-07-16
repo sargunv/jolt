@@ -22,17 +22,16 @@ KotlinFile
       ModifierList
       ValKw "val" @ 0..3 trailing=[Whitespace " "]
       CallableName
-        CallableNamePartList
-          TypeReference
-            UserType
-              UserTypeSegmentList
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "String" @ 4..10
-          Dot "." @ 10..11
-          Name
-            Identifier "lastIndexOrZero" @ 11..26
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "String" @ 4..10
+        Dot "." @ 10..11
+        Name
+          Identifier "lastIndexOrZero" @ 11..26
       Colon ":" @ 26..27 trailing=[Whitespace " "]
       TypeReference
         UserType
@@ -49,39 +48,39 @@ KotlinFile
             LParen "(" @ 39..40
             ValueParameterSeparatedList
             RParen ")" @ 40..41 trailing=[Whitespace " "]
-          Assign "=" @ 42..43 trailing=[Whitespace " "]
-          BinaryExpression
-            NameExpression
-              Identifier "length" @ 44..50 trailing=[Whitespace " "]
-            Minus "-" @ 51..52 trailing=[Whitespace " "]
-            LiteralExpression
-              IntegerLiteral "1" @ 53..54
+          ExpressionBody
+            Assign "=" @ 42..43 trailing=[Whitespace " "]
+            BinaryExpression
+              NameExpression
+                Identifier "length" @ 44..50 trailing=[Whitespace " "]
+              Minus "-" @ 51..52 trailing=[Whitespace " "]
+              LiteralExpression
+                IntegerLiteral "1" @ 53..54
     PropertyDeclaration
       ModifierList
       ModifierList
       ValKw "val" @ 56..59 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       CallableName
-        CallableNamePartList
-          TypeReference
-            UserType
-              UserTypeSegmentList
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "com" @ 60..63
-                Dot "." @ 63..64
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "example" @ 64..71
-                Dot "." @ 71..72
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "Scope" @ 72..77
-          Dot "." @ 77..78
-          Name
-            Identifier "qualifiedTitle" @ 78..92
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "com" @ 60..63
+              Dot "." @ 63..64
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "example" @ 64..71
+              Dot "." @ 71..72
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "Scope" @ 72..77
+        Dot "." @ 77..78
+        Name
+          Identifier "qualifiedTitle" @ 78..92
       Colon ":" @ 92..93 trailing=[Whitespace " "]
       TypeReference
         UserType
@@ -98,57 +97,57 @@ KotlinFile
             LParen "(" @ 108..109
             ValueParameterSeparatedList
             RParen ")" @ 109..110 trailing=[Whitespace " "]
-          Assign "=" @ 111..112 trailing=[Whitespace " "]
-          CallExpression
-            NameExpression
-              Identifier "toString" @ 113..121
-            TypeArgumentListList
-            ValueArgumentList
-              LParen "(" @ 121..122
-              ValueArgumentEntryList
-              RParen ")" @ 122..123
-            LambdaExpressionList
+          ExpressionBody
+            Assign "=" @ 111..112 trailing=[Whitespace " "]
+            CallExpression
+              NameExpression
+                Identifier "toString" @ 113..121
+              TypeArgumentListList
+              ValueArgumentList
+                LParen "(" @ 121..122
+                ValueArgumentEntryList
+                RParen ")" @ 122..123
+              LambdaExpressionList
     PropertyDeclaration
       ModifierList
       ModifierList
       ValKw "val" @ 125..128 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       CallableName
-        CallableNamePartList
-          TypeReference
-            UserType
-              UserTypeSegmentList
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "MutableMap" @ 129..139
-                  TypeArgumentList
-                    Lt "<" @ 139..140
-                    TypeProjectionSeparatedList
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
-                            UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "String" @ 140..146
-                      Comma "," @ 146..147 trailing=[Whitespace " "]
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
-                            UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "Expression" @ 148..158
-                              TypeArgumentList
-                                Lt "<" @ 158..159
-                                TypeProjectionSeparatedList
-                                  StarProjection
-                                    Star "*" @ 159..160
-                                Gt ">" @ 160..161
-                    Gt ">" @ 161..162
-          Dot "." @ 162..163
-          Name
-            Identifier "entryCount" @ 163..173
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "MutableMap" @ 129..139
+                TypeArgumentList
+                  Lt "<" @ 139..140
+                  TypeProjectionSeparatedList
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 140..146
+                    Comma "," @ 146..147 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "Expression" @ 148..158
+                            TypeArgumentList
+                              Lt "<" @ 158..159
+                              TypeProjectionSeparatedList
+                                StarProjection
+                                  Star "*" @ 159..160
+                              Gt ">" @ 160..161
+                  Gt ">" @ 161..162
+        Dot "." @ 162..163
+        Name
+          Identifier "entryCount" @ 163..173
       Colon ":" @ 173..174 trailing=[Whitespace " "]
       TypeReference
         UserType
@@ -165,9 +164,10 @@ KotlinFile
             LParen "(" @ 186..187
             ValueParameterSeparatedList
             RParen ")" @ 187..188 trailing=[Whitespace " "]
-          Assign "=" @ 189..190 trailing=[Whitespace " "]
-          NameExpression
-            Identifier "size" @ 191..195
+          ExpressionBody
+            Assign "=" @ 189..190 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "size" @ 191..195
   Eof "" @ 196..196 leading=[Newline "\n"]
 
 diagnostics:

@@ -27,18 +27,17 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 13..16 trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "ok" @ 17..19
+              Name
+                Identifier "ok" @ 17..19
               ValueParameterList
                 LParen "(" @ 19..20
                 ValueParameterSeparatedList
                 RParen ")" @ 20..21 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 22..23
-                BlockItemList
-                RBrace "}" @ 23..24
+              BlockBody
+                Block
+                  LBrace "{" @ 22..23
+                  BlockItemList
+                  RBrace "}" @ 23..24
           ClassMemberDeclaration
             Statement
               ExpressionStatement

@@ -132,10 +132,8 @@ KotlinFile
       ModifierList
       ModifierList
       ValKw "val" @ 146..149 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "receiverBlock" @ 150..163
+      Name
+        Identifier "receiverBlock" @ 150..163
       Colon ":" @ 163..164 trailing=[Whitespace " "]
       TypeReference
         UserType
@@ -144,51 +142,52 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "ReceiverBlock" @ 165..178 trailing=[Whitespace " "]
-      Assign "=" @ 179..180 trailing=[Whitespace " "]
-      LambdaExpression
-        LambdaBody
-          LBrace "{" @ 181..182 trailing=[Whitespace " "]
-          LambdaParameterList
-            LambdaParameterSeparatedList
-              LambdaParameter
-                Name
-                  Identifier "count" @ 183..188 trailing=[Whitespace " "]
-            Arrow "->" @ 189..191 trailing=[Whitespace " "]
-          LambdaBodyItemList
-            Statement
-              ExpressionStatement
-                CallExpression
-                  NameExpression
-                    Identifier "repeat" @ 192..198
-                  TypeArgumentListList
-                  ValueArgumentList
-                    LParen "(" @ 198..199
-                    ValueArgumentEntryList
-                      ValueArgument
-                        ValueArgumentPrefixList
-                        NameExpression
-                          Identifier "count" @ 199..204
-                    RParen ")" @ 204..205 trailing=[Whitespace " "]
-                  LambdaExpressionList
-                    LambdaExpression
-                      LambdaBody
-                        LBrace "{" @ 206..207 trailing=[Whitespace " "]
-                        LambdaBodyItemList
-                          Statement
-                            ExpressionStatement
-                              CallExpression
-                                NameExpression
-                                  Identifier "trim" @ 208..212
-                                TypeArgumentListList
-                                ValueArgumentList
-                                  LParen "(" @ 212..213
-                                  ValueArgumentEntryList
-                                  RParen ")" @ 213..214 trailing=[Whitespace " "]
-                                LambdaExpressionList
-                            TerminatorList
-                        RBrace "}" @ 215..216 trailing=[Whitespace " "]
-              TerminatorList
-          RBrace "}" @ 217..218
+      PropertyInitializer
+        Assign "=" @ 179..180 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 181..182 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  Name
+                    Identifier "count" @ 183..188 trailing=[Whitespace " "]
+              Arrow "->" @ 189..191 trailing=[Whitespace " "]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  CallExpression
+                    NameExpression
+                      Identifier "repeat" @ 192..198
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 198..199
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          NameExpression
+                            Identifier "count" @ 199..204
+                      RParen ")" @ 204..205 trailing=[Whitespace " "]
+                    LambdaExpressionList
+                      LambdaExpression
+                        LambdaBody
+                          LBrace "{" @ 206..207 trailing=[Whitespace " "]
+                          LambdaBodyItemList
+                            Statement
+                              ExpressionStatement
+                                CallExpression
+                                  NameExpression
+                                    Identifier "trim" @ 208..212
+                                  TypeArgumentListList
+                                  ValueArgumentList
+                                    LParen "(" @ 212..213
+                                    ValueArgumentEntryList
+                                    RParen ")" @ 213..214 trailing=[Whitespace " "]
+                                  LambdaExpressionList
+                              TerminatorList
+                          RBrace "}" @ 215..216 trailing=[Whitespace " "]
+                TerminatorList
+            RBrace "}" @ 217..218
       PropertyBodyMemberList
   Eof "" @ 219..219 leading=[Newline "\n"]
 

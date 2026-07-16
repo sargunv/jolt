@@ -14,12 +14,10 @@ KotlinFile
       ModifierList
       ModifierList
       ValKw "val" @ 0..3 trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "value" @ 4..9 trailing=[Whitespace " "]
-      Assign "=" @ 10..11 trailing=[Whitespace " "]
-      BinaryExpression
+      Name
+        Identifier "value" @ 4..9 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 10..11 trailing=[Whitespace " "]
         ObjectExpression
           ObjectKw "object" @ 12..18 trailing=[Whitespace " "]
           Colon ":" @ 19..20 trailing=[Whitespace " "]
@@ -34,23 +32,25 @@ KotlinFile
                         Name
                           Identifier "First" @ 21..26
               Comma "," @ 26..27 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
+              BogusDelegationSpecifier
+              Comma "," @ 41..42 trailing=[Whitespace " "]
               DelegationSpecifier
                 TypeReference
-                  BogusType
-              Comma "," @ 41..42 trailing=[Whitespace " "]
-        Identifier "Second" @ 43..49 trailing=[Whitespace " "]
-        LambdaExpression
-          LambdaBody
+                  UserType
+                    UserTypeSegmentList
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Second" @ 43..49 trailing=[Whitespace " "]
+          ClassBody
             LBrace "{" @ 50..51
-            LambdaBodyItemList
+            ClassMemberList
             RBrace "}" @ 51..52
       PropertyBodyMemberList
   Eof "" @ 53..53 leading=[Newline "\n"]
 
 diagnostics:
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=41..42 message="expected type"
-  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=41..42 message="expected delegation specifier"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=41..42 message="expected delegation specifier between commas"
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(41), end: TextSize(42) }) message=expected type
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(41), end: TextSize(42) }) message=expected delegation specifier
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(41), end: TextSize(42) }) message=expected delegation specifier between commas

@@ -31,48 +31,41 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 15..18 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "before" @ 19..25
+              Name
+                Identifier "before" @ 19..25
               ValueParameterList
                 LParen "(" @ 25..26
                 ValueParameterSeparatedList
                 RParen ")" @ 26..27 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 28..29
-                BlockItemList
-                RBrace "}" @ 29..30
+              BlockBody
+                Block
+                  LBrace "{" @ 28..29
+                  BlockItemList
+                  RBrace "}" @ 29..30
           ClassMemberDeclaration
             FunctionDeclaration
               ModifierList
               ModifierList
               FunKw "fun" @ 53..56 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "raw" @ 57..60
+              Name
+                Identifier "raw" @ 57..60
               ValueParameterList
                 LParen "(" @ 60..61
                 ValueParameterSeparatedList
                 RParen ")" @ 61..62
-              Block
-                LBrace "{" @ 62..63 trailing=[Whitespace " "]
-                BlockItemList
-                RBrace "}" @ 64..65
-          ClassMemberDeclaration
-            Statement
-              ExpressionStatement
-                UnaryExpression
-                  Plus "+" @ 100..101 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  ", BlockComment "/* member */", Whitespace " "]
-                  ErrorNode
-              TerminatorList
+              BlockBody
+                Block
+                  LBrace "{" @ 62..63 trailing=[Whitespace " "]
+                  BlockItemList
+                  RBrace "}" @ 64..65
+          BogusClassMember
+            Plus "+" @ 100..101 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  ", BlockComment "/* member */", Whitespace " "]
         RBrace "}" @ 102..103 leading=[Newline "\n"]
   Eof "" @ 104..104 leading=[Newline "\n"]
 
 diagnostics:
-  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=102..103 message="expected expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=100..101 message="unexpected orphan class member"
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(102), end: TextSize(103) }) message=expected expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(100), end: TextSize(101) }) message=unexpected orphan class member

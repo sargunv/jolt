@@ -283,10 +283,8 @@ KotlinFile
               BogusType
         Gt ">" @ 386..387 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "broken" @ 388..394
+      Name
+        Identifier "broken" @ 388..394
       ValueParameterList
         LParen "(" @ 394..395
         ValueParameterSeparatedList
@@ -343,10 +341,11 @@ KotlinFile
                     AnnotationList
                     Name
                       Identifier "Any" @ 468..471 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 472..473
-        BlockItemList
-        RBrace "}" @ 474..475 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 472..473
+          BlockItemList
+          RBrace "}" @ 474..475 leading=[Newline "\n"]
     FunctionDeclaration
       ModifierList
       ModifierList
@@ -360,10 +359,8 @@ KotlinFile
               Identifier "U" @ 482..483
         Gt ">" @ 483..484 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "constrained" @ 485..496
+      Name
+        Identifier "constrained" @ 485..496
       ValueParameterList
         LParen "(" @ 496..497
         ValueParameterSeparatedList
@@ -381,10 +378,11 @@ KotlinFile
                     AnnotationList
                     Name
                       Identifier "Any" @ 507..510 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 511..512
-        BlockItemList
-        RBrace "}" @ 513..514 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 511..512
+          BlockItemList
+          RBrace "}" @ 513..514 leading=[Newline "\n"]
     FunctionDeclaration
       ModifierList
       ModifierList
@@ -398,10 +396,8 @@ KotlinFile
               Identifier "T" @ 521..522
         Gt ">" @ 522..523 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "constraintGap" @ 524..537
+      Name
+        Identifier "constraintGap" @ 524..537
       ValueParameterList
         LParen "(" @ 537..538
         ValueParameterSeparatedList
@@ -434,10 +430,11 @@ KotlinFile
                     AnnotationList
                     Name
                       Identifier "Closeable" @ 561..570 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 571..572
-        BlockItemList
-        RBrace "}" @ 573..574 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 571..572
+          BlockItemList
+          RBrace "}" @ 573..574 leading=[Newline "\n"]
     FunctionDeclaration
       ModifierList
       ContextParameterClause
@@ -481,18 +478,17 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 615..618 leading=[Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "contextual" @ 619..629
+      Name
+        Identifier "contextual" @ 619..629
       ValueParameterList
         LParen "(" @ 629..630
         ValueParameterSeparatedList
         RParen ")" @ 630..631 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 632..633
-        BlockItemList
-        RBrace "}" @ 634..635 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 632..633
+          BlockItemList
+          RBrace "}" @ 634..635 leading=[Newline "\n"]
   Eof "" @ 636..636 leading=[Newline "\n"]
 
 diagnostics:

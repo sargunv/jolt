@@ -25,17 +25,16 @@ KotlinFile
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
       CallableName
-        CallableNamePartList
-          TypeReference
-            UserType
-              UserTypeSegmentList
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "String" @ 4..10
-          Dot "." @ 10..11
-          Name
-            Identifier "surrounded" @ 11..21
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "String" @ 4..10
+        Dot "." @ 10..11
+        Name
+          Identifier "surrounded" @ 11..21
       ValueParameterList
         LParen "(" @ 21..22
         ValueParameterSeparatedList
@@ -73,36 +72,36 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "String" @ 55..61 trailing=[Whitespace " "]
-      Assign "=" @ 62..63
-      BinaryExpression
+      ExpressionBody
+        Assign "=" @ 62..63
         BinaryExpression
+          BinaryExpression
+            NameExpression
+              Identifier "prefix" @ 68..74 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Plus "+" @ 75..76 trailing=[Whitespace " "]
+            ThisExpression
+              ThisKw "this" @ 77..81 trailing=[Whitespace " "]
+          Plus "+" @ 82..83 trailing=[Whitespace " "]
           NameExpression
-            Identifier "prefix" @ 68..74 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Plus "+" @ 75..76 trailing=[Whitespace " "]
-          ThisExpression
-            ThisKw "this" @ 77..81 trailing=[Whitespace " "]
-        Plus "+" @ 82..83 trailing=[Whitespace " "]
-        NameExpression
-          Identifier "suffix" @ 84..90
+            Identifier "suffix" @ 84..90
     FunctionDeclaration
       ModifierList
       ModifierList
       FunKw "fun" @ 92..95 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
       CallableName
-        CallableNamePartList
-          TypeReference
-            NullableType
-              UserType
-                UserTypeSegmentList
-                  UserTypeSegment
-                    AnnotationList
-                    Name
-                      Identifier "PsiElement" @ 96..106
-              Question "?" @ 106..107
-          Dot "." @ 107..108
-          Name
-            Identifier "containsNewline" @ 108..123
+        TypeReference
+          NullableType
+            UserType
+              UserTypeSegmentList
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "PsiElement" @ 96..106
+            Question "?" @ 106..107
+        Dot "." @ 107..108
+        Name
+          Identifier "containsNewline" @ 108..123
       ValueParameterList
         LParen "(" @ 123..124
         ValueParameterSeparatedList
@@ -115,47 +114,47 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Boolean" @ 127..134 trailing=[Whitespace " "]
-      Assign "=" @ 135..136 trailing=[Whitespace " "]
-      CallExpression
-        NameExpression
-          Identifier "textContains" @ 137..149
-        TypeArgumentListList
-        ValueArgumentList
-          LParen "(" @ 149..150
-          ValueArgumentEntryList
-            ValueArgument
-              ValueArgumentPrefixList
-              LiteralExpression
-                CharacterLiteral "'\\n'" @ 150..154
-          RParen ")" @ 154..155
-        LambdaExpressionList
+      ExpressionBody
+        Assign "=" @ 135..136 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "textContains" @ 137..149
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 149..150
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                LiteralExpression
+                  CharacterLiteral "'\\n'" @ 150..154
+            RParen ")" @ 154..155
+          LambdaExpressionList
     FunctionDeclaration
       ModifierList
       ModifierList
       FunKw "fun" @ 157..160 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
       CallableName
-        CallableNamePartList
-          TypeReference
-            UserType
-              UserTypeSegmentList
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "com" @ 161..164
-                Dot "." @ 164..165
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "example" @ 165..172
-                Dot "." @ 172..173
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "Scope" @ 173..178
-          Dot "." @ 178..179
-          Name
-            Identifier "renderQualified" @ 179..194
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "com" @ 161..164
+              Dot "." @ 164..165
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "example" @ 165..172
+              Dot "." @ 172..173
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "Scope" @ 173..178
+        Dot "." @ 178..179
+        Name
+          Identifier "renderQualified" @ 179..194
       ValueParameterList
         LParen "(" @ 194..195
         ValueParameterSeparatedList
@@ -168,58 +167,58 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "String" @ 198..204 trailing=[Whitespace " "]
-      Assign "=" @ 205..206 trailing=[Whitespace " "]
-      CallExpression
-        NameExpression
-          Identifier "toString" @ 207..215
-        TypeArgumentListList
-        ValueArgumentList
-          LParen "(" @ 215..216
-          ValueArgumentEntryList
-          RParen ")" @ 216..217
-        LambdaExpressionList
+      ExpressionBody
+        Assign "=" @ 205..206 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "toString" @ 207..215
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 215..216
+            ValueArgumentEntryList
+            RParen ")" @ 216..217
+          LambdaExpressionList
     FunctionDeclaration
       ModifierList
       ModifierList
       FunKw "fun" @ 219..222 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
       CallableName
-        CallableNamePartList
-          TypeReference
-            UserType
-              UserTypeSegmentList
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "MutableMap" @ 223..233
-                  TypeArgumentList
-                    Lt "<" @ 233..234
-                    TypeProjectionSeparatedList
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
-                            UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "String" @ 234..240
-                      Comma "," @ 240..241 trailing=[Whitespace " "]
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
-                            UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "Expression" @ 242..252
-                              TypeArgumentList
-                                Lt "<" @ 252..253
-                                TypeProjectionSeparatedList
-                                  StarProjection
-                                    Star "*" @ 253..254
-                                Gt ">" @ 254..255
-                    Gt ">" @ 255..256
-          Dot "." @ 256..257
-          Name
-            Identifier "record" @ 257..263
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "MutableMap" @ 223..233
+                TypeArgumentList
+                  Lt "<" @ 233..234
+                  TypeProjectionSeparatedList
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 234..240
+                    Comma "," @ 240..241 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "Expression" @ 242..252
+                            TypeArgumentList
+                              Lt "<" @ 252..253
+                              TypeProjectionSeparatedList
+                                StarProjection
+                                  Star "*" @ 253..254
+                              Gt ">" @ 254..255
+                  Gt ">" @ 255..256
+        Dot "." @ 256..257
+        Name
+          Identifier "record" @ 257..263
       ValueParameterList
         LParen "(" @ 263..264
         ValueParameterSeparatedList
@@ -255,31 +254,32 @@ KotlinFile
                           Star "*" @ 295..296
                       Gt ">" @ 296..297
         RParen ")" @ 297..298 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 299..300
-        BlockItemList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NameExpression
-                  Identifier "put" @ 305..308 leading=[Newline "\n", Whitespace "    "]
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 308..309
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      NameExpression
-                        Identifier "key" @ 309..312
-                    Comma "," @ 312..313 trailing=[Whitespace " "]
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      NameExpression
-                        Identifier "value" @ 314..319
-                  RParen ")" @ 319..320
-                LambdaExpressionList
-            TerminatorList
-        RBrace "}" @ 321..322 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 299..300
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "put" @ 305..308 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 308..309
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "key" @ 309..312
+                      Comma "," @ 312..313 trailing=[Whitespace " "]
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "value" @ 314..319
+                    RParen ")" @ 319..320
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 321..322 leading=[Newline "\n"]
   Eof "" @ 323..323 leading=[Newline "\n"]
 
 diagnostics:

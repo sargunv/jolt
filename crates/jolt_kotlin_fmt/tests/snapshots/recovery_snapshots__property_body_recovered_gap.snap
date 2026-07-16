@@ -7,10 +7,10 @@ val property: Int +
     get() = 1
 
 formatted:
-val property: Int
-+
+val property: Int +
     get() =
   1
 
 diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(18), end: TextSize(19) }) message=expected property initializer operator
 code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=Some(TextRange { start: TextSize(30), end: TextSize(31) }) message=invalid assignment target

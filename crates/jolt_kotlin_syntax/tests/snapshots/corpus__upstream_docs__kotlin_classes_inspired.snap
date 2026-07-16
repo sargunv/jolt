@@ -62,10 +62,8 @@ KotlinFile
               ModifierList
               ModifierList
               VarKw "var" @ 65..68 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "visits" @ 69..75
+              Name
+                Identifier "visits" @ 69..75
               Colon ":" @ 75..76 trailing=[Whitespace " "]
               TypeReference
                 UserType
@@ -74,9 +72,10 @@ KotlinFile
                       AnnotationList
                       Name
                         Identifier "Int" @ 77..80 trailing=[Whitespace " "]
-              Assign "=" @ 81..82 trailing=[Whitespace " "]
-              LiteralExpression
-                IntegerLiteral "0" @ 83..84
+              PropertyInitializer
+                Assign "=" @ 81..82 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "0" @ 83..84
               PropertyBodyMemberList
           ClassMemberDeclaration
             FunctionDeclaration
@@ -84,10 +83,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 90..93 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "greet" @ 94..99
+              Name
+                Identifier "greet" @ 94..99
               ValueParameterList
                 LParen "(" @ 99..100
                 ValueParameterSeparatedList
@@ -100,18 +97,19 @@ KotlinFile
                       AnnotationList
                       Name
                         Identifier "String" @ 103..109 trailing=[Whitespace " "]
-              Assign "=" @ 110..111 trailing=[Whitespace " "]
-              StringTemplateExpression
-                StringTemplateEntryList
-                  StringTemplateEntry
-                    OpenQuote "\"" @ 112..113
-                  StringTemplateEntry
-                    RegularStringPart "Welcome, " @ 113..122
-                  StringTemplateEntry
-                    ShortTemplateEntryStart "$" @ 122..123
-                  StringTemplateEntry
-                    Identifier "name" @ 123..127
-                ClosingQuote "\"" @ 127..128
+              ExpressionBody
+                Assign "=" @ 110..111 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 112..113
+                    StringTemplateEntry
+                      RegularStringPart "Welcome, " @ 113..122
+                    StringTemplateEntry
+                      ShortTemplateEntryStart "$" @ 122..123
+                    StringTemplateEntry
+                      Identifier "name" @ 123..127
+                  ClosingQuote "\"" @ 127..128
         RBrace "}" @ 129..130 leading=[Newline "\n"]
   Eof "" @ 131..131 leading=[Newline "\n"]
 

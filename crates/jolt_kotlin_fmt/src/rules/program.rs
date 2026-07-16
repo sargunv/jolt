@@ -22,7 +22,7 @@ use crate::helpers::recovery::{
     format_optional_field, format_required_field, resolve_list_part, resolve_required_field,
 };
 use crate::rules::annotations::format_annotation;
-use crate::rules::declarations::{format_file_item, format_fun_interface_file_items};
+use crate::rules::declarations::format_file_item;
 use crate::rules::imports::format_import_list;
 use crate::rules::names::format_qualified_name;
 use crate::rules::statements::format_statement_syntax_with_leading;
@@ -390,39 +390,11 @@ fn format_source_body<'source>(
                 let separator = source_item_separator(previous, item, preserve).doc(body);
                 body.push(separator);
             }
-            if let (
-                KotlinFileItem::FunctionDeclaration(function),
-                Some(KotlinFileItem::InterfaceDeclaration(interface)),
-            ) = (item, items.get(index + 1))
-                && is_fun_interface_header(function)
-                && let Some(combined) = format_fun_interface_file_items(body, function, interface)
-            {
-                body.push(combined);
-                index += 2;
-                continue;
-            }
             let formatted = format_body_item(body, item);
             body.push(formatted);
             index += 1;
         }
     })
-}
-
-fn is_fun_interface_header(function: &jolt_kotlin_syntax::FunctionDeclaration<'_>) -> bool {
-    function.is_recovery_free()
-        && matches!(function.fun_token(), Ok(KotlinSyntaxField::Present(_)))
-        && matches!(function.context(), Ok(KotlinSyntaxField::Missing(_)))
-        && matches!(
-            function.type_parameters(),
-            Ok(KotlinSyntaxField::Missing(_))
-        )
-        && matches!(function.name(), Ok(KotlinSyntaxField::Missing(_)))
-        && matches!(function.parameters(), Ok(KotlinSyntaxField::Missing(_)))
-        && matches!(function.return_colon(), Ok(KotlinSyntaxField::Missing(_)))
-        && matches!(function.return_type(), Ok(KotlinSyntaxField::Missing(_)))
-        && matches!(function.constraints(), Ok(KotlinSyntaxField::Missing(_)))
-        && matches!(function.assign(), Ok(KotlinSyntaxField::Missing(_)))
-        && matches!(function.body(), Ok(KotlinSyntaxField::Missing(_)))
 }
 
 fn is_statement_item(item: &KotlinFileItem<'_>) -> bool {

@@ -34,71 +34,70 @@ KotlinFile
       ModifierList
       ModifierList
       ValKw "val" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "settings" @ 36..44 trailing=[Whitespace " "]
-      Identifier "by" @ 45..47 trailing=[Whitespace " "]
-      CallExpression
-        NameExpression
-          Identifier "lazy" @ 48..52 trailing=[Whitespace " "]
-        TypeArgumentListList
-        LambdaExpressionList
-          LambdaExpression
-            LambdaBody
-              LBrace "{" @ 53..54
-              LambdaBodyItemList
-                Statement
-                  ExpressionStatement
-                    CallExpression
-                      NameExpression
-                        Identifier "mapOf" @ 59..64 leading=[Newline "\n", Whitespace "    "]
-                      TypeArgumentListList
-                      ValueArgumentList
-                        LParen "(" @ 64..65
-                        ValueArgumentEntryList
-                          ValueArgument
-                            ValueArgumentPrefixList
-                            BinaryExpression
-                              StringTemplateExpression
-                                StringTemplateEntryList
-                                  StringTemplateEntry
-                                    OpenQuote "\"" @ 74..75 leading=[Newline "\n", Whitespace "        "]
-                                  StringTemplateEntry
-                                    RegularStringPart "environment" @ 75..86
-                                ClosingQuote "\"" @ 86..87 trailing=[Whitespace " "]
-                              Identifier "to" @ 88..90 trailing=[Whitespace " "]
-                              StringTemplateExpression
-                                StringTemplateEntryList
-                                  StringTemplateEntry
-                                    OpenQuote "\"" @ 91..92
-                                  StringTemplateEntry
-                                    RegularStringPart "development" @ 92..103
-                                ClosingQuote "\"" @ 103..104
-                          Comma "," @ 104..105
-                          ValueArgument
-                            ValueArgumentPrefixList
-                            BinaryExpression
-                              StringTemplateExpression
-                                StringTemplateEntryList
-                                  StringTemplateEntry
-                                    OpenQuote "\"" @ 114..115 leading=[Newline "\n", Whitespace "        "]
-                                  StringTemplateEntry
-                                    RegularStringPart "feature" @ 115..122
-                                ClosingQuote "\"" @ 122..123 trailing=[Whitespace " "]
-                              Identifier "to" @ 124..126 trailing=[Whitespace " "]
-                              StringTemplateExpression
-                                StringTemplateEntryList
-                                  StringTemplateEntry
-                                    OpenQuote "\"" @ 127..128
-                                  StringTemplateEntry
-                                    RegularStringPart "layout-fit-boundary" @ 128..147
-                                ClosingQuote "\"" @ 147..148
-                          Comma "," @ 148..149
-                        RParen ")" @ 154..155 leading=[Newline "\n", Whitespace "    "]
-                      LambdaExpressionList
-                  TerminatorList
-              RBrace "}" @ 156..157 leading=[Newline "\n"]
+      Name
+        Identifier "settings" @ 36..44 trailing=[Whitespace " "]
+      PropertyInitializer
+        Identifier "by" @ 45..47 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "lazy" @ 48..52 trailing=[Whitespace " "]
+          TypeArgumentListList
+          LambdaExpressionList
+            LambdaExpression
+              LambdaBody
+                LBrace "{" @ 53..54
+                LambdaBodyItemList
+                  Statement
+                    ExpressionStatement
+                      CallExpression
+                        NameExpression
+                          Identifier "mapOf" @ 59..64 leading=[Newline "\n", Whitespace "    "]
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 64..65
+                          ValueArgumentEntryList
+                            ValueArgument
+                              ValueArgumentPrefixList
+                              BinaryExpression
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 74..75 leading=[Newline "\n", Whitespace "        "]
+                                    StringTemplateEntry
+                                      RegularStringPart "environment" @ 75..86
+                                  ClosingQuote "\"" @ 86..87 trailing=[Whitespace " "]
+                                Identifier "to" @ 88..90 trailing=[Whitespace " "]
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 91..92
+                                    StringTemplateEntry
+                                      RegularStringPart "development" @ 92..103
+                                  ClosingQuote "\"" @ 103..104
+                            Comma "," @ 104..105
+                            ValueArgument
+                              ValueArgumentPrefixList
+                              BinaryExpression
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 114..115 leading=[Newline "\n", Whitespace "        "]
+                                    StringTemplateEntry
+                                      RegularStringPart "feature" @ 115..122
+                                  ClosingQuote "\"" @ 122..123 trailing=[Whitespace " "]
+                                Identifier "to" @ 124..126 trailing=[Whitespace " "]
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 127..128
+                                    StringTemplateEntry
+                                      RegularStringPart "layout-fit-boundary" @ 128..147
+                                  ClosingQuote "\"" @ 147..148
+                            Comma "," @ 148..149
+                          RParen ")" @ 154..155 leading=[Newline "\n", Whitespace "    "]
+                        LambdaExpressionList
+                    TerminatorList
+                RBrace "}" @ 156..157 leading=[Newline "\n"]
       PropertyBodyMemberList
   Eof "" @ 158..158 leading=[Newline "\n"]
 

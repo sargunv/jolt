@@ -43,10 +43,8 @@ KotlinFile
                       ModifierList
                       ModifierList
                       ValKw "val" @ 48..51 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      CallableName
-                        CallableNamePartList
-                          Name
-                            Identifier "key" @ 52..55
+                      Name
+                        Identifier "key" @ 52..55
                       Colon ":" @ 55..56 trailing=[Whitespace " "]
                       TypeReference
                         UserType
@@ -68,15 +66,15 @@ KotlinFile
               ClassBody
                 LBrace "{" @ 91..92
                 ClassMemberList
-                  ClassMemberDeclaration
-                    EnumEntry
-                      NameExpression
-                        Identifier "First" @ 101..106 leading=[Newline "\n", Whitespace "        "]
+                  EnumEntry
+                    ModifierList
+                    Name
+                      Identifier "First" @ 101..106 leading=[Newline "\n", Whitespace "        "]
                     Comma "," @ 106..107
-                  ClassMemberDeclaration
-                    EnumEntry
-                      NameExpression
-                        Identifier "Second" @ 116..122 leading=[Newline "\n", Whitespace "        "]
+                  EnumEntry
+                    ModifierList
+                    Name
+                      Identifier "Second" @ 116..122 leading=[Newline "\n", Whitespace "        "]
                     Comma "," @ 122..123
                 RBrace "}" @ 128..129 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 130..131 leading=[Newline "\n"]

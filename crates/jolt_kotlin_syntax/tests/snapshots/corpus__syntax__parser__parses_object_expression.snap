@@ -18,68 +18,66 @@ KotlinFile
       ModifierList
       ModifierList
       ValKw "val" @ 0..3 trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "listener" @ 4..12 trailing=[Whitespace " "]
-      Assign "=" @ 13..14 trailing=[Whitespace " "]
-      ObjectExpression
-        ObjectKw "object" @ 15..21 trailing=[Whitespace " "]
-        Colon ":" @ 22..23 trailing=[Whitespace " "]
-        DelegationSpecifierList
-          DelegationSpecifierSeparatedList
-            DelegationSpecifier
-              TypeReference
-                UserType
-                  UserTypeSegmentList
-                    UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Runnable" @ 24..32 trailing=[Whitespace " "]
-        ClassBody
-          LBrace "{" @ 33..34
-          ClassMemberList
-            ClassMemberDeclaration
-              FunctionDeclaration
-                ModifierList
-                  Identifier "override" @ 39..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                ModifierList
-                FunKw "fun" @ 48..51 trailing=[Whitespace " "]
-                ModifierList
-                CallableName
-                  CallableNamePartList
-                    Name
-                      Identifier "run" @ 52..55
-                ValueParameterList
-                  LParen "(" @ 55..56
-                  ValueParameterSeparatedList
-                  RParen ")" @ 56..57 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 58..59
-                  BlockItemList
-                    Statement
-                      ExpressionStatement
-                        CallExpression
-                          NameExpression
-                            Identifier "println" @ 68..75 leading=[Newline "\n", Whitespace "        "]
-                          TypeArgumentListList
-                          ValueArgumentList
-                            LParen "(" @ 75..76
-                            ValueArgumentEntryList
-                              ValueArgument
-                                ValueArgumentPrefixList
-                                StringTemplateExpression
-                                  StringTemplateEntryList
-                                    StringTemplateEntry
-                                      OpenQuote "\"" @ 76..77
-                                    StringTemplateEntry
-                                      RegularStringPart "tick" @ 77..81
-                                  ClosingQuote "\"" @ 81..82
-                            RParen ")" @ 82..83
-                          LambdaExpressionList
-                      TerminatorList
-                  RBrace "}" @ 88..89 leading=[Newline "\n", Whitespace "    "]
-          RBrace "}" @ 90..91 leading=[Newline "\n"]
+      Name
+        Identifier "listener" @ 4..12 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 13..14 trailing=[Whitespace " "]
+        ObjectExpression
+          ObjectKw "object" @ 15..21 trailing=[Whitespace " "]
+          Colon ":" @ 22..23 trailing=[Whitespace " "]
+          DelegationSpecifierList
+            DelegationSpecifierSeparatedList
+              DelegationSpecifier
+                TypeReference
+                  UserType
+                    UserTypeSegmentList
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Runnable" @ 24..32 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 33..34
+            ClassMemberList
+              ClassMemberDeclaration
+                FunctionDeclaration
+                  ModifierList
+                    Identifier "override" @ 39..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  ModifierList
+                  FunKw "fun" @ 48..51 trailing=[Whitespace " "]
+                  ModifierList
+                  Name
+                    Identifier "run" @ 52..55
+                  ValueParameterList
+                    LParen "(" @ 55..56
+                    ValueParameterSeparatedList
+                    RParen ")" @ 56..57 trailing=[Whitespace " "]
+                  BlockBody
+                    Block
+                      LBrace "{" @ 58..59
+                      BlockItemList
+                        Statement
+                          ExpressionStatement
+                            CallExpression
+                              NameExpression
+                                Identifier "println" @ 68..75 leading=[Newline "\n", Whitespace "        "]
+                              TypeArgumentListList
+                              ValueArgumentList
+                                LParen "(" @ 75..76
+                                ValueArgumentEntryList
+                                  ValueArgument
+                                    ValueArgumentPrefixList
+                                    StringTemplateExpression
+                                      StringTemplateEntryList
+                                        StringTemplateEntry
+                                          OpenQuote "\"" @ 76..77
+                                        StringTemplateEntry
+                                          RegularStringPart "tick" @ 77..81
+                                      ClosingQuote "\"" @ 81..82
+                                RParen ")" @ 82..83
+                              LambdaExpressionList
+                          TerminatorList
+                      RBrace "}" @ 88..89 leading=[Newline "\n", Whitespace "    "]
+            RBrace "}" @ 90..91 leading=[Newline "\n"]
       PropertyBodyMemberList
   Eof "" @ 92..92 leading=[Newline "\n"]
 

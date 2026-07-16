@@ -16,17 +16,16 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "topLevelOrphanToken" @ 4..23
+      Name
+        Identifier "topLevelOrphanToken" @ 4..23
       ValueParameterList
         LParen "(" @ 23..24
         ValueParameterSeparatedList
         RParen ")" @ 24..25 trailing=[Whitespace " "]
-      Assign "=" @ 26..27 trailing=[Whitespace " "]
-      NameExpression
-        Identifier "Unit" @ 28..32
+      ExpressionBody
+        Assign "=" @ 26..27 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "Unit" @ 28..32
     BogusKotlinFileItem
       RBrace "}" @ 33..34 leading=[Newline "\n"]
   Eof "" @ 35..35 leading=[Newline "\n"]

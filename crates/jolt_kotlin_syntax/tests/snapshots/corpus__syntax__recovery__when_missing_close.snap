@@ -15,10 +15,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "demo" @ 4..8
+      Name
+        Identifier "demo" @ 4..8
       ValueParameterList
         LParen "(" @ 8..9
         ValueParameterSeparatedList
@@ -35,36 +33,37 @@ KotlinFile
                     Name
                       Identifier "Int" @ 16..19
         RParen ")" @ 19..20 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 21..22 trailing=[Whitespace " "]
-        BlockItemList
-          Statement
-            ExpressionStatement
-              WhenExpression
-                WhenKw "when" @ 23..27 trailing=[Whitespace " "]
-                WhenSubject
-                  LParen "(" @ 28..29
-                  NameExpression
-                    Identifier "value" @ 29..34
-                  RParen ")" @ 34..35 trailing=[Whitespace " "]
-                LBrace "{" @ 36..37 trailing=[Whitespace " "]
-                WhenEntryList
-                  WhenEntry
-                    WhenConditionSeparatedList
-                      WhenCondition
-                        LiteralExpression
-                          IntegerLiteral "1" @ 38..39 trailing=[Whitespace " "]
-                    Arrow "->" @ 40..42 trailing=[Whitespace " "]
-                    CallExpression
-                      NameExpression
-                        Identifier "one" @ 43..46
-                      TypeArgumentListList
-                      ValueArgumentList
-                        LParen "(" @ 46..47
-                        ValueArgumentEntryList
-                        RParen ")" @ 47..48
-                      LambdaExpressionList
-            TerminatorList
+      BlockBody
+        Block
+          LBrace "{" @ 21..22 trailing=[Whitespace " "]
+          BlockItemList
+            Statement
+              ExpressionStatement
+                WhenExpression
+                  WhenKw "when" @ 23..27 trailing=[Whitespace " "]
+                  WhenSubject
+                    LParen "(" @ 28..29
+                    NameExpression
+                      Identifier "value" @ 29..34
+                    RParen ")" @ 34..35 trailing=[Whitespace " "]
+                  LBrace "{" @ 36..37 trailing=[Whitespace " "]
+                  WhenEntryList
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          LiteralExpression
+                            IntegerLiteral "1" @ 38..39 trailing=[Whitespace " "]
+                      Arrow "->" @ 40..42 trailing=[Whitespace " "]
+                      CallExpression
+                        NameExpression
+                          Identifier "one" @ 43..46
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 46..47
+                          ValueArgumentEntryList
+                          RParen ")" @ 47..48
+                        LambdaExpressionList
+              TerminatorList
   Eof "" @ 49..49 leading=[Newline "\n"]
 
 diagnostics:

@@ -52,39 +52,38 @@ KotlinFile
                 Identifier "private" @ 56..63 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
               ValKw "val" @ 64..67 trailing=[Whitespace " "]
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "values" @ 68..74 trailing=[Whitespace " "]
-              Assign "=" @ 75..76 trailing=[Whitespace " "]
-              CallExpression
-                NameExpression
-                  Identifier "mutableMapOf" @ 77..89
-                TypeArgumentListList
-                  TypeArgumentList
-                    Lt "<" @ 89..90
-                    TypeProjectionSeparatedList
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
-                            UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "String" @ 90..96
-                      Comma "," @ 96..97 trailing=[Whitespace " "]
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
-                            UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "String" @ 98..104
-                    Gt ">" @ 104..105
-                ValueArgumentList
-                  LParen "(" @ 105..106
-                  ValueArgumentEntryList
-                  RParen ")" @ 106..107
-                LambdaExpressionList
+              Name
+                Identifier "values" @ 68..74 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 75..76 trailing=[Whitespace " "]
+                CallExpression
+                  NameExpression
+                    Identifier "mutableMapOf" @ 77..89
+                  TypeArgumentListList
+                    TypeArgumentList
+                      Lt "<" @ 89..90
+                      TypeProjectionSeparatedList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 90..96
+                        Comma "," @ 96..97 trailing=[Whitespace " "]
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 98..104
+                      Gt ">" @ 104..105
+                  ValueArgumentList
+                    LParen "(" @ 105..106
+                    ValueArgumentEntryList
+                    RParen ")" @ 106..107
+                  LambdaExpressionList
               PropertyBodyMemberList
           ClassMemberDeclaration
             FunctionDeclaration
@@ -92,10 +91,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 113..116 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "put" @ 117..120
+              Name
+                Identifier "put" @ 117..120
               ValueParameterList
                 LParen "(" @ 120..121
                 ValueParameterSeparatedList
@@ -125,27 +122,28 @@ KotlinFile
                             Name
                               Identifier "String" @ 141..147
                 RParen ")" @ 147..148 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 149..150
-                BlockItemList
-                  Statement
-                    ExpressionStatement
-                      AssignmentExpression
-                        IndexExpression
+              BlockBody
+                Block
+                  LBrace "{" @ 149..150
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        AssignmentExpression
+                          IndexExpression
+                            NameExpression
+                              Identifier "values" @ 159..165 leading=[Newline "\n", Whitespace "        "]
+                            LBracket "[" @ 165..166
+                            ValueArgumentSeparatedList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "key" @ 166..169
+                            RBracket "]" @ 169..170 trailing=[Whitespace " "]
+                          Assign "=" @ 171..172 trailing=[Whitespace " "]
                           NameExpression
-                            Identifier "values" @ 159..165 leading=[Newline "\n", Whitespace "        "]
-                          LBracket "[" @ 165..166
-                          ValueArgumentSeparatedList
-                            ValueArgument
-                              ValueArgumentPrefixList
-                              NameExpression
-                                Identifier "key" @ 166..169
-                          RBracket "]" @ 169..170 trailing=[Whitespace " "]
-                        Assign "=" @ 171..172 trailing=[Whitespace " "]
-                        NameExpression
-                          Identifier "value" @ 173..178
-                    TerminatorList
-                RBrace "}" @ 183..184 leading=[Newline "\n", Whitespace "    "]
+                            Identifier "value" @ 173..178
+                      TerminatorList
+                  RBrace "}" @ 183..184 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 185..186 leading=[Newline "\n"]
     ClassDeclaration
       ModifierList
@@ -171,18 +169,17 @@ KotlinFile
                         Identifier "const" @ 241..246 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                       ModifierList
                       ValKw "val" @ 247..250 trailing=[Whitespace " "]
-                      CallableName
-                        CallableNamePartList
-                          Name
-                            Identifier "KIND" @ 251..255 trailing=[Whitespace " "]
-                      Assign "=" @ 256..257 trailing=[Whitespace " "]
-                      StringTemplateExpression
-                        StringTemplateEntryList
-                          StringTemplateEntry
-                            OpenQuote "\"" @ 258..259
-                          StringTemplateEntry
-                            RegularStringPart "fixture" @ 259..266
-                        ClosingQuote "\"" @ 266..267
+                      Name
+                        Identifier "KIND" @ 251..255 trailing=[Whitespace " "]
+                      PropertyInitializer
+                        Assign "=" @ 256..257 trailing=[Whitespace " "]
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 258..259
+                            StringTemplateEntry
+                              RegularStringPart "fixture" @ 259..266
+                          ClosingQuote "\"" @ 266..267
                       PropertyBodyMemberList
                 RBrace "}" @ 272..273 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 274..275 leading=[Newline "\n"]

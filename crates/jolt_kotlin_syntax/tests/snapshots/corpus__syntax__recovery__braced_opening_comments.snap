@@ -29,39 +29,38 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 63..66 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "block" @ 67..72
+              Name
+                Identifier "block" @ 67..72
               ValueParameterList
                 LParen "(" @ 72..73
                 ValueParameterSeparatedList
                 RParen ")" @ 73..74 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 75..76 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:block-open */"]
-                BlockItemList
-                  Statement
-                    ExpressionStatement
-                      CallExpression
-                        NameExpression
-                          Identifier "println" @ 114..121 leading=[Newline "\n", Whitespace "        "]
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 121..122
-                          ValueArgumentEntryList
-                            ValueArgument
-                              ValueArgumentPrefixList
-                              StringTemplateExpression
-                                StringTemplateEntryList
-                                  StringTemplateEntry
-                                    OpenQuote "\"" @ 122..123
-                                  StringTemplateEntry
-                                    RegularStringPart "body" @ 123..127
-                                ClosingQuote "\"" @ 127..128
-                          RParen ")" @ 128..129
-                        LambdaExpressionList
-                    TerminatorList
-                RBrace "}" @ 134..135 leading=[Newline "\n", Whitespace "    "]
+              BlockBody
+                Block
+                  LBrace "{" @ 75..76 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:block-open */"]
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "println" @ 114..121 leading=[Newline "\n", Whitespace "        "]
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 121..122
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 122..123
+                                    StringTemplateEntry
+                                      RegularStringPart "body" @ 123..127
+                                  ClosingQuote "\"" @ 127..128
+                            RParen ")" @ 128..129
+                          LambdaExpressionList
+                      TerminatorList
+                  RBrace "}" @ 134..135 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 136..137 leading=[Newline "\n"]
   Eof "" @ 138..138 leading=[Newline "\n"]
 

@@ -49,10 +49,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "summarize" @ 36..45
+      Name
+        Identifier "summarize" @ 36..45
       ValueParameterList
         LParen "(" @ 45..46
         ValueParameterSeparatedList
@@ -99,195 +97,194 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "String" @ 70..76 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 77..78
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 83..86 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "total" @ 87..92 trailing=[Whitespace " "]
-            Assign "=" @ 93..94 trailing=[Whitespace " "]
-            TryExpression
-              TryKw "try" @ 95..98 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 99..100
-                BlockItemList
-                  PropertyDeclaration
-                    ModifierList
-                    ModifierList
-                    VarKw "var" @ 109..112 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                    CallableName
-                      CallableNamePartList
+      BlockBody
+        Block
+          LBrace "{" @ 77..78
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 83..86 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "total" @ 87..92 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 93..94 trailing=[Whitespace " "]
+                TryExpression
+                  TryKw "try" @ 95..98 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 99..100
+                    BlockItemList
+                      PropertyDeclaration
+                        ModifierList
+                        ModifierList
+                        VarKw "var" @ 109..112 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                         Name
                           Identifier "count" @ 113..118 trailing=[Whitespace " "]
-                    Assign "=" @ 119..120 trailing=[Whitespace " "]
-                    LiteralExpression
-                      IntegerLiteral "0" @ 121..122
-                    PropertyBodyMemberList
-                  Statement
-                    ExpressionStatement
-                      NameExpression
-                        Identifier "outer" @ 131..136 leading=[Newline "\n", Whitespace "        "]
-                        At "@" @ 136..137 trailing=[Whitespace " "]
-                        ForStatement
-                          ForKw "for" @ 138..141 trailing=[Whitespace " "]
-                          LParen "(" @ 142..143
-                          NameExpression
-                            Identifier "row" @ 143..146 trailing=[Whitespace " "]
-                          InKw "in" @ 147..149 trailing=[Whitespace " "]
-                          NameExpression
-                            Identifier "rows" @ 150..154
-                          RParen ")" @ 154..155 trailing=[Whitespace " "]
-                          Block
-                            LBrace "{" @ 156..157
-                            BlockItemList
-                              Statement
-                                ExpressionStatement
-                                  ForStatement
-                                    ForKw "for" @ 170..173 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                    LParen "(" @ 174..175
-                                    NameExpression
-                                      Identifier "value" @ 175..180 trailing=[Whitespace " "]
-                                    InKw "in" @ 181..183 trailing=[Whitespace " "]
-                                    NameExpression
-                                      Identifier "row" @ 184..187
-                                    RParen ")" @ 187..188 trailing=[Whitespace " "]
-                                    Block
-                                      LBrace "{" @ 189..190
-                                      BlockItemList
-                                        Statement
-                                          ExpressionStatement
-                                            IfExpression
-                                              IfKw "if" @ 207..209 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
-                                              ParenthesizedExpression
-                                                LParen "(" @ 210..211
-                                                BinaryExpression
-                                                  NameExpression
-                                                    Identifier "value" @ 211..216 trailing=[Whitespace " "]
-                                                  Lt "<" @ 217..218 trailing=[Whitespace " "]
-                                                  LiteralExpression
-                                                    IntegerLiteral "0" @ 219..220
-                                                RParen ")" @ 220..221 trailing=[Whitespace " "]
-                                              JumpExpression
-                                                ContinueKw "continue" @ 222..230
-                                                At "@" @ 230..231
-                                                Identifier "outer" @ 231..236
-                                          TerminatorList
-                                        Statement
-                                          ExpressionStatement
-                                            AssignmentExpression
-                                              NameExpression
-                                                Identifier "count" @ 253..258 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
-                                              PlusEq "+=" @ 259..261 trailing=[Whitespace " "]
-                                              NameExpression
-                                                Identifier "value" @ 262..267
-                                          TerminatorList
-                                      RBrace "}" @ 280..281 leading=[Newline "\n", Whitespace "            "]
-                                TerminatorList
-                            RBrace "}" @ 290..291 leading=[Newline "\n", Whitespace "        "]
-                    TerminatorList
-                  Statement
-                    ExpressionStatement
-                      NameExpression
-                        Identifier "count" @ 300..305 leading=[Newline "\n", Whitespace "        "]
-                    TerminatorList
-                RBrace "}" @ 310..311 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              CatchClauseList
-                CatchClause
-                  Identifier "catch" @ 312..317 trailing=[Whitespace " "]
-                  ValueParameterList
-                    LParen "(" @ 318..319
-                    ValueParameterSeparatedList
-                      ValueParameter
-                        ModifierList
-                        Name
-                          Identifier "error" @ 319..324
-                        Colon ":" @ 324..325 trailing=[Whitespace " "]
-                        TypeReference
-                          UserType
-                            UserTypeSegmentList
-                              UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "IllegalStateException" @ 326..347
-                    RParen ")" @ 347..348 trailing=[Whitespace " "]
-                  Block
-                    LBrace "{" @ 349..350
-                    BlockItemList
+                        PropertyInitializer
+                          Assign "=" @ 119..120 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "0" @ 121..122
+                        PropertyBodyMemberList
                       Statement
                         ExpressionStatement
-                          JumpExpression
-                            ReturnKw "return" @ 359..365 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                            StringTemplateExpression
-                              StringTemplateEntryList
-                                StringTemplateEntry
-                                  OpenQuote "\"" @ 366..367
-                                StringTemplateEntry
-                                  RegularStringPart "error" @ 367..372
-                              ClosingQuote "\"" @ 372..373
+                          NameExpression
+                            Identifier "outer" @ 131..136 leading=[Newline "\n", Whitespace "        "]
+                            At "@" @ 136..137 trailing=[Whitespace " "]
+                            ForStatement
+                              ForKw "for" @ 138..141 trailing=[Whitespace " "]
+                              LParen "(" @ 142..143
+                              NameExpression
+                                Identifier "row" @ 143..146 trailing=[Whitespace " "]
+                              InKw "in" @ 147..149 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "rows" @ 150..154
+                              RParen ")" @ 154..155 trailing=[Whitespace " "]
+                              Block
+                                LBrace "{" @ 156..157
+                                BlockItemList
+                                  Statement
+                                    ExpressionStatement
+                                      ForStatement
+                                        ForKw "for" @ 170..173 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                                        LParen "(" @ 174..175
+                                        NameExpression
+                                          Identifier "value" @ 175..180 trailing=[Whitespace " "]
+                                        InKw "in" @ 181..183 trailing=[Whitespace " "]
+                                        NameExpression
+                                          Identifier "row" @ 184..187
+                                        RParen ")" @ 187..188 trailing=[Whitespace " "]
+                                        Block
+                                          LBrace "{" @ 189..190
+                                          BlockItemList
+                                            Statement
+                                              ExpressionStatement
+                                                IfExpression
+                                                  IfKw "if" @ 207..209 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+                                                  ParenthesizedExpression
+                                                    LParen "(" @ 210..211
+                                                    BinaryExpression
+                                                      NameExpression
+                                                        Identifier "value" @ 211..216 trailing=[Whitespace " "]
+                                                      Lt "<" @ 217..218 trailing=[Whitespace " "]
+                                                      LiteralExpression
+                                                        IntegerLiteral "0" @ 219..220
+                                                    RParen ")" @ 220..221 trailing=[Whitespace " "]
+                                                  JumpExpression
+                                                    ContinueKw "continue" @ 222..230
+                                                    At "@" @ 230..231
+                                                    Identifier "outer" @ 231..236
+                                              TerminatorList
+                                            Statement
+                                              ExpressionStatement
+                                                AssignmentExpression
+                                                  NameExpression
+                                                    Identifier "count" @ 253..258 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+                                                  PlusEq "+=" @ 259..261 trailing=[Whitespace " "]
+                                                  NameExpression
+                                                    Identifier "value" @ 262..267
+                                              TerminatorList
+                                          RBrace "}" @ 280..281 leading=[Newline "\n", Whitespace "            "]
+                                    TerminatorList
+                                RBrace "}" @ 290..291 leading=[Newline "\n", Whitespace "        "]
                         TerminatorList
-                    RBrace "}" @ 378..379 leading=[Newline "\n", Whitespace "    "]
-            PropertyBodyMemberList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 385..391 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                WhenExpression
-                  WhenKw "when" @ 392..396 trailing=[Whitespace " "]
-                  LBrace "{" @ 397..398
-                  WhenEntryList
-                    WhenEntry
-                      WhenConditionSeparatedList
-                        WhenCondition
-                          BinaryExpression
-                            NameExpression
-                              Identifier "total" @ 407..412 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                            EqEq "==" @ 413..415 trailing=[Whitespace " "]
-                            LiteralExpression
-                              IntegerLiteral "0" @ 416..417 trailing=[Whitespace " "]
-                      Arrow "->" @ 418..420 trailing=[Whitespace " "]
-                      StringTemplateExpression
-                        StringTemplateEntryList
-                          StringTemplateEntry
-                            OpenQuote "\"" @ 421..422
-                          StringTemplateEntry
-                            RegularStringPart "empty" @ 422..427
-                        ClosingQuote "\"" @ 427..428
-                    WhenEntry
-                      WhenConditionSeparatedList
-                        WhenCondition
-                          BinaryExpression
-                            NameExpression
-                              Identifier "total" @ 437..442 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                            Gt ">" @ 443..444 trailing=[Whitespace " "]
-                            LiteralExpression
-                              IntegerLiteral "10" @ 445..447 trailing=[Whitespace " "]
-                      Arrow "->" @ 448..450 trailing=[Whitespace " "]
-                      StringTemplateExpression
-                        StringTemplateEntryList
-                          StringTemplateEntry
-                            OpenQuote "\"" @ 451..452
-                          StringTemplateEntry
-                            RegularStringPart "large" @ 452..457
-                        ClosingQuote "\"" @ 457..458
-                    WhenEntry
-                      ElseKw "else" @ 467..471 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      WhenConditionSeparatedList
-                      Arrow "->" @ 472..474 trailing=[Whitespace " "]
-                      StringTemplateExpression
-                        StringTemplateEntryList
-                          StringTemplateEntry
-                            OpenQuote "\"" @ 475..476
-                          StringTemplateEntry
-                            RegularStringPart "small" @ 476..481
-                        ClosingQuote "\"" @ 481..482
-                  RBrace "}" @ 487..488 leading=[Newline "\n", Whitespace "    "]
-            TerminatorList
-        RBrace "}" @ 489..490 leading=[Newline "\n"]
+                      Statement
+                        ExpressionStatement
+                          NameExpression
+                            Identifier "count" @ 300..305 leading=[Newline "\n", Whitespace "        "]
+                        TerminatorList
+                    RBrace "}" @ 310..311 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  CatchClauseList
+                    CatchClause
+                      Identifier "catch" @ 312..317 trailing=[Whitespace " "]
+                      ValueParameterList
+                        LParen "(" @ 318..319
+                        ValueParameterSeparatedList
+                          ValueParameter
+                            ModifierList
+                            Name
+                              Identifier "error" @ 319..324
+                            Colon ":" @ 324..325 trailing=[Whitespace " "]
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  UserTypeSegment
+                                    AnnotationList
+                                    Name
+                                      Identifier "IllegalStateException" @ 326..347
+                        RParen ")" @ 347..348 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 349..350
+                        BlockItemList
+                          Statement
+                            ExpressionStatement
+                              JumpExpression
+                                ReturnKw "return" @ 359..365 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 366..367
+                                    StringTemplateEntry
+                                      RegularStringPart "error" @ 367..372
+                                  ClosingQuote "\"" @ 372..373
+                            TerminatorList
+                        RBrace "}" @ 378..379 leading=[Newline "\n", Whitespace "    "]
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 385..391 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  WhenExpression
+                    WhenKw "when" @ 392..396 trailing=[Whitespace " "]
+                    LBrace "{" @ 397..398
+                    WhenEntryList
+                      WhenEntry
+                        WhenConditionSeparatedList
+                          WhenCondition
+                            BinaryExpression
+                              NameExpression
+                                Identifier "total" @ 407..412 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                              EqEq "==" @ 413..415 trailing=[Whitespace " "]
+                              LiteralExpression
+                                IntegerLiteral "0" @ 416..417 trailing=[Whitespace " "]
+                        Arrow "->" @ 418..420 trailing=[Whitespace " "]
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 421..422
+                            StringTemplateEntry
+                              RegularStringPart "empty" @ 422..427
+                          ClosingQuote "\"" @ 427..428
+                      WhenEntry
+                        WhenConditionSeparatedList
+                          WhenCondition
+                            BinaryExpression
+                              NameExpression
+                                Identifier "total" @ 437..442 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                              Gt ">" @ 443..444 trailing=[Whitespace " "]
+                              LiteralExpression
+                                IntegerLiteral "10" @ 445..447 trailing=[Whitespace " "]
+                        Arrow "->" @ 448..450 trailing=[Whitespace " "]
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 451..452
+                            StringTemplateEntry
+                              RegularStringPart "large" @ 452..457
+                          ClosingQuote "\"" @ 457..458
+                      WhenEntry
+                        ElseKw "else" @ 467..471 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                        WhenConditionSeparatedList
+                        Arrow "->" @ 472..474 trailing=[Whitespace " "]
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 475..476
+                            StringTemplateEntry
+                              RegularStringPart "small" @ 476..481
+                          ClosingQuote "\"" @ 481..482
+                    RBrace "}" @ 487..488 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+          RBrace "}" @ 489..490 leading=[Newline "\n"]
   Eof "" @ 491..491 leading=[Newline "\n"]
 
 diagnostics:

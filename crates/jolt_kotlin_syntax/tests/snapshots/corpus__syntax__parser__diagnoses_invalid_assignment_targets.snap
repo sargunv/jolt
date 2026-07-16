@@ -20,10 +20,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "invalidAssignmentTargets" @ 4..28
+      Name
+        Identifier "invalidAssignmentTargets" @ 4..28
       ValueParameterList
         LParen "(" @ 28..29
         ValueParameterSeparatedList
@@ -40,63 +38,64 @@ KotlinFile
                     Name
                       Identifier "Int" @ 36..39
         RParen ")" @ 39..40 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 41..42
-        BlockItemList
-          Statement
-            ExpressionStatement
-              AssignmentExpression
-                ErrorNode
-                  LiteralExpression
-                    IntegerLiteral "1" @ 47..48 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                Assign "=" @ 49..50 trailing=[Whitespace " "]
-                NameExpression
-                  Identifier "value" @ 51..56
-            TerminatorList
-          Statement
-            ExpressionStatement
-              AssignmentExpression
-                ErrorNode
-                  BinaryExpression
-                    NameExpression
-                      Identifier "value" @ 61..66 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                    Plus "+" @ 67..68 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 41..42
+          BlockItemList
+            Statement
+              ExpressionStatement
+                AssignmentExpression
+                  ErrorNode
                     LiteralExpression
-                      IntegerLiteral "1" @ 69..70 trailing=[Whitespace " "]
-                Assign "=" @ 71..72 trailing=[Whitespace " "]
-                NameExpression
-                  Identifier "value" @ 73..78
-            TerminatorList
-          Statement
-            ExpressionStatement
-              AssignmentExpression
-                ParenthesizedExpression
-                  LParen "(" @ 83..84 leading=[Newline "\n", Whitespace "    "]
+                      IntegerLiteral "1" @ 47..48 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  Assign "=" @ 49..50 trailing=[Whitespace " "]
                   NameExpression
-                    Identifier "value" @ 84..89
-                  RParen ")" @ 89..90 trailing=[Whitespace " "]
-                Assign "=" @ 91..92 trailing=[Whitespace " "]
-                LiteralExpression
-                  IntegerLiteral "2" @ 93..94
-            TerminatorList
-          Statement
-            ExpressionStatement
-              AssignmentExpression
-                ErrorNode
-                  CallExpression
+                    Identifier "value" @ 51..56
+              TerminatorList
+            Statement
+              ExpressionStatement
+                AssignmentExpression
+                  ErrorNode
+                    BinaryExpression
+                      NameExpression
+                        Identifier "value" @ 61..66 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      Plus "+" @ 67..68 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "1" @ 69..70 trailing=[Whitespace " "]
+                  Assign "=" @ 71..72 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "value" @ 73..78
+              TerminatorList
+            Statement
+              ExpressionStatement
+                AssignmentExpression
+                  ParenthesizedExpression
+                    LParen "(" @ 83..84 leading=[Newline "\n", Whitespace "    "]
                     NameExpression
-                      Identifier "value" @ 99..104 leading=[Newline "\n", Whitespace "    "]
-                    TypeArgumentListList
-                    ValueArgumentList
-                      LParen "(" @ 104..105
-                      ValueArgumentEntryList
-                      RParen ")" @ 105..106 trailing=[Whitespace " "]
-                    LambdaExpressionList
-                Assign "=" @ 107..108 trailing=[Whitespace " "]
-                LiteralExpression
-                  IntegerLiteral "3" @ 109..110
-            TerminatorList
-        RBrace "}" @ 111..112 leading=[Newline "\n"]
+                      Identifier "value" @ 84..89
+                    RParen ")" @ 89..90 trailing=[Whitespace " "]
+                  Assign "=" @ 91..92 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "2" @ 93..94
+              TerminatorList
+            Statement
+              ExpressionStatement
+                AssignmentExpression
+                  ErrorNode
+                    CallExpression
+                      NameExpression
+                        Identifier "value" @ 99..104 leading=[Newline "\n", Whitespace "    "]
+                      TypeArgumentListList
+                      ValueArgumentList
+                        LParen "(" @ 104..105
+                        ValueArgumentEntryList
+                        RParen ")" @ 105..106 trailing=[Whitespace " "]
+                      LambdaExpressionList
+                  Assign "=" @ 107..108 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "3" @ 109..110
+              TerminatorList
+          RBrace "}" @ 111..112 leading=[Newline "\n"]
   Eof "" @ 113..113 leading=[Newline "\n"]
 
 diagnostics:

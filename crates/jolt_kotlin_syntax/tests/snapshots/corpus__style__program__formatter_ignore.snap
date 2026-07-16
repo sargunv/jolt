@@ -107,34 +107,33 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 179..182 trailing=[Whitespace "   "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "messy" @ 185..190
+              Name
+                Identifier "messy" @ 185..190
               ValueParameterList
                 LParen "(" @ 190..191 trailing=[Whitespace " "]
                 ValueParameterSeparatedList
                 RParen ")" @ 192..193 trailing=[Whitespace "  "]
-              Block
-                LBrace "{" @ 195..196 trailing=[Whitespace " "]
-                BlockItemList
-                  Statement
-                    ExpressionStatement
-                      CallExpression
-                        NameExpression
-                          Identifier "println" @ 197..204
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 204..205
-                          ValueArgumentEntryList
-                            ValueArgument
-                              ValueArgumentPrefixList
-                              LiteralExpression
-                                IntegerLiteral "1" @ 205..206
-                          RParen ")" @ 206..207 trailing=[Whitespace " "]
-                        LambdaExpressionList
-                    TerminatorList
-                RBrace "}" @ 208..209 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 195..196 trailing=[Whitespace " "]
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "println" @ 197..204
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 204..205
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 205..206
+                            RParen ")" @ 206..207 trailing=[Whitespace " "]
+                          LambdaExpressionList
+                      TerminatorList
+                  RBrace "}" @ 208..209 trailing=[Whitespace " "]
         RBrace "}" @ 210..211
     ClassDeclaration
       ModifierList
@@ -151,34 +150,33 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 248..251 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "ok" @ 252..254
+              Name
+                Identifier "ok" @ 252..254
               ValueParameterList
                 LParen "(" @ 254..255
                 ValueParameterSeparatedList
                 RParen ")" @ 255..256 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 257..258
-                BlockItemList
-                  Statement
-                    ExpressionStatement
-                      CallExpression
-                        NameExpression
-                          Identifier "println" @ 263..270 leading=[Newline "\n", Whitespace "    "]
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 270..271
-                          ValueArgumentEntryList
-                            ValueArgument
-                              ValueArgumentPrefixList
-                              LiteralExpression
-                                IntegerLiteral "2" @ 271..272
-                          RParen ")" @ 272..273
-                        LambdaExpressionList
-                    TerminatorList
-                RBrace "}" @ 276..277 leading=[Newline "\n", Whitespace "  "]
+              BlockBody
+                Block
+                  LBrace "{" @ 257..258
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "println" @ 263..270 leading=[Newline "\n", Whitespace "    "]
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 270..271
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                LiteralExpression
+                                  IntegerLiteral "2" @ 271..272
+                            RParen ")" @ 272..273
+                          LambdaExpressionList
+                      TerminatorList
+                  RBrace "}" @ 276..277 leading=[Newline "\n", Whitespace "  "]
         RBrace "}" @ 278..279 leading=[Newline "\n"]
     ClassDeclaration
       ModifierList
@@ -194,13 +192,12 @@ KotlinFile
               ModifierList
               ModifierList
               ValKw "val" @ 316..319 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "    "]
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "kept" @ 323..327
-              Assign "=" @ 327..328
-              LiteralExpression
-                IntegerLiteral "1" @ 328..329
+              Name
+                Identifier "kept" @ 323..327
+              PropertyInitializer
+                Assign "=" @ 327..328
+                LiteralExpression
+                  IntegerLiteral "1" @ 328..329
               PropertyBodyMemberList
           ClassMemberDeclaration
             FunctionDeclaration
@@ -208,153 +205,150 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 332..335 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace "    "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "ugly" @ 339..343
+              Name
+                Identifier "ugly" @ 339..343
               ValueParameterList
                 LParen "(" @ 343..344 trailing=[Whitespace " "]
                 ValueParameterSeparatedList
                 RParen ")" @ 345..346 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 347..348 trailing=[Whitespace " "]
-                BlockItemList
-                  Statement
-                    ExpressionStatement
-                      CallExpression
-                        NameExpression
-                          Identifier "println" @ 349..356
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 356..357 trailing=[Whitespace " "]
-                          ValueArgumentEntryList
-                            ValueArgument
-                              ValueArgumentPrefixList
-                              LiteralExpression
-                                IntegerLiteral "2" @ 358..359 trailing=[Whitespace " "]
-                          RParen ")" @ 360..361 trailing=[Whitespace " "]
-                        LambdaExpressionList
-                    TerminatorList
-                RBrace "}" @ 362..363
+              BlockBody
+                Block
+                  LBrace "{" @ 347..348 trailing=[Whitespace " "]
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "println" @ 349..356
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 356..357 trailing=[Whitespace " "]
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                LiteralExpression
+                                  IntegerLiteral "2" @ 358..359 trailing=[Whitespace " "]
+                            RParen ")" @ 360..361 trailing=[Whitespace " "]
+                          LambdaExpressionList
+                      TerminatorList
+                  RBrace "}" @ 362..363
           ClassMemberDeclaration
             FunctionDeclaration
               ModifierList
               ModifierList
               FunKw "fun" @ 385..388 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "good" @ 389..393
+              Name
+                Identifier "good" @ 389..393
               ValueParameterList
                 LParen "(" @ 393..394
                 ValueParameterSeparatedList
                 RParen ")" @ 394..395 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 396..397
-                BlockItemList
-                  Statement
-                    ExpressionStatement
-                      CallExpression
-                        NameExpression
-                          Identifier "println" @ 402..409 leading=[Newline "\n", Whitespace "    "]
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 409..410
-                          ValueArgumentEntryList
-                            ValueArgument
-                              ValueArgumentPrefixList
-                              LiteralExpression
-                                IntegerLiteral "3" @ 410..411
-                          RParen ")" @ 411..412
-                        LambdaExpressionList
-                    TerminatorList
-                RBrace "}" @ 415..416 leading=[Newline "\n", Whitespace "  "]
+              BlockBody
+                Block
+                  LBrace "{" @ 396..397
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "println" @ 402..409 leading=[Newline "\n", Whitespace "    "]
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 409..410
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                LiteralExpression
+                                  IntegerLiteral "3" @ 410..411
+                            RParen ")" @ 411..412
+                          LambdaExpressionList
+                      TerminatorList
+                  RBrace "}" @ 415..416 leading=[Newline "\n", Whitespace "  "]
         RBrace "}" @ 417..418 leading=[Newline "\n"]
     FunctionDeclaration
       ModifierList
       ModifierList
       FunKw "fun" @ 420..423 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "block" @ 424..429
+      Name
+        Identifier "block" @ 424..429
       ValueParameterList
         LParen "(" @ 429..430
         ValueParameterSeparatedList
         RParen ")" @ 430..431 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 432..433
-        BlockItemList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NameExpression
-                  Identifier "println" @ 456..463 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "]
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 463..464 trailing=[Whitespace "   "]
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      StringTemplateExpression
-                        StringTemplateEntryList
-                          StringTemplateEntry
-                            OpenQuote "\"" @ 467..468
-                          StringTemplateEntry
-                            RegularStringPart "kept" @ 468..472
-                        ClosingQuote "\"" @ 472..473 trailing=[Whitespace " "]
-                  RParen ")" @ 474..475
-                LambdaExpressionList
-            TerminatorList
-          Statement
-            ExpressionStatement
-              IfExpression
-                IfKw "if" @ 478..480 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-                ParenthesizedExpression
-                  LParen "(" @ 481..482
-                  LiteralExpression
-                    TrueKw "true" @ 482..486
-                  RParen ")" @ 486..487 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 488..489 trailing=[Whitespace " "]
-                  BlockItemList
-                    Statement
-                      ExpressionStatement
-                        CallExpression
-                          NameExpression
-                            Identifier "println" @ 490..497
-                          TypeArgumentListList
-                          ValueArgumentList
-                            LParen "(" @ 497..498
-                            ValueArgumentEntryList
-                              ValueArgument
-                                ValueArgumentPrefixList
-                                LiteralExpression
-                                  IntegerLiteral "1" @ 498..499
-                            RParen ")" @ 499..500 trailing=[Whitespace " "]
-                          LambdaExpressionList
-                      TerminatorList
-                  RBrace "}" @ 501..502
-            TerminatorList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NameExpression
-                  Identifier "println" @ 524..531 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "]
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 531..532
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      LiteralExpression
-                        IntegerLiteral "4" @ 532..533
-                  RParen ")" @ 533..534
-                LambdaExpressionList
-            TerminatorList
-        RBrace "}" @ 535..536 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 432..433
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "println" @ 456..463 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 463..464 trailing=[Whitespace "   "]
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 467..468
+                            StringTemplateEntry
+                              RegularStringPart "kept" @ 468..472
+                          ClosingQuote "\"" @ 472..473 trailing=[Whitespace " "]
+                    RParen ")" @ 474..475
+                  LambdaExpressionList
+              TerminatorList
+            Statement
+              ExpressionStatement
+                IfExpression
+                  IfKw "if" @ 478..480 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 481..482
+                    LiteralExpression
+                      TrueKw "true" @ 482..486
+                    RParen ")" @ 486..487 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 488..489 trailing=[Whitespace " "]
+                    BlockItemList
+                      Statement
+                        ExpressionStatement
+                          CallExpression
+                            NameExpression
+                              Identifier "println" @ 490..497
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 497..498
+                              ValueArgumentEntryList
+                                ValueArgument
+                                  ValueArgumentPrefixList
+                                  LiteralExpression
+                                    IntegerLiteral "1" @ 498..499
+                              RParen ")" @ 499..500 trailing=[Whitespace " "]
+                            LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 501..502
+              TerminatorList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "println" @ 524..531 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 531..532
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        LiteralExpression
+                          IntegerLiteral "4" @ 532..533
+                    RParen ")" @ 533..534
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 535..536 leading=[Newline "\n"]
   Eof "" @ 537..537 leading=[Newline "\n"]
 
 diagnostics:

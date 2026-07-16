@@ -24,10 +24,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "newlineSelectors" @ 4..20
+      Name
+        Identifier "newlineSelectors" @ 4..20
       ValueParameterList
         LParen "(" @ 20..21
         ValueParameterSeparatedList
@@ -44,68 +42,68 @@ KotlinFile
                     Name
                       Identifier "Receiver" @ 31..39
         RParen ")" @ 39..40 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 41..42
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 47..50 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "selected" @ 51..59 trailing=[Whitespace " "]
-            Assign "=" @ 60..61 trailing=[Whitespace " "]
-            CallExpression
-              NavigationExpression
-                NavigationExpression
-                  NameExpression
-                    Identifier "receiver" @ 62..70
-                  Dot "." @ 79..80 leading=[Newline "\n", Whitespace "        "]
-                  Identifier "child" @ 80..85
-                Dot "." @ 94..95 leading=[Newline "\n", Whitespace "        "]
-                Identifier "call" @ 95..99
-              TypeArgumentListList
-              ValueArgumentList
-                LParen "(" @ 99..100
-                ValueArgumentEntryList
-                RParen ")" @ 100..101
-              LambdaExpressionList
-            PropertyBodyMemberList
-          Statement
-            ExpressionStatement
-              NameExpression
-                Identifier "receiver" @ 107..115 leading=[Newline "\n", Newline "\n", Whitespace "    "]
-            TerminatorList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NameExpression
-                  Identifier "standalone" @ 120..130 leading=[Newline "\n", Whitespace "    "]
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 130..131
-                  ValueArgumentEntryList
-                  RParen ")" @ 131..132
-                LambdaExpressionList
-            TerminatorList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NameExpression
-                  Identifier "consume" @ 138..145 leading=[Newline "\n", Newline "\n", Whitespace "    "]
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 145..146
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
+      BlockBody
+        Block
+          LBrace "{" @ 41..42
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 47..50 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "selected" @ 51..59 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 60..61 trailing=[Whitespace " "]
+                CallExpression
+                  NavigationExpression
+                    NavigationExpression
                       NameExpression
-                        Identifier "selected" @ 146..154
-                  RParen ")" @ 154..155
-                LambdaExpressionList
-            TerminatorList
-        RBrace "}" @ 156..157 leading=[Newline "\n"]
+                        Identifier "receiver" @ 62..70
+                      Dot "." @ 79..80 leading=[Newline "\n", Whitespace "        "]
+                      Identifier "child" @ 80..85
+                    Dot "." @ 94..95 leading=[Newline "\n", Whitespace "        "]
+                    Identifier "call" @ 95..99
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 99..100
+                    ValueArgumentEntryList
+                    RParen ")" @ 100..101
+                  LambdaExpressionList
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                NameExpression
+                  Identifier "receiver" @ 107..115 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+              TerminatorList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "standalone" @ 120..130 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 130..131
+                    ValueArgumentEntryList
+                    RParen ")" @ 131..132
+                  LambdaExpressionList
+              TerminatorList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "consume" @ 138..145 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 145..146
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "selected" @ 146..154
+                    RParen ")" @ 154..155
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 156..157 leading=[Newline "\n"]
   Eof "" @ 158..158 leading=[Newline "\n"]
 
 diagnostics:

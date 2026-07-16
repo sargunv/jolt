@@ -33,10 +33,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 25..28 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "provide" @ 29..36
+              Name
+                Identifier "provide" @ 29..36
               ValueParameterList
                 LParen "(" @ 36..37
                 ValueParameterSeparatedList
@@ -67,8 +65,8 @@ KotlinFile
               ObjectKw "object" @ 86..92 trailing=[Whitespace " "]
               Name
                 Identifier "Defaults" @ 93..101 trailing=[Whitespace " "]
-              Colon ":" @ 102..103 trailing=[Whitespace " "]
-              DelegationSpecifierList
+              DelegationClause
+                Colon ":" @ 102..103 trailing=[Whitespace " "]
                 DelegationSpecifierSeparatedList
                   DelegationSpecifier
                     TypeReference
@@ -88,10 +86,8 @@ KotlinFile
                       ModifierList
                       FunKw "fun" @ 132..135 trailing=[Whitespace " "]
                       ModifierList
-                      CallableName
-                        CallableNamePartList
-                          Name
-                            Identifier "provide" @ 136..143
+                      Name
+                        Identifier "provide" @ 136..143
                       ValueParameterList
                         LParen "(" @ 143..144
                         ValueParameterSeparatedList
@@ -104,14 +100,15 @@ KotlinFile
                               AnnotationList
                               Name
                                 Identifier "String" @ 147..153 trailing=[Whitespace " "]
-                      Assign "=" @ 154..155 trailing=[Whitespace " "]
-                      StringTemplateExpression
-                        StringTemplateEntryList
-                          StringTemplateEntry
-                            OpenQuote "\"" @ 156..157
-                          StringTemplateEntry
-                            RegularStringPart "default" @ 157..164
-                        ClosingQuote "\"" @ 164..165
+                      ExpressionBody
+                        Assign "=" @ 154..155 trailing=[Whitespace " "]
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 156..157
+                            StringTemplateEntry
+                              RegularStringPart "default" @ 157..164
+                          ClosingQuote "\"" @ 164..165
                 RBrace "}" @ 170..171 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 172..173 leading=[Newline "\n"]
   Eof "" @ 174..174 leading=[Newline "\n"]

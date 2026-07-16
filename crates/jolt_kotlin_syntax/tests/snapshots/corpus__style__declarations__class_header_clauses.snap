@@ -113,8 +113,8 @@ KotlinFile
                         Gt ">" @ 166..167
             Comma "," @ 167..168
           RParen ")" @ 169..170 leading=[Newline "\n"] trailing=[Whitespace " "]
-      Colon ":" @ 171..172 trailing=[Whitespace " "]
-      DelegationSpecifierList
+      DelegationClause
+        Colon ":" @ 171..172 trailing=[Whitespace " "]
         DelegationSpecifierSeparatedList
           DelegationSpecifier
             TypeReference

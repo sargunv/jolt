@@ -75,17 +75,16 @@ KotlinFile
               Identifier "T" @ 78..79
         Gt ">" @ 79..80 trailing=[Whitespace " "]
       CallableName
-        CallableNamePartList
-          TypeReference
-            UserType
-              UserTypeSegmentList
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "T" @ 81..82
-          Dot "." @ 82..83
-          Name
-            Identifier "cached" @ 83..89
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "T" @ 81..82
+        Dot "." @ 82..83
+        Name
+          Identifier "cached" @ 83..89
       Colon ":" @ 89..90 trailing=[Whitespace " "]
       TypeReference
         UserType
@@ -108,22 +107,23 @@ KotlinFile
                     AnnotationList
                     Name
                       Identifier "Any" @ 103..106 trailing=[Whitespace " "]
-      Identifier "by" @ 107..109 trailing=[Whitespace " "]
-      CallExpression
-        NameExpression
-          Identifier "lazy" @ 110..114 trailing=[Whitespace " "]
-        TypeArgumentListList
-        LambdaExpressionList
-          LambdaExpression
-            LambdaBody
-              LBrace "{" @ 115..116 trailing=[Whitespace " "]
-              LambdaBodyItemList
-                Statement
-                  ExpressionStatement
-                    ThisExpression
-                      ThisKw "this" @ 117..121 trailing=[Whitespace " "]
-                  TerminatorList
-              RBrace "}" @ 122..123
+      PropertyInitializer
+        Identifier "by" @ 107..109 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "lazy" @ 110..114 trailing=[Whitespace " "]
+          TypeArgumentListList
+          LambdaExpressionList
+            LambdaExpression
+              LambdaBody
+                LBrace "{" @ 115..116 trailing=[Whitespace " "]
+                LambdaBodyItemList
+                  Statement
+                    ExpressionStatement
+                      ThisExpression
+                        ThisKw "this" @ 117..121 trailing=[Whitespace " "]
+                    TerminatorList
+                RBrace "}" @ 122..123
       PropertyBodyMemberList
     FunctionDeclaration
       ModifierList
@@ -143,10 +143,8 @@ KotlinFile
               Identifier "R" @ 133..134
         Gt ">" @ 134..135 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "connect" @ 136..143
+      Name
+        Identifier "connect" @ 136..143
       ValueParameterList
         LParen "(" @ 143..144
         ValueParameterSeparatedList
@@ -232,17 +230,18 @@ KotlinFile
                                 Name
                                   Identifier "R" @ 212..213
                       Gt ">" @ 213..214 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 215..216
-        BlockItemList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 221..227 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                NameExpression
-                  Identifier "value" @ 228..233
-            TerminatorList
-        RBrace "}" @ 234..235 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 215..216
+          BlockItemList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 221..227 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "value" @ 228..233
+              TerminatorList
+          RBrace "}" @ 234..235 leading=[Newline "\n"]
   Eof "" @ 236..236 leading=[Newline "\n"]
 
 diagnostics:

@@ -37,40 +37,38 @@ KotlinFile
         Identifier "const" @ 27..32 leading=[Newline "\n", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
       ValKw "val" @ 33..36 trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "NAME" @ 37..41
-      Assign "=" @ 41..42
-      StringTemplateExpression
-        StringTemplateEntryList
-          StringTemplateEntry
-            OpenQuote "\"" @ 42..43
-          StringTemplateEntry
-            RegularStringPart "demo" @ 43..47
-        ClosingQuote "\"" @ 47..48
+      Name
+        Identifier "NAME" @ 37..41
+      PropertyInitializer
+        Assign "=" @ 41..42
+        StringTemplateExpression
+          StringTemplateEntryList
+            StringTemplateEntry
+              OpenQuote "\"" @ 42..43
+            StringTemplateEntry
+              RegularStringPart "demo" @ 43..47
+          ClosingQuote "\"" @ 47..48
       PropertyBodyMemberList
     FunctionDeclaration
       ModifierList
       ModifierList
       FunKw "fun" @ 51..54 leading=[Newline "\n", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "greet" @ 55..60
+      Name
+        Identifier "greet" @ 55..60
       ValueParameterList
         LParen "(" @ 60..61
         ValueParameterSeparatedList
         RParen ")" @ 61..62 trailing=[Whitespace " "]
-      Assign "=" @ 63..64 trailing=[Whitespace " "]
-      StringTemplateExpression
-        StringTemplateEntryList
-          StringTemplateEntry
-            OpenQuote "\"" @ 65..66
-          StringTemplateEntry
-            RegularStringPart "hello" @ 66..71
-        ClosingQuote "\"" @ 71..72
+      ExpressionBody
+        Assign "=" @ 63..64 trailing=[Whitespace " "]
+        StringTemplateExpression
+          StringTemplateEntryList
+            StringTemplateEntry
+              OpenQuote "\"" @ 65..66
+            StringTemplateEntry
+              RegularStringPart "hello" @ 66..71
+          ClosingQuote "\"" @ 71..72
     ClassDeclaration
       ModifierList
       ModifierList

@@ -23,10 +23,8 @@ KotlinFile
               Identifier "T" @ 5..6
         Gt ">" @ 6..7 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "definitelyNonNullable" @ 8..29
+      Name
+        Identifier "definitelyNonNullable" @ 8..29
       ValueParameterList
         LParen "(" @ 29..30
         ValueParameterSeparatedList
@@ -54,9 +52,10 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "T" @ 43..44 trailing=[Whitespace " "]
-      Assign "=" @ 45..46 trailing=[Whitespace " "]
-      NameExpression
-        Identifier "value" @ 47..52
+      ExpressionBody
+        Assign "=" @ 45..46 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "value" @ 47..52
   Eof "" @ 53..53 leading=[Newline "\n"]
 
 diagnostics:

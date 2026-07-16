@@ -38,10 +38,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 24..27 leading=[Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "logMessage" @ 28..38
+      Name
+        Identifier "logMessage" @ 28..38
       ValueParameterList
         LParen "(" @ 38..39
         ValueParameterSeparatedList
@@ -58,29 +56,30 @@ KotlinFile
                     Name
                       Identifier "String" @ 48..54
         RParen ")" @ 54..55 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 56..57
-        BlockItemList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NavigationExpression
-                  NameExpression
-                    Identifier "logger" @ 62..68 leading=[Newline "\n", Whitespace "    "]
-                  Dot "." @ 68..69
-                  Identifier "write" @ 69..74
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 74..75
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      NameExpression
-                        Identifier "message" @ 75..82
-                  RParen ")" @ 82..83
-                LambdaExpressionList
-            TerminatorList
-        RBrace "}" @ 84..85 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 56..57
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NavigationExpression
+                    NameExpression
+                      Identifier "logger" @ 62..68 leading=[Newline "\n", Whitespace "    "]
+                    Dot "." @ 68..69
+                    Identifier "write" @ 69..74
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 74..75
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "message" @ 75..82
+                    RParen ")" @ 82..83
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 84..85 leading=[Newline "\n"]
     InterfaceDeclaration
       ModifierList
       ModifierList
@@ -96,10 +95,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 110..113 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "write" @ 114..119
+              Name
+                Identifier "write" @ 114..119
               ValueParameterList
                 LParen "(" @ 119..120
                 ValueParameterSeparatedList

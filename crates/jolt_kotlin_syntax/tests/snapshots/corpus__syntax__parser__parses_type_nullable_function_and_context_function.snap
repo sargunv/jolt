@@ -111,10 +111,8 @@ KotlinFile
       ModifierList
       ModifierList
       ValKw "val" @ 119..122 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "callback" @ 123..131
+      Name
+        Identifier "callback" @ 123..131
       Colon ":" @ 131..132 trailing=[Whitespace " "]
       TypeReference
         UserType
@@ -123,34 +121,35 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Callback" @ 133..141 trailing=[Whitespace " "]
-      Assign "=" @ 142..143 trailing=[Whitespace " "]
-      LambdaExpression
-        LambdaBody
-          LBrace "{" @ 144..145 trailing=[Whitespace " "]
-          LambdaParameterList
-            LambdaParameterSeparatedList
-              LambdaParameter
-                Name
-                  Identifier "value" @ 146..151 trailing=[Whitespace " "]
-            Arrow "->" @ 152..154 trailing=[Whitespace " "]
-          LambdaBodyItemList
-            Statement
-              ExpressionStatement
-                CallExpression
-                  NameExpression
-                    Identifier "println" @ 155..162
-                  TypeArgumentListList
-                  ValueArgumentList
-                    LParen "(" @ 162..163
-                    ValueArgumentEntryList
-                      ValueArgument
-                        ValueArgumentPrefixList
-                        NameExpression
-                          Identifier "value" @ 163..168
-                    RParen ")" @ 168..169 trailing=[Whitespace " "]
-                  LambdaExpressionList
-              TerminatorList
-          RBrace "}" @ 170..171
+      PropertyInitializer
+        Assign "=" @ 142..143 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 144..145 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  Name
+                    Identifier "value" @ 146..151 trailing=[Whitespace " "]
+              Arrow "->" @ 152..154 trailing=[Whitespace " "]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  CallExpression
+                    NameExpression
+                      Identifier "println" @ 155..162
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 162..163
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          NameExpression
+                            Identifier "value" @ 163..168
+                      RParen ")" @ 168..169 trailing=[Whitespace " "]
+                    LambdaExpressionList
+                TerminatorList
+            RBrace "}" @ 170..171
       PropertyBodyMemberList
     InterfaceDeclaration
       ModifierList

@@ -15,10 +15,8 @@ KotlinFile
       ModifierList
       ModifierList
       ValKw "val" @ 0..3 trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "property" @ 4..12
+      Name
+        Identifier "property" @ 4..12
       Colon ":" @ 12..13 trailing=[Whitespace " "]
       TypeReference
         UserType
@@ -27,9 +25,7 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Int" @ 14..17 trailing=[Whitespace " "]
-      PropertyBodyMemberList
-    Statement
-      ExpressionStatement
+      PropertyInitializer
         AssignmentExpression
           ErrorNode
             UnaryExpression
@@ -46,11 +42,13 @@ KotlinFile
           Assign "=" @ 30..31 trailing=[Whitespace " "]
           LiteralExpression
             IntegerLiteral "1" @ 32..33
-      TerminatorList
+      PropertyBodyMemberList
   Eof "" @ 34..34 leading=[Newline "\n"]
 
 diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=18..19 message="expected property initializer operator"
   code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=30..31 message="invalid assignment target"
 
 diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(18), end: TextSize(19) }) message=expected property initializer operator
 code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=Some(TextRange { start: TextSize(30), end: TextSize(31) }) message=invalid assignment target

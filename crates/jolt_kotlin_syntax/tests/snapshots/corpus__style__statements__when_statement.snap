@@ -36,10 +36,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "log" @ 36..39
+      Name
+        Identifier "log" @ 36..39
       ValueParameterList
         LParen "(" @ 39..40
         ValueParameterSeparatedList
@@ -58,92 +56,93 @@ KotlinFile
                         Identifier "Any" @ 47..50
                 Question "?" @ 50..51
         RParen ")" @ 51..52 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 53..54
-        BlockItemList
-          Statement
-            ExpressionStatement
-              WhenExpression
-                WhenKw "when" @ 59..63 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                WhenSubject
-                  LParen "(" @ 64..65
-                  NameExpression
-                    Identifier "value" @ 65..70
-                  RParen ")" @ 70..71 trailing=[Whitespace " "]
-                LBrace "{" @ 72..73
-                WhenEntryList
-                  WhenEntry
-                    WhenConditionSeparatedList
-                      WhenCondition
-                        LiteralExpression
-                          NullKw "null" @ 82..86 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                    Arrow "->" @ 87..89 trailing=[Whitespace " "]
-                    CallExpression
-                      NameExpression
-                        Identifier "println" @ 90..97
-                      TypeArgumentListList
-                      ValueArgumentList
-                        LParen "(" @ 97..98
-                        ValueArgumentEntryList
-                          ValueArgument
-                            ValueArgumentPrefixList
-                            StringTemplateExpression
-                              StringTemplateEntryList
-                                StringTemplateEntry
-                                  OpenQuote "\"" @ 98..99
-                                StringTemplateEntry
-                                  RegularStringPart "null" @ 99..103
-                              ClosingQuote "\"" @ 103..104
-                        RParen ")" @ 104..105
-                      LambdaExpressionList
-                  WhenEntry
-                    WhenConditionSeparatedList
-                      WhenCondition
-                        IsKw "is" @ 114..116 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                        TypeReference
-                          UserType
-                            UserTypeSegmentList
-                              UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 117..123 trailing=[Whitespace " "]
-                    Arrow "->" @ 124..126 trailing=[Whitespace " "]
-                    CallExpression
-                      NameExpression
-                        Identifier "println" @ 127..134
-                      TypeArgumentListList
-                      ValueArgumentList
-                        LParen "(" @ 134..135
-                        ValueArgumentEntryList
-                          ValueArgument
-                            ValueArgumentPrefixList
-                            NavigationExpression
+      BlockBody
+        Block
+          LBrace "{" @ 53..54
+          BlockItemList
+            Statement
+              ExpressionStatement
+                WhenExpression
+                  WhenKw "when" @ 59..63 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  WhenSubject
+                    LParen "(" @ 64..65
+                    NameExpression
+                      Identifier "value" @ 65..70
+                    RParen ")" @ 70..71 trailing=[Whitespace " "]
+                  LBrace "{" @ 72..73
+                  WhenEntryList
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          LiteralExpression
+                            NullKw "null" @ 82..86 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      Arrow "->" @ 87..89 trailing=[Whitespace " "]
+                      CallExpression
+                        NameExpression
+                          Identifier "println" @ 90..97
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 97..98
+                          ValueArgumentEntryList
+                            ValueArgument
+                              ValueArgumentPrefixList
+                              StringTemplateExpression
+                                StringTemplateEntryList
+                                  StringTemplateEntry
+                                    OpenQuote "\"" @ 98..99
+                                  StringTemplateEntry
+                                    RegularStringPart "null" @ 99..103
+                                ClosingQuote "\"" @ 103..104
+                          RParen ")" @ 104..105
+                        LambdaExpressionList
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          IsKw "is" @ 114..116 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
+                                    Identifier "String" @ 117..123 trailing=[Whitespace " "]
+                      Arrow "->" @ 124..126 trailing=[Whitespace " "]
+                      CallExpression
+                        NameExpression
+                          Identifier "println" @ 127..134
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 134..135
+                          ValueArgumentEntryList
+                            ValueArgument
+                              ValueArgumentPrefixList
+                              NavigationExpression
+                                NameExpression
+                                  Identifier "value" @ 135..140
+                                Dot "." @ 140..141
+                                Identifier "length" @ 141..147
+                          RParen ")" @ 147..148
+                        LambdaExpressionList
+                    WhenEntry
+                      ElseKw "else" @ 157..161 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      WhenConditionSeparatedList
+                      Arrow "->" @ 162..164 trailing=[Whitespace " "]
+                      CallExpression
+                        NameExpression
+                          Identifier "println" @ 165..172
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 172..173
+                          ValueArgumentEntryList
+                            ValueArgument
+                              ValueArgumentPrefixList
                               NameExpression
-                                Identifier "value" @ 135..140
-                              Dot "." @ 140..141
-                              Identifier "length" @ 141..147
-                        RParen ")" @ 147..148
-                      LambdaExpressionList
-                  WhenEntry
-                    ElseKw "else" @ 157..161 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                    WhenConditionSeparatedList
-                    Arrow "->" @ 162..164 trailing=[Whitespace " "]
-                    CallExpression
-                      NameExpression
-                        Identifier "println" @ 165..172
-                      TypeArgumentListList
-                      ValueArgumentList
-                        LParen "(" @ 172..173
-                        ValueArgumentEntryList
-                          ValueArgument
-                            ValueArgumentPrefixList
-                            NameExpression
-                              Identifier "value" @ 173..178
-                        RParen ")" @ 178..179
-                      LambdaExpressionList
-                RBrace "}" @ 184..185 leading=[Newline "\n", Whitespace "    "]
-            TerminatorList
-        RBrace "}" @ 186..187 leading=[Newline "\n"]
+                                Identifier "value" @ 173..178
+                          RParen ")" @ 178..179
+                        LambdaExpressionList
+                  RBrace "}" @ 184..185 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+          RBrace "}" @ 186..187 leading=[Newline "\n"]
   Eof "" @ 188..188 leading=[Newline "\n"]
 
 diagnostics:

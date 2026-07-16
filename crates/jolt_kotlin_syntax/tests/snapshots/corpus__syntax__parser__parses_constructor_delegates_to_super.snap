@@ -46,8 +46,8 @@ KotlinFile
       ClassKw "class" @ 35..40 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Child" @ 41..46 trailing=[Whitespace " "]
-      Colon ":" @ 47..48 trailing=[Whitespace " "]
-      DelegationSpecifierList
+      DelegationClause
+        Colon ":" @ 47..48 trailing=[Whitespace " "]
         DelegationSpecifierSeparatedList
           DelegationSpecifier
             TypeReference
@@ -81,21 +81,22 @@ KotlinFile
                             Name
                               Identifier "String" @ 78..84
                 RParen ")" @ 84..85 trailing=[Whitespace " "]
-              Colon ":" @ 86..87 trailing=[Whitespace " "]
-              ConstructorDelegationCall
-                CallExpression
-                  SuperExpression
-                    SuperKw "super" @ 88..93
-                  TypeArgumentListList
-                  ValueArgumentList
-                    LParen "(" @ 93..94
-                    ValueArgumentEntryList
-                      ValueArgument
-                        ValueArgumentPrefixList
-                        NameExpression
-                          Identifier "name" @ 94..98
-                    RParen ")" @ 98..99
-                  LambdaExpressionList
+              ConstructorDelegation
+                Colon ":" @ 86..87 trailing=[Whitespace " "]
+                ConstructorDelegationCall
+                  CallExpression
+                    SuperExpression
+                      SuperKw "super" @ 88..93
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 93..94
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          NameExpression
+                            Identifier "name" @ 94..98
+                      RParen ")" @ 98..99
+                    LambdaExpressionList
         RBrace "}" @ 100..101 leading=[Newline "\n"]
   Eof "" @ 102..102 leading=[Newline "\n"]
 

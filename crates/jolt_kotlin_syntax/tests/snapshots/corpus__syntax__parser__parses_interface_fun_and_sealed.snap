@@ -14,14 +14,10 @@ syntax:
 KotlinFile
   AnnotationList
   KotlinFileItemList
-    FunctionDeclaration
-      ModifierList
-      ModifierList
-      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-      ModifierList
     InterfaceDeclaration
       ModifierList
       ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       InterfaceKw "interface" @ 4..13 trailing=[Whitespace " "]
       Name
         Identifier "Decoder" @ 14..21
@@ -42,10 +38,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 31..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "decode" @ 35..41
+              Name
+                Identifier "decode" @ 35..41
               ValueParameterList
                 LParen "(" @ 41..42
                 ValueParameterSeparatedList

@@ -87,10 +87,8 @@ KotlinFile
                     RParen ")" @ 100..101
               ModifierList
               ValKw "val" @ 106..109 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "cached" @ 110..116
+              Name
+                Identifier "cached" @ 110..116
               Colon ":" @ 116..117 trailing=[Whitespace " "]
               TypeReference
                 UserType
@@ -99,27 +97,28 @@ KotlinFile
                       AnnotationList
                       Name
                         Identifier "String" @ 118..124 trailing=[Whitespace " "]
-              Identifier "by" @ 125..127 trailing=[Whitespace " "]
-              CallExpression
-                NameExpression
-                  Identifier "lazy" @ 128..132 trailing=[Whitespace " "]
-                TypeArgumentListList
-                LambdaExpressionList
-                  LambdaExpression
-                    LambdaBody
-                      LBrace "{" @ 133..134 trailing=[Whitespace " "]
-                      LambdaBodyItemList
-                        Statement
-                          ExpressionStatement
-                            StringTemplateExpression
-                              StringTemplateEntryList
-                                StringTemplateEntry
-                                  OpenQuote "\"" @ 135..136
-                                StringTemplateEntry
-                                  RegularStringPart "ready" @ 136..141
-                              ClosingQuote "\"" @ 141..142 trailing=[Whitespace " "]
-                          TerminatorList
-                      RBrace "}" @ 143..144
+              PropertyInitializer
+                Identifier "by" @ 125..127 trailing=[Whitespace " "]
+                CallExpression
+                  NameExpression
+                    Identifier "lazy" @ 128..132 trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 133..134 trailing=[Whitespace " "]
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              StringTemplateExpression
+                                StringTemplateEntryList
+                                  StringTemplateEntry
+                                    OpenQuote "\"" @ 135..136
+                                  StringTemplateEntry
+                                    RegularStringPart "ready" @ 136..141
+                                ClosingQuote "\"" @ 141..142 trailing=[Whitespace " "]
+                            TerminatorList
+                        RBrace "}" @ 143..144
               PropertyBodyMemberList
           ClassMemberDeclaration
             PropertyDeclaration
@@ -170,10 +169,8 @@ KotlinFile
                     RParen ")" @ 196..197
               ModifierList
               VarKw "var" @ 202..205 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "name" @ 206..210
+              Name
+                Identifier "name" @ 206..210
               Colon ":" @ 210..211 trailing=[Whitespace " "]
               TypeReference
                 UserType
@@ -182,12 +179,13 @@ KotlinFile
                       AnnotationList
                       Name
                         Identifier "String" @ 212..218 trailing=[Whitespace " "]
-              Assign "=" @ 219..220 trailing=[Whitespace " "]
-              StringTemplateExpression
-                StringTemplateEntryList
-                  StringTemplateEntry
-                    OpenQuote "\"" @ 221..222
-                ClosingQuote "\"" @ 222..223
+              PropertyInitializer
+                Assign "=" @ 219..220 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 221..222
+                  ClosingQuote "\"" @ 222..223
               PropertyBodyMemberList
         RBrace "}" @ 224..225 leading=[Newline "\n"]
   Eof "" @ 226..226 leading=[Newline "\n"]

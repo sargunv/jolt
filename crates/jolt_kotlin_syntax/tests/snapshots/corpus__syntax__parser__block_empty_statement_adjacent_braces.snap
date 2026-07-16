@@ -15,23 +15,22 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "demo" @ 4..8
+      Name
+        Identifier "demo" @ 4..8
       ValueParameterList
         LParen "(" @ 8..9
         ValueParameterSeparatedList
         RParen ")" @ 9..10
-      Block
-        LBrace "{" @ 10..11
-        BlockItemList
-          Statement
-            ExpressionStatement
-              ErrorNode
-                Semicolon ";" @ 11..12
-            TerminatorList
-        RBrace "}" @ 12..13
+      BlockBody
+        Block
+          LBrace "{" @ 10..11
+          BlockItemList
+            Statement
+              ExpressionStatement
+                ErrorNode
+                  Semicolon ";" @ 11..12
+              TerminatorList
+          RBrace "}" @ 12..13
   Eof "" @ 14..14 leading=[Newline "\n"]
 
 diagnostics:

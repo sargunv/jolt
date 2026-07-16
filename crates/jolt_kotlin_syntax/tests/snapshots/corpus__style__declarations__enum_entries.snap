@@ -1,0 +1,75 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+enum class Single {
+    Entry
+}
+
+enum class Annotated {
+    @Deprecated("legacy")
+    Entry
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+        Identifier "enum" @ 0..4 trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 5..10 trailing=[Whitespace " "]
+      Name
+        Identifier "Single" @ 11..17 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 18..19
+        ClassMemberList
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "Entry" @ 24..29 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 30..31 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+        Identifier "enum" @ 33..37 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 38..43 trailing=[Whitespace " "]
+      Name
+        Identifier "Annotated" @ 44..53 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 54..55
+        ClassMemberList
+          EnumEntry
+            ModifierList
+              Annotation
+                At "@" @ 60..61 leading=[Newline "\n", Whitespace "    "]
+                QualifiedName
+                  QualifiedNameSegmentList
+                    Name
+                      Identifier "Deprecated" @ 61..71
+                AnnotationArgumentList
+                  LParen "(" @ 71..72
+                  ValueArgumentSeparatedList
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      StringTemplateExpression
+                        StringTemplateEntryList
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 72..73
+                          StringTemplateEntry
+                            RegularStringPart "legacy" @ 73..79
+                        ClosingQuote "\"" @ 79..80
+                  RParen ")" @ 80..81
+            Name
+              Identifier "Entry" @ 86..91 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 92..93 leading=[Newline "\n"]
+  Eof "" @ 94..94 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

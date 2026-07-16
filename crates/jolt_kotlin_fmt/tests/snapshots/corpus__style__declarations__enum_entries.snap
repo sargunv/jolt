@@ -1,0 +1,16 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+enum class Single {
+  Entry
+}
+
+enum class Annotated {
+  @Deprecated("legacy")
+  Entry
+}
+
+diagnostics:
+(none)

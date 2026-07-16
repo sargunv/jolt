@@ -36,10 +36,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "totals" @ 37..43
+      Name
+        Identifier "totals" @ 37..43
       ValueParameterList
         LParen "(" @ 43..44
         ValueParameterSeparatedList
@@ -113,116 +111,116 @@ KotlinFile
                           Name
                             Identifier "Int" @ 91..94
                 Gt ">" @ 94..95 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 96..97
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 102..105 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "result" @ 106..112 trailing=[Whitespace " "]
-            Assign "=" @ 113..114 trailing=[Whitespace " "]
-            CallExpression
-              NameExpression
-                Identifier "mutableMapOf" @ 115..127
-              TypeArgumentListList
-                TypeArgumentList
-                  Lt "<" @ 127..128
-                  TypeProjectionSeparatedList
-                    TypeReference
-                      UserType
-                        UserTypeSegmentList
-                          UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 128..134
-                    Comma "," @ 134..135 trailing=[Whitespace " "]
-                    TypeReference
-                      UserType
-                        UserTypeSegmentList
-                          UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "Int" @ 136..139
-                  Gt ">" @ 139..140
-              ValueArgumentList
-                LParen "(" @ 140..141
-                ValueArgumentEntryList
-                RParen ")" @ 141..142
-              LambdaExpressionList
-            PropertyBodyMemberList
-          Statement
-            ExpressionStatement
-              ForStatement
-                ForKw "for" @ 147..150 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                LParen "(" @ 151..152
-                DestructuringDeclaration
-                  LParen "(" @ 152..153
-                  DestructuringEntrySeparatedList
-                    DestructuringEntry
-                      Name
-                        Identifier "name" @ 153..157
-                    Comma "," @ 157..158 trailing=[Whitespace " "]
-                    DestructuringEntry
-                      Name
-                        Identifier "count" @ 159..164
-                  RParen ")" @ 164..165 trailing=[Whitespace " "]
-                InKw "in" @ 166..168 trailing=[Whitespace " "]
-                NameExpression
-                  Identifier "entries" @ 169..176
-                RParen ")" @ 176..177 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 178..179
-                  BlockItemList
-                    Statement
-                      ExpressionStatement
-                        AssignmentExpression
-                          IndexExpression
-                            NameExpression
-                              Identifier "result" @ 188..194 leading=[Newline "\n", Whitespace "        "]
-                            LBracket "[" @ 194..195
-                            ValueArgumentSeparatedList
-                              ValueArgument
-                                ValueArgumentPrefixList
-                                NameExpression
-                                  Identifier "name" @ 195..199
-                            RBracket "]" @ 199..200 trailing=[Whitespace " "]
-                          Assign "=" @ 201..202 trailing=[Whitespace " "]
-                          BinaryExpression
-                            ParenthesizedExpression
-                              LParen "(" @ 203..204
-                              BinaryExpression
-                                IndexExpression
+      BlockBody
+        Block
+          LBrace "{" @ 96..97
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 102..105 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "result" @ 106..112 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 113..114 trailing=[Whitespace " "]
+                CallExpression
+                  NameExpression
+                    Identifier "mutableMapOf" @ 115..127
+                  TypeArgumentListList
+                    TypeArgumentList
+                      Lt "<" @ 127..128
+                      TypeProjectionSeparatedList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 128..134
+                        Comma "," @ 134..135 trailing=[Whitespace " "]
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "Int" @ 136..139
+                      Gt ">" @ 139..140
+                  ValueArgumentList
+                    LParen "(" @ 140..141
+                    ValueArgumentEntryList
+                    RParen ")" @ 141..142
+                  LambdaExpressionList
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                ForStatement
+                  ForKw "for" @ 147..150 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  LParen "(" @ 151..152
+                  DestructuringDeclaration
+                    LParen "(" @ 152..153
+                    DestructuringEntrySeparatedList
+                      DestructuringEntry
+                        Name
+                          Identifier "name" @ 153..157
+                      Comma "," @ 157..158 trailing=[Whitespace " "]
+                      DestructuringEntry
+                        Name
+                          Identifier "count" @ 159..164
+                    RParen ")" @ 164..165 trailing=[Whitespace " "]
+                  InKw "in" @ 166..168 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "entries" @ 169..176
+                  RParen ")" @ 176..177 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 178..179
+                    BlockItemList
+                      Statement
+                        ExpressionStatement
+                          AssignmentExpression
+                            IndexExpression
+                              NameExpression
+                                Identifier "result" @ 188..194 leading=[Newline "\n", Whitespace "        "]
+                              LBracket "[" @ 194..195
+                              ValueArgumentSeparatedList
+                                ValueArgument
+                                  ValueArgumentPrefixList
                                   NameExpression
-                                    Identifier "result" @ 204..210
-                                  LBracket "[" @ 210..211
-                                  ValueArgumentSeparatedList
-                                    ValueArgument
-                                      ValueArgumentPrefixList
-                                      NameExpression
-                                        Identifier "name" @ 211..215
-                                  RBracket "]" @ 215..216 trailing=[Whitespace " "]
-                                Elvis "?:" @ 217..219 trailing=[Whitespace " "]
-                                LiteralExpression
-                                  IntegerLiteral "0" @ 220..221
-                              RParen ")" @ 221..222 trailing=[Whitespace " "]
-                            Plus "+" @ 223..224 trailing=[Whitespace " "]
-                            NameExpression
-                              Identifier "count" @ 225..230
-                      TerminatorList
-                  RBrace "}" @ 235..236 leading=[Newline "\n", Whitespace "    "]
-            TerminatorList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 241..247 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                NameExpression
-                  Identifier "result" @ 248..254
-            TerminatorList
-        RBrace "}" @ 255..256 leading=[Newline "\n"]
+                                    Identifier "name" @ 195..199
+                              RBracket "]" @ 199..200 trailing=[Whitespace " "]
+                            Assign "=" @ 201..202 trailing=[Whitespace " "]
+                            BinaryExpression
+                              ParenthesizedExpression
+                                LParen "(" @ 203..204
+                                BinaryExpression
+                                  IndexExpression
+                                    NameExpression
+                                      Identifier "result" @ 204..210
+                                    LBracket "[" @ 210..211
+                                    ValueArgumentSeparatedList
+                                      ValueArgument
+                                        ValueArgumentPrefixList
+                                        NameExpression
+                                          Identifier "name" @ 211..215
+                                    RBracket "]" @ 215..216 trailing=[Whitespace " "]
+                                  Elvis "?:" @ 217..219 trailing=[Whitespace " "]
+                                  LiteralExpression
+                                    IntegerLiteral "0" @ 220..221
+                                RParen ")" @ 221..222 trailing=[Whitespace " "]
+                              Plus "+" @ 223..224 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "count" @ 225..230
+                        TerminatorList
+                    RBrace "}" @ 235..236 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 241..247 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "result" @ 248..254
+              TerminatorList
+          RBrace "}" @ 255..256 leading=[Newline "\n"]
   Eof "" @ 257..257 leading=[Newline "\n"]
 
 diagnostics:

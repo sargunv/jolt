@@ -15,45 +15,44 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "demo" @ 4..8
+      Name
+        Identifier "demo" @ 4..8
       ValueParameterList
         LParen "(" @ 8..9
         ValueParameterSeparatedList
         RParen ")" @ 9..10 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 11..12 trailing=[Whitespace " "]
-        BlockItemList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NameExpression
-                  Identifier "run" @ 13..16 trailing=[Whitespace " "]
-                TypeArgumentListList
-                LambdaExpressionList
-                  LambdaExpression
-                    LambdaBody
-                      LBrace "{" @ 17..18 trailing=[Whitespace " "]
-                      LambdaBodyItemList
-                        Statement
-                          ExpressionStatement
-                            CallExpression
-                              NameExpression
-                                Identifier "value" @ 19..24
-                              TypeArgumentListList
-                              ValueArgumentList
-                                LParen "(" @ 24..25
-                                ValueArgumentEntryList
-                                  ValueArgument
-                                    ValueArgumentPrefixList
-                                    LiteralExpression
-                                      IntegerLiteral "1" @ 25..26
-                                RParen ")" @ 26..27
-                              LambdaExpressionList
-                          TerminatorList
-            TerminatorList
+      BlockBody
+        Block
+          LBrace "{" @ 11..12 trailing=[Whitespace " "]
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "run" @ 13..16 trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 17..18 trailing=[Whitespace " "]
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              CallExpression
+                                NameExpression
+                                  Identifier "value" @ 19..24
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 24..25
+                                  ValueArgumentEntryList
+                                    ValueArgument
+                                      ValueArgumentPrefixList
+                                      LiteralExpression
+                                        IntegerLiteral "1" @ 25..26
+                                  RParen ")" @ 26..27
+                                LambdaExpressionList
+                            TerminatorList
+              TerminatorList
   Eof "" @ 28..28 leading=[Newline "\n"]
 
 diagnostics:

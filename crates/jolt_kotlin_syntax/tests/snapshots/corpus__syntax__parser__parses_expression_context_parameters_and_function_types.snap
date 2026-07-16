@@ -38,10 +38,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 24..27 leading=[Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "withContextParameter" @ 28..48
+      Name
+        Identifier "withContextParameter" @ 28..48
       ValueParameterList
         LParen "(" @ 48..49
         ValueParameterSeparatedList
@@ -66,23 +64,24 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Unit" @ 65..69 trailing=[Whitespace " "]
-      Assign "=" @ 70..71 trailing=[Whitespace " "]
-      CallExpression
-        NavigationExpression
-          NameExpression
-            Identifier "logger" @ 72..78
-          Dot "." @ 78..79
-          Identifier "info" @ 79..83
-        TypeArgumentListList
-        ValueArgumentList
-          LParen "(" @ 83..84
-          ValueArgumentEntryList
-            ValueArgument
-              ValueArgumentPrefixList
-              NameExpression
-                Identifier "value" @ 84..89
-          RParen ")" @ 89..90
-        LambdaExpressionList
+      ExpressionBody
+        Assign "=" @ 70..71 trailing=[Whitespace " "]
+        CallExpression
+          NavigationExpression
+            NameExpression
+              Identifier "logger" @ 72..78
+            Dot "." @ 78..79
+            Identifier "info" @ 79..83
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 83..84
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                NameExpression
+                  Identifier "value" @ 84..89
+            RParen ")" @ 89..90
+          LambdaExpressionList
     TypeAliasDeclaration
       ModifierList
       ModifierList
@@ -131,10 +130,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 147..150 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "functionType" @ 151..163
+      Name
+        Identifier "functionType" @ 151..163
       ValueParameterList
         LParen "(" @ 163..164
         ValueParameterSeparatedList
@@ -151,31 +148,32 @@ KotlinFile
                     Name
                       Identifier "Handler" @ 173..180
         RParen ")" @ 180..181 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 182..183
-        BlockItemList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NameExpression
-                  Identifier "handler" @ 188..195 leading=[Newline "\n", Whitespace "    "]
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 195..196
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      StringTemplateExpression
-                        StringTemplateEntryList
-                          StringTemplateEntry
-                            OpenQuote "\"" @ 196..197
-                          StringTemplateEntry
-                            RegularStringPart "ready" @ 197..202
-                        ClosingQuote "\"" @ 202..203
-                  RParen ")" @ 203..204
-                LambdaExpressionList
-            TerminatorList
-        RBrace "}" @ 205..206 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 182..183
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "handler" @ 188..195 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 195..196
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 196..197
+                            StringTemplateEntry
+                              RegularStringPart "ready" @ 197..202
+                          ClosingQuote "\"" @ 202..203
+                    RParen ")" @ 203..204
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 205..206 leading=[Newline "\n"]
   Eof "" @ 207..207 leading=[Newline "\n"]
 
 diagnostics:

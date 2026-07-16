@@ -35,10 +35,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 26..29 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "describe" @ 30..38
+      Name
+        Identifier "describe" @ 30..38
       ValueParameterList
         LParen "(" @ 38..39
         ValueParameterSeparatedList
@@ -63,81 +61,82 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "String" @ 52..58 trailing=[Whitespace " "]
-      Assign "=" @ 59..60
-      WhenExpression
-        WhenKw "when" @ 65..69 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        WhenSubject
-          LParen "(" @ 70..71
-          NameExpression
-            Identifier "value" @ 71..76
-          RParen ")" @ 76..77 trailing=[Whitespace " "]
-        LBrace "{" @ 78..79
-        WhenEntryList
-          WhenEntry
-            WhenConditionSeparatedList
-              WhenCondition
-                IsKw "is" @ 88..90 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                TypeReference
-                  UserType
-                    UserTypeSegmentList
-                      UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "String" @ 91..97 trailing=[Whitespace " "]
-            Arrow "->" @ 98..100 trailing=[Whitespace " "]
-            StringTemplateExpression
-              StringTemplateEntryList
-                StringTemplateEntry
-                  OpenQuote "\"" @ 101..102
-                StringTemplateEntry
-                  RegularStringPart "text with " @ 102..112
-                StringTemplateEntry
-                  LongStringTemplateEntry
-                    LongTemplateEntryStart "${" @ 112..114
-                    NavigationExpression
-                      NameExpression
-                        Identifier "value" @ 114..119
-                      Dot "." @ 119..120
-                      Identifier "length" @ 120..126
-                    LongTemplateEntryEnd "}" @ 126..127
-                StringTemplateEntry
-                  RegularStringPart " chars" @ 127..133
-              ClosingQuote "\"" @ 133..134
-          WhenEntry
-            WhenConditionSeparatedList
-              WhenCondition
-                IsKw "is" @ 143..145 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                TypeReference
-                  UserType
-                    UserTypeSegmentList
-                      UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "Int" @ 146..149 trailing=[Whitespace " "]
-            Arrow "->" @ 150..152 trailing=[Whitespace " "]
-            StringTemplateExpression
-              StringTemplateEntryList
-                StringTemplateEntry
-                  OpenQuote "\"" @ 153..154
-                StringTemplateEntry
-                  RegularStringPart "number " @ 154..161
-                StringTemplateEntry
-                  ShortTemplateEntryStart "$" @ 161..162
-                StringTemplateEntry
-                  Identifier "value" @ 162..167
-              ClosingQuote "\"" @ 167..168
-          WhenEntry
-            ElseKw "else" @ 177..181 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-            WhenConditionSeparatedList
-            Arrow "->" @ 182..184 trailing=[Whitespace " "]
-            StringTemplateExpression
-              StringTemplateEntryList
-                StringTemplateEntry
-                  OpenQuote "\"" @ 185..186
-                StringTemplateEntry
-                  RegularStringPart "unknown" @ 186..193
-              ClosingQuote "\"" @ 193..194
-        RBrace "}" @ 199..200 leading=[Newline "\n", Whitespace "    "]
+      ExpressionBody
+        Assign "=" @ 59..60
+        WhenExpression
+          WhenKw "when" @ 65..69 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 70..71
+            NameExpression
+              Identifier "value" @ 71..76
+            RParen ")" @ 76..77 trailing=[Whitespace " "]
+          LBrace "{" @ 78..79
+          WhenEntryList
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  IsKw "is" @ 88..90 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "String" @ 91..97 trailing=[Whitespace " "]
+              Arrow "->" @ 98..100 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 101..102
+                  StringTemplateEntry
+                    RegularStringPart "text with " @ 102..112
+                  StringTemplateEntry
+                    LongStringTemplateEntry
+                      LongTemplateEntryStart "${" @ 112..114
+                      NavigationExpression
+                        NameExpression
+                          Identifier "value" @ 114..119
+                        Dot "." @ 119..120
+                        Identifier "length" @ 120..126
+                      LongTemplateEntryEnd "}" @ 126..127
+                  StringTemplateEntry
+                    RegularStringPart " chars" @ 127..133
+                ClosingQuote "\"" @ 133..134
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  IsKw "is" @ 143..145 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "Int" @ 146..149 trailing=[Whitespace " "]
+              Arrow "->" @ 150..152 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 153..154
+                  StringTemplateEntry
+                    RegularStringPart "number " @ 154..161
+                  StringTemplateEntry
+                    ShortTemplateEntryStart "$" @ 161..162
+                  StringTemplateEntry
+                    Identifier "value" @ 162..167
+                ClosingQuote "\"" @ 167..168
+            WhenEntry
+              ElseKw "else" @ 177..181 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 182..184 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 185..186
+                  StringTemplateEntry
+                    RegularStringPart "unknown" @ 186..193
+                ClosingQuote "\"" @ 193..194
+          RBrace "}" @ 199..200 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 201..201 leading=[Newline "\n"]
 
 diagnostics:

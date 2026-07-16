@@ -19,10 +19,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "incompleteLambda" @ 4..20
+      Name
+        Identifier "incompleteLambda" @ 4..20
       ValueParameterList
         LParen "(" @ 20..21
         ValueParameterSeparatedList
@@ -50,57 +48,58 @@ KotlinFile
                                   Identifier "Int" @ 34..37
                       Gt ">" @ 37..38
         RParen ")" @ 38..39 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 40..41
-        BlockItemList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NavigationExpression
-                  NameExpression
-                    Identifier "values" @ 46..52 leading=[Newline "\n", Whitespace "    "]
-                  Dot "." @ 52..53
-                  Identifier "map" @ 53..56 trailing=[Whitespace " "]
-                TypeArgumentListList
-                LambdaExpressionList
-                  LambdaExpression
-                    LambdaBody
-                      LBrace "{" @ 57..58 trailing=[Whitespace " "]
-                      LambdaParameterList
-                        LambdaParameterSeparatedList
-                          LambdaParameter
-                            Name
-                              Identifier "value" @ 59..64 trailing=[Whitespace " "]
-                        Arrow "->" @ 65..67
-                      LambdaBodyItemList
-                        Statement
-                          ExpressionStatement
-                            BinaryExpression
-                              NameExpression
-                                Identifier "value" @ 76..81 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                              Plus "+" @ 82..83 trailing=[Whitespace " "]
-                              LiteralExpression
-                                IntegerLiteral "1" @ 84..85
-                          TerminatorList
-                        Statement
-                          ExpressionStatement
-                            CallExpression
-                              NavigationExpression
+      BlockBody
+        Block
+          LBrace "{" @ 40..41
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NavigationExpression
+                    NameExpression
+                      Identifier "values" @ 46..52 leading=[Newline "\n", Whitespace "    "]
+                    Dot "." @ 52..53
+                    Identifier "map" @ 53..56 trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 57..58 trailing=[Whitespace " "]
+                        LambdaParameterList
+                          LambdaParameterSeparatedList
+                            LambdaParameter
+                              Name
+                                Identifier "value" @ 59..64 trailing=[Whitespace " "]
+                          Arrow "->" @ 65..67
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              BinaryExpression
                                 NameExpression
-                                  Identifier "values" @ 90..96 leading=[Newline "\n", Whitespace "    "]
-                                Dot "." @ 96..97
-                                Identifier "filter" @ 97..103
-                              TypeArgumentListList
-                              ValueArgumentList
-                                LParen "(" @ 103..104
-                                ValueArgumentEntryList
-                                  ValueArgument
-                                    ValueArgumentPrefixList
-                                    ErrorNode
-                                      RBrace "}" @ 105..106 leading=[Newline "\n"]
-                              LambdaExpressionList
-                          TerminatorList
-            TerminatorList
+                                  Identifier "value" @ 76..81 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                                Plus "+" @ 82..83 trailing=[Whitespace " "]
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 84..85
+                            TerminatorList
+                          Statement
+                            ExpressionStatement
+                              CallExpression
+                                NavigationExpression
+                                  NameExpression
+                                    Identifier "values" @ 90..96 leading=[Newline "\n", Whitespace "    "]
+                                  Dot "." @ 96..97
+                                  Identifier "filter" @ 97..103
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 103..104
+                                  ValueArgumentEntryList
+                                    ValueArgument
+                                      ValueArgumentPrefixList
+                                      ErrorNode
+                                        RBrace "}" @ 105..106 leading=[Newline "\n"]
+                                LambdaExpressionList
+                            TerminatorList
+              TerminatorList
   Eof "" @ 107..107 leading=[Newline "\n"]
 
 diagnostics:

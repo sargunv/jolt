@@ -21,58 +21,54 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "demo" @ 4..8
+      Name
+        Identifier "demo" @ 4..8
       ValueParameterList
         LParen "(" @ 8..9
         ValueParameterSeparatedList
         RParen ")" @ 9..10 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 11..12
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 15..18 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "before" @ 19..25 trailing=[Whitespace " "]
-            Assign "=" @ 26..27 trailing=[Whitespace " "]
-            LiteralExpression
-              IntegerLiteral "1" @ 28..29
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 52..55 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "raw" @ 56..59
-            Assign "=" @ 59..60
-            BinaryExpression
-              LiteralExpression
-                IntegerLiteral "1" @ 60..61
-              Plus "+" @ 61..62
-              LiteralExpression
-                IntegerLiteral "2" @ 62..63
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 97..100 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  ", BlockComment "/* block */", Whitespace " "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "after" @ 101..106 trailing=[Whitespace " "]
-            Assign "=" @ 107..108 trailing=[Whitespace " "]
-            NameExpression
-              Identifier "value" @ 109..114
-            PropertyBodyMemberList
-        RBrace "}" @ 115..116 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 11..12
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 15..18 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "before" @ 19..25 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 26..27 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "1" @ 28..29
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 52..55 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "raw" @ 56..59
+              PropertyInitializer
+                Assign "=" @ 59..60
+                BinaryExpression
+                  LiteralExpression
+                    IntegerLiteral "1" @ 60..61
+                  Plus "+" @ 61..62
+                  LiteralExpression
+                    IntegerLiteral "2" @ 62..63
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 97..100 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  ", BlockComment "/* block */", Whitespace " "] trailing=[Whitespace " "]
+              Name
+                Identifier "after" @ 101..106 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 107..108 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "value" @ 109..114
+              PropertyBodyMemberList
+          RBrace "}" @ 115..116 leading=[Newline "\n"]
   Eof "" @ 117..117 leading=[Newline "\n"]
 
 diagnostics:

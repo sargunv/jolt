@@ -2,12 +2,12 @@ use crate::KotlinSyntaxKind as K;
 
 use super::Parser;
 
+const MAX_DECLARATION_LOOKAHEAD: usize = 256;
+
 #[path = "declarations/callables.rs"]
 mod callables;
 #[path = "declarations/classes.rs"]
 mod classes;
-
-const MAX_DECLARATION_LOOKAHEAD: usize = 256;
 
 impl Parser<'_> {
     pub(super) fn parse_declaration_or_statement(&mut self) {
@@ -46,6 +46,11 @@ impl Parser<'_> {
                 self.parse_class_or_interface_tail();
                 K::ClassDeclaration
             }
+            K::FunKw if self.nth_kind(1) == K::InterfaceKw => {
+                self.bump();
+                self.parse_class_or_interface_tail();
+                K::InterfaceDeclaration
+            }
             K::InterfaceKw => {
                 self.parse_class_or_interface_tail();
                 K::InterfaceDeclaration
@@ -63,7 +68,7 @@ impl Parser<'_> {
                 K::PropertyDeclaration
             }
             K::TypeAliasKw => {
-                self.parse_type_alias_tail();
+                self.parse_type_alias_tail(marker.anchor());
                 K::TypeAliasDeclaration
             }
             kind if self.is_soft_kind(kind, "constructor") => {
@@ -187,7 +192,6 @@ impl Parser<'_> {
             }
             index += 1;
         }
-
         None
     }
 

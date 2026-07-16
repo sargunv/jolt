@@ -31,39 +31,38 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 51..54 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "main" @ 55..59
+      Name
+        Identifier "main" @ 55..59
       ValueParameterList
         LParen "(" @ 59..60
         ValueParameterSeparatedList
         RParen ")" @ 60..61 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 62..63
-        BlockItemList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NameExpression
-                  Identifier "println" @ 68..75 leading=[Newline "\n", Whitespace "    "]
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 75..76
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      StringTemplateExpression
-                        StringTemplateEntryList
-                          StringTemplateEntry
-                            OpenQuote "\"" @ 76..77
-                          StringTemplateEntry
-                            RegularStringPart "ready" @ 77..82
-                        ClosingQuote "\"" @ 82..83
-                  RParen ")" @ 83..84
-                LambdaExpressionList
-            TerminatorList
-        RBrace "}" @ 85..86 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 62..63
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "println" @ 68..75 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 75..76
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 76..77
+                            StringTemplateEntry
+                              RegularStringPart "ready" @ 77..82
+                          ClosingQuote "\"" @ 82..83
+                    RParen ")" @ 83..84
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 85..86 leading=[Newline "\n"]
   Eof "" @ 87..87 leading=[Newline "\n"]
 
 diagnostics:

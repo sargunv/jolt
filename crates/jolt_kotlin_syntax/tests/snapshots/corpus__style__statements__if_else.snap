@@ -37,10 +37,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "choose" @ 36..42
+      Name
+        Identifier "choose" @ 36..42
       ValueParameterList
         LParen "(" @ 42..43
         ValueParameterSeparatedList
@@ -65,80 +63,81 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "String" @ 56..62 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 63..64
-        BlockItemList
-          Statement
-            ExpressionStatement
-              IfExpression
-                IfKw "if" @ 69..71 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                ParenthesizedExpression
-                  LParen "(" @ 72..73
-                  BinaryExpression
-                    NameExpression
-                      Identifier "value" @ 73..78 trailing=[Whitespace " "]
-                    Lt "<" @ 79..80 trailing=[Whitespace " "]
-                    LiteralExpression
-                      IntegerLiteral "0" @ 81..82
-                  RParen ")" @ 82..83 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 84..85
-                  BlockItemList
-                    Statement
-                      ExpressionStatement
-                        JumpExpression
-                          ReturnKw "return" @ 94..100 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                          StringTemplateExpression
-                            StringTemplateEntryList
-                              StringTemplateEntry
-                                OpenQuote "\"" @ 101..102
-                              StringTemplateEntry
-                                RegularStringPart "negative" @ 102..110
-                            ClosingQuote "\"" @ 110..111
-                      TerminatorList
-                  RBrace "}" @ 116..117 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                ElseKw "else" @ 118..122 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 63..64
+          BlockItemList
+            Statement
+              ExpressionStatement
                 IfExpression
-                  IfKw "if" @ 123..125 trailing=[Whitespace " "]
+                  IfKw "if" @ 69..71 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                   ParenthesizedExpression
-                    LParen "(" @ 126..127
+                    LParen "(" @ 72..73
                     BinaryExpression
                       NameExpression
-                        Identifier "value" @ 127..132 trailing=[Whitespace " "]
-                      EqEq "==" @ 133..135 trailing=[Whitespace " "]
+                        Identifier "value" @ 73..78 trailing=[Whitespace " "]
+                      Lt "<" @ 79..80 trailing=[Whitespace " "]
                       LiteralExpression
-                        IntegerLiteral "0" @ 136..137
-                    RParen ")" @ 137..138 trailing=[Whitespace " "]
+                        IntegerLiteral "0" @ 81..82
+                    RParen ")" @ 82..83 trailing=[Whitespace " "]
                   Block
-                    LBrace "{" @ 139..140
+                    LBrace "{" @ 84..85
                     BlockItemList
                       Statement
                         ExpressionStatement
                           JumpExpression
-                            ReturnKw "return" @ 149..155 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                            ReturnKw "return" @ 94..100 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                             StringTemplateExpression
                               StringTemplateEntryList
                                 StringTemplateEntry
-                                  OpenQuote "\"" @ 156..157
+                                  OpenQuote "\"" @ 101..102
                                 StringTemplateEntry
-                                  RegularStringPart "zero" @ 157..161
-                              ClosingQuote "\"" @ 161..162
+                                  RegularStringPart "negative" @ 102..110
+                              ClosingQuote "\"" @ 110..111
                         TerminatorList
-                    RBrace "}" @ 167..168 leading=[Newline "\n", Whitespace "    "]
-            TerminatorList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 173..179 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                StringTemplateExpression
-                  StringTemplateEntryList
-                    StringTemplateEntry
-                      OpenQuote "\"" @ 180..181
-                    StringTemplateEntry
-                      RegularStringPart "positive" @ 181..189
-                  ClosingQuote "\"" @ 189..190
-            TerminatorList
-        RBrace "}" @ 191..192 leading=[Newline "\n"]
+                    RBrace "}" @ 116..117 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  ElseKw "else" @ 118..122 trailing=[Whitespace " "]
+                  IfExpression
+                    IfKw "if" @ 123..125 trailing=[Whitespace " "]
+                    ParenthesizedExpression
+                      LParen "(" @ 126..127
+                      BinaryExpression
+                        NameExpression
+                          Identifier "value" @ 127..132 trailing=[Whitespace " "]
+                        EqEq "==" @ 133..135 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "0" @ 136..137
+                      RParen ")" @ 137..138 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 139..140
+                      BlockItemList
+                        Statement
+                          ExpressionStatement
+                            JumpExpression
+                              ReturnKw "return" @ 149..155 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                              StringTemplateExpression
+                                StringTemplateEntryList
+                                  StringTemplateEntry
+                                    OpenQuote "\"" @ 156..157
+                                  StringTemplateEntry
+                                    RegularStringPart "zero" @ 157..161
+                                ClosingQuote "\"" @ 161..162
+                          TerminatorList
+                      RBrace "}" @ 167..168 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 173..179 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  StringTemplateExpression
+                    StringTemplateEntryList
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 180..181
+                      StringTemplateEntry
+                        RegularStringPart "positive" @ 181..189
+                    ClosingQuote "\"" @ 189..190
+              TerminatorList
+          RBrace "}" @ 191..192 leading=[Newline "\n"]
   Eof "" @ 193..193 leading=[Newline "\n"]
 
 diagnostics:

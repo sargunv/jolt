@@ -35,10 +35,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "branch" @ 36..42
+      Name
+        Identifier "branch" @ 36..42
       ValueParameterList
         LParen "(" @ 42..43
         ValueParameterSeparatedList
@@ -63,89 +61,90 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "String" @ 56..62 trailing=[Whitespace " "]
-      Assign "=" @ 63..64
-      WhenExpression
-        WhenKw "when" @ 69..73 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        WhenSubject
-          LParen "(" @ 74..75
-          NameExpression
-            Identifier "value" @ 75..80
-          RParen ")" @ 80..81 trailing=[Whitespace " "]
-        LBrace "{" @ 82..83
-        WhenEntryList
-          WhenEntry
-            WhenConditionSeparatedList
-              WhenCondition
-                LiteralExpression
-                  IntegerLiteral "0" @ 92..93 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-            Arrow "->" @ 94..96 trailing=[Whitespace " "]
-            StringTemplateExpression
-              StringTemplateEntryList
-                StringTemplateEntry
-                  OpenQuote "\"" @ 97..98
-                StringTemplateEntry
-                  RegularStringPart "zero" @ 98..102
-              ClosingQuote "\"" @ 102..103
-          WhenEntry
-            WhenConditionSeparatedList
-              WhenCondition
-                LiteralExpression
-                  IntegerLiteral "1" @ 112..113 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-            Arrow "->" @ 114..116 trailing=[Whitespace " "]
-            StringTemplateExpression
-              StringTemplateEntryList
-                StringTemplateEntry
-                  OpenQuote "\"" @ 117..118
-                StringTemplateEntry
-                  RegularStringPart "one" @ 118..121
-              ClosingQuote "\"" @ 121..122
-          WhenEntry
-            ElseKw "else" @ 131..135 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-            WhenConditionSeparatedList
-            Arrow "->" @ 136..138 trailing=[Whitespace " "]
-            StringTemplateExpression
-              StringTemplateEntryList
-                StringTemplateEntry
-                  OpenQuote "\"" @ 139..140
-                StringTemplateEntry
-                  RegularStringPart "value-" @ 140..146
-                StringTemplateEntry
-                  LongStringTemplateEntry
-                    LongTemplateEntryStart "${" @ 146..148
-                    CallExpression
-                      NavigationExpression
-                        CallExpression
-                          NavigationExpression
-                            NameExpression
-                              Identifier "value" @ 148..153
-                            Dot "." @ 153..154
-                            Identifier "toString" @ 154..162
-                          TypeArgumentListList
-                          ValueArgumentList
-                            LParen "(" @ 162..163
-                            ValueArgumentEntryList
-                            RParen ")" @ 163..164
-                          LambdaExpressionList
-                        Dot "." @ 164..165
-                        Identifier "padStart" @ 165..173
-                      TypeArgumentListList
-                      ValueArgumentList
-                        LParen "(" @ 173..174
-                        ValueArgumentEntryList
-                          ValueArgument
-                            ValueArgumentPrefixList
-                            LiteralExpression
-                              IntegerLiteral "4" @ 174..175
-                          Comma "," @ 175..176 trailing=[Whitespace " "]
-                          ValueArgument
-                            ValueArgumentPrefixList
-                            LiteralExpression
-                              CharacterLiteral "'0'" @ 177..180
-                        RParen ")" @ 180..181
-                      LambdaExpressionList
-                    LongTemplateEntryEnd "}" @ 181..182
-              ClosingQuote "\"" @ 182..183
-        RBrace "}" @ 188..189 leading=[Newline "\n", Whitespace "    "]
+      ExpressionBody
+        Assign "=" @ 63..64
+        WhenExpression
+          WhenKw "when" @ 69..73 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 74..75
+            NameExpression
+              Identifier "value" @ 75..80
+            RParen ")" @ 80..81 trailing=[Whitespace " "]
+          LBrace "{" @ 82..83
+          WhenEntryList
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  LiteralExpression
+                    IntegerLiteral "0" @ 92..93 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              Arrow "->" @ 94..96 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 97..98
+                  StringTemplateEntry
+                    RegularStringPart "zero" @ 98..102
+                ClosingQuote "\"" @ 102..103
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  LiteralExpression
+                    IntegerLiteral "1" @ 112..113 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              Arrow "->" @ 114..116 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 117..118
+                  StringTemplateEntry
+                    RegularStringPart "one" @ 118..121
+                ClosingQuote "\"" @ 121..122
+            WhenEntry
+              ElseKw "else" @ 131..135 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 136..138 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 139..140
+                  StringTemplateEntry
+                    RegularStringPart "value-" @ 140..146
+                  StringTemplateEntry
+                    LongStringTemplateEntry
+                      LongTemplateEntryStart "${" @ 146..148
+                      CallExpression
+                        NavigationExpression
+                          CallExpression
+                            NavigationExpression
+                              NameExpression
+                                Identifier "value" @ 148..153
+                              Dot "." @ 153..154
+                              Identifier "toString" @ 154..162
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 162..163
+                              ValueArgumentEntryList
+                              RParen ")" @ 163..164
+                            LambdaExpressionList
+                          Dot "." @ 164..165
+                          Identifier "padStart" @ 165..173
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 173..174
+                          ValueArgumentEntryList
+                            ValueArgument
+                              ValueArgumentPrefixList
+                              LiteralExpression
+                                IntegerLiteral "4" @ 174..175
+                            Comma "," @ 175..176 trailing=[Whitespace " "]
+                            ValueArgument
+                              ValueArgumentPrefixList
+                              LiteralExpression
+                                CharacterLiteral "'0'" @ 177..180
+                          RParen ")" @ 180..181
+                        LambdaExpressionList
+                      LongTemplateEntryEnd "}" @ 181..182
+                ClosingQuote "\"" @ 182..183
+          RBrace "}" @ 188..189 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 190..190 leading=[Newline "\n"]
 
 diagnostics:

@@ -102,10 +102,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 102..105 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "email" @ 106..111
+      Name
+        Identifier "email" @ 106..111
       ValueParameterList
         LParen "(" @ 111..112
         ValueParameterSeparatedList
@@ -132,28 +130,29 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "String" @ 126..132 trailing=[Whitespace " "]
-      Assign "=" @ 133..134
-      BinaryExpression
-        NavigationExpression
+      ExpressionBody
+        Assign "=" @ 133..134
+        BinaryExpression
           NavigationExpression
-            NameExpression
-              Identifier "user" @ 139..143 leading=[Newline "\n", Whitespace "    "]
+            NavigationExpression
+              NameExpression
+                Identifier "user" @ 139..143 leading=[Newline "\n", Whitespace "    "]
+              SplitSafeNavigationOperator
+                Question "?" @ 143..144
+                Dot "." @ 144..145
+              Identifier "profile" @ 145..152
             SplitSafeNavigationOperator
-              Question "?" @ 143..144
-              Dot "." @ 144..145
-            Identifier "profile" @ 145..152
-          SplitSafeNavigationOperator
-            Question "?" @ 152..153
-            Dot "." @ 153..154
-          Identifier "email" @ 154..159
-        Elvis "?:" @ 168..170 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-        StringTemplateExpression
-          StringTemplateEntryList
-            StringTemplateEntry
-              OpenQuote "\"" @ 171..172
-            StringTemplateEntry
-              RegularStringPart "missing@example.com" @ 172..191
-          ClosingQuote "\"" @ 191..192
+              Question "?" @ 152..153
+              Dot "." @ 153..154
+            Identifier "email" @ 154..159
+          Elvis "?:" @ 168..170 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+          StringTemplateExpression
+            StringTemplateEntryList
+              StringTemplateEntry
+                OpenQuote "\"" @ 171..172
+              StringTemplateEntry
+                RegularStringPart "missing@example.com" @ 172..191
+            ClosingQuote "\"" @ 191..192
     ClassDeclaration
       ModifierList
       ModifierList
@@ -210,8 +209,8 @@ KotlinFile
                       Name
                         Identifier "Status" @ 270..276
           RParen ")" @ 276..277 trailing=[Whitespace " "]
-      Colon ":" @ 278..279 trailing=[Whitespace " "]
-      DelegationSpecifierList
+      DelegationClause
+        Colon ":" @ 278..279 trailing=[Whitespace " "]
         DelegationSpecifierSeparatedList
           DelegationSpecifier
             TypeReference
@@ -235,10 +234,10 @@ KotlinFile
       ClassBody
         LBrace "{" @ 309..310
         ClassMemberList
-          ClassMemberDeclaration
-            EnumEntry
-              NameExpression
-                Identifier "Unknown" @ 315..322 leading=[Newline "\n", Whitespace "    "]
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "Unknown" @ 315..322 leading=[Newline "\n", Whitespace "    "]
             Comma "," @ 322..323
         RBrace "}" @ 324..325 leading=[Newline "\n"]
     FunctionDeclaration
@@ -246,10 +245,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 327..330 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "status" @ 331..337
+      Name
+        Identifier "status" @ 331..337
       ValueParameterList
         LParen "(" @ 337..338
         ValueParameterSeparatedList
@@ -274,58 +271,58 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Status" @ 351..357 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 358..359
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 364..367 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "status" @ 368..374 trailing=[Whitespace " "]
-            Assign "=" @ 375..376 trailing=[Whitespace " "]
-            BinaryExpression
-              NavigationExpression
-                ParenthesizedExpression
-                  LParen "(" @ 377..378
-                  BinaryExpression
+      BlockBody
+        Block
+          LBrace "{" @ 358..359
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 364..367 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "status" @ 368..374 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 375..376 trailing=[Whitespace " "]
+                BinaryExpression
+                  NavigationExpression
+                    ParenthesizedExpression
+                      LParen "(" @ 377..378
+                      BinaryExpression
+                        NavigationExpression
+                          NameExpression
+                            Identifier "pack" @ 378..382
+                          Dot "." @ 382..383
+                          Identifier "progress" @ 383..391 trailing=[Whitespace " "]
+                        AsSafe "as?" @ 392..395 trailing=[Whitespace " "]
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "Healthy" @ 396..403
+                      RParen ")" @ 403..404
+                    SplitSafeNavigationOperator
+                      Question "?" @ 413..414 leading=[Newline "\n", Whitespace "        "]
+                      Dot "." @ 414..415
+                    Identifier "status" @ 415..421 trailing=[Whitespace " "]
+                  Elvis "?:" @ 422..424 trailing=[Whitespace " "]
+                  JumpExpression
+                    ReturnKw "return" @ 425..431 trailing=[Whitespace " "]
                     NavigationExpression
                       NameExpression
-                        Identifier "pack" @ 378..382
-                      Dot "." @ 382..383
-                      Identifier "progress" @ 383..391 trailing=[Whitespace " "]
-                    AsSafe "as?" @ 392..395 trailing=[Whitespace " "]
-                    TypeReference
-                      UserType
-                        UserTypeSegmentList
-                          UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "Healthy" @ 396..403
-                  RParen ")" @ 403..404
-                SplitSafeNavigationOperator
-                  Question "?" @ 413..414 leading=[Newline "\n", Whitespace "        "]
-                  Dot "." @ 414..415
-                Identifier "status" @ 415..421 trailing=[Whitespace " "]
-              Elvis "?:" @ 422..424 trailing=[Whitespace " "]
-              JumpExpression
-                ReturnKw "return" @ 425..431 trailing=[Whitespace " "]
-                NavigationExpression
+                        Identifier "Status" @ 432..438
+                      Dot "." @ 438..439
+                      Identifier "Unknown" @ 439..446
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 451..457 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                   NameExpression
-                    Identifier "Status" @ 432..438
-                  Dot "." @ 438..439
-                  Identifier "Unknown" @ 439..446
-            PropertyBodyMemberList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 451..457 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                NameExpression
-                  Identifier "status" @ 458..464
-            TerminatorList
-        RBrace "}" @ 465..466 leading=[Newline "\n"]
+                    Identifier "status" @ 458..464
+              TerminatorList
+          RBrace "}" @ 465..466 leading=[Newline "\n"]
   Eof "" @ 467..467 leading=[Newline "\n"]
 
 diagnostics:

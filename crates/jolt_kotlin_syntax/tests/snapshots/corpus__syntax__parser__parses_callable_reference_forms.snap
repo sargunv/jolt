@@ -21,116 +21,111 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "callableReferences" @ 4..22
+      Name
+        Identifier "callableReferences" @ 4..22
       ValueParameterList
         LParen "(" @ 22..23
         ValueParameterSeparatedList
         RParen ")" @ 23..24 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 25..26
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 31..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "top" @ 35..38 trailing=[Whitespace " "]
-            Assign "=" @ 39..40 trailing=[Whitespace " "]
-            CallableReferenceExpression
-              ColonColon "::" @ 41..43
-              Identifier "topLevel" @ 43..51
-              TypeArgumentListList
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 56..59 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "member" @ 60..66 trailing=[Whitespace " "]
-            Assign "=" @ 67..68 trailing=[Whitespace " "]
-            CallableReferenceExpression
-              NameExpression
-                Identifier "String" @ 69..75
-              ColonColon "::" @ 75..77
-              Identifier "trim" @ 77..81
-              TypeArgumentListList
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 86..89 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "bound" @ 90..95 trailing=[Whitespace " "]
-            Assign "=" @ 96..97 trailing=[Whitespace " "]
-            CallableReferenceExpression
-              StringTemplateExpression
-                StringTemplateEntryList
-                  StringTemplateEntry
-                    OpenQuote "\"" @ 98..99
-                  StringTemplateEntry
-                    RegularStringPart "value" @ 99..104
-                ClosingQuote "\"" @ 104..105
-              ColonColon "::" @ 105..107
-              Identifier "length" @ 107..113
-              TypeArgumentListList
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 118..121 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "klass" @ 122..127 trailing=[Whitespace " "]
-            Assign "=" @ 128..129 trailing=[Whitespace " "]
-            CallableReferenceExpression
-              NameExpression
-                Identifier "String" @ 130..136
-              ColonColon "::" @ 136..138
-              ClassKw "class" @ 138..143
-              TypeArgumentListList
-            PropertyBodyMemberList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NameExpression
-                  Identifier "consume" @ 148..155 leading=[Newline "\n", Whitespace "    "]
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 155..156
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      NameExpression
-                        Identifier "top" @ 156..159
-                    Comma "," @ 159..160 trailing=[Whitespace " "]
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      NameExpression
-                        Identifier "member" @ 161..167
-                    Comma "," @ 167..168 trailing=[Whitespace " "]
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      NameExpression
-                        Identifier "bound" @ 169..174
-                    Comma "," @ 174..175 trailing=[Whitespace " "]
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      NameExpression
-                        Identifier "klass" @ 176..181
-                  RParen ")" @ 181..182
-                LambdaExpressionList
-            TerminatorList
-        RBrace "}" @ 183..184 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 25..26
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 31..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "top" @ 35..38 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 39..40 trailing=[Whitespace " "]
+                CallableReferenceExpression
+                  ColonColon "::" @ 41..43
+                  Identifier "topLevel" @ 43..51
+                  TypeArgumentListList
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 56..59 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "member" @ 60..66 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 67..68 trailing=[Whitespace " "]
+                CallableReferenceExpression
+                  NameExpression
+                    Identifier "String" @ 69..75
+                  ColonColon "::" @ 75..77
+                  Identifier "trim" @ 77..81
+                  TypeArgumentListList
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 86..89 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "bound" @ 90..95 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 96..97 trailing=[Whitespace " "]
+                CallableReferenceExpression
+                  StringTemplateExpression
+                    StringTemplateEntryList
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 98..99
+                      StringTemplateEntry
+                        RegularStringPart "value" @ 99..104
+                    ClosingQuote "\"" @ 104..105
+                  ColonColon "::" @ 105..107
+                  Identifier "length" @ 107..113
+                  TypeArgumentListList
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 118..121 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "klass" @ 122..127 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 128..129 trailing=[Whitespace " "]
+                CallableReferenceExpression
+                  NameExpression
+                    Identifier "String" @ 130..136
+                  ColonColon "::" @ 136..138
+                  ClassKw "class" @ 138..143
+                  TypeArgumentListList
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "consume" @ 148..155 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 155..156
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "top" @ 156..159
+                      Comma "," @ 159..160 trailing=[Whitespace " "]
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "member" @ 161..167
+                      Comma "," @ 167..168 trailing=[Whitespace " "]
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "bound" @ 169..174
+                      Comma "," @ 174..175 trailing=[Whitespace " "]
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "klass" @ 176..181
+                    RParen ")" @ 181..182
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 183..184 leading=[Newline "\n"]
   Eof "" @ 185..185 leading=[Newline "\n"]
 
 diagnostics:

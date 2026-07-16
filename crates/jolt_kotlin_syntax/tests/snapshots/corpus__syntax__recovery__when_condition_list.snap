@@ -15,10 +15,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "demo" @ 4..8
+      Name
+        Identifier "demo" @ 4..8
       ValueParameterList
         LParen "(" @ 8..9
         ValueParameterSeparatedList
@@ -35,45 +33,46 @@ KotlinFile
                     Name
                       Identifier "Int" @ 12..15
         RParen ")" @ 15..16 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 17..18 trailing=[Whitespace " "]
-        BlockItemList
-          Statement
-            ExpressionStatement
-              WhenExpression
-                WhenKw "when" @ 19..23 trailing=[Whitespace " "]
-                WhenSubject
-                  LParen "(" @ 24..25
-                  NameExpression
-                    Identifier "x" @ 25..26
-                  RParen ")" @ 26..27 trailing=[Whitespace " "]
-                LBrace "{" @ 28..29 trailing=[Whitespace " "]
-                WhenEntryList
-                  WhenEntry
-                    WhenConditionSeparatedList
-                      WhenCondition
-                        LiteralExpression
-                          IntegerLiteral "1" @ 30..31
-                      Comma "," @ 31..32 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
-                      WhenCondition
-                        ErrorNode
-                      Comma "," @ 46..47 trailing=[Whitespace " "]
-                      WhenCondition
-                        LiteralExpression
-                          IntegerLiteral "2" @ 48..49 trailing=[Whitespace " "]
-                    Arrow "->" @ 50..52 trailing=[Whitespace " "]
-                    CallExpression
-                      NameExpression
-                        Identifier "hit" @ 53..56
-                      TypeArgumentListList
-                      ValueArgumentList
-                        LParen "(" @ 56..57
-                        ValueArgumentEntryList
-                        RParen ")" @ 57..58 trailing=[Whitespace " "]
-                      LambdaExpressionList
-                RBrace "}" @ 59..60 trailing=[Whitespace " "]
-            TerminatorList
-        RBrace "}" @ 61..62
+      BlockBody
+        Block
+          LBrace "{" @ 17..18 trailing=[Whitespace " "]
+          BlockItemList
+            Statement
+              ExpressionStatement
+                WhenExpression
+                  WhenKw "when" @ 19..23 trailing=[Whitespace " "]
+                  WhenSubject
+                    LParen "(" @ 24..25
+                    NameExpression
+                      Identifier "x" @ 25..26
+                    RParen ")" @ 26..27 trailing=[Whitespace " "]
+                  LBrace "{" @ 28..29 trailing=[Whitespace " "]
+                  WhenEntryList
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          LiteralExpression
+                            IntegerLiteral "1" @ 30..31
+                        Comma "," @ 31..32 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
+                        WhenCondition
+                          ErrorNode
+                        Comma "," @ 46..47 trailing=[Whitespace " "]
+                        WhenCondition
+                          LiteralExpression
+                            IntegerLiteral "2" @ 48..49 trailing=[Whitespace " "]
+                      Arrow "->" @ 50..52 trailing=[Whitespace " "]
+                      CallExpression
+                        NameExpression
+                          Identifier "hit" @ 53..56
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 56..57
+                          ValueArgumentEntryList
+                          RParen ")" @ 57..58 trailing=[Whitespace " "]
+                        LambdaExpressionList
+                  RBrace "}" @ 59..60 trailing=[Whitespace " "]
+              TerminatorList
+          RBrace "}" @ 61..62
   Eof "" @ 63..63 leading=[Newline "\n"]
 
 diagnostics:

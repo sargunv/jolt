@@ -53,26 +53,27 @@ KotlinFile
                 LParen "(" @ 82..83
                 ValueParameterSeparatedList
                 RParen ")" @ 83..84 trailing=[Whitespace " "]
-              Colon ":" @ 85..86 trailing=[Whitespace " "]
-              ConstructorDelegationCall
-                CallExpression
-                  ThisExpression
-                    ThisKw "this" @ 87..91
-                  TypeArgumentListList
-                  ValueArgumentList
-                    LParen "(" @ 91..92
-                    ValueArgumentEntryList
-                      ValueArgument
-                        ValueArgumentPrefixList
-                        StringTemplateExpression
-                          StringTemplateEntryList
-                            StringTemplateEntry
-                              OpenQuote "\"" @ 92..93
-                            StringTemplateEntry
-                              RegularStringPart "default" @ 93..100
-                          ClosingQuote "\"" @ 100..101
-                    RParen ")" @ 101..102
-                  LambdaExpressionList
+              ConstructorDelegation
+                Colon ":" @ 85..86 trailing=[Whitespace " "]
+                ConstructorDelegationCall
+                  CallExpression
+                    ThisExpression
+                      ThisKw "this" @ 87..91
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 91..92
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                OpenQuote "\"" @ 92..93
+                              StringTemplateEntry
+                                RegularStringPart "default" @ 93..100
+                            ClosingQuote "\"" @ 100..101
+                      RParen ")" @ 101..102
+                    LambdaExpressionList
           ClassMemberDeclaration
             SecondaryConstructor
               ModifierList
@@ -94,31 +95,32 @@ KotlinFile
                             Name
                               Identifier "Int" @ 124..127
                 RParen ")" @ 127..128 trailing=[Whitespace " "]
-              Colon ":" @ 129..130 trailing=[Whitespace " "]
-              ConstructorDelegationCall
-                CallExpression
-                  ThisExpression
-                    ThisKw "this" @ 131..135
-                  TypeArgumentListList
-                  ValueArgumentList
-                    LParen "(" @ 135..136
-                    ValueArgumentEntryList
-                      ValueArgument
-                        ValueArgumentPrefixList
-                        CallExpression
-                          NavigationExpression
-                            NameExpression
-                              Identifier "id" @ 136..138
-                            Dot "." @ 138..139
-                            Identifier "toString" @ 139..147
-                          TypeArgumentListList
-                          ValueArgumentList
-                            LParen "(" @ 147..148
-                            ValueArgumentEntryList
-                            RParen ")" @ 148..149
-                          LambdaExpressionList
-                    RParen ")" @ 149..150
-                  LambdaExpressionList
+              ConstructorDelegation
+                Colon ":" @ 129..130 trailing=[Whitespace " "]
+                ConstructorDelegationCall
+                  CallExpression
+                    ThisExpression
+                      ThisKw "this" @ 131..135
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 135..136
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          CallExpression
+                            NavigationExpression
+                              NameExpression
+                                Identifier "id" @ 136..138
+                              Dot "." @ 138..139
+                              Identifier "toString" @ 139..147
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 147..148
+                              ValueArgumentEntryList
+                              RParen ")" @ 148..149
+                            LambdaExpressionList
+                      RParen ")" @ 149..150
+                    LambdaExpressionList
         RBrace "}" @ 151..152 leading=[Newline "\n"]
   Eof "" @ 153..153 leading=[Newline "\n"]
 

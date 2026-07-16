@@ -14,10 +14,8 @@ KotlinFile
       ModifierList
       ModifierList
       ValKw "val" @ 0..3 trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "value" @ 4..9
+      Name
+        Identifier "value" @ 4..9
       Colon ":" @ 9..10 trailing=[Whitespace " "]
       TypeReference
         UserType

@@ -1,0 +1,173 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+fun () {
+}
+
+fun missingParameters {
+}
+
+fun Receiver.member() = value
+fun Receiver.() {
+}
+fun MissingDot member() {
+}
+
+fun missingBody() =
+val = 1
+val delegated by provider
+val initialized = value
+val (recoveredInitializer) value
+
+val recoveredProperty: Int
+    field
+    get() value
+    set(value) {
+        field = value
+    } = value
+
+val missingAccessorBody: Int
+    get() =
+
+typealias Alias String
+
+class Derived Base(), Other {
+    constructor() this()
+    constructor():
+
+    val property: Int
+        field = 1
+        get() = field
+        set(value) {
+            field = value
+        }
+}
+
+class EmptyDelegation : {
+}
+
+class PartialDelegation : Base by {
+}
+
+class OrphanMember {
+    +
+}
+
+class OrphanComma {
+    ,
+}
+
+enum class Choice {
+    ),
+    First(1) {
+    },
+    Second,,
+    Third
+}
+
+class MissingClose {
+    val value = 1
+
+formatted:
+fun () {}
+
+fun missingParameters {}
+
+fun Receiver.member() = value
+
+fun Receiver.() {}
+
+fun MissingDot member() {}
+
+fun missingBody() =
+
+val = 1
+
+val delegated by provider
+
+val initialized = value
+
+val (recoveredInitializer) value
+
+val recoveredProperty: Int
+  field
+  get() value
+  set(value) {
+        field = value
+    } = value
+
+val missingAccessorBody: Int
+  get() =
+
+typealias Alias String
+
+class Derived
+  Base(), Other {
+  constructor() this()
+
+  constructor() :
+
+  val property: Int
+    field = 1
+    get() = field
+    set(value) {
+      field = value
+    }
+}
+
+class EmptyDelegation
+  : {
+}
+
+class PartialDelegation
+  : Base by {
+}
+
+class OrphanMember {
+  +
+}
+
+class OrphanComma {
+  ,
+}
+
+enum class Choice {
+  ),
+
+  First(1) {
+  },
+  Second,
+  ,
+
+  Third
+}
+
+class MissingClose {
+  val value = 1
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(4), end: TextSize(5) }) message=expected function name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(34), end: TextSize(35) }) message=expected value parameter list
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(82), end: TextSize(83) }) message=expected name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(104), end: TextSize(110) }) message=expected receiver separator
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(138), end: TextSize(141) }) message=expected declaration body expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(142), end: TextSize(143) }) message=expected property binding
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(223), end: TextSize(228) }) message=expected property initializer operator
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(271), end: TextSize(274) }) message=expected '=' after backing field
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(271), end: TextSize(274) }) message=expected backing field expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(277), end: TextSize(282) }) message=expected '=' before property accessor expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(328), end: TextSize(329) }) message=property accessor has both block and expression bodies
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(379), end: TextSize(388) }) message=expected declaration body expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(395), end: TextSize(401) }) message=expected '=' in typealias
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(417), end: TextSize(421) }) message=expected ':' before delegation specifiers
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(451), end: TextSize(455) }) message=expected ':' before constructor delegation
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(482), end: TextSize(485) }) message=expected constructor delegation call
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(624), end: TextSize(625) }) message=expected delegation specifier
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(663), end: TextSize(664) }) message=expected delegation expression after 'by'
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(693), end: TextSize(694) }) message=unexpected orphan class member
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(722), end: TextSize(723) }) message=unexpected orphan class member comma
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(751), end: TextSize(752) }) message=expected enum entry name
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(787), end: TextSize(788) }) message=unexpected orphan class member comma
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(841), end: TextSize(841) }) message=expected '}' after class body

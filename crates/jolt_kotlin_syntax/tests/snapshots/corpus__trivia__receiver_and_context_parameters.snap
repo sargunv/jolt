@@ -50,10 +50,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 50..53 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "text" @ 54..58
+              Name
+                Identifier "text" @ 54..58
               ValueParameterList
                 LParen "(" @ 58..59
                 ValueParameterSeparatedList
@@ -70,10 +68,11 @@ KotlinFile
                             Name
                               Identifier "String" @ 66..72
                 RParen ")" @ 72..73 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 74..75
-                BlockItemList
-                RBrace "}" @ 75..76
+              BlockBody
+                Block
+                  LBrace "{" @ 74..75
+                  BlockItemList
+                  RBrace "}" @ 75..76
         RBrace "}" @ 77..78 leading=[Newline "\n"]
     FunctionDeclaration
       ModifierList
@@ -97,60 +96,59 @@ KotlinFile
       FunKw "fun" @ 169..172 leading=[Newline "\n"] trailing=[Whitespace " "]
       ModifierList
       CallableName
-        CallableNamePartList
-          TypeReference
-            UserType
-              UserTypeSegmentList
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "String" @ 173..179 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:receiver-type */", Whitespace " "]
-          Dot "." @ 212..213
-          Name
-            Identifier "render" @ 213..219
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "String" @ 173..179 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:receiver-type */", Whitespace " "]
+        Dot "." @ 212..213
+        Name
+          Identifier "render" @ 213..219
       ValueParameterList
         LParen "(" @ 219..220 trailing=[BlockComment "/* JOLT-TRIVIA:receiver-dot */"]
         ValueParameterSeparatedList
         RParen ")" @ 250..251 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 252..253
-        BlockItemList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NavigationExpression
-                  NameExpression
-                    Identifier "scope" @ 258..263 leading=[Newline "\n", Whitespace "    "]
-                  Dot "." @ 263..264
-                  Identifier "text" @ 264..268
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 268..269
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      ThisExpression
-                        ThisKw "this" @ 269..273
-                  RParen ")" @ 273..274
-                LambdaExpressionList
-            TerminatorList
-        RBrace "}" @ 275..276 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 252..253
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NavigationExpression
+                    NameExpression
+                      Identifier "scope" @ 258..263 leading=[Newline "\n", Whitespace "    "]
+                    Dot "." @ 263..264
+                    Identifier "text" @ 264..268
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 268..269
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        ThisExpression
+                          ThisKw "this" @ 269..273
+                    RParen ")" @ 273..274
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 275..276 leading=[Newline "\n"]
     PropertyDeclaration
       ModifierList
       ModifierList
       ValKw "val" @ 278..281 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       CallableName
-        CallableNamePartList
-          TypeReference
-            UserType
-              UserTypeSegmentList
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "HtmlScope" @ 282..291 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-receiver */", Whitespace " "]
-          Dot "." @ 328..329
-          Name
-            Identifier "title" @ 329..334
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "HtmlScope" @ 282..291 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-receiver */", Whitespace " "]
+        Dot "." @ 328..329
+        Name
+          Identifier "title" @ 329..334
       Colon ":" @ 334..335 trailing=[Whitespace " "]
       TypeReference
         UserType
@@ -167,14 +165,15 @@ KotlinFile
             LParen "(" @ 350..351
             ValueParameterSeparatedList
             RParen ")" @ 351..352 trailing=[Whitespace " "]
-          Assign "=" @ 353..354 trailing=[Whitespace " "]
-          StringTemplateExpression
-            StringTemplateEntryList
-              StringTemplateEntry
-                OpenQuote "\"" @ 355..356
-              StringTemplateEntry
-                RegularStringPart "ready" @ 356..361
-            ClosingQuote "\"" @ 361..362
+          ExpressionBody
+            Assign "=" @ 353..354 trailing=[Whitespace " "]
+            StringTemplateExpression
+              StringTemplateEntryList
+                StringTemplateEntry
+                  OpenQuote "\"" @ 355..356
+                StringTemplateEntry
+                  RegularStringPart "ready" @ 356..361
+              ClosingQuote "\"" @ 361..362
   Eof "" @ 363..363 leading=[Newline "\n"]
 
 diagnostics:

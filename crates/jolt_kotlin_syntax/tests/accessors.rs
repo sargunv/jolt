@@ -1,5 +1,5 @@
 use jolt_kotlin_syntax::{
-    Block, KotlinFileItem, KotlinSyntaxField, KotlinSyntaxListPart, parse_kotlin_file,
+    DeclarationBody, KotlinFileItem, KotlinSyntaxField, KotlinSyntaxListPart, parse_kotlin_file,
 };
 use jolt_test_support::{kotlin_fixture_root, read_to_string};
 
@@ -29,9 +29,12 @@ fn block_inner_is_whitespace_rejects_adjacent_interior_tokens() {
     let Ok(KotlinSyntaxField::Present(body)) = function.body() else {
         panic!("expected function body in {}", fixture.display());
     };
-    let block = body
-        .cast_node::<Block<'_>>()
-        .unwrap_or_else(|| panic!("expected function body block in {}", fixture.display()));
+    let DeclarationBody::BlockBody(body) = body else {
+        panic!("expected function body block in {}", fixture.display());
+    };
+    let Ok(KotlinSyntaxField::Present(block)) = body.block() else {
+        panic!("expected represented block in {}", fixture.display());
+    };
 
     assert!(
         !block.inner_is_whitespace(),

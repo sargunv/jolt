@@ -34,10 +34,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "compute" @ 36..43
+      Name
+        Identifier "compute" @ 36..43
       ValueParameterList
         LParen "(" @ 43..44
         ValueParameterSeparatedList
@@ -62,57 +60,57 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Int" @ 57..60 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 61..62
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 67..70 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "doubled" @ 71..78
-            Assign "=" @ 78..79
-            BinaryExpression
-              NameExpression
-                Identifier "value" @ 79..84
-              Star "*" @ 84..85
-              LiteralExpression
-                IntegerLiteral "2" @ 85..86
-            PropertyBodyMemberList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NameExpression
-                  Identifier "println" @ 91..98 leading=[Newline "\n", Whitespace "    "]
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 98..99
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      BinaryExpression
-                        NameExpression
-                          Identifier "doubled" @ 99..106
-                        Plus "+" @ 106..107
-                        LiteralExpression
-                          IntegerLiteral "1" @ 107..108
-                  RParen ")" @ 108..109
-                LambdaExpressionList
-            TerminatorList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 114..120 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 61..62
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 67..70 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "doubled" @ 71..78
+              PropertyInitializer
+                Assign "=" @ 78..79
                 BinaryExpression
                   NameExpression
-                    Identifier "doubled" @ 121..128
-                  Plus "+" @ 128..129
+                    Identifier "value" @ 79..84
+                  Star "*" @ 84..85
                   LiteralExpression
-                    IntegerLiteral "1" @ 129..130
-            TerminatorList
-        RBrace "}" @ 131..132 leading=[Newline "\n"]
+                    IntegerLiteral "2" @ 85..86
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "println" @ 91..98 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 98..99
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        BinaryExpression
+                          NameExpression
+                            Identifier "doubled" @ 99..106
+                          Plus "+" @ 106..107
+                          LiteralExpression
+                            IntegerLiteral "1" @ 107..108
+                    RParen ")" @ 108..109
+                  LambdaExpressionList
+              TerminatorList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 114..120 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  BinaryExpression
+                    NameExpression
+                      Identifier "doubled" @ 121..128
+                    Plus "+" @ 128..129
+                    LiteralExpression
+                      IntegerLiteral "1" @ 129..130
+              TerminatorList
+          RBrace "}" @ 131..132 leading=[Newline "\n"]
   Eof "" @ 133..133 leading=[Newline "\n"]
 
 diagnostics:

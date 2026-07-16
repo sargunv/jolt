@@ -90,10 +90,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 137..140 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "aliases" @ 141..148
+      Name
+        Identifier "aliases" @ 141..148
       ValueParameterList
         LParen "(" @ 148..149
         ValueParameterSeparatedList
@@ -110,36 +108,37 @@ KotlinFile
                     Name
                       Identifier "ToolFactory" @ 158..169
         RParen ")" @ 169..170 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 171..172
-        BlockItemList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NameExpression
-                  Identifier "say" @ 177..180 leading=[Newline "\n", Whitespace "    "]
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 180..181
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      CallExpression
-                        NavigationExpression
-                          NameExpression
-                            Identifier "factory" @ 181..188
-                          Dot "." @ 188..189
-                          Identifier "toString" @ 189..197
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 197..198
-                          ValueArgumentEntryList
-                          RParen ")" @ 198..199
-                        LambdaExpressionList
-                  RParen ")" @ 199..200
-                LambdaExpressionList
-            TerminatorList
-        RBrace "}" @ 201..202 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 171..172
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "say" @ 177..180 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 180..181
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        CallExpression
+                          NavigationExpression
+                            NameExpression
+                              Identifier "factory" @ 181..188
+                            Dot "." @ 188..189
+                            Identifier "toString" @ 189..197
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 197..198
+                            ValueArgumentEntryList
+                            RParen ")" @ 198..199
+                          LambdaExpressionList
+                    RParen ")" @ 199..200
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 201..202 leading=[Newline "\n"]
   Eof "" @ 203..203 leading=[Newline "\n"]
 
 diagnostics:

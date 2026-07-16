@@ -38,10 +38,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "visit" @ 37..42
+      Name
+        Identifier "visit" @ 37..42
       ValueParameterList
         LParen "(" @ 42..43
         ValueParameterSeparatedList
@@ -109,135 +107,136 @@ KotlinFile
                         Name
                           Identifier "Unit" @ 89..93
         RParen ")" @ 93..94 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 95..96
-        BlockItemList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NavigationExpression
-                  NameExpression
-                    Identifier "groups" @ 101..107 leading=[Newline "\n", Whitespace "    "]
-                  Dot "." @ 107..108
-                  Identifier "forEach" @ 108..115 trailing=[Whitespace " "]
-                TypeArgumentListList
-                LambdaExpressionList
-                  LambdaExpression
-                    LabeledLambdaExpression
-                      Identifier "outer" @ 116..121
-                      At "@" @ 121..122
-                      LambdaExpression
-                        LambdaBody
-                          LBrace "{" @ 122..123 trailing=[Whitespace " "]
-                          LambdaParameterList
-                            LambdaParameterSeparatedList
-                              LambdaParameter
-                                Name
-                                  Identifier "group" @ 124..129 trailing=[Whitespace " "]
-                            Arrow "->" @ 130..132
-                          LambdaBodyItemList
-                            Statement
-                              ExpressionStatement
-                                CallExpression
-                                  NavigationExpression
-                                    NameExpression
-                                      Identifier "group" @ 141..146 leading=[Newline "\n", Whitespace "        "]
-                                    Dot "." @ 146..147
-                                    Identifier "forEach" @ 147..154 trailing=[Whitespace " "]
-                                  TypeArgumentListList
-                                  LambdaExpressionList
-                                    LambdaExpression
-                                      LabeledLambdaExpression
-                                        Identifier "inner" @ 155..160
-                                        At "@" @ 160..161
-                                        LambdaExpression
-                                          LambdaBody
-                                            LBrace "{" @ 161..162 trailing=[Whitespace " "]
-                                            LambdaParameterList
-                                              LambdaParameterSeparatedList
-                                                LambdaParameter
-                                                  Name
-                                                    Identifier "item" @ 163..167 trailing=[Whitespace " "]
-                                              Arrow "->" @ 168..170
-                                            LambdaBodyItemList
-                                              Statement
-                                                ExpressionStatement
-                                                  IfExpression
-                                                    IfKw "if" @ 183..185 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                                    ParenthesizedExpression
-                                                      LParen "(" @ 186..187
-                                                      CallExpression
-                                                        NavigationExpression
+      BlockBody
+        Block
+          LBrace "{" @ 95..96
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NavigationExpression
+                    NameExpression
+                      Identifier "groups" @ 101..107 leading=[Newline "\n", Whitespace "    "]
+                    Dot "." @ 107..108
+                    Identifier "forEach" @ 108..115 trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      LabeledLambdaExpression
+                        Identifier "outer" @ 116..121
+                        At "@" @ 121..122
+                        LambdaExpression
+                          LambdaBody
+                            LBrace "{" @ 122..123 trailing=[Whitespace " "]
+                            LambdaParameterList
+                              LambdaParameterSeparatedList
+                                LambdaParameter
+                                  Name
+                                    Identifier "group" @ 124..129 trailing=[Whitespace " "]
+                              Arrow "->" @ 130..132
+                            LambdaBodyItemList
+                              Statement
+                                ExpressionStatement
+                                  CallExpression
+                                    NavigationExpression
+                                      NameExpression
+                                        Identifier "group" @ 141..146 leading=[Newline "\n", Whitespace "        "]
+                                      Dot "." @ 146..147
+                                      Identifier "forEach" @ 147..154 trailing=[Whitespace " "]
+                                    TypeArgumentListList
+                                    LambdaExpressionList
+                                      LambdaExpression
+                                        LabeledLambdaExpression
+                                          Identifier "inner" @ 155..160
+                                          At "@" @ 160..161
+                                          LambdaExpression
+                                            LambdaBody
+                                              LBrace "{" @ 161..162 trailing=[Whitespace " "]
+                                              LambdaParameterList
+                                                LambdaParameterSeparatedList
+                                                  LambdaParameter
+                                                    Name
+                                                      Identifier "item" @ 163..167 trailing=[Whitespace " "]
+                                                Arrow "->" @ 168..170
+                                              LambdaBodyItemList
+                                                Statement
+                                                  ExpressionStatement
+                                                    IfExpression
+                                                      IfKw "if" @ 183..185 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                                                      ParenthesizedExpression
+                                                        LParen "(" @ 186..187
+                                                        CallExpression
+                                                          NavigationExpression
+                                                            NameExpression
+                                                              Identifier "item" @ 187..191
+                                                            Dot "." @ 191..192
+                                                            Identifier "isBlank" @ 192..199
+                                                          TypeArgumentListList
+                                                          ValueArgumentList
+                                                            LParen "(" @ 199..200
+                                                            ValueArgumentEntryList
+                                                            RParen ")" @ 200..201
+                                                          LambdaExpressionList
+                                                        RParen ")" @ 201..202 trailing=[Whitespace " "]
+                                                      JumpExpression
+                                                        ReturnKw "return" @ 203..209
+                                                        At "@" @ 209..210
+                                                        Identifier "inner" @ 210..215
+                                                  TerminatorList
+                                                Statement
+                                                  ExpressionStatement
+                                                    IfExpression
+                                                      IfKw "if" @ 228..230 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                                                      ParenthesizedExpression
+                                                        LParen "(" @ 231..232
+                                                        BinaryExpression
                                                           NameExpression
-                                                            Identifier "item" @ 187..191
-                                                          Dot "." @ 191..192
-                                                          Identifier "isBlank" @ 192..199
-                                                        TypeArgumentListList
-                                                        ValueArgumentList
-                                                          LParen "(" @ 199..200
-                                                          ValueArgumentEntryList
-                                                          RParen ")" @ 200..201
-                                                        LambdaExpressionList
-                                                      RParen ")" @ 201..202 trailing=[Whitespace " "]
-                                                    JumpExpression
-                                                      ReturnKw "return" @ 203..209
-                                                      At "@" @ 209..210
-                                                      Identifier "inner" @ 210..215
-                                                TerminatorList
-                                              Statement
-                                                ExpressionStatement
-                                                  IfExpression
-                                                    IfKw "if" @ 228..230 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                                    ParenthesizedExpression
-                                                      LParen "(" @ 231..232
-                                                      BinaryExpression
-                                                        NameExpression
-                                                          Identifier "item" @ 232..236 trailing=[Whitespace " "]
-                                                        EqEq "==" @ 237..239 trailing=[Whitespace " "]
-                                                        StringTemplateExpression
-                                                          StringTemplateEntryList
-                                                            StringTemplateEntry
-                                                              OpenQuote "\"" @ 240..241
-                                                            StringTemplateEntry
-                                                              RegularStringPart "stop" @ 241..245
-                                                          ClosingQuote "\"" @ 245..246
-                                                      RParen ")" @ 246..247 trailing=[Whitespace " "]
-                                                    JumpExpression
-                                                      ReturnKw "return" @ 248..254
-                                                      At "@" @ 254..255
-                                                      Identifier "outer" @ 255..260
-                                                TerminatorList
-                                              Statement
-                                                ExpressionStatement
-                                                  CallExpression
-                                                    NameExpression
-                                                      Identifier "emit" @ 273..277 leading=[Newline "\n", Whitespace "            "]
-                                                    TypeArgumentListList
-                                                    ValueArgumentList
-                                                      LParen "(" @ 277..278
-                                                      ValueArgumentEntryList
-                                                        ValueArgument
-                                                          ValueArgumentPrefixList
-                                                          CallExpression
-                                                            NavigationExpression
-                                                              NameExpression
-                                                                Identifier "item" @ 278..282
-                                                              Dot "." @ 282..283
-                                                              Identifier "trim" @ 283..287
-                                                            TypeArgumentListList
-                                                            ValueArgumentList
-                                                              LParen "(" @ 287..288
-                                                              ValueArgumentEntryList
-                                                              RParen ")" @ 288..289
-                                                            LambdaExpressionList
-                                                      RParen ")" @ 289..290
-                                                    LambdaExpressionList
-                                                TerminatorList
-                                            RBrace "}" @ 299..300 leading=[Newline "\n", Whitespace "        "]
-                              TerminatorList
-                          RBrace "}" @ 305..306 leading=[Newline "\n", Whitespace "    "]
-            TerminatorList
-        RBrace "}" @ 307..308 leading=[Newline "\n"]
+                                                            Identifier "item" @ 232..236 trailing=[Whitespace " "]
+                                                          EqEq "==" @ 237..239 trailing=[Whitespace " "]
+                                                          StringTemplateExpression
+                                                            StringTemplateEntryList
+                                                              StringTemplateEntry
+                                                                OpenQuote "\"" @ 240..241
+                                                              StringTemplateEntry
+                                                                RegularStringPart "stop" @ 241..245
+                                                            ClosingQuote "\"" @ 245..246
+                                                        RParen ")" @ 246..247 trailing=[Whitespace " "]
+                                                      JumpExpression
+                                                        ReturnKw "return" @ 248..254
+                                                        At "@" @ 254..255
+                                                        Identifier "outer" @ 255..260
+                                                  TerminatorList
+                                                Statement
+                                                  ExpressionStatement
+                                                    CallExpression
+                                                      NameExpression
+                                                        Identifier "emit" @ 273..277 leading=[Newline "\n", Whitespace "            "]
+                                                      TypeArgumentListList
+                                                      ValueArgumentList
+                                                        LParen "(" @ 277..278
+                                                        ValueArgumentEntryList
+                                                          ValueArgument
+                                                            ValueArgumentPrefixList
+                                                            CallExpression
+                                                              NavigationExpression
+                                                                NameExpression
+                                                                  Identifier "item" @ 278..282
+                                                                Dot "." @ 282..283
+                                                                Identifier "trim" @ 283..287
+                                                              TypeArgumentListList
+                                                              ValueArgumentList
+                                                                LParen "(" @ 287..288
+                                                                ValueArgumentEntryList
+                                                                RParen ")" @ 288..289
+                                                              LambdaExpressionList
+                                                        RParen ")" @ 289..290
+                                                      LambdaExpressionList
+                                                  TerminatorList
+                                              RBrace "}" @ 299..300 leading=[Newline "\n", Whitespace "        "]
+                                TerminatorList
+                            RBrace "}" @ 305..306 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+          RBrace "}" @ 307..308 leading=[Newline "\n"]
   Eof "" @ 309..309 leading=[Newline "\n"]
 
 diagnostics:

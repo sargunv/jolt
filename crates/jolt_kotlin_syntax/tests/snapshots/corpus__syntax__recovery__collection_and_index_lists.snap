@@ -16,10 +16,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "demo" @ 4..8
+      Name
+        Identifier "demo" @ 4..8
       ValueParameterList
         LParen "(" @ 8..9
         ValueParameterSeparatedList
@@ -47,38 +45,39 @@ KotlinFile
                                   Identifier "Int" @ 22..25
                       Gt ">" @ 25..26
         RParen ")" @ 26..27 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 28..29 trailing=[Whitespace " "]
-        BlockItemList
-          Statement
-            ExpressionStatement
-              CollectionLiteralExpression
-                LBracket "[" @ 30..31 trailing=[BlockComment "/* collection */", Whitespace " "]
-                ValueArgumentSeparatedList
-                  Comma "," @ 48..49 trailing=[Whitespace " "]
-                  ErrorNode
-                  ValueArgument
-                    ValueArgumentPrefixList
-                    NameExpression
-                      Identifier "value" @ 50..55
-                RBracket "]" @ 55..56
-            TerminatorList
-          Statement
-            ExpressionStatement
-              IndexExpression
-                NameExpression
-                  Identifier "values" @ 57..63 leading=[Newline "\n"]
-                LBracket "[" @ 63..64 trailing=[BlockComment "/* index */", Whitespace " "]
-                ValueArgumentSeparatedList
-                  Comma "," @ 76..77 trailing=[Whitespace " "]
-                  ErrorNode
-                  ValueArgument
-                    ValueArgumentPrefixList
-                    LiteralExpression
-                      IntegerLiteral "0" @ 78..79
-                RBracket "]" @ 79..80 trailing=[Whitespace " "]
-            TerminatorList
-        RBrace "}" @ 81..82
+      BlockBody
+        Block
+          LBrace "{" @ 28..29 trailing=[Whitespace " "]
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CollectionLiteralExpression
+                  LBracket "[" @ 30..31 trailing=[BlockComment "/* collection */", Whitespace " "]
+                  ValueArgumentSeparatedList
+                    Comma "," @ 48..49 trailing=[Whitespace " "]
+                    ErrorNode
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      NameExpression
+                        Identifier "value" @ 50..55
+                  RBracket "]" @ 55..56
+              TerminatorList
+            Statement
+              ExpressionStatement
+                IndexExpression
+                  NameExpression
+                    Identifier "values" @ 57..63 leading=[Newline "\n"]
+                  LBracket "[" @ 63..64 trailing=[BlockComment "/* index */", Whitespace " "]
+                  ValueArgumentSeparatedList
+                    Comma "," @ 76..77 trailing=[Whitespace " "]
+                    ErrorNode
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      LiteralExpression
+                        IntegerLiteral "0" @ 78..79
+                  RBracket "]" @ 79..80 trailing=[Whitespace " "]
+              TerminatorList
+          RBrace "}" @ 81..82
   Eof "" @ 83..83 leading=[Newline "\n"]
 
 diagnostics:

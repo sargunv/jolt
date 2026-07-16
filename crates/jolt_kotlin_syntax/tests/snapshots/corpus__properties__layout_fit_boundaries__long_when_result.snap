@@ -35,10 +35,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "describe" @ 36..44
+      Name
+        Identifier "describe" @ 36..44
       ValueParameterList
         LParen "(" @ 44..45
         ValueParameterSeparatedList
@@ -63,54 +61,55 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "String" @ 57..63 trailing=[Whitespace " "]
-      Assign "=" @ 64..65
-      WhenExpression
-        WhenKw "when" @ 70..74 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        WhenSubject
-          LParen "(" @ 75..76
-          NameExpression
-            Identifier "code" @ 76..80
-          RParen ")" @ 80..81 trailing=[Whitespace " "]
-        LBrace "{" @ 82..83
-        WhenEntryList
-          WhenEntry
-            WhenConditionSeparatedList
-              WhenCondition
-                LiteralExpression
-                  IntegerLiteral "200" @ 92..95 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-            Arrow "->" @ 96..98 trailing=[Whitespace " "]
-            StringTemplateExpression
-              StringTemplateEntryList
-                StringTemplateEntry
-                  OpenQuote "\"" @ 99..100
-                StringTemplateEntry
-                  RegularStringPart "request completed successfully with a compact success response" @ 100..162
-              ClosingQuote "\"" @ 162..163
-          WhenEntry
-            WhenConditionSeparatedList
-              WhenCondition
-                LiteralExpression
-                  IntegerLiteral "404" @ 172..175 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-            Arrow "->" @ 176..178 trailing=[Whitespace " "]
-            StringTemplateExpression
-              StringTemplateEntryList
-                StringTemplateEntry
-                  OpenQuote "\"" @ 179..180
-                StringTemplateEntry
-                  RegularStringPart "resource was not found in the active workspace" @ 180..226
-              ClosingQuote "\"" @ 226..227
-          WhenEntry
-            ElseKw "else" @ 236..240 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-            WhenConditionSeparatedList
-            Arrow "->" @ 241..243 trailing=[Whitespace " "]
-            StringTemplateExpression
-              StringTemplateEntryList
-                StringTemplateEntry
-                  OpenQuote "\"" @ 244..245
-                StringTemplateEntry
-                  RegularStringPart "unexpected status code returned from the service" @ 245..293
-              ClosingQuote "\"" @ 293..294
-        RBrace "}" @ 299..300 leading=[Newline "\n", Whitespace "    "]
+      ExpressionBody
+        Assign "=" @ 64..65
+        WhenExpression
+          WhenKw "when" @ 70..74 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 75..76
+            NameExpression
+              Identifier "code" @ 76..80
+            RParen ")" @ 80..81 trailing=[Whitespace " "]
+          LBrace "{" @ 82..83
+          WhenEntryList
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  LiteralExpression
+                    IntegerLiteral "200" @ 92..95 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              Arrow "->" @ 96..98 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 99..100
+                  StringTemplateEntry
+                    RegularStringPart "request completed successfully with a compact success response" @ 100..162
+                ClosingQuote "\"" @ 162..163
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  LiteralExpression
+                    IntegerLiteral "404" @ 172..175 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              Arrow "->" @ 176..178 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 179..180
+                  StringTemplateEntry
+                    RegularStringPart "resource was not found in the active workspace" @ 180..226
+                ClosingQuote "\"" @ 226..227
+            WhenEntry
+              ElseKw "else" @ 236..240 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 241..243 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 244..245
+                  StringTemplateEntry
+                    RegularStringPart "unexpected status code returned from the service" @ 245..293
+                ClosingQuote "\"" @ 293..294
+          RBrace "}" @ 299..300 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 301..301 leading=[Newline "\n"]
 
 diagnostics:

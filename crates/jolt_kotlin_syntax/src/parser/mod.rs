@@ -232,6 +232,38 @@ mod tests {
         check("fun f(x: Int 1) {}\n", "expected '=' before parameter default", KotlinSyntaxKind::ValueParameter, Some(crate::shape::value_parameter::Slot::assign as u16));
         check("context(named: Int 1) fun f() {}\n", "expected '=' before context parameter default", KotlinSyntaxKind::ContextParameter, Some(crate::shape::context_parameter::Slot::assign as u16));
     }
+
+    #[test]
+    #[rustfmt::skip]
+    fn phase_eighteen_diagnostics_own_the_declared_node_or_slot() {
+        check("fun () {}\n", "expected function name", KotlinSyntaxKind::BogusCallableDeclarationName, None);
+        check("fun named {}\n", "expected value parameter list", KotlinSyntaxKind::ValueParameterList, None);
+        check("val = 1\n", "expected property binding", KotlinSyntaxKind::BogusPropertyBinding, None);
+        check("class C { constructor() this() }\n", "expected ':' before constructor delegation", KotlinSyntaxKind::ConstructorDelegation, Some(crate::shape::constructor_delegation::Slot::colon as u16));
+        check("class C Base()\n", "expected ':' before delegation specifiers", KotlinSyntaxKind::DelegationClause, Some(crate::shape::delegation_clause::Slot::colon as u16));
+        check("typealias Alias String\n", "expected '=' in typealias", KotlinSyntaxKind::TypeAliasDeclaration, Some(crate::shape::type_alias_declaration::Slot::assign as u16));
+        check("val x: Int get() value\n", "expected '=' before property accessor expression", KotlinSyntaxKind::ExpressionBody, Some(crate::shape::expression_body::Slot::assign as u16));
+        check("fun f() =\n", "expected declaration body expression", KotlinSyntaxKind::ExpressionBody, Some(crate::shape::expression_body::Slot::expression as u16));
+        check("val x: Int get() =\n", "expected declaration body expression", KotlinSyntaxKind::ExpressionBody, Some(crate::shape::expression_body::Slot::expression as u16));
+        check_code("val x: Int get() {} = value\n", "property accessor has both block and expression bodies", KotlinParseDiagnosticCode::UnexpectedSyntax, KotlinSyntaxKind::BogusDeclarationBody, None);
+        check("val (x) value\n", "expected property initializer operator", KotlinSyntaxKind::PropertyInitializer, Some(crate::shape::property_initializer::Slot::operator as u16));
+        check("val x by\n", "expected property initializer expression", KotlinSyntaxKind::PropertyInitializer, Some(crate::shape::property_initializer::Slot::expression as u16));
+        check("val answer =\nval next = 1\n", "expected property initializer expression", KotlinSyntaxKind::PropertyInitializer, Some(crate::shape::property_initializer::Slot::expression as u16));
+        check("val delegated by\nval next = 1\n", "expected property initializer expression", KotlinSyntaxKind::PropertyInitializer, Some(crate::shape::property_initializer::Slot::expression as u16));
+        check("val x: Int field\nget() = x\n", "expected '=' after backing field", KotlinSyntaxKind::ExplicitBackingField, Some(crate::shape::explicit_backing_field::Slot::assign as u16));
+        check("val x: Int field =\nget() = x\n", "expected backing field expression", KotlinSyntaxKind::ExplicitBackingField, Some(crate::shape::explicit_backing_field::Slot::expression as u16));
+        check("class C { constructor(): }\n", "expected constructor delegation call", KotlinSyntaxKind::ConstructorDelegationCall, Some(crate::shape::constructor_delegation_call::Slot::expression as u16));
+        check("class C : Base by {}\n", "expected delegation expression after 'by'", KotlinSyntaxKind::DelegationByClause, Some(crate::shape::delegation_by_clause::Slot::delegate as u16));
+        check("class C : {}\n", "expected delegation specifier", KotlinSyntaxKind::BogusDelegationSpecifier, None);
+        check_code("class C : Base, , Other {}\n", "expected delegation specifier between commas", KotlinParseDiagnosticCode::UnexpectedSyntax, KotlinSyntaxKind::BogusDelegationSpecifier, None);
+        check("fun Receiver.() {}\n", "expected name", KotlinSyntaxKind::Name, Some(crate::shape::name::Slot::identifier as u16));
+        check("fun Receiver member() {}\n", "expected receiver separator", KotlinSyntaxKind::CallableName, Some(crate::shape::callable_name::Slot::dot as u16));
+        check("enum class E { ), }\n", "expected enum entry name", KotlinSyntaxKind::EnumEntry, None);
+        check("class C { + }\n", "unexpected orphan class member", KotlinSyntaxKind::BogusClassMember, None);
+        check("class C { , }\n", "unexpected orphan class member comma", KotlinSyntaxKind::BogusClassMember, None);
+        check("enum class E { A,,B }\n", "unexpected orphan class member comma", KotlinSyntaxKind::BogusClassMember, None);
+        check("class C {\n", "expected '}' after class body", KotlinSyntaxKind::ClassBody, Some(crate::shape::class_body::Slot::close_brace as u16));
+    }
 }
 
 fn invalid_event_stream_diagnostic(error: &jolt_syntax::BuildSyntaxTreeError) -> Diagnostic {

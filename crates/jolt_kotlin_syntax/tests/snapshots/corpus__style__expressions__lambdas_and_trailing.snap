@@ -36,10 +36,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "render" @ 37..43
+      Name
+        Identifier "render" @ 37..43
       ValueParameterList
         LParen "(" @ 43..44
         ValueParameterSeparatedList
@@ -96,147 +94,147 @@ KotlinFile
                         Name
                           Identifier "Unit" @ 83..87
         RParen ")" @ 87..88 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 89..90
-        BlockItemList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NavigationExpression
-                  NameExpression
-                    Identifier "items" @ 95..100 leading=[Newline "\n", Whitespace "    "]
-                  Dot "." @ 100..101
-                  Identifier "forEach" @ 101..108 trailing=[Whitespace " "]
-                TypeArgumentListList
-                LambdaExpressionList
-                  LambdaExpression
-                    LambdaBody
-                      LBrace "{" @ 109..110 trailing=[Whitespace " "]
-                      LambdaParameterList
-                        LambdaParameterSeparatedList
-                          LambdaParameter
-                            Name
-                              Identifier "item" @ 111..115 trailing=[Whitespace " "]
-                        Arrow "->" @ 116..118
-                      LambdaBodyItemList
-                        Statement
-                          ExpressionStatement
-                            CallExpression
-                              NameExpression
-                                Identifier "emit" @ 127..131 leading=[Newline "\n", Whitespace "        "]
-                              TypeArgumentListList
-                              ValueArgumentList
-                                LParen "(" @ 131..132
-                                ValueArgumentEntryList
-                                  ValueArgument
-                                    ValueArgumentPrefixList
-                                    CallExpression
-                                      NavigationExpression
-                                        NameExpression
-                                          Identifier "item" @ 132..136
-                                        Dot "." @ 136..137
-                                        Identifier "uppercase" @ 137..146
-                                      TypeArgumentListList
-                                      ValueArgumentList
-                                        LParen "(" @ 146..147
-                                        ValueArgumentEntryList
-                                        RParen ")" @ 147..148
-                                      LambdaExpressionList
-                                RParen ")" @ 148..149
-                              LambdaExpressionList
-                          TerminatorList
-                      RBrace "}" @ 154..155 leading=[Newline "\n", Whitespace "    "]
-            TerminatorList
-        RBrace "}" @ 156..157 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 89..90
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NavigationExpression
+                    NameExpression
+                      Identifier "items" @ 95..100 leading=[Newline "\n", Whitespace "    "]
+                    Dot "." @ 100..101
+                    Identifier "forEach" @ 101..108 trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 109..110 trailing=[Whitespace " "]
+                        LambdaParameterList
+                          LambdaParameterSeparatedList
+                            LambdaParameter
+                              Name
+                                Identifier "item" @ 111..115 trailing=[Whitespace " "]
+                          Arrow "->" @ 116..118
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              CallExpression
+                                NameExpression
+                                  Identifier "emit" @ 127..131 leading=[Newline "\n", Whitespace "        "]
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 131..132
+                                  ValueArgumentEntryList
+                                    ValueArgument
+                                      ValueArgumentPrefixList
+                                      CallExpression
+                                        NavigationExpression
+                                          NameExpression
+                                            Identifier "item" @ 132..136
+                                          Dot "." @ 136..137
+                                          Identifier "uppercase" @ 137..146
+                                        TypeArgumentListList
+                                        ValueArgumentList
+                                          LParen "(" @ 146..147
+                                          ValueArgumentEntryList
+                                          RParen ")" @ 147..148
+                                        LambdaExpressionList
+                                  RParen ")" @ 148..149
+                                LambdaExpressionList
+                            TerminatorList
+                        RBrace "}" @ 154..155 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+          RBrace "}" @ 156..157 leading=[Newline "\n"]
     PropertyDeclaration
       ModifierList
       ModifierList
       ValKw "val" @ 159..162 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "joined" @ 163..169 trailing=[Whitespace " "]
-      Assign "=" @ 170..171 trailing=[Whitespace " "]
-      CallExpression
-        NavigationExpression
-          CallExpression
-            NameExpression
-              Identifier "listOf" @ 172..178
-            TypeArgumentListList
-            ValueArgumentList
-              LParen "(" @ 178..179
-              ValueArgumentEntryList
-                ValueArgument
-                  ValueArgumentPrefixList
-                  StringTemplateExpression
-                    StringTemplateEntryList
-                      StringTemplateEntry
-                        OpenQuote "\"" @ 179..180
-                      StringTemplateEntry
-                        RegularStringPart "a" @ 180..181
-                    ClosingQuote "\"" @ 181..182
-                Comma "," @ 182..183 trailing=[Whitespace " "]
-                ValueArgument
-                  ValueArgumentPrefixList
-                  StringTemplateExpression
-                    StringTemplateEntryList
-                      StringTemplateEntry
-                        OpenQuote "\"" @ 184..185
-                      StringTemplateEntry
-                        RegularStringPart "b" @ 185..186
-                    ClosingQuote "\"" @ 186..187
-                Comma "," @ 187..188 trailing=[Whitespace " "]
-                ValueArgument
-                  ValueArgumentPrefixList
-                  StringTemplateExpression
-                    StringTemplateEntryList
-                      StringTemplateEntry
-                        OpenQuote "\"" @ 189..190
-                      StringTemplateEntry
-                        RegularStringPart "c" @ 190..191
-                    ClosingQuote "\"" @ 191..192
-              RParen ")" @ 192..193
-            LambdaExpressionList
-          Dot "." @ 193..194
-          Identifier "joinToString" @ 194..206
-        TypeArgumentListList
-        ValueArgumentList
-          LParen "(" @ 206..207
-          ValueArgumentEntryList
-            ValueArgument
-              ValueArgumentPrefixList
-              Name
-                Identifier "separator" @ 207..216 trailing=[Whitespace " "]
-              Assign "=" @ 217..218 trailing=[Whitespace " "]
-              StringTemplateExpression
-                StringTemplateEntryList
-                  StringTemplateEntry
-                    OpenQuote "\"" @ 219..220
-                  StringTemplateEntry
-                    RegularStringPart "," @ 220..221
-                ClosingQuote "\"" @ 221..222
-          RParen ")" @ 222..223 trailing=[Whitespace " "]
-        LambdaExpressionList
-          LambdaExpression
-            LambdaBody
-              LBrace "{" @ 224..225 trailing=[Whitespace " "]
-              LambdaBodyItemList
-                Statement
-                  ExpressionStatement
-                    CallExpression
-                      NavigationExpression
-                        NameExpression
-                          Identifier "it" @ 226..228
-                        Dot "." @ 228..229
-                        Identifier "uppercase" @ 229..238
-                      TypeArgumentListList
-                      ValueArgumentList
-                        LParen "(" @ 238..239
-                        ValueArgumentEntryList
-                        RParen ")" @ 239..240 trailing=[Whitespace " "]
-                      LambdaExpressionList
-                  TerminatorList
-              RBrace "}" @ 241..242
+      Name
+        Identifier "joined" @ 163..169 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 170..171 trailing=[Whitespace " "]
+        CallExpression
+          NavigationExpression
+            CallExpression
+              NameExpression
+                Identifier "listOf" @ 172..178
+              TypeArgumentListList
+              ValueArgumentList
+                LParen "(" @ 178..179
+                ValueArgumentEntryList
+                  ValueArgument
+                    ValueArgumentPrefixList
+                    StringTemplateExpression
+                      StringTemplateEntryList
+                        StringTemplateEntry
+                          OpenQuote "\"" @ 179..180
+                        StringTemplateEntry
+                          RegularStringPart "a" @ 180..181
+                      ClosingQuote "\"" @ 181..182
+                  Comma "," @ 182..183 trailing=[Whitespace " "]
+                  ValueArgument
+                    ValueArgumentPrefixList
+                    StringTemplateExpression
+                      StringTemplateEntryList
+                        StringTemplateEntry
+                          OpenQuote "\"" @ 184..185
+                        StringTemplateEntry
+                          RegularStringPart "b" @ 185..186
+                      ClosingQuote "\"" @ 186..187
+                  Comma "," @ 187..188 trailing=[Whitespace " "]
+                  ValueArgument
+                    ValueArgumentPrefixList
+                    StringTemplateExpression
+                      StringTemplateEntryList
+                        StringTemplateEntry
+                          OpenQuote "\"" @ 189..190
+                        StringTemplateEntry
+                          RegularStringPart "c" @ 190..191
+                      ClosingQuote "\"" @ 191..192
+                RParen ")" @ 192..193
+              LambdaExpressionList
+            Dot "." @ 193..194
+            Identifier "joinToString" @ 194..206
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 206..207
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                Name
+                  Identifier "separator" @ 207..216 trailing=[Whitespace " "]
+                Assign "=" @ 217..218 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 219..220
+                    StringTemplateEntry
+                      RegularStringPart "," @ 220..221
+                  ClosingQuote "\"" @ 221..222
+            RParen ")" @ 222..223 trailing=[Whitespace " "]
+          LambdaExpressionList
+            LambdaExpression
+              LambdaBody
+                LBrace "{" @ 224..225 trailing=[Whitespace " "]
+                LambdaBodyItemList
+                  Statement
+                    ExpressionStatement
+                      CallExpression
+                        NavigationExpression
+                          NameExpression
+                            Identifier "it" @ 226..228
+                          Dot "." @ 228..229
+                          Identifier "uppercase" @ 229..238
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 238..239
+                          ValueArgumentEntryList
+                          RParen ")" @ 239..240 trailing=[Whitespace " "]
+                        LambdaExpressionList
+                    TerminatorList
+                RBrace "}" @ 241..242
       PropertyBodyMemberList
   Eof "" @ 243..243 leading=[Newline "\n"]
 

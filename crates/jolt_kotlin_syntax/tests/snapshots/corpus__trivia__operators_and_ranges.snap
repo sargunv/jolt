@@ -34,10 +34,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 28..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "operators" @ 32..41
+      Name
+        Identifier "operators" @ 32..41
       ValueParameterList
         LParen "(" @ 41..42
         ValueParameterSeparatedList
@@ -73,83 +71,82 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Boolean" @ 62..69 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 70..71
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 76..79 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "range" @ 80..85 trailing=[Whitespace " "]
-            Assign "=" @ 86..87 trailing=[Whitespace " "]
-            BinaryExpression
-              LiteralExpression
-                IntegerLiteral "1" @ 88..89 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:range-left */", Whitespace " "]
-              Range ".." @ 119..121 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:range-op */", Whitespace " "]
-              LiteralExpression
-                IntegerLiteral "10" @ 149..151
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 156..159 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "indexed" @ 160..167 trailing=[Whitespace " "]
-            Assign "=" @ 168..169 trailing=[Whitespace " "]
-            IndexExpression
-              NameExpression
-                Identifier "values" @ 170..176
-              LBracket "[" @ 176..177
-              ValueArgumentSeparatedList
-                ValueArgument
-                  ValueArgumentPrefixList
-                  LiteralExpression
-                    IntegerLiteral "0" @ 177..178 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:index-value */"]
-              RBracket "]" @ 208..209
-            PropertyBodyMemberList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 214..220 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 70..71
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 76..79 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "range" @ 80..85 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 86..87 trailing=[Whitespace " "]
                 BinaryExpression
+                  LiteralExpression
+                    IntegerLiteral "1" @ 88..89 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:range-left */", Whitespace " "]
+                  Range ".." @ 119..121 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:range-op */", Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "10" @ 149..151
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 156..159 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "indexed" @ 160..167 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 168..169 trailing=[Whitespace " "]
+                IndexExpression
+                  NameExpression
+                    Identifier "values" @ 170..176
+                  LBracket "[" @ 176..177
+                  ValueArgumentSeparatedList
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      LiteralExpression
+                        IntegerLiteral "0" @ 177..178 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:index-value */"]
+                  RBracket "]" @ 208..209
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 214..220 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                   BinaryExpression
-                    NameExpression
-                      Identifier "indexed" @ 221..228 trailing=[Whitespace " "]
-                    InKw "in" @ 229..231 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:in-operator */", Whitespace " "]
-                    NameExpression
-                      Identifier "range" @ 262..267 trailing=[Whitespace " "]
-                  AndAnd "&&" @ 268..270 trailing=[Whitespace " "]
-                  BinaryExpression
-                    NameExpression
-                      Identifier "indexed" @ 271..278 trailing=[Whitespace " "]
-                    NotIn "!in" @ 279..282 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:not-in-operator */", Whitespace " "]
-                    CallExpression
+                    BinaryExpression
                       NameExpression
-                        Identifier "setOf" @ 317..322
-                      TypeArgumentListList
-                        TypeArgumentList
-                          Lt "<" @ 322..323
-                          TypeProjectionSeparatedList
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
-                                  UserTypeSegment
-                                    AnnotationList
-                                    Name
-                                      Identifier "Int" @ 323..326
-                          Gt ">" @ 326..327
-                      ValueArgumentList
-                        LParen "(" @ 327..328
-                        ValueArgumentEntryList
-                        RParen ")" @ 328..329
-                      LambdaExpressionList
-            TerminatorList
-        RBrace "}" @ 330..331 leading=[Newline "\n"]
+                        Identifier "indexed" @ 221..228 trailing=[Whitespace " "]
+                      InKw "in" @ 229..231 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:in-operator */", Whitespace " "]
+                      NameExpression
+                        Identifier "range" @ 262..267 trailing=[Whitespace " "]
+                    AndAnd "&&" @ 268..270 trailing=[Whitespace " "]
+                    BinaryExpression
+                      NameExpression
+                        Identifier "indexed" @ 271..278 trailing=[Whitespace " "]
+                      NotIn "!in" @ 279..282 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:not-in-operator */", Whitespace " "]
+                      CallExpression
+                        NameExpression
+                          Identifier "setOf" @ 317..322
+                        TypeArgumentListList
+                          TypeArgumentList
+                            Lt "<" @ 322..323
+                            TypeProjectionSeparatedList
+                              TypeReference
+                                UserType
+                                  UserTypeSegmentList
+                                    UserTypeSegment
+                                      AnnotationList
+                                      Name
+                                        Identifier "Int" @ 323..326
+                            Gt ">" @ 326..327
+                        ValueArgumentList
+                          LParen "(" @ 327..328
+                          ValueArgumentEntryList
+                          RParen ")" @ 328..329
+                        LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 330..331 leading=[Newline "\n"]
   Eof "" @ 332..332 leading=[Newline "\n"]
 
 diagnostics:

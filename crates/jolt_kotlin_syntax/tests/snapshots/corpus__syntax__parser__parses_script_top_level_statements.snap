@@ -20,18 +20,17 @@ KotlinFile
       ModifierList
       ModifierList
       ValKw "val" @ 23..26 leading=[ShebangComment "#!/usr/bin/env kotlin", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "scriptName" @ 27..37 trailing=[Whitespace " "]
-      Assign "=" @ 38..39 trailing=[Whitespace " "]
-      StringTemplateExpression
-        StringTemplateEntryList
-          StringTemplateEntry
-            OpenQuote "\"" @ 40..41
-          StringTemplateEntry
-            RegularStringPart "jolt" @ 41..45
-        ClosingQuote "\"" @ 45..46
+      Name
+        Identifier "scriptName" @ 27..37 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 38..39 trailing=[Whitespace " "]
+        StringTemplateExpression
+          StringTemplateEntryList
+            StringTemplateEntry
+              OpenQuote "\"" @ 40..41
+            StringTemplateEntry
+              RegularStringPart "jolt" @ 41..45
+          ClosingQuote "\"" @ 45..46
       PropertyBodyMemberList
     Statement
       ExpressionStatement

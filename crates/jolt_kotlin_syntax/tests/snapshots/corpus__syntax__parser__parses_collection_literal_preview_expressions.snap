@@ -20,10 +20,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "collectionLiterals" @ 4..22
+      Name
+        Identifier "collectionLiterals" @ 4..22
       ValueParameterList
         LParen "(" @ 22..23
         ValueParameterSeparatedList
@@ -36,122 +34,120 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Any" @ 26..29 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 30..31
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 36..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "empty" @ 40..45 trailing=[Whitespace " "]
-            Assign "=" @ 46..47 trailing=[Whitespace " "]
-            CollectionLiteralExpression
-              LBracket "[" @ 48..49
-              ValueArgumentSeparatedList
-              RBracket "]" @ 49..50
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 55..58 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "numbers" @ 59..66 trailing=[Whitespace " "]
-            Assign "=" @ 67..68 trailing=[Whitespace " "]
-            CollectionLiteralExpression
-              LBracket "[" @ 69..70
-              ValueArgumentSeparatedList
-                ValueArgument
-                  ValueArgumentPrefixList
-                  LiteralExpression
-                    IntegerLiteral "1" @ 70..71
-                Comma "," @ 71..72 trailing=[Whitespace " "]
-                ValueArgument
-                  ValueArgumentPrefixList
-                  LiteralExpression
-                    IntegerLiteral "2" @ 73..74
-                Comma "," @ 74..75 trailing=[Whitespace " "]
-                ValueArgument
-                  ValueArgumentPrefixList
-                  LiteralExpression
-                    IntegerLiteral "3" @ 76..77
-              RBracket "]" @ 77..78
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 83..86 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "nested" @ 87..93 trailing=[Whitespace " "]
-            Assign "=" @ 94..95 trailing=[Whitespace " "]
-            CollectionLiteralExpression
-              LBracket "[" @ 96..97
-              ValueArgumentSeparatedList
-                ValueArgument
-                  ValueArgumentPrefixList
-                  CollectionLiteralExpression
-                    LBracket "[" @ 97..98
-                    ValueArgumentSeparatedList
-                      ValueArgument
-                        ValueArgumentPrefixList
-                        LiteralExpression
-                          IntegerLiteral "1" @ 98..99
-                    RBracket "]" @ 99..100
-                Comma "," @ 100..101 trailing=[Whitespace " "]
-                ValueArgument
-                  ValueArgumentPrefixList
-                  CollectionLiteralExpression
-                    LBracket "[" @ 102..103
-                    ValueArgumentSeparatedList
-                      ValueArgument
-                        ValueArgumentPrefixList
-                        LiteralExpression
-                          IntegerLiteral "2" @ 103..104
-                      Comma "," @ 104..105 trailing=[Whitespace " "]
-                      ValueArgument
-                        ValueArgumentPrefixList
-                        LiteralExpression
-                          IntegerLiteral "3" @ 106..107
-                    RBracket "]" @ 107..108
-                Comma "," @ 108..109 trailing=[Whitespace " "]
-                ValueArgument
-                  ValueArgumentPrefixList
-                  CollectionLiteralExpression
-                    LBracket "[" @ 110..111
-                    ValueArgumentSeparatedList
-                    RBracket "]" @ 111..112
-              RBracket "]" @ 112..113
-            PropertyBodyMemberList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 118..124 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 30..31
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 36..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "empty" @ 40..45 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 46..47 trailing=[Whitespace " "]
                 CollectionLiteralExpression
-                  LBracket "[" @ 125..126
+                  LBracket "[" @ 48..49
+                  ValueArgumentSeparatedList
+                  RBracket "]" @ 49..50
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 55..58 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "numbers" @ 59..66 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 67..68 trailing=[Whitespace " "]
+                CollectionLiteralExpression
+                  LBracket "[" @ 69..70
                   ValueArgumentSeparatedList
                     ValueArgument
                       ValueArgumentPrefixList
-                      NameExpression
-                        Identifier "empty" @ 126..131
-                    Comma "," @ 131..132 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "1" @ 70..71
+                    Comma "," @ 71..72 trailing=[Whitespace " "]
                     ValueArgument
                       ValueArgumentPrefixList
-                      NameExpression
-                        Identifier "numbers" @ 133..140
-                    Comma "," @ 140..141 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "2" @ 73..74
+                    Comma "," @ 74..75 trailing=[Whitespace " "]
                     ValueArgument
                       ValueArgumentPrefixList
-                      NameExpression
-                        Identifier "nested" @ 142..148
-                  RBracket "]" @ 148..149
-            TerminatorList
-        RBrace "}" @ 150..151 leading=[Newline "\n"]
+                      LiteralExpression
+                        IntegerLiteral "3" @ 76..77
+                  RBracket "]" @ 77..78
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 83..86 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "nested" @ 87..93 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 94..95 trailing=[Whitespace " "]
+                CollectionLiteralExpression
+                  LBracket "[" @ 96..97
+                  ValueArgumentSeparatedList
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      CollectionLiteralExpression
+                        LBracket "[" @ 97..98
+                        ValueArgumentSeparatedList
+                          ValueArgument
+                            ValueArgumentPrefixList
+                            LiteralExpression
+                              IntegerLiteral "1" @ 98..99
+                        RBracket "]" @ 99..100
+                    Comma "," @ 100..101 trailing=[Whitespace " "]
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      CollectionLiteralExpression
+                        LBracket "[" @ 102..103
+                        ValueArgumentSeparatedList
+                          ValueArgument
+                            ValueArgumentPrefixList
+                            LiteralExpression
+                              IntegerLiteral "2" @ 103..104
+                          Comma "," @ 104..105 trailing=[Whitespace " "]
+                          ValueArgument
+                            ValueArgumentPrefixList
+                            LiteralExpression
+                              IntegerLiteral "3" @ 106..107
+                        RBracket "]" @ 107..108
+                    Comma "," @ 108..109 trailing=[Whitespace " "]
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      CollectionLiteralExpression
+                        LBracket "[" @ 110..111
+                        ValueArgumentSeparatedList
+                        RBracket "]" @ 111..112
+                  RBracket "]" @ 112..113
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 118..124 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  CollectionLiteralExpression
+                    LBracket "[" @ 125..126
+                    ValueArgumentSeparatedList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "empty" @ 126..131
+                      Comma "," @ 131..132 trailing=[Whitespace " "]
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "numbers" @ 133..140
+                      Comma "," @ 140..141 trailing=[Whitespace " "]
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "nested" @ 142..148
+                    RBracket "]" @ 148..149
+              TerminatorList
+          RBrace "}" @ 150..151 leading=[Newline "\n"]
   Eof "" @ 152..152 leading=[Newline "\n"]
 
 diagnostics:

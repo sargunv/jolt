@@ -20,10 +20,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "invalidGuardWithoutSubject" @ 4..30
+      Name
+        Identifier "invalidGuardWithoutSubject" @ 4..30
       ValueParameterList
         LParen "(" @ 30..31
         ValueParameterSeparatedList
@@ -48,56 +46,57 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "String" @ 44..50 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 51..52
-        BlockItemList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 57..63 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                WhenExpression
-                  WhenKw "when" @ 64..68 trailing=[Whitespace " "]
-                  LBrace "{" @ 69..70
-                  WhenEntryList
-                    WhenEntry
-                      WhenConditionSeparatedList
-                        WhenCondition
+      BlockBody
+        Block
+          LBrace "{" @ 51..52
+          BlockItemList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 57..63 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  WhenExpression
+                    WhenKw "when" @ 64..68 trailing=[Whitespace " "]
+                    LBrace "{" @ 69..70
+                    WhenEntryList
+                      WhenEntry
+                        WhenConditionSeparatedList
+                          WhenCondition
+                            BinaryExpression
+                              NameExpression
+                                Identifier "value" @ 79..84 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                              Gt ">" @ 85..86 trailing=[Whitespace " "]
+                              LiteralExpression
+                                IntegerLiteral "0" @ 87..88 trailing=[Whitespace " "]
+                        WhenGuard
+                          IfKw "if" @ 89..91 trailing=[Whitespace " "]
                           BinaryExpression
                             NameExpression
-                              Identifier "value" @ 79..84 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                            Gt ">" @ 85..86 trailing=[Whitespace " "]
+                              Identifier "value" @ 92..97 trailing=[Whitespace " "]
+                            Lt "<" @ 98..99 trailing=[Whitespace " "]
                             LiteralExpression
-                              IntegerLiteral "0" @ 87..88 trailing=[Whitespace " "]
-                      WhenGuard
-                        IfKw "if" @ 89..91 trailing=[Whitespace " "]
-                        BinaryExpression
-                          NameExpression
-                            Identifier "value" @ 92..97 trailing=[Whitespace " "]
-                          Lt "<" @ 98..99 trailing=[Whitespace " "]
-                          LiteralExpression
-                            IntegerLiteral "10" @ 100..102 trailing=[Whitespace " "]
-                      Arrow "->" @ 103..105 trailing=[Whitespace " "]
-                      StringTemplateExpression
-                        StringTemplateEntryList
-                          StringTemplateEntry
-                            OpenQuote "\"" @ 106..107
-                          StringTemplateEntry
-                            RegularStringPart "small" @ 107..112
-                        ClosingQuote "\"" @ 112..113
-                    WhenEntry
-                      ElseKw "else" @ 122..126 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      WhenConditionSeparatedList
-                      Arrow "->" @ 127..129 trailing=[Whitespace " "]
-                      StringTemplateExpression
-                        StringTemplateEntryList
-                          StringTemplateEntry
-                            OpenQuote "\"" @ 130..131
-                          StringTemplateEntry
-                            RegularStringPart "other" @ 131..136
-                        ClosingQuote "\"" @ 136..137
-                  RBrace "}" @ 142..143 leading=[Newline "\n", Whitespace "    "]
-            TerminatorList
-        RBrace "}" @ 144..145 leading=[Newline "\n"]
+                              IntegerLiteral "10" @ 100..102 trailing=[Whitespace " "]
+                        Arrow "->" @ 103..105 trailing=[Whitespace " "]
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 106..107
+                            StringTemplateEntry
+                              RegularStringPart "small" @ 107..112
+                          ClosingQuote "\"" @ 112..113
+                      WhenEntry
+                        ElseKw "else" @ 122..126 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                        WhenConditionSeparatedList
+                        Arrow "->" @ 127..129 trailing=[Whitespace " "]
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 130..131
+                            StringTemplateEntry
+                              RegularStringPart "other" @ 131..136
+                          ClosingQuote "\"" @ 136..137
+                    RBrace "}" @ 142..143 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+          RBrace "}" @ 144..145 leading=[Newline "\n"]
   Eof "" @ 146..146 leading=[Newline "\n"]
 
 diagnostics:

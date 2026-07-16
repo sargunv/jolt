@@ -23,4 +23,4 @@ class Demo {
 }
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(102), end: TextSize(103) }) message=expected expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(100), end: TextSize(101) }) message=unexpected orphan class member

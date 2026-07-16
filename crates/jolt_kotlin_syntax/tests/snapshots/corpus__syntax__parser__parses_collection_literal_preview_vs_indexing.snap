@@ -19,10 +19,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "collectionLiteralVsIndexing" @ 4..31
+      Name
+        Identifier "collectionLiteralVsIndexing" @ 4..31
       ValueParameterList
         LParen "(" @ 31..32
         ValueParameterSeparatedList
@@ -69,103 +67,102 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Any" @ 58..61 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 62..63
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 68..71 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "literal" @ 72..79 trailing=[Whitespace " "]
-            Assign "=" @ 80..81 trailing=[Whitespace " "]
-            CollectionLiteralExpression
-              LBracket "[" @ 82..83
-              ValueArgumentSeparatedList
-                ValueArgument
-                  ValueArgumentPrefixList
-                  IndexExpression
-                    NameExpression
-                      Identifier "values" @ 83..89
-                    LBracket "[" @ 89..90
-                    ValueArgumentSeparatedList
-                      ValueArgument
-                        ValueArgumentPrefixList
-                        LiteralExpression
-                          IntegerLiteral "0" @ 90..91
-                    RBracket "]" @ 91..92
-                Comma "," @ 92..93 trailing=[Whitespace " "]
-                ValueArgument
-                  ValueArgumentPrefixList
-                  IndexExpression
-                    NameExpression
-                      Identifier "values" @ 94..100
-                    LBracket "[" @ 100..101
-                    ValueArgumentSeparatedList
-                      ValueArgument
-                        ValueArgumentPrefixList
-                        LiteralExpression
-                          IntegerLiteral "1" @ 101..102
-                    RBracket "]" @ 102..103
-              RBracket "]" @ 103..104
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 109..112 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "indexed" @ 113..120 trailing=[Whitespace " "]
-            Assign "=" @ 121..122 trailing=[Whitespace " "]
-            IndexExpression
-              IndexExpression
-                NameExpression
-                  Identifier "literal" @ 123..130
-                LBracket "[" @ 130..131
-                ValueArgumentSeparatedList
-                  ValueArgument
-                    ValueArgumentPrefixList
-                    LiteralExpression
-                      IntegerLiteral "0" @ 131..132
-                RBracket "]" @ 132..133
-              LBracket "[" @ 133..134
-              ValueArgumentSeparatedList
-                ValueArgument
-                  ValueArgumentPrefixList
-                  LiteralExpression
-                    IntegerLiteral "1" @ 134..135
-              RBracket "]" @ 135..136
-            PropertyBodyMemberList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 141..147 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 62..63
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 68..71 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "literal" @ 72..79 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 80..81 trailing=[Whitespace " "]
                 CollectionLiteralExpression
-                  LBracket "[" @ 148..149
+                  LBracket "[" @ 82..83
                   ValueArgumentSeparatedList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      NameExpression
-                        Identifier "indexed" @ 149..156
-                    Comma "," @ 156..157 trailing=[Whitespace " "]
                     ValueArgument
                       ValueArgumentPrefixList
                       IndexExpression
                         NameExpression
-                          Identifier "values" @ 158..164
-                        LBracket "[" @ 164..165
+                          Identifier "values" @ 83..89
+                        LBracket "[" @ 89..90
                         ValueArgumentSeparatedList
                           ValueArgument
                             ValueArgumentPrefixList
                             LiteralExpression
-                              IntegerLiteral "0" @ 165..166
-                        RBracket "]" @ 166..167
-                  RBracket "]" @ 167..168
-            TerminatorList
-        RBrace "}" @ 169..170 leading=[Newline "\n"]
+                              IntegerLiteral "0" @ 90..91
+                        RBracket "]" @ 91..92
+                    Comma "," @ 92..93 trailing=[Whitespace " "]
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      IndexExpression
+                        NameExpression
+                          Identifier "values" @ 94..100
+                        LBracket "[" @ 100..101
+                        ValueArgumentSeparatedList
+                          ValueArgument
+                            ValueArgumentPrefixList
+                            LiteralExpression
+                              IntegerLiteral "1" @ 101..102
+                        RBracket "]" @ 102..103
+                  RBracket "]" @ 103..104
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 109..112 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "indexed" @ 113..120 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 121..122 trailing=[Whitespace " "]
+                IndexExpression
+                  IndexExpression
+                    NameExpression
+                      Identifier "literal" @ 123..130
+                    LBracket "[" @ 130..131
+                    ValueArgumentSeparatedList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        LiteralExpression
+                          IntegerLiteral "0" @ 131..132
+                    RBracket "]" @ 132..133
+                  LBracket "[" @ 133..134
+                  ValueArgumentSeparatedList
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      LiteralExpression
+                        IntegerLiteral "1" @ 134..135
+                  RBracket "]" @ 135..136
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 141..147 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  CollectionLiteralExpression
+                    LBracket "[" @ 148..149
+                    ValueArgumentSeparatedList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "indexed" @ 149..156
+                      Comma "," @ 156..157 trailing=[Whitespace " "]
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        IndexExpression
+                          NameExpression
+                            Identifier "values" @ 158..164
+                          LBracket "[" @ 164..165
+                          ValueArgumentSeparatedList
+                            ValueArgument
+                              ValueArgumentPrefixList
+                              LiteralExpression
+                                IntegerLiteral "0" @ 165..166
+                          RBracket "]" @ 166..167
+                    RBracket "]" @ 167..168
+              TerminatorList
+          RBrace "}" @ 169..170 leading=[Newline "\n"]
   Eof "" @ 171..171 leading=[Newline "\n"]
 
 diagnostics:

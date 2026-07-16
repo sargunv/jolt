@@ -15,13 +15,12 @@ KotlinFile
       ModifierList
       ModifierList
       ValKw "val" @ 0..3
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "x" @ 8..9 leading=[BlockComment "/*\n*/"]
-      Assign "=" @ 9..10
-      LiteralExpression
-        IntegerLiteral "1" @ 10..11
+      Name
+        Identifier "x" @ 8..9 leading=[BlockComment "/*\n*/"]
+      PropertyInitializer
+        Assign "=" @ 9..10
+        LiteralExpression
+          IntegerLiteral "1" @ 10..11
       PropertyBodyMemberList
   Eof "" @ 12..12 leading=[Newline "\n"]
 

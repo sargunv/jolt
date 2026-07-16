@@ -152,10 +152,8 @@ KotlinFile
               Identifier "T" @ 282..283 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:function-type-param */"]
         Gt ">" @ 321..322 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "echo" @ 323..327
+      Name
+        Identifier "echo" @ 323..327
       ValueParameterList
         LParen "(" @ 327..328
         ValueParameterSeparatedList
@@ -194,9 +192,10 @@ KotlinFile
                     AnnotationList
                     Name
                       Identifier "CharSequence" @ 351..363 trailing=[Whitespace " "]
-      Assign "=" @ 364..365 trailing=[Whitespace " "]
-      NameExpression
-        Identifier "value" @ 366..371
+      ExpressionBody
+        Assign "=" @ 364..365 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "value" @ 366..371
   Eof "" @ 372..372 leading=[Newline "\n"]
 
 diagnostics:

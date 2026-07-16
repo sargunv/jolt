@@ -30,113 +30,104 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "triviaOwnedBlockGaps" @ 4..24
+      Name
+        Identifier "triviaOwnedBlockGaps" @ 4..24
       ValueParameterList
         LParen "(" @ 24..25
         ValueParameterSeparatedList
         RParen ")" @ 25..26 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 27..28
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 31..34 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "first" @ 35..40 trailing=[Whitespace " "]
-            Assign "=" @ 41..42 trailing=[Whitespace " "]
-            LiteralExpression
-              IntegerLiteral "1" @ 43..44
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 94..97 leading=[Newline "\n", Newline "\n", Whitespace "  ", BlockComment "/* JOLT-TRIVIA:blank-line-before-comment */", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "second" @ 98..104 trailing=[Whitespace " "]
-            Assign "=" @ 105..106 trailing=[Whitespace " "]
-            LiteralExpression
-              IntegerLiteral "2" @ 107..108
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 158..161 leading=[Newline "\n", Whitespace "  ", BlockComment "/* JOLT-TRIVIA:comment-resets-newline-run */", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "third" @ 162..167 trailing=[Whitespace " "]
-            Assign "=" @ 168..169 trailing=[Whitespace " "]
-            LiteralExpression
-              IntegerLiteral "3" @ 170..171 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:line-comment-no-blank"]
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 211..214 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "fourth" @ 215..221 trailing=[Whitespace " "]
-            Assign "=" @ 222..223 trailing=[Whitespace " "]
-            LiteralExpression
-              IntegerLiteral "4" @ 224..225 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:line-comment-before-blank"]
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 270..273 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "fifth" @ 274..279 trailing=[Whitespace " "]
-            Assign "=" @ 280..281 trailing=[Whitespace " "]
-            LiteralExpression
-              IntegerLiteral "5" @ 282..283
-            PropertyBodyMemberList
-        RBrace "}" @ 284..285 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 27..28
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 31..34 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "first" @ 35..40 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 41..42 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "1" @ 43..44
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 94..97 leading=[Newline "\n", Newline "\n", Whitespace "  ", BlockComment "/* JOLT-TRIVIA:blank-line-before-comment */", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "second" @ 98..104 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 105..106 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "2" @ 107..108
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 158..161 leading=[Newline "\n", Whitespace "  ", BlockComment "/* JOLT-TRIVIA:comment-resets-newline-run */", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "third" @ 162..167 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 168..169 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "3" @ 170..171 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:line-comment-no-blank"]
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 211..214 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "fourth" @ 215..221 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 222..223 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "4" @ 224..225 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:line-comment-before-blank"]
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 270..273 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "fifth" @ 274..279 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 280..281 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "5" @ 282..283
+              PropertyBodyMemberList
+          RBrace "}" @ 284..285 leading=[Newline "\n"]
     PropertyDeclaration
       ModifierList
       ModifierList
       ValKw "val" @ 287..290 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "firstTopLevel" @ 291..304 trailing=[Whitespace " "]
-      Assign "=" @ 305..306 trailing=[Whitespace " "]
-      LiteralExpression
-        IntegerLiteral "1" @ 307..308 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:top-level-line-comment-no-blank"]
+      Name
+        Identifier "firstTopLevel" @ 291..304 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 305..306 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "1" @ 307..308 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:top-level-line-comment-no-blank"]
       PropertyBodyMemberList
     PropertyDeclaration
       ModifierList
       ModifierList
       ValKw "val" @ 356..359 leading=[Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "secondTopLevel" @ 360..374 trailing=[Whitespace " "]
-      Assign "=" @ 375..376 trailing=[Whitespace " "]
-      LiteralExpression
-        IntegerLiteral "2" @ 377..378 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:top-level-line-comment-before-blank"]
+      Name
+        Identifier "secondTopLevel" @ 360..374 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 375..376 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "2" @ 377..378 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:top-level-line-comment-before-blank"]
       PropertyBodyMemberList
     PropertyDeclaration
       ModifierList
       ModifierList
       ValKw "val" @ 431..434 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "thirdTopLevel" @ 435..448 trailing=[Whitespace " "]
-      Assign "=" @ 449..450 trailing=[Whitespace " "]
-      LiteralExpression
-        IntegerLiteral "3" @ 451..452
+      Name
+        Identifier "thirdTopLevel" @ 435..448 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 449..450 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "3" @ 451..452
       PropertyBodyMemberList
   Eof "" @ 453..453 leading=[Newline "\n"]
 

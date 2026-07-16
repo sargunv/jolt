@@ -1,0 +1,631 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun () {
+}
+
+fun missingParameters {
+}
+
+fun Receiver.member() = value
+fun Receiver.() {
+}
+fun MissingDot member() {
+}
+
+fun missingBody() =
+val = 1
+val delegated by provider
+val initialized = value
+val (recoveredInitializer) value
+
+val recoveredProperty: Int
+    field
+    get() value
+    set(value) {
+        field = value
+    } = value
+
+val missingAccessorBody: Int
+    get() =
+
+typealias Alias String
+
+class Derived Base(), Other {
+    constructor() this()
+    constructor():
+
+    val property: Int
+        field = 1
+        get() = field
+        set(value) {
+            field = value
+        }
+}
+
+class EmptyDelegation : {
+}
+
+class PartialDelegation : Base by {
+}
+
+class OrphanMember {
+    +
+}
+
+class OrphanComma {
+    ,
+}
+
+enum class Choice {
+    ),
+    First(1) {
+    },
+    Second,,
+    Third
+}
+
+class MissingClose {
+    val value = 1
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      BogusCallableDeclarationName
+      ValueParameterList
+        LParen "(" @ 4..5
+        ValueParameterSeparatedList
+        RParen ")" @ 5..6 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 7..8
+          BlockItemList
+          RBrace "}" @ 9..10 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 12..15 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "missingParameters" @ 16..33 trailing=[Whitespace " "]
+      ValueParameterList
+        ValueParameterSeparatedList
+      BlockBody
+        Block
+          LBrace "{" @ 34..35
+          BlockItemList
+          RBrace "}" @ 36..37 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 39..42 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      CallableName
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "Receiver" @ 43..51
+        Dot "." @ 51..52
+        Name
+          Identifier "member" @ 52..58
+      ValueParameterList
+        LParen "(" @ 58..59
+        ValueParameterSeparatedList
+        RParen ")" @ 59..60 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 61..62 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "value" @ 63..68
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 69..72 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      CallableName
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "Receiver" @ 73..81
+        Dot "." @ 81..82
+        Name
+      ValueParameterList
+        LParen "(" @ 82..83
+        ValueParameterSeparatedList
+        RParen ")" @ 83..84 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 85..86
+          BlockItemList
+          RBrace "}" @ 87..88 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 89..92 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      CallableName
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "MissingDot" @ 93..103 trailing=[Whitespace " "]
+        Name
+          Identifier "member" @ 104..110
+      ValueParameterList
+        LParen "(" @ 110..111
+        ValueParameterSeparatedList
+        RParen ")" @ 111..112 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 113..114
+          BlockItemList
+          RBrace "}" @ 115..116 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 118..121 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "missingBody" @ 122..133
+      ValueParameterList
+        LParen "(" @ 133..134
+        ValueParameterSeparatedList
+        RParen ")" @ 134..135 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 136..137
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 138..141 leading=[Newline "\n"] trailing=[Whitespace " "]
+      BogusPropertyBinding
+      PropertyInitializer
+        Assign "=" @ 142..143 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "1" @ 144..145
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 146..149 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "delegated" @ 150..159 trailing=[Whitespace " "]
+      PropertyInitializer
+        Identifier "by" @ 160..162 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "provider" @ 163..171
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 172..175 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "initialized" @ 176..187 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 188..189 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "value" @ 190..195
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 196..199 leading=[Newline "\n"] trailing=[Whitespace " "]
+      DestructuringDeclaration
+        LParen "(" @ 200..201
+        DestructuringEntrySeparatedList
+          DestructuringEntry
+            Name
+              Identifier "recoveredInitializer" @ 201..221
+        RParen ")" @ 221..222 trailing=[Whitespace " "]
+      PropertyInitializer
+        NameExpression
+          Identifier "value" @ 223..228
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 230..233 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "recoveredProperty" @ 234..251
+      Colon ":" @ 251..252 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Int" @ 253..256
+      PropertyBodyMemberList
+        ExplicitBackingField
+          Identifier "field" @ 261..266 leading=[Newline "\n", Whitespace "    "]
+        PropertyAccessor
+          ModifierList
+          Identifier "get" @ 271..274 leading=[Newline "\n", Whitespace "    "]
+          ValueParameterList
+            LParen "(" @ 274..275
+            ValueParameterSeparatedList
+            RParen ")" @ 275..276 trailing=[Whitespace " "]
+          ExpressionBody
+            NameExpression
+              Identifier "value" @ 277..282
+        PropertyAccessor
+          ModifierList
+          Identifier "set" @ 287..290 leading=[Newline "\n", Whitespace "    "]
+          ValueParameterList
+            LParen "(" @ 290..291
+            ValueParameterSeparatedList
+              ValueParameter
+                ModifierList
+                Name
+                  Identifier "value" @ 291..296
+            RParen ")" @ 296..297 trailing=[Whitespace " "]
+          BogusDeclarationBody
+            BlockBody
+              Block
+                LBrace "{" @ 298..299
+                BlockItemList
+                  Statement
+                    ExpressionStatement
+                      AssignmentExpression
+                        NameExpression
+                          Identifier "field" @ 308..313 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                        Assign "=" @ 314..315 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "value" @ 316..321
+                    TerminatorList
+                RBrace "}" @ 326..327 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            ExpressionBody
+              Assign "=" @ 328..329 trailing=[Whitespace " "]
+              NameExpression
+                Identifier "value" @ 330..335
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 337..340 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "missingAccessorBody" @ 341..360
+      Colon ":" @ 360..361 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Int" @ 362..365
+      PropertyBodyMemberList
+        PropertyAccessor
+          ModifierList
+          Identifier "get" @ 370..373 leading=[Newline "\n", Whitespace "    "]
+          ValueParameterList
+            LParen "(" @ 373..374
+            ValueParameterSeparatedList
+            RParen ")" @ 374..375 trailing=[Whitespace " "]
+          ExpressionBody
+            Assign "=" @ 376..377
+    TypeAliasDeclaration
+      ModifierList
+      ModifierList
+      TypeAliasKw "typealias" @ 379..388 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Alias" @ 389..394 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 395..401
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 403..408 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Derived" @ 409..416 trailing=[Whitespace " "]
+      DelegationClause
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Base" @ 417..421
+            ValueArgumentList
+              LParen "(" @ 421..422
+              ValueArgumentEntryList
+              RParen ")" @ 422..423
+          Comma "," @ 423..424 trailing=[Whitespace " "]
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Other" @ 425..430 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 431..432
+        ClassMemberList
+          ClassMemberDeclaration
+            SecondaryConstructor
+              ModifierList
+              ModifierList
+              Identifier "constructor" @ 437..448 leading=[Newline "\n", Whitespace "    "]
+              ValueParameterList
+                LParen "(" @ 448..449
+                ValueParameterSeparatedList
+                RParen ")" @ 449..450 trailing=[Whitespace " "]
+              ConstructorDelegation
+                ConstructorDelegationCall
+                  CallExpression
+                    ThisExpression
+                      ThisKw "this" @ 451..455
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 455..456
+                      ValueArgumentEntryList
+                      RParen ")" @ 456..457
+                    LambdaExpressionList
+          ClassMemberDeclaration
+            SecondaryConstructor
+              ModifierList
+              ModifierList
+              Identifier "constructor" @ 462..473 leading=[Newline "\n", Whitespace "    "]
+              ValueParameterList
+                LParen "(" @ 473..474
+                ValueParameterSeparatedList
+                RParen ")" @ 474..475
+              ConstructorDelegation
+                Colon ":" @ 475..476
+                ConstructorDelegationCall
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 482..485 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "property" @ 486..494
+              Colon ":" @ 494..495 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Int" @ 496..499
+              PropertyBodyMemberList
+                ExplicitBackingField
+                  Identifier "field" @ 508..513 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  Assign "=" @ 514..515 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "1" @ 516..517
+                PropertyAccessor
+                  ModifierList
+                  Identifier "get" @ 526..529 leading=[Newline "\n", Whitespace "        "]
+                  ValueParameterList
+                    LParen "(" @ 529..530
+                    ValueParameterSeparatedList
+                    RParen ")" @ 530..531 trailing=[Whitespace " "]
+                  ExpressionBody
+                    Assign "=" @ 532..533 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "field" @ 534..539
+                PropertyAccessor
+                  ModifierList
+                  Identifier "set" @ 548..551 leading=[Newline "\n", Whitespace "        "]
+                  ValueParameterList
+                    LParen "(" @ 551..552
+                    ValueParameterSeparatedList
+                      ValueParameter
+                        ModifierList
+                        Name
+                          Identifier "value" @ 552..557
+                    RParen ")" @ 557..558 trailing=[Whitespace " "]
+                  BlockBody
+                    Block
+                      LBrace "{" @ 559..560
+                      BlockItemList
+                        Statement
+                          ExpressionStatement
+                            AssignmentExpression
+                              NameExpression
+                                Identifier "field" @ 573..578 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              Assign "=" @ 579..580 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "value" @ 581..586
+                          TerminatorList
+                      RBrace "}" @ 595..596 leading=[Newline "\n", Whitespace "        "]
+        RBrace "}" @ 597..598 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 600..605 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "EmptyDelegation" @ 606..621 trailing=[Whitespace " "]
+      DelegationClause
+        Colon ":" @ 622..623 trailing=[Whitespace " "]
+        DelegationSpecifierSeparatedList
+          BogusDelegationSpecifier
+      ClassBody
+        LBrace "{" @ 624..625
+        ClassMemberList
+        RBrace "}" @ 626..627 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 629..634 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "PartialDelegation" @ 635..652 trailing=[Whitespace " "]
+      DelegationClause
+        Colon ":" @ 653..654 trailing=[Whitespace " "]
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Base" @ 655..659 trailing=[Whitespace " "]
+            DelegationByClause
+              Identifier "by" @ 660..662 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 663..664
+        ClassMemberList
+        RBrace "}" @ 665..666 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 668..673 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "OrphanMember" @ 674..686 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 687..688
+        ClassMemberList
+          BogusClassMember
+            Plus "+" @ 693..694 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 695..696 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 698..703 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "OrphanComma" @ 704..715 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 716..717
+        ClassMemberList
+          BogusClassMember
+            Comma "," @ 722..723 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 724..725 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+        Identifier "enum" @ 727..731 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 732..737 trailing=[Whitespace " "]
+      Name
+        Identifier "Choice" @ 738..744 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 745..746
+        ClassMemberList
+          EnumEntry
+            ModifierList
+            Name
+            RParen ")" @ 751..752 leading=[Newline "\n", Whitespace "    "]
+            Comma "," @ 752..753
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "First" @ 758..763 leading=[Newline "\n", Whitespace "    "]
+            ValueArgumentList
+              LParen "(" @ 763..764
+              ValueArgumentEntryList
+                ValueArgument
+                  ValueArgumentPrefixList
+                  LiteralExpression
+                    IntegerLiteral "1" @ 764..765
+              RParen ")" @ 765..766 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 767..768
+              ClassMemberList
+              RBrace "}" @ 773..774 leading=[Newline "\n", Whitespace "    "]
+            Comma "," @ 774..775
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "Second" @ 780..786 leading=[Newline "\n", Whitespace "    "]
+            Comma "," @ 786..787
+          BogusClassMember
+            Comma "," @ 787..788
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "Third" @ 793..798 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 799..800 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 802..807 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "MissingClose" @ 808..820 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 821..822
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 827..830 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "value" @ 831..836 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 837..838 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "1" @ 839..840
+              PropertyBodyMemberList
+  Eof "" @ 841..841 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=4..5 message="expected function name"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=34..35 message="expected value parameter list"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=82..83 message="expected name"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=104..110 message="expected receiver separator"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=138..141 message="expected declaration body expression"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=142..143 message="expected property binding"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=223..228 message="expected property initializer operator"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=271..274 message="expected '=' after backing field"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=271..274 message="expected backing field expression"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=277..282 message="expected '=' before property accessor expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=328..329 message="property accessor has both block and expression bodies"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=379..388 message="expected declaration body expression"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=395..401 message="expected '=' in typealias"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=417..421 message="expected ':' before delegation specifiers"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=451..455 message="expected ':' before constructor delegation"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=482..485 message="expected constructor delegation call"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=624..625 message="expected delegation specifier"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=663..664 message="expected delegation expression after 'by'"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=693..694 message="unexpected orphan class member"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=722..723 message="unexpected orphan class member comma"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=751..752 message="expected enum entry name"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=787..788 message="unexpected orphan class member comma"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=841..841 message="expected '}' after class body"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(4), end: TextSize(5) }) message=expected function name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(34), end: TextSize(35) }) message=expected value parameter list
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(82), end: TextSize(83) }) message=expected name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(104), end: TextSize(110) }) message=expected receiver separator
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(138), end: TextSize(141) }) message=expected declaration body expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(142), end: TextSize(143) }) message=expected property binding
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(223), end: TextSize(228) }) message=expected property initializer operator
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(271), end: TextSize(274) }) message=expected '=' after backing field
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(271), end: TextSize(274) }) message=expected backing field expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(277), end: TextSize(282) }) message=expected '=' before property accessor expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(328), end: TextSize(329) }) message=property accessor has both block and expression bodies
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(379), end: TextSize(388) }) message=expected declaration body expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(395), end: TextSize(401) }) message=expected '=' in typealias
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(417), end: TextSize(421) }) message=expected ':' before delegation specifiers
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(451), end: TextSize(455) }) message=expected ':' before constructor delegation
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(482), end: TextSize(485) }) message=expected constructor delegation call
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(624), end: TextSize(625) }) message=expected delegation specifier
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(663), end: TextSize(664) }) message=expected delegation expression after 'by'
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(693), end: TextSize(694) }) message=unexpected orphan class member
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(722), end: TextSize(723) }) message=unexpected orphan class member comma
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(751), end: TextSize(752) }) message=expected enum entry name
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(787), end: TextSize(788) }) message=unexpected orphan class member comma
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(841), end: TextSize(841) }) message=expected '}' after class body

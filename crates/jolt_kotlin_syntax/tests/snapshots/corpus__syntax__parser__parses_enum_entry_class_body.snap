@@ -29,91 +29,83 @@ KotlinFile
       ClassBody
         LBrace "{" @ 17..18
         ClassMemberList
-          ClassMemberDeclaration
-            EnumEntry
-              CallExpression
-                NameExpression
-                  Identifier "Word" @ 23..27 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                TypeArgumentListList
-                LambdaExpressionList
-                  LambdaExpression
-                    LambdaBody
-                      LBrace "{" @ 28..29
-                      LambdaBodyItemList
-                        FunctionDeclaration
-                          ModifierList
-                            Identifier "override" @ 38..46 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                          ModifierList
-                          FunKw "fun" @ 47..50 trailing=[Whitespace " "]
-                          ModifierList
-                          CallableName
-                            CallableNamePartList
-                              Name
-                                Identifier "text" @ 51..55
-                          ValueParameterList
-                            LParen "(" @ 55..56
-                            ValueParameterSeparatedList
-                            RParen ")" @ 56..57
-                          Colon ":" @ 57..58 trailing=[Whitespace " "]
-                          TypeReference
-                            UserType
-                              UserTypeSegmentList
-                                UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "String" @ 59..65 trailing=[Whitespace " "]
-                          Assign "=" @ 66..67 trailing=[Whitespace " "]
-                          StringTemplateExpression
-                            StringTemplateEntryList
-                              StringTemplateEntry
-                                OpenQuote "\"" @ 68..69
-                              StringTemplateEntry
-                                RegularStringPart "word" @ 69..73
-                            ClosingQuote "\"" @ 73..74
-                      RBrace "}" @ 79..80 leading=[Newline "\n", Whitespace "    "]
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "Word" @ 23..27 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 28..29
+              ClassMemberList
+                ClassMemberDeclaration
+                  FunctionDeclaration
+                    ModifierList
+                      Identifier "override" @ 38..46 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    ModifierList
+                    FunKw "fun" @ 47..50 trailing=[Whitespace " "]
+                    ModifierList
+                    Name
+                      Identifier "text" @ 51..55
+                    ValueParameterList
+                      LParen "(" @ 55..56
+                      ValueParameterSeparatedList
+                      RParen ")" @ 56..57
+                    Colon ":" @ 57..58 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 59..65 trailing=[Whitespace " "]
+                    ExpressionBody
+                      Assign "=" @ 66..67 trailing=[Whitespace " "]
+                      StringTemplateExpression
+                        StringTemplateEntryList
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 68..69
+                          StringTemplateEntry
+                            RegularStringPart "word" @ 69..73
+                        ClosingQuote "\"" @ 73..74
+              RBrace "}" @ 79..80 leading=[Newline "\n", Whitespace "    "]
             Comma "," @ 80..81
-          ClassMemberDeclaration
-            EnumEntry
-              CallExpression
-                NameExpression
-                  Identifier "Number" @ 86..92 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                TypeArgumentListList
-                LambdaExpressionList
-                  LambdaExpression
-                    LambdaBody
-                      LBrace "{" @ 93..94
-                      LambdaBodyItemList
-                        FunctionDeclaration
-                          ModifierList
-                            Identifier "override" @ 103..111 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                          ModifierList
-                          FunKw "fun" @ 112..115 trailing=[Whitespace " "]
-                          ModifierList
-                          CallableName
-                            CallableNamePartList
-                              Name
-                                Identifier "text" @ 116..120
-                          ValueParameterList
-                            LParen "(" @ 120..121
-                            ValueParameterSeparatedList
-                            RParen ")" @ 121..122
-                          Colon ":" @ 122..123 trailing=[Whitespace " "]
-                          TypeReference
-                            UserType
-                              UserTypeSegmentList
-                                UserTypeSegment
-                                  AnnotationList
-                                  Name
-                                    Identifier "String" @ 124..130 trailing=[Whitespace " "]
-                          Assign "=" @ 131..132 trailing=[Whitespace " "]
-                          StringTemplateExpression
-                            StringTemplateEntryList
-                              StringTemplateEntry
-                                OpenQuote "\"" @ 133..134
-                              StringTemplateEntry
-                                RegularStringPart "number" @ 134..140
-                            ClosingQuote "\"" @ 140..141
-                      RBrace "}" @ 146..147 leading=[Newline "\n", Whitespace "    "]
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "Number" @ 86..92 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 93..94
+              ClassMemberList
+                ClassMemberDeclaration
+                  FunctionDeclaration
+                    ModifierList
+                      Identifier "override" @ 103..111 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    ModifierList
+                    FunKw "fun" @ 112..115 trailing=[Whitespace " "]
+                    ModifierList
+                    Name
+                      Identifier "text" @ 116..120
+                    ValueParameterList
+                      LParen "(" @ 120..121
+                      ValueParameterSeparatedList
+                      RParen ")" @ 121..122
+                    Colon ":" @ 122..123 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 124..130 trailing=[Whitespace " "]
+                    ExpressionBody
+                      Assign "=" @ 131..132 trailing=[Whitespace " "]
+                      StringTemplateExpression
+                        StringTemplateEntryList
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 133..134
+                          StringTemplateEntry
+                            RegularStringPart "number" @ 134..140
+                        ClosingQuote "\"" @ 140..141
+              RBrace "}" @ 146..147 leading=[Newline "\n", Whitespace "    "]
           Semicolon ";" @ 147..148
           ClassMemberDeclaration
             FunctionDeclaration
@@ -122,10 +114,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 163..166 trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "text" @ 167..171
+              Name
+                Identifier "text" @ 167..171
               ValueParameterList
                 LParen "(" @ 171..172
                 ValueParameterSeparatedList

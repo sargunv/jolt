@@ -27,9 +27,10 @@ KotlinFile
             Name
               Identifier "second" @ 27..33
         RParen ")" @ 33..34 trailing=[Whitespace " "]
-      Assign "=" @ 35..36 trailing=[Whitespace " "]
-      NameExpression
-        Identifier "pair" @ 37..41
+      PropertyInitializer
+        Assign "=" @ 35..36 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "pair" @ 37..41
       PropertyBodyMemberList
   Eof "" @ 42..42 leading=[Newline "\n"]
 

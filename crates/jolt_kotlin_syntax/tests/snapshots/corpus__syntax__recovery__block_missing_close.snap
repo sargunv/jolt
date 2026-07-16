@@ -15,29 +15,27 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "demo" @ 4..8
+      Name
+        Identifier "demo" @ 4..8
       ValueParameterList
         LParen "(" @ 8..9
         ValueParameterSeparatedList
         RParen ")" @ 9..10 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 11..12 trailing=[Whitespace " "]
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 13..16 trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "answer" @ 17..23 trailing=[Whitespace " "]
-            Assign "=" @ 24..25 trailing=[Whitespace " "]
-            LiteralExpression
-              IntegerLiteral "42" @ 26..28
-            PropertyBodyMemberList
+      BlockBody
+        Block
+          LBrace "{" @ 11..12 trailing=[Whitespace " "]
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 13..16 trailing=[Whitespace " "]
+              Name
+                Identifier "answer" @ 17..23 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 24..25 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "42" @ 26..28
+              PropertyBodyMemberList
   Eof "" @ 29..29 leading=[Newline "\n"]
 
 diagnostics:

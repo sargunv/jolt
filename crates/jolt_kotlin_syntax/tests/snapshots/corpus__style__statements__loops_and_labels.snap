@@ -37,10 +37,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "firstMatch" @ 36..46
+      Name
+        Identifier "firstMatch" @ 36..46
       ValueParameterList
         LParen "(" @ 46..47
         ValueParameterSeparatedList
@@ -102,70 +100,71 @@ KotlinFile
                 Name
                   Identifier "String" @ 90..96
           Question "?" @ 96..97 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 98..99
-        BlockItemList
-          Statement
-            ExpressionStatement
-              NameExpression
-                Identifier "outer" @ 104..109 leading=[Newline "\n", Whitespace "    "]
-                At "@" @ 109..110 trailing=[Whitespace " "]
-                ForStatement
-                  ForKw "for" @ 111..114 trailing=[Whitespace " "]
-                  LParen "(" @ 115..116
-                  NameExpression
-                    Identifier "row" @ 116..119 trailing=[Whitespace " "]
-                  InKw "in" @ 120..122 trailing=[Whitespace " "]
-                  NameExpression
-                    Identifier "rows" @ 123..127
-                  RParen ")" @ 127..128 trailing=[Whitespace " "]
-                  Block
-                    LBrace "{" @ 129..130
-                    BlockItemList
-                      Statement
-                        ExpressionStatement
-                          ForStatement
-                            ForKw "for" @ 139..142 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                            LParen "(" @ 143..144
-                            NameExpression
-                              Identifier "cell" @ 144..148 trailing=[Whitespace " "]
-                            InKw "in" @ 149..151 trailing=[Whitespace " "]
-                            NameExpression
-                              Identifier "row" @ 152..155
-                            RParen ")" @ 155..156 trailing=[Whitespace " "]
-                            Block
-                              LBrace "{" @ 157..158
-                              BlockItemList
-                                Statement
-                                  ExpressionStatement
-                                    IfExpression
-                                      IfKw "if" @ 171..173 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                      ParenthesizedExpression
-                                        LParen "(" @ 174..175
-                                        BinaryExpression
-                                          NameExpression
-                                            Identifier "cell" @ 175..179 trailing=[Whitespace " "]
-                                          EqEq "==" @ 180..182 trailing=[Whitespace " "]
-                                          NameExpression
-                                            Identifier "needle" @ 183..189
-                                        RParen ")" @ 189..190 trailing=[Whitespace " "]
-                                      JumpExpression
-                                        BreakKw "break" @ 191..196
-                                        At "@" @ 196..197
-                                        Identifier "outer" @ 197..202
-                                  TerminatorList
-                              RBrace "}" @ 211..212 leading=[Newline "\n", Whitespace "        "]
-                        TerminatorList
-                    RBrace "}" @ 217..218 leading=[Newline "\n", Whitespace "    "]
-            TerminatorList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 223..229 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                LiteralExpression
-                  NullKw "null" @ 230..234
-            TerminatorList
-        RBrace "}" @ 235..236 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 98..99
+          BlockItemList
+            Statement
+              ExpressionStatement
+                NameExpression
+                  Identifier "outer" @ 104..109 leading=[Newline "\n", Whitespace "    "]
+                  At "@" @ 109..110 trailing=[Whitespace " "]
+                  ForStatement
+                    ForKw "for" @ 111..114 trailing=[Whitespace " "]
+                    LParen "(" @ 115..116
+                    NameExpression
+                      Identifier "row" @ 116..119 trailing=[Whitespace " "]
+                    InKw "in" @ 120..122 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "rows" @ 123..127
+                    RParen ")" @ 127..128 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 129..130
+                      BlockItemList
+                        Statement
+                          ExpressionStatement
+                            ForStatement
+                              ForKw "for" @ 139..142 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                              LParen "(" @ 143..144
+                              NameExpression
+                                Identifier "cell" @ 144..148 trailing=[Whitespace " "]
+                              InKw "in" @ 149..151 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "row" @ 152..155
+                              RParen ")" @ 155..156 trailing=[Whitespace " "]
+                              Block
+                                LBrace "{" @ 157..158
+                                BlockItemList
+                                  Statement
+                                    ExpressionStatement
+                                      IfExpression
+                                        IfKw "if" @ 171..173 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                                        ParenthesizedExpression
+                                          LParen "(" @ 174..175
+                                          BinaryExpression
+                                            NameExpression
+                                              Identifier "cell" @ 175..179 trailing=[Whitespace " "]
+                                            EqEq "==" @ 180..182 trailing=[Whitespace " "]
+                                            NameExpression
+                                              Identifier "needle" @ 183..189
+                                          RParen ")" @ 189..190 trailing=[Whitespace " "]
+                                        JumpExpression
+                                          BreakKw "break" @ 191..196
+                                          At "@" @ 196..197
+                                          Identifier "outer" @ 197..202
+                                    TerminatorList
+                                RBrace "}" @ 211..212 leading=[Newline "\n", Whitespace "        "]
+                          TerminatorList
+                      RBrace "}" @ 217..218 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 223..229 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  LiteralExpression
+                    NullKw "null" @ 230..234
+              TerminatorList
+          RBrace "}" @ 235..236 leading=[Newline "\n"]
   Eof "" @ 237..237 leading=[Newline "\n"]
 
 diagnostics:

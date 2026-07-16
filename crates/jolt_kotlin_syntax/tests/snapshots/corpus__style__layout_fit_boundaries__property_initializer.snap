@@ -30,18 +30,17 @@ KotlinFile
       ModifierList
       ModifierList
       ValKw "val" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "endpoint" @ 36..44 trailing=[Whitespace " "]
-      Assign "=" @ 45..46
-      StringTemplateExpression
-        StringTemplateEntryList
-          StringTemplateEntry
-            OpenQuote "\"" @ 51..52 leading=[Newline "\n", Whitespace "    "]
-          StringTemplateEntry
-            RegularStringPart "https://example.test/api/v1/projects/default/environments/development/resources/current" @ 52..139
-        ClosingQuote "\"" @ 139..140
+      Name
+        Identifier "endpoint" @ 36..44 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 45..46
+        StringTemplateExpression
+          StringTemplateEntryList
+            StringTemplateEntry
+              OpenQuote "\"" @ 51..52 leading=[Newline "\n", Whitespace "    "]
+            StringTemplateEntry
+              RegularStringPart "https://example.test/api/v1/projects/default/environments/development/resources/current" @ 52..139
+          ClosingQuote "\"" @ 139..140
       PropertyBodyMemberList
   Eof "" @ 141..141 leading=[Newline "\n"]
 

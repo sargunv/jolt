@@ -14,13 +14,12 @@ KotlinFile
       ModifierList
       ModifierList
       ValKw "val" @ 0..3 trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "x" @ 4..5 trailing=[Whitespace " ", BlockComment "/* outer /* inner */ outer */", Whitespace " "]
-      Assign "=" @ 36..37 trailing=[Whitespace " "]
-      LiteralExpression
-        IntegerLiteral "1" @ 38..39
+      Name
+        Identifier "x" @ 4..5 trailing=[Whitespace " ", BlockComment "/* outer /* inner */ outer */", Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 36..37 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "1" @ 38..39
       PropertyBodyMemberList
   Eof "" @ 40..40 leading=[Newline "\n"]
 

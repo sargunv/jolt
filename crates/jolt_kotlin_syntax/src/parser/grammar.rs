@@ -6,22 +6,32 @@ use super::source::{ParseEvents, Parser};
 struct StopSet<'a> {
     kinds: &'a [KotlinSyntaxKind],
     extra: Option<KotlinSyntaxKind>,
+    position: Option<usize>,
 }
 
 impl<'a> StopSet<'a> {
     const fn new(kinds: &'a [KotlinSyntaxKind]) -> Self {
-        Self { kinds, extra: None }
+        Self {
+            kinds,
+            extra: None,
+            position: None,
+        }
     }
 
     const fn with_extra(self, extra: KotlinSyntaxKind) -> Self {
         Self {
             kinds: self.kinds,
             extra: Some(extra),
+            position: self.position,
         }
     }
 
-    fn contains(self, kind: KotlinSyntaxKind) -> bool {
-        self.extra == Some(kind) || self.kinds.contains(&kind)
+    const fn with_position(self, position: Option<usize>) -> Self {
+        Self { position, ..self }
+    }
+
+    fn contains(self, kind: KotlinSyntaxKind, position: usize) -> bool {
+        self.position == Some(position) || self.extra == Some(kind) || self.kinds.contains(&kind)
     }
 }
 

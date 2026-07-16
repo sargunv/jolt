@@ -52,8 +52,8 @@ KotlinFile
               ObjectKw "object" @ 68..74 trailing=[Whitespace " "]
               Name
                 Identifier "Ready" @ 75..80 trailing=[Whitespace " "]
-              Colon ":" @ 81..82 trailing=[Whitespace " "]
-              DelegationSpecifierList
+              DelegationClause
+                Colon ":" @ 81..82 trailing=[Whitespace " "]
                 DelegationSpecifierSeparatedList
                   DelegationSpecifier
                     TypeReference
@@ -90,8 +90,8 @@ KotlinFile
                               Name
                                 Identifier "String" @ 124..130
                   RParen ")" @ 130..131 trailing=[Whitespace " "]
-              Colon ":" @ 132..133 trailing=[Whitespace " "]
-              DelegationSpecifierList
+              DelegationClause
+                Colon ":" @ 132..133 trailing=[Whitespace " "]
                 DelegationSpecifierSeparatedList
                   DelegationSpecifier
                     TypeReference
@@ -107,10 +107,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 144..147 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "message" @ 148..155
+      Name
+        Identifier "message" @ 148..155
       ValueParameterList
         LParen "(" @ 155..156
         ValueParameterSeparatedList
@@ -135,66 +133,67 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "String" @ 173..179 trailing=[Whitespace " "]
-      Assign "=" @ 180..181
-      WhenExpression
-        WhenKw "when" @ 186..190 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        WhenSubject
-          LParen "(" @ 191..192
-          NameExpression
-            Identifier "status" @ 192..198
-          RParen ")" @ 198..199 trailing=[Whitespace " "]
-        LBrace "{" @ 200..201
-        WhenEntryList
-          WhenEntry
-            WhenConditionSeparatedList
-              WhenCondition
-                NavigationExpression
-                  NameExpression
-                    Identifier "Status" @ 210..216 leading=[Newline "\n", Whitespace "        "]
-                  Dot "." @ 216..217
-                  Identifier "Ready" @ 217..222 trailing=[Whitespace " "]
-            Arrow "->" @ 223..225 trailing=[Whitespace " "]
-            StringTemplateExpression
-              StringTemplateEntryList
-                StringTemplateEntry
-                  OpenQuote "\"" @ 226..227
-                StringTemplateEntry
-                  RegularStringPart "ready" @ 227..232
-              ClosingQuote "\"" @ 232..233
-          WhenEntry
-            WhenConditionSeparatedList
-              WhenCondition
-                IsKw "is" @ 242..244 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                TypeReference
-                  UserType
-                    UserTypeSegmentList
-                      UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "Status" @ 245..251
-                      Dot "." @ 251..252
-                      UserTypeSegment
-                        AnnotationList
-                        Name
-                          Identifier "Failed" @ 252..258 trailing=[Whitespace " "]
-            Arrow "->" @ 259..261 trailing=[Whitespace " "]
-            StringTemplateExpression
-              StringTemplateEntryList
-                StringTemplateEntry
-                  OpenQuote "\"" @ 262..263
-                StringTemplateEntry
-                  RegularStringPart "failed: " @ 263..271
-                StringTemplateEntry
-                  LongStringTemplateEntry
-                    LongTemplateEntryStart "${" @ 271..273
-                    NavigationExpression
-                      NameExpression
-                        Identifier "status" @ 273..279
-                      Dot "." @ 279..280
-                      Identifier "reason" @ 280..286
-                    LongTemplateEntryEnd "}" @ 286..287
-              ClosingQuote "\"" @ 287..288
-        RBrace "}" @ 293..294 leading=[Newline "\n", Whitespace "    "]
+      ExpressionBody
+        Assign "=" @ 180..181
+        WhenExpression
+          WhenKw "when" @ 186..190 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 191..192
+            NameExpression
+              Identifier "status" @ 192..198
+            RParen ")" @ 198..199 trailing=[Whitespace " "]
+          LBrace "{" @ 200..201
+          WhenEntryList
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  NavigationExpression
+                    NameExpression
+                      Identifier "Status" @ 210..216 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 216..217
+                    Identifier "Ready" @ 217..222 trailing=[Whitespace " "]
+              Arrow "->" @ 223..225 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 226..227
+                  StringTemplateEntry
+                    RegularStringPart "ready" @ 227..232
+                ClosingQuote "\"" @ 232..233
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  IsKw "is" @ 242..244 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "Status" @ 245..251
+                        Dot "." @ 251..252
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "Failed" @ 252..258 trailing=[Whitespace " "]
+              Arrow "->" @ 259..261 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntryList
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 262..263
+                  StringTemplateEntry
+                    RegularStringPart "failed: " @ 263..271
+                  StringTemplateEntry
+                    LongStringTemplateEntry
+                      LongTemplateEntryStart "${" @ 271..273
+                      NavigationExpression
+                        NameExpression
+                          Identifier "status" @ 273..279
+                        Dot "." @ 279..280
+                        Identifier "reason" @ 280..286
+                      LongTemplateEntryEnd "}" @ 286..287
+                ClosingQuote "\"" @ 287..288
+          RBrace "}" @ 293..294 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 295..295 leading=[Newline "\n"]
 
 diagnostics:

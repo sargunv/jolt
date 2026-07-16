@@ -10,7 +10,6 @@ class Container {
 
   enum class Kind {
     First,
-
     Second,
   }
 }

@@ -133,8 +133,8 @@ KotlinFile
                       Name
                         Identifier "String" @ 210..216
           RParen ")" @ 216..217 trailing=[Whitespace " "]
-      Colon ":" @ 218..219 trailing=[Whitespace " "]
-      DelegationSpecifierList
+      DelegationClause
+        Colon ":" @ 218..219 trailing=[Whitespace " "]
         DelegationSpecifierSeparatedList
           DelegationSpecifier
             TypeReference

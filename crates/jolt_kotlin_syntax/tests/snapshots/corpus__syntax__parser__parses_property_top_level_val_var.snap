@@ -25,27 +25,24 @@ KotlinFile
         Identifier "const" @ 0..5 trailing=[Whitespace " "]
       ModifierList
       ValKw "val" @ 6..9 trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "BuildName" @ 10..19 trailing=[Whitespace " "]
-      Assign "=" @ 20..21 trailing=[Whitespace " "]
-      StringTemplateExpression
-        StringTemplateEntryList
-          StringTemplateEntry
-            OpenQuote "\"" @ 22..23
-          StringTemplateEntry
-            RegularStringPart "dev" @ 23..26
-        ClosingQuote "\"" @ 26..27
+      Name
+        Identifier "BuildName" @ 10..19 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 20..21 trailing=[Whitespace " "]
+        StringTemplateExpression
+          StringTemplateEntryList
+            StringTemplateEntry
+              OpenQuote "\"" @ 22..23
+            StringTemplateEntry
+              RegularStringPart "dev" @ 23..26
+          ClosingQuote "\"" @ 26..27
       PropertyBodyMemberList
     PropertyDeclaration
       ModifierList
       ModifierList
       VarKw "var" @ 29..32 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "mutableCount" @ 33..45
+      Name
+        Identifier "mutableCount" @ 33..45
       Colon ":" @ 45..46 trailing=[Whitespace " "]
       TypeReference
         UserType
@@ -54,9 +51,10 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Int" @ 47..50 trailing=[Whitespace " "]
-      Assign "=" @ 51..52 trailing=[Whitespace " "]
-      LiteralExpression
-        IntegerLiteral "0" @ 53..54
+      PropertyInitializer
+        Assign "=" @ 51..52 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "0" @ 53..54
       PropertyBodyMemberList
     PropertyDeclaration
       ModifierList
@@ -78,10 +76,8 @@ KotlinFile
         RParen ")" @ 78..79
       ModifierList
       ValKw "val" @ 80..83 leading=[Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "configuredName" @ 84..98
+      Name
+        Identifier "configuredName" @ 84..98
       Colon ":" @ 98..99 trailing=[Whitespace " "]
       TypeReference
         UserType
@@ -98,12 +94,13 @@ KotlinFile
             LParen "(" @ 114..115
             ValueParameterSeparatedList
             RParen ")" @ 115..116 trailing=[Whitespace " "]
-          Assign "=" @ 117..118 trailing=[Whitespace " "]
-          NavigationExpression
-            NameExpression
-              Identifier "config" @ 119..125
-            Dot "." @ 125..126
-            Identifier "name" @ 126..130
+          ExpressionBody
+            Assign "=" @ 117..118 trailing=[Whitespace " "]
+            NavigationExpression
+              NameExpression
+                Identifier "config" @ 119..125
+              Dot "." @ 125..126
+              Identifier "name" @ 126..130
     InterfaceDeclaration
       ModifierList
       ModifierList
@@ -118,10 +115,8 @@ KotlinFile
               ModifierList
               ModifierList
               ValKw "val" @ 155..158 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "name" @ 159..163
+              Name
+                Identifier "name" @ 159..163
               Colon ":" @ 163..164 trailing=[Whitespace " "]
               TypeReference
                 UserType

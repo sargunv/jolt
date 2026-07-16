@@ -16,10 +16,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "demo" @ 4..8
+      Name
+        Identifier "demo" @ 4..8
       ValueParameterList
         LParen "(" @ 8..9
         ValueParameterSeparatedList
@@ -36,52 +34,53 @@ KotlinFile
                     Name
                       Identifier "Boolean" @ 15..22
         RParen ")" @ 22..23 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 24..25 trailing=[Whitespace " "]
-        BlockItemList
-          Statement
-            ExpressionStatement
-              IfExpression
-                IfKw "if" @ 26..28 trailing=[Whitespace " "]
-                ParenthesizedExpression
-                  LParen "(" @ 29..30
-                  NameExpression
-                    Identifier "flag" @ 30..34
-                  RParen ")" @ 34..35 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 36..37 trailing=[Whitespace " "]
-                  BlockItemList
-                    Statement
-                      ExpressionStatement
-                        CallExpression
-                          NameExpression
-                            Identifier "run" @ 38..41
-                          TypeArgumentListList
-                          ValueArgumentList
-                            LParen "(" @ 41..42 trailing=[BlockComment "/* branch */", Whitespace " "]
-                            ValueArgumentEntryList
-                              ValueArgument
-                                ValueArgumentPrefixList
-                                NameExpression
-                                  Identifier "value" @ 55..60
-                            RParen ")" @ 60..61
-                          LambdaExpressionList
-                      TerminatorList
-                    Statement
-                      ExpressionStatement
-                        CallExpression
-                          NameExpression
-                            Identifier "next" @ 62..66 leading=[Newline "\n"]
-                          TypeArgumentListList
-                          ValueArgumentList
-                            LParen "(" @ 66..67
-                            ValueArgumentEntryList
-                            RParen ")" @ 67..68 trailing=[Whitespace " "]
-                          LambdaExpressionList
-                      TerminatorList
-                  RBrace "}" @ 69..70 trailing=[Whitespace " "]
-            TerminatorList
-        RBrace "}" @ 71..72
+      BlockBody
+        Block
+          LBrace "{" @ 24..25 trailing=[Whitespace " "]
+          BlockItemList
+            Statement
+              ExpressionStatement
+                IfExpression
+                  IfKw "if" @ 26..28 trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 29..30
+                    NameExpression
+                      Identifier "flag" @ 30..34
+                    RParen ")" @ 34..35 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 36..37 trailing=[Whitespace " "]
+                    BlockItemList
+                      Statement
+                        ExpressionStatement
+                          CallExpression
+                            NameExpression
+                              Identifier "run" @ 38..41
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 41..42 trailing=[BlockComment "/* branch */", Whitespace " "]
+                              ValueArgumentEntryList
+                                ValueArgument
+                                  ValueArgumentPrefixList
+                                  NameExpression
+                                    Identifier "value" @ 55..60
+                              RParen ")" @ 60..61
+                            LambdaExpressionList
+                        TerminatorList
+                      Statement
+                        ExpressionStatement
+                          CallExpression
+                            NameExpression
+                              Identifier "next" @ 62..66 leading=[Newline "\n"]
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 66..67
+                              ValueArgumentEntryList
+                              RParen ")" @ 67..68 trailing=[Whitespace " "]
+                            LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 69..70 trailing=[Whitespace " "]
+              TerminatorList
+          RBrace "}" @ 71..72
   Eof "" @ 73..73 leading=[Newline "\n"]
 
 diagnostics:

@@ -33,31 +33,28 @@ KotlinFile
       ModifierList
       ModifierList
       ValKw "val" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "answer" @ 37..43
-      Assign "=" @ 43..44
-      BinaryExpression
-        LiteralExpression
-          IntegerLiteral "1" @ 44..45
-        Plus "+" @ 45..46
+      Name
+        Identifier "answer" @ 37..43
+      PropertyInitializer
+        Assign "=" @ 43..44
         BinaryExpression
           LiteralExpression
-            IntegerLiteral "2" @ 46..47
-          Star "*" @ 47..48
-          LiteralExpression
-            IntegerLiteral "3" @ 48..49
+            IntegerLiteral "1" @ 44..45
+          Plus "+" @ 45..46
+          BinaryExpression
+            LiteralExpression
+              IntegerLiteral "2" @ 46..47
+            Star "*" @ 47..48
+            LiteralExpression
+              IntegerLiteral "3" @ 48..49
       PropertyBodyMemberList
     FunctionDeclaration
       ModifierList
       ModifierList
       FunKw "fun" @ 51..54 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "doubled" @ 55..62
+      Name
+        Identifier "doubled" @ 55..62
       ValueParameterList
         LParen "(" @ 62..63
         ValueParameterSeparatedList
@@ -82,22 +79,21 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Int" @ 76..79
-      Assign "=" @ 79..80
-      BinaryExpression
-        NameExpression
-          Identifier "value" @ 80..85
-        Star "*" @ 85..86
-        LiteralExpression
-          IntegerLiteral "2" @ 86..87
+      ExpressionBody
+        Assign "=" @ 79..80
+        BinaryExpression
+          NameExpression
+            Identifier "value" @ 80..85
+          Star "*" @ 85..86
+          LiteralExpression
+            IntegerLiteral "2" @ 86..87
     FunctionDeclaration
       ModifierList
       ModifierList
       FunKw "fun" @ 89..92 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "label" @ 93..98
+      Name
+        Identifier "label" @ 93..98
       ValueParameterList
         LParen "(" @ 98..99
         ValueParameterSeparatedList
@@ -122,29 +118,30 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "String" @ 115..121
-      Assign "=" @ 121..122
-      CallExpression
-        NavigationExpression
-          CallExpression
-            NavigationExpression
-              NameExpression
-                Identifier "input" @ 122..127
-              Dot "." @ 127..128
-              Identifier "trim" @ 128..132
-            TypeArgumentListList
-            ValueArgumentList
-              LParen "(" @ 132..133
-              ValueArgumentEntryList
-              RParen ")" @ 133..134
-            LambdaExpressionList
-          Dot "." @ 134..135
-          Identifier "lowercase" @ 135..144
-        TypeArgumentListList
-        ValueArgumentList
-          LParen "(" @ 144..145
-          ValueArgumentEntryList
-          RParen ")" @ 145..146
-        LambdaExpressionList
+      ExpressionBody
+        Assign "=" @ 121..122
+        CallExpression
+          NavigationExpression
+            CallExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "input" @ 122..127
+                Dot "." @ 127..128
+                Identifier "trim" @ 128..132
+              TypeArgumentListList
+              ValueArgumentList
+                LParen "(" @ 132..133
+                ValueArgumentEntryList
+                RParen ")" @ 133..134
+              LambdaExpressionList
+            Dot "." @ 134..135
+            Identifier "lowercase" @ 135..144
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 144..145
+            ValueArgumentEntryList
+            RParen ")" @ 145..146
+          LambdaExpressionList
   Eof "" @ 147..147 leading=[Newline "\n"]
 
 diagnostics:

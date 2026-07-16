@@ -109,10 +109,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 425..428 leading=[Newline "\n", LineComment "// JOLT-TRIVIA:after-imports", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "importedNames" @ 429..442
+      Name
+        Identifier "importedNames" @ 429..442
       ValueParameterList
         LParen "(" @ 442..443
         ValueParameterSeparatedList
@@ -140,36 +138,37 @@ KotlinFile
                                   Identifier "String" @ 455..461
                       Gt ">" @ 461..462
         RParen ")" @ 462..463 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 464..465
-        BlockItemList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NameExpression
-                  Identifier "say" @ 470..473 leading=[Newline "\n", Whitespace "    "]
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 473..474
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      CallExpression
-                        NavigationExpression
-                          NameExpression
-                            Identifier "names" @ 474..479
-                          Dot "." @ 479..480
-                          Identifier "joinToString" @ 480..492
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 492..493
-                          ValueArgumentEntryList
-                          RParen ")" @ 493..494
-                        LambdaExpressionList
-                  RParen ")" @ 494..495
-                LambdaExpressionList
-            TerminatorList
-        RBrace "}" @ 496..497 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 464..465
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "say" @ 470..473 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 473..474
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        CallExpression
+                          NavigationExpression
+                            NameExpression
+                              Identifier "names" @ 474..479
+                            Dot "." @ 479..480
+                            Identifier "joinToString" @ 480..492
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 492..493
+                            ValueArgumentEntryList
+                            RParen ")" @ 493..494
+                          LambdaExpressionList
+                    RParen ")" @ 494..495
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 496..497 leading=[Newline "\n"]
   Eof "" @ 498..498 leading=[Newline "\n"]
 
 diagnostics:

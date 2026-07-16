@@ -212,10 +212,8 @@ KotlinFile
                     RParen ")" @ 403..404
               ModifierList
               VarKw "var" @ 409..412 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "label" @ 413..418
+              Name
+                Identifier "label" @ 413..418
               Colon ":" @ 418..419 trailing=[Whitespace " "]
               TypeReference
                 UserType
@@ -224,9 +222,10 @@ KotlinFile
                       AnnotationList
                       Name
                         Identifier "String" @ 420..426 trailing=[Whitespace " "]
-              Assign "=" @ 427..428 trailing=[Whitespace " "]
-              NameExpression
-                Identifier "id" @ 429..431
+              PropertyInitializer
+                Assign "=" @ 427..428 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "id" @ 429..431
               PropertyBodyMemberList
         RBrace "}" @ 432..433 leading=[Newline "\n"]
   Eof "" @ 434..434 leading=[Newline "\n"]

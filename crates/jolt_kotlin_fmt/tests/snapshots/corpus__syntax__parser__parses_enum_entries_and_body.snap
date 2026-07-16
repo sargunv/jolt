@@ -1,12 +1,10 @@
 ---
 source: crates/jolt_kotlin_fmt/tests/corpus.rs
-assertion_line: 57
 expression: snapshot
 ---
 formatted:
 enum class Direction(val dx: Int, val dy: Int) {
   North(0, -1),
-
   South(0, 1);
 
   fun vertical(): Boolean = dx == 0

@@ -17,42 +17,40 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "callableReferenceMissingTarget" @ 4..34
+      Name
+        Identifier "callableReferenceMissingTarget" @ 4..34
       ValueParameterList
         LParen "(" @ 34..35
         ValueParameterSeparatedList
         RParen ")" @ 35..36 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 37..38
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 43..46 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "reference" @ 47..56 trailing=[Whitespace " "]
-            Assign "=" @ 57..58 trailing=[Whitespace " "]
-            CallableReferenceExpression
-              ColonColon "::" @ 59..61
-              TypeArgumentList
-                Lt "<" @ 61..62
-                TypeProjectionSeparatedList
-                  TypeReference
-                    UserType
-                      UserTypeSegmentList
-                        UserTypeSegment
-                          AnnotationList
-                          Name
-                            Identifier "String" @ 62..68
-                Gt ">" @ 68..69
-              TypeArgumentListList
-            PropertyBodyMemberList
-        RBrace "}" @ 70..71 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 37..38
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 43..46 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "reference" @ 47..56 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 57..58 trailing=[Whitespace " "]
+                CallableReferenceExpression
+                  ColonColon "::" @ 59..61
+                  TypeArgumentList
+                    Lt "<" @ 61..62
+                    TypeProjectionSeparatedList
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 62..68
+                    Gt ">" @ 68..69
+                  TypeArgumentListList
+              PropertyBodyMemberList
+          RBrace "}" @ 70..71 leading=[Newline "\n"]
   Eof "" @ 72..72 leading=[Newline "\n"]
 
 diagnostics:

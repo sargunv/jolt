@@ -15,10 +15,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "demo" @ 4..8
+      Name
+        Identifier "demo" @ 4..8
       ValueParameterList
         LParen "(" @ 8..9
         ValueParameterSeparatedList
@@ -46,29 +44,30 @@ KotlinFile
                                   Identifier "String" @ 21..27
                       Gt ">" @ 27..28
         RParen ")" @ 28..29 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 30..31 trailing=[Whitespace " "]
-        BlockItemList
-          Statement
-            ExpressionStatement
-              ForStatement
-                ForKw "for" @ 32..35 trailing=[Whitespace " "]
-                LParen "(" @ 36..37
-                NameExpression
-                  Identifier "item" @ 37..41 trailing=[Whitespace " "]
-                InKw "in" @ 42..44 trailing=[Whitespace " "]
-                BinaryExpression
+      BlockBody
+        Block
+          LBrace "{" @ 30..31 trailing=[Whitespace " "]
+          BlockItemList
+            Statement
+              ExpressionStatement
+                ForStatement
+                  ForKw "for" @ 32..35 trailing=[Whitespace " "]
+                  LParen "(" @ 36..37
                   NameExpression
-                    Identifier "items" @ 45..50 trailing=[Whitespace " "]
-                  Identifier "print" @ 51..56
-                  ParenthesizedExpression
-                    LParen "(" @ 56..57
+                    Identifier "item" @ 37..41 trailing=[Whitespace " "]
+                  InKw "in" @ 42..44 trailing=[Whitespace " "]
+                  BinaryExpression
                     NameExpression
-                      Identifier "item" @ 57..61
-                    RParen ")" @ 61..62 trailing=[Whitespace " "]
-                ErrorNode
-            TerminatorList
-        RBrace "}" @ 63..64
+                      Identifier "items" @ 45..50 trailing=[Whitespace " "]
+                    Identifier "print" @ 51..56
+                    ParenthesizedExpression
+                      LParen "(" @ 56..57
+                      NameExpression
+                        Identifier "item" @ 57..61
+                      RParen ")" @ 61..62 trailing=[Whitespace " "]
+                  ErrorNode
+              TerminatorList
+          RBrace "}" @ 63..64
   Eof "" @ 65..65 leading=[Newline "\n"]
 
 diagnostics:

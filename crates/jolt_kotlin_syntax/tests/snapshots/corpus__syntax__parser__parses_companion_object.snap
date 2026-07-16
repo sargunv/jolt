@@ -38,10 +38,8 @@ KotlinFile
                       ModifierList
                       FunKw "fun" @ 47..50 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                       ModifierList
-                      CallableName
-                        CallableNamePartList
-                          Name
-                            Identifier "create" @ 51..57
+                      Name
+                        Identifier "create" @ 51..57
                       ValueParameterList
                         LParen "(" @ 57..58
                         ValueParameterSeparatedList
@@ -54,16 +52,17 @@ KotlinFile
                               AnnotationList
                               Name
                                 Identifier "Factory" @ 61..68 trailing=[Whitespace " "]
-                      Assign "=" @ 69..70 trailing=[Whitespace " "]
-                      CallExpression
-                        NameExpression
-                          Identifier "Factory" @ 71..78
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 78..79
-                          ValueArgumentEntryList
-                          RParen ")" @ 79..80
-                        LambdaExpressionList
+                      ExpressionBody
+                        Assign "=" @ 69..70 trailing=[Whitespace " "]
+                        CallExpression
+                          NameExpression
+                            Identifier "Factory" @ 71..78
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 78..79
+                            ValueArgumentEntryList
+                            RParen ")" @ 79..80
+                          LambdaExpressionList
                 RBrace "}" @ 85..86 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 87..88 leading=[Newline "\n"]
   Eof "" @ 89..89 leading=[Newline "\n"]

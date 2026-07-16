@@ -60,10 +60,8 @@ KotlinFile
         Identifier "inline" @ 32..38 trailing=[Whitespace " "]
       FunKw "fun" @ 39..42 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "logLater" @ 43..51
+      Name
+        Identifier "logLater" @ 43..51
       ValueParameterList
         LParen "(" @ 51..52
         ValueParameterSeparatedList
@@ -80,29 +78,30 @@ KotlinFile
                     Name
                       Identifier "String" @ 61..67
         RParen ")" @ 67..68 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 69..70
-        BlockItemList
-          Statement
-            ExpressionStatement
-              CallExpression
-                NavigationExpression
-                  NameExpression
-                    Identifier "logger" @ 75..81 leading=[Newline "\n", Whitespace "    "]
-                  Dot "." @ 81..82
-                  Identifier "write" @ 82..87
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 87..88
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      NameExpression
-                        Identifier "message" @ 88..95
-                  RParen ")" @ 95..96
-                LambdaExpressionList
-            TerminatorList
-        RBrace "}" @ 97..98 leading=[Newline "\n"]
+      BlockBody
+        Block
+          LBrace "{" @ 69..70
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NavigationExpression
+                    NameExpression
+                      Identifier "logger" @ 75..81 leading=[Newline "\n", Whitespace "    "]
+                    Dot "." @ 81..82
+                    Identifier "write" @ 82..87
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 87..88
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "message" @ 88..95
+                    RParen ")" @ 95..96
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 97..98 leading=[Newline "\n"]
     FunctionDeclaration
       ModifierList
         Annotation
@@ -150,28 +149,27 @@ KotlinFile
         Gt ">" @ 184..185 trailing=[Whitespace " "]
       ModifierList
       CallableName
-        CallableNamePartList
-          TypeReference
-            UserType
-              UserTypeSegmentList
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "Repository" @ 186..196
-                  TypeArgumentList
-                    Lt "<" @ 196..197
-                    TypeProjectionSeparatedList
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
-                            UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "UserId" @ 197..203
-                    Gt ">" @ 203..204
-          Dot "." @ 204..205
-          Name
-            Identifier "loadLater" @ 205..214
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "Repository" @ 186..196
+                TypeArgumentList
+                  Lt "<" @ 196..197
+                  TypeProjectionSeparatedList
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "UserId" @ 197..203
+                  Gt ">" @ 203..204
+        Dot "." @ 204..205
+        Name
+          Identifier "loadLater" @ 205..214
       ValueParameterList
         LParen "(" @ 214..215
         ValueParameterSeparatedList
@@ -221,20 +219,21 @@ KotlinFile
                                 Name
                                   Identifier "T" @ 255..256
                       Gt ">" @ 256..257 trailing=[Whitespace " "]
-      Assign "=" @ 258..259 trailing=[Whitespace " "]
-      CallExpression
-        NameExpression
-          Identifier "fetch" @ 260..265
-        TypeArgumentListList
-        ValueArgumentList
-          LParen "(" @ 265..266
-          ValueArgumentEntryList
-            ValueArgument
-              ValueArgumentPrefixList
-              NameExpression
-                Identifier "id" @ 266..268
-          RParen ")" @ 268..269
-        LambdaExpressionList
+      ExpressionBody
+        Assign "=" @ 258..259 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "fetch" @ 260..265
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 265..266
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                NameExpression
+                  Identifier "id" @ 266..268
+            RParen ")" @ 268..269
+          LambdaExpressionList
     FunctionDeclaration
       ModifierList
       ContextParameterClause
@@ -258,17 +257,16 @@ KotlinFile
       FunKw "fun" @ 303..306 trailing=[Whitespace " "]
       ModifierList
       CallableName
-        CallableNamePartList
-          TypeReference
-            UserType
-              UserTypeSegmentList
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "Counter" @ 307..314
-          Dot "." @ 314..315
-          Name
-            Identifier "plus" @ 315..319
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "Counter" @ 307..314
+        Dot "." @ 314..315
+        Name
+          Identifier "plus" @ 315..319
       ValueParameterList
         LParen "(" @ 319..320
         ValueParameterSeparatedList
@@ -293,27 +291,28 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Counter" @ 337..344 trailing=[Whitespace " "]
-      Assign "=" @ 345..346 trailing=[Whitespace " "]
-      CallExpression
-        NameExpression
-          Identifier "Counter" @ 347..354
-        TypeArgumentListList
-        ValueArgumentList
-          LParen "(" @ 354..355
-          ValueArgumentEntryList
-            ValueArgument
-              ValueArgumentPrefixList
-              BinaryExpression
-                NameExpression
-                  Identifier "value" @ 355..360 trailing=[Whitespace " "]
-                Plus "+" @ 361..362 trailing=[Whitespace " "]
-                NavigationExpression
+      ExpressionBody
+        Assign "=" @ 345..346 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "Counter" @ 347..354
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 354..355
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                BinaryExpression
                   NameExpression
-                    Identifier "right" @ 363..368
-                  Dot "." @ 368..369
-                  Identifier "value" @ 369..374
-          RParen ")" @ 374..375
-        LambdaExpressionList
+                    Identifier "value" @ 355..360 trailing=[Whitespace " "]
+                  Plus "+" @ 361..362 trailing=[Whitespace " "]
+                  NavigationExpression
+                    NameExpression
+                      Identifier "right" @ 363..368
+                    Dot "." @ 368..369
+                    Identifier "value" @ 369..374
+            RParen ")" @ 374..375
+          LambdaExpressionList
     FunctionDeclaration
       ModifierList
       ContextParameterClause
@@ -337,17 +336,16 @@ KotlinFile
       FunKw "fun" @ 407..410 trailing=[Whitespace " "]
       ModifierList
       CallableName
-        CallableNamePartList
-          TypeReference
-            UserType
-              UserTypeSegmentList
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "Logger" @ 411..417
-          Dot "." @ 417..418
-          Name
-            Identifier "then" @ 418..422
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "Logger" @ 411..417
+        Dot "." @ 417..418
+        Name
+          Identifier "then" @ 418..422
       ValueParameterList
         LParen "(" @ 422..423
         ValueParameterSeparatedList
@@ -372,9 +370,10 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Logger" @ 441..447 trailing=[Whitespace " "]
-      Assign "=" @ 448..449 trailing=[Whitespace " "]
-      ThisExpression
-        ThisKw "this" @ 450..454
+      ExpressionBody
+        Assign "=" @ 448..449 trailing=[Whitespace " "]
+        ThisExpression
+          ThisKw "this" @ 450..454
     InterfaceDeclaration
       ModifierList
       ModifierList
@@ -390,10 +389,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 479..482 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "write" @ 483..488
+              Name
+                Identifier "write" @ 483..488
               ValueParameterList
                 LParen "(" @ 488..489
                 ValueParameterSeparatedList
@@ -468,10 +465,8 @@ KotlinFile
                       Identifier "T" @ 583..584
                 Gt ">" @ 584..585 trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "fetch" @ 586..591
+              Name
+                Identifier "fetch" @ 586..591
               ValueParameterList
                 LParen "(" @ 591..592
                 ValueParameterSeparatedList

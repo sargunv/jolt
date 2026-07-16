@@ -21,10 +21,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "choose" @ 4..10
+      Name
+        Identifier "choose" @ 4..10
       ValueParameterList
         LParen "(" @ 10..11
         ValueParameterSeparatedList
@@ -75,101 +73,101 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Int" @ 36..39 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 40..41
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 46..49 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "logged" @ 50..56 trailing=[Whitespace " "]
-            Assign "=" @ 57..58 trailing=[Whitespace " "]
-            CallExpression
-              NameExpression
-                Identifier "trace" @ 59..64
-              TypeArgumentListList
-              ValueArgumentList
-                LParen "(" @ 64..65
-                ValueArgumentEntryList
-                  ValueArgument
-                    ValueArgumentPrefixList
+      BlockBody
+        Block
+          LBrace "{" @ 40..41
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 46..49 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "logged" @ 50..56 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 57..58 trailing=[Whitespace " "]
+                CallExpression
+                  NameExpression
+                    Identifier "trace" @ 59..64
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 64..65
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        IfExpression
+                          IfKw "if" @ 65..67 trailing=[Whitespace " "]
+                          ParenthesizedExpression
+                            LParen "(" @ 68..69
+                            BinaryExpression
+                              NameExpression
+                                Identifier "a" @ 69..70 trailing=[Whitespace " "]
+                              Gt ">" @ 71..72 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "b" @ 73..74
+                            RParen ")" @ 74..75 trailing=[Whitespace " "]
+                          NameExpression
+                            Identifier "a" @ 76..77 trailing=[Whitespace " "]
+                          ElseKw "else" @ 78..82 trailing=[Whitespace " "]
+                          NameExpression
+                            Identifier "b" @ 83..84
+                      Comma "," @ 84..85 trailing=[Whitespace " "]
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "c" @ 86..87
+                    RParen ")" @ 87..88
+                  LambdaExpressionList
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 93..99 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  IfExpression
+                    IfKw "if" @ 100..102 trailing=[Whitespace " "]
+                    ParenthesizedExpression
+                      LParen "(" @ 103..104
+                      BinaryExpression
+                        NameExpression
+                          Identifier "a" @ 104..105 trailing=[Whitespace " "]
+                        Gt ">" @ 106..107 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "b" @ 108..109
+                      RParen ")" @ 109..110
                     IfExpression
-                      IfKw "if" @ 65..67 trailing=[Whitespace " "]
+                      IfKw "if" @ 119..121 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                       ParenthesizedExpression
-                        LParen "(" @ 68..69
+                        LParen "(" @ 122..123
                         BinaryExpression
                           NameExpression
-                            Identifier "a" @ 69..70 trailing=[Whitespace " "]
-                          Gt ">" @ 71..72 trailing=[Whitespace " "]
+                            Identifier "a" @ 123..124 trailing=[Whitespace " "]
+                          Gt ">" @ 125..126 trailing=[Whitespace " "]
                           NameExpression
-                            Identifier "b" @ 73..74
-                        RParen ")" @ 74..75 trailing=[Whitespace " "]
+                            Identifier "c" @ 127..128
+                        RParen ")" @ 128..129 trailing=[Whitespace " "]
                       NameExpression
-                        Identifier "a" @ 76..77 trailing=[Whitespace " "]
-                      ElseKw "else" @ 78..82 trailing=[Whitespace " "]
+                        Identifier "a" @ 130..131 trailing=[Whitespace " "]
+                      ElseKw "else" @ 132..136 trailing=[Whitespace " "]
                       NameExpression
-                        Identifier "b" @ 83..84
-                  Comma "," @ 84..85 trailing=[Whitespace " "]
-                  ValueArgument
-                    ValueArgumentPrefixList
-                    NameExpression
-                      Identifier "c" @ 86..87
-                RParen ")" @ 87..88
-              LambdaExpressionList
-            PropertyBodyMemberList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 93..99 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                IfExpression
-                  IfKw "if" @ 100..102 trailing=[Whitespace " "]
-                  ParenthesizedExpression
-                    LParen "(" @ 103..104
-                    BinaryExpression
+                        Identifier "c" @ 137..138
+                    ElseKw "else" @ 143..147 leading=[Newline "\n", Whitespace "    "]
+                    IfExpression
+                      IfKw "if" @ 156..158 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      ParenthesizedExpression
+                        LParen "(" @ 159..160
+                        BinaryExpression
+                          NameExpression
+                            Identifier "b" @ 160..161 trailing=[Whitespace " "]
+                          Gt ">" @ 162..163 trailing=[Whitespace " "]
+                          NameExpression
+                            Identifier "c" @ 164..165
+                        RParen ")" @ 165..166 trailing=[Whitespace " "]
                       NameExpression
-                        Identifier "a" @ 104..105 trailing=[Whitespace " "]
-                      Gt ">" @ 106..107 trailing=[Whitespace " "]
+                        Identifier "b" @ 167..168 trailing=[Whitespace " "]
+                      ElseKw "else" @ 169..173 trailing=[Whitespace " "]
                       NameExpression
-                        Identifier "b" @ 108..109
-                    RParen ")" @ 109..110
-                  IfExpression
-                    IfKw "if" @ 119..121 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                    ParenthesizedExpression
-                      LParen "(" @ 122..123
-                      BinaryExpression
-                        NameExpression
-                          Identifier "a" @ 123..124 trailing=[Whitespace " "]
-                        Gt ">" @ 125..126 trailing=[Whitespace " "]
-                        NameExpression
-                          Identifier "c" @ 127..128
-                      RParen ")" @ 128..129 trailing=[Whitespace " "]
-                    NameExpression
-                      Identifier "a" @ 130..131 trailing=[Whitespace " "]
-                    ElseKw "else" @ 132..136 trailing=[Whitespace " "]
-                    NameExpression
-                      Identifier "c" @ 137..138
-                  ElseKw "else" @ 143..147 leading=[Newline "\n", Whitespace "    "]
-                  IfExpression
-                    IfKw "if" @ 156..158 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                    ParenthesizedExpression
-                      LParen "(" @ 159..160
-                      BinaryExpression
-                        NameExpression
-                          Identifier "b" @ 160..161 trailing=[Whitespace " "]
-                        Gt ">" @ 162..163 trailing=[Whitespace " "]
-                        NameExpression
-                          Identifier "c" @ 164..165
-                      RParen ")" @ 165..166 trailing=[Whitespace " "]
-                    NameExpression
-                      Identifier "b" @ 167..168 trailing=[Whitespace " "]
-                    ElseKw "else" @ 169..173 trailing=[Whitespace " "]
-                    NameExpression
-                      Identifier "c" @ 174..175
-            TerminatorList
-        RBrace "}" @ 176..177 leading=[Newline "\n"]
+                        Identifier "c" @ 174..175
+              TerminatorList
+          RBrace "}" @ 176..177 leading=[Newline "\n"]
   Eof "" @ 178..178 leading=[Newline "\n"]
 
 diagnostics:

@@ -54,10 +54,8 @@ KotlinFile
               ModifierList
               ModifierList
               ValKw "val" @ 56..59 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "names" @ 60..65
+              Name
+                Identifier "names" @ 60..65
               Colon ":" @ 65..66 trailing=[Whitespace " "]
               TypeReference
                 UserType
@@ -66,16 +64,17 @@ KotlinFile
                       AnnotationList
                       Name
                         Identifier "Names" @ 67..72 trailing=[Whitespace " "]
-              Assign "=" @ 73..74 trailing=[Whitespace " "]
-              CallExpression
-                NameExpression
-                  Identifier "emptyList" @ 75..84
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 84..85
-                  ValueArgumentEntryList
-                  RParen ")" @ 85..86
-                LambdaExpressionList
+              PropertyInitializer
+                Assign "=" @ 73..74 trailing=[Whitespace " "]
+                CallExpression
+                  NameExpression
+                    Identifier "emptyList" @ 75..84
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 84..85
+                    ValueArgumentEntryList
+                    RParen ")" @ 85..86
+                  LambdaExpressionList
               PropertyBodyMemberList
         RBrace "}" @ 87..88 leading=[Newline "\n"]
   Eof "" @ 89..89 leading=[Newline "\n"]

@@ -34,10 +34,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "localFactory" @ 36..48
+      Name
+        Identifier "localFactory" @ 36..48
       ValueParameterList
         LParen "(" @ 48..49
         ValueParameterSeparatedList
@@ -70,87 +68,87 @@ KotlinFile
                   AnnotationList
                   Name
                     Identifier "String" @ 72..78 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 79..80
-        BlockItemList
-          ClassDeclaration
-            ModifierList
-              Identifier "data" @ 85..89 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            ModifierList
-            ClassKw "class" @ 90..95 trailing=[Whitespace " "]
-            Name
-              Identifier "Local" @ 96..101
-            PrimaryConstructor
+      BlockBody
+        Block
+          LBrace "{" @ 79..80
+          BlockItemList
+            ClassDeclaration
               ModifierList
-              ValueParameterList
-                LParen "(" @ 101..102
-                ValueParameterSeparatedList
-                  ValueParameter
-                    ModifierList
-                    ValKw "val" @ 102..105 trailing=[Whitespace " "]
-                    Name
-                      Identifier "value" @ 106..111
-                    Colon ":" @ 111..112 trailing=[Whitespace " "]
-                    TypeReference
-                      UserType
-                        UserTypeSegmentList
-                          UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 113..119
-                RParen ")" @ 119..120
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 125..128 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "local" @ 129..134 trailing=[Whitespace " "]
-            Assign "=" @ 135..136 trailing=[Whitespace " "]
-            CallExpression
-              NameExpression
-                Identifier "Local" @ 137..142
-              TypeArgumentListList
-              ValueArgumentList
-                LParen "(" @ 142..143
-                ValueArgumentEntryList
-                  ValueArgument
-                    ValueArgumentPrefixList
-                    CallExpression
-                      NavigationExpression
-                        NameExpression
-                          Identifier "prefix" @ 143..149
-                        Dot "." @ 149..150
-                        Identifier "trim" @ 150..154
-                      TypeArgumentListList
-                      ValueArgumentList
-                        LParen "(" @ 154..155
-                        ValueArgumentEntryList
-                        RParen ")" @ 155..156
-                      LambdaExpressionList
-                RParen ")" @ 156..157
-              LambdaExpressionList
-            PropertyBodyMemberList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 162..168 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                LambdaExpression
-                  LambdaBody
-                    LBrace "{" @ 169..170 trailing=[Whitespace " "]
-                    LambdaBodyItemList
-                      Statement
-                        ExpressionStatement
+                Identifier "data" @ 85..89 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
+              ClassKw "class" @ 90..95 trailing=[Whitespace " "]
+              Name
+                Identifier "Local" @ 96..101
+              PrimaryConstructor
+                ModifierList
+                ValueParameterList
+                  LParen "(" @ 101..102
+                  ValueParameterSeparatedList
+                    ValueParameter
+                      ModifierList
+                      ValKw "val" @ 102..105 trailing=[Whitespace " "]
+                      Name
+                        Identifier "value" @ 106..111
+                      Colon ":" @ 111..112 trailing=[Whitespace " "]
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 113..119
+                  RParen ")" @ 119..120
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 125..128 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "local" @ 129..134 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 135..136 trailing=[Whitespace " "]
+                CallExpression
+                  NameExpression
+                    Identifier "Local" @ 137..142
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 142..143
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        CallExpression
                           NavigationExpression
                             NameExpression
-                              Identifier "local" @ 171..176
-                            Dot "." @ 176..177
-                            Identifier "value" @ 177..182 trailing=[Whitespace " "]
-                        TerminatorList
-                    RBrace "}" @ 183..184
-            TerminatorList
-        RBrace "}" @ 185..186 leading=[Newline "\n"]
+                              Identifier "prefix" @ 143..149
+                            Dot "." @ 149..150
+                            Identifier "trim" @ 150..154
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 154..155
+                            ValueArgumentEntryList
+                            RParen ")" @ 155..156
+                          LambdaExpressionList
+                    RParen ")" @ 156..157
+                  LambdaExpressionList
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 162..168 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  LambdaExpression
+                    LambdaBody
+                      LBrace "{" @ 169..170 trailing=[Whitespace " "]
+                      LambdaBodyItemList
+                        Statement
+                          ExpressionStatement
+                            NavigationExpression
+                              NameExpression
+                                Identifier "local" @ 171..176
+                              Dot "." @ 176..177
+                              Identifier "value" @ 177..182 trailing=[Whitespace " "]
+                          TerminatorList
+                      RBrace "}" @ 183..184
+              TerminatorList
+          RBrace "}" @ 185..186 leading=[Newline "\n"]
   Eof "" @ 187..187 leading=[Newline "\n"]
 
 diagnostics:

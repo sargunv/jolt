@@ -23,10 +23,8 @@ KotlinFile
               Identifier "T" @ 5..6
         Gt ">" @ 6..7 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "requireValue" @ 8..20
+      Name
+        Identifier "requireValue" @ 8..20
       ValueParameterList
         LParen "(" @ 20..21
         ValueParameterSeparatedList
@@ -69,9 +67,10 @@ KotlinFile
                   AnnotationList
                   Name
                     Identifier "Any" @ 42..45 trailing=[Whitespace " "]
-      Assign "=" @ 46..47 trailing=[Whitespace " "]
-      NameExpression
-        Identifier "value" @ 48..53
+      ExpressionBody
+        Assign "=" @ 46..47 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "value" @ 48..53
   Eof "" @ 54..54 leading=[Newline "\n"]
 
 diagnostics:

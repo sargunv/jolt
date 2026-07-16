@@ -58,10 +58,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 70..73 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "render" @ 74..80
+      Name
+        Identifier "render" @ 74..80
       ValueParameterList
         LParen "(" @ 80..81
         ValueParameterSeparatedList
@@ -199,9 +197,10 @@ KotlinFile
                       Identifier "String" @ 248..254
           Comma "," @ 254..255
         RParen ")" @ 256..257 leading=[Newline "\n"] trailing=[Whitespace " "]
-      Assign "=" @ 258..259 trailing=[Whitespace " "]
-      NameExpression
-        Identifier "Unit" @ 260..264
+      ExpressionBody
+        Assign "=" @ 258..259 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "Unit" @ 260..264
     ClassDeclaration
       ModifierList
       ModifierList

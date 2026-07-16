@@ -20,10 +20,8 @@ KotlinFile
       ModifierList
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
-      CallableName
-        CallableNamePartList
-          Name
-            Identifier "subjectBinding" @ 4..18
+      Name
+        Identifier "subjectBinding" @ 4..18
       ValueParameterList
         LParen "(" @ 18..19
         ValueParameterSeparatedList
@@ -48,55 +46,56 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "Int" @ 32..35 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 36..37
-        BlockItemList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 42..48 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                WhenExpression
-                  WhenKw "when" @ 49..53 trailing=[Whitespace " "]
-                  WhenSubject
-                    LParen "(" @ 54..55
-                    ValKw "val" @ 55..58 trailing=[Whitespace " "]
-                    Name
-                      Identifier "text" @ 59..63 trailing=[Whitespace " "]
-                    Assign "=" @ 64..65 trailing=[Whitespace " "]
-                    BinaryExpression
-                      NameExpression
-                        Identifier "input" @ 66..71 trailing=[Whitespace " "]
-                      AsSafe "as?" @ 72..75 trailing=[Whitespace " "]
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
-                            UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "String" @ 76..82
-                    RParen ")" @ 82..83 trailing=[Whitespace " "]
-                  LBrace "{" @ 84..85
-                  WhenEntryList
-                    WhenEntry
-                      WhenConditionSeparatedList
-                        WhenCondition
-                          LiteralExpression
-                            NullKw "null" @ 94..98 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      Arrow "->" @ 99..101 trailing=[Whitespace " "]
-                      LiteralExpression
-                        IntegerLiteral "0" @ 102..103
-                    WhenEntry
-                      ElseKw "else" @ 112..116 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      WhenConditionSeparatedList
-                      Arrow "->" @ 117..119 trailing=[Whitespace " "]
-                      NavigationExpression
+      BlockBody
+        Block
+          LBrace "{" @ 36..37
+          BlockItemList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 42..48 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  WhenExpression
+                    WhenKw "when" @ 49..53 trailing=[Whitespace " "]
+                    WhenSubject
+                      LParen "(" @ 54..55
+                      ValKw "val" @ 55..58 trailing=[Whitespace " "]
+                      Name
+                        Identifier "text" @ 59..63 trailing=[Whitespace " "]
+                      Assign "=" @ 64..65 trailing=[Whitespace " "]
+                      BinaryExpression
                         NameExpression
-                          Identifier "text" @ 120..124
-                        Dot "." @ 124..125
-                        Identifier "length" @ 125..131
-                  RBrace "}" @ 136..137 leading=[Newline "\n", Whitespace "    "]
-            TerminatorList
-        RBrace "}" @ 138..139 leading=[Newline "\n"]
+                          Identifier "input" @ 66..71 trailing=[Whitespace " "]
+                        AsSafe "as?" @ 72..75 trailing=[Whitespace " "]
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 76..82
+                      RParen ")" @ 82..83 trailing=[Whitespace " "]
+                    LBrace "{" @ 84..85
+                    WhenEntryList
+                      WhenEntry
+                        WhenConditionSeparatedList
+                          WhenCondition
+                            LiteralExpression
+                              NullKw "null" @ 94..98 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                        Arrow "->" @ 99..101 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "0" @ 102..103
+                      WhenEntry
+                        ElseKw "else" @ 112..116 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                        WhenConditionSeparatedList
+                        Arrow "->" @ 117..119 trailing=[Whitespace " "]
+                        NavigationExpression
+                          NameExpression
+                            Identifier "text" @ 120..124
+                          Dot "." @ 124..125
+                          Identifier "length" @ 125..131
+                    RBrace "}" @ 136..137 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+          RBrace "}" @ 138..139 leading=[Newline "\n"]
   Eof "" @ 140..140 leading=[Newline "\n"]
 
 diagnostics:

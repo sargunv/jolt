@@ -36,10 +36,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 27..30 trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "call" @ 31..35
+              Name
+                Identifier "call" @ 31..35
               ValueParameterList
                 LParen "(" @ 35..36
                 ValueParameterSeparatedList
@@ -56,10 +54,11 @@ KotlinFile
                             Name
                               Identifier "String" @ 43..49
                 RParen ")" @ 49..50 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 51..52
-                BlockItemList
-                RBrace "}" @ 52..53
+              BlockBody
+                Block
+                  LBrace "{" @ 51..52
+                  BlockItemList
+                  RBrace "}" @ 52..53
         RBrace "}" @ 54..55 leading=[Newline "\n"]
     ClassDeclaration
       ModifierList
@@ -67,8 +66,8 @@ KotlinFile
       ClassKw "class" @ 57..62 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "Derived" @ 63..70 trailing=[Whitespace " "]
-      Colon ":" @ 71..72 trailing=[Whitespace " "]
-      DelegationSpecifierList
+      DelegationClause
+        Colon ":" @ 71..72 trailing=[Whitespace " "]
         DelegationSpecifierSeparatedList
           DelegationSpecifier
             TypeReference
@@ -92,10 +91,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 95..98 trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "call" @ 99..103
+              Name
+                Identifier "call" @ 99..103
               ValueParameterList
                 LParen "(" @ 103..104
                 ValueParameterSeparatedList
@@ -112,61 +109,62 @@ KotlinFile
                             Name
                               Identifier "String" @ 111..117
                 RParen ")" @ 117..118 trailing=[Whitespace " "]
-              Block
-                LBrace "{" @ 119..120
-                BlockItemList
-                  Statement
-                    ExpressionStatement
-                      CallExpression
-                        NavigationExpression
-                          ThisExpression
-                            ThisKw "this" @ 129..133 leading=[Newline "\n", Whitespace "        "]
-                          Dot "." @ 133..134
-                          Identifier "call" @ 134..138
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 138..139
-                          ValueArgumentEntryList
-                            ValueArgument
-                              ValueArgumentPrefixList
-                              Name
-                                Identifier "value" @ 139..144 trailing=[Whitespace " "]
-                              Assign "=" @ 145..146 trailing=[Whitespace " "]
-                              CallExpression
-                                NavigationExpression
-                                  NameExpression
-                                    Identifier "value" @ 147..152
-                                  Dot "." @ 152..153
-                                  Identifier "trim" @ 153..157
-                                TypeArgumentListList
-                                ValueArgumentList
-                                  LParen "(" @ 157..158
-                                  ValueArgumentEntryList
-                                  RParen ")" @ 158..159
-                                LambdaExpressionList
-                          RParen ")" @ 159..160
-                        LambdaExpressionList
-                    TerminatorList
-                  Statement
-                    ExpressionStatement
-                      CallExpression
-                        NavigationExpression
-                          SuperExpression
-                            SuperKw "super" @ 169..174 leading=[Newline "\n", Whitespace "        "]
-                          Dot "." @ 174..175
-                          Identifier "call" @ 175..179
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 179..180
-                          ValueArgumentEntryList
-                            ValueArgument
-                              ValueArgumentPrefixList
-                              NameExpression
-                                Identifier "value" @ 180..185
-                          RParen ")" @ 185..186
-                        LambdaExpressionList
-                    TerminatorList
-                RBrace "}" @ 191..192 leading=[Newline "\n", Whitespace "    "]
+              BlockBody
+                Block
+                  LBrace "{" @ 119..120
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NavigationExpression
+                            ThisExpression
+                              ThisKw "this" @ 129..133 leading=[Newline "\n", Whitespace "        "]
+                            Dot "." @ 133..134
+                            Identifier "call" @ 134..138
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 138..139
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                Name
+                                  Identifier "value" @ 139..144 trailing=[Whitespace " "]
+                                Assign "=" @ 145..146 trailing=[Whitespace " "]
+                                CallExpression
+                                  NavigationExpression
+                                    NameExpression
+                                      Identifier "value" @ 147..152
+                                    Dot "." @ 152..153
+                                    Identifier "trim" @ 153..157
+                                  TypeArgumentListList
+                                  ValueArgumentList
+                                    LParen "(" @ 157..158
+                                    ValueArgumentEntryList
+                                    RParen ")" @ 158..159
+                                  LambdaExpressionList
+                            RParen ")" @ 159..160
+                          LambdaExpressionList
+                      TerminatorList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NavigationExpression
+                            SuperExpression
+                              SuperKw "super" @ 169..174 leading=[Newline "\n", Whitespace "        "]
+                            Dot "." @ 174..175
+                            Identifier "call" @ 175..179
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 179..180
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "value" @ 180..185
+                            RParen ")" @ 185..186
+                          LambdaExpressionList
+                      TerminatorList
+                  RBrace "}" @ 191..192 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 193..194 leading=[Newline "\n"]
   Eof "" @ 195..195 leading=[Newline "\n"]
 

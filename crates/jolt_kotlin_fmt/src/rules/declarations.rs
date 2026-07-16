@@ -1,11 +1,12 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    CallableName, ContextParameter, ContextParameterClause, ContextParameterListEntry, Declaration,
-    DestructuringDeclaration, DestructuringEntry, EnumEntry, ExplicitBackingField,
-    FunctionDeclaration, InitializerBlock, KotlinFileItem, KotlinNode, KotlinRoleElement,
-    KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView, ModifierList,
-    Name, PropertyAccessor, PropertyDeclaration, SecondaryConstructor, TypeAliasDeclaration,
-    TypeReference,
+    CallableDeclarationName, CallableName, ContextParameter, ContextParameterClause,
+    ContextParameterListEntry, Declaration, DeclarationBody, DestructuringDeclaration,
+    DestructuringEntry, EnumEntry, ExplicitBackingField, ExpressionBody, FunctionDeclaration,
+    InitializerBlock, KotlinFileItem, KotlinNode, KotlinRoleElement, KotlinSyntaxField,
+    KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView, ModifierList, PropertyAccessor,
+    PropertyBinding, PropertyBodyMember, PropertyDeclaration, PropertyInitializer,
+    SecondaryConstructor, TypeAliasDeclaration, TypeReference,
 };
 
 use crate::helpers::comments::{
@@ -15,11 +16,11 @@ use crate::helpers::comments::{
 use crate::helpers::lists::{CommaListItem, compact_parenthesized_list, physical_comma_list_items};
 use crate::helpers::recovery::{
     KotlinFormatDelimiter, KotlinFormatField, KotlinFormatListPart, format_malformed,
-    format_optional_field, format_or_verbatim, format_required_field, resolve_list_part,
+    format_optional_field, format_required_field, resolve_list_part, resolve_optional_field,
     resolve_required_delimiter, resolve_required_field,
 };
 use crate::rules::annotations::format_annotation;
-use crate::rules::expressions::format_expression;
+use crate::rules::expressions::{format_expression, format_value_argument_list};
 use crate::rules::names::format_name;
 use crate::rules::statements::format_block;
 use crate::rules::types::{
@@ -62,45 +63,6 @@ pub(crate) fn format_file_item<'source>(
     }
 }
 
-pub(crate) fn format_fun_interface_file_items<'source>(
-    doc: &mut DocBuilder<'source>,
-    function: &FunctionDeclaration<'source>,
-    interface: &jolt_kotlin_syntax::InterfaceDeclaration<'source>,
-) -> Option<Doc<'source>> {
-    if !is_fun_interface_header(function) {
-        return None;
-    }
-    let Ok(KotlinSyntaxField::Present(fun)) = function.fun_token() else {
-        return None;
-    };
-    let fun = format_token(
-        doc,
-        &fun,
-        LeadingTrivia::Preserve,
-        TrailingTrivia::RelocatedToEnclosingContext,
-    );
-    let space = doc.space();
-    let interface = format_interface_declaration(doc, interface);
-    Some(doc.concat([fun, space, interface]))
-}
-
-fn is_fun_interface_header(function: &FunctionDeclaration<'_>) -> bool {
-    function.is_recovery_free()
-        && matches!(function.fun_token(), Ok(KotlinSyntaxField::Present(_)))
-        && matches!(function.context(), Ok(KotlinSyntaxField::Missing(_)))
-        && matches!(
-            function.type_parameters(),
-            Ok(KotlinSyntaxField::Missing(_))
-        )
-        && matches!(function.name(), Ok(KotlinSyntaxField::Missing(_)))
-        && matches!(function.parameters(), Ok(KotlinSyntaxField::Missing(_)))
-        && matches!(function.return_colon(), Ok(KotlinSyntaxField::Missing(_)))
-        && matches!(function.return_type(), Ok(KotlinSyntaxField::Missing(_)))
-        && matches!(function.constraints(), Ok(KotlinSyntaxField::Missing(_)))
-        && matches!(function.assign(), Ok(KotlinSyntaxField::Missing(_)))
-        && matches!(function.body(), Ok(KotlinSyntaxField::Missing(_)))
-}
-
 pub(crate) fn format_declaration<'source>(
     doc: &mut DocBuilder<'source>,
     declaration: &Declaration<'source>,
@@ -120,13 +82,19 @@ pub(crate) fn format_declaration<'source>(
     }
 }
 
-pub(super) fn format_enum_entry_with_separator<'source>(
+fn format_enum_entry<'source>(
     doc: &mut DocBuilder<'source>,
     entry: &EnumEntry<'source>,
-    comma: Option<KotlinSyntaxToken<'source>>,
 ) -> Doc<'source> {
-    let entry = format_enum_entry(doc, entry);
-    let comma = comma.map_or_else(Doc::nil, |comma| {
+    let modifiers = format_modifier_prefix(doc, entry.modifiers());
+    let name = format_required_field(entry.name(), doc, |name, doc| format_name(doc, &name));
+    let arguments = format_optional_field(entry.arguments(), doc, |arguments, doc| {
+        format_value_argument_list(doc, &arguments)
+    });
+    let body = format_optional_field(entry.body(), doc, |body, doc| {
+        member_bodies::format_class_body(doc, Some(body))
+    });
+    let comma = format_optional_field(entry.comma(), doc, |comma, doc| {
         format_token(
             doc,
             &comma,
@@ -134,155 +102,137 @@ pub(super) fn format_enum_entry_with_separator<'source>(
             TrailingTrivia::Preserve,
         )
     });
-    doc.concat([entry, comma])
-}
-
-fn format_enum_entry<'source>(
-    doc: &mut DocBuilder<'source>,
-    entry: &EnumEntry<'source>,
-) -> Doc<'source> {
-    format_or_verbatim(entry, doc, |doc| {
-        format_required_field(entry.expression(), doc, |expression, doc| {
-            format_expression(doc, &expression)
-        })
-    })
+    doc.concat([modifiers, name, arguments, body, comma])
 }
 
 pub(super) fn format_initializer_block<'source>(
     doc: &mut DocBuilder<'source>,
     block: &InitializerBlock<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(block, doc, |doc| {
-        let keyword = format_required_field(block.init_token(), doc, |token, doc| {
-            format_token(
-                doc,
-                &token,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::RelocatedToEnclosingContext,
-            )
-        });
-        let body = format_required_field(block.block(), doc, |body, doc| {
-            let space = doc.space();
-            let body = format_block(doc, &body);
-            doc.concat([space, body])
-        });
-        doc.concat([keyword, body])
-    })
+    let keyword = format_required_field(block.init_token(), doc, |token, doc| {
+        format_token(
+            doc,
+            &token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        )
+    });
+    let body = format_required_field(block.block(), doc, |body, doc| {
+        let space = doc.space();
+        let body = format_block(doc, &body);
+        doc.concat([space, body])
+    });
+    doc.concat([keyword, body])
 }
 
 pub(super) fn format_function_declaration<'source>(
     doc: &mut DocBuilder<'source>,
     declaration: &FunctionDeclaration<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(declaration, doc, |doc| {
-        let prefix = format_declaration_prefix(
-            doc,
-            declaration.leading_modifiers(),
-            declaration.context(),
-            declaration.post_context_modifiers(),
-        );
-        let keyword = keyword_with_space(doc, declaration.fun_token());
-        let has_type_parameters = matches!(
-            declaration.type_parameters(),
-            Ok(KotlinSyntaxField::Present(_))
-        );
-        let type_parameters =
-            format_optional_field(declaration.type_parameters(), doc, |parameters, doc| {
-                format_type_parameter_list(doc, Some(parameters))
-            });
-        let type_parameter_space = if has_type_parameters {
-            doc.space()
-        } else {
-            Doc::nil()
-        };
-        let receiver_modifiers =
-            format_inline_modifier_prefix(doc, declaration.receiver_modifiers());
-        let name = format_optional_field(declaration.name(), doc, |name, doc| {
-            format_callable_role(doc, name)
+    let prefix = format_declaration_prefix(
+        doc,
+        declaration.leading_modifiers(),
+        declaration.context(),
+        declaration.post_context_modifiers(),
+    );
+    let keyword = keyword_with_space(doc, declaration.fun_token());
+    let has_type_parameters = matches!(
+        declaration.type_parameters(),
+        Ok(KotlinSyntaxField::Present(_))
+    );
+    let type_parameters =
+        format_optional_field(declaration.type_parameters(), doc, |parameters, doc| {
+            format_type_parameter_list(doc, Some(parameters))
         });
-        let parameters = format_optional_field(declaration.parameters(), doc, |parameters, doc| {
-            format_value_parameter_list(doc, &parameters)
-        });
-        let return_type =
-            format_type_annotation(doc, declaration.return_colon(), declaration.return_type());
-        let constraints =
-            format_optional_field(declaration.constraints(), doc, |constraints, doc| {
-                format_type_constraint_list(doc, Some(constraints))
-            });
-        let body = format_declaration_body(doc, declaration.assign(), declaration.body());
-        let header = doc.concat([
-            keyword,
-            type_parameters,
-            type_parameter_space,
-            receiver_modifiers,
-            name,
-            parameters,
-            return_type,
-            constraints,
-        ]);
-        let header = doc.group(header);
-        doc.concat([prefix, header, body])
-    })
+    let type_parameter_space = if has_type_parameters {
+        doc.space()
+    } else {
+        Doc::nil()
+    };
+    let receiver_modifiers = format_inline_modifier_prefix(doc, declaration.receiver_modifiers());
+    let name = format_required_field(declaration.name(), doc, |name, doc| {
+        format_callable_declaration_name(doc, &name)
+    });
+    let parameters = format_required_field(declaration.parameters(), doc, |parameters, doc| {
+        format_value_parameter_list(doc, &parameters)
+    });
+    let return_type =
+        format_type_annotation(doc, declaration.return_colon(), declaration.return_type());
+    let constraints = format_optional_field(declaration.constraints(), doc, |constraints, doc| {
+        format_type_constraint_list(doc, Some(constraints))
+    });
+    let body = format_optional_declaration_body(doc, declaration.body());
+    let header = doc.concat([
+        keyword,
+        type_parameters,
+        type_parameter_space,
+        receiver_modifiers,
+        name,
+        parameters,
+        return_type,
+        constraints,
+    ]);
+    let header = doc.group(header);
+    doc.concat([prefix, header, body])
 }
 
 pub(super) fn format_secondary_constructor<'source>(
     doc: &mut DocBuilder<'source>,
     constructor: &SecondaryConstructor<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(constructor, doc, |doc| {
-        let prefix = format_declaration_prefix(
+    let prefix = format_declaration_prefix(
+        doc,
+        constructor.leading_modifiers(),
+        constructor.context(),
+        constructor.post_context_modifiers(),
+    );
+    let keyword = format_required_field(constructor.constructor_token(), doc, |token, doc| {
+        format_token(
             doc,
-            constructor.leading_modifiers(),
-            constructor.context(),
-            constructor.post_context_modifiers(),
-        );
-        let keyword = format_required_field(constructor.constructor_token(), doc, |token, doc| {
-            format_token(
-                doc,
-                &token,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::Preserve,
-            )
-        });
-        let parameters = format_required_field(constructor.parameters(), doc, |parameters, doc| {
-            format_value_parameter_list(doc, &parameters)
-        });
-        let has_delegation = !matches!(constructor.colon(), Ok(KotlinSyntaxField::Missing(_)))
-            || !matches!(
-                constructor.delegation_call(),
-                Ok(KotlinSyntaxField::Missing(_))
-            );
-        let colon = format_optional_field(constructor.colon(), doc, |colon, doc| {
-            keyword_token(doc, colon)
-        });
-        let call = format_optional_field(constructor.delegation_call(), doc, |call, doc| {
-            let call = format_constructor_delegation(doc, &call);
-            let space = doc.space();
-            doc.concat([space, call])
-        });
-        let delegation = if has_delegation {
-            let before = doc.space();
-            doc.concat([before, colon, call])
+            &token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        )
+    });
+    let parameters = format_required_field(constructor.parameters(), doc, |parameters, doc| {
+        format_value_parameter_list(doc, &parameters)
+    });
+    let delegation = format_optional_field(constructor.delegation(), doc, |delegation, doc| {
+        let has_colon = matches!(delegation.colon(), Ok(KotlinSyntaxField::Present(_)));
+        let has_call = syntax_field_has_token(delegation.call());
+        let before = if has_colon || has_call {
+            doc.space()
         } else {
             Doc::nil()
         };
-        let body = format_optional_field(constructor.body(), doc, |body, doc| {
-            let space = doc.space();
-            let body = format_block(doc, &body);
-            doc.concat([space, body])
+        let colon = format_required_field(delegation.colon(), doc, |colon, doc| {
+            keyword_token(doc, colon)
         });
-        doc.concat([prefix, keyword, parameters, delegation, body])
-    })
+        let call = format_required_field(delegation.call(), doc, |call, doc| {
+            let space = if has_colon && has_call {
+                doc.space()
+            } else {
+                Doc::nil()
+            };
+            let call = format_constructor_delegation(doc, &call);
+            doc.concat([space, call])
+        });
+        doc.concat([before, colon, call])
+    });
+    let body = format_optional_field(constructor.body(), doc, |body, doc| {
+        let space = doc.space();
+        let body = format_block(doc, &body);
+        doc.concat([space, body])
+    });
+    doc.concat([prefix, keyword, parameters, delegation, body])
 }
 
 fn format_constructor_delegation<'source>(
     doc: &mut DocBuilder<'source>,
     call: &jolt_kotlin_syntax::ConstructorDelegationCall<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(call, doc, |doc| {
-        format_required_field(call.expression(), doc, |expression, doc| {
-            format_expression(doc, &expression)
-        })
+    format_required_field(call.expression(), doc, |expression, doc| {
+        format_expression(doc, &expression)
     })
 }
 
@@ -290,140 +240,148 @@ pub(super) fn format_property_declaration<'source>(
     doc: &mut DocBuilder<'source>,
     declaration: &PropertyDeclaration<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(declaration, doc, |doc| {
-        let prefix = format_declaration_prefix(
-            doc,
-            declaration.leading_modifiers(),
-            declaration.context(),
-            declaration.post_context_modifiers(),
-        );
-        let keyword = keyword_with_space(doc, declaration.binding_keyword());
-        let type_parameters =
-            format_optional_field(declaration.type_parameters(), doc, |parameters, doc| {
-                let parameters = format_type_parameter_list(doc, Some(parameters));
-                let space = doc.space();
-                doc.concat([parameters, space])
-            });
-        let binding = format_required_field(declaration.binding(), doc, |binding, doc| {
-            if let Some(name) = binding.cast_node::<Name<'source>>() {
-                format_name(doc, &name)
-            } else if let Some(name) = binding.cast_node::<CallableName<'source>>() {
-                format_callable_name(doc, &name)
-            } else if let Some(pattern) = binding.cast_node::<DestructuringDeclaration<'source>>() {
-                format_destructuring_declaration(doc, &pattern)
-            } else {
-                doc.block_on_invariant("invalid property binding role");
-                Doc::nil()
-            }
+    let has_header_after_keyword = syntax_field_has_token(declaration.type_parameters())
+        || syntax_field_has_token(declaration.binding())
+        || syntax_field_has_token(declaration.r#type())
+        || syntax_field_has_token(declaration.constraints());
+    let prefix = format_declaration_prefix(
+        doc,
+        declaration.leading_modifiers(),
+        declaration.context(),
+        declaration.post_context_modifiers(),
+    );
+    let keyword = keyword_with_space(doc, declaration.binding_keyword());
+    let type_parameters =
+        format_optional_field(declaration.type_parameters(), doc, |parameters, doc| {
+            let parameters = format_type_parameter_list(doc, Some(parameters));
+            let space = doc.space();
+            doc.concat([parameters, space])
         });
-        let ty = format_type_annotation(doc, declaration.type_colon(), declaration.r#type());
-        let constraints =
-            format_optional_field(declaration.constraints(), doc, |constraints, doc| {
-                format_type_constraint_list(doc, Some(constraints))
-            });
-        let initializer = format_optional_initializer(
-            doc,
-            declaration.initializer_operator(),
-            declaration.initializer(),
-        );
-        let body = format_required_field(declaration.body_members(), doc, |members, doc| {
-            format_property_members(doc, &members)
-        });
-        let declaration = doc.concat([
-            prefix,
-            keyword,
-            type_parameters,
-            binding,
-            ty,
-            constraints,
-            initializer,
-            body,
-        ]);
-        doc.group(declaration)
-    })
+    let binding = format_required_field(declaration.binding(), doc, |binding, doc| {
+        format_property_binding(doc, &binding)
+    });
+    let ty = format_type_annotation(doc, declaration.type_colon(), declaration.r#type());
+    let constraints = format_optional_field(declaration.constraints(), doc, |constraints, doc| {
+        format_type_constraint_list(doc, Some(constraints))
+    });
+    let initializer = format_optional_property_initializer(
+        doc,
+        declaration.initializer(),
+        has_header_after_keyword,
+    );
+    let body = format_required_field(declaration.body_members(), doc, |members, doc| {
+        format_property_members(doc, &members)
+    });
+    let declaration = doc.concat([
+        prefix,
+        keyword,
+        type_parameters,
+        binding,
+        ty,
+        constraints,
+        initializer,
+        body,
+    ]);
+    doc.group(declaration)
 }
 
-fn format_optional_initializer<'source>(
+fn format_property_binding<'source>(
     doc: &mut DocBuilder<'source>,
-    operator: Result<
-        KotlinSyntaxField<'source, KotlinRoleElement<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
-    expression: Result<
-        KotlinSyntaxField<'source, jolt_kotlin_syntax::Expression<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
+    binding: &PropertyBinding<'source>,
 ) -> Doc<'source> {
-    let operator = match crate::helpers::recovery::resolve_optional_field(operator, doc) {
-        KotlinFormatField::Present(Some(operator)) => {
-            if let Some(token) = operator.token() {
-                Ok(Some(token))
-            } else {
-                doc.block_on_invariant("property initializer operator is not a token");
-                Ok(None)
-            }
+    match binding {
+        PropertyBinding::Name(name) => format_name(doc, name),
+        PropertyBinding::CallableName(name) => format_callable_name(doc, name),
+        PropertyBinding::DestructuringDeclaration(pattern) => {
+            format_destructuring_declaration(doc, pattern)
         }
-        KotlinFormatField::Present(None) => Ok(None),
-        KotlinFormatField::Malformed(malformed) => Err(malformed),
-    };
-    let expression = crate::helpers::recovery::resolve_optional_field(expression, doc);
+        PropertyBinding::BogusPropertyBinding(bogus) => format_malformed(bogus, doc),
+    }
+}
 
-    match (operator, expression) {
-        (Ok(None), KotlinFormatField::Present(None)) => Doc::nil(),
-        (Ok(Some(operator)), KotlinFormatField::Present(Some(expression))) => {
-            let before = doc.space();
-            if trailing_comments_force_line(&operator) {
-                let operator = format_token(
-                    doc,
-                    &operator,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::BeforeLineBreak,
-                );
-                let line = doc.hard_line();
-                let expression = format_expression(doc, &expression);
-                return doc.concat([before, operator, line, expression]);
-            }
-            let operator = format_token(
+fn format_property_initializer<'source>(
+    doc: &mut DocBuilder<'source>,
+    initializer: &PropertyInitializer<'source>,
+    leading_space: bool,
+) -> Doc<'source> {
+    let operator_token = match initializer.operator() {
+        Ok(KotlinSyntaxField::Present(operator)) => operator.token(),
+        _ => None,
+    };
+    let has_expression = syntax_field_has_token(initializer.expression());
+    let before = if leading_space {
+        doc.space()
+    } else {
+        Doc::nil()
+    };
+    let operator = format_required_field(initializer.operator(), doc, |operator, doc| {
+        let Some(operator) = operator.token() else {
+            doc.block_on_invariant("property initializer operator is not a token");
+            return Doc::nil();
+        };
+        if trailing_comments_force_line(&operator) {
+            format_token(
+                doc,
+                &operator,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::BeforeLineBreak,
+            )
+        } else {
+            format_token(
                 doc,
                 &operator,
                 LeadingTrivia::Preserve,
                 TrailingTrivia::RelocatedToEnclosingContext,
-            );
-            if matches!(
-                expression,
-                jolt_kotlin_syntax::Expression::AnnotatedExpression(_)
-            ) {
-                let line = doc.hard_line();
-                let expression = format_expression(doc, &expression);
-                let expression = doc.concat([line, expression]);
-                let expression = doc.indent(expression);
-                return doc.concat([before, operator, expression]);
-            }
-            let after = doc.space();
-            let expression = format_expression(doc, &expression);
-            let contents = doc.concat([before, operator, after, expression]);
-            doc.group(contents)
+            )
         }
-        (operator, expression) => {
-            let operator = match operator {
-                Ok(Some(operator)) => format_token(
-                    doc,
-                    &operator,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::Preserve,
-                ),
-                Ok(None) => Doc::nil(),
-                Err(malformed) => malformed,
-            };
-            let expression = match expression {
-                KotlinFormatField::Present(Some(expression)) => format_expression(doc, &expression),
-                KotlinFormatField::Present(None) => Doc::nil(),
-                KotlinFormatField::Malformed(malformed) => malformed,
-            };
-            let before = doc.space();
-            let after = doc.space();
-            doc.concat([before, operator, after, expression])
+    });
+    let expression = format_required_field(initializer.expression(), doc, |expression, doc| {
+        format_expression(doc, &expression)
+    });
+    if has_expression
+        && operator_token.is_some_and(|operator| trailing_comments_force_line(&operator))
+    {
+        let line = doc.hard_line();
+        return doc.concat([before, operator, line, expression]);
+    }
+    if matches!(
+        initializer.expression(),
+        Ok(KotlinSyntaxField::Present(
+            jolt_kotlin_syntax::Expression::AnnotatedExpression(_)
+        ))
+    ) {
+        let line = doc.hard_line();
+        let expression = doc.concat([line, expression]);
+        let expression = doc.indent(expression);
+        return doc.concat([before, operator, expression]);
+    }
+    let after = if operator_token.is_some() && has_expression {
+        doc.space()
+    } else {
+        Doc::nil()
+    };
+    let contents = doc.concat([before, operator, after, expression]);
+    doc.group(contents)
+}
+
+fn format_optional_property_initializer<'source>(
+    doc: &mut DocBuilder<'source>,
+    initializer: Result<
+        KotlinSyntaxField<'source, PropertyInitializer<'source>>,
+        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
+    >,
+    leading_space: bool,
+) -> Doc<'source> {
+    match resolve_optional_field(initializer, doc) {
+        KotlinFormatField::Present(Some(initializer)) => {
+            format_property_initializer(doc, &initializer, leading_space)
         }
+        KotlinFormatField::Present(None) => Doc::nil(),
+        KotlinFormatField::Malformed(recovery) if leading_space => {
+            let space = doc.space();
+            doc.concat([space, recovery])
+        }
+        KotlinFormatField::Malformed(recovery) => recovery,
     }
 }
 
@@ -434,21 +392,27 @@ fn format_property_members<'source>(
     let contents = doc.concat_list(|docs| {
         for part in members.parts() {
             match resolve_list_part(part, docs) {
-                KotlinFormatListPart::Item(KotlinRoleElement::Node(node)) => {
-                    let formatted = if let Some(field) = ExplicitBackingField::cast(node) {
-                        format_explicit_backing_field(docs, &field)
-                    } else if let Some(accessor) = PropertyAccessor::cast(node) {
-                        format_property_accessor(docs, &accessor)
-                    } else {
+                KotlinFormatListPart::Item(member) => {
+                    let Some(member) = member.cast_family::<PropertyBodyMember<'source>>() else {
                         docs.block_on_invariant("invalid property body member");
-                        Doc::nil()
+                        continue;
+                    };
+                    let formatted = match member {
+                        PropertyBodyMember::ExplicitBackingField(field) => {
+                            format_explicit_backing_field(docs, &field)
+                        }
+                        PropertyBodyMember::PropertyAccessor(accessor) => {
+                            format_property_accessor(docs, &accessor)
+                        }
+                        PropertyBodyMember::BogusPropertyBodyMember(bogus) => {
+                            format_malformed(&bogus, docs)
+                        }
                     };
                     let line = docs.hard_line();
                     docs.push(line);
                     docs.push(formatted);
                 }
-                KotlinFormatListPart::Item(KotlinRoleElement::Token(token))
-                | KotlinFormatListPart::Separator(token) => {
+                KotlinFormatListPart::Separator(token) => {
                     let removed = format_removed_separator(
                         docs,
                         &token,
@@ -468,183 +432,133 @@ pub(super) fn format_explicit_backing_field<'source>(
     doc: &mut DocBuilder<'source>,
     field: &ExplicitBackingField<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(field, doc, |doc| {
-        let keyword = format_required_field(field.field_token(), doc, |field, doc| {
-            let Some(field) = field.token() else {
-                doc.block_on_invariant("backing-field role is not a token");
-                return Doc::nil();
-            };
-            format_token(
-                doc,
-                &field,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::RelocatedToEnclosingContext,
-            )
-        });
-        let assign = format_required_field(field.assign(), doc, |assign, doc| {
-            format_token(
-                doc,
-                &assign,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::Preserve,
-            )
-        });
-        let value = format_required_field(field.expression(), doc, |value, doc| {
-            format_expression(doc, &value)
-        });
-        let first_space = doc.space();
-        let second_space = doc.space();
-        doc.concat([keyword, first_space, assign, second_space, value])
-    })
+    let has_assign = token_field_has_token(field.assign());
+    let has_value = syntax_field_has_token(field.expression());
+    let keyword = format_required_field(field.field_token(), doc, |field, doc| {
+        let Some(field) = field.token() else {
+            doc.block_on_invariant("backing-field role is not a token");
+            return Doc::nil();
+        };
+        format_token(
+            doc,
+            &field,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        )
+    });
+    let assign = format_required_field(field.assign(), doc, |assign, doc| {
+        format_token(
+            doc,
+            &assign,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        )
+    });
+    let value = format_required_field(field.expression(), doc, |value, doc| {
+        format_expression(doc, &value)
+    });
+    let first_space = if has_assign || has_value {
+        doc.space()
+    } else {
+        Doc::nil()
+    };
+    let second_space = if has_assign && has_value {
+        doc.space()
+    } else {
+        Doc::nil()
+    };
+    doc.concat([keyword, first_space, assign, second_space, value])
 }
 
 pub(super) fn format_property_accessor<'source>(
     doc: &mut DocBuilder<'source>,
     accessor: &PropertyAccessor<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(accessor, doc, |doc| {
-        let modifiers = format_modifier_prefix(doc, accessor.modifiers());
-        let keyword = format_required_field(accessor.keyword(), doc, |keyword, doc| {
-            let Some(keyword) = keyword.token() else {
-                doc.block_on_invariant("property accessor keyword is not a token");
-                return Doc::nil();
-            };
-            format_token(
-                doc,
-                &keyword,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::Preserve,
-            )
-        });
-        let parameters = format_optional_field(accessor.parameters(), doc, |parameters, doc| {
-            format_value_parameter_list(doc, &parameters)
-        });
-        let return_type =
-            format_type_annotation(doc, accessor.return_colon(), accessor.return_type());
-        let body = format_property_accessor_body(doc, accessor.assign(), accessor.body());
-        doc.concat([modifiers, keyword, parameters, return_type, body])
-    })
-}
-
-fn format_property_accessor_body<'source>(
-    doc: &mut DocBuilder<'source>,
-    assign: Result<
-        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
-    body: Result<
-        KotlinSyntaxField<'source, KotlinRoleElement<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
-) -> Doc<'source> {
-    let assign = crate::helpers::recovery::resolve_optional_field(assign, doc);
-    let body = crate::helpers::recovery::resolve_optional_field(body, doc);
-    match (assign, body) {
-        (KotlinFormatField::Present(None), KotlinFormatField::Present(None)) => Doc::nil(),
-        (KotlinFormatField::Present(Some(assign)), KotlinFormatField::Present(Some(body))) => {
-            let before = doc.space();
-            let assign = keyword_token(doc, assign);
-            if let Some(expression) = body.cast_family::<jolt_kotlin_syntax::Expression<'source>>()
-            {
-                let line = doc.line();
-                let expression = format_expression(doc, &expression);
-                let expression = doc.concat([line, expression]);
-                let expression = doc.indent(expression);
-                let body = doc.concat([before, assign, expression]);
-                return doc.group(body);
-            }
-            let after = doc.space();
-            let body = format_declaration_body_role(doc, body);
-            doc.concat([before, assign, after, body])
-        }
-        (KotlinFormatField::Present(None), KotlinFormatField::Present(Some(body))) => {
-            let space = doc.space();
-            let body = format_declaration_body_role(doc, body);
-            doc.concat([space, body])
-        }
-        (KotlinFormatField::Present(Some(assign)), KotlinFormatField::Present(None)) => {
-            let space = doc.space();
-            let assign = keyword_token(doc, assign);
-            doc.concat([space, assign])
-        }
-        (assign, body) => {
-            let assign = match assign {
-                KotlinFormatField::Present(Some(assign)) => keyword_token(doc, assign),
-                KotlinFormatField::Present(None) => Doc::nil(),
-                KotlinFormatField::Malformed(malformed) => malformed,
-            };
-            let body = match body {
-                KotlinFormatField::Present(Some(body)) => format_declaration_body_role(doc, body),
-                KotlinFormatField::Present(None) => Doc::nil(),
-                KotlinFormatField::Malformed(malformed) => malformed,
-            };
-            let before = doc.space();
-            let after = doc.space();
-            doc.concat([before, assign, after, body])
-        }
-    }
+    let modifiers = format_modifier_prefix(doc, accessor.modifiers());
+    let keyword = format_required_field(accessor.keyword(), doc, |keyword, doc| {
+        let Some(keyword) = keyword.token() else {
+            doc.block_on_invariant("property accessor keyword is not a token");
+            return Doc::nil();
+        };
+        format_token(
+            doc,
+            &keyword,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        )
+    });
+    let parameters = format_optional_field(accessor.parameters(), doc, |parameters, doc| {
+        format_value_parameter_list(doc, &parameters)
+    });
+    let return_type = format_type_annotation(doc, accessor.return_colon(), accessor.return_type());
+    let body = format_optional_declaration_body(doc, accessor.body());
+    doc.concat([modifiers, keyword, parameters, return_type, body])
 }
 
 pub(crate) fn format_destructuring_declaration<'source>(
     doc: &mut DocBuilder<'source>,
     declaration: &DestructuringDeclaration<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(declaration, doc, |doc| {
-        let open = resolve_required_delimiter(declaration.open_delimiter(), doc);
-        let close = resolve_required_delimiter(declaration.close_delimiter(), doc);
-        let items = match resolve_required_field(declaration.entries(), doc) {
-            KotlinFormatField::Present(entries) => {
-                syntax_comma_items(doc, entries.parts(), |entry, doc| match entry {
-                    jolt_kotlin_syntax::DestructuringPatternEntry::DestructuringEntry(entry) => {
-                        format_destructuring_entry(doc, &entry)
-                    }
-                    jolt_kotlin_syntax::DestructuringPatternEntry::BogusDestructuringEntry(
-                        malformed,
-                    ) => format_malformed(&malformed, doc),
-                })
-            }
-            KotlinFormatField::Malformed(recovery) => vec![CommaListItem {
-                doc: recovery,
-                comma: None,
-            }],
-        };
-        format_delimited_with_recovery(doc, &open, &close, items)
-    })
+    let open = resolve_required_delimiter(declaration.open_delimiter(), doc);
+    let close = resolve_required_delimiter(declaration.close_delimiter(), doc);
+    let items = match resolve_required_field(declaration.entries(), doc) {
+        KotlinFormatField::Present(entries) => {
+            syntax_comma_items(doc, entries.parts(), |entry, doc| match entry {
+                jolt_kotlin_syntax::DestructuringPatternEntry::DestructuringEntry(entry) => {
+                    format_destructuring_entry(doc, &entry)
+                }
+                jolt_kotlin_syntax::DestructuringPatternEntry::BogusDestructuringEntry(
+                    malformed,
+                ) => format_malformed(&malformed, doc),
+            })
+        }
+        KotlinFormatField::Malformed(recovery) => vec![CommaListItem {
+            doc: recovery,
+            comma: None,
+        }],
+    };
+    format_delimited_with_recovery(doc, &open, &close, items)
 }
 
 fn format_destructuring_entry<'source>(
     doc: &mut DocBuilder<'source>,
     entry: &DestructuringEntry<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(entry, doc, |doc| {
-        let modifier = format_optional_field(entry.modifier(), doc, |token, doc| {
-            let modifier = keyword_token(doc, token);
+    let modifier = format_optional_field(entry.modifier(), doc, |token, doc| {
+        let modifier = keyword_token(doc, token);
+        let space = doc.space();
+        doc.concat([modifier, space])
+    });
+    let name = format_required_field(entry.name(), doc, |name, doc| format_name(doc, &name));
+    let has_assign = matches!(entry.assign(), Ok(KotlinSyntaxField::Present(_)));
+    let assign = format_optional_field(entry.assign(), doc, |assign, doc| {
+        let before = doc.space();
+        let assign = keyword_token(doc, assign);
+        let after = doc.space();
+        doc.concat([before, assign, after])
+    });
+    let default = format_optional_field(entry.default(), doc, |default, doc| {
+        let default = format_expression(doc, &default);
+        if has_assign {
+            default
+        } else {
             let space = doc.space();
-            doc.concat([modifier, space])
-        });
-        let name = format_required_field(entry.name(), doc, |name, doc| format_name(doc, &name));
-        let default = format_optional_initializer(
-            doc,
-            entry
-                .assign()
-                .map(|field| field.map(KotlinRoleElement::Token)),
-            entry.default(),
-        );
-        doc.concat([modifier, name, default])
-    })
+            doc.concat([space, default])
+        }
+    });
+    doc.concat([modifier, name, assign, default])
 }
 
-fn format_callable_role<'source>(
+fn format_callable_declaration_name<'source>(
     doc: &mut DocBuilder<'source>,
-    role: KotlinRoleElement<'source>,
+    name: &CallableDeclarationName<'source>,
 ) -> Doc<'source> {
-    if let Some(name) = role.cast_node::<Name<'source>>() {
-        format_name(doc, &name)
-    } else if let Some(name) = role.cast_node::<CallableName<'source>>() {
-        format_callable_name(doc, &name)
-    } else {
-        doc.block_on_invariant("invalid callable name role");
-        Doc::nil()
+    match name {
+        CallableDeclarationName::Name(name) => format_name(doc, name),
+        CallableDeclarationName::CallableName(name) => format_callable_name(doc, name),
+        CallableDeclarationName::BogusCallableDeclarationName(bogus) => {
+            format_malformed(bogus, doc)
+        }
     }
 }
 
@@ -652,82 +566,62 @@ fn format_callable_name<'source>(
     doc: &mut DocBuilder<'source>,
     name: &CallableName<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(name, doc, |doc| {
-        match resolve_required_field(name.parts(), doc) {
-            KotlinFormatField::Present(parts) => doc.concat_list(|docs| {
-                for part in parts.parts() {
-                    match resolve_list_part(part, docs) {
-                        KotlinFormatListPart::Item(KotlinRoleElement::Node(node)) => {
-                            let formatted = if let Some(name) = Name::cast(node) {
-                                format_name(docs, &name)
-                            } else if let Some(ty) = TypeReference::cast(node) {
-                                format_type_reference(docs, &ty)
-                            } else {
-                                docs.block_on_invariant("invalid callable-name node");
-                                Doc::nil()
-                            };
-                            docs.push(formatted);
-                        }
-                        KotlinFormatListPart::Item(KotlinRoleElement::Token(dot)) => {
-                            let dot = format_token(
-                                docs,
-                                &dot,
-                                LeadingTrivia::Preserve,
-                                TrailingTrivia::Preserve,
-                            );
-                            docs.push(dot);
-                        }
-                        KotlinFormatListPart::Separator(_) => {}
-                        KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
-                    }
-                }
-            }),
-            KotlinFormatField::Malformed(recovery) => recovery,
-        }
-    })
+    let has_dot = matches!(name.dot(), Ok(KotlinSyntaxField::Present(_)));
+    let receiver = format_required_field(name.receiver(), doc, |receiver, doc| {
+        format_type_reference(doc, &receiver)
+    });
+    let dot = format_required_field(name.dot(), doc, |dot, doc| {
+        format_token(doc, &dot, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
+    });
+    let name = format_required_field(name.name(), doc, |name, doc| format_name(doc, &name));
+    let missing_dot_separator = if has_dot { Doc::nil() } else { doc.space() };
+    doc.concat([receiver, dot, missing_dot_separator, name])
 }
 
 pub(super) fn format_type_alias_declaration<'source>(
     doc: &mut DocBuilder<'source>,
     declaration: &TypeAliasDeclaration<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(declaration, doc, |doc| {
-        let modifiers = format_declaration_prefix(
-            doc,
-            declaration.leading_modifiers(),
-            declaration.context(),
-            declaration.post_context_modifiers(),
-        );
-        let keyword = keyword_with_space(doc, declaration.typealias_token());
-        let name =
-            format_required_field(declaration.name(), doc, |name, doc| format_name(doc, &name));
-        let parameters =
-            format_optional_field(declaration.type_parameters(), doc, |parameters, doc| {
-                format_type_parameter_list(doc, Some(parameters))
-            });
-        let assign = format_required_field(declaration.assign(), doc, |assign, doc| {
-            keyword_token(doc, assign)
+    let has_assign = token_field_has_token(declaration.assign());
+    let has_type = syntax_field_has_token(declaration.r#type());
+    let modifiers = format_declaration_prefix(
+        doc,
+        declaration.leading_modifiers(),
+        declaration.context(),
+        declaration.post_context_modifiers(),
+    );
+    let keyword = keyword_with_space(doc, declaration.typealias_token());
+    let name = format_required_field(declaration.name(), doc, |name, doc| format_name(doc, &name));
+    let parameters =
+        format_optional_field(declaration.type_parameters(), doc, |parameters, doc| {
+            format_type_parameter_list(doc, Some(parameters))
         });
-        let ty = format_required_field(declaration.r#type(), doc, |ty, doc| {
-            format_type_reference(doc, &ty)
-        });
-        let has_type = matches!(
-            declaration.r#type(),
-            Ok(KotlinSyntaxField::Present(ty)) if ty.first_token().is_some()
-        );
-        let first_space = doc.space();
-        let second_space = if has_type { doc.space() } else { Doc::nil() };
-        doc.concat([
-            modifiers,
-            keyword,
-            name,
-            parameters,
-            first_space,
-            assign,
-            second_space,
-            ty,
-        ])
-    })
+    let assign = format_required_field(declaration.assign(), doc, |assign, doc| {
+        keyword_token(doc, assign)
+    });
+    let ty = format_required_field(declaration.r#type(), doc, |ty, doc| {
+        format_type_reference(doc, &ty)
+    });
+    let first_space = if has_assign || has_type {
+        doc.space()
+    } else {
+        Doc::nil()
+    };
+    let second_space = if has_assign && has_type {
+        doc.space()
+    } else {
+        Doc::nil()
+    };
+    doc.concat([
+        modifiers,
+        keyword,
+        name,
+        parameters,
+        first_space,
+        assign,
+        second_space,
+        ty,
+    ])
 }
 
 pub(super) fn format_declaration_prefix<'source>(
@@ -869,40 +763,38 @@ fn format_modifier_list<'source>(
     list: &ModifierList<'source>,
     annotations_break: bool,
 ) -> Doc<'source> {
-    format_or_verbatim(list, doc, |doc| {
-        doc.concat_list(|docs| {
-            for part in list.parts() {
-                match resolve_list_part(part, docs) {
-                    KotlinFormatListPart::Item(KotlinRoleElement::Node(node)) => {
-                        if let Some(annotation) = jolt_kotlin_syntax::Annotation::cast(node) {
-                            let annotation = format_annotation(docs, &annotation);
-                            docs.push(annotation);
-                            let separator = if annotations_break {
-                                docs.hard_line()
-                            } else {
-                                docs.space()
-                            };
-                            docs.push(separator);
+    doc.concat_list(|docs| {
+        for part in list.parts() {
+            match resolve_list_part(part, docs) {
+                KotlinFormatListPart::Item(KotlinRoleElement::Node(node)) => {
+                    if let Some(annotation) = jolt_kotlin_syntax::Annotation::cast(node) {
+                        let annotation = format_annotation(docs, &annotation);
+                        docs.push(annotation);
+                        let separator = if annotations_break {
+                            docs.hard_line()
                         } else {
-                            docs.block_on_invariant("invalid modifier node");
-                        }
+                            docs.space()
+                        };
+                        docs.push(separator);
+                    } else {
+                        docs.block_on_invariant("invalid modifier node");
                     }
-                    KotlinFormatListPart::Item(KotlinRoleElement::Token(token)) => {
-                        let token = format_token(
-                            docs,
-                            &token,
-                            LeadingTrivia::Preserve,
-                            TrailingTrivia::Preserve,
-                        );
-                        docs.push(token);
-                        let space = docs.space();
-                        docs.push(space);
-                    }
-                    KotlinFormatListPart::Separator(_) => {}
-                    KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
                 }
+                KotlinFormatListPart::Item(KotlinRoleElement::Token(token)) => {
+                    let token = format_token(
+                        docs,
+                        &token,
+                        LeadingTrivia::Preserve,
+                        TrailingTrivia::Preserve,
+                    );
+                    docs.push(token);
+                    let space = docs.space();
+                    docs.push(space);
+                }
+                KotlinFormatListPart::Separator(_) => {}
+                KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
             }
-        })
+        }
     })
 }
 
@@ -935,95 +827,84 @@ pub(crate) fn format_type_annotation<'source>(
 
 fn format_declaration_body<'source>(
     doc: &mut DocBuilder<'source>,
-    assign: Result<
-        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
+    body: &DeclarationBody<'source>,
+) -> Doc<'source> {
+    match body {
+        DeclarationBody::BlockBody(block) => {
+            let space = doc.space();
+            let body =
+                format_required_field(block.block(), doc, |block, doc| format_block(doc, &block));
+            doc.concat([space, body])
+        }
+        DeclarationBody::ExpressionBody(expression) => format_expression_body(doc, expression),
+        DeclarationBody::BogusDeclarationBody(bogus) => format_malformed(bogus, doc),
+    }
+}
+
+fn format_optional_declaration_body<'source>(
+    doc: &mut DocBuilder<'source>,
     body: Result<
-        KotlinSyntaxField<'source, KotlinRoleElement<'source>>,
+        KotlinSyntaxField<'source, DeclarationBody<'source>>,
         jolt_kotlin_syntax::KotlinSyntaxInvariantError,
     >,
 ) -> Doc<'source> {
-    let assign = crate::helpers::recovery::resolve_optional_field(assign, doc);
-    let body = crate::helpers::recovery::resolve_optional_field(body, doc);
-    match (assign, body) {
-        (KotlinFormatField::Present(None), KotlinFormatField::Present(None)) => Doc::nil(),
-        (KotlinFormatField::Present(Some(assign)), KotlinFormatField::Present(Some(body))) => {
-            let before = doc.space();
-            if let Some(expression) = body.cast_family::<jolt_kotlin_syntax::Expression<'source>>()
-            {
-                if trailing_comments_force_line(&assign) {
-                    let assign = format_token(
-                        doc,
-                        &assign,
-                        LeadingTrivia::Preserve,
-                        TrailingTrivia::BeforeLineBreak,
-                    );
-                    let line = doc.hard_line();
-                    let expression = format_expression(doc, &expression);
-                    return doc.concat([before, assign, line, expression]);
-                }
-                let assign = keyword_token(doc, assign);
-                if matches!(
-                    expression,
-                    jolt_kotlin_syntax::Expression::AnnotatedExpression(_)
-                ) {
-                    let line = doc.hard_line();
-                    let expression = format_expression(doc, &expression);
-                    let expression = doc.concat([line, expression]);
-                    let expression = doc.indent(expression);
-                    return doc.concat([before, assign, expression]);
-                }
-                let after = doc.space();
-                let expression = format_expression(doc, &expression);
-                let contents = doc.concat([before, assign, after, expression]);
-                return doc.group(contents);
-            }
-            let assign = keyword_token(doc, assign);
-            let after = doc.space();
-            let body = format_declaration_body_role(doc, body);
-            doc.concat([before, assign, after, body])
-        }
-        (KotlinFormatField::Present(None), KotlinFormatField::Present(Some(body))) => {
+    match crate::helpers::recovery::resolve_optional_field(body, doc) {
+        KotlinFormatField::Present(Some(body)) => format_declaration_body(doc, &body),
+        KotlinFormatField::Present(None) => Doc::nil(),
+        KotlinFormatField::Malformed(recovery) => {
             let space = doc.space();
-            let body = format_declaration_body_role(doc, body);
-            doc.concat([space, body])
-        }
-        (KotlinFormatField::Present(Some(assign)), KotlinFormatField::Present(None)) => {
-            let space = doc.space();
-            let assign = keyword_token(doc, assign);
-            doc.concat([space, assign])
-        }
-        (assign, body) => {
-            let assign = match assign {
-                KotlinFormatField::Present(Some(assign)) => keyword_token(doc, assign),
-                KotlinFormatField::Present(None) => Doc::nil(),
-                KotlinFormatField::Malformed(malformed) => malformed,
-            };
-            let body = match body {
-                KotlinFormatField::Present(Some(body)) => format_declaration_body_role(doc, body),
-                KotlinFormatField::Present(None) => Doc::nil(),
-                KotlinFormatField::Malformed(malformed) => malformed,
-            };
-            let before = doc.space();
-            let after = doc.space();
-            doc.concat([before, assign, after, body])
+            doc.concat([space, recovery])
         }
     }
 }
 
-fn format_declaration_body_role<'source>(
+fn format_expression_body<'source>(
     doc: &mut DocBuilder<'source>,
-    body: KotlinRoleElement<'source>,
+    body: &ExpressionBody<'source>,
 ) -> Doc<'source> {
-    if let Some(block) = body.cast_node::<jolt_kotlin_syntax::Block<'source>>() {
-        format_block(doc, &block)
-    } else if let Some(expression) = body.cast_family::<jolt_kotlin_syntax::Expression<'source>>() {
+    let has_expression = syntax_field_has_token(body.expression());
+    let assign_token = match body.assign() {
+        Ok(KotlinSyntaxField::Present(assign)) => Some(assign),
+        _ => None,
+    };
+    let before = doc.space();
+    let assign = format_required_field(body.assign(), doc, |assign, doc| {
+        if trailing_comments_force_line(&assign) {
+            format_token(
+                doc,
+                &assign,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::BeforeLineBreak,
+            )
+        } else {
+            keyword_token(doc, assign)
+        }
+    });
+    let expression = format_required_field(body.expression(), doc, |expression, doc| {
         format_expression(doc, &expression)
-    } else {
-        doc.block_on_invariant("invalid declaration body role");
-        Doc::nil()
+    });
+    if has_expression && assign_token.is_some_and(|assign| trailing_comments_force_line(&assign)) {
+        let line = doc.hard_line();
+        return doc.concat([before, assign, line, expression]);
     }
+    if matches!(
+        body.expression(),
+        Ok(KotlinSyntaxField::Present(
+            jolt_kotlin_syntax::Expression::AnnotatedExpression(_)
+        ))
+    ) {
+        let line = doc.hard_line();
+        let expression = doc.concat([line, expression]);
+        let expression = doc.indent(expression);
+        return doc.concat([before, assign, expression]);
+    }
+    let after = if assign_token.is_some() && has_expression {
+        doc.space()
+    } else {
+        Doc::nil()
+    };
+    let contents = doc.concat([before, assign, after, expression]);
+    doc.group(contents)
 }
 
 fn keyword_with_space<'source>(
@@ -1050,6 +931,32 @@ fn keyword_token<'source>(
         LeadingTrivia::Preserve,
         TrailingTrivia::RelocatedToEnclosingContext,
     )
+}
+
+fn syntax_field_has_token<'source, T>(
+    field: Result<KotlinSyntaxField<'source, T>, jolt_kotlin_syntax::KotlinSyntaxInvariantError>,
+) -> bool
+where
+    T: KotlinSyntaxView<'source>,
+{
+    match field {
+        Ok(KotlinSyntaxField::Present(value)) => value.first_token().is_some(),
+        Ok(KotlinSyntaxField::Malformed(malformed)) => malformed.first_token().is_some(),
+        Ok(KotlinSyntaxField::Missing(_)) | Err(_) => false,
+    }
+}
+
+fn token_field_has_token(
+    field: Result<
+        KotlinSyntaxField<'_, KotlinSyntaxToken<'_>>,
+        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
+    >,
+) -> bool {
+    match field {
+        Ok(KotlinSyntaxField::Present(_)) => true,
+        Ok(KotlinSyntaxField::Malformed(malformed)) => malformed.first_token().is_some(),
+        Ok(KotlinSyntaxField::Missing(_)) | Err(_) => false,
+    }
 }
 
 fn syntax_comma_items<'source, T>(

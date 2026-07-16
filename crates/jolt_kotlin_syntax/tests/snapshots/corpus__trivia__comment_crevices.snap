@@ -173,10 +173,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 606..609 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "emit" @ 610..614 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:member-name */", Whitespace " "]
+              Name
+                Identifier "emit" @ 610..614 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:member-name */", Whitespace " "]
               ValueParameterList
                 LParen "(" @ 645..646
                 ValueParameterSeparatedList
@@ -271,10 +269,8 @@ KotlinFile
               ModifierList
               ModifierList
               ValKw "val" @ 1275..1278 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "boxed" @ 1279..1284 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-name */", Whitespace " "]
+              Name
+                Identifier "boxed" @ 1279..1284 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-name */", Whitespace " "]
               Colon ":" @ 1317..1318 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-colon */", Whitespace " "]
               TypeReference
                 UserType
@@ -294,20 +290,21 @@ KotlinFile
                                   Name
                                     Identifier "T" @ 1426..1427 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:type-arg-name */", Whitespace " "]
                         Gt ">" @ 1460..1461 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:type-after-args */", Whitespace " "]
-              Assign "=" @ 1496..1497 trailing=[Whitespace " "]
-              CallExpression
-                NameExpression
-                  Identifier "listOf" @ 1498..1504
-                TypeArgumentListList
-                ValueArgumentList
-                  LParen "(" @ 1504..1505
-                  ValueArgumentEntryList
-                    ValueArgument
-                      ValueArgumentPrefixList
-                      NameExpression
-                        Identifier "payload" @ 1505..1512
-                  RParen ")" @ 1512..1513
-                LambdaExpressionList
+              PropertyInitializer
+                Assign "=" @ 1496..1497 trailing=[Whitespace " "]
+                CallExpression
+                  NameExpression
+                    Identifier "listOf" @ 1498..1504
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 1504..1505
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "payload" @ 1505..1512
+                    RParen ")" @ 1512..1513
+                  LambdaExpressionList
               PropertyBodyMemberList
           ClassMemberDeclaration
             FunctionDeclaration
@@ -316,10 +313,8 @@ KotlinFile
               ModifierList
               FunKw "fun" @ 1528..1531 trailing=[Whitespace " "]
               ModifierList
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "component1" @ 1532..1542 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:component-name */", Whitespace " "]
+              Name
+                Identifier "component1" @ 1532..1542 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:component-name */", Whitespace " "]
               ValueParameterList
                 LParen "(" @ 1576..1577
                 ValueParameterSeparatedList
@@ -332,9 +327,10 @@ KotlinFile
                       AnnotationList
                       Name
                         Identifier "T" @ 1623..1624 trailing=[Whitespace " "]
-              Assign "=" @ 1625..1626 trailing=[Whitespace " "]
-              NameExpression
-                Identifier "payload" @ 1627..1634
+              ExpressionBody
+                Assign "=" @ 1625..1626 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "payload" @ 1627..1634
         RBrace "}" @ 1635..1636 leading=[Newline "\n"]
     FunctionDeclaration
       ModifierList
@@ -342,17 +338,16 @@ KotlinFile
       FunKw "fun" @ 1638..1641 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
       CallableName
-        CallableNamePartList
-          TypeReference
-            UserType
-              UserTypeSegmentList
-                UserTypeSegment
-                  AnnotationList
-                  Name
-                    Identifier "Scope" @ 1642..1647 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:receiver-type */", Whitespace " "]
-          Dot "." @ 1680..1681 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:receiver-dot */", Whitespace " "]
-          Name
-            Identifier "commentCrevices" @ 1713..1728 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:function-name */", Whitespace " "]
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "Scope" @ 1642..1647 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:receiver-type */", Whitespace " "]
+        Dot "." @ 1680..1681 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:receiver-dot */", Whitespace " "]
+        Name
+          Identifier "commentCrevices" @ 1713..1728 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:function-name */", Whitespace " "]
       ValueParameterList
         LParen "(" @ 1761..1762
         ValueParameterSeparatedList
@@ -439,582 +434,578 @@ KotlinFile
               AnnotationList
               Name
                 Identifier "String" @ 2302..2308 trailing=[Whitespace " "]
-      Block
-        LBrace "{" @ 2309..2310
-        BlockItemList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 2315..2318 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "holder" @ 2319..2325 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:holder-name */", Whitespace " "]
-            Assign "=" @ 2356..2357 trailing=[Whitespace " "]
-            CallExpression
-              NameExpression
-                Identifier "Holder" @ 2358..2364 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:constructor-call */", Whitespace " "]
-              TypeArgumentListList
-                TypeArgumentList
-                  Lt "<" @ 2400..2401 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-type-arg-open */", Whitespace " "]
-                  TypeProjectionSeparatedList
-                    TypeReference
-                      UserType
-                        UserTypeSegmentList
-                          UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 2439..2445 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-type-arg */", Whitespace " "]
-                  Gt ">" @ 2478..2479 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-type-arg-close */", Whitespace " "]
-              ValueArgumentList
-                LParen "(" @ 2518..2519 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:constructor-call-open */", Whitespace " "]
-                ValueArgumentEntryList
-                  ValueArgument
-                    ValueArgumentPrefixList
-                    IndexExpression
-                      NameExpression
-                        Identifier "input" @ 2560..2565
-                      LBracket "[" @ 2565..2566
-                      ValueArgumentSeparatedList
-                        ValueArgument
-                          ValueArgumentPrefixList
-                          LiteralExpression
-                            IntegerLiteral "0" @ 2566..2567 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:constructor-index */"]
-                      RBracket "]" @ 2603..2604 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:constructor-call-close */", Whitespace " "]
-                RParen ")" @ 2646..2647
-              LambdaExpressionList
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 2652..2655 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            DestructuringDeclaration
-              LParen "(" @ 2656..2657
-              DestructuringEntrySeparatedList
-                DestructuringEntry
-                  Name
-                    Identifier "first" @ 2657..2662 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:destructure-first */"]
-                Comma "," @ 2698..2699 trailing=[Whitespace " "]
-                DestructuringEntry
-                  Name
-                    Identifier "second" @ 2700..2706 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:destructure-second */"]
-              RParen ")" @ 2743..2744 trailing=[Whitespace " "]
-            Assign "=" @ 2745..2746 trailing=[Whitespace " "]
-            BinaryExpression
-              IndexExpression
-                NameExpression
-                  Identifier "input" @ 2747..2752
-                LBracket "[" @ 2752..2753
-                ValueArgumentSeparatedList
-                  ValueArgument
-                    ValueArgumentPrefixList
-                    LiteralExpression
-                      IntegerLiteral "0" @ 2753..2754 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:index-zero */"]
-                RBracket "]" @ 2783..2784 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:to-receiver */", Whitespace " "]
-              Identifier "to" @ 2815..2817 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:to-name */", Whitespace " "]
-              IndexExpression
-                NameExpression
-                  Identifier "input" @ 2844..2849
-                LBracket "[" @ 2849..2850
-                ValueArgumentSeparatedList
-                  ValueArgument
-                    ValueArgumentPrefixList
-                    LiteralExpression
-                      IntegerLiteral "1" @ 2850..2851 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:index-one */"]
-                RBracket "]" @ 2879..2880
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 2885..2888 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "computed" @ 2889..2897 trailing=[Whitespace " "]
-            Assign "=" @ 2898..2899
-            BinaryExpression
-              CallExpression
-                NavigationExpression
-                  CallExpression
-                    NavigationExpression
-                      ParenthesizedExpression
-                        LParen "(" @ 2908..2909 leading=[Newline "\n", Whitespace "        "]
-                        BinaryExpression
-                          CallExpression
-                            NameExpression
-                              Identifier "transform" @ 2909..2918 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-callee */", Whitespace " "]
-                            TypeArgumentListList
-                            ValueArgumentList
-                              LParen "(" @ 2949..2950 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-open */", Whitespace " "]
-                              ValueArgumentEntryList
-                                ValueArgument
-                                  ValueArgumentPrefixList
-                                  NameExpression
-                                    Identifier "first" @ 2979..2984 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-arg */", Whitespace " "]
-                              RParen ")" @ 3012..3013 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:binary-left */", Whitespace " "]
-                            LambdaExpressionList
-                          Plus "+" @ 3044..3045 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:binary-plus */", Whitespace " "]
-                          CallExpression
-                            NameExpression
-                              Identifier "transform" @ 3076..3085
-                            TypeArgumentListList
-                            ValueArgumentList
-                              LParen "(" @ 3085..3086
-                              ValueArgumentEntryList
-                                ValueArgument
-                                  ValueArgumentPrefixList
-                                  NameExpression
-                                    Identifier "second" @ 3086..3092
-                              RParen ")" @ 3092..3093
-                            LambdaExpressionList
-                        RParen ")" @ 3093..3094
-                      Dot "." @ 3142..3143 leading=[Newline "\n", Whitespace "            ", BlockComment "/* JOLT-TRIVIA:before-chain-dot */", Whitespace " "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:chain-dot */", Whitespace " "]
-                      Identifier "trim" @ 3172..3176 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:trim-name */", Whitespace " "]
-                    TypeArgumentListList
-                    ValueArgumentList
-                      LParen "(" @ 3205..3206
-                      ValueArgumentEntryList
-                      RParen ")" @ 3206..3207
-                    LambdaExpressionList
-                  SplitSafeNavigationOperator
-                    Question "?" @ 3220..3221 leading=[Newline "\n", Whitespace "            "]
-                    Dot "." @ 3221..3222 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:safe-chain */", Whitespace " "]
-                  Identifier "ifEmpty" @ 3252..3259 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-empty-name */", Whitespace " "]
-                TypeArgumentListList
-                LambdaExpressionList
-                  LambdaExpression
-                    LambdaBody
-                      LBrace "{" @ 3292..3293 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-empty-open */", Whitespace " "]
-                      LambdaBodyItemList
-                        Statement
-                          ExpressionStatement
-                            NameExpression
-                              Identifier "fallback" @ 3326..3334 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-empty-body */", Whitespace " "]
-                          TerminatorList
-                      RBrace "}" @ 3367..3368
-              Elvis "?:" @ 3381..3383 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:elvis */", Whitespace " "]
-              NameExpression
-                Identifier "fallback" @ 3408..3416
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 3421..3424 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "rendered" @ 3425..3433 trailing=[Whitespace " "]
-            Assign "=" @ 3434..3435 trailing=[Whitespace " "]
-            StringTemplateExpression
-              StringTemplateEntryList
-                StringTemplateEntry
-                  OpenQuote "\"" @ 3436..3437
-                StringTemplateEntry
-                  RegularStringPart "value=" @ 3437..3443
-                StringTemplateEntry
-                  LongStringTemplateEntry
-                    LongTemplateEntryStart "${" @ 3443..3445 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:template-open */", Whitespace " "]
-                    BinaryExpression
-                      NameExpression
-                        Identifier "computed" @ 3478..3486 trailing=[Whitespace " "]
-                      Plus "+" @ 3487..3488 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:template-plus */", Whitespace " "]
-                      StringTemplateExpression
-                        StringTemplateEntryList
-                          StringTemplateEntry
-                            OpenQuote "\"" @ 3521..3522
-                          StringTemplateEntry
-                            RegularStringPart "!" @ 3522..3523
-                        ClosingQuote "\"" @ 3523..3524 trailing=[Whitespace " "]
-                    LongTemplateEntryEnd "}" @ 3525..3526
-              ClosingQuote "\"" @ 3526..3527
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 3532..3535 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "casted" @ 3536..3542 trailing=[Whitespace " "]
-            Assign "=" @ 3543..3544 trailing=[Whitespace " "]
-            BinaryExpression
-              NameExpression
-                Identifier "rendered" @ 3545..3553 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:as-left */", Whitespace " "]
-              AsSafe "as?" @ 3580..3583 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:as-operator */", Whitespace " "]
-              TypeReference
-                UserType
-                  UserTypeSegmentList
-                    UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 3614..3620
-            PropertyBodyMemberList
-          PropertyDeclaration
-            ModifierList
-            ModifierList
-            ValKw "val" @ 3625..3628 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            CallableName
-              CallableNamePartList
-                Name
-                  Identifier "checked" @ 3629..3636 trailing=[Whitespace " "]
-            Assign "=" @ 3637..3638 trailing=[Whitespace " "]
-            BinaryExpression
-              NameExpression
-                Identifier "casted" @ 3639..3645 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:is-left */", Whitespace " "]
-              NotIs "!is" @ 3672..3675 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:is-operator */", Whitespace " "]
-              TypeReference
-                UserType
-                  UserTypeSegmentList
-                    UserTypeSegment
-                      AnnotationList
-                      Name
-                        Identifier "Nothing" @ 3706..3713
-            PropertyBodyMemberList
-          Statement
-            ExpressionStatement
-              IfExpression
-                IfKw "if" @ 3719..3721 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-keyword */", Whitespace " "]
-                ParenthesizedExpression
-                  LParen "(" @ 3751..3752 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-open */", Whitespace " "]
-                  BinaryExpression
-                    NameExpression
-                      Identifier "checked" @ 3779..3786 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-condition */", Whitespace " "]
-                    AndAnd "&&" @ 3818..3820 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-and */", Whitespace " "]
-                    BinaryExpression
-                      NameExpression
-                        Identifier "computed" @ 3846..3854 trailing=[Whitespace " "]
-                      NotIn "!in" @ 3855..3858 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:not-in */", Whitespace " "]
-                      CallExpression
-                        NameExpression
-                          Identifier "listOf" @ 3884..3890
-                        TypeArgumentListList
-                        ValueArgumentList
-                          LParen "(" @ 3890..3891
-                          ValueArgumentEntryList
+      BlockBody
+        Block
+          LBrace "{" @ 2309..2310
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 2315..2318 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "holder" @ 2319..2325 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:holder-name */", Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 2356..2357 trailing=[Whitespace " "]
+                CallExpression
+                  NameExpression
+                    Identifier "Holder" @ 2358..2364 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:constructor-call */", Whitespace " "]
+                  TypeArgumentListList
+                    TypeArgumentList
+                      Lt "<" @ 2400..2401 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-type-arg-open */", Whitespace " "]
+                      TypeProjectionSeparatedList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 2439..2445 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-type-arg */", Whitespace " "]
+                      Gt ">" @ 2478..2479 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-type-arg-close */", Whitespace " "]
+                  ValueArgumentList
+                    LParen "(" @ 2518..2519 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:constructor-call-open */", Whitespace " "]
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        IndexExpression
+                          NameExpression
+                            Identifier "input" @ 2560..2565
+                          LBracket "[" @ 2565..2566
+                          ValueArgumentSeparatedList
                             ValueArgument
                               ValueArgumentPrefixList
-                              StringTemplateExpression
-                                StringTemplateEntryList
-                                  StringTemplateEntry
-                                    OpenQuote "\"" @ 3891..3892
-                                ClosingQuote "\"" @ 3892..3893
-                          RParen ")" @ 3893..3894 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-close */", Whitespace " "]
-                        LambdaExpressionList
-                  RParen ")" @ 3922..3923 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 3924..3925
-                  BlockItemList
-                    Statement
-                      ExpressionStatement
-                        CallExpression
-                          NameExpression
-                            Identifier "emit" @ 3934..3938 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:emit-callee */", Whitespace " "]
-                          TypeArgumentListList
-                          ValueArgumentList
-                            LParen "(" @ 3969..3970
-                            ValueArgumentEntryList
-                              ValueArgument
-                                ValueArgumentPrefixList
-                                NameExpression
-                                  Identifier "rendered" @ 3970..3978
-                            RParen ")" @ 3978..3979
-                          LambdaExpressionList
-                      TerminatorList
-                  RBrace "}" @ 3984..3985 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                ElseKw "else" @ 3986..3990 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:else-keyword */", Whitespace " "]
-                Block
-                  LBrace "{" @ 4022..4023
-                  BlockItemList
-                    Statement
-                      ExpressionStatement
-                        CallExpression
-                          NameExpression
-                            Identifier "emit" @ 4032..4036 leading=[Newline "\n", Whitespace "        "]
-                          TypeArgumentListList
-                          ValueArgumentList
-                            LParen "(" @ 4036..4037
-                            ValueArgumentEntryList
-                              ValueArgument
-                                ValueArgumentPrefixList
-                                NameExpression
-                                  Identifier "fallback" @ 4037..4045
-                            RParen ")" @ 4045..4046
-                          LambdaExpressionList
-                      TerminatorList
-                  RBrace "}" @ 4051..4052 leading=[Newline "\n", Whitespace "    "]
-            TerminatorList
-          Statement
-            ExpressionStatement
-              ForStatement
-                ForKw "for" @ 4058..4061 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:for-keyword */", Whitespace " "]
-                LParen "(" @ 4092..4093 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:for-open */", Whitespace " "]
-                DestructuringDeclaration
-                  LParen "(" @ 4121..4122
-                  DestructuringEntrySeparatedList
-                    DestructuringEntry
-                      Name
-                        Identifier "index" @ 4122..4127 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:loop-index */", Whitespace " "]
-                    Comma "," @ 4157..4158 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:loop-comma */", Whitespace " "]
-                    DestructuringEntry
-                      Name
-                        Identifier "item" @ 4188..4192 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:loop-value */"]
-                  RParen ")" @ 4221..4222 trailing=[Whitespace " "]
-                InKw "in" @ 4223..4225 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:loop-in */", Whitespace " "]
-                CallExpression
-                  NavigationExpression
-                    NameExpression
-                      Identifier "input" @ 4252..4257
-                    Dot "." @ 4257..4258
-                    Identifier "withIndex" @ 4258..4267
-                  TypeArgumentListList
-                  ValueArgumentList
-                    LParen "(" @ 4267..4268
-                    ValueArgumentEntryList
-                    RParen ")" @ 4268..4269 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:for-close */", Whitespace " "]
+                              LiteralExpression
+                                IntegerLiteral "0" @ 2566..2567 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:constructor-index */"]
+                          RBracket "]" @ 2603..2604 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:constructor-call-close */", Whitespace " "]
+                    RParen ")" @ 2646..2647
                   LambdaExpressionList
-                RParen ")" @ 4298..4299 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 4300..4301
-                  BlockItemList
-                    Statement
-                      ExpressionStatement
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 2652..2655 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              DestructuringDeclaration
+                LParen "(" @ 2656..2657
+                DestructuringEntrySeparatedList
+                  DestructuringEntry
+                    Name
+                      Identifier "first" @ 2657..2662 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:destructure-first */"]
+                  Comma "," @ 2698..2699 trailing=[Whitespace " "]
+                  DestructuringEntry
+                    Name
+                      Identifier "second" @ 2700..2706 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:destructure-second */"]
+                RParen ")" @ 2743..2744 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 2745..2746 trailing=[Whitespace " "]
+                BinaryExpression
+                  IndexExpression
+                    NameExpression
+                      Identifier "input" @ 2747..2752
+                    LBracket "[" @ 2752..2753
+                    ValueArgumentSeparatedList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        LiteralExpression
+                          IntegerLiteral "0" @ 2753..2754 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:index-zero */"]
+                    RBracket "]" @ 2783..2784 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:to-receiver */", Whitespace " "]
+                  Identifier "to" @ 2815..2817 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:to-name */", Whitespace " "]
+                  IndexExpression
+                    NameExpression
+                      Identifier "input" @ 2844..2849
+                    LBracket "[" @ 2849..2850
+                    ValueArgumentSeparatedList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        LiteralExpression
+                          IntegerLiteral "1" @ 2850..2851 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:index-one */"]
+                    RBracket "]" @ 2879..2880
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 2885..2888 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "computed" @ 2889..2897 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 2898..2899
+                BinaryExpression
+                  CallExpression
+                    NavigationExpression
+                      CallExpression
+                        NavigationExpression
+                          ParenthesizedExpression
+                            LParen "(" @ 2908..2909 leading=[Newline "\n", Whitespace "        "]
+                            BinaryExpression
+                              CallExpression
+                                NameExpression
+                                  Identifier "transform" @ 2909..2918 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-callee */", Whitespace " "]
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 2949..2950 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-open */", Whitespace " "]
+                                  ValueArgumentEntryList
+                                    ValueArgument
+                                      ValueArgumentPrefixList
+                                      NameExpression
+                                        Identifier "first" @ 2979..2984 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-arg */", Whitespace " "]
+                                  RParen ")" @ 3012..3013 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:binary-left */", Whitespace " "]
+                                LambdaExpressionList
+                              Plus "+" @ 3044..3045 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:binary-plus */", Whitespace " "]
+                              CallExpression
+                                NameExpression
+                                  Identifier "transform" @ 3076..3085
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 3085..3086
+                                  ValueArgumentEntryList
+                                    ValueArgument
+                                      ValueArgumentPrefixList
+                                      NameExpression
+                                        Identifier "second" @ 3086..3092
+                                  RParen ")" @ 3092..3093
+                                LambdaExpressionList
+                            RParen ")" @ 3093..3094
+                          Dot "." @ 3142..3143 leading=[Newline "\n", Whitespace "            ", BlockComment "/* JOLT-TRIVIA:before-chain-dot */", Whitespace " "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:chain-dot */", Whitespace " "]
+                          Identifier "trim" @ 3172..3176 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:trim-name */", Whitespace " "]
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 3205..3206
+                          ValueArgumentEntryList
+                          RParen ")" @ 3206..3207
+                        LambdaExpressionList
+                      SplitSafeNavigationOperator
+                        Question "?" @ 3220..3221 leading=[Newline "\n", Whitespace "            "]
+                        Dot "." @ 3221..3222 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:safe-chain */", Whitespace " "]
+                      Identifier "ifEmpty" @ 3252..3259 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-empty-name */", Whitespace " "]
+                    TypeArgumentListList
+                    LambdaExpressionList
+                      LambdaExpression
+                        LambdaBody
+                          LBrace "{" @ 3292..3293 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-empty-open */", Whitespace " "]
+                          LambdaBodyItemList
+                            Statement
+                              ExpressionStatement
+                                NameExpression
+                                  Identifier "fallback" @ 3326..3334 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-empty-body */", Whitespace " "]
+                              TerminatorList
+                          RBrace "}" @ 3367..3368
+                  Elvis "?:" @ 3381..3383 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:elvis */", Whitespace " "]
+                  NameExpression
+                    Identifier "fallback" @ 3408..3416
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 3421..3424 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "rendered" @ 3425..3433 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 3434..3435 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 3436..3437
+                    StringTemplateEntry
+                      RegularStringPart "value=" @ 3437..3443
+                    StringTemplateEntry
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 3443..3445 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:template-open */", Whitespace " "]
+                        BinaryExpression
+                          NameExpression
+                            Identifier "computed" @ 3478..3486 trailing=[Whitespace " "]
+                          Plus "+" @ 3487..3488 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:template-plus */", Whitespace " "]
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                OpenQuote "\"" @ 3521..3522
+                              StringTemplateEntry
+                                RegularStringPart "!" @ 3522..3523
+                            ClosingQuote "\"" @ 3523..3524 trailing=[Whitespace " "]
+                        LongTemplateEntryEnd "}" @ 3525..3526
+                  ClosingQuote "\"" @ 3526..3527
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 3532..3535 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "casted" @ 3536..3542 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 3543..3544 trailing=[Whitespace " "]
+                BinaryExpression
+                  NameExpression
+                    Identifier "rendered" @ 3545..3553 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:as-left */", Whitespace " "]
+                  AsSafe "as?" @ 3580..3583 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:as-operator */", Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "String" @ 3614..3620
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 3625..3628 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "checked" @ 3629..3636 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 3637..3638 trailing=[Whitespace " "]
+                BinaryExpression
+                  NameExpression
+                    Identifier "casted" @ 3639..3645 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:is-left */", Whitespace " "]
+                  NotIs "!is" @ 3672..3675 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:is-operator */", Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "Nothing" @ 3706..3713
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                IfExpression
+                  IfKw "if" @ 3719..3721 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-keyword */", Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 3751..3752 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-open */", Whitespace " "]
+                    BinaryExpression
+                      NameExpression
+                        Identifier "checked" @ 3779..3786 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-condition */", Whitespace " "]
+                      AndAnd "&&" @ 3818..3820 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-and */", Whitespace " "]
+                      BinaryExpression
+                        NameExpression
+                          Identifier "computed" @ 3846..3854 trailing=[Whitespace " "]
+                        NotIn "!in" @ 3855..3858 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:not-in */", Whitespace " "]
                         CallExpression
                           NameExpression
-                            Identifier "emit" @ 4310..4314 leading=[Newline "\n", Whitespace "        "]
+                            Identifier "listOf" @ 3884..3890
                           TypeArgumentListList
                           ValueArgumentList
-                            LParen "(" @ 4314..4315
+                            LParen "(" @ 3890..3891
                             ValueArgumentEntryList
                               ValueArgument
                                 ValueArgumentPrefixList
                                 StringTemplateExpression
                                   StringTemplateEntryList
                                     StringTemplateEntry
-                                      OpenQuote "\"" @ 4315..4316
-                                    StringTemplateEntry
-                                      ShortTemplateEntryStart "$" @ 4316..4317
-                                    StringTemplateEntry
-                                      Identifier "index" @ 4317..4322
-                                    StringTemplateEntry
-                                      RegularStringPart ":" @ 4322..4323
-                                    StringTemplateEntry
-                                      ShortTemplateEntryStart "$" @ 4323..4324
-                                    StringTemplateEntry
-                                      Identifier "item" @ 4324..4328
-                                  ClosingQuote "\"" @ 4328..4329
-                            RParen ")" @ 4329..4330
+                                      OpenQuote "\"" @ 3891..3892
+                                  ClosingQuote "\"" @ 3892..3893
+                            RParen ")" @ 3893..3894 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-close */", Whitespace " "]
                           LambdaExpressionList
-                      TerminatorList
-                  RBrace "}" @ 4335..4336 leading=[Newline "\n", Whitespace "    "]
-            TerminatorList
-          Statement
-            ExpressionStatement
-              WhenExpression
-                WhenKw "when" @ 4342..4346 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-keyword */", Whitespace " "]
-                WhenSubject
-                  LParen "(" @ 4378..4379 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-open */", Whitespace " "]
-                  ValKw "val" @ 4408..4411 trailing=[Whitespace " "]
-                  Name
-                    Identifier "text" @ 4412..4416 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-subject-name */", Whitespace " "]
-                  Assign "=" @ 4453..4454 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-subject-equals */", Whitespace " "]
-                  NameExpression
-                    Identifier "rendered" @ 4493..4501 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-close */", Whitespace " "]
-                  RParen ")" @ 4531..4532 trailing=[Whitespace " "]
-                LBrace "{" @ 4533..4534
-                WhenEntryList
-                  WhenEntry
-                    WhenConditionSeparatedList
-                      WhenCondition
-                        StringTemplateExpression
-                          StringTemplateEntryList
-                            StringTemplateEntry
-                              OpenQuote "\"" @ 4543..4544 leading=[Newline "\n", Whitespace "        "]
-                          ClosingQuote "\"" @ 4544..4545 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-empty-condition */", Whitespace " "]
-                    Arrow "->" @ 4585..4587 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-empty-arrow */", Whitespace " "]
-                    CallExpression
-                      NameExpression
-                        Identifier "emit" @ 4623..4627
-                      TypeArgumentListList
-                      ValueArgumentList
-                        LParen "(" @ 4627..4628
-                        ValueArgumentEntryList
-                          ValueArgument
-                            ValueArgumentPrefixList
-                            StringTemplateExpression
-                              StringTemplateEntryList
-                                StringTemplateEntry
-                                  OpenQuote "\"" @ 4628..4629
-                                StringTemplateEntry
-                                  RegularStringPart "blank" @ 4629..4634
-                              ClosingQuote "\"" @ 4634..4635
-                        RParen ")" @ 4635..4636
-                      LambdaExpressionList
-                  WhenEntry
-                    WhenConditionSeparatedList
-                      WhenCondition
-                        InKw "in" @ 4645..4647 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-in */", Whitespace " "]
-                        CallExpression
-                          NameExpression
-                            Identifier "listOf" @ 4674..4680
-                          TypeArgumentListList
-                          ValueArgumentList
-                            LParen "(" @ 4680..4681
-                            ValueArgumentEntryList
-                              ValueArgument
-                                ValueArgumentPrefixList
-                                NameExpression
-                                  Identifier "first" @ 4681..4686
-                              Comma "," @ 4686..4687 trailing=[Whitespace " "]
-                              ValueArgument
-                                ValueArgumentPrefixList
-                                NameExpression
-                                  Identifier "second" @ 4688..4694
-                            RParen ")" @ 4694..4695 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-list */", Whitespace " "]
-                          LambdaExpressionList
-                    Arrow "->" @ 4724..4726 trailing=[Whitespace " "]
-                    CallExpression
-                      NameExpression
-                        Identifier "emit" @ 4727..4731
-                      TypeArgumentListList
-                      ValueArgumentList
-                        LParen "(" @ 4731..4732
-                        ValueArgumentEntryList
-                          ValueArgument
-                            ValueArgumentPrefixList
+                    RParen ")" @ 3922..3923 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 3924..3925
+                    BlockItemList
+                      Statement
+                        ExpressionStatement
+                          CallExpression
                             NameExpression
-                              Identifier "text" @ 4732..4736
-                        RParen ")" @ 4736..4737
-                      LambdaExpressionList
-                  WhenEntry
-                    ElseKw "else" @ 4746..4750 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:else-condition */", Whitespace " "]
-                    WhenConditionSeparatedList
-                    Arrow "->" @ 4784..4786 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:else-arrow */", Whitespace " "]
-                    CallExpression
-                      NameExpression
-                        Identifier "emit" @ 4816..4820
-                      TypeArgumentListList
-                      ValueArgumentList
-                        LParen "(" @ 4820..4821
-                        ValueArgumentEntryList
-                          ValueArgument
-                            ValueArgumentPrefixList
+                              Identifier "emit" @ 3934..3938 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:emit-callee */", Whitespace " "]
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 3969..3970
+                              ValueArgumentEntryList
+                                ValueArgument
+                                  ValueArgumentPrefixList
+                                  NameExpression
+                                    Identifier "rendered" @ 3970..3978
+                              RParen ")" @ 3978..3979
+                            LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 3984..3985 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  ElseKw "else" @ 3986..3990 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:else-keyword */", Whitespace " "]
+                  Block
+                    LBrace "{" @ 4022..4023
+                    BlockItemList
+                      Statement
+                        ExpressionStatement
+                          CallExpression
                             NameExpression
-                              Identifier "text" @ 4821..4825
-                        RParen ")" @ 4825..4826
-                      LambdaExpressionList
-                RBrace "}" @ 4831..4832 leading=[Newline "\n", Whitespace "    "]
-            TerminatorList
-          Statement
-            ExpressionStatement
-              JumpExpression
-                ReturnKw "return" @ 4838..4844 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                BinaryExpression
+                              Identifier "emit" @ 4032..4036 leading=[Newline "\n", Whitespace "        "]
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 4036..4037
+                              ValueArgumentEntryList
+                                ValueArgument
+                                  ValueArgumentPrefixList
+                                  NameExpression
+                                    Identifier "fallback" @ 4037..4045
+                              RParen ")" @ 4045..4046
+                            LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 4051..4052 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+            Statement
+              ExpressionStatement
+                ForStatement
+                  ForKw "for" @ 4058..4061 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:for-keyword */", Whitespace " "]
+                  LParen "(" @ 4092..4093 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:for-open */", Whitespace " "]
+                  DestructuringDeclaration
+                    LParen "(" @ 4121..4122
+                    DestructuringEntrySeparatedList
+                      DestructuringEntry
+                        Name
+                          Identifier "index" @ 4122..4127 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:loop-index */", Whitespace " "]
+                      Comma "," @ 4157..4158 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:loop-comma */", Whitespace " "]
+                      DestructuringEntry
+                        Name
+                          Identifier "item" @ 4188..4192 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:loop-value */"]
+                    RParen ")" @ 4221..4222 trailing=[Whitespace " "]
+                  InKw "in" @ 4223..4225 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:loop-in */", Whitespace " "]
                   CallExpression
                     NavigationExpression
                       NameExpression
-                        Identifier "input" @ 4845..4850
-                      Dot "." @ 4850..4851
-                      Identifier "joinToString" @ 4851..4863 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:trailing-lambda-call */", Whitespace " "]
+                        Identifier "input" @ 4252..4257
+                      Dot "." @ 4257..4258
+                      Identifier "withIndex" @ 4258..4267
                     TypeArgumentListList
                     ValueArgumentList
-                      LParen "(" @ 4903..4904
+                      LParen "(" @ 4267..4268
                       ValueArgumentEntryList
-                        ValueArgument
-                          ValueArgumentPrefixList
-                          Name
-                            Identifier "separator" @ 4913..4922 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                          Assign "=" @ 4923..4924 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:named-arg-equals */", Whitespace " "]
+                      RParen ")" @ 4268..4269 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:for-close */", Whitespace " "]
+                    LambdaExpressionList
+                  RParen ")" @ 4298..4299 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 4300..4301
+                    BlockItemList
+                      Statement
+                        ExpressionStatement
+                          CallExpression
+                            NameExpression
+                              Identifier "emit" @ 4310..4314 leading=[Newline "\n", Whitespace "        "]
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 4314..4315
+                              ValueArgumentEntryList
+                                ValueArgument
+                                  ValueArgumentPrefixList
+                                  StringTemplateExpression
+                                    StringTemplateEntryList
+                                      StringTemplateEntry
+                                        OpenQuote "\"" @ 4315..4316
+                                      StringTemplateEntry
+                                        ShortTemplateEntryStart "$" @ 4316..4317
+                                      StringTemplateEntry
+                                        Identifier "index" @ 4317..4322
+                                      StringTemplateEntry
+                                        RegularStringPart ":" @ 4322..4323
+                                      StringTemplateEntry
+                                        ShortTemplateEntryStart "$" @ 4323..4324
+                                      StringTemplateEntry
+                                        Identifier "item" @ 4324..4328
+                                    ClosingQuote "\"" @ 4328..4329
+                              RParen ")" @ 4329..4330
+                            LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 4335..4336 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+            Statement
+              ExpressionStatement
+                WhenExpression
+                  WhenKw "when" @ 4342..4346 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-keyword */", Whitespace " "]
+                  WhenSubject
+                    LParen "(" @ 4378..4379 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-open */", Whitespace " "]
+                    ValKw "val" @ 4408..4411 trailing=[Whitespace " "]
+                    Name
+                      Identifier "text" @ 4412..4416 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-subject-name */", Whitespace " "]
+                    Assign "=" @ 4453..4454 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-subject-equals */", Whitespace " "]
+                    NameExpression
+                      Identifier "rendered" @ 4493..4501 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-close */", Whitespace " "]
+                    RParen ")" @ 4531..4532 trailing=[Whitespace " "]
+                  LBrace "{" @ 4533..4534
+                  WhenEntryList
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                OpenQuote "\"" @ 4960..4961
-                              StringTemplateEntry
-                                RegularStringPart "," @ 4961..4962
-                            ClosingQuote "\"" @ 4962..4963
-                        Comma "," @ 4963..4964
-                      RParen ")" @ 4969..4970 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:before-trailing-lambda */", Whitespace " "]
-                    LambdaExpressionList
-                      LambdaExpression
-                        LambdaBody
-                          LBrace "{" @ 5012..5013 trailing=[Whitespace " "]
-                          LambdaParameterList
-                            LambdaParameterSeparatedList
-                              LambdaParameter
-                                Name
-                                  Identifier "item" @ 5014..5018 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lambda-param */", Whitespace " "]
-                            Arrow "->" @ 5050..5052
-                          LambdaBodyItemList
-                            PropertyDeclaration
-                              ModifierList
-                              ModifierList
-                              ValKw "val" @ 5061..5064 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                              CallableName
-                                CallableNamePartList
+                                OpenQuote "\"" @ 4543..4544 leading=[Newline "\n", Whitespace "        "]
+                            ClosingQuote "\"" @ 4544..4545 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-empty-condition */", Whitespace " "]
+                      Arrow "->" @ 4585..4587 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-empty-arrow */", Whitespace " "]
+                      CallExpression
+                        NameExpression
+                          Identifier "emit" @ 4623..4627
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 4627..4628
+                          ValueArgumentEntryList
+                            ValueArgument
+                              ValueArgumentPrefixList
+                              StringTemplateExpression
+                                StringTemplateEntryList
+                                  StringTemplateEntry
+                                    OpenQuote "\"" @ 4628..4629
+                                  StringTemplateEntry
+                                    RegularStringPart "blank" @ 4629..4634
+                                ClosingQuote "\"" @ 4634..4635
+                          RParen ")" @ 4635..4636
+                        LambdaExpressionList
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          InKw "in" @ 4645..4647 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-in */", Whitespace " "]
+                          CallExpression
+                            NameExpression
+                              Identifier "listOf" @ 4674..4680
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 4680..4681
+                              ValueArgumentEntryList
+                                ValueArgument
+                                  ValueArgumentPrefixList
+                                  NameExpression
+                                    Identifier "first" @ 4681..4686
+                                Comma "," @ 4686..4687 trailing=[Whitespace " "]
+                                ValueArgument
+                                  ValueArgumentPrefixList
+                                  NameExpression
+                                    Identifier "second" @ 4688..4694
+                              RParen ")" @ 4694..4695 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-list */", Whitespace " "]
+                            LambdaExpressionList
+                      Arrow "->" @ 4724..4726 trailing=[Whitespace " "]
+                      CallExpression
+                        NameExpression
+                          Identifier "emit" @ 4727..4731
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 4731..4732
+                          ValueArgumentEntryList
+                            ValueArgument
+                              ValueArgumentPrefixList
+                              NameExpression
+                                Identifier "text" @ 4732..4736
+                          RParen ")" @ 4736..4737
+                        LambdaExpressionList
+                    WhenEntry
+                      ElseKw "else" @ 4746..4750 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:else-condition */", Whitespace " "]
+                      WhenConditionSeparatedList
+                      Arrow "->" @ 4784..4786 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:else-arrow */", Whitespace " "]
+                      CallExpression
+                        NameExpression
+                          Identifier "emit" @ 4816..4820
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 4820..4821
+                          ValueArgumentEntryList
+                            ValueArgument
+                              ValueArgumentPrefixList
+                              NameExpression
+                                Identifier "text" @ 4821..4825
+                          RParen ")" @ 4825..4826
+                        LambdaExpressionList
+                  RBrace "}" @ 4831..4832 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 4838..4844 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  BinaryExpression
+                    CallExpression
+                      NavigationExpression
+                        NameExpression
+                          Identifier "input" @ 4845..4850
+                        Dot "." @ 4850..4851
+                        Identifier "joinToString" @ 4851..4863 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:trailing-lambda-call */", Whitespace " "]
+                      TypeArgumentListList
+                      ValueArgumentList
+                        LParen "(" @ 4903..4904
+                        ValueArgumentEntryList
+                          ValueArgument
+                            ValueArgumentPrefixList
+                            Name
+                              Identifier "separator" @ 4913..4922 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                            Assign "=" @ 4923..4924 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:named-arg-equals */", Whitespace " "]
+                            StringTemplateExpression
+                              StringTemplateEntryList
+                                StringTemplateEntry
+                                  OpenQuote "\"" @ 4960..4961
+                                StringTemplateEntry
+                                  RegularStringPart "," @ 4961..4962
+                              ClosingQuote "\"" @ 4962..4963
+                          Comma "," @ 4963..4964
+                        RParen ")" @ 4969..4970 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:before-trailing-lambda */", Whitespace " "]
+                      LambdaExpressionList
+                        LambdaExpression
+                          LambdaBody
+                            LBrace "{" @ 5012..5013 trailing=[Whitespace " "]
+                            LambdaParameterList
+                              LambdaParameterSeparatedList
+                                LambdaParameter
                                   Name
-                                    Identifier "local" @ 5065..5070 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lambda-local-name */", Whitespace " "]
-                              Assign "=" @ 5107..5108 trailing=[Whitespace " "]
-                              CallExpression
-                                NameExpression
-                                  Identifier "transform" @ 5109..5118
-                                TypeArgumentListList
-                                ValueArgumentList
-                                  LParen "(" @ 5118..5119
-                                  ValueArgumentEntryList
-                                    ValueArgument
-                                      ValueArgumentPrefixList
-                                      NameExpression
-                                        Identifier "item" @ 5119..5123
-                                  RParen ")" @ 5123..5124
-                                LambdaExpressionList
-                              PropertyBodyMemberList
-                            Statement
-                              ExpressionStatement
-                                IfExpression
-                                  IfKw "if" @ 5133..5135 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                                  ParenthesizedExpression
-                                    LParen "(" @ 5136..5137
-                                    CallExpression
-                                      NavigationExpression
-                                        NameExpression
-                                          Identifier "local" @ 5137..5142
-                                        Dot "." @ 5142..5143
-                                        Identifier "isEmpty" @ 5143..5150
-                                      TypeArgumentListList
-                                      ValueArgumentList
-                                        LParen "(" @ 5150..5151
-                                        ValueArgumentEntryList
-                                        RParen ")" @ 5151..5152
-                                      LambdaExpressionList
-                                    RParen ")" @ 5152..5153 trailing=[Whitespace " "]
-                                  Block
-                                    LBrace "{" @ 5154..5155
-                                    BlockItemList
-                                      Statement
-                                        ExpressionStatement
-                                          JumpExpression
-                                            ReturnKw "return" @ 5168..5174 leading=[Newline "\n", Whitespace "            "]
-                                            At "@" @ 5174..5175
-                                            Identifier "joinToString" @ 5175..5187 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:labeled-return */", Whitespace " "]
-                                            NameExpression
-                                              Identifier "fallback" @ 5221..5229
-                                        TerminatorList
-                                    RBrace "}" @ 5238..5239 leading=[Newline "\n", Whitespace "        "]
-                              TerminatorList
-                            Statement
-                              ExpressionStatement
-                                NameExpression
-                                  Identifier "local" @ 5248..5253 leading=[Newline "\n", Whitespace "        "]
-                              TerminatorList
-                          RBrace "}" @ 5258..5259 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                  Plus "+" @ 5260..5261 trailing=[Whitespace " "]
-                  CallableReferenceExpression
-                    NameExpression
-                      Identifier "holder" @ 5262..5268 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-left */", Whitespace " "]
-                    ColonColon "::" @ 5311..5313 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-operator */", Whitespace " "]
-                    Identifier "component1" @ 5360..5370 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-name */"]
-                    TypeArgumentListList
-            TerminatorList
-        RBrace "}" @ 5413..5414 leading=[Newline "\n"]
+                                    Identifier "item" @ 5014..5018 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lambda-param */", Whitespace " "]
+                              Arrow "->" @ 5050..5052
+                            LambdaBodyItemList
+                              PropertyDeclaration
+                                ModifierList
+                                ModifierList
+                                ValKw "val" @ 5061..5064 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                                Name
+                                  Identifier "local" @ 5065..5070 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lambda-local-name */", Whitespace " "]
+                                PropertyInitializer
+                                  Assign "=" @ 5107..5108 trailing=[Whitespace " "]
+                                  CallExpression
+                                    NameExpression
+                                      Identifier "transform" @ 5109..5118
+                                    TypeArgumentListList
+                                    ValueArgumentList
+                                      LParen "(" @ 5118..5119
+                                      ValueArgumentEntryList
+                                        ValueArgument
+                                          ValueArgumentPrefixList
+                                          NameExpression
+                                            Identifier "item" @ 5119..5123
+                                      RParen ")" @ 5123..5124
+                                    LambdaExpressionList
+                                PropertyBodyMemberList
+                              Statement
+                                ExpressionStatement
+                                  IfExpression
+                                    IfKw "if" @ 5133..5135 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                                    ParenthesizedExpression
+                                      LParen "(" @ 5136..5137
+                                      CallExpression
+                                        NavigationExpression
+                                          NameExpression
+                                            Identifier "local" @ 5137..5142
+                                          Dot "." @ 5142..5143
+                                          Identifier "isEmpty" @ 5143..5150
+                                        TypeArgumentListList
+                                        ValueArgumentList
+                                          LParen "(" @ 5150..5151
+                                          ValueArgumentEntryList
+                                          RParen ")" @ 5151..5152
+                                        LambdaExpressionList
+                                      RParen ")" @ 5152..5153 trailing=[Whitespace " "]
+                                    Block
+                                      LBrace "{" @ 5154..5155
+                                      BlockItemList
+                                        Statement
+                                          ExpressionStatement
+                                            JumpExpression
+                                              ReturnKw "return" @ 5168..5174 leading=[Newline "\n", Whitespace "            "]
+                                              At "@" @ 5174..5175
+                                              Identifier "joinToString" @ 5175..5187 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:labeled-return */", Whitespace " "]
+                                              NameExpression
+                                                Identifier "fallback" @ 5221..5229
+                                          TerminatorList
+                                      RBrace "}" @ 5238..5239 leading=[Newline "\n", Whitespace "        "]
+                                TerminatorList
+                              Statement
+                                ExpressionStatement
+                                  NameExpression
+                                    Identifier "local" @ 5248..5253 leading=[Newline "\n", Whitespace "        "]
+                                TerminatorList
+                            RBrace "}" @ 5258..5259 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    Plus "+" @ 5260..5261 trailing=[Whitespace " "]
+                    CallableReferenceExpression
+                      NameExpression
+                        Identifier "holder" @ 5262..5268 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-left */", Whitespace " "]
+                      ColonColon "::" @ 5311..5313 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-operator */", Whitespace " "]
+                      Identifier "component1" @ 5360..5370 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-name */"]
+                      TypeArgumentListList
+              TerminatorList
+          RBrace "}" @ 5413..5414 leading=[Newline "\n"]
   Eof "" @ 5415..5415 leading=[Newline "\n"]
 
 diagnostics:

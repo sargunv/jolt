@@ -48,10 +48,8 @@ KotlinFile
               ModifierList
               ModifierList
               ValKw "val" @ 36..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              CallableName
-                CallableNamePartList
-                  Name
-                    Identifier "doubled" @ 40..47
+              Name
+                Identifier "doubled" @ 40..47
               Colon ":" @ 47..48 trailing=[Whitespace " "]
               TypeReference
                 UserType
