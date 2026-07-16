@@ -44,18 +44,17 @@ CompilationUnit
                           AnnotationList
                           Identifier "value" @ 93..98
                         Comma "," @ 98..99 trailing=[Whitespace " "]
-                        ErrorNode
-                          ReceiverParameter
-                            AnnotationList
-                            ClassType
-                              ClassTypeSegmentList
-                                ClassTypeSegmentNode
-                                  AnnotationList
-                                  Name
-                                    Identifier "MisplacedReceiverOuter" @ 100..122 trailing=[Whitespace " "]
-                            Identifier "MisplacedReceiverOuter" @ 123..145
-                            Dot "." @ 145..146
-                            ThisKw "this" @ 146..150
+                        BogusFormalParameter
+                          AnnotationList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "MisplacedReceiverOuter" @ 100..122 trailing=[Whitespace " "]
+                          Identifier "MisplacedReceiverOuter" @ 123..145
+                          Dot "." @ 145..146
+                          ThisKw "this" @ 146..150
                       RParen ")" @ 150..151 trailing=[Whitespace " "]
                       Block
                         LBrace "{" @ 152..153

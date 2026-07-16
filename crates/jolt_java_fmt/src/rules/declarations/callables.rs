@@ -380,17 +380,16 @@ fn parameter_list_items<'source, 'fmt>(
     for part in parts {
         match resolve_list_part(part, doc) {
             JavaFormatListPart::Item(item) => {
-                let item_doc = if let Some(parameter) =
-                    item.cast_node::<jolt_java_syntax::ReceiverParameter<'source>>()
-                {
-                    format_receiver_parameter(&parameter, doc)
-                } else if let Some(parameter) =
-                    item.cast_node::<jolt_java_syntax::FormalParameter<'source>>()
-                {
-                    format_formal_parameter(&parameter, doc)
-                } else {
-                    doc.block_on_invariant("formal parameter list item had an undeclared kind");
-                    Doc::nil()
+                let item_doc = match item {
+                    jolt_java_syntax::FormalParameterSyntax::FormalParameter(parameter) => {
+                        format_formal_parameter(&parameter, doc)
+                    }
+                    jolt_java_syntax::FormalParameterSyntax::ReceiverParameter(parameter) => {
+                        format_receiver_parameter(&parameter, doc)
+                    }
+                    jolt_java_syntax::FormalParameterSyntax::BogusFormalParameter(bogus) => {
+                        crate::helpers::recovery::format_malformed(&bogus, doc)
+                    }
                 };
                 items.push(CommaListItem {
                     doc: item_doc,
@@ -444,7 +443,15 @@ fn format_throws_clause<'source>(
             .parts()
             .map(|part| resolve_list_part(part, doc))
             .collect::<Vec<_>>(),
-        JavaFormatField::Malformed(malformed) => vec![JavaFormatListPart::Malformed(malformed)],
+        JavaFormatField::Malformed(malformed) => {
+            return doc_indent!(
+                doc,
+                doc_concat!(
+                    doc,
+                    [doc.line(), format_throws_keyword(doc, throws), malformed]
+                )
+            );
+        }
     };
     if entries.is_empty() {
         return doc_indent!(

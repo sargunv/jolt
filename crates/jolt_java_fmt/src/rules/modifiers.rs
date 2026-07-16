@@ -1,6 +1,7 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{Annotation, ModifierList, ParameterModifierList, PartitionedModifierItem};
 
+use crate::helpers::comments::comment_forces_line;
 use crate::helpers::modifiers::{
     ModifierEntry, inline_modifier_prefix_from_docs, modifier_prefix_from_docs,
 };
@@ -58,6 +59,12 @@ pub(crate) fn format_modifier_prefix<'source>(
                 Ok(PartitionedModifierItem::NonSealed(non_sealed)) => {
                     entries.push(ModifierEntry::NonSealed(non_sealed));
                 }
+                Ok(PartitionedModifierItem::Bogus(bogus)) => {
+                    entries.push(ModifierEntry::Malformed(format_malformed(
+                        &bogus,
+                        annotations,
+                    )));
+                }
                 Ok(PartitionedModifierItem::Malformed(malformed)) => {
                     entries.push(ModifierEntry::Malformed(format_malformed(
                         &malformed,
@@ -104,60 +111,66 @@ pub(crate) fn format_typed_parameter_modifier_prefix<'source>(
     modifiers: &ParameterModifierList<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> TypedModifierPrefix<'source> {
-    let (declaration_count, type_use_count, entry_count) = modifiers.partitioned_items().fold(
-        (0, 0, 0),
-        |(declarations, type_uses, entries), item| match item {
-            Ok(PartitionedModifierItem::DeclarationAnnotation(_)) => {
-                (declarations + 1, type_uses, entries)
-            }
-            Ok(PartitionedModifierItem::TypeUseAnnotation(_)) => {
-                (declarations, type_uses + 1, entries)
-            }
-            Ok(
-                PartitionedModifierItem::Token(_)
-                | PartitionedModifierItem::Malformed(_)
-                | PartitionedModifierItem::Missing(_),
-            ) => (declarations, type_uses, entries + 1),
-            Ok(PartitionedModifierItem::Sealed(_) | PartitionedModifierItem::NonSealed(_))
-            | Err(_) => (declarations, type_uses, entries),
-        },
-    );
-    let mut declaration_annotations = Vec::with_capacity(declaration_count);
-    let mut type_use_annotations = Vec::with_capacity(type_use_count);
-    let mut entries = Vec::with_capacity(entry_count);
-    for item in modifiers.partitioned_items() {
-        match item {
-            Ok(PartitionedModifierItem::DeclarationAnnotation(annotation)) => {
-                declaration_annotations.push(annotation);
-            }
-            Ok(PartitionedModifierItem::TypeUseAnnotation(annotation)) => {
-                type_use_annotations.push(annotation);
-            }
-            Ok(PartitionedModifierItem::Token(token)) => {
-                entries.push(ModifierEntry::Token(token));
-            }
-            Ok(PartitionedModifierItem::Malformed(malformed)) => {
-                entries.push(ModifierEntry::Malformed(format_malformed(&malformed, doc)));
-            }
-            Ok(PartitionedModifierItem::Missing(missing)) => {
-                entries.push(ModifierEntry::Malformed(
-                    crate::helpers::recovery::format_missing(&missing, doc),
-                ));
-            }
-            Ok(PartitionedModifierItem::Sealed(_) | PartitionedModifierItem::NonSealed(_)) => {
-                doc.block_on_invariant("parameter modifier had a declaration-only role");
-            }
-            Err(error) => {
-                doc.block_on_invariant(error.to_string());
-            }
-        }
-    }
+    let parts = partition_parameter_modifier_items(modifiers, doc);
     format_typed_modifier_prefix_from_split_parts(
-        declaration_annotations,
-        type_use_annotations,
-        entries,
+        parts.declaration_annotations,
+        parts.type_use_annotations,
+        parts.entries,
         doc,
     )
+}
+
+pub(crate) fn format_inline_typed_parameter_modifier_prefix<'source>(
+    modifiers: &ParameterModifierList<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> TypedModifierPrefix<'source> {
+    let parts = partition_parameter_modifier_items(modifiers, doc);
+    let type_use_is_first = parts.declaration_annotations.is_empty() && parts.entries.is_empty();
+    let (type_use_forces_line, type_use_needs_line) =
+        last_annotation_line_state(&parts.type_use_annotations);
+    let (terminal_forces_line, terminal_needs_line) = if let Some(entry) = parts.entries.last() {
+        let token = match entry {
+            ModifierEntry::Token(token) | ModifierEntry::Sealed(token) => Some(*token),
+            ModifierEntry::NonSealed(modifier) => modifier.last_token(),
+            ModifierEntry::Malformed(_) => None,
+        };
+        let forces = token.is_some_and(|token| {
+            token
+                .trailing_comments()
+                .any(|comment| comment_forces_line(&comment))
+        });
+        (forces, forces)
+    } else {
+        last_annotation_line_state(&parts.declaration_annotations)
+    };
+    let declaration_annotations =
+        format_inline_annotations(parts.declaration_annotations, true, doc);
+    let declaration_prefix = inline_modifier_prefix_from_docs(
+        doc,
+        [declaration_annotations],
+        parts.entries,
+        true,
+        terminal_forces_line,
+        terminal_needs_line,
+    );
+    let type_use_prefix = if parts.type_use_annotations.is_empty() {
+        Doc::nil()
+    } else {
+        let annotations =
+            format_inline_annotations(parts.type_use_annotations, type_use_is_first, doc);
+        inline_modifier_prefix_from_docs(
+            doc,
+            [annotations],
+            Vec::new(),
+            false,
+            type_use_forces_line,
+            type_use_needs_line,
+        )
+    };
+    TypedModifierPrefix {
+        declaration_prefix,
+        type_use_prefix,
+    }
 }
 
 struct PartitionedModifiers<'source> {
@@ -166,28 +179,32 @@ struct PartitionedModifiers<'source> {
     entries: Vec<ModifierEntry<'source>>,
 }
 
+fn partition_parameter_modifier_items<'source>(
+    modifiers: &ParameterModifierList<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> PartitionedModifiers<'source> {
+    partition_items(modifiers.partitioned_items(), doc)
+}
+
 fn partition_modifier_items<'source>(
     modifiers: &ModifierList<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> PartitionedModifiers<'source> {
-    let (declaration_count, type_use_count, entry_count) = modifiers.partitioned_items().fold(
-        (0, 0, 0),
-        |(declarations, type_uses, entries), item| match item {
-            Ok(PartitionedModifierItem::DeclarationAnnotation(_)) => {
-                (declarations + 1, type_uses, entries)
-            }
-            Ok(PartitionedModifierItem::TypeUseAnnotation(_)) => {
-                (declarations, type_uses + 1, entries)
-            }
-            _ => (declarations, type_uses, entries + 1),
-        },
-    );
+    partition_items(modifiers.partitioned_items(), doc)
+}
+
+fn partition_items<'source>(
+    items: impl IntoIterator<
+        Item = Result<PartitionedModifierItem<'source>, jolt_java_syntax::JavaSyntaxInvariantError>,
+    >,
+    doc: &mut DocBuilder<'source>,
+) -> PartitionedModifiers<'source> {
     let mut result = PartitionedModifiers {
-        declaration_annotations: Vec::with_capacity(declaration_count),
-        type_use_annotations: Vec::with_capacity(type_use_count),
-        entries: Vec::with_capacity(entry_count),
+        declaration_annotations: Vec::new(),
+        type_use_annotations: Vec::new(),
+        entries: Vec::new(),
     };
-    for item in modifiers.partitioned_items() {
+    for item in items {
         match item {
             Ok(PartitionedModifierItem::DeclarationAnnotation(annotation)) => {
                 result.declaration_annotations.push(annotation);
@@ -203,6 +220,11 @@ fn partition_modifier_items<'source>(
             }
             Ok(PartitionedModifierItem::NonSealed(non_sealed)) => {
                 result.entries.push(ModifierEntry::NonSealed(non_sealed));
+            }
+            Ok(PartitionedModifierItem::Bogus(bogus)) => {
+                result
+                    .entries
+                    .push(ModifierEntry::Malformed(format_malformed(&bogus, doc)));
             }
             Ok(PartitionedModifierItem::Malformed(malformed)) => {
                 result
@@ -234,14 +256,42 @@ fn format_typed_modifier_prefix_from_split_parts<'source>(
     let type_use_prefix = if type_use_annotations.is_empty() {
         Doc::nil()
     } else {
-        let type_use_annotations = format_inline_annotations(type_use_annotations, doc);
-        inline_modifier_prefix_from_docs(doc, [type_use_annotations], Vec::new())
+        let (terminal_forces_line, terminal_needs_line) =
+            last_annotation_line_state(&type_use_annotations);
+        let type_use_annotations = format_inline_annotations(type_use_annotations, false, doc);
+        inline_modifier_prefix_from_docs(
+            doc,
+            [type_use_annotations],
+            Vec::new(),
+            false,
+            terminal_forces_line,
+            terminal_needs_line,
+        )
     };
 
     TypedModifierPrefix {
         declaration_prefix,
         type_use_prefix,
     }
+}
+
+fn last_annotation_token<'source>(
+    annotations: &[Annotation<'source>],
+) -> Option<jolt_java_syntax::JavaSyntaxToken<'source>> {
+    annotations.last().and_then(Annotation::last_token)
+}
+
+fn last_annotation_line_state(annotations: &[Annotation<'_>]) -> (bool, bool) {
+    let Some(token) = last_annotation_token(annotations) else {
+        return (false, false);
+    };
+    let forces = token
+        .trailing_comments()
+        .any(|comment| comment_forces_line(&comment));
+    (
+        forces,
+        forces && token.kind() != jolt_java_syntax::JavaSyntaxKind::RParen,
+    )
 }
 
 pub(crate) fn format_modifier_prefix_from_parts<'source>(
@@ -257,15 +307,20 @@ pub(crate) fn format_modifier_prefix_from_parts<'source>(
 
 fn format_inline_annotations<'source>(
     annotations: Vec<Annotation<'source>>,
+    suppress_first_leading: bool,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     doc.concat_list(|docs| {
-        for annotation in annotations {
+        for (index, annotation) in annotations.into_iter().enumerate() {
             if !docs.is_empty() {
                 let space = docs.space();
                 docs.push(space);
             }
-            let annotation = format_annotation(&annotation, docs);
+            let annotation = if suppress_first_leading && index == 0 {
+                format_annotation_without_leading_comments(&annotation, docs)
+            } else {
+                format_annotation(&annotation, docs)
+            };
             docs.push(annotation);
         }
     })

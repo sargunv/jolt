@@ -377,6 +377,7 @@ syntax/recovery/phase-11-eof-comments.java
 syntax/recovery/phase-11-incomplete-module-directive.java
 syntax/recovery/phase-11-malformed-import-pieces.java
 syntax/recovery/phase-11-program-containers.java
+syntax/recovery/phase-12-variable-declarators.java
 syntax/recovery/qualifier-dots-without-qualifiers.java
 syntax/recovery/recovered-declaration-names-and-modifiers.java
 syntax/recovery/resource-and-catch-lists.java

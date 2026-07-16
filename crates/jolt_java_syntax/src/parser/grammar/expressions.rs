@@ -791,7 +791,11 @@ impl Parser<'_> {
         loop {
             let segment = self.start();
             self.parse_annotations();
-            self.expect_type_identifier("expected class type segment");
+            self.expect_type_identifier(
+                "expected class type segment",
+                segment.anchor(),
+                crate::shape::qualified_name_segment_node::Slot::identifier as u16,
+            );
             self.complete(segment, JavaSyntaxKind::QualifiedNameSegmentNode);
 
             if self.at(JavaSyntaxKind::Lt) && self.type_arguments_are_followed_by_dot() {

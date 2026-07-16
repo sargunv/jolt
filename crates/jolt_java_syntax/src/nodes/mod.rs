@@ -1205,6 +1205,7 @@ java_syntax_schema!(define_java_accessors_from_schema);
 #[derive(Clone, Copy, Debug)]
 pub enum ModifierItem<'source> {
     Annotation(Annotation<'source>),
+    Bogus(BogusModifier<'source>),
     Sealed(JavaSyntaxToken<'source>),
     Token(JavaSyntaxToken<'source>),
     NonSealed(NonSealedModifier<'source>),
@@ -1219,6 +1220,8 @@ impl<'source> ModifierElement<'source> {
     pub fn classify(self) -> Result<ModifierItem<'source>, JavaSyntaxInvariantError> {
         if let Some(annotation) = self.cast_node::<Annotation<'source>>() {
             Ok(ModifierItem::Annotation(annotation))
+        } else if let Some(bogus) = self.cast_node::<BogusModifier<'source>>() {
+            Ok(ModifierItem::Bogus(bogus))
         } else if let Some(non_sealed) = self.cast_node::<NonSealedModifier<'source>>() {
             Ok(ModifierItem::NonSealed(non_sealed))
         } else if let Some(token) = self.token() {
@@ -1243,6 +1246,7 @@ pub enum PartitionedModifierItem<'source> {
     Token(JavaSyntaxToken<'source>),
     Sealed(JavaSyntaxToken<'source>),
     NonSealed(NonSealedModifier<'source>),
+    Bogus(BogusModifier<'source>),
     Missing(JavaMissingSyntax<'source>),
     Malformed(JavaMalformedSyntax<'source>),
 }
@@ -1272,6 +1276,10 @@ impl<'source> ModifierList<'source> {
                 Ok(ModifierItem::NonSealed(non_sealed)) => {
                     saw_modifier = true;
                     Ok(PartitionedModifierItem::NonSealed(non_sealed))
+                }
+                Ok(ModifierItem::Bogus(bogus)) => {
+                    saw_modifier = true;
+                    Ok(PartitionedModifierItem::Bogus(bogus))
                 }
                 Err(error) => Err(error),
             }),
@@ -1304,6 +1312,9 @@ impl<'source> ParameterModifierList<'source> {
                     } else {
                         Ok(PartitionedModifierItem::DeclarationAnnotation(annotation))
                     }
+                } else if let Some(bogus) = item.cast_node::<BogusModifier<'source>>() {
+                    saw_modifier = true;
+                    Ok(PartitionedModifierItem::Bogus(bogus))
                 } else if let Some(token) = item.token() {
                     saw_modifier = true;
                     Ok(PartitionedModifierItem::Token(token))
@@ -1352,12 +1363,6 @@ pub struct SwitchBlockStatementGroupLabel<'source> {
     pub colon: Option<JavaSyntaxToken<'source>>,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum AnnotationArgument<'source> {
-    Value(AnnotationElementValue<'source>),
-    Pair(AnnotationElementValuePair<'source>),
-}
-
 #[derive(Clone, Copy, Debug)]
 pub enum AnnotationElementValueContentItem<'source> {
     Expression(Expression<'source>),
@@ -1380,26 +1385,9 @@ impl<'source> AnnotationElementValueContent<'source> {
     }
 }
 
-impl<'source> AnnotationArgumentElement<'source> {
-    pub fn classify(self) -> Option<AnnotationArgument<'source>> {
-        self.cast_node::<AnnotationElementValue<'source>>()
-            .map(AnnotationArgument::Value)
-            .or_else(|| {
-                self.cast_node::<AnnotationElementValuePair<'source>>()
-                    .map(AnnotationArgument::Pair)
-            })
-    }
-}
-
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AnnotationArrayInitializerEntry<'source> {
     pub value: AnnotationElementValue<'source>,
-    pub comma: Option<JavaSyntaxToken<'source>>,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct AnnotationArgumentListEntry<'source> {
-    pub argument: AnnotationArgument<'source>,
     pub comma: Option<JavaSyntaxToken<'source>>,
 }
 

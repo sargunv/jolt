@@ -1,6 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
-use jolt_syntax::CompletedMarker;
+use jolt_syntax::{CompletedMarker, DiagnosticMarker, NodeAnchor};
 
 use crate::JavaSyntaxKind;
 use crate::language::JavaLanguage;
@@ -41,6 +41,18 @@ impl<'source> Parser<'source> {
     pub(super) fn completed_is_error_node(marker: &CompletedMarker) -> bool {
         jolt_syntax::Parser::<JavaLanguage>::completed_is_error_node(marker)
     }
+
+    pub(super) fn expect_contextual_owned(
+        &mut self,
+        text: &str,
+        message: &str,
+        owner: NodeAnchor,
+        slot: u16,
+    ) {
+        if !self.eat_contextual(text) {
+            self.expected_owned_slot(message, owner, slot);
+        }
+    }
 }
 
 impl<'source> Deref for Parser<'source> {
@@ -66,9 +78,9 @@ pub(super) trait JavaParserExt {
     fn invalid_switch_guard_here(&mut self, message: &str);
     fn unqualified_yield_method_invocation_here(&mut self, message: &str);
     fn decimal_integer_boundary_literal_here(&mut self, message: &str);
-    fn misplaced_receiver_parameter_here(&mut self, message: &str);
+    fn misplaced_receiver_parameter_here(&mut self, message: &str) -> DiagnosticMarker;
     fn misplaced_constructor_invocation_here(&mut self, message: &str);
-    fn restricted_type_identifier_here(&mut self, message: &str);
+    fn restricted_type_identifier_here(&mut self, message: &str) -> DiagnosticMarker;
 }
 
 impl JavaParserExt for Parser<'_> {
@@ -123,11 +135,11 @@ impl JavaParserExt for Parser<'_> {
         );
     }
 
-    fn misplaced_receiver_parameter_here(&mut self, message: &str) {
+    fn misplaced_receiver_parameter_here(&mut self, message: &str) -> DiagnosticMarker {
         self.error_here(
             JavaParseDiagnosticCode::MisplacedReceiverParameter.id(),
             message,
-        );
+        )
     }
 
     fn misplaced_constructor_invocation_here(&mut self, message: &str) {
@@ -137,10 +149,10 @@ impl JavaParserExt for Parser<'_> {
         );
     }
 
-    fn restricted_type_identifier_here(&mut self, message: &str) {
+    fn restricted_type_identifier_here(&mut self, message: &str) -> DiagnosticMarker {
         self.error_here(
             JavaParseDiagnosticCode::RestrictedTypeIdentifier.id(),
             message,
-        );
+        )
     }
 }

@@ -17,6 +17,9 @@ public /* JOLT-TRIVIA:public-final-gap */ final /* JOLT-TRIVIA:final-class-gap *
       /* JOLT-TRIVIA:method-close-before-body */ {
     return value /* JOLT-TRIVIA:return-expression-before-semi */;
   }
+
+  void typeUseLineComment(final @Deprecated // JOLT-TRIVIA:type-use-line-boundary
+      String value) {}
 }
 
 syntax:
@@ -114,8 +117,35 @@ CompilationUnit
                         Identifier "value" @ 894..899 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:return-expression-before-semi */"]
                       Semicolon ";" @ 947..948
                 RBrace "}" @ 951..952 leading=[Newline "\n", Whitespace "  "]
-        RBrace "}" @ 953..954 leading=[Newline "\n"]
-  Eof "" @ 955..955 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 956..960 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Identifier "typeUseLineComment" @ 961..979
+              LParen "(" @ 979..980
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                    FinalKw "final" @ 980..985 trailing=[Whitespace " "]
+                    Annotation
+                      At "@" @ 986..987
+                      Name
+                        Identifier "Deprecated" @ 987..997 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:type-use-line-boundary"]
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "String" @ 1042..1048 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "value" @ 1049..1054
+              RParen ")" @ 1054..1055 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 1056..1057
+                BlockStatementList
+                RBrace "}" @ 1057..1058
+        RBrace "}" @ 1059..1060 leading=[Newline "\n"]
+  Eof "" @ 1061..1061 leading=[Newline "\n"]
 
 diagnostics:
   (none)

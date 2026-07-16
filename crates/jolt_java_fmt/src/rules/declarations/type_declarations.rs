@@ -445,8 +445,7 @@ fn format_permits<'source>(
     let names = match resolve_required_field(clause.names(), doc) {
         JavaFormatField::Present(names) => names,
         JavaFormatField::Malformed(names) => {
-            let keyword = field_token_with_space(keyword, doc);
-            return doc_concat!(doc, [keyword, names]);
+            return format_missing_clause_target(keyword, names, doc);
         }
     };
     let parts = names.parts();
@@ -500,9 +499,26 @@ fn format_type_clause_fields<'source>(
             ]
         ),
         (keyword, JavaFormatField::Malformed(types)) => {
-            doc_concat!(doc, [field_token_with_space(keyword, doc), types])
+            format_missing_clause_target(keyword, types, doc)
         }
     }
+}
+
+fn format_missing_clause_target<'source>(
+    keyword: JavaFormatField<'source, JavaSyntaxToken<'source>>,
+    missing: Doc<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let keyword = match keyword {
+        JavaFormatField::Present(keyword) => format_token(
+            doc,
+            &keyword,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::BeforeLineBreak,
+        ),
+        JavaFormatField::Malformed(malformed) => malformed,
+    };
+    doc_indent!(doc, doc_concat!(doc, [doc.line(), keyword, missing]))
 }
 
 fn field_token_with_space<'source>(

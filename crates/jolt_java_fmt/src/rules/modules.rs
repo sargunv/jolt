@@ -373,7 +373,7 @@ fn name_key<'source>(
 ) -> Option<NameSortKey<'source>> {
     match field.ok()? {
         jolt_java_syntax::JavaSyntaxField::Present(name) if name.is_recovery_free() => {
-            Some(NameSortKey::new(&name, false))
+            NameSortKey::new(&name, false)
         }
         _ => None,
     }

@@ -303,24 +303,4 @@ impl Parser<'_> {
         self.complete(modules, JavaSyntaxKind::ModuleNameList);
         self.complete(clause, JavaSyntaxKind::ModuleTargetClause);
     }
-
-    fn expect_owned(&mut self, kind: JavaSyntaxKind, message: &str, node: NodeAnchor, slot: u16) {
-        if !self.eat(kind) {
-            let diagnostic = self.expected_here(message);
-            self.own_diagnostic(
-                diagnostic,
-                UnresolvedDiagnosticOwner::missing_slot(node, slot),
-            );
-        }
-    }
-
-    fn expect_contextual_owned(&mut self, text: &str, message: &str, node: NodeAnchor, slot: u16) {
-        if !self.eat_contextual(text) {
-            let diagnostic = self.expected_here(message);
-            self.own_diagnostic(
-                diagnostic,
-                UnresolvedDiagnosticOwner::missing_slot(node, slot),
-            );
-        }
-    }
 }

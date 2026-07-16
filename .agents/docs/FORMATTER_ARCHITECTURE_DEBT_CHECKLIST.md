@@ -745,9 +745,9 @@ Vertically migrate compilation units, packages, imports, modules/directives, EOF
 comments, and sorting barriers. Valid nodes remain structured; malformed spans
 use the narrowest category-compatible bogus owner.
 
-Implementation status: **implemented, focused-gate-green, and uncommitted for
-review**. `CompilationUnit` now owns one ordered `CompilationUnitItemList`;
-packages, imports, modules, declarations, removable empty declarations, and
+Implementation status: **implemented, gate-green, and committed**.
+`CompilationUnit` now owns one ordered `CompilationUnitItemList`; packages,
+imports, modules, declarations, removable empty declarations, and
 `BogusCompilationUnitItem` share that source-order-preserving category. Module
 directive lists directly contain the generated `ModuleDirective` category
 instead of a redundant wrapper node. Import recovery owns only a
@@ -783,6 +783,39 @@ The final roadmap remains responsible for crossing below zero.
 Vertically migrate names, types, dimensions, annotations, modifiers, parameters,
 declarators, and throws clauses. Delete range-derived and skip-capable recovery
 accessors for these families.
+
+Implementation status: **implemented, gate-green, and uncommitted for review**.
+The Java schema now gives malformed types, modifiers, formal parameters, and
+annotation arguments category-compatible bogus variants. Scoped parser
+diagnostics attach directly to those nodes or to the exact required slot that is
+absent; the migrated type and identifier grammar no longer constructs the
+generic `ErrorNode`. The architecture inventory freezes that reduction at zero
+type and identifier sites and four later-phase declaration-container sites.
+
+Formatters consume the generated typed categories exhaustively. Annotation
+arguments and modifiers no longer use broad `format_or_verbatim` containers, and
+recovered import names no longer receive an invented sortable sentinel.
+Malformed syntax remains syntax-owned and verbatim, while valid names, types,
+annotations, parameters, declarators, and throws clauses always take structured
+layout. The scoped formatter code is net negative; no token cursor, cloned
+source, range-derived accessor, or skip-capable recovery API was added or
+retained in these families.
+
+The historical variable-declarator singleton regression is restored as a
+Phase-12 fixture. Existing and restored cases pass reconstruction, exact token
+and trivia conservation, represented-comment conservation, reparse, determinism,
+and idempotence gates. Empty `extends` and `throws` clauses now also report
+their previously missing required-type diagnostics with exact syntax owners.
+
+The Phase 12 review point is +26,866/-24,472 implementation lines, net +2,394
+from `2197128`: 301 lines above Phase 11. Shared exact-owner support accounts
+for 64 net lines: 24 in parser infrastructure and 40 in the reusable proof
+helper. Java syntax and its compact language-specific owner cases account for
+292 net lines, while Java formatter cleanup removes 55 net lines. Fixtures,
+snapshots, reports, and documentation are excluded; tests and test support are
+included. The remaining vertical phases must reuse the shared proof helper,
+delete the declaration-container and transitional recovery layers, and bring the
+final roadmap below zero.
 
 ### New Phase 13: Java Declarations
 

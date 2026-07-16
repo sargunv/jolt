@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class VariableDeclaratorRecovery {
+    int first, /* JOLT-TRIVIA:variable-recovered */ , second;
+}
+
+formatted:
+class VariableDeclaratorRecovery {
+  int first, /* JOLT-TRIVIA:variable-recovered */ , second;
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(87), end: TextSize(88) }) message=expected variable name

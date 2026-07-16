@@ -47,8 +47,7 @@ CompilationUnit
                             LiteralExpression
                               IntegerLiteral "1" @ 36..37
                         Comma "," @ 37..38 trailing=[Whitespace " ", BlockComment "/* ann */", Whitespace " "]
-                        AnnotationElementValue
-                          ErrorNode
+                        BogusAnnotationArgument
                         Comma "," @ 49..50 trailing=[Whitespace " "]
                         AnnotationElementValuePair
                           Identifier "y" @ 51..52 trailing=[Whitespace " "]
@@ -70,11 +69,7 @@ CompilationUnit
                   AnnotationList
                   Identifier "a" @ 69..70
                 Comma "," @ 70..71 trailing=[Whitespace " ", BlockComment "/* param */", Whitespace " "]
-                FormalParameter
-                  ParameterModifierList
-                  ErrorNode
-                    AnnotationList
-                  AnnotationList
+                BogusFormalParameter
                 Comma "," @ 84..85 trailing=[Whitespace " "]
                 FormalParameter
                   ParameterModifierList
@@ -93,12 +88,10 @@ CompilationUnit
 
 diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=22..23 message="expected type parameter name"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=49..50 message="expected expression"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=84..85 message="expected type"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=84..85 message="expected parameter name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=49..50 message="expected annotation argument"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=84..85 message="expected parameter"
 
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(22), end: TextSize(23) }) message=expected type parameter name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(50) }) message=expected expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(84), end: TextSize(85) }) message=expected type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(84), end: TextSize(85) }) message=expected parameter name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(50) }) message=expected annotation argument
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(84), end: TextSize(85) }) message=expected parameter

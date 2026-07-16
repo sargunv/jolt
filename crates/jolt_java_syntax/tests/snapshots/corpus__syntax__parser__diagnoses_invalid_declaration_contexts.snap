@@ -37,7 +37,7 @@ CompilationUnit
             Identifier "T" @ 33..34 trailing=[Whitespace " "]
             TypeBoundList
               ExtendsKw "extends" @ 35..42 trailing=[Whitespace " "]
-              ErrorNode
+              BogusType
                 AnnotationList
                 IntKw "int" @ 43..46
         Gt ">" @ 46..47 trailing=[Whitespace " "]
@@ -99,7 +99,7 @@ CompilationUnit
               ThrowsClause
                 ThrowsKw "throws" @ 107..113 trailing=[Whitespace " "]
                 TypeList
-                  ErrorNode
+                  BogusType
                     AnnotationList
                     IntKw "int" @ 114..117 trailing=[Whitespace " "]
               Block
@@ -276,7 +276,7 @@ CompilationUnit
                           CatchParameter
                             ParameterModifierList
                             CatchTypeList
-                              ErrorNode
+                              BogusType
                                 AnnotationList
                                 IntKw "int" @ 384..387 trailing=[Whitespace " "]
                             Identifier "ex" @ 388..390
@@ -330,7 +330,7 @@ CompilationUnit
           ClassBodyDeclaration
             MethodDeclaration
               ModifierList
-                ErrorNode
+                BogusModifier
                   TransientKw "transient" @ 494..503 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               VoidType
                 VoidKw "void" @ 504..508 trailing=[Whitespace " "]
@@ -344,7 +344,7 @@ CompilationUnit
           ClassBodyDeclaration
             ConstructorDeclaration
               ModifierList
-                ErrorNode
+                BogusModifier
                   VolatileKw "volatile" @ 534..542 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Identifier "InvalidDeclarationContexts" @ 543..569
               LParen "(" @ 569..570
@@ -356,7 +356,7 @@ CompilationUnit
           ClassBodyDeclaration
             FieldDeclaration
               ModifierList
-                ErrorNode
+                BogusModifier
                   SynchronizedKw "synchronized" @ 579..591 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               PrimitiveType
                 AnnotationList

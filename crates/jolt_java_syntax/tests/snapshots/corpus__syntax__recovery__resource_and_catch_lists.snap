@@ -65,7 +65,7 @@ CompilationUnit
                                           Identifier "A" @ 60..61 trailing=[Whitespace " "]
                                   Bar "|" @ 62..63 trailing=[Whitespace " ", BlockComment "/* catch */", Whitespace " "]
                                   TypeBarList
-                                    ErrorNode
+                                    BogusType
                                       AnnotationList
                                     Bar "|" @ 76..77 trailing=[Whitespace " "]
                                     ClassType

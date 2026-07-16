@@ -1,4 +1,5 @@
 use super::{JavaParserExt, JavaSyntaxKind, Parser, StopSet};
+use jolt_syntax::UnresolvedDiagnosticOwner;
 
 impl Parser<'_> {
     pub(super) fn parse_type_declaration(&mut self) {
@@ -26,7 +27,21 @@ impl Parser<'_> {
         };
 
         let type_name = self.current_text().map(|_| self.position());
-        self.expect_type_identifier("expected type name");
+        let name_slot = match kind {
+            JavaSyntaxKind::AnnotationInterfaceDeclaration => {
+                crate::shape::annotation_interface_declaration::Slot::name as u16
+            }
+            JavaSyntaxKind::ClassDeclaration => crate::shape::class_declaration::Slot::name as u16,
+            JavaSyntaxKind::InterfaceDeclaration => {
+                crate::shape::interface_declaration::Slot::name as u16
+            }
+            JavaSyntaxKind::EnumDeclaration => crate::shape::enum_declaration::Slot::name as u16,
+            JavaSyntaxKind::RecordDeclaration => {
+                crate::shape::record_declaration::Slot::name as u16
+            }
+            _ => unreachable!("matched type declaration kind"),
+        };
+        self.expect_type_identifier("expected type name", type_decl.anchor(), name_slot);
         self.parse_type_declaration_header(kind);
         self.parse_type_body(body_kind_for_type(kind), type_name);
         self.complete(type_decl, kind);
@@ -125,9 +140,9 @@ impl Parser<'_> {
                     self.bump_type_modifier();
                 } else {
                     let error = self.start();
-                    self.unexpected_here(context.invalid_message());
+                    self.unexpected_owned_node(context.invalid_message(), error.anchor());
                     self.bump_type_modifier();
-                    self.complete(error, JavaSyntaxKind::ErrorNode);
+                    self.complete(error, JavaSyntaxKind::BogusModifier);
                 }
             } else {
                 break;
@@ -164,25 +179,49 @@ impl Parser<'_> {
 
     fn parse_parameter_annotations(&mut self) {
         let modifiers = self.start();
-        while self.at(JavaSyntaxKind::At) && self.nth_kind(1) != JavaSyntaxKind::InterfaceKw {
-            self.parse_annotation();
+        loop {
+            if self.at(JavaSyntaxKind::At) && self.nth_kind(1) != JavaSyntaxKind::InterfaceKw {
+                self.parse_annotation();
+            } else if self.at_type_modifier() {
+                self.parse_bogus_parameter_modifier();
+            } else {
+                break;
+            }
         }
         self.complete(modifiers, JavaSyntaxKind::ParameterModifierList);
     }
 
+    fn parse_bogus_parameter_modifier(&mut self) {
+        let bogus = self.start();
+        self.unexpected_owned_node("invalid parameter modifier", bogus.anchor());
+        self.bump_type_modifier();
+        self.complete(bogus, JavaSyntaxKind::BogusModifier);
+    }
+
     pub(super) fn parse_annotation(&mut self) {
         let annotation = self.start();
-        self.expect(JavaSyntaxKind::At, "expected `@`");
-        self.consume_qualified_name();
+        let owner = annotation.anchor();
+        self.expect_owned(
+            JavaSyntaxKind::At,
+            "expected `@`",
+            owner,
+            crate::shape::annotation::Slot::at as u16,
+        );
+        self.consume_qualified_name_owned(UnresolvedDiagnosticOwner::missing_slot(
+            owner,
+            crate::shape::annotation::Slot::name as u16,
+        ));
         if self.at(JavaSyntaxKind::LParen) {
             let arguments = self.start();
             self.bump();
             if !self.at(JavaSyntaxKind::RParen) {
                 self.parse_annotation_element_values(JavaSyntaxKind::RParen);
             }
-            self.expect(
+            self.expect_owned(
                 JavaSyntaxKind::RParen,
                 "expected `)` after annotation arguments",
+                arguments.anchor(),
+                crate::shape::annotation_argument_list::Slot::close_paren as u16,
             );
             self.complete(arguments, JavaSyntaxKind::AnnotationArgumentList);
         }
@@ -220,6 +259,7 @@ impl Parser<'_> {
         }
 
         let list = self.start();
+        let owner = list.anchor();
         self.bump();
         let parameters = self.start();
         while !self.at_eof() && !self.at_type_argument_close() {
@@ -229,15 +269,26 @@ impl Parser<'_> {
             }
         }
         self.complete(parameters, JavaSyntaxKind::TypeParameterSeparatedList);
-        self.eat_type_argument_close();
+        if !self.eat_type_argument_close() {
+            self.expected_owned_slot(
+                "expected `>` after type parameters",
+                owner,
+                crate::shape::type_parameter_list::Slot::close_angle as u16,
+            );
+        }
         self.complete(list, JavaSyntaxKind::TypeParameterList);
         true
     }
 
     pub(super) fn parse_type_parameter(&mut self) {
         let parameter = self.start();
+        let owner = parameter.anchor();
         self.parse_annotations();
-        self.expect_type_identifier("expected type parameter name");
+        self.expect_type_identifier(
+            "expected type parameter name",
+            owner,
+            crate::shape::type_parameter::Slot::name as u16,
+        );
         if self.at(JavaSyntaxKind::ExtendsKw) {
             let bounds = self.start();
             self.bump();
@@ -253,8 +304,12 @@ impl Parser<'_> {
         }
 
         let clause = self.start();
+        let owner = clause.anchor();
         self.bump();
-        self.parse_type_list_until_clause_end();
+        self.parse_type_list_until_clause_end(
+            owner,
+            crate::shape::extends_clause::Slot::types as u16,
+        );
         self.complete(clause, JavaSyntaxKind::ExtendsClause);
     }
 
@@ -264,8 +319,12 @@ impl Parser<'_> {
         }
 
         let clause = self.start();
+        let owner = clause.anchor();
         self.bump();
-        self.parse_type_list_until_clause_end();
+        self.parse_type_list_until_clause_end(
+            owner,
+            crate::shape::implements_clause::Slot::types as u16,
+        );
         self.complete(clause, JavaSyntaxKind::ImplementsClause);
     }
 
@@ -275,12 +334,24 @@ impl Parser<'_> {
         }
 
         let clause = self.start();
+        let owner = clause.anchor();
         self.bump();
-        self.parse_type_name_list_until_clause_end();
+        self.parse_type_name_list_until_clause_end(
+            owner,
+            crate::shape::permits_clause::Slot::names as u16,
+        );
         self.complete(clause, JavaSyntaxKind::PermitsClause);
     }
 
-    pub(super) fn parse_type_list_until_clause_end(&mut self) {
+    pub(super) fn parse_type_list_until_clause_end(
+        &mut self,
+        clause: jolt_syntax::NodeAnchor,
+        slot: u16,
+    ) {
+        if self.at_eof() || self.at_header_clause_end() {
+            self.expected_owned_slot("expected type", clause, slot);
+            return;
+        }
         let types = self.start();
         while !self.at_eof() && !self.at_header_clause_end() {
             self.parse_class_type();
@@ -291,10 +362,19 @@ impl Parser<'_> {
         self.complete(types, JavaSyntaxKind::TypeList);
     }
 
-    pub(super) fn parse_type_name_list_until_clause_end(&mut self) {
+    pub(super) fn parse_type_name_list_until_clause_end(
+        &mut self,
+        clause: jolt_syntax::NodeAnchor,
+        slot: u16,
+    ) {
+        if self.at_eof() || self.at_header_clause_end() {
+            self.expected_owned_slot("expected name", clause, slot);
+            return;
+        }
         let names = self.start();
+        let owner = UnresolvedDiagnosticOwner::node(names.anchor());
         while !self.at_eof() && !self.at_header_clause_end() {
-            self.consume_qualified_name();
+            self.consume_qualified_name_owned(owner);
             if !self.eat(JavaSyntaxKind::Comma) {
                 break;
             }
@@ -324,11 +404,16 @@ impl Parser<'_> {
 
     pub(super) fn parse_record_component(&mut self) {
         let component = self.start();
+        let owner = component.anchor();
         self.parse_parameter_annotations();
         self.parse_type();
         self.parse_annotations();
         self.eat(JavaSyntaxKind::Ellipsis);
-        self.expect_named_variable_identifier("expected record component name");
+        self.expect_named_identifier_owned(
+            "expected record component name",
+            owner,
+            crate::shape::record_component::Slot::name as u16,
+        );
         self.complete(component, JavaSyntaxKind::RecordComponent);
     }
 
@@ -454,19 +539,25 @@ impl Parser<'_> {
         allow_unnamed: bool,
     ) {
         let declarator = self.start();
-        self.parse_variable_declarator_id(allow_unnamed);
+        let owner = declarator.anchor();
+        self.parse_variable_declarator_id(
+            allow_unnamed,
+            owner,
+            crate::shape::variable_declarator::Slot::name as u16,
+        );
         if self.eat(JavaSyntaxKind::Assign) {
             self.parse_variable_initializer_until(stops);
         }
         self.complete(declarator, JavaSyntaxKind::VariableDeclarator);
     }
 
-    pub(super) fn parse_variable_declarator_id(&mut self, allow_unnamed: bool) {
-        if allow_unnamed {
-            self.expect_variable_identifier("expected variable name");
-        } else {
-            self.expect_named_variable_identifier("expected variable name");
-        }
+    pub(super) fn parse_variable_declarator_id(
+        &mut self,
+        allow_unnamed: bool,
+        owner: jolt_syntax::NodeAnchor,
+        slot: u16,
+    ) {
+        self.expect_variable_identifier_owned("expected variable name", owner, slot, allow_unnamed);
         self.parse_array_dimensions();
     }
 
@@ -482,11 +573,16 @@ impl Parser<'_> {
 
     pub(super) fn parse_method_declaration(&mut self) {
         let method = self.start();
+        let owner = method.anchor();
         self.parse_method_modifier_list();
         self.parse_optional_type_parameter_list();
         self.parse_optional_annotations();
         self.parse_result_type();
-        self.expect_method_identifier("expected method name");
+        self.expect_named_identifier_owned(
+            "expected method name",
+            owner,
+            crate::shape::method_declaration::Slot::name as u16,
+        );
         self.parse_formal_parameter_section();
         self.parse_array_dimensions();
         self.parse_optional_throws_clause();
@@ -496,9 +592,14 @@ impl Parser<'_> {
 
     pub(super) fn parse_annotation_element(&mut self) {
         let element = self.start();
+        let owner = element.anchor();
         self.parse_annotation_element_modifier_list();
         self.parse_type();
-        self.expect_method_identifier("expected annotation element name");
+        self.expect_named_identifier_owned(
+            "expected annotation element name",
+            owner,
+            crate::shape::annotation_element_declaration::Slot::name as u16,
+        );
         self.expect(JavaSyntaxKind::LParen, "expected `(`");
         self.expect(JavaSyntaxKind::RParen, "expected `)`");
         self.parse_array_dimensions();
@@ -523,7 +624,11 @@ impl Parser<'_> {
         let constructor = self.start();
         self.parse_constructor_modifier_list();
         self.parse_optional_type_parameter_list();
-        self.expect_type_identifier("expected constructor name");
+        self.expect_type_identifier(
+            "expected constructor name",
+            constructor.anchor(),
+            crate::shape::constructor_declaration::Slot::name as u16,
+        );
         self.parse_formal_parameter_section();
         self.parse_optional_throws_clause();
         self.parse_constructor_block();
@@ -533,7 +638,11 @@ impl Parser<'_> {
     pub(super) fn parse_compact_constructor_declaration(&mut self) {
         let constructor = self.start();
         self.parse_constructor_modifier_list();
-        self.expect_type_identifier("expected compact constructor name");
+        self.expect_type_identifier(
+            "expected compact constructor name",
+            constructor.anchor(),
+            crate::shape::compact_constructor_declaration::Slot::name as u16,
+        );
         self.parse_constructor_block();
         self.complete(constructor, JavaSyntaxKind::CompactConstructorDeclaration);
     }
@@ -552,20 +661,16 @@ impl Parser<'_> {
             let list = self.start();
             let mut allow_receiver = true;
             while !self.at_eof() && !self.at(JavaSyntaxKind::RParen) {
-                if allow_receiver && self.starts_receiver_parameter() {
-                    self.parse_receiver_parameter();
+                if self.at(JavaSyntaxKind::Comma) {
+                    let bogus = self.start();
+                    self.expected_owned_node("expected parameter", bogus.anchor());
+                    self.complete(bogus, JavaSyntaxKind::BogusFormalParameter);
                 } else if self.starts_receiver_parameter() {
-                    let error = self.start();
-                    self.misplaced_receiver_parameter_here("receiver parameter must be first");
-                    self.parse_receiver_parameter();
-                    self.complete(error, JavaSyntaxKind::ErrorNode);
+                    self.parse_receiver_parameter_entry(!allow_receiver);
                 } else {
                     let was_varargs = self.parse_formal_parameter();
                     if was_varargs && !self.at(JavaSyntaxKind::RParen) && !self.at_eof() {
-                        let error = self.start();
-                        self.expected_here("varargs parameter must be last");
                         let consumed_comma = self.eat(JavaSyntaxKind::Comma);
-                        self.complete(error, JavaSyntaxKind::ErrorNode);
                         if consumed_comma {
                             allow_receiver = false;
                             continue;
@@ -583,30 +688,76 @@ impl Parser<'_> {
         self.expect(JavaSyntaxKind::RParen, "expected `)` after parameters");
     }
 
-    pub(super) fn parse_receiver_parameter(&mut self) {
+    fn parse_receiver_parameter_entry(&mut self, misplaced: bool) {
         let parameter = self.start();
+        let owner = parameter.anchor();
+        let mut bogus = misplaced;
+        if misplaced {
+            let diagnostic =
+                self.misplaced_receiver_parameter_here("receiver parameter must be first");
+            self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(owner));
+        }
         self.parse_annotations();
+        while self.at_type_modifier() {
+            bogus = true;
+            self.unexpected_owned_node("invalid receiver parameter modifier", owner);
+            self.bump_type_modifier();
+            self.parse_annotations();
+        }
         self.parse_type();
         if self.at_name_segment() && self.nth_kind(1) == JavaSyntaxKind::Dot {
             self.bump();
             self.bump();
         }
-        self.expect(
-            JavaSyntaxKind::ThisKw,
-            "expected `this` in receiver parameter",
+        if !self.at(JavaSyntaxKind::ThisKw) {
+            bogus = true;
+            self.unexpected_owned_node("invalid receiver parameter", owner);
+            while !self.at_eof()
+                && !matches!(
+                    self.current_kind(),
+                    JavaSyntaxKind::ThisKw | JavaSyntaxKind::Comma | JavaSyntaxKind::RParen
+                )
+            {
+                self.bump();
+            }
+        }
+        self.eat(JavaSyntaxKind::ThisKw);
+        self.complete(
+            parameter,
+            if bogus {
+                JavaSyntaxKind::BogusFormalParameter
+            } else {
+                JavaSyntaxKind::ReceiverParameter
+            },
         );
-        self.complete(parameter, JavaSyntaxKind::ReceiverParameter);
     }
 
     pub(super) fn parse_formal_parameter(&mut self) -> bool {
         let parameter = self.start();
+        let owner = parameter.anchor();
         self.parse_variable_modifiers();
         self.parse_type();
         self.parse_annotations();
         let varargs = self.eat(JavaSyntaxKind::Ellipsis);
-        self.expect_variable_identifier("expected parameter name");
+        self.expect_variable_identifier_owned(
+            "expected parameter name",
+            owner,
+            crate::shape::formal_parameter::Slot::name as u16,
+            true,
+        );
         self.parse_array_dimensions();
-        self.complete(parameter, JavaSyntaxKind::FormalParameter);
+        let misplaced_varargs = varargs && !self.at(JavaSyntaxKind::RParen) && !self.at_eof();
+        if misplaced_varargs {
+            self.expected_owned_node("varargs parameter must be last", parameter.anchor());
+        }
+        self.complete(
+            parameter,
+            if misplaced_varargs {
+                JavaSyntaxKind::BogusFormalParameter
+            } else {
+                JavaSyntaxKind::FormalParameter
+            },
+        );
         varargs
     }
 
@@ -618,6 +769,8 @@ impl Parser<'_> {
                 self.parse_annotation();
             } else if self.at(JavaSyntaxKind::FinalKw) {
                 self.bump();
+            } else if self.at_type_modifier() {
+                self.parse_bogus_parameter_modifier();
             } else {
                 break;
             }
@@ -633,7 +786,22 @@ impl Parser<'_> {
         }
 
         let clause = self.start();
+        let owner = clause.anchor();
         self.bump();
+        if self.at_eof()
+            || matches!(
+                self.current_kind(),
+                JavaSyntaxKind::LBrace | JavaSyntaxKind::Semicolon
+            )
+        {
+            self.expected_owned_slot(
+                "expected exception type",
+                owner,
+                crate::shape::throws_clause::Slot::exceptions as u16,
+            );
+            self.complete(clause, JavaSyntaxKind::ThrowsClause);
+            return;
+        }
         let types = self.start();
         while !self.at_eof()
             && !matches!(
@@ -845,7 +1013,14 @@ enum ModifierContext {
 impl ModifierContext {
     fn allows(self, parser: &mut Parser<'_>) -> bool {
         match self {
-            Self::Type => true,
+            Self::Type => !matches!(
+                parser.current_kind(),
+                JavaSyntaxKind::NativeKw
+                    | JavaSyntaxKind::SynchronizedKw
+                    | JavaSyntaxKind::TransientKw
+                    | JavaSyntaxKind::VolatileKw
+                    | JavaSyntaxKind::DefaultKw
+            ),
             Self::Field => matches!(
                 parser.current_kind(),
                 JavaSyntaxKind::PublicKw

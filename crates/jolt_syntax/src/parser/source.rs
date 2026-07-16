@@ -104,6 +104,30 @@ impl<'source, L: Language> Parser<'source, L> {
         }
     }
 
+    pub fn expect_owned(&mut self, kind: L::Kind, message: &str, owner: NodeAnchor, slot: u16) {
+        if !self.eat(kind) {
+            self.expected_owned_slot(message, owner, slot);
+        }
+    }
+
+    pub fn expected_owned_node(&mut self, message: &str, owner: NodeAnchor) {
+        let diagnostic = self.expected_here(message);
+        self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(owner));
+    }
+
+    pub fn expected_owned_slot(&mut self, message: &str, owner: NodeAnchor, slot: u16) {
+        let diagnostic = self.expected_here(message);
+        self.own_diagnostic(
+            diagnostic,
+            UnresolvedDiagnosticOwner::missing_slot(owner, slot),
+        );
+    }
+
+    pub fn unexpected_owned_node(&mut self, message: &str, owner: NodeAnchor) {
+        let diagnostic = self.unexpected_here(message);
+        self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(owner));
+    }
+
     pub fn eat(&mut self, kind: L::Kind) -> bool {
         if self.at(kind) {
             self.bump();

@@ -15,32 +15,28 @@ CompilationUnit
   CompilationUnitItemList
     ClassDeclaration
       ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-      ErrorNode
-        Identifier "var" @ 6..9 trailing=[Whitespace " "]
+      Identifier "var" @ 6..9 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 10..11
         ClassBodyMemberList
         RBrace "}" @ 11..12
     ClassDeclaration
       ClassKw "class" @ 13..18 leading=[Newline "\n"] trailing=[Whitespace " "]
-      ErrorNode
-        Identifier "record" @ 19..25 trailing=[Whitespace " "]
+      Identifier "record" @ 19..25 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 26..27
         ClassBodyMemberList
         RBrace "}" @ 27..28
     ClassDeclaration
       ClassKw "class" @ 29..34 leading=[Newline "\n"] trailing=[Whitespace " "]
-      ErrorNode
-        Identifier "permits" @ 35..42 trailing=[Whitespace " "]
+      Identifier "permits" @ 35..42 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 43..44
         ClassBodyMemberList
         RBrace "}" @ 44..45
     RecordDeclaration
       Identifier "record" @ 46..52 leading=[Newline "\n"] trailing=[Whitespace " "]
-      ErrorNode
-        Identifier "sealed" @ 53..59
+      Identifier "sealed" @ 53..59
       LParen "(" @ 59..60
       RecordComponentList
         RecordComponent
@@ -57,8 +53,7 @@ CompilationUnit
         RBrace "}" @ 72..73
     InterfaceDeclaration
       InterfaceKw "interface" @ 74..83 leading=[Newline "\n"] trailing=[Whitespace " "]
-      ErrorNode
-        Identifier "yield" @ 84..89 trailing=[Whitespace " "]
+      Identifier "yield" @ 84..89 trailing=[Whitespace " "]
       InterfaceBody
         LBrace "{" @ 90..91
         InterfaceBodyMemberList

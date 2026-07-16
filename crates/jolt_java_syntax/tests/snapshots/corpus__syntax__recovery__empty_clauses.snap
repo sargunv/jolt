@@ -24,7 +24,6 @@ CompilationUnit
       Identifier "C" @ 20..21 trailing=[Whitespace " "]
       ExtendsClause
         ExtendsKw "extends" @ 22..29 trailing=[Whitespace " ", BlockComment "/* type */", Whitespace " "]
-        TypeList
       ClassBody
         LBrace "{" @ 41..42
         ClassBodyMemberList
@@ -44,7 +43,6 @@ CompilationUnit
               RParen ")" @ 61..62 trailing=[Whitespace " "]
               ThrowsClause
                 ThrowsKw "throws" @ 63..69 trailing=[Whitespace " ", BlockComment "/* throws */", Whitespace " "]
-                TypeList
               Block
                 LBrace "{" @ 83..84
                 BlockStatementList
@@ -77,9 +75,13 @@ CompilationUnit
   Eof "" @ 158..158 leading=[Newline "\n"]
 
 diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=41..42 message="expected type"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=83..84 message="expected exception type"
   code=java.parse.expected_syntax severity=Error stage=Parser range=125..126 message="expected identifier"
   code=java.parse.expected_syntax severity=Error stage=Parser range=154..155 message="expected identifier"
 
 diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(41), end: TextSize(42) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(83), end: TextSize(84) }) message=expected exception type
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(125), end: TextSize(126) }) message=expected identifier
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(154), end: TextSize(155) }) message=expected identifier

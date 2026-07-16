@@ -7,7 +7,7 @@ use jolt_java_syntax::{
 use crate::helpers::comments::{
     InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line,
     format_construct_leading_comments, format_token, format_token_with_comments,
-    format_token_with_inline_leading_comments, token_has_comments,
+    format_token_with_inline_leading_comments,
 };
 use crate::helpers::lists::{CommaListItem, comma_list, syntax_comma_list_items};
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
@@ -18,7 +18,8 @@ use crate::helpers::recovery::{
 use crate::rules::annotations::{format_annotation, format_annotation_without_leading_comments};
 use crate::rules::expressions::format_variable_initializer_value;
 use crate::rules::modifiers::{
-    TypedModifierPrefix, format_typed_modifier_prefix, format_typed_parameter_modifier_prefix,
+    TypedModifierPrefix, format_inline_typed_parameter_modifier_prefix,
+    format_typed_modifier_prefix, format_typed_parameter_modifier_prefix,
 };
 use crate::rules::statements::format_statement_semicolon;
 use crate::rules::types::{
@@ -121,14 +122,26 @@ pub(crate) fn format_formal_parameter<'source>(
     parameter: &FormalParameter<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let leading_comments = format_construct_leading_comments(doc, parameter.first_token().as_ref());
-    let modifier_prefix = format_required_field(parameter.modifiers(), doc, |modifiers, doc| {
-        format_parameter_modifier_parts(modifiers.parts(), true, doc)
-    });
-    let modifiers = doc_concat!(doc, [leading_comments, modifier_prefix]);
+    let parameter_first = parameter.first_token();
+    let leading_comments = format_construct_leading_comments(doc, parameter_first.as_ref());
+    let modifiers = match resolve_required_field(parameter.modifiers(), doc) {
+        JavaFormatField::Present(modifiers) => {
+            format_inline_typed_parameter_modifier_prefix(&modifiers, doc)
+        }
+        JavaFormatField::Malformed(recovery) => TypedModifierPrefix {
+            declaration_prefix: recovery,
+            type_use_prefix: Doc::nil(),
+        },
+    };
+    let declaration_prefix = doc_concat!(doc, [leading_comments, modifiers.declaration_prefix]);
     let ty = format_required_field(parameter.r#type(), doc, |ty, doc| {
-        format_type_without_leading_comments(&ty, doc)
+        if ty.first_token() == parameter_first {
+            format_type_without_leading_comments(&ty, doc)
+        } else {
+            format_type(&ty, doc)
+        }
     });
+    let ty = doc_concat!(doc, [modifiers.type_use_prefix, ty]);
     let varargs_annotations = resolve_annotation_list_docs(parameter.varargs_annotations(), doc);
     let name = format_required_field(parameter.name(), doc, |name, doc| {
         format_name_after_type_token(doc, &name)
@@ -140,7 +153,7 @@ pub(crate) fn format_formal_parameter<'source>(
         format_token_with_comments(doc, &ellipsis)
     });
     format_named_typed_declaration(
-        modifiers,
+        declaration_prefix,
         ty,
         varargs_annotations,
         name,
@@ -156,10 +169,16 @@ pub(crate) fn format_record_component<'source>(
 ) -> Doc<'source> {
     let component_first = component.first_token();
     let leading_comments = format_construct_leading_comments(doc, component_first.as_ref());
-    let modifier_prefix = format_required_field(component.modifiers(), doc, |modifiers, doc| {
-        format_parameter_modifier_parts(modifiers.parts(), true, doc)
-    });
-    let modifiers = doc_concat!(doc, [leading_comments, modifier_prefix]);
+    let modifiers = match resolve_required_field(component.modifiers(), doc) {
+        JavaFormatField::Present(modifiers) => {
+            format_inline_typed_parameter_modifier_prefix(&modifiers, doc)
+        }
+        JavaFormatField::Malformed(recovery) => TypedModifierPrefix {
+            declaration_prefix: recovery,
+            type_use_prefix: Doc::nil(),
+        },
+    };
+    let declaration_prefix = doc_concat!(doc, [leading_comments, modifiers.declaration_prefix]);
     let ty = format_required_field(component.r#type(), doc, |ty, doc| {
         if ty.first_token() == component_first {
             format_type_without_leading_comments(&ty, doc)
@@ -167,6 +186,7 @@ pub(crate) fn format_record_component<'source>(
             format_type(&ty, doc)
         }
     });
+    let ty = doc_concat!(doc, [modifiers.type_use_prefix, ty]);
     let varargs_annotations = resolve_annotation_list_docs(component.varargs_annotations(), doc);
     let name = format_required_field(component.name(), doc, |name, doc| {
         format_name_after_type_token(doc, &name)
@@ -175,7 +195,7 @@ pub(crate) fn format_record_component<'source>(
         format_token_with_comments(doc, &ellipsis)
     });
     format_named_typed_declaration(
-        modifiers,
+        declaration_prefix,
         ty,
         varargs_annotations,
         name,
@@ -221,131 +241,6 @@ pub(crate) fn format_receiver_parameter<'source>(
             this_token,
         ]
     )
-}
-
-fn format_parameter_modifier_parts<'source>(
-    parts: impl IntoIterator<
-        Item = Result<
-            jolt_java_syntax::JavaSyntaxListPart<
-                'source,
-                jolt_java_syntax::ParameterModifier<'source>,
-            >,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
-    >,
-    suppress_first_leading: bool,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let mut parts = parts
-        .into_iter()
-        .map(|part| resolve_list_part(part, doc))
-        .collect::<Vec<_>>();
-    if suppress_first_leading {
-        sort_parameter_modifier_runs(&mut parts);
-    }
-    let terminal_forces_line = parts
-        .iter()
-        .rev()
-        .find_map(|part| match part {
-            JavaFormatListPart::Item(modifier) => modifier.last_token().map(|token| {
-                token
-                    .trailing_comments()
-                    .any(|comment| comment_forces_line(&comment))
-            }),
-            JavaFormatListPart::Separator(_) | JavaFormatListPart::Malformed(_) => None,
-        })
-        .unwrap_or(false);
-    let mut has_parts = false;
-    let docs = doc.concat_list(|docs| {
-        for part in parts {
-            if has_parts {
-                let space = docs.space();
-                docs.push(space);
-            }
-            let first = !has_parts;
-            has_parts = true;
-            let part = match part {
-                JavaFormatListPart::Item(modifier) => {
-                    if let Some(annotation) = modifier.cast_node::<Annotation<'source>>() {
-                        if first && suppress_first_leading {
-                            format_annotation_without_leading_comments(&annotation, docs)
-                        } else {
-                            format_annotation(&annotation, docs)
-                        }
-                    } else if let Some(token) = modifier.token() {
-                        format_token(
-                            docs,
-                            &token,
-                            if first && suppress_first_leading {
-                                LeadingTrivia::SuppressAlreadyHandled
-                            } else {
-                                LeadingTrivia::Preserve
-                            },
-                            TrailingTrivia::Preserve,
-                        )
-                    } else {
-                        docs.block_on_invariant("parameter modifier had an unknown shape");
-                        Doc::nil()
-                    }
-                }
-                JavaFormatListPart::Separator(separator) => {
-                    format_token_with_comments(docs, &separator)
-                }
-                JavaFormatListPart::Malformed(recovery) => recovery,
-            };
-            docs.push(part);
-        }
-    });
-    if has_parts && !terminal_forces_line {
-        doc_concat!(doc, [docs, doc.space()])
-    } else {
-        docs
-    }
-}
-
-fn sort_parameter_modifier_runs<'source>(
-    parts: &mut [JavaFormatListPart<'source, jolt_java_syntax::ParameterModifier<'source>>],
-) {
-    let is_barrier =
-        |part: &JavaFormatListPart<'source, jolt_java_syntax::ParameterModifier<'source>>| {
-            match part {
-                JavaFormatListPart::Item(modifier) => {
-                    if let Some(annotation) = modifier.cast_node::<Annotation<'source>>() {
-                        annotation
-                            .token_iter()
-                            .any(|token| token_has_comments(&token))
-                    } else if let Some(token) = modifier.token() {
-                        token_has_comments(&token)
-                    } else {
-                        true
-                    }
-                }
-                JavaFormatListPart::Separator(_) | JavaFormatListPart::Malformed(_) => true,
-            }
-        };
-    let mut run_start = None;
-    for index in 0..parts.len() {
-        if is_barrier(&parts[index]) {
-            if let Some(start) = run_start.take() {
-                parts[start..index].sort_by_key(parameter_modifier_order);
-            }
-        } else if run_start.is_none() {
-            run_start = Some(index);
-        }
-    }
-    if let Some(start) = run_start {
-        parts[start..].sort_by_key(parameter_modifier_order);
-    }
-}
-
-fn parameter_modifier_order(
-    part: &JavaFormatListPart<'_, jolt_java_syntax::ParameterModifier<'_>>,
-) -> u8 {
-    match part {
-        JavaFormatListPart::Item(modifier) if modifier.cast_node::<Annotation<'_>>().is_some() => 0,
-        JavaFormatListPart::Item(_) => 1,
-        JavaFormatListPart::Separator(_) | JavaFormatListPart::Malformed(_) => u8::MAX,
-    }
 }
 
 fn format_annotation_parts<'source>(
@@ -430,8 +325,14 @@ fn format_named_typed_declaration<'source>(
     let has_ellipsis = ellipsis.is_some();
     let ellipsis = if let Some(ellipsis) = ellipsis {
         if let Some(varargs_annotations) = varargs_annotations {
-            let annotations =
-                inline_modifier_prefix_from_docs(doc, [varargs_annotations], Vec::new());
+            let annotations = inline_modifier_prefix_from_docs(
+                doc,
+                [varargs_annotations],
+                Vec::new(),
+                false,
+                false,
+                false,
+            );
             doc_concat!(doc, [annotations, ellipsis])
         } else {
             ellipsis

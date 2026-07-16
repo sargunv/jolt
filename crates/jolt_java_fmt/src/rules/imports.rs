@@ -6,10 +6,7 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_comment, format_token_after_relocated_leading_comments,
     format_token_before_relocated_trailing_comments, format_token_with_comments,
 };
-use crate::helpers::recovery::{
-    JavaFormatField, format_optional_field, format_required_field, resolve_optional_field,
-    resolve_required_field,
-};
+use crate::helpers::recovery::{format_optional_field, format_required_field};
 use crate::rules::names::{NameSortKey, format_name};
 
 pub(crate) fn format_imports<'source>(
@@ -26,7 +23,7 @@ pub(crate) fn format_imports<'source>(
     let mut sections = Vec::new();
     let mut sortable = Vec::new();
     for import in imports {
-        if is_sortable_import(&import) {
+        if let Some(formatted) = FormattedImport::new(import) {
             if !sortable.is_empty()
                 && import
                     .first_token()
@@ -34,7 +31,7 @@ pub(crate) fn format_imports<'source>(
             {
                 flush_sortable(&mut sortable, &mut sections, doc);
             }
-            sortable.push(FormattedImport::new(import, doc));
+            sortable.push(formatted);
         } else {
             flush_sortable(&mut sortable, &mut sections, doc);
             sections.push(format_import(&import, doc));
@@ -42,39 +39,6 @@ pub(crate) fn format_imports<'source>(
     }
     flush_sortable(&mut sortable, &mut sections, doc);
     Some(join_empty_lines(doc, sections))
-}
-
-fn is_sortable_import(import: &ImportDeclaration<'_>) -> bool {
-    #[allow(clippy::needless_pass_by_value)]
-    fn required<T>(
-        field: Result<
-            jolt_java_syntax::JavaSyntaxField<'_, T>,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
-    ) -> bool {
-        matches!(field, Ok(jolt_java_syntax::JavaSyntaxField::Present(_)))
-    }
-    #[allow(clippy::needless_pass_by_value)]
-    fn optional<T>(
-        field: Result<
-            jolt_java_syntax::JavaSyntaxField<'_, T>,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
-    ) -> bool {
-        matches!(
-            field,
-            Ok(jolt_java_syntax::JavaSyntaxField::Present(_)
-                | jolt_java_syntax::JavaSyntaxField::Missing(_))
-        )
-    }
-    import.is_recovery_free()
-        && required(import.import_keyword())
-        && optional(import.module_keyword())
-        && optional(import.static_keyword())
-        && matches!(import.name(), Ok(jolt_java_syntax::JavaSyntaxField::Present(ref name)) if name.is_recovery_free())
-        && optional(import.on_demand_dot())
-        && optional(import.star())
-        && required(import.semicolon())
 }
 
 fn flush_sortable<'source>(
@@ -130,24 +94,31 @@ struct FormattedImport<'source> {
 }
 
 impl<'source> FormattedImport<'source> {
-    fn new(import: ImportDeclaration<'source>, doc: &mut DocBuilder<'source>) -> Self {
-        let on_demand = matches!(
-            resolve_optional_field(import.star(), doc),
-            JavaFormatField::Present(Some(_))
-        );
-        let key = match resolve_required_field(import.name(), doc) {
-            JavaFormatField::Present(name) => NameSortKey::new(&name, on_demand),
-            JavaFormatField::Malformed(_) => NameSortKey::recovered(),
+    fn new(import: ImportDeclaration<'source>) -> Option<Self> {
+        use jolt_java_syntax::JavaSyntaxField::{Malformed, Missing, Present};
+
+        if !import.is_recovery_free()
+            || !matches!(import.import_keyword(), Ok(Present(_)))
+            || !matches!(import.module_keyword(), Ok(Present(_) | Missing(_)))
+            || !matches!(import.static_keyword(), Ok(Present(_) | Missing(_)))
+            || !matches!(import.on_demand_dot(), Ok(Present(_) | Missing(_)))
+            || !matches!(import.star(), Ok(Present(_) | Missing(_)))
+            || !matches!(import.semicolon(), Ok(Present(_)))
+        {
+            return None;
+        }
+        let name = match import.name() {
+            Ok(Present(name)) if name.is_recovery_free() => name,
+            Ok(Present(_) | Missing(_) | Malformed(_)) | Err(_) => return None,
         };
-        let is_static = matches!(
-            resolve_optional_field(import.static_keyword(), doc),
-            JavaFormatField::Present(Some(_))
-        );
-        Self {
+        let on_demand = matches!(import.star(), Ok(Present(_)));
+        let key = NameSortKey::new(&name, on_demand)?;
+        let is_static = matches!(import.static_keyword(), Ok(Present(_)));
+        Some(Self {
             import,
             key,
             is_static,
-        }
+        })
     }
 
     #[allow(clippy::redundant_closure_for_method_calls)]

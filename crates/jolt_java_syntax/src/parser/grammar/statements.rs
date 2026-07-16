@@ -218,7 +218,11 @@ impl Parser<'_> {
 
         let list = self.start();
         let declarator = self.start();
-        self.parse_variable_declarator_id(true);
+        self.parse_variable_declarator_id(
+            true,
+            declarator.anchor(),
+            crate::shape::variable_declarator::Slot::name as u16,
+        );
         if self.eat(JavaSyntaxKind::Assign) {
             let error = self.start();
             self.expected_here("enhanced for variable must not have an initializer");
@@ -419,7 +423,11 @@ impl Parser<'_> {
 
         let list = self.start();
         let declarator = self.start();
-        self.parse_variable_declarator_id(true);
+        self.parse_variable_declarator_id(
+            true,
+            declarator.anchor(),
+            crate::shape::variable_declarator::Slot::name as u16,
+        );
         if self.eat(JavaSyntaxKind::Assign) {
             self.parse_variable_initializer_until(stops);
         } else {

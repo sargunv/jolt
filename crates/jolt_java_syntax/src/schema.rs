@@ -200,6 +200,14 @@ macro_rules! java_syntax_schema {
                     Name,
                     QualifiedName,
                 }
+                FormalParameterSyntax => BogusFormalParameter {
+                    FormalParameter,
+                    ReceiverParameter,
+                }
+                AnnotationArgumentSyntax => BogusAnnotationArgument {
+                    AnnotationElementValue,
+                    AnnotationElementValuePair,
+                }
                 ModuleDirective => BogusModuleDirective {
                     RequiresDirective,
                     ExportsDirective,
@@ -294,6 +302,9 @@ macro_rules! java_syntax_schema {
                 ErrorNode => ErrorNode [error_node malformed] {
                     elements: many (any_element) => ErrorElement;
                 }
+                BogusModifier => BogusModifier [bogus_modifier malformed] {
+                    elements: many (any_element) => BogusModifierElement;
+                }
                 CompilationUnit => CompilationUnit [compilation_unit valid] {
                     items: required (list CompilationUnitItemList);
                     eof: required (token Eof);
@@ -366,6 +377,7 @@ macro_rules! java_syntax_schema {
                 ModifierList => ModifierList [modifier_list list] {
                     modifiers: one_or_more (choice [
                         (node Annotation),
+                        (node BogusModifier),
                         (token_set [
                             AbstractKw, FinalKw, NativeKw, PrivateKw, ProtectedKw,
                             PublicKw, StaticKw, StrictfpKw, SynchronizedKw,
@@ -596,7 +608,7 @@ macro_rules! java_syntax_schema {
                     body: required (node Block);
                 }
                 FormalParameterList => FormalParameterList [formal_parameter_list list] {
-                    parameters: one_or_more (node_set [FormalParameter, ReceiverParameter]) => FormalParameterListElement [separated (token Comma), minimum 1, trailing forbidden, recovery bogus_owner];
+                    parameters: one_or_more (category FormalParameterSyntax) [separated (token Comma), minimum 1, trailing forbidden, recovery bogus_owner];
                 }
                 FormalParameter => FormalParameter [formal_parameter valid] {
                     modifiers: required (list ParameterModifierList);
@@ -1143,7 +1155,7 @@ macro_rules! java_syntax_schema {
                     elements: one_or_more (category NameSyntax) [separated (token Comma), minimum 1, trailing forbidden, recovery bogus_owner];
                 }
                 AnnotationElementArgumentList => AnnotationElementArgumentList [annotation_element_argument_list list] {
-                    elements: many (node_set [AnnotationElementValue, AnnotationElementValuePair]) => AnnotationArgumentElement [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];
+                    elements: many (category AnnotationArgumentSyntax) [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];
                 }
                 AnnotationInterfaceBodyMemberList => AnnotationInterfaceBodyMemberList [annotation_interface_body_member_list list] {
                     elements: many (category AnnotationInterfaceBodyMember);
@@ -1167,7 +1179,7 @@ macro_rules! java_syntax_schema {
                     elements: many (category InterfaceBodyMember);
                 }
                 ParameterModifierList => ParameterModifierList [parameter_modifier_list list] {
-                    elements: many (element_set [Annotation, FinalKw]) => ParameterModifier;
+                    elements: many (element_set [Annotation, BogusModifier, FinalKw]) => ParameterModifier;
                 }
                 ConstructorBodyEntryList => ConstructorBodyEntryList [constructor_body_entry_list list] {
                     elements: many (node_set [ConstructorInvocation, BlockStatement]) => ConstructorBodyEntryRole;

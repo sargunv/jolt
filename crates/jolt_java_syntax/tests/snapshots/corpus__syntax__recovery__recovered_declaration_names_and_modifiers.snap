@@ -15,8 +15,7 @@ CompilationUnit
   CompilationUnitItemList
     RecordDeclaration
       Identifier "record" @ 0..6 trailing=[Whitespace " "]
-      ErrorNode
-        Identifier "sealed" @ 7..13
+      Identifier "sealed" @ 7..13
       LParen "(" @ 13..14
       RecordComponentList
         RecordComponent
@@ -40,7 +39,7 @@ CompilationUnit
           ClassBodyDeclaration
             MethodDeclaration
               ModifierList
-                ErrorNode
+                BogusModifier
                   TransientKw "transient" @ 60..69 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               VoidType
                 VoidKw "void" @ 70..74 trailing=[Whitespace " "]

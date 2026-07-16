@@ -31,7 +31,7 @@ CompilationUnit
                           WildcardType
                             Question "?" @ 15..16 trailing=[Whitespace " "]
                             ExtendsKw "extends" @ 17..24 trailing=[Whitespace " ", BlockComment "/* bound */"]
-                            ErrorNode
+                            BogusType
                               AnnotationList
                       Gt ">" @ 36..37 trailing=[Whitespace " "]
               VariableDeclaratorList
@@ -55,7 +55,7 @@ CompilationUnit
                               At "@" @ 46..47
                               Name
                                 Identifier "A" @ 47..48 trailing=[Whitespace " ", BlockComment "/* arg */"]
-                          ErrorNode
+                          BogusType
                             AnnotationList
                       Gt ">" @ 58..59 trailing=[Whitespace " "]
               VariableDeclaratorList

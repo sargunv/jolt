@@ -1,0 +1,41 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class VariableDeclaratorRecovery {
+    int first, /* JOLT-TRIVIA:variable-recovered */ , second;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "VariableDeclaratorRecovery" @ 6..32 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 33..34
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            FieldDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 39..42 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "first" @ 43..48
+                Comma "," @ 48..49 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:variable-recovered */", Whitespace " "]
+                VariableDeclarator
+                Comma "," @ 87..88 trailing=[Whitespace " "]
+                VariableDeclarator
+                  Identifier "second" @ 89..95
+              Semicolon ";" @ 95..96
+        RBrace "}" @ 97..98 leading=[Newline "\n"]
+  Eof "" @ 99..99 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=87..88 message="expected variable name"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(87), end: TextSize(88) }) message=expected variable name

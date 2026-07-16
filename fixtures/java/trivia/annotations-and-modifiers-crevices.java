@@ -12,4 +12,7 @@ public /* JOLT-TRIVIA:public-final-gap */ final /* JOLT-TRIVIA:final-class-gap *
       /* JOLT-TRIVIA:method-close-before-body */ {
     return value /* JOLT-TRIVIA:return-expression-before-semi */;
   }
+
+  void typeUseLineComment(final @Deprecated // JOLT-TRIVIA:type-use-line-boundary
+      String value) {}
 }

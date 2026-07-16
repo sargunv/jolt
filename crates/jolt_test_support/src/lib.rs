@@ -1,19 +1,59 @@
 #![allow(clippy::missing_panics_doc)]
 
 use std::collections::BTreeMap;
-use std::fmt::Write as _;
+use std::fmt::{Debug, Write as _};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use jolt_diagnostics::Diagnostic;
+use jolt_diagnostics::{Diagnostic, DiagnosticCodeId};
 use jolt_fmt_ir::{RenderControl, RenderSink};
-use jolt_syntax::{CommentKind, Language, SyntaxToken};
+use jolt_syntax::{
+    CommentKind, Language, SyntaxDiagnosticOwner, SyntaxNode, SyntaxSlot, SyntaxToken,
+};
 use serde::Deserialize;
 use unicode_width::UnicodeWidthStr;
 
 mod schema_audit;
 
 pub use schema_audit::{PhysicalNodeAudit, SchemaAudit};
+
+pub fn assert_exact_diagnostic_owner<L>(
+    root: SyntaxNode<'_, L>,
+    diagnostics: &[Diagnostic],
+    owners: &[Option<SyntaxDiagnosticOwner>],
+    code: DiagnosticCodeId,
+    message: &str,
+    kind: L::Kind,
+    slot: Option<u16>,
+) where
+    L: Language,
+    L::Kind: Debug,
+{
+    assert_eq!(owners.len(), diagnostics.len());
+    let (index, diagnostic) = diagnostics
+        .iter()
+        .enumerate()
+        .find(|(_, diagnostic)| diagnostic.code == code && diagnostic.message == message)
+        .unwrap_or_else(|| panic!("missing diagnostic {code} {message:?}"));
+    let owner = owners[index].unwrap_or_else(|| panic!("unowned diagnostic: {diagnostic:?}"));
+    let mut nodes = vec![root];
+    let mut cursor = 0;
+    while let Some(node) = nodes.get(cursor).copied() {
+        nodes.extend(node.children());
+        cursor += 1;
+    }
+    let node = nodes
+        .into_iter()
+        .find(|node| node.id() == owner.node())
+        .unwrap_or_else(|| panic!("owner node is not reachable: {diagnostic:?}"));
+    assert_eq!((node.kind(), owner.slot()), (kind, slot));
+    if let Some(slot) = slot {
+        assert!(matches!(
+            node.slot_at(slot as usize),
+            Some(SyntaxSlot::Empty)
+        ));
+    }
+}
 
 #[derive(Default)]
 pub struct StringSink {

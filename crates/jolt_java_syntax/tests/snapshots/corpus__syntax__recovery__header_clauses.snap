@@ -24,7 +24,7 @@ CompilationUnit
                 Name
                   Identifier "Base" @ 23..27
           Comma "," @ 27..28 trailing=[Whitespace " ", BlockComment "/* extends */", Whitespace " "]
-          ErrorNode
+          BogusType
             AnnotationList
           Comma "," @ 43..44 trailing=[Whitespace " "]
           ClassType
@@ -43,7 +43,7 @@ CompilationUnit
                 Name
                   Identifier "A" @ 62..63
           Comma "," @ 63..64 trailing=[Whitespace " ", BlockComment "/* implements */", Whitespace " "]
-          ErrorNode
+          BogusType
             AnnotationList
           Comma "," @ 82..83 trailing=[Whitespace " "]
           ClassType
@@ -81,7 +81,7 @@ CompilationUnit
                         Name
                           Identifier "E" @ 133..134
                   Comma "," @ 134..135 trailing=[Whitespace " ", BlockComment "/* throws */", Whitespace " "]
-                  ErrorNode
+                  BogusType
                     AnnotationList
                   Comma "," @ 149..150 trailing=[Whitespace " "]
                   ClassType

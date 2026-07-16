@@ -28,7 +28,7 @@ CompilationUnit
               FormalParameterList
                 FormalParameter
                   ParameterModifierList
-                  ErrorNode
+                  BogusType
                     AnnotationList
                   AnnotationList
               Block

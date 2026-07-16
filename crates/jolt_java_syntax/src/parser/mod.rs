@@ -201,14 +201,18 @@ fn invalid_event_stream_diagnostic(error: &jolt_syntax::BuildSyntaxTreeError) ->
 mod tests {
     use jolt_diagnostics::DiagnosticStage;
     use jolt_syntax::SyntaxSlot;
+    use jolt_test_support::assert_exact_diagnostic_owner;
 
     use crate::{JavaSyntaxKind, parse_compilation_unit};
 
+    use super::JavaParseDiagnosticCode;
+
     #[test]
-    fn phase_eleven_structural_diagnostics_have_exact_syntax_owners() {
+    fn migrated_structural_diagnostics_have_exact_syntax_owners() {
         for source in [
             "package ;\nimport foo + lost;\nmodule m { +; requires ; exports p to ; opens p target; uses ; provides s with ; }\n+;",
             "module missing requires dependency; class After {}",
+            "native class C { int ; void f(, String... xs, int y) {} }",
         ] {
             let parse = parse_compilation_unit(source);
             let root = parse.syntax().expect("represented compilation unit");
@@ -245,15 +249,55 @@ mod tests {
                     JavaSyntaxKind::BogusCompilationUnitItem
                         | JavaSyntaxKind::BogusImportSuffix
                         | JavaSyntaxKind::BogusModuleDirective
+                        | JavaSyntaxKind::BogusFormalParameter
+                        | JavaSyntaxKind::BogusModifier
+                        | JavaSyntaxKind::BogusType
                 ) {
                     assert!(node.is_directly_malformed());
                     assert!(
                         owned_nodes.contains(&node.id()),
-                        "direct malformed Phase 11 owner has no diagnostic: {:?}",
+                        "direct malformed migrated owner has no diagnostic: {:?}",
                         node.kind()
                     );
                 }
             }
         }
+    }
+
+    #[test]
+    #[rustfmt::skip] // Keep the owner matrix one case per line.
+    fn phase_twelve_diagnostics_own_the_declared_node_or_slot() {
+        fn check(source: &str, code: jolt_diagnostics::DiagnosticCodeId, message: &str, kind: JavaSyntaxKind, slot: Option<u16>) {
+            let parse = parse_compilation_unit(source);
+            let root = parse.syntax().expect("represented compilation unit");
+            assert_exact_diagnostic_owner(
+                *root.syntax(), parse.diagnostics(), parse.structural_diagnostic_owners(),
+                code, message, kind, slot,
+            );
+        }
+        let expected = JavaParseDiagnosticCode::ExpectedSyntax.id();
+        let unexpected = JavaParseDiagnosticCode::UnexpectedSyntax.id();
+        macro_rules! slot { ($src:literal, $msg:literal, $kind:ident, $shape:ident, $slot:ident) => {
+            check($src, expected, $msg, JavaSyntaxKind::$kind, Some(crate::shape::$shape::Slot::$slot as u16));
+        }; }
+
+        slot!("interface {}", "expected type name", InterfaceDeclaration, interface_declaration, name);
+        slot!("class C extends {}", "expected type", ExtendsClause, extends_clause, types);
+        slot!("class C { int ; }", "expected variable name", VariableDeclarator, variable_declarator, name);
+        slot!("class C { <T>() {} }", "expected constructor name", ConstructorDeclaration, constructor_declaration, name);
+        slot!("class C { void (); }", "expected method name", MethodDeclaration, method_declaration, name);
+        slot!("class C { void f(String) {} }", "expected parameter name", FormalParameter, formal_parameter, name);
+        slot!("record R(int) {}", "expected record component name", RecordComponent, record_component, name);
+        slot!("@interface A { int (); }", "expected annotation element name", AnnotationElementDeclaration, annotation_element_declaration, name);
+        slot!("class C<T {}", "expected `>` after type parameters", TypeParameterList, type_parameter_list, close_angle);
+        slot!("@interface A { int value() default { 1", "expected `}` after annotation array initializer", AnnotationArrayInitializer, annotation_array_initializer, close_brace);
+        check("native class C {}", unexpected, "invalid type modifier", JavaSyntaxKind::BogusModifier, None);
+        check("class C { void f(public int x) {} }", unexpected, "invalid parameter modifier", JavaSyntaxKind::BogusModifier, None);
+        check("@interface A { A value() default @A(first,,second); }", expected, "expected annotation argument", JavaSyntaxKind::BogusAnnotationArgument, None);
+        check("class C<T extends int> {}", expected, "expected class or interface type", JavaSyntaxKind::BogusType, None);
+        check("class C { void f(String value, C this) {} }", JavaParseDiagnosticCode::MisplacedReceiverParameter.id(), "receiver parameter must be first", JavaSyntaxKind::BogusFormalParameter, None);
+        check("class C { void f(@A final C this) {} }", unexpected, "invalid receiver parameter modifier", JavaSyntaxKind::BogusFormalParameter, None);
+        check("class C { void f(C... this) {} }", unexpected, "invalid receiver parameter", JavaSyntaxKind::BogusFormalParameter, None);
+        check("class var {}", JavaParseDiagnosticCode::RestrictedTypeIdentifier.id(), "expected type name", JavaSyntaxKind::ClassDeclaration, None);
     }
 }

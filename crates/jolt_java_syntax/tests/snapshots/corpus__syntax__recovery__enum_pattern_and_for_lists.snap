@@ -113,7 +113,7 @@ CompilationUnit
                               TypePattern
                                 LocalVariableDeclaration
                                   ParameterModifierList
-                                  ErrorNode
+                                  BogusType
                                     AnnotationList
                                   VariableDeclaratorList
                                     VariableDeclarator

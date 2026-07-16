@@ -64,6 +64,9 @@ pub(crate) fn inline_modifier_prefix_from_docs<'source>(
     doc: &mut DocBuilder<'source>,
     annotation_docs: impl IntoIterator<Item = Doc<'source>>,
     modifier_entries: Vec<ModifierEntry<'source>>,
+    suppress_first_entry_leading: bool,
+    terminal_forces_line: bool,
+    append_terminal_line: bool,
 ) -> Doc<'source> {
     let modifier_entries = sorted_modifier_entries(modifier_entries);
     let mut has_docs = false;
@@ -77,13 +80,18 @@ pub(crate) fn inline_modifier_prefix_from_docs<'source>(
             docs.push(annotation);
         }
         let mut previous_is_structured = !docs.is_empty();
-        for entry in modifier_entries {
+        for (index, entry) in modifier_entries.into_iter().enumerate() {
             let entry_is_structured = entry.is_structured();
             if !docs.is_empty() && previous_is_structured && entry_is_structured {
                 let space = docs.space();
                 docs.push(space);
             }
-            let entry = format_modifier_entry(docs, &entry, LeadingComments::Preserve);
+            let leading = if suppress_first_entry_leading && index == 0 && docs.is_empty() {
+                LeadingComments::Suppress
+            } else {
+                LeadingComments::Preserve
+            };
+            let entry = format_modifier_entry(docs, &entry, leading);
             docs.push(entry);
             previous_is_structured = entry_is_structured;
         }
@@ -93,7 +101,12 @@ pub(crate) fn inline_modifier_prefix_from_docs<'source>(
     if !has_docs {
         return Doc::nil();
     }
-    if ends_with_structured {
+    if append_terminal_line {
+        let line = doc.hard_line();
+        doc_concat!(doc, [docs, line])
+    } else if terminal_forces_line {
+        docs
+    } else if ends_with_structured {
         let space = doc.space();
         doc_concat!(doc, [docs, space])
     } else {

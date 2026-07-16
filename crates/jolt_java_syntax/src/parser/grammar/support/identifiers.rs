@@ -1,18 +1,22 @@
 // Handles Java identifier roles that depend on parser context.
 use super::{JavaParserExt, JavaSyntaxKind, Parser};
-use jolt_syntax::UnresolvedDiagnosticOwner;
+use jolt_syntax::{NodeAnchor, UnresolvedDiagnosticOwner};
 
 impl Parser<'_> {
-    pub(in crate::parser::grammar) fn expect_type_identifier(&mut self, message: &str) {
+    pub(in crate::parser::grammar) fn expect_type_identifier(
+        &mut self,
+        message: &str,
+        owner: NodeAnchor,
+        slot: u16,
+    ) {
         if self.at_type_identifier() {
             self.bump();
         } else if self.at_name_segment() {
-            let error = self.start();
-            self.restricted_type_identifier_here(message);
+            let diagnostic = self.restricted_type_identifier_here(message);
+            self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(owner));
             self.bump();
-            self.complete(error, JavaSyntaxKind::ErrorNode);
         } else {
-            self.expected_here(message);
+            self.expected_owned_slot(message, owner, slot);
         }
     }
 
@@ -24,11 +28,43 @@ impl Parser<'_> {
         }
     }
 
+    pub(in crate::parser::grammar) fn expect_named_identifier_owned(
+        &mut self,
+        message: &str,
+        owner: NodeAnchor,
+        slot: u16,
+    ) {
+        if self.at_name_segment() {
+            self.bump();
+        } else {
+            self.expected_owned_slot(message, owner, slot);
+        }
+    }
+
     pub(in crate::parser::grammar) fn expect_variable_identifier(&mut self, message: &str) {
         if self.at_variable_identifier() {
             self.bump();
         } else {
             self.expected_here(message);
+        }
+    }
+
+    pub(in crate::parser::grammar) fn expect_variable_identifier_owned(
+        &mut self,
+        message: &str,
+        owner: NodeAnchor,
+        slot: u16,
+        allow_unnamed: bool,
+    ) {
+        let accepted = if allow_unnamed {
+            self.at_variable_identifier()
+        } else {
+            self.at_name_segment()
+        };
+        if accepted {
+            self.bump();
+        } else {
+            self.expected_owned_slot(message, owner, slot);
         }
     }
 

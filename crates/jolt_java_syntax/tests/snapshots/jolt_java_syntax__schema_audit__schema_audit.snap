@@ -3,16 +3,16 @@ source: crates/jolt_java_syntax/src/schema_audit.rs
 expression: audit.render()
 ---
 language = java
-fixture_files = 403
-diagnostic_fixture_files = 151
-audited_nodes = 24352
-exact_valid_shapes = 24049
-malformed_nodes = 200
+fixture_files = 404
+diagnostic_fixture_files = 152
+audited_nodes = 24367
+exact_valid_shapes = 24069
+malformed_nodes = 194
 clean_missing_required_shapes = 0
-diagnostic_missing_required_shapes = 92
+diagnostic_missing_required_shapes = 94
 clean_unexpected_shapes = 0
-diagnostic_unexpected_shapes = 11
-error_node_owners = 94
+diagnostic_unexpected_shapes = 10
+error_node_owners = 69
 
 [clean_missing_required]
 
@@ -85,12 +85,14 @@ syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: F
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: VariableDeclarator occurrence 2 ()
 syntax__parser__disambiguates_when_in_switch_labels__invalid_guard: SwitchLabelItemList occurrence 1 (CaseConstant ErrorNode)
 syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: MethodDeclaration occurrence 1 (VoidType Identifier("method") LParen("(") FormalParameterList Block)
-syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: FormalParameter occurrence 1 (ParameterModifierList ErrorNode AnnotationList)
+syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: FormalParameter occurrence 1 (ParameterModifierList BogusType AnnotationList)
 syntax__parser__recovers_malformed_nested_generic_member: VariableDeclarator occurrence 1 ()
 syntax__parser__recovers_missing_declaration_names: ConstructorDeclaration occurrence 1 (TypeParameterList LParen("(") RParen(")") ConstructorBody)
 syntax__parser__recovers_missing_declaration_names: MethodDeclaration occurrence 1 (VoidType LParen("(") RParen(")") Block)
 syntax__parser__recovers_missing_declaration_names: AnnotationElementDeclaration occurrence 1 (PrimitiveType LParen("(") RParen(")") Semicolon(";"))
 syntax__parser__recovers_missing_declaration_names: EnumConstant occurrence 1 (AnnotationList)
+syntax__recovery__empty_clauses: ExtendsClause occurrence 1 (ExtendsKw("extends"))
+syntax__recovery__empty_clauses: ThrowsClause occurrence 1 (ThrowsKw("throws"))
 syntax__recovery__empty_clauses: ModuleNameList occurrence 1 ()
 syntax__recovery__empty_clauses: ModuleNameList occurrence 2 ()
 syntax__recovery__enum_pattern_and_for_lists: EnumConstant occurrence 2 (AnnotationList)
@@ -104,11 +106,11 @@ syntax__recovery__module_recovery_barriers: ModuleTargetClause occurrence 3 (Mod
 syntax__recovery__module_recovery_barriers: ModuleImplementationClause occurrence 1 (ModuleNameList)
 syntax__recovery__phase_11_incomplete_module_directive: RequiresDirective occurrence 1 (Identifier("requires") RequiresModifierList Semicolon(";"))
 syntax__recovery__phase_11_malformed_import_pieces: ImportDeclaration occurrence 1 (ImportKw("import") Semicolon(";"))
+syntax__recovery__phase_12_variable_declarators: VariableDeclarator occurrence 2 ()
 syntax__recovery__qualifier_dots_without_qualifiers: ConstructorInvocation occurrence 1 (TypeArgumentList ErrorNode Semicolon(";"))
 syntax__recovery__switch_and_module_lists: SwitchLabelItemList occurrence 1 (CaseConstant Comma(",") Comma(",") CaseConstant)
 syntax__recovery__switch_and_module_lists: ModuleNameList occurrence 1 (Name Comma(",") Comma(",") Name)
 syntax__recovery__type_annotation_and_parameter_lists: TypeParameter occurrence 2 (AnnotationList)
-syntax__recovery__type_annotation_and_parameter_lists: FormalParameter occurrence 2 (ParameterModifierList ErrorNode AnnotationList)
 
 [clean_unexpected]
 
@@ -123,21 +125,14 @@ syntax__recovery__missing_type_body_token: ClassBody occurrence 1 has valid kind
 syntax__recovery__qualifier_dots_without_qualifiers: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=15, tokens=6, children=6] (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode Semicolon(";"))
 syntax__recovery__qualifier_dots_without_qualifiers: ExpressionStatement occurrence 2 has valid kind with direct malformed ownership [bytes=7, tokens=3, children=3] (ErrorNode ErrorNode Semicolon(";"))
 syntax__recovery__qualifier_dots_without_qualifiers: ExpressionStatement occurrence 3 has valid kind with direct malformed ownership [bytes=8, tokens=3, children=3] (ErrorNode ErrorNode Semicolon(";"))
-syntax__recovery__wildcard_bounds_and_type_argument_annotations: WildcardType occurrence 1 has valid kind with direct malformed ownership [bytes=21, tokens=2, children=3] (Question("?") ExtendsKw("extends") ErrorNode)
 
 [error_node_ownership]
 syntax__parser__diagnoses_expression_try_with_resource: ErrorNode occurrence 1 owned by Resource
-syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 1 owned by TypeBoundList
-syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 2 owned by TypeList
+syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 1 owned by VariableDeclarator
+syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 2 owned by VariableDeclaratorList
 syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 3 owned by VariableDeclarator
 syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 4 owned by VariableDeclaratorList
-syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 5 owned by VariableDeclarator
-syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 6 owned by VariableDeclaratorList
-syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 7 owned by VariableDeclaratorList
-syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 8 owned by CatchTypeList
-syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 9 owned by ModifierList
-syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 10 owned by ModifierList
-syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 11 owned by ModifierList
+syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 5 owned by VariableDeclaratorList
 syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 1 owned by ExpressionStatement
 syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 2 owned by ExpressionStatement
 syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 3 owned by ExpressionStatement
@@ -153,7 +148,6 @@ syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 12 owne
 syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 13 owned by ObjectCreationExpression
 syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 14 owned by DimExpressionList
 syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 15 owned by ArrayCreationExpression
-syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 16 owned by InstanceofExpression
 syntax__parser__diagnoses_invalid_lambda_parameters: ErrorNode occurrence 1 owned by LambdaParameterList
 syntax__parser__diagnoses_invalid_lambda_parameters: ErrorNode occurrence 2 owned by LambdaParameterList
 syntax__parser__diagnoses_invalid_lambda_parameters: ErrorNode occurrence 3 owned by LambdaParameterList
@@ -168,16 +162,9 @@ syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: E
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: ErrorNode occurrence 3 owned by ClassBodyDeclaration
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: ErrorNode occurrence 4 owned by ClassBodyDeclaration
 syntax__parser__diagnoses_misplaced_explicit_constructor_invocations: ErrorNode occurrence 1 owned by ConstructorBodyEntryList
-syntax__parser__diagnoses_misplaced_receiver_parameter: ErrorNode occurrence 1 owned by FormalParameterList
 syntax__parser__disambiguates_when_in_switch_labels__invalid_guard: ErrorNode occurrence 1 owned by SwitchLabelItemList
 syntax__parser__recovers_from_invalid_void_field: ErrorNode occurrence 1 owned by ClassBodyDeclaration
-syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: ErrorNode occurrence 1 owned by FormalParameter
-syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: ErrorNode occurrence 2 owned by VariableInitializer
-syntax__parser__recovers_restricted_type_identifiers: ErrorNode occurrence 1 owned by ClassDeclaration
-syntax__parser__recovers_restricted_type_identifiers: ErrorNode occurrence 2 owned by ClassDeclaration
-syntax__parser__recovers_restricted_type_identifiers: ErrorNode occurrence 3 owned by ClassDeclaration
-syntax__parser__recovers_restricted_type_identifiers: ErrorNode occurrence 4 owned by RecordDeclaration
-syntax__parser__recovers_restricted_type_identifiers: ErrorNode occurrence 5 owned by InterfaceDeclaration
+syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: ErrorNode occurrence 1 owned by VariableInitializer
 syntax__parser__recovers_unqualified_yield_method_invocation: ErrorNode occurrence 1 owned by ExpressionStatement
 syntax__recovery__argument_list: ErrorNode occurrence 1 owned by ExpressionList
 syntax__recovery__binary_expression: ErrorNode occurrence 1 owned by ExpressionStatement
@@ -187,12 +174,8 @@ syntax__recovery__block_with_formatter_ignore: ErrorNode occurrence 1 owned by E
 syntax__recovery__block_with_formatter_ignore: ErrorNode occurrence 2 owned by UnaryExpression
 syntax__recovery__constructor_body: ErrorNode occurrence 1 owned by ExpressionStatement
 syntax__recovery__constructor_body: ErrorNode occurrence 2 owned by UnaryExpression
-syntax__recovery__enum_pattern_and_for_lists: ErrorNode occurrence 1 owned by LocalVariableDeclaration
+syntax__recovery__enum_pattern_and_for_lists: ErrorNode occurrence 1 owned by StatementExpressionList
 syntax__recovery__enum_pattern_and_for_lists: ErrorNode occurrence 2 owned by StatementExpressionList
-syntax__recovery__enum_pattern_and_for_lists: ErrorNode occurrence 3 owned by StatementExpressionList
-syntax__recovery__header_clauses: ErrorNode occurrence 1 owned by TypeList
-syntax__recovery__header_clauses: ErrorNode occurrence 2 owned by TypeList
-syntax__recovery__header_clauses: ErrorNode occurrence 3 owned by TypeList
 syntax__recovery__member_body_unowned_tokens: ErrorNode occurrence 1 owned by ClassBodyDeclaration
 syntax__recovery__member_body_with_formatter_ignore: ErrorNode occurrence 1 owned by ClassBodyDeclaration
 syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 1 owned by ConstructorInvocation
@@ -205,18 +188,11 @@ syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 7 owne
 syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 8 owned by ExpressionStatement
 syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 9 owned by ExpressionStatement
 syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 10 owned by ExpressionStatement
-syntax__recovery__recovered_declaration_names_and_modifiers: ErrorNode occurrence 1 owned by RecordDeclaration
-syntax__recovery__recovered_declaration_names_and_modifiers: ErrorNode occurrence 2 owned by ModifierList
 syntax__recovery__resource_and_catch_lists: ErrorNode occurrence 1 owned by Resource
 syntax__recovery__resource_and_catch_lists: ErrorNode occurrence 2 owned by BinaryExpression
-syntax__recovery__resource_and_catch_lists: ErrorNode occurrence 3 owned by TypeBarList
 syntax__recovery__switch_block_unowned_tokens: ErrorNode occurrence 1 owned by SwitchEntryList
 syntax__recovery__switch_block_unowned_tokens: ErrorNode occurrence 2 owned by ExpressionStatement
 syntax__recovery__switch_block_unowned_tokens: ErrorNode occurrence 3 owned by UnaryExpression
 syntax__recovery__switch_rule_empty_body: ErrorNode occurrence 1 owned by SwitchRule
 syntax__recovery__switch_statement_group: ErrorNode occurrence 1 owned by ExpressionStatement
 syntax__recovery__switch_statement_group: ErrorNode occurrence 2 owned by UnaryExpression
-syntax__recovery__type_annotation_and_parameter_lists: ErrorNode occurrence 1 owned by AnnotationElementValue
-syntax__recovery__type_annotation_and_parameter_lists: ErrorNode occurrence 2 owned by FormalParameter
-syntax__recovery__wildcard_bounds_and_type_argument_annotations: ErrorNode occurrence 1 owned by WildcardType
-syntax__recovery__wildcard_bounds_and_type_argument_annotations: ErrorNode occurrence 2 owned by TypeArgument

@@ -74,18 +74,11 @@ pub(crate) struct NameSortKey<'source> {
 }
 
 impl<'source> NameSortKey<'source> {
-    pub(crate) fn new(name: &NameSyntax<'source>, on_demand: bool) -> Self {
-        Self {
-            segments: name_identifier_texts(name).unwrap_or_default(),
+    pub(crate) fn new(name: &NameSyntax<'source>, on_demand: bool) -> Option<Self> {
+        Some(Self {
+            segments: name_identifier_texts(name)?,
             on_demand,
-        }
-    }
-
-    pub(crate) fn recovered() -> Self {
-        Self {
-            segments: Vec::new(),
-            on_demand: false,
-        }
+        })
     }
 
     fn chars(&self) -> impl Iterator<Item = char> + '_ {

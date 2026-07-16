@@ -368,7 +368,7 @@ CompilationUnit
                               NameExpression
                                 Identifier "x" @ 458..459 trailing=[Whitespace " "]
                               InstanceofKw "instanceof" @ 460..470 trailing=[Whitespace " "]
-                              ErrorNode
+                              BogusType
                                 PrimitiveType
                                   AnnotationList
                                   IntKw "int" @ 471..474

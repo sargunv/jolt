@@ -8,7 +8,7 @@
 schema = 1
 baseline_commit = "2197128"
 verified_date = "2026-07-12"
-fixture_count = 48
+fixture_count = 49
 inline_regression_count = 2
 parser_fix_count = 27
 corpus_gate_count = 1
@@ -458,14 +458,24 @@ old_commit = "95d158c"
 owners = [{ phase = 11, scope = "duplicate package and module containers" }]
 
 [[fixture]]
-id = "old-p11-java-singletons"
+id = "old-p11-java-singleton-variable-declarators"
+language = "java"
+path = "fixtures/java/syntax/recovery/phase-12-variable-declarators.java"
+location = "current"
+old_phase = 11
+old_commit = "95d158c"
+owners = [
+  { phase = 12, scope = "variable declarators hidden by singleton assumptions" },
+]
+
+[[fixture]]
+id = "old-p11-java-singletons-remaining"
 language = "java"
 path = "fixtures/java/syntax/recovery/phase-11-singletons.java"
 location = "historical"
 old_phase = 11
 old_commit = "95d158c"
 owners = [
-  { phase = 12, scope = "variable declarators hidden by singleton assumptions" },
   { phase = 13, scope = "recovered enum entry pieces" },
   { phase = 14, scope = "lambda and array-creation siblings and dimensions" },
   { phase = 15, scope = "recovered switch labels" },
