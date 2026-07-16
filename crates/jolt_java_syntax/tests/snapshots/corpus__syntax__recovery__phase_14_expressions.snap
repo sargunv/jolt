@@ -228,9 +228,7 @@ CompilationUnit
                                 Identifier "item" @ 308..312
                               Comma "," @ 312..313 trailing=[Whitespace " ", BlockComment "/* lambda-parameter-sibling */", Whitespace " "]
                               LambdaParameter
-                                LambdaModifierList
-                                AnnotationList
-                              Comma "," @ 345..346
+                                Comma "," @ 345..346
                             RParen ")" @ 346..347 trailing=[Whitespace " "]
                             Arrow "->" @ 348..350 trailing=[Whitespace " "]
                             NameExpression
@@ -658,7 +656,7 @@ CompilationUnit
                                   LParen "(" @ 1153..1154
                                   ExpressionList
                                   RParen ")" @ 1154..1155
-                              Dot "." @ 1155..1156
+                            Dot "." @ 1155..1156
                             ClassKw "class" @ 1156..1161
                   Semicolon ";" @ 1161..1162
                 BlockStatement
@@ -690,7 +688,7 @@ CompilationUnit
                                 NameExpression
                                   Identifier "value" @ 1193..1198
                                 RParen ")" @ 1198..1199
-                              Dot "." @ 1199..1200
+                            Dot "." @ 1199..1200
                             ClassKw "class" @ 1200..1205
                   Semicolon ";" @ 1205..1206
                 BlockStatement
@@ -725,7 +723,7 @@ CompilationUnit
                                   RParen ")" @ 1247..1248
                                 Dot "." @ 1248..1249
                                 Identifier "field" @ 1249..1254
-                              Dot "." @ 1254..1255
+                            Dot "." @ 1254..1255
                             ClassKw "class" @ 1255..1260
                   Semicolon ";" @ 1260..1261
                 BlockStatement
@@ -767,7 +765,7 @@ CompilationUnit
                                     RParen ")" @ 1300..1301
                                 Dot "." @ 1301..1302
                                 Identifier "field" @ 1302..1307
-                              Dot "." @ 1307..1308
+                            Dot "." @ 1307..1308
                             ClassKw "class" @ 1308..1313
                   Semicolon ";" @ 1313..1314
                 BlockStatement
@@ -796,7 +794,7 @@ CompilationUnit
                             BogusClassLiteralTarget
                               LiteralExpression
                                 IntegerLiteral "1" @ 1338..1339 trailing=[Whitespace " "]
-                              Dot "." @ 1340..1341
+                            Dot "." @ 1340..1341
                             ClassKw "class" @ 1341..1346
                   Semicolon ";" @ 1346..1347
                 BlockStatement
@@ -830,7 +828,7 @@ CompilationUnit
                                   AnnotationList
                                   LBracket "[" @ 1377..1378
                                   RBracket "]" @ 1378..1379
-                              Dot "." @ 1379..1380
+                            Dot "." @ 1379..1380
                             ClassKw "class" @ 1380..1385
                   Semicolon ";" @ 1385..1386
               RBrace "}" @ 1389..1390 leading=[Newline "\n", Whitespace "  "]

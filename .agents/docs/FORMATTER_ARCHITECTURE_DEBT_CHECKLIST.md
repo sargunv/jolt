@@ -1469,6 +1469,54 @@ explain multiple cascading empty slots, and multiple diagnostics may share one
 smallest complete malformed owner. Java formatter, imported-corpus,
 conservation, idempotence, CLI, and dprint tests pass before commit.
 
+Implementation status: **implemented and quality-audited**. Every Java parser
+recovery cause now enters through `PendingDiagnostic` and is consumed by
+`complete_recovery`, `missing_required_slot`, or the explicit non-structural
+path. Java parser source contains no diagnostic ownership marker, mutating
+ownership call, unresolved-owner construction, legacy owned helper, plain
+structural `expect`, or ownerless grammar helper; an architecture gate rejects
+their reintroduction. The decimal integer boundary advisory is the sole
+intentionally ownerless Java parser diagnostic.
+
+The corpus-wide proof checks three directions against generated physical slots:
+every structural parser diagnostic has an owner, every owner names the exact
+directly malformed node or required empty slot, and every such invalid shape has
+a cause on that same node. It has no descendant-owner fallback. Atomic recovery
+of an otherwise schema-valid kind covers conditional grammar rules such as an
+`else` without a branch, restricted type identifiers, mixed lambda parameter
+forms, misplaced varargs, non-final type arguments, and invalid array-creation
+combinations. Primitive-type annotations are correctly optional in the Java
+schema and formatter, eliminating the three formerly clean required-slot
+mismatches.
+
+Diagnostic codes, messages, ranges, and ordering are unchanged except for two
+consecutive-comma switch labels that previously created required empty item
+slots without any cause. Those now receive one primary
+`expected switch label
+item` diagnostic at the missing item; this closes an
+undiagnosed recovery hole rather than adding a cascade diagnostic. Two
+inconsistent recovery boundaries are corrected: a class-literal dot remains in
+the complete class-literal owner instead of being swallowed by its bogus target,
+and a malformed lambda comma is represented by its malformed parameter instead
+of creating unowned empty slots in both the parameter and list. Bounded
+lookahead capture preserves the original class-token diagnostic ranges. No valid
+syntax or formatter snapshot changes. Reviewed malformed snapshots remain
+idempotent and conservative.
+
+Quality audit: the isolated Phase 25 stack passes the full Java syntax corpus,
+exact diagnostic ownership, parser loss/progress, normalization, Java formatter
+corpus, recovery snapshots, imported formatter idempotence and conservation,
+layout boundaries, trivia conservation, CLI tests and snapshots, dprint handler
+and wasm smoke tests, Rust 1.96 Java syntax and test-support library clippy,
+rustfmt, the Java legacy/ownerless-API architecture gate, and
+`git diff
+--check`. The unrelated pre-existing extension-comparison lint in the
+architecture-gate test remains outside this phase.
+
+Size: the isolated implementation projection is +32,954/-25,246 against
+`2197128`, net +7,708. The executable intermediate ceiling is updated to that
+value; Phase 29's all-implementation net-negative gate remains binding.
+
 ### New Phase 26: Kotlin Atomic Recovery Migration And Legacy Deletion
 
 Move every Kotlin structural diagnostic and recovery completion onto the same

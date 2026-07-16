@@ -149,7 +149,7 @@ fn format_primitive_type<'source>(
     leading_comments: LeadingComments,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let annotations = format_required_field(ty.annotations(), doc, |annotations, doc| {
+    let annotations = format_optional_field(ty.annotations(), doc, |annotations, doc| {
         format_inline_annotation_parts(annotations.parts(), doc)
     });
     let keyword = format_required_field(ty.keyword(), doc, |keyword, doc| {

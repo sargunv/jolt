@@ -381,6 +381,16 @@ macro_rules! java_audit_fixed_field {
 }
 
 #[cfg(test)]
+macro_rules! java_audit_required {
+    (required) => {
+        true
+    };
+    ($cardinality:ident) => {
+        false
+    };
+}
+
+#[cfg(test)]
 macro_rules! java_audit_node {
     ($node:ident, valid; $($field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)? $([$($policy:tt)*])?;)*) => {{
         let mut cursor = 0;
@@ -452,6 +462,25 @@ macro_rules! java_audit_node {
 }
 
 #[cfg(test)]
+macro_rules! java_required_slot {
+    ($slot:ident, valid; $($field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)? $([$($policy:tt)*])?;)*) => {
+        [$(java_audit_required!($cardinality)),*]
+            .get($slot)
+            .copied()
+            .unwrap_or(false)
+    };
+    ($slot:ident, constructed; $($fields:tt)*) => {
+        java_required_slot!($slot, valid; $($fields)*)
+    };
+    ($slot:ident, list; $($fields:tt)*) => {
+        true
+    };
+    ($slot:ident, malformed; $($fields:tt)*) => {
+        false
+    };
+}
+
+#[cfg(test)]
 macro_rules! define_java_physical_audit {
     (
         tokens { $($token:ident,)* }
@@ -467,6 +496,17 @@ macro_rules! define_java_physical_audit {
                 $(JavaSyntaxKind::$kind => java_audit_node!(node, $class; $($fields)*),)*
                 $(JavaSyntaxKind::$bogus => jolt_test_support::PhysicalNodeAudit::Malformed,)*
                 _ => jolt_test_support::PhysicalNodeAudit::Unexpected,
+            }
+        }
+
+        pub(crate) fn is_required_slot(
+            node: jolt_syntax::SyntaxNode<'_, crate::JavaLanguage>,
+            slot: usize,
+        ) -> bool {
+            match node.kind() {
+                $(JavaSyntaxKind::$kind => java_required_slot!(slot, $class; $($fields)*),)*
+                $(JavaSyntaxKind::$bogus => false,)*
+                _ => false,
             }
         }
     };

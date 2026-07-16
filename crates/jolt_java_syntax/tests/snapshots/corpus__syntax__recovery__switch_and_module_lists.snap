@@ -96,7 +96,9 @@ CompilationUnit
   Eof "" @ 136..136 leading=[Newline "\n"]
 
 diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=69..70 message="expected switch label item"
   code=java.parse.expected_syntax severity=Error stage=Parser range=129..130 message="expected identifier"
 
 diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(69), end: TextSize(70) }) message=expected switch label item
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(129), end: TextSize(130) }) message=expected identifier

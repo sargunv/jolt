@@ -70,7 +70,7 @@ class Phase14Expressions {
     java.util.function.Function<Integer, Integer> conciseRecovered =
       item /* lambda-concise-sibling */ @ -> item;
     java.util.function.Function<Integer, Integer> parenthesizedRecovered =
-      (item, /* lambda-parameter-sibling */ , ) -> item;
+      (item, /* lambda-parameter-sibling */ ,) -> item;
     java.util.function.Function<Integer, Integer> trailingLineComment =
       (first,
       second // lambda-last-parameter

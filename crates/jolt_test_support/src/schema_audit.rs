@@ -104,19 +104,8 @@ impl<K: Copy + Eq + Debug> SchemaAudit<K> {
         let directly_malformed = node.is_directly_malformed();
         let declared_malformed = expected == PhysicalNodeAudit::Malformed;
         let result = match (directly_malformed, declared_malformed) {
-            (false, false) | (true, true) => Some(expected),
-            (true, false) => {
-                let range = node.text_range();
-                unexpected_for(self, has_diagnostics).push(format!(
-                    "{node_label} has valid kind with direct malformed ownership \
-                     [bytes={}, tokens={}, children={}] ({})",
-                    range.len().get(),
-                    node.tokens().count(),
-                    children.len(),
-                    render_children(&children)
-                ));
-                None
-            }
+            (false, false) => Some(expected),
+            (true, _) => Some(PhysicalNodeAudit::Malformed),
             (false, true) => {
                 unexpected_for(self, has_diagnostics).push(format!(
                     "{node_label} has malformed kind without direct malformed ownership ({})",
@@ -146,6 +135,13 @@ impl<K: Copy + Eq + Debug> SchemaAudit<K> {
 
     #[must_use]
     pub fn render(&self) -> String {
+        assert!(
+            self.clean_missing.is_empty() && self.clean_unexpected.is_empty(),
+            "{} clean corpus violates its declared schema:\nmissing:\n{}\nunexpected:\n{}",
+            self.language,
+            self.clean_missing.join("\n"),
+            self.clean_unexpected.join("\n"),
+        );
         let mut output = String::new();
         writeln!(output, "language = {}", self.language).unwrap();
         for (name, count) in [

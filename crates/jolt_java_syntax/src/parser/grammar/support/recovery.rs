@@ -1,22 +1,23 @@
 // Contains recovery paths for malformed syntax after a parser error is reported.
 use super::{JavaSyntaxKind, Parser};
-use jolt_syntax::UnresolvedDiagnosticOwner;
 
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn error_unexpected_top_level_token(&mut self) {
         let error = self.start();
-        let diagnostic = self.unexpected_here("unexpected token at top level");
-        self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(error.anchor()));
+        let diagnostic = self.pending_unexpected("unexpected token at top level");
         self.recover_top_level();
-        self.complete(error, JavaSyntaxKind::BogusCompilationUnitItem);
+        self.complete_recovery(
+            error,
+            JavaSyntaxKind::BogusCompilationUnitItem,
+            [diagnostic],
+        );
     }
 
     pub(in crate::parser::grammar) fn error_unexpected_module_token(&mut self) {
         let error = self.start();
-        let diagnostic = self.unexpected_here("unexpected token in module declaration");
-        self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(error.anchor()));
+        let diagnostic = self.pending_unexpected("unexpected token in module declaration");
         self.recover_module_directive();
-        self.complete(error, JavaSyntaxKind::BogusModuleDirective);
+        self.complete_recovery(error, JavaSyntaxKind::BogusModuleDirective, [diagnostic]);
     }
 
     pub(in crate::parser::grammar) fn recover_top_level(&mut self) {

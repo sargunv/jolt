@@ -966,7 +966,7 @@ macro_rules! java_syntax_schema {
                     expression: required (node_set [NameExpression, FieldAccessExpression]) => VariableAccessExpression;
                 }
                 PrimitiveType => PrimitiveType [primitive_type valid] {
-                    annotations: required (list AnnotationList);
+                    annotations: optional (list AnnotationList);
                     keyword: required (token_set [BooleanKw, ByteKw, CharKw, DoubleKw, FloatKw, IntKw, LongKw, ShortKw]);
                 }
                 VoidType => VoidType [void_type valid] {

@@ -120,8 +120,7 @@ class Phase15Statements {
   }
 
   void missingElse(boolean value) {
-    if (value) {
-    }else
+    if (value) {} else
   }
 
   void missingWhile(boolean value) {
@@ -177,6 +176,7 @@ code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange
 code=java.parse.invalid_switch_guard severity=Error stage=Parser range=Some(TextRange { start: TextSize(856), end: TextSize(860) }) message=switch guard requires a pattern
 code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(908), end: TextSize(909) }) message=unexpected token in case constant
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(960), end: TextSize(961) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1014), end: TextSize(1015) }) message=expected switch label item
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1069), end: TextSize(1070) }) message=expected expression
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1071), end: TextSize(1072) }) message=expected expression
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1090), end: TextSize(1091) }) message=expected `:` in conditional expression

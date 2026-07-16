@@ -5,18 +5,15 @@ expression: audit.render()
 language = java
 fixture_files = 410
 diagnostic_fixture_files = 158
-audited_nodes = 25058
-exact_valid_shapes = 24718
-malformed_nodes = 219
-clean_missing_required_shapes = 3
-diagnostic_missing_required_shapes = 118
+audited_nodes = 25056
+exact_valid_shapes = 24711
+malformed_nodes = 235
+clean_missing_required_shapes = 0
+diagnostic_missing_required_shapes = 110
 clean_unexpected_shapes = 0
 diagnostic_unexpected_shapes = 0
 
 [clean_missing_required]
-style__expressions__casts_instanceof_arrays: PrimitiveType occurrence 7 (IntKw("int"))
-syntax__parser__parses_primitive_and_void_class_literals: PrimitiveType occurrence 1 (IntKw("int"))
-syntax__parser__parses_primitive_and_void_class_literals: PrimitiveType occurrence 2 (BooleanKw("boolean"))
 
 [diagnostic_missing_required]
 syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_context: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
@@ -109,15 +106,7 @@ syntax__recovery__phase_11_malformed_import_pieces: ImportDeclaration occurrence
 syntax__recovery__phase_12_variable_declarators: VariableDeclarator occurrence 2 ()
 syntax__recovery__phase_13_declarations: EnumConstant occurrence 2 (AnnotationList ArgumentList ClassBody)
 syntax__recovery__phase_13_declarations: EnumConstant occurrence 3 (AnnotationList)
-syntax__recovery__phase_14_expressions: LambdaParameterList occurrence 1 (LambdaParameter Comma(",") LambdaParameter Comma(","))
-syntax__recovery__phase_14_expressions: LambdaParameter occurrence 2 (LambdaModifierList AnnotationList)
 syntax__recovery__phase_14_expressions: ParenthesizedExpression occurrence 1 (LParen("(") RParen(")"))
-syntax__recovery__phase_14_expressions: ClassLiteralExpression occurrence 2 (BogusClassLiteralTarget ClassKw("class"))
-syntax__recovery__phase_14_expressions: ClassLiteralExpression occurrence 3 (BogusClassLiteralTarget ClassKw("class"))
-syntax__recovery__phase_14_expressions: ClassLiteralExpression occurrence 4 (BogusClassLiteralTarget ClassKw("class"))
-syntax__recovery__phase_14_expressions: ClassLiteralExpression occurrence 5 (BogusClassLiteralTarget ClassKw("class"))
-syntax__recovery__phase_14_expressions: ClassLiteralExpression occurrence 6 (BogusClassLiteralTarget ClassKw("class"))
-syntax__recovery__phase_14_expressions: ClassLiteralExpression occurrence 7 (BogusClassLiteralTarget ClassKw("class"))
 syntax__recovery__phase_14_expressions: TypePattern occurrence 4 (ParameterModifierList ClassType)
 syntax__recovery__phase_14_expressions: TypePattern occurrence 8 (ParameterModifierList ClassType)
 syntax__recovery__phase_15_statements: Annotation occurrence 1 (At("@"))

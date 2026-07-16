@@ -13,8 +13,12 @@ use jolt_syntax::{
 use serde::Deserialize;
 use unicode_width::UnicodeWidthStr;
 
+mod diagnostic_ownership;
 mod schema_audit;
 
+pub use diagnostic_ownership::{
+    assert_exact_structural_ownership, assert_exact_structural_ownership_requiring,
+};
 pub use schema_audit::{PhysicalNodeAudit, SchemaAudit};
 
 pub fn assert_bidirectional_diagnostic_ownership<L>(

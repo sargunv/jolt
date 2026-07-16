@@ -1,6 +1,6 @@
 // Handles Java identifier roles that depend on parser context.
 use super::{JavaParserExt, JavaSyntaxKind, Parser};
-use jolt_syntax::{NodeAnchor, UnresolvedDiagnosticOwner};
+use jolt_syntax::{NodeAnchor, PendingDiagnostic};
 
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn expect_type_identifier(
@@ -8,19 +8,22 @@ impl Parser<'_> {
         message: &str,
         owner: NodeAnchor,
         slot: u16,
-    ) {
+    ) -> Option<PendingDiagnostic> {
         if self.at_type_identifier() {
             self.bump();
+            None
         } else if self.at_name_segment() {
             let diagnostic = self.restricted_type_identifier_here(message);
-            self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(owner));
             self.bump();
+            Some(diagnostic)
         } else {
-            self.expected_owned_slot(message, owner, slot);
+            let diagnostic = self.pending_expected(message);
+            self.missing_required_slot(owner, slot, [diagnostic]);
+            None
         }
     }
 
-    pub(in crate::parser::grammar) fn expect_method_identifier_owned(
+    pub(in crate::parser::grammar) fn expect_method_identifier_required(
         &mut self,
         message: &str,
         owner: NodeAnchor,
@@ -29,11 +32,12 @@ impl Parser<'_> {
         if self.at_name_segment() {
             self.bump();
         } else {
-            self.expected_owned_slot(message, owner, slot);
+            let diagnostic = self.pending_expected(message);
+            self.missing_required_slot(owner, slot, [diagnostic]);
         }
     }
 
-    pub(in crate::parser::grammar) fn expect_named_identifier_owned(
+    pub(in crate::parser::grammar) fn expect_named_identifier_required(
         &mut self,
         message: &str,
         owner: NodeAnchor,
@@ -42,19 +46,12 @@ impl Parser<'_> {
         if self.at_name_segment() {
             self.bump();
         } else {
-            self.expected_owned_slot(message, owner, slot);
+            let diagnostic = self.pending_expected(message);
+            self.missing_required_slot(owner, slot, [diagnostic]);
         }
     }
 
-    pub(in crate::parser::grammar) fn expect_variable_identifier(&mut self, message: &str) {
-        if self.at_variable_identifier() {
-            self.bump();
-        } else {
-            self.expected_here(message);
-        }
-    }
-
-    pub(in crate::parser::grammar) fn expect_variable_identifier_owned(
+    pub(in crate::parser::grammar) fn expect_variable_identifier_required(
         &mut self,
         message: &str,
         owner: NodeAnchor,
@@ -69,38 +66,34 @@ impl Parser<'_> {
         if accepted {
             self.bump();
         } else {
-            self.expected_owned_slot(message, owner, slot);
+            let diagnostic = self.pending_expected(message);
+            self.missing_required_slot(owner, slot, [diagnostic]);
         }
     }
 
-    pub(in crate::parser::grammar) fn expect_named_variable_identifier(&mut self, message: &str) {
-        if self.at_name_segment() {
-            self.bump();
+    pub(in crate::parser::grammar) fn consume_qualified_name_required(
+        &mut self,
+        owner: NodeAnchor,
+        slot: u16,
+    ) -> bool {
+        if self.consume_qualified_name_contents() {
+            true
         } else {
-            self.expected_here(message);
+            let diagnostic = self.pending_expected("expected identifier");
+            self.missing_required_slot(owner, slot, [diagnostic]);
+            false
         }
     }
 
-    pub(in crate::parser::grammar) fn consume_qualified_name(&mut self) -> bool {
-        self.consume_qualified_name_with_owner(None)
+    pub(in crate::parser::grammar) fn consume_qualified_name_cause(
+        &mut self,
+    ) -> Option<PendingDiagnostic> {
+        (!self.consume_qualified_name_contents())
+            .then(|| self.pending_expected("expected identifier"))
     }
 
-    pub(in crate::parser::grammar) fn consume_qualified_name_owned(
-        &mut self,
-        owner: UnresolvedDiagnosticOwner,
-    ) -> bool {
-        self.consume_qualified_name_with_owner(Some(owner))
-    }
-
-    fn consume_qualified_name_with_owner(
-        &mut self,
-        owner: Option<UnresolvedDiagnosticOwner>,
-    ) -> bool {
+    fn consume_qualified_name_contents(&mut self) -> bool {
         if !self.at_name_segment() {
-            let diagnostic = self.expected_here("expected identifier");
-            if let Some(owner) = owner {
-                self.own_diagnostic(diagnostic, owner);
-            }
             return false;
         }
 

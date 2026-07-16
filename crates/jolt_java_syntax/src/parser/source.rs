@@ -1,6 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
-use jolt_syntax::{DiagnosticMarker, NodeAnchor};
+use jolt_syntax::{NodeAnchor, PendingDiagnostic};
 
 use crate::JavaSyntaxKind;
 use crate::language::JavaLanguage;
@@ -38,7 +38,20 @@ impl<'source> Parser<'source> {
         self.0.tokens_are_adjacent(index, count)
     }
 
-    pub(super) fn expect_contextual_owned(
+    pub(super) fn expect_required(
+        &mut self,
+        kind: JavaSyntaxKind,
+        message: &str,
+        owner: NodeAnchor,
+        slot: u16,
+    ) {
+        if !self.eat(kind) {
+            let diagnostic = self.pending_expected(message);
+            self.missing_required_slot(owner, slot, [diagnostic]);
+        }
+    }
+
+    pub(super) fn expect_contextual_required(
         &mut self,
         text: &str,
         message: &str,
@@ -46,7 +59,8 @@ impl<'source> Parser<'source> {
         slot: u16,
     ) {
         if !self.eat_contextual(text) {
-            self.expected_owned_slot(message, owner, slot);
+            let diagnostic = self.pending_expected(message);
+            self.missing_required_slot(owner, slot, [diagnostic]);
         }
     }
 }
@@ -66,26 +80,13 @@ impl DerefMut for Parser<'_> {
 }
 
 pub(super) trait JavaParserExt {
-    fn expect_contextual(&mut self, text: &str, message: &str);
     fn eat_contextual(&mut self, text: &str) -> bool;
     fn at_contextual(&mut self, text: &str) -> bool;
-    fn invalid_statement_expression_here(&mut self, message: &str) -> DiagnosticMarker;
-    fn invalid_resource_variable_access_here(&mut self, message: &str) -> DiagnosticMarker;
-    fn invalid_switch_guard_here(&mut self, message: &str) -> DiagnosticMarker;
-    fn unqualified_yield_method_invocation_here(&mut self, message: &str) -> DiagnosticMarker;
     fn decimal_integer_boundary_literal_here(&mut self, message: &str);
-    fn misplaced_receiver_parameter_here(&mut self, message: &str) -> DiagnosticMarker;
-    fn misplaced_constructor_invocation_here(&mut self, message: &str) -> DiagnosticMarker;
-    fn restricted_type_identifier_here(&mut self, message: &str) -> DiagnosticMarker;
+    fn restricted_type_identifier_here(&mut self, message: &str) -> PendingDiagnostic;
 }
 
 impl JavaParserExt for Parser<'_> {
-    fn expect_contextual(&mut self, text: &str, message: &str) {
-        if !self.eat_contextual(text) {
-            self.expected_here(message);
-        }
-    }
-
     fn eat_contextual(&mut self, text: &str) -> bool {
         if self.at_contextual(text) {
             self.bump();
@@ -99,54 +100,16 @@ impl JavaParserExt for Parser<'_> {
         self.current_kind() == JavaSyntaxKind::Identifier && self.current_text() == Some(text)
     }
 
-    fn invalid_statement_expression_here(&mut self, message: &str) -> DiagnosticMarker {
-        self.error_here(
-            JavaParseDiagnosticCode::InvalidStatementExpression.id(),
-            message,
-        )
-    }
-
-    fn invalid_resource_variable_access_here(&mut self, message: &str) -> DiagnosticMarker {
-        self.error_here(
-            JavaParseDiagnosticCode::InvalidResourceVariableAccess.id(),
-            message,
-        )
-    }
-
-    fn invalid_switch_guard_here(&mut self, message: &str) -> DiagnosticMarker {
-        self.error_here(JavaParseDiagnosticCode::InvalidSwitchGuard.id(), message)
-    }
-
-    fn unqualified_yield_method_invocation_here(&mut self, message: &str) -> DiagnosticMarker {
-        self.error_here(
-            JavaParseDiagnosticCode::UnqualifiedYieldMethodInvocation.id(),
-            message,
-        )
-    }
-
     fn decimal_integer_boundary_literal_here(&mut self, message: &str) {
-        self.error_here(
+        let diagnostic = self.pending_error(
             JavaParseDiagnosticCode::DecimalIntegerBoundaryLiteral.id(),
             message,
         );
+        self.report_non_structural(diagnostic);
     }
 
-    fn misplaced_receiver_parameter_here(&mut self, message: &str) -> DiagnosticMarker {
-        self.error_here(
-            JavaParseDiagnosticCode::MisplacedReceiverParameter.id(),
-            message,
-        )
-    }
-
-    fn misplaced_constructor_invocation_here(&mut self, message: &str) -> DiagnosticMarker {
-        self.error_here(
-            JavaParseDiagnosticCode::MisplacedConstructorInvocation.id(),
-            message,
-        )
-    }
-
-    fn restricted_type_identifier_here(&mut self, message: &str) -> DiagnosticMarker {
-        self.error_here(
+    fn restricted_type_identifier_here(&mut self, message: &str) -> PendingDiagnostic {
+        self.pending_error(
             JavaParseDiagnosticCode::RestrictedTypeIdentifier.id(),
             message,
         )

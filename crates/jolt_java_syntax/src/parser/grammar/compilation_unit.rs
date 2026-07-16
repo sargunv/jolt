@@ -1,5 +1,5 @@
 use super::{JavaParserExt, JavaSyntaxKind, ParseEvents, Parser};
-use jolt_syntax::{NodeAnchor, UnresolvedDiagnosticOwner};
+use jolt_syntax::NodeAnchor;
 
 impl Parser<'_> {
     pub(in crate::parser) fn parse_compilation_unit(mut self) -> ParseEvents {
@@ -36,17 +36,17 @@ impl Parser<'_> {
         let package = self.start();
         let owner = package.anchor();
         self.parse_annotations();
-        self.expect_owned(
+        self.expect_required(
             JavaSyntaxKind::PackageKw,
             "expected `package`",
             owner,
             crate::shape::package_declaration::Slot::package_keyword as u16,
         );
-        self.consume_qualified_name_owned(UnresolvedDiagnosticOwner::missing_slot(
+        self.consume_qualified_name_required(
             owner,
             crate::shape::package_declaration::Slot::name as u16,
-        ));
-        self.expect_owned(
+        );
+        self.expect_required(
             JavaSyntaxKind::Semicolon,
             "expected `;` after package declaration",
             owner,
@@ -58,7 +58,7 @@ impl Parser<'_> {
     pub(super) fn parse_import_declaration(&mut self) {
         let import = self.start();
         let owner = import.anchor();
-        self.expect_owned(
+        self.expect_required(
             JavaSyntaxKind::ImportKw,
             "expected `import`",
             owner,
@@ -67,11 +67,11 @@ impl Parser<'_> {
 
         if self.at_contextual("module") && self.nth_is_name_segment(1) {
             self.bump();
-            self.consume_qualified_name_owned(UnresolvedDiagnosticOwner::missing_slot(
+            self.consume_qualified_name_required(
                 owner,
                 crate::shape::import_declaration::Slot::name as u16,
-            ));
-            self.expect_owned(
+            );
+            self.expect_required(
                 JavaSyntaxKind::Semicolon,
                 "expected `;` after module import",
                 owner,
@@ -82,10 +82,10 @@ impl Parser<'_> {
         }
 
         self.eat(JavaSyntaxKind::StaticKw);
-        if self.consume_qualified_name_owned(UnresolvedDiagnosticOwner::missing_slot(
+        if self.consume_qualified_name_required(
             owner,
             crate::shape::import_declaration::Slot::name as u16,
-        )) && self.at(JavaSyntaxKind::Dot)
+        ) && self.at(JavaSyntaxKind::Dot)
             && self.nth_kind(1) == JavaSyntaxKind::Star
         {
             self.bump();
@@ -93,17 +93,16 @@ impl Parser<'_> {
         }
         if !self.at_eof() && !self.at(JavaSyntaxKind::Semicolon) {
             let suffix = self.start();
-            let diagnostic = self.unexpected_here("unexpected token in import declaration");
-            self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(suffix.anchor()));
+            let diagnostic = self.pending_unexpected("unexpected token in import declaration");
             while !self.at_eof()
                 && !self.at(JavaSyntaxKind::Semicolon)
                 && !self.at_program_item_recovery_boundary()
             {
                 self.bump();
             }
-            self.complete(suffix, JavaSyntaxKind::BogusImportSuffix);
+            self.complete_recovery(suffix, JavaSyntaxKind::BogusImportSuffix, [diagnostic]);
         }
-        self.expect_owned(
+        self.expect_required(
             JavaSyntaxKind::Semicolon,
             "expected `;` after import declaration",
             owner,
@@ -117,26 +116,24 @@ impl Parser<'_> {
         let owner = module.anchor();
         self.parse_annotations();
         self.eat_contextual("open");
-        self.expect_contextual_owned(
+        self.expect_contextual_required(
             "module",
             "expected `module`",
             owner,
             crate::shape::module_declaration::Slot::module_keyword as u16,
         );
-        self.consume_qualified_name_owned(UnresolvedDiagnosticOwner::missing_slot(
+        self.consume_qualified_name_required(
             owner,
             crate::shape::module_declaration::Slot::name as u16,
-        ));
+        );
 
         let has_open_brace = self.eat(JavaSyntaxKind::LBrace);
         if !has_open_brace {
-            let diagnostic = self.expected_here("expected module body");
-            self.own_diagnostic(
-                diagnostic,
-                UnresolvedDiagnosticOwner::missing_slot(
-                    owner,
-                    crate::shape::module_declaration::Slot::open_brace as u16,
-                ),
+            let diagnostic = self.pending_expected("expected module body");
+            self.missing_required_slot(
+                owner,
+                crate::shape::module_declaration::Slot::open_brace as u16,
+                [diagnostic],
             );
         }
         let directives = self.start();
@@ -154,7 +151,7 @@ impl Parser<'_> {
             }
         }
         self.complete(directives, JavaSyntaxKind::ModuleDirectiveList);
-        self.expect_owned(
+        self.expect_required(
             JavaSyntaxKind::RBrace,
             "expected `}` after module declaration",
             owner,
@@ -167,7 +164,7 @@ impl Parser<'_> {
     pub(super) fn parse_module_directive(&mut self) {
         let directive = self.start();
         let owner = directive.anchor();
-        let kind = match self.current_text() {
+        let (kind, recovery) = match self.current_text() {
             Some("requires") => {
                 self.bump();
                 let modifiers = self.start();
@@ -181,99 +178,108 @@ impl Parser<'_> {
                     self.bump();
                 }
                 self.complete(modifiers, JavaSyntaxKind::RequiresModifierList);
-                self.consume_qualified_name_owned(UnresolvedDiagnosticOwner::missing_slot(
+                self.consume_qualified_name_required(
                     owner,
                     crate::shape::requires_directive::Slot::module as u16,
-                ));
-                self.expect_owned(
+                );
+                self.expect_required(
                     JavaSyntaxKind::Semicolon,
                     "expected `;` after requires directive",
                     owner,
                     crate::shape::requires_directive::Slot::semicolon as u16,
                 );
-                JavaSyntaxKind::RequiresDirective
+                (JavaSyntaxKind::RequiresDirective, None)
             }
             Some("exports") => {
                 self.bump();
-                self.consume_qualified_name_owned(UnresolvedDiagnosticOwner::missing_slot(
+                self.consume_qualified_name_required(
                     owner,
                     crate::shape::exports_directive::Slot::package as u16,
-                ));
+                );
                 self.parse_optional_module_target_clause();
-                self.expect_owned(
+                self.expect_required(
                     JavaSyntaxKind::Semicolon,
                     "expected `;` after exports directive",
                     owner,
                     crate::shape::exports_directive::Slot::semicolon as u16,
                 );
-                JavaSyntaxKind::ExportsDirective
+                (JavaSyntaxKind::ExportsDirective, None)
             }
             Some("opens") => {
                 self.bump();
-                self.consume_qualified_name_owned(UnresolvedDiagnosticOwner::missing_slot(
+                self.consume_qualified_name_required(
                     owner,
                     crate::shape::opens_directive::Slot::package as u16,
-                ));
+                );
                 self.parse_optional_module_target_clause();
-                self.expect_owned(
+                self.expect_required(
                     JavaSyntaxKind::Semicolon,
                     "expected `;` after opens directive",
                     owner,
                     crate::shape::opens_directive::Slot::semicolon as u16,
                 );
-                JavaSyntaxKind::OpensDirective
+                (JavaSyntaxKind::OpensDirective, None)
             }
             Some("uses") => {
                 self.bump();
-                self.consume_qualified_name_owned(UnresolvedDiagnosticOwner::missing_slot(
+                self.consume_qualified_name_required(
                     owner,
                     crate::shape::uses_directive::Slot::service as u16,
-                ));
-                self.expect_owned(
+                );
+                self.expect_required(
                     JavaSyntaxKind::Semicolon,
                     "expected `;` after uses directive",
                     owner,
                     crate::shape::uses_directive::Slot::semicolon as u16,
                 );
-                JavaSyntaxKind::UsesDirective
+                (JavaSyntaxKind::UsesDirective, None)
             }
             Some("provides") => {
                 self.parse_provides_directive_rest(owner);
-                JavaSyntaxKind::ProvidesDirective
+                (JavaSyntaxKind::ProvidesDirective, None)
             }
             _ => {
-                let diagnostic = self.expected_here("expected module directive");
-                self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(owner));
+                let diagnostic = self.pending_expected("expected module directive");
                 self.recover_module_directive();
-                JavaSyntaxKind::BogusModuleDirective
+                (JavaSyntaxKind::BogusModuleDirective, Some(diagnostic))
             }
         };
-        self.complete(directive, kind);
+        if let Some(diagnostic) = recovery {
+            self.complete_recovery(directive, kind, [diagnostic]);
+        } else {
+            self.complete(directive, kind);
+        }
     }
 
     fn parse_provides_directive_rest(&mut self, owner: NodeAnchor) {
         self.bump();
-        self.consume_qualified_name_owned(UnresolvedDiagnosticOwner::missing_slot(
+        self.consume_qualified_name_required(
             owner,
             crate::shape::provides_directive::Slot::service as u16,
-        ));
+        );
         let implementation = self.start();
         let implementation_owner = implementation.anchor();
-        self.expect_contextual_owned(
+        self.expect_contextual_required(
             "with",
             "expected `with` in provides directive",
             implementation_owner,
             crate::shape::module_implementation_clause::Slot::with_keyword as u16,
         );
         let implementations = self.start();
-        let list_owner = UnresolvedDiagnosticOwner::node(implementations.anchor());
-        self.consume_qualified_name_owned(list_owner);
+        let list_owner = implementations.anchor();
+        let mut item_slot = 0;
+        if let Some(diagnostic) = self.consume_qualified_name_cause() {
+            self.missing_required_slot(list_owner, item_slot, [diagnostic]);
+        }
         while self.eat(JavaSyntaxKind::Comma) {
-            self.consume_qualified_name_owned(list_owner);
+            item_slot += 2;
+            if let Some(diagnostic) = self.consume_qualified_name_cause() {
+                self.missing_required_slot(list_owner, item_slot, [diagnostic]);
+            }
         }
         self.complete(implementations, JavaSyntaxKind::ModuleNameList);
         self.complete(implementation, JavaSyntaxKind::ModuleImplementationClause);
-        self.expect_owned(
+        self.expect_required(
             JavaSyntaxKind::Semicolon,
             "expected `;` after provides directive",
             owner,
@@ -288,17 +294,23 @@ impl Parser<'_> {
 
         let clause = self.start();
         let owner = clause.anchor();
-        self.expect_contextual_owned(
+        self.expect_contextual_required(
             "to",
             "expected `to` before module target list",
             owner,
             crate::shape::module_target_clause::Slot::to_keyword as u16,
         );
         let modules = self.start();
-        let modules_owner = UnresolvedDiagnosticOwner::node(modules.anchor());
-        self.consume_qualified_name_owned(modules_owner);
+        let list_owner = modules.anchor();
+        let mut item_slot = 0;
+        if let Some(diagnostic) = self.consume_qualified_name_cause() {
+            self.missing_required_slot(list_owner, item_slot, [diagnostic]);
+        }
         while self.eat(JavaSyntaxKind::Comma) {
-            self.consume_qualified_name_owned(modules_owner);
+            item_slot += 2;
+            if let Some(diagnostic) = self.consume_qualified_name_cause() {
+                self.missing_required_slot(list_owner, item_slot, [diagnostic]);
+            }
         }
         self.complete(modules, JavaSyntaxKind::ModuleNameList);
         self.complete(clause, JavaSyntaxKind::ModuleTargetClause);
