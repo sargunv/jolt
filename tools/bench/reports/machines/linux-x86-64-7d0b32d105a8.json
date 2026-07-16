@@ -1,0 +1,429 @@
+{
+  "build": {
+    "profile": "release",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)\nbinary: rustc\ncommit-hash: ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96\ncommit-date: 2026-05-25\nhost: x86_64-unknown-linux-gnu\nrelease: 1.96.0\nLLVM version: 22.1.2",
+    "target": "x86_64-unknown-linux-gnu"
+  },
+  "corpora": {
+    "kotlin-realistic": {
+      "manifest": {
+        "files": 485,
+        "sha256": "b7b2c47ddd84f206be83afb627ed9ac1286db05d4bb647e983123562e780c13a",
+        "source_bytes": 1017583
+      },
+      "stages": {
+        "end-to-end": {
+          "allocations": {
+            "samples": [
+              {
+                "bytes_max": 1251960,
+                "bytes_total": 78603284,
+                "count_max": 100,
+                "count_total": 43911
+              },
+              {
+                "bytes_max": 1251960,
+                "bytes_total": 78603284,
+                "count_max": 100,
+                "count_total": 43911
+              },
+              {
+                "bytes_max": 1251960,
+                "bytes_total": 78603284,
+                "count_max": 100,
+                "count_total": 43911
+              }
+            ],
+            "summary": {
+              "bytes_max": 1251960.0,
+              "bytes_total": 78603284.0,
+              "count_max": 100.0,
+              "count_total": 43911.0
+            },
+            "warmups": 1
+          },
+          "commands": {
+            "allocations": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-allocations --corpus /home/sargunv/Projects/jolt/tools/import/.imports/maplibre-compose/source --language kotlin --mode end-to-end --measurement allocations --samples 3 --warmups 1",
+            "memory": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /home/sargunv/Projects/jolt/tools/import/.imports/maplibre-compose/source --language kotlin --mode end-to-end --measurement memory",
+            "timing": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /home/sargunv/Projects/jolt/tools/import/.imports/maplibre-compose/source --language kotlin --mode end-to-end --measurement timing --samples 10 --warmups 2"
+          },
+          "peak_rss_bytes": 5320704,
+          "timing": {
+            "samples_ns": [
+              33490107,
+              33508803,
+              34061762,
+              34759664,
+              35103900,
+              34876584,
+              34870862,
+              34880631,
+              33353652,
+              33431948
+            ],
+            "summary": {
+              "median_absolute_deviation_ns": 581552.5,
+              "median_ns": 34410713.0
+            },
+            "warmups": 2
+          }
+        },
+        "format": {
+          "allocations": {
+            "samples": [
+              {
+                "bytes_max": 947828,
+                "bytes_total": 45812956,
+                "count_max": 96,
+                "count_total": 39570
+              },
+              {
+                "bytes_max": 947828,
+                "bytes_total": 45812956,
+                "count_max": 96,
+                "count_total": 39570
+              },
+              {
+                "bytes_max": 947828,
+                "bytes_total": 45812956,
+                "count_max": 96,
+                "count_total": 39570
+              }
+            ],
+            "summary": {
+              "bytes_max": 947828.0,
+              "bytes_total": 45812956.0,
+              "count_max": 96.0,
+              "count_total": 39570.0
+            },
+            "warmups": 1
+          },
+          "commands": {
+            "allocations": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-allocations --corpus /home/sargunv/Projects/jolt/tools/import/.imports/maplibre-compose/source --language kotlin --mode format --measurement allocations --samples 3 --warmups 1",
+            "memory": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /home/sargunv/Projects/jolt/tools/import/.imports/maplibre-compose/source --language kotlin --mode format --measurement memory",
+            "timing": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /home/sargunv/Projects/jolt/tools/import/.imports/maplibre-compose/source --language kotlin --mode format --measurement timing --samples 10 --warmups 2"
+          },
+          "peak_rss_bytes": 21606400,
+          "timing": {
+            "samples_ns": [
+              22056530,
+              21906829,
+              22058454,
+              21860572,
+              21867405,
+              22058635,
+              22449769,
+              22319896,
+              22148343,
+              22159474
+            ],
+            "summary": {
+              "median_absolute_deviation_ns": 126322.5,
+              "median_ns": 22058544.5
+            },
+            "warmups": 2
+          }
+        },
+        "parse": {
+          "allocations": {
+            "samples": [
+              {
+                "bytes_max": 666340,
+                "bytes_total": 32790328,
+                "count_max": 8,
+                "count_total": 4341
+              },
+              {
+                "bytes_max": 666340,
+                "bytes_total": 32790328,
+                "count_max": 8,
+                "count_total": 4341
+              },
+              {
+                "bytes_max": 666340,
+                "bytes_total": 32790328,
+                "count_max": 8,
+                "count_total": 4341
+              }
+            ],
+            "summary": {
+              "bytes_max": 666340.0,
+              "bytes_total": 32790328.0,
+              "count_max": 8.0,
+              "count_total": 4341.0
+            },
+            "warmups": 1
+          },
+          "commands": {
+            "allocations": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-allocations --corpus /home/sargunv/Projects/jolt/tools/import/.imports/maplibre-compose/source --language kotlin --mode parse --measurement allocations --samples 3 --warmups 1",
+            "memory": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /home/sargunv/Projects/jolt/tools/import/.imports/maplibre-compose/source --language kotlin --mode parse --measurement memory",
+            "timing": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /home/sargunv/Projects/jolt/tools/import/.imports/maplibre-compose/source --language kotlin --mode parse --measurement timing --samples 10 --warmups 2"
+          },
+          "peak_rss_bytes": 4300800,
+          "timing": {
+            "samples_ns": [
+              13829660,
+              13966397,
+              14049743,
+              14076624,
+              14072676,
+              14081023,
+              14038562,
+              14023804,
+              14081113,
+              14051346
+            ],
+            "summary": {
+              "median_absolute_deviation_ns": 26410.0,
+              "median_ns": 14050544.5
+            },
+            "warmups": 2
+          }
+        }
+      },
+      "structure": {
+        "document": {
+          "children": 87338,
+          "logical_bytes": 16559672,
+          "nodes": 405258,
+          "reserved_bytes": 24759216
+        },
+        "normalized": {
+          "document_nodes_per_token": 2.589193644222107,
+          "end_to_end_ns_per_token": 219.85006932065755,
+          "format_ns_per_token": 140.93205617209412,
+          "parse_ns_per_token": 89.76893859531431,
+          "tree_reserved_bytes_per_node": 80.65632162889693,
+          "tree_reserved_bytes_per_token": 121.17746727234393
+        },
+        "syntax": {
+          "children": 484546,
+          "logical_bytes": 14824280,
+          "nodes": 235153,
+          "reserved_bytes": 18966576,
+          "tokens": 156519,
+          "trivia": 83391
+        }
+      }
+    },
+    "realistic": {
+      "manifest": {
+        "files": 9206,
+        "sha256": "d6d96ec262f7e4a0639eb5076c9cec65977877ebe11a0bc8c18f133dbba09b6a",
+        "source_bytes": 52549613
+      },
+      "stages": {
+        "end-to-end": {
+          "allocations": {
+            "samples": [
+              {
+                "bytes_max": 18986056,
+                "bytes_total": 3292944687,
+                "count_max": 1175,
+                "count_total": 1641691
+              },
+              {
+                "bytes_max": 18986056,
+                "bytes_total": 3292944687,
+                "count_max": 1175,
+                "count_total": 1641691
+              },
+              {
+                "bytes_max": 18986056,
+                "bytes_total": 3292944687,
+                "count_max": 1175,
+                "count_total": 1641691
+              }
+            ],
+            "summary": {
+              "bytes_max": 18986056.0,
+              "bytes_total": 3292944687.0,
+              "count_max": 1175.0,
+              "count_total": 1641691.0
+            },
+            "warmups": 1
+          },
+          "commands": {
+            "allocations": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-allocations --corpus /home/sargunv/Projects/jolt/tools/import/.imports/spring-framework --language java --mode end-to-end --measurement allocations --samples 3 --warmups 1",
+            "memory": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /home/sargunv/Projects/jolt/tools/import/.imports/spring-framework --language java --mode end-to-end --measurement memory",
+            "timing": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /home/sargunv/Projects/jolt/tools/import/.imports/spring-framework --language java --mode end-to-end --measurement timing --samples 10 --warmups 2"
+          },
+          "peak_rss_bytes": 73728000,
+          "timing": {
+            "samples_ns": [
+              1400682472,
+              1414085370,
+              1420605273,
+              1409856313,
+              1395881149,
+              1405039290,
+              1396928638,
+              1393269802,
+              1400878331,
+              1398250552
+            ],
+            "summary": {
+              "median_absolute_deviation_ns": 4579070.5,
+              "median_ns": 1400780401.5
+            },
+            "warmups": 2
+          }
+        },
+        "format": {
+          "allocations": {
+            "samples": [
+              {
+                "bytes_max": 13607052,
+                "bytes_total": 2002882442,
+                "count_max": 1171,
+                "count_total": 1534888
+              },
+              {
+                "bytes_max": 13607052,
+                "bytes_total": 2002882442,
+                "count_max": 1171,
+                "count_total": 1534888
+              },
+              {
+                "bytes_max": 13607052,
+                "bytes_total": 2002882442,
+                "count_max": 1171,
+                "count_total": 1534888
+              }
+            ],
+            "summary": {
+              "bytes_max": 13607052.0,
+              "bytes_total": 2002882442.0,
+              "count_max": 1171.0,
+              "count_total": 1534888.0
+            },
+            "warmups": 1
+          },
+          "commands": {
+            "allocations": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-allocations --corpus /home/sargunv/Projects/jolt/tools/import/.imports/spring-framework --language java --mode format --measurement allocations --samples 3 --warmups 1",
+            "memory": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /home/sargunv/Projects/jolt/tools/import/.imports/spring-framework --language java --mode format --measurement memory",
+            "timing": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /home/sargunv/Projects/jolt/tools/import/.imports/spring-framework --language java --mode format --measurement timing --samples 10 --warmups 2"
+          },
+          "peak_rss_bytes": 725024768,
+          "timing": {
+            "samples_ns": [
+              1113935982,
+              1046507364,
+              1020623931,
+              1016929388,
+              1039739766,
+              1020301134,
+              1011169684,
+              1033227026,
+              1047029115,
+              1026034769
+            ],
+            "summary": {
+              "median_absolute_deviation_ns": 11405189.0,
+              "median_ns": 1029630897.5
+            },
+            "warmups": 2
+          }
+        },
+        "parse": {
+          "allocations": {
+            "samples": [
+              {
+                "bytes_max": 7629660,
+                "bytes_total": 1290062245,
+                "count_max": 9,
+                "count_total": 106803
+              },
+              {
+                "bytes_max": 7629660,
+                "bytes_total": 1290062245,
+                "count_max": 9,
+                "count_total": 106803
+              },
+              {
+                "bytes_max": 7629660,
+                "bytes_total": 1290062245,
+                "count_max": 9,
+                "count_total": 106803
+              }
+            ],
+            "summary": {
+              "bytes_max": 7629660.0,
+              "bytes_total": 1290062245.0,
+              "count_max": 9.0,
+              "count_total": 106803.0
+            },
+            "warmups": 1
+          },
+          "commands": {
+            "allocations": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-allocations --corpus /home/sargunv/Projects/jolt/tools/import/.imports/spring-framework --language java --mode parse --measurement allocations --samples 3 --warmups 1",
+            "memory": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /home/sargunv/Projects/jolt/tools/import/.imports/spring-framework --language java --mode parse --measurement memory",
+            "timing": "/home/sargunv/Projects/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /home/sargunv/Projects/jolt/tools/import/.imports/spring-framework --language java --mode parse --measurement timing --samples 10 --warmups 2"
+          },
+          "peak_rss_bytes": 63377408,
+          "timing": {
+            "samples_ns": [
+              552048782,
+              555387917,
+              556100535,
+              555428232,
+              553802647,
+              561410405,
+              557702787,
+              556584274,
+              559870401,
+              557379288
+            ],
+            "summary": {
+              "median_absolute_deviation_ns": 1198633.0,
+              "median_ns": 556342404.5
+            },
+            "warmups": 2
+          }
+        }
+      },
+      "structure": {
+        "document": {
+          "children": 3002152,
+          "logical_bytes": 832395848,
+          "nodes": 20509681,
+          "reserved_bytes": 1249211448
+        },
+        "normalized": {
+          "document_nodes_per_token": 3.144348218295056,
+          "end_to_end_ns_per_token": 214.7542596922477,
+          "format_ns_per_token": 157.85316592957562,
+          "parse_ns_per_token": 85.29309882252983,
+          "tree_reserved_bytes_per_node": 85.69891256352768,
+          "tree_reserved_bytes_per_token": 113.57555299458983
+        },
+        "syntax": {
+          "children": 18629932,
+          "logical_bytes": 578574592,
+          "nodes": 8644459,
+          "reserved_bytes": 740820736,
+          "tokens": 6522713,
+          "trivia": 3399043
+        }
+      }
+    }
+  },
+  "harness_generation": 2,
+  "harness_sha256": "b45485f34dedecb677396faf69bfc400a30270dbcc6f1754f82ee49f27e2f316",
+  "machine": {
+    "architecture": "x86_64",
+    "id": "linux-x86-64-7d0b32d105a8",
+    "logical_cpus": 32,
+    "memory_bytes": 134297890816,
+    "processor": "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S",
+    "release": "7.1.3-200.fc44.x86_64",
+    "system": "Linux"
+  },
+  "recorded_at": "2026-07-15T23:59:21.359810+00:00",
+  "schema_version": 1,
+  "subject": {
+    "commit": "d0c2eaaad74a3ccabff73554b98edb6c13ddcd12",
+    "dirty": false,
+    "worktree_sha256": null
+  }
+}
