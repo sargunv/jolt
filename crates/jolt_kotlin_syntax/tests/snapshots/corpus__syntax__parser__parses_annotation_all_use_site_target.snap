@@ -57,7 +57,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 54..60
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 54..60
             Comma "," @ 60..61
           RParen ")" @ 62..63 leading=[Newline "\n"]
     ClassDeclaration
@@ -81,7 +84,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 99..105
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 99..105
           RParen ")" @ 105..106
   Eof "" @ 107..107 leading=[Newline "\n"]
 

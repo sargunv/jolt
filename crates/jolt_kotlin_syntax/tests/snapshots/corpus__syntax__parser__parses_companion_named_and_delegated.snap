@@ -45,7 +45,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 40..46
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 40..46
         RBrace "}" @ 47..48 leading=[Newline "\n"]
     ClassDeclaration
       ModifierList
@@ -71,7 +74,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "Provider" @ 104..112 trailing=[Whitespace " "]
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "Provider" @ 104..112 trailing=[Whitespace " "]
               ClassBody
                 LBrace "{" @ 113..114
                 ClassMemberList
@@ -94,7 +100,10 @@ KotlinFile
                       TypeReference
                         UserType
                           UserTypeSegmentList
-                            Identifier "String" @ 147..153 trailing=[Whitespace " "]
+                            UserTypeSegment
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 147..153 trailing=[Whitespace " "]
                       Assign "=" @ 154..155 trailing=[Whitespace " "]
                       StringTemplateExpression
                         StringTemplateEntryList

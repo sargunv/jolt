@@ -30,10 +30,18 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "example" @ 31..38
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "example" @ 31..38
                   Dot "." @ 38..39
-                  Identifier "Type" @ 39..43
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Type" @ 39..43
                   Dot "." @ 43..44
+                  BogusUserTypeSegment
+                    AnnotationList
         RParen ")" @ 44..45 trailing=[Whitespace " "]
       Assign "=" @ 46..47 trailing=[Whitespace " "]
       NameExpression

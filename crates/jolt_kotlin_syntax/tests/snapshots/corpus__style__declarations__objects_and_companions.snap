@@ -63,21 +63,22 @@ KotlinFile
                 TypeArgumentListList
                   TypeArgumentList
                     Lt "<" @ 89..90
-                    TypeProjectionList
-                      TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
-                                  Identifier "String" @ 90..96
-                        Comma "," @ 96..97 trailing=[Whitespace " "]
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
-                                  Identifier "String" @ 98..104
+                    TypeProjectionSeparatedList
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 90..96
+                      Comma "," @ 96..97 trailing=[Whitespace " "]
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 98..104
                     Gt ">" @ 104..105
                 ValueArgumentList
                   LParen "(" @ 105..106
@@ -106,7 +107,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "String" @ 126..132
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 126..132
                   Comma "," @ 132..133 trailing=[Whitespace " "]
                   ValueParameter
                     ModifierList
@@ -116,7 +120,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "String" @ 141..147
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 141..147
                 RParen ")" @ 147..148 trailing=[Whitespace " "]
               Block
                 LBrace "{" @ 149..150

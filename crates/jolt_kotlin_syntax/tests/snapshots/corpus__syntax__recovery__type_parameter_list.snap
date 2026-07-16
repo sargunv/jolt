@@ -25,7 +25,7 @@ KotlinFile
               Identifier "First" @ 10..15
           Comma "," @ 15..16 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
           Comma "," @ 30..31 trailing=[Whitespace " "]
-          ErrorNode
+          BogusTypeParameter
           TypeParameter
             ModifierList
             Name

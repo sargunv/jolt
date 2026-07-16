@@ -44,7 +44,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Logger" @ 61..67 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:context-function-type */"]
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Logger" @ 61..67 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:context-function-type */"]
           RParen ")" @ 107..108 trailing=[Whitespace " "]
           FunctionType
             ArrowFunctionType
@@ -57,13 +60,19 @@ KotlinFile
                       NullableType
                         UserType
                           UserTypeSegmentList
-                            Identifier "String" @ 110..116
+                            UserTypeSegment
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 110..116
                         Question "?" @ 116..117 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:nullable-parameter */"]
                 RParen ")" @ 154..155 trailing=[Whitespace " "]
               Arrow "->" @ 156..158 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:function-arrow */", Whitespace " "]
               UserType
                 UserTypeSegmentList
-                  Identifier "Unit" @ 192..196
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Unit" @ 192..196
     InterfaceDeclaration
       ModifierList
       ModifierList

@@ -29,7 +29,10 @@ KotlinFile
           TypeReference
             UserType
               UserTypeSegmentList
-                Identifier "String" @ 4..10
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "String" @ 4..10
           Dot "." @ 10..11
           Name
             Identifier "surrounded" @ 11..21
@@ -44,7 +47,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "String" @ 30..36
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 30..36
           Comma "," @ 36..37 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -54,13 +60,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "String" @ 46..52
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 46..52
         RParen ")" @ 52..53
       Colon ":" @ 53..54 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 55..61 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 55..61 trailing=[Whitespace " "]
       Assign "=" @ 62..63
       BinaryExpression
         BinaryExpression
@@ -83,7 +95,10 @@ KotlinFile
             NullableType
               UserType
                 UserTypeSegmentList
-                  Identifier "PsiElement" @ 96..106
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "PsiElement" @ 96..106
               Question "?" @ 106..107
           Dot "." @ 107..108
           Name
@@ -96,7 +111,10 @@ KotlinFile
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Boolean" @ 127..134 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Boolean" @ 127..134 trailing=[Whitespace " "]
       Assign "=" @ 135..136 trailing=[Whitespace " "]
       CallExpression
         NameExpression
@@ -121,11 +139,20 @@ KotlinFile
           TypeReference
             UserType
               UserTypeSegmentList
-                Identifier "com" @ 161..164
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "com" @ 161..164
                 Dot "." @ 164..165
-                Identifier "example" @ 165..172
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "example" @ 165..172
                 Dot "." @ 172..173
-                Identifier "Scope" @ 173..178
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "Scope" @ 173..178
           Dot "." @ 178..179
           Name
             Identifier "renderQualified" @ 179..194
@@ -137,7 +164,10 @@ KotlinFile
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 198..204 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 198..204 trailing=[Whitespace " "]
       Assign "=" @ 205..206 trailing=[Whitespace " "]
       CallExpression
         NameExpression
@@ -158,33 +188,35 @@ KotlinFile
           TypeReference
             UserType
               UserTypeSegmentList
-                Identifier "MutableMap" @ 223..233
-                TypeArgumentList
-                  Lt "<" @ 233..234
-                  TypeProjectionList
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "MutableMap" @ 223..233
+                  TypeArgumentList
+                    Lt "<" @ 233..234
                     TypeProjectionSeparatedList
-                      TypeArgument
-                        TypeProjection
-                          TypeReference
-                            UserType
-                              UserTypeSegmentList
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              AnnotationList
+                              Name
                                 Identifier "String" @ 234..240
                       Comma "," @ 240..241 trailing=[Whitespace " "]
-                      TypeArgument
-                        TypeProjection
-                          TypeReference
-                            UserType
-                              UserTypeSegmentList
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              AnnotationList
+                              Name
                                 Identifier "Expression" @ 242..252
-                                TypeArgumentList
-                                  Lt "<" @ 252..253
-                                  TypeProjectionList
-                                    TypeProjectionSeparatedList
-                                      TypeArgument
-                                        TypeProjection
-                                          Star "*" @ 253..254
-                                  Gt ">" @ 254..255
-                  Gt ">" @ 255..256
+                              TypeArgumentList
+                                Lt "<" @ 252..253
+                                TypeProjectionSeparatedList
+                                  StarProjection
+                                    Star "*" @ 253..254
+                                Gt ">" @ 254..255
+                    Gt ">" @ 255..256
           Dot "." @ 256..257
           Name
             Identifier "record" @ 257..263
@@ -199,7 +231,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "String" @ 269..275
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 269..275
           Comma "," @ 275..276 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -209,15 +244,16 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Expression" @ 284..294
-                  TypeArgumentList
-                    Lt "<" @ 294..295
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Expression" @ 284..294
+                    TypeArgumentList
+                      Lt "<" @ 294..295
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            Star "*" @ 295..296
-                    Gt ">" @ 296..297
+                        StarProjection
+                          Star "*" @ 295..296
+                      Gt ">" @ 296..297
         RParen ")" @ 297..298 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 299..300

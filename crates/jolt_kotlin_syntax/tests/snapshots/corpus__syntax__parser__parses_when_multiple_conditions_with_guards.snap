@@ -35,13 +35,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Any" @ 29..32
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Any" @ 29..32
         RParen ")" @ 32..33
       Colon ":" @ 33..34 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 35..41 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 35..41 trailing=[Whitespace " "]
       Assign "=" @ 42..43
       WhenExpression
         WhenKw "when" @ 48..52 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
@@ -94,14 +100,20 @@ KotlinFile
                 TypeReference
                   UserType
                     UserTypeSegmentList
-                      Identifier "String" @ 123..129
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "String" @ 123..129
               Comma "," @ 129..130 trailing=[Whitespace " "]
               WhenCondition
                 IsKw "is" @ 131..133 trailing=[Whitespace " "]
                 TypeReference
                   UserType
                     UserTypeSegmentList
-                      Identifier "CharSequence" @ 134..146 trailing=[Whitespace " "]
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "CharSequence" @ 134..146 trailing=[Whitespace " "]
             WhenGuard
               IfKw "if" @ 147..149 trailing=[Whitespace " "]
               CallExpression

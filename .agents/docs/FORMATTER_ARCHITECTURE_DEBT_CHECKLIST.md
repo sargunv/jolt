@@ -1064,6 +1064,46 @@ Vertically migrate names/types, arguments/parameters, constraints, projections,
 context parameters, function types, and type-owned lists not covered by Phase 9.
 Delete range-derived recovery and list state machines.
 
+Implementation status: **complete and gate-green**. User types now contain exact
+dot-separated `UserTypeSegment` nodes with annotations, names, and optional type
+arguments. Type arguments directly expose type references, variance projections,
+star projections, or category-compatible bogus entries. Function types,
+definitely-non-nullable forms, type parameters, constraints, function and
+context parameters, value parameters, and parameter names all use generated
+typed categories instead of generic role casts.
+
+The parser replaces every Phase 17 `ErrorNode` site with the smallest typed
+bogus entry and gives missing types, segments, `where`, colons, assignments, and
+list gaps exact diagnostic ownership. Recovery stops at newline declaration
+boundaries, so a missing type cannot consume the next declaration. Consecutive
+constraint commas now create a `BogusTypeConstraint` barrier and continue
+through the remaining constraints and function body. Value and context defaults
+remain represented when `=` is missing; `vararg` and destructuring parameter
+names have explicit typed roles.
+
+The formatter deletes all 24 in-scope whole-node fallbacks, the manual
+type-argument recovery machine, the trailing-empty-constraint heuristic, and
+runtime type-form/segment dispatch. Typed physical comma lists preserve every
+separator, including consecutive commas, while zero-token recovery roles add no
+layout. Central malformed lexical safety no longer inserts a fusion-prevention
+space across an already represented source line break. The shared modifier-list
+fallback remains intentionally scoped to Phase 18.
+
+The focused recovery fixture covers missing declaration types, modified
+declaration boundaries, malformed user segments, type projections, function
+types, type/value/context parameters and defaults, missing constraints, and
+constraint gaps. Its diagnostics pass the bidirectional ownership proof. The
+phase adds 419 net implementation lines, moving the cumulative baseline delta to
++4,482; `types.rs` itself is slightly smaller, while the growth is primarily
+exact parser recovery, schema categories, owner tests, and parameter formatting.
+Phase 22 and the Phase 24 net-negative gate remain binding.
+
+Quality audit: valid formatter snapshots are unchanged; Rust 1.96 checks,
+focused and imported Kotlin parse/format corpora, recovery conservation and
+idempotence, schema exactness, parser progress, bidirectional ownership, and
+`git diff --check` pass. No benchmark was run; Phase 23 remains the designated
+cumulative performance gate.
+
 ### New Phase 18: Kotlin Declarations
 
 Vertically migrate properties, functions, constructors, accessors, type aliases,

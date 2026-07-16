@@ -204,6 +204,14 @@ macro_rules! kotlin_syntax_schema {
                     ParenthesizedType,
                     DefinitelyNonNullableType,
                 }
+                FunctionTypeForm => BogusFunctionTypeForm {
+                    SuspendedFunctionType,
+                    ArrowFunctionType,
+                }
+                DefinitelyNonNullableTypeForm => BogusDefinitelyNonNullableTypeForm {
+                    IntersectionDefinitelyNonNullableType,
+                    BangDefinitelyNonNullableType,
+                }
                 Expression => BogusExpression {
                     AssignmentExpression,
                     BinaryExpression,
@@ -245,8 +253,31 @@ macro_rules! kotlin_syntax_schema {
                     ValueArgument,
                 }
                 TypeArgumentListEntry => BogusTypeArgument {
-                    TypeArgument,
+                    TypeReference,
                     TypeProjection,
+                    StarProjection,
+                }
+                TypeParameterListEntry => BogusTypeParameter {
+                    TypeParameter,
+                }
+                TypeConstraintListEntry => BogusTypeConstraint {
+                    TypeConstraint,
+                }
+                FunctionTypeParameterListEntry => BogusFunctionTypeParameter {
+                    FunctionTypeParameter,
+                }
+                ContextParameterListEntry => BogusContextParameter {
+                    ContextParameter,
+                }
+                ValueParameterListEntry => BogusValueParameter {
+                    ValueParameter,
+                }
+                ValueParameterName => BogusValueParameterName {
+                    Name,
+                    DestructuringDeclaration,
+                }
+                UserTypeSegmentSyntax => BogusUserTypeSegment {
+                    UserTypeSegment,
                 }
                 DestructuringPatternEntry => BogusDestructuringEntry {
                     DestructuringEntry,
@@ -354,11 +385,8 @@ macro_rules! kotlin_syntax_schema {
                 }
                 TypeArgumentList => TypeArgumentList [type_argument_list valid] {
                     open_angle: required (token Lt);
-                    projections: required (node TypeProjectionList);
+                    entries: required (list TypeProjectionSeparatedList);
                     close_angle: required (token Gt);
-                }
-                TypeArgument => TypeArgument [type_argument valid] {
-                    projection: required (node_set [TypeProjection, TypeReference]);
                 }
                 ClassDeclaration => ClassDeclaration [class_declaration valid] {
                     leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
@@ -540,12 +568,17 @@ macro_rules! kotlin_syntax_schema {
                 UserType => UserType [user_type valid] {
                     segments: required (list UserTypeSegmentList);
                 }
+                UserTypeSegment => UserTypeSegment [user_type_segment valid] {
+                    annotations: required (list AnnotationList);
+                    name: required (node Name);
+                    arguments: optional (node TypeArgumentList);
+                }
                 NullableType => NullableType [nullable_type valid] {
                     inner: required (category TypeSyntax);
                     question: required (token Question);
                 }
                 FunctionType => FunctionType [function_type valid] {
-                    form: required (choice [(constructed SuspendedFunctionType), (constructed ArrowFunctionType)]) [disambiguate longest_then_first];
+                    form: required (category FunctionTypeForm);
                 }
                 ContextFunctionType => ContextFunctionType [context_function_type valid] {
                     context_token: required (contextual "context");
@@ -571,15 +604,14 @@ macro_rules! kotlin_syntax_schema {
                     r#type: required (node TypeReference);
                 }
                 DefinitelyNonNullableType => DefinitelyNonNullableType [definitely_non_nullable_type valid] {
-                    form: required (choice [(constructed IntersectionDefinitelyNonNullableType), (constructed BangDefinitelyNonNullableType)]) [disambiguate longest_then_first];
+                    form: required (category DefinitelyNonNullableTypeForm);
                 }
                 TypeProjection => TypeProjection [type_projection valid] {
-                    variance: optional (choice [(token InKw), (contextual "out")]);
-                    star: optional (token Star);
-                    r#type: optional (node TypeReference);
+                    variance: required (choice [(token InKw), (contextual "out")]);
+                    r#type: required (node TypeReference);
                 }
-                TypeProjectionList => TypeProjectionList [type_projection_list valid] {
-                    entries: required (list TypeProjectionSeparatedList);
+                StarProjection => StarProjection [star_projection valid] {
+                    star: required (token Star);
                 }
                 Block => Block [block valid] {
                     open_brace: required (token LBrace);
@@ -827,8 +859,8 @@ macro_rules! kotlin_syntax_schema {
                 }
                 ValueParameter => ValueParameter [value_parameter valid] {
                     modifiers: required (list ModifierList);
-                    property_keyword: optional (token_set [ValKw, VarKw]);
-                    name: required (node Name);
+                    parameter_keyword: optional (token_set [ValKw, VarKw, VarargKw]);
+                    name: required (category ValueParameterName);
                     colon: optional (token Colon);
                     r#type: optional (node TypeReference);
                     assign: optional (token Assign);
@@ -933,25 +965,25 @@ macro_rules! kotlin_syntax_schema {
                     members: many (choice [(node_set [ExplicitBackingField, PropertyAccessor]), (token_set [EolOrSemicolon, Semicolon])]);
                 }
                 TypeParameterSeparatedList => TypeParameterSeparatedList [type_parameter_separated_list list] {
-                    entries: one_or_more (node TypeParameter) [separated (token Comma), minimum 1, trailing optional, recovery bogus_owner];
+                    entries: one_or_more (category TypeParameterListEntry) [separated (token Comma), minimum 1, trailing optional, recovery bogus_owner];
                 }
                 TypeConstraintSeparatedList => TypeConstraintSeparatedList [type_constraint_separated_list list] {
-                    entries: one_or_more (node TypeConstraint) [separated (token Comma), minimum 1, trailing forbidden, recovery bogus_owner];
+                    entries: one_or_more (category TypeConstraintListEntry) [separated (token Comma), minimum 1, trailing forbidden, recovery bogus_owner];
                 }
                 ContextParameterSeparatedList => ContextParameterSeparatedList [context_parameter_separated_list list] {
-                    entries: one_or_more (node ContextParameter) [separated (token Comma), minimum 1, trailing optional, recovery bogus_owner];
+                    entries: one_or_more (category ContextParameterListEntry) [separated (token Comma), minimum 1, trailing optional, recovery bogus_owner];
                 }
                 DelegationSpecifierSeparatedList => DelegationSpecifierSeparatedList [delegation_specifier_separated_list list] {
                     entries: one_or_more (node DelegationSpecifier) [separated (token Comma), minimum 1, trailing optional, recovery bogus_owner];
                 }
                 UserTypeSegmentList => UserTypeSegmentList [user_type_segment_list list] {
-                    segments: many (choice [(node_set [Annotation, Name]), (token Identifier), (node TypeArgumentList), (token Dot)]);
+                    segments: one_or_more (category UserTypeSegmentSyntax) [separated (token Dot), minimum 1, trailing forbidden, recovery bogus_owner];
                 }
                 FunctionTypeParameterSeparatedList => FunctionTypeParameterSeparatedList [function_type_parameter_separated_list list] {
-                    entries: one_or_more (node_set [FunctionTypeParameter, TypeReference]) [separated (token Comma), minimum 1, trailing optional, recovery bogus_owner];
+                    entries: one_or_more (category FunctionTypeParameterListEntry) [separated (token Comma), minimum 1, trailing optional, recovery bogus_owner];
                 }
                 ParenthesizedTypeEntryList => ParenthesizedTypeEntryList [parenthesized_type_entry_list list] {
-                    entries: many (node_set [TypeReference, FunctionTypeParameter]) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];
+                    entries: many (category FunctionTypeParameterListEntry) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];
                 }
                 TypeProjectionSeparatedList => TypeProjectionSeparatedList [type_projection_separated_list list] {
                     entries: one_or_more (category TypeArgumentListEntry) [separated (token Comma), minimum 1, trailing optional, recovery bogus_owner];
@@ -987,7 +1019,7 @@ macro_rules! kotlin_syntax_schema {
                     entries: many (category DestructuringPatternEntry) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];
                 }
                 ValueParameterSeparatedList => ValueParameterSeparatedList [value_parameter_separated_list list] {
-                    entries: many (node ValueParameter) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];
+                    entries: many (category ValueParameterListEntry) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];
                 }
             }
         }

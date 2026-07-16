@@ -23,7 +23,10 @@ KotlinFile
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Int" @ 14..17 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Int" @ 14..17 trailing=[Whitespace " "]
       PropertyBodyMemberList
     Statement
       ExpressionStatement

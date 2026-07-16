@@ -35,7 +35,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 43..49
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 43..49
               PropertyBodyMemberList
                 ExplicitBackingField
                   Identifier "field" @ 58..63 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]

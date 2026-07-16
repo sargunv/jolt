@@ -37,7 +37,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Bits" @ 21..25
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Bits" @ 21..25
           Comma "," @ 25..26 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -47,13 +50,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Bits" @ 33..37
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Bits" @ 33..37
         RParen ")" @ 37..38
       Colon ":" @ 38..39 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Bits" @ 40..44 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Bits" @ 40..44 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 45..46
         BlockItemList

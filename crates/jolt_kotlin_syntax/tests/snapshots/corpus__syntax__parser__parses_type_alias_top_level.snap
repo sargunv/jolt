@@ -30,25 +30,29 @@ KotlinFile
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Map" @ 23..26
-            TypeArgumentList
-              Lt "<" @ 26..27
-              TypeProjectionList
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Map" @ 23..26
+              TypeArgumentList
+                Lt "<" @ 26..27
                 TypeProjectionSeparatedList
-                  TypeArgument
-                    TypeProjection
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          AnnotationList
+                          Name
                             Identifier "String" @ 27..33
                   Comma "," @ 33..34 trailing=[Whitespace " "]
-                  TypeArgument
-                    TypeProjection
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          AnnotationList
+                          Name
                             Identifier "T" @ 35..36
-              Gt ">" @ 36..37
+                Gt ">" @ 36..37
     PropertyDeclaration
       ModifierList
       ModifierList
@@ -61,18 +65,21 @@ KotlinFile
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "NameMap" @ 50..57
-            TypeArgumentList
-              Lt "<" @ 57..58
-              TypeProjectionList
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "NameMap" @ 50..57
+              TypeArgumentList
+                Lt "<" @ 57..58
                 TypeProjectionSeparatedList
-                  TypeArgument
-                    TypeProjection
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          AnnotationList
+                          Name
                             Identifier "Int" @ 58..61
-              Gt ">" @ 61..62 trailing=[Whitespace " "]
+                Gt ">" @ 61..62 trailing=[Whitespace " "]
       Assign "=" @ 63..64 trailing=[Whitespace " "]
       CallExpression
         NameExpression

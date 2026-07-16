@@ -29,11 +29,14 @@ KotlinFile
                 TypeReference
                   UserType
                     UserTypeSegmentList
-                      Identifier "First" @ 21..26
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "First" @ 21..26
               Comma "," @ 26..27 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
               DelegationSpecifier
                 TypeReference
-                  ErrorNode
+                  BogusType
               Comma "," @ 41..42 trailing=[Whitespace " "]
         Identifier "Second" @ 43..49 trailing=[Whitespace " "]
         LambdaExpression

@@ -50,7 +50,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Logger" @ 16..22
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Logger" @ 16..22
         RParen ")" @ 22..23
       ModifierList
         Identifier "suspend" @ 24..31 leading=[Newline "\n"] trailing=[Whitespace " "]
@@ -72,7 +75,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "String" @ 61..67
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 61..67
         RParen ")" @ 67..68 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 69..70
@@ -117,7 +123,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Logger" @ 139..145
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Logger" @ 139..145
         RParen ")" @ 145..146
       ModifierList
         Identifier "tailrec" @ 147..154 leading=[Newline "\n"] trailing=[Whitespace " "]
@@ -134,7 +143,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "CharSequence" @ 172..184
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "CharSequence" @ 172..184
         Gt ">" @ 184..185 trailing=[Whitespace " "]
       ModifierList
       CallableName
@@ -142,18 +154,21 @@ KotlinFile
           TypeReference
             UserType
               UserTypeSegmentList
-                Identifier "Repository" @ 186..196
-                TypeArgumentList
-                  Lt "<" @ 196..197
-                  TypeProjectionList
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "Repository" @ 186..196
+                  TypeArgumentList
+                    Lt "<" @ 196..197
                     TypeProjectionSeparatedList
-                      TypeArgument
-                        TypeProjection
-                          TypeReference
-                            UserType
-                              UserTypeSegmentList
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              AnnotationList
+                              Name
                                 Identifier "UserId" @ 197..203
-                  Gt ">" @ 203..204
+                    Gt ">" @ 203..204
           Dot "." @ 204..205
           Name
             Identifier "loadLater" @ 205..214
@@ -168,13 +183,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "UserId" @ 219..225
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "UserId" @ 219..225
         RParen ")" @ 225..226
       Colon ":" @ 226..227 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "T" @ 228..229
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "T" @ 228..229
       TypeConstraintList
         Identifier "where" @ 234..239 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
         TypeConstraintSeparatedList
@@ -185,18 +206,21 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Comparable" @ 244..254
-                  TypeArgumentList
-                    Lt "<" @ 254..255
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Comparable" @ 244..254
+                    TypeArgumentList
+                      Lt "<" @ 254..255
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "T" @ 255..256
-                    Gt ">" @ 256..257 trailing=[Whitespace " "]
+                      Gt ">" @ 256..257 trailing=[Whitespace " "]
       Assign "=" @ 258..259 trailing=[Whitespace " "]
       CallExpression
         NameExpression
@@ -224,7 +248,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Counter" @ 285..292
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Counter" @ 285..292
         RParen ")" @ 292..293
       ModifierList
         Identifier "operator" @ 294..302 leading=[Newline "\n"] trailing=[Whitespace " "]
@@ -235,7 +262,10 @@ KotlinFile
           TypeReference
             UserType
               UserTypeSegmentList
-                Identifier "Counter" @ 307..314
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "Counter" @ 307..314
           Dot "." @ 314..315
           Name
             Identifier "plus" @ 315..319
@@ -250,13 +280,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Counter" @ 327..334
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Counter" @ 327..334
         RParen ")" @ 334..335
       Colon ":" @ 335..336 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Counter" @ 337..344 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Counter" @ 337..344 trailing=[Whitespace " "]
       Assign "=" @ 345..346 trailing=[Whitespace " "]
       CallExpression
         NameExpression
@@ -291,7 +327,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Logger" @ 393..399
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Logger" @ 393..399
         RParen ")" @ 399..400
       ModifierList
         Identifier "infix" @ 401..406 leading=[Newline "\n"] trailing=[Whitespace " "]
@@ -302,7 +341,10 @@ KotlinFile
           TypeReference
             UserType
               UserTypeSegmentList
-                Identifier "Logger" @ 411..417
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "Logger" @ 411..417
           Dot "." @ 417..418
           Name
             Identifier "then" @ 418..422
@@ -317,13 +359,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "String" @ 432..438
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 432..438
         RParen ")" @ 438..439
       Colon ":" @ 439..440 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Logger" @ 441..447 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Logger" @ 441..447 trailing=[Whitespace " "]
       Assign "=" @ 448..449 trailing=[Whitespace " "]
       ThisExpression
         ThisKw "this" @ 450..454
@@ -357,7 +405,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "String" @ 498..504
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 498..504
                 RParen ")" @ 504..505
         RBrace "}" @ 506..507 leading=[Newline "\n"]
     ClassDeclaration
@@ -380,7 +431,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Int" @ 534..537
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Int" @ 534..537
           RParen ")" @ 537..538
     InterfaceDeclaration
       ModifierList
@@ -429,13 +483,19 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "K" @ 596..597
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "K" @ 596..597
                 RParen ")" @ 597..598
               Colon ":" @ 598..599 trailing=[Whitespace " "]
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "T" @ 600..601
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "T" @ 600..601
         RBrace "}" @ 602..603 leading=[Newline "\n"]
     ClassDeclaration
       ModifierList

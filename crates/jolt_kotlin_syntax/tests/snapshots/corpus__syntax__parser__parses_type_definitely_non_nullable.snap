@@ -40,11 +40,17 @@ KotlinFile
                 IntersectionDefinitelyNonNullableType
                   UserType
                     UserTypeSegmentList
-                      Identifier "T" @ 28..29 trailing=[Whitespace " "]
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "T" @ 28..29 trailing=[Whitespace " "]
                   Amp "&" @ 30..31 trailing=[Whitespace " "]
                   UserType
                     UserTypeSegmentList
-                      Identifier "Any" @ 32..35
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Any" @ 32..35
         RParen ")" @ 35..36
       Colon ":" @ 36..37 trailing=[Whitespace " "]
       TypeReference
@@ -52,11 +58,17 @@ KotlinFile
           IntersectionDefinitelyNonNullableType
             UserType
               UserTypeSegmentList
-                Identifier "T" @ 38..39 trailing=[Whitespace " "]
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "T" @ 38..39 trailing=[Whitespace " "]
             Amp "&" @ 40..41 trailing=[Whitespace " "]
             UserType
               UserTypeSegmentList
-                Identifier "Any" @ 42..45 trailing=[Whitespace " "]
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "Any" @ 42..45 trailing=[Whitespace " "]
       Assign "=" @ 46..47 trailing=[Whitespace " "]
       NameExpression
         Identifier "value" @ 48..53

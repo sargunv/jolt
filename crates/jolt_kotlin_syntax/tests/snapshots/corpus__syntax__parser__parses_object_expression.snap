@@ -32,7 +32,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Runnable" @ 24..32 trailing=[Whitespace " "]
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Runnable" @ 24..32 trailing=[Whitespace " "]
         ClassBody
           LBrace "{" @ 33..34
           ClassMemberList

@@ -6,7 +6,7 @@ input:
 fun demo(first: String, /* orphan */ , second: Int) {}
 
 formatted:
-fun demo(first: String, /* orphan */ ,   second: Int) {}
+fun demo(first: String, /* orphan */ , second: Int) {}
 
 diagnostics:
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(39), end: TextSize(45) }) message=expected value parameter between commas

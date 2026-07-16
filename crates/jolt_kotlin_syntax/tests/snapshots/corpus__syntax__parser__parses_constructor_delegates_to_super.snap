@@ -35,7 +35,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 26..32
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 26..32
           RParen ")" @ 32..33
     ClassDeclaration
       ModifierList
@@ -50,7 +53,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Base" @ 49..53 trailing=[Whitespace " "]
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Base" @ 49..53 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 54..55
         ClassMemberList
@@ -70,7 +76,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "String" @ 78..84
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 78..84
                 RParen ")" @ 84..85 trailing=[Whitespace " "]
               Colon ":" @ 86..87 trailing=[Whitespace " "]
               ConstructorDelegationCall

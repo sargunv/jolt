@@ -3,16 +3,16 @@ source: crates/jolt_kotlin_syntax/src/schema_audit.rs
 expression: audit.render()
 ---
 language = kotlin
-fixture_files = 247
-diagnostic_fixture_files = 65
-audited_nodes = 15297
-exact_valid_shapes = 15068
-malformed_nodes = 159
+fixture_files = 248
+diagnostic_fixture_files = 66
+audited_nodes = 17102
+exact_valid_shapes = 16856
+malformed_nodes = 170
 clean_missing_required_shapes = 0
-diagnostic_missing_required_shapes = 33
+diagnostic_missing_required_shapes = 40
 clean_unexpected_shapes = 0
-diagnostic_unexpected_shapes = 37
-error_node_owners = 152
+diagnostic_unexpected_shapes = 36
+error_node_owners = 140
 
 [clean_missing_required]
 
@@ -21,7 +21,7 @@ syntax__lexer__recognizes_all_hard_keywords: Name occurrence 1 ()
 syntax__lexer__recognizes_delimiters_and_punctuation: NavigationExpression occurrence 1 (CallExpression Dot("."))
 syntax__lexer__reports_unterminated_line_string_at_newline: StringTemplateExpression occurrence 1 (StringTemplateEntryList)
 syntax__lexer__reports_unterminated_raw_string: StringTemplateExpression occurrence 1 (StringTemplateEntryList)
-syntax__parser__diagnoses_malformed_type_argument_call: TypeProjectionSeparatedList occurrence 1 (TypeArgument Comma(",") Comma(",") ErrorNode TypeArgument)
+syntax__parser__diagnoses_malformed_type_argument_call: TypeProjectionSeparatedList occurrence 1 (TypeReference Comma(",") Comma(",") BogusTypeArgument TypeReference)
 syntax__parser__recovers_incomplete_lambda_and_call: Block occurrence 1 (LBrace("{") BlockItemList)
 syntax__parser__recovers_incomplete_lambda_and_call: LambdaBody occurrence 1 (LBrace("{") LambdaParameterList LambdaBodyItemList)
 syntax__parser__recovers_incomplete_lambda_and_call: ValueArgumentList occurrence 1 (LParen("(") ValueArgumentEntryList)
@@ -31,10 +31,10 @@ syntax__recovery__argument_list: ValueArgumentEntryList occurrence 1 (Comma(",")
 syntax__recovery__block_missing_close: Block occurrence 1 (LBrace("{") BlockItemList)
 syntax__recovery__collection_and_index_lists: ValueArgumentSeparatedList occurrence 1 (Comma(",") ErrorNode ValueArgument)
 syntax__recovery__collection_and_index_lists: ValueArgumentSeparatedList occurrence 2 (Comma(",") ErrorNode ValueArgument)
-syntax__recovery__context_function_type: FunctionTypeParameterSeparatedList occurrence 1 (FunctionTypeParameter Comma(",") Comma(",") ErrorNode FunctionTypeParameter)
+syntax__recovery__context_function_type: FunctionTypeParameterSeparatedList occurrence 1 (FunctionTypeParameter Comma(",") Comma(",") BogusFunctionTypeParameter FunctionTypeParameter)
 syntax__recovery__control_flow_missing_children: DoWhileStatement occurrence 1 (DoKw("do") Block)
 syntax__recovery__control_flow_missing_children: WhenExpression occurrence 1 (WhenKw("when") WhenSubject WhenEntryList)
-syntax__recovery__destructuring: DestructuringEntrySeparatedList occurrence 1 (DestructuringEntry Comma(",") Comma(",") ErrorNode DestructuringEntry)
+syntax__recovery__destructuring: DestructuringEntrySeparatedList occurrence 1 (DestructuringEntry Comma(",") Comma(",") BogusDestructuringEntry DestructuringEntry)
 syntax__recovery__lambda_missing_close: Block occurrence 1 (LBrace("{") BlockItemList)
 syntax__recovery__lambda_missing_close: LambdaBody occurrence 1 (LBrace("{") LambdaBodyItemList)
 syntax__recovery__lambda_parameter_list: LambdaParameterSeparatedList occurrence 1 (LambdaParameter Comma(",") Comma(",") ErrorNode LambdaParameter)
@@ -43,11 +43,18 @@ syntax__recovery__phase_16_program: Name occurrence 15 ()
 syntax__recovery__phase_16_program: Name occurrence 17 ()
 syntax__recovery__phase_16_program: ImportOnDemandSuffix occurrence 1 (Star("*"))
 syntax__recovery__phase_16_program: Name occurrence 22 ()
-syntax__recovery__type_argument_list: TypeProjectionSeparatedList occurrence 1 (TypeArgument Comma(",") Comma(",") ErrorNode TypeArgument)
-syntax__recovery__type_constraints: TypeConstraint occurrence 2 (Name)
-syntax__recovery__type_constraints: Name occurrence 4 ()
-syntax__recovery__type_parameter_list: TypeParameterSeparatedList occurrence 1 (TypeParameter Comma(",") Comma(",") ErrorNode TypeParameter)
-syntax__recovery__value_parameter_list: ValueParameterSeparatedList occurrence 1 (ValueParameter Comma(",") Comma(",") ErrorNode ValueParameter)
+syntax__recovery__phase_17_types_and_parameters: UserTypeSegmentList occurrence 2 (UserTypeSegment BogusUserTypeSegment)
+syntax__recovery__phase_17_types_and_parameters: TypeProjectionSeparatedList occurrence 1 (Comma(",") BogusTypeArgument TypeReference Comma(",") BogusTypeArgument Comma(",") TypeProjection Comma(",") TypeProjection Comma(",") StarProjection)
+syntax__recovery__phase_17_types_and_parameters: ParenthesizedTypeEntryList occurrence 1 (Comma(",") BogusFunctionTypeParameter FunctionTypeParameter Comma(",") FunctionTypeParameter)
+syntax__recovery__phase_17_types_and_parameters: FunctionTypeParameterSeparatedList occurrence 1 (FunctionTypeParameter Comma(",") Comma(",") BogusFunctionTypeParameter FunctionTypeParameter)
+syntax__recovery__phase_17_types_and_parameters: TypeParameterSeparatedList occurrence 1 (Comma(",") BogusTypeParameter TypeParameter Comma(",") TypeParameter)
+syntax__recovery__phase_17_types_and_parameters: ValueParameterSeparatedList occurrence 1 (ValueParameter Comma(",") Comma(",") BogusValueParameter ValueParameter Comma(",") ValueParameter Comma(","))
+syntax__recovery__phase_17_types_and_parameters: TypeConstraintList occurrence 1 (TypeConstraintSeparatedList)
+syntax__recovery__phase_17_types_and_parameters: TypeConstraint occurrence 2 (Name TypeReference)
+syntax__recovery__phase_17_types_and_parameters: ContextParameterSeparatedList occurrence 1 (ContextParameter Comma(",") ContextParameter Comma(",") Comma(",") BogusContextParameter ContextParameter)
+syntax__recovery__type_argument_list: TypeProjectionSeparatedList occurrence 1 (TypeReference Comma(",") Comma(",") BogusTypeArgument TypeReference)
+syntax__recovery__type_parameter_list: TypeParameterSeparatedList occurrence 1 (TypeParameter Comma(",") Comma(",") BogusTypeParameter TypeParameter)
+syntax__recovery__value_parameter_list: ValueParameterSeparatedList occurrence 1 (ValueParameter Comma(",") Comma(",") BogusValueParameter ValueParameter)
 syntax__recovery__when_missing_close: Block occurrence 1 (LBrace("{") BlockItemList)
 syntax__recovery__when_missing_close: WhenExpression occurrence 1 (WhenKw("when") WhenSubject LBrace("{") WhenEntryList)
 
@@ -90,7 +97,6 @@ syntax__recovery__else_without_branch: IfExpression occurrence 1 has valid kind 
 syntax__recovery__navigation_without_receiver: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=6, tokens=2, children=2] (ErrorNode ErrorNode)
 syntax__recovery__nested_recovered_when_condition: WhenEntry occurrence 1 has valid kind with direct malformed ownership [bytes=33, tokens=9, children=6] (WhenConditionSeparatedList ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
 syntax__recovery__nested_recovered_when_condition: WhenCondition occurrence 1 has valid kind with direct malformed ownership [bytes=13, tokens=4, children=4] (LiteralExpression ErrorNode ErrorNode ErrorNode)
-syntax__recovery__type_constraints: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=17, tokens=5, children=5] (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
 
 [error_node_ownership]
 syntax__lexer__comment_markers_inside_character_literals_are_literal_content: ErrorNode occurrence 1 owned by ExpressionStatement
@@ -181,12 +187,11 @@ syntax__parser__block_empty_statement_adjacent_braces: ErrorNode occurrence 1 ow
 syntax__parser__diagnoses_invalid_assignment_targets: ErrorNode occurrence 1 owned by AssignmentExpression
 syntax__parser__diagnoses_invalid_assignment_targets: ErrorNode occurrence 2 owned by AssignmentExpression
 syntax__parser__diagnoses_invalid_assignment_targets: ErrorNode occurrence 3 owned by AssignmentExpression
-syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 1 owned by TypeProjectionSeparatedList
-syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 2 owned by BinaryExpression
+syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 1 owned by BinaryExpression
+syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 2 owned by PropertyDeclaration
 syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 3 owned by PropertyDeclaration
 syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 4 owned by PropertyDeclaration
-syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 5 owned by PropertyDeclaration
-syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 6 owned by NavigationExpression
+syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 5 owned by NavigationExpression
 syntax__parser__recovers_incomplete_lambda_and_call: ErrorNode occurrence 1 owned by ValueArgument
 syntax__parser__recovers_missing_expression_after_elvis: ErrorNode occurrence 1 owned by BinaryExpression
 syntax__parser__recovers_missing_expression_in_collection_literal_preview: ErrorNode occurrence 1 owned by ValueArgumentSeparatedList
@@ -215,12 +220,10 @@ syntax__recovery__class_body: ErrorNode occurrence 3 owned by ExpressionStatemen
 syntax__recovery__class_body: ErrorNode occurrence 4 owned by ExpressionStatement
 syntax__recovery__collection_and_index_lists: ErrorNode occurrence 1 owned by ValueArgumentSeparatedList
 syntax__recovery__collection_and_index_lists: ErrorNode occurrence 2 owned by ValueArgumentSeparatedList
-syntax__recovery__context_function_type: ErrorNode occurrence 1 owned by FunctionTypeParameterSeparatedList
 syntax__recovery__declaration_tails: ErrorNode occurrence 1 owned by FunctionDeclaration
 syntax__recovery__declaration_tails: ErrorNode occurrence 2 owned by FunctionDeclaration
 syntax__recovery__declaration_tails: ErrorNode occurrence 3 owned by FunctionDeclaration
 syntax__recovery__declaration_tails: ErrorNode occurrence 4 owned by PropertyDeclaration
-syntax__recovery__destructuring: ErrorNode occurrence 1 owned by DestructuringEntrySeparatedList
 syntax__recovery__else_without_branch: ErrorNode occurrence 1 owned by IfExpression
 syntax__recovery__for_partial_header: ErrorNode occurrence 1 owned by ForStatement
 syntax__recovery__lambda_parameter_list: ErrorNode occurrence 1 owned by LambdaParameterSeparatedList
@@ -234,14 +237,5 @@ syntax__recovery__nested_recovered_when_condition: ErrorNode occurrence 5 owned 
 syntax__recovery__nested_recovered_when_condition: ErrorNode occurrence 6 owned by WhenEntry
 syntax__recovery__nested_recovered_when_condition: ErrorNode occurrence 7 owned by WhenEntry
 syntax__recovery__nested_recovered_when_condition: ErrorNode occurrence 8 owned by WhenEntry
-syntax__recovery__object_delegation: ErrorNode occurrence 1 owned by TypeReference
 syntax__recovery__property_body_recovered_gap: ErrorNode occurrence 1 owned by AssignmentExpression
-syntax__recovery__type_argument_list: ErrorNode occurrence 1 owned by TypeProjectionSeparatedList
-syntax__recovery__type_constraints: ErrorNode occurrence 1 owned by ExpressionStatement
-syntax__recovery__type_constraints: ErrorNode occurrence 2 owned by ExpressionStatement
-syntax__recovery__type_constraints: ErrorNode occurrence 3 owned by ExpressionStatement
-syntax__recovery__type_constraints: ErrorNode occurrence 4 owned by ExpressionStatement
-syntax__recovery__type_constraints: ErrorNode occurrence 5 owned by ExpressionStatement
-syntax__recovery__type_parameter_list: ErrorNode occurrence 1 owned by TypeParameterSeparatedList
-syntax__recovery__value_parameter_list: ErrorNode occurrence 1 owned by ValueParameterSeparatedList
 syntax__recovery__when_condition_list: ErrorNode occurrence 1 owned by WhenCondition

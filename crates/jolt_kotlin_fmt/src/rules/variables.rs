@@ -1,92 +1,152 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_kotlin_syntax::{KotlinSyntaxToken, ValueParameter, ValueParameterList};
+use jolt_kotlin_syntax::{
+    KotlinSyntaxToken, ValueParameter, ValueParameterList, ValueParameterListEntry,
+    ValueParameterName,
+};
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
 use crate::helpers::lists::{CommaListItem, parenthesized_list, physical_comma_list_items};
 use crate::helpers::recovery::{
-    KotlinFormatDelimiter, KotlinFormatField, format_optional_field, format_or_verbatim,
-    format_required_field, resolve_required_delimiter, resolve_required_field,
+    KotlinFormatDelimiter, KotlinFormatField, format_optional_field, format_required_field,
+    resolve_required_delimiter, resolve_required_field,
 };
+use crate::rules::declarations::format_destructuring_declaration;
 use crate::rules::expressions::format_expression;
 use crate::rules::names::format_name;
-use crate::rules::types::{format_modifier_sequence, format_type_reference};
+use crate::rules::types::{
+    format_bogus_list_entry, format_modifier_sequence, format_type_reference, list_part_has_content,
+};
 
 pub(crate) fn format_value_parameter_list<'source>(
     doc: &mut DocBuilder<'source>,
     list: &ValueParameterList<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(list, doc, |doc| {
-        let open = resolve_required_delimiter(list.open_paren(), doc);
-        let close = resolve_required_delimiter(list.close_paren(), doc);
-        let items = match resolve_required_field(list.entries(), doc) {
-            KotlinFormatField::Present(entries) => {
-                physical_comma_list_items(doc, entries.parts(), |doc, parameter| CommaListItem {
-                    doc: format_value_parameter(doc, &parameter),
-                    comma: None,
-                })
-            }
-            KotlinFormatField::Malformed(recovery) => vec![CommaListItem {
-                doc: recovery,
+    let open = resolve_required_delimiter(list.open_paren(), doc);
+    let close = resolve_required_delimiter(list.close_paren(), doc);
+    let items = match resolve_required_field(list.entries(), doc) {
+        KotlinFormatField::Present(entries) => physical_comma_list_items(
+            doc,
+            entries.parts().filter(list_part_has_content),
+            |doc, parameter| CommaListItem {
+                doc: match parameter {
+                    ValueParameterListEntry::ValueParameter(parameter) => {
+                        format_value_parameter(doc, &parameter)
+                    }
+                    ValueParameterListEntry::BogusValueParameter(bogus) => {
+                        format_bogus_list_entry(doc, &bogus)
+                    }
+                },
                 comma: None,
-            }],
-        };
-        format_parenthesized_delimiters(doc, &open, &close, items)
-    })
+            },
+        ),
+        KotlinFormatField::Malformed(recovery) => vec![CommaListItem {
+            doc: recovery,
+            comma: None,
+        }],
+    };
+    format_parenthesized_delimiters(doc, &open, &close, items)
 }
 
 fn format_value_parameter<'source>(
     doc: &mut DocBuilder<'source>,
     parameter: &ValueParameter<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(parameter, doc, |doc| {
-        let modifiers = format_required_field(parameter.modifiers(), doc, |modifiers, doc| {
-            format_modifier_sequence(doc, &modifiers)
+    let has_name = matches!(
+        parameter.name(),
+        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(_))
+    );
+    let has_colon = matches!(
+        parameter.colon(),
+        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(_))
+    );
+    let has_type = matches!(
+        parameter.r#type(),
+        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(ty))
+            if ty.first_token().is_some()
+    );
+    let has_assign = matches!(
+        parameter.assign(),
+        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(_))
+    );
+    let modifiers = format_required_field(parameter.modifiers(), doc, |modifiers, doc| {
+        format_modifier_sequence(doc, &modifiers)
+    });
+    let parameter_keyword =
+        format_optional_field(parameter.parameter_keyword(), doc, |role, doc| {
+            let keyword = format_parameter_keyword(doc, &role);
+            let space = doc.space();
+            doc.concat([keyword, space])
         });
-        let property_keyword =
-            format_optional_field(parameter.property_keyword(), doc, |role, doc| {
-                let keyword = format_parameter_keyword(doc, &role);
-                let space = doc.space();
-                doc.concat([keyword, space])
-            });
-        let name =
-            format_required_field(parameter.name(), doc, |name, doc| format_name(doc, &name));
-        let colon = format_optional_field(parameter.colon(), doc, |colon, doc| {
-            let colon = format_token(
-                doc,
-                &colon,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::Preserve,
-            );
+    let name = format_required_field(parameter.name(), doc, |name, doc| {
+        format_parameter_name(doc, name)
+    });
+    let colon = format_optional_field(parameter.colon(), doc, |colon, doc| {
+        let colon = format_token(
+            doc,
+            &colon,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        );
+        if has_type {
             let space = doc.space();
             doc.concat([colon, space])
-        });
-        let ty = format_optional_field(parameter.r#type(), doc, |ty, doc| {
-            format_type_reference(doc, &ty)
-        });
-        let assign = format_optional_field(parameter.assign(), doc, |assign, doc| {
-            let before = doc.space();
-            let assign = format_token(
-                doc,
-                &assign,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::Preserve,
-            );
-            let after = doc.space();
-            doc.concat([before, assign, after])
-        });
-        let default = format_optional_field(parameter.default(), doc, |expression, doc| {
-            format_expression(doc, &expression)
-        });
-        doc.concat([
-            modifiers,
-            property_keyword,
-            name,
-            colon,
-            ty,
-            assign,
-            default,
-        ])
-    })
+        } else {
+            colon
+        }
+    });
+    let ty = format_optional_field(parameter.r#type(), doc, |ty, doc| {
+        format_type_reference(doc, &ty)
+    });
+    let missing_colon_space = if has_name && !has_colon && has_type {
+        doc.space()
+    } else {
+        Doc::nil()
+    };
+    let assign = format_optional_field(parameter.assign(), doc, |assign, doc| {
+        let before = doc.space();
+        let assign = format_token(
+            doc,
+            &assign,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        );
+        let after = doc.space();
+        doc.concat([before, assign, after])
+    });
+    let default = format_optional_field(parameter.default(), doc, |expression, doc| {
+        let expression = format_expression(doc, &expression);
+        if has_assign {
+            expression
+        } else {
+            let space = doc.space();
+            doc.concat([space, expression])
+        }
+    });
+    doc.concat([
+        modifiers,
+        parameter_keyword,
+        name,
+        colon,
+        missing_colon_space,
+        ty,
+        assign,
+        default,
+    ])
+}
+
+fn format_parameter_name<'source>(
+    doc: &mut DocBuilder<'source>,
+    name: ValueParameterName<'source>,
+) -> Doc<'source> {
+    match name {
+        ValueParameterName::Name(name) => format_name(doc, &name),
+        ValueParameterName::DestructuringDeclaration(pattern) => {
+            format_destructuring_declaration(doc, &pattern)
+        }
+        ValueParameterName::BogusValueParameterName(bogus) => {
+            crate::helpers::recovery::format_malformed(&bogus, doc)
+        }
+    }
 }
 
 fn format_parameter_keyword<'source>(

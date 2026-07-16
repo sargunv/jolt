@@ -41,13 +41,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "T" @ 24..25
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "T" @ 24..25
         RParen ")" @ 25..26
       Colon ":" @ 26..27 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "T" @ 28..29 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "T" @ 28..29 trailing=[Whitespace " "]
       Assign "=" @ 30..31 trailing=[Whitespace " "]
       NameExpression
         Identifier "value" @ 32..37
@@ -66,18 +72,21 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Comparable" @ 48..58
-                  TypeArgumentList
-                    Lt "<" @ 58..59
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Comparable" @ 48..58
+                    TypeArgumentList
+                      Lt "<" @ 58..59
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "T" @ 59..60
-                    Gt ">" @ 60..61
+                      Gt ">" @ 60..61
         Gt ">" @ 61..62 trailing=[Whitespace " "]
       ModifierList
       CallableName
@@ -95,7 +104,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "T" @ 75..76
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "T" @ 75..76
           Comma "," @ 76..77 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -105,13 +117,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "T" @ 85..86
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "T" @ 85..86
         RParen ")" @ 86..87
       Colon ":" @ 87..88 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "T" @ 89..90 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "T" @ 89..90 trailing=[Whitespace " "]
       Assign "=" @ 91..92
       IfExpression
         IfKw "if" @ 97..99 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]

@@ -1,0 +1,540 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+typealias MissingType =
+typealias MissingBeforeModified =
+private class AfterMissing
+typealias MissingSegment = Alpha.
+typealias RangeSeparator = Alpha..Beta
+typealias Projections = Box<, String, *String, out, in Number, *>
+typealias FunctionParameters = (, named: String, Int) -> Unit
+typealias ContextFunction = context(String, , named: Int) (value: String) -> Unit
+
+fun <, T Any, U :> broken(
+    first: Int 1,
+    ,
+    vararg rest: String,
+    missingType:,
+) T: Any {
+}
+
+fun <U> constrained() where U Any {
+}
+
+fun <T> constraintGap() where T : Any, , T : Closeable {
+}
+
+context(String, named: Int 1, , Other)
+fun contextual() {
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    TypeAliasDeclaration
+      ModifierList
+      ModifierList
+      TypeAliasKw "typealias" @ 0..9 trailing=[Whitespace " "]
+      Name
+        Identifier "MissingType" @ 10..21 trailing=[Whitespace " "]
+      Assign "=" @ 22..23
+      TypeReference
+        BogusType
+    TypeAliasDeclaration
+      ModifierList
+      ModifierList
+      TypeAliasKw "typealias" @ 24..33 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "MissingBeforeModified" @ 34..55 trailing=[Whitespace " "]
+      Assign "=" @ 56..57
+      TypeReference
+        BogusType
+    ClassDeclaration
+      ModifierList
+        Identifier "private" @ 58..65 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 66..71 trailing=[Whitespace " "]
+      Name
+        Identifier "AfterMissing" @ 72..84
+    TypeAliasDeclaration
+      ModifierList
+      ModifierList
+      TypeAliasKw "typealias" @ 85..94 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "MissingSegment" @ 95..109 trailing=[Whitespace " "]
+      Assign "=" @ 110..111 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Alpha" @ 112..117
+            Dot "." @ 117..118
+            BogusUserTypeSegment
+              AnnotationList
+    TypeAliasDeclaration
+      ModifierList
+      ModifierList
+      TypeAliasKw "typealias" @ 119..128 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "RangeSeparator" @ 129..143 trailing=[Whitespace " "]
+      Assign "=" @ 144..145 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Alpha" @ 146..151
+            BogusUserTypeSegment
+              Range ".." @ 151..153
+              Identifier "Beta" @ 153..157
+    TypeAliasDeclaration
+      ModifierList
+      ModifierList
+      TypeAliasKw "typealias" @ 158..167 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Projections" @ 168..179 trailing=[Whitespace " "]
+      Assign "=" @ 180..181 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Box" @ 182..185
+              TypeArgumentList
+                Lt "<" @ 185..186
+                TypeProjectionSeparatedList
+                  Comma "," @ 186..187 trailing=[Whitespace " "]
+                  BogusTypeArgument
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "String" @ 188..194
+                  Comma "," @ 194..195 trailing=[Whitespace " "]
+                  BogusTypeArgument
+                    Star "*" @ 196..197
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 197..203
+                  Comma "," @ 203..204 trailing=[Whitespace " "]
+                  TypeProjection
+                    Identifier "out" @ 205..208
+                    TypeReference
+                      BogusType
+                  Comma "," @ 208..209 trailing=[Whitespace " "]
+                  TypeProjection
+                    InKw "in" @ 210..212 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "Number" @ 213..219
+                  Comma "," @ 219..220 trailing=[Whitespace " "]
+                  StarProjection
+                    Star "*" @ 221..222
+                Gt ">" @ 222..223
+    TypeAliasDeclaration
+      ModifierList
+      ModifierList
+      TypeAliasKw "typealias" @ 224..233 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "FunctionParameters" @ 234..252 trailing=[Whitespace " "]
+      Assign "=" @ 253..254 trailing=[Whitespace " "]
+      TypeReference
+        FunctionType
+          ArrowFunctionType
+            ParenthesizedType
+              AnnotationList
+              LParen "(" @ 255..256
+              ParenthesizedTypeEntryList
+                Comma "," @ 256..257 trailing=[Whitespace " "]
+                BogusFunctionTypeParameter
+                FunctionTypeParameter
+                  Name
+                    Identifier "named" @ 258..263
+                  Colon ":" @ 263..264 trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "String" @ 265..271
+                Comma "," @ 271..272 trailing=[Whitespace " "]
+                FunctionTypeParameter
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "Int" @ 273..276
+              RParen ")" @ 276..277 trailing=[Whitespace " "]
+            Arrow "->" @ 278..280 trailing=[Whitespace " "]
+            UserType
+              UserTypeSegmentList
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "Unit" @ 281..285
+    TypeAliasDeclaration
+      ModifierList
+      ModifierList
+      TypeAliasKw "typealias" @ 286..295 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "ContextFunction" @ 296..311 trailing=[Whitespace " "]
+      Assign "=" @ 312..313 trailing=[Whitespace " "]
+      TypeReference
+        ContextFunctionType
+          Identifier "context" @ 314..321
+          LParen "(" @ 321..322
+          FunctionTypeParameterSeparatedList
+            FunctionTypeParameter
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 322..328
+            Comma "," @ 328..329 trailing=[Whitespace " "]
+            Comma "," @ 330..331 trailing=[Whitespace " "]
+            BogusFunctionTypeParameter
+            FunctionTypeParameter
+              Name
+                Identifier "named" @ 332..337
+              Colon ":" @ 337..338 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Int" @ 339..342
+          RParen ")" @ 342..343 trailing=[Whitespace " "]
+          FunctionType
+            ArrowFunctionType
+              ParenthesizedType
+                AnnotationList
+                LParen "(" @ 344..345
+                ParenthesizedTypeEntryList
+                  FunctionTypeParameter
+                    Name
+                      Identifier "value" @ 345..350
+                    Colon ":" @ 350..351 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 352..358
+                RParen ")" @ 358..359 trailing=[Whitespace " "]
+              Arrow "->" @ 360..362 trailing=[Whitespace " "]
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Unit" @ 363..367
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 369..372 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      TypeParameterList
+        Lt "<" @ 373..374
+        TypeParameterSeparatedList
+          Comma "," @ 374..375 trailing=[Whitespace " "]
+          BogusTypeParameter
+          TypeParameter
+            ModifierList
+            Name
+              Identifier "T" @ 376..377 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Any" @ 378..381
+          Comma "," @ 381..382 trailing=[Whitespace " "]
+          TypeParameter
+            ModifierList
+            Name
+              Identifier "U" @ 383..384 trailing=[Whitespace " "]
+            Colon ":" @ 385..386
+            TypeReference
+              BogusType
+        Gt ">" @ 386..387 trailing=[Whitespace " "]
+      ModifierList
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "broken" @ 388..394
+      ValueParameterList
+        LParen "(" @ 394..395
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "first" @ 400..405 leading=[Newline "\n", Whitespace "    "]
+            Colon ":" @ 405..406 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Int" @ 407..410 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "1" @ 411..412
+          Comma "," @ 412..413
+          Comma "," @ 418..419 leading=[Newline "\n", Whitespace "    "]
+          BogusValueParameter
+          ValueParameter
+            ModifierList
+              Identifier "vararg" @ 424..430 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Name
+              Identifier "rest" @ 431..435
+            Colon ":" @ 435..436 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 437..443
+          Comma "," @ 443..444
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "missingType" @ 449..460 leading=[Newline "\n", Whitespace "    "]
+            Colon ":" @ 460..461
+            TypeReference
+              BogusType
+          Comma "," @ 461..462
+        RParen ")" @ 463..464 leading=[Newline "\n"] trailing=[Whitespace " "]
+      TypeConstraintList
+        TypeConstraintSeparatedList
+          TypeConstraint
+            Name
+              Identifier "T" @ 465..466
+            Colon ":" @ 466..467 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Any" @ 468..471 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 472..473
+        BlockItemList
+        RBrace "}" @ 474..475 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 477..480 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      TypeParameterList
+        Lt "<" @ 481..482
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierList
+            Name
+              Identifier "U" @ 482..483
+        Gt ">" @ 483..484 trailing=[Whitespace " "]
+      ModifierList
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "constrained" @ 485..496
+      ValueParameterList
+        LParen "(" @ 496..497
+        ValueParameterSeparatedList
+        RParen ")" @ 497..498 trailing=[Whitespace " "]
+      TypeConstraintList
+        Identifier "where" @ 499..504 trailing=[Whitespace " "]
+        TypeConstraintSeparatedList
+          TypeConstraint
+            Name
+              Identifier "U" @ 505..506 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Any" @ 507..510 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 511..512
+        BlockItemList
+        RBrace "}" @ 513..514 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 516..519 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      TypeParameterList
+        Lt "<" @ 520..521
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierList
+            Name
+              Identifier "T" @ 521..522
+        Gt ">" @ 522..523 trailing=[Whitespace " "]
+      ModifierList
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "constraintGap" @ 524..537
+      ValueParameterList
+        LParen "(" @ 537..538
+        ValueParameterSeparatedList
+        RParen ")" @ 538..539 trailing=[Whitespace " "]
+      TypeConstraintList
+        Identifier "where" @ 540..545 trailing=[Whitespace " "]
+        TypeConstraintSeparatedList
+          TypeConstraint
+            Name
+              Identifier "T" @ 546..547 trailing=[Whitespace " "]
+            Colon ":" @ 548..549 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Any" @ 550..553
+          Comma "," @ 553..554 trailing=[Whitespace " "]
+          BogusTypeConstraint
+          Comma "," @ 555..556 trailing=[Whitespace " "]
+          TypeConstraint
+            Name
+              Identifier "T" @ 557..558 trailing=[Whitespace " "]
+            Colon ":" @ 559..560 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Closeable" @ 561..570 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 571..572
+        BlockItemList
+        RBrace "}" @ 573..574 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ContextParameterClause
+        Identifier "context" @ 576..583 leading=[Newline "\n", Newline "\n"]
+        LParen "(" @ 583..584
+        ContextParameterSeparatedList
+          ContextParameter
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 584..590
+          Comma "," @ 590..591 trailing=[Whitespace " "]
+          ContextParameter
+            Name
+              Identifier "named" @ 592..597
+            Colon ":" @ 597..598 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Int" @ 599..602 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "1" @ 603..604
+          Comma "," @ 604..605 trailing=[Whitespace " "]
+          Comma "," @ 606..607 trailing=[Whitespace " "]
+          BogusContextParameter
+          ContextParameter
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Other" @ 608..613
+        RParen ")" @ 613..614
+      ModifierList
+      FunKw "fun" @ 615..618 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      CallableName
+        CallableNamePartList
+          Name
+            Identifier "contextual" @ 619..629
+      ValueParameterList
+        LParen "(" @ 629..630
+        ValueParameterSeparatedList
+        RParen ")" @ 630..631 trailing=[Whitespace " "]
+      Block
+        LBrace "{" @ 632..633
+        BlockItemList
+        RBrace "}" @ 634..635 leading=[Newline "\n"]
+  Eof "" @ 636..636 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=24..33 message="expected type"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=58..65 message="expected type"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=119..128 message="expected type segment"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=151..153 message="expected one '.' between type segments"
+  code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=188..194 message="malformed type argument list"
+  code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=197..203 message="star projection cannot include a simultaneous type"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=208..209 message="expected type"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=258..263 message="expected function type parameter between commas"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=332..337 message="expected function type parameter between commas"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=376..377 message="expected type parameter between commas"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=378..381 message="expected ':' before type parameter bound"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=386..387 message="expected type"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=411..412 message="expected '=' before parameter default"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=424..430 message="expected value parameter between commas"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=461..462 message="expected type"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=465..466 message="expected 'where' before type constraints"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=507..510 message="expected ':' before type constraint bound"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=555..556 message="expected type constraint between commas"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=603..604 message="expected '=' before context parameter default"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=608..613 message="expected context parameter"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(24), end: TextSize(33) }) message=expected type
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(58), end: TextSize(65) }) message=expected type
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(119), end: TextSize(128) }) message=expected type segment
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(151), end: TextSize(153) }) message=expected one '.' between type segments
+code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=Some(TextRange { start: TextSize(188), end: TextSize(194) }) message=malformed type argument list
+code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=Some(TextRange { start: TextSize(197), end: TextSize(203) }) message=star projection cannot include a simultaneous type
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(208), end: TextSize(209) }) message=expected type
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(258), end: TextSize(263) }) message=expected function type parameter between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(332), end: TextSize(337) }) message=expected function type parameter between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(376), end: TextSize(377) }) message=expected type parameter between commas
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(378), end: TextSize(381) }) message=expected ':' before type parameter bound
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(386), end: TextSize(387) }) message=expected type
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(411), end: TextSize(412) }) message=expected '=' before parameter default
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(424), end: TextSize(430) }) message=expected value parameter between commas
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(461), end: TextSize(462) }) message=expected type
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(465), end: TextSize(466) }) message=expected 'where' before type constraints
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(507), end: TextSize(510) }) message=expected ':' before type constraint bound
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(555), end: TextSize(556) }) message=expected type constraint between commas
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(603), end: TextSize(604) }) message=expected '=' before context parameter default
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(608), end: TextSize(613) }) message=expected context parameter

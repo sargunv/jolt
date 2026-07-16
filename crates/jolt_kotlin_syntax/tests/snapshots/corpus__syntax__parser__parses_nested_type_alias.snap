@@ -34,18 +34,21 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "List" @ 38..42
-                    TypeArgumentList
-                      Lt "<" @ 42..43
-                      TypeProjectionList
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "List" @ 38..42
+                      TypeArgumentList
+                        Lt "<" @ 42..43
                         TypeProjectionSeparatedList
-                          TypeArgument
-                            TypeProjection
-                              TypeReference
-                                UserType
-                                  UserTypeSegmentList
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
                                     Identifier "String" @ 43..49
-                      Gt ">" @ 49..50
+                        Gt ">" @ 49..50
           ClassMemberDeclaration
             PropertyDeclaration
               ModifierList
@@ -59,7 +62,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Names" @ 67..72 trailing=[Whitespace " "]
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Names" @ 67..72 trailing=[Whitespace " "]
               Assign "=" @ 73..74 trailing=[Whitespace " "]
               CallExpression
                 NameExpression

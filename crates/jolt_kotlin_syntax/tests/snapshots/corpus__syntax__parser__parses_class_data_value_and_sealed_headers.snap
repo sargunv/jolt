@@ -36,7 +36,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "ByteArray" @ 30..39
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "ByteArray" @ 30..39
           RParen ")" @ 39..40
     ClassDeclaration
       ModifierList
@@ -65,7 +68,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 83..89
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 83..89
           RParen ")" @ 89..90
     ClassDeclaration
       ModifierList

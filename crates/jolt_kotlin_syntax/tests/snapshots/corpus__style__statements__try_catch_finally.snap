@@ -53,13 +53,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "String" @ 54..60
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 54..60
         RParen ")" @ 60..61
       Colon ":" @ 61..62 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Int" @ 63..66 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Int" @ 63..66 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 67..68
         BlockItemList
@@ -112,7 +118,10 @@ KotlinFile
                             TypeReference
                               UserType
                                 UserTypeSegmentList
-                                  Identifier "NumberFormatException" @ 134..155
+                                  UserTypeSegment
+                                    AnnotationList
+                                    Name
+                                      Identifier "NumberFormatException" @ 134..155
                         RParen ")" @ 155..156 trailing=[Whitespace " "]
                       Block
                         LBrace "{" @ 157..158

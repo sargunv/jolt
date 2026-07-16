@@ -51,7 +51,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "String" @ 43..49
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 43..49
                 RParen ")" @ 49..50 trailing=[Whitespace " "]
               Block
                 LBrace "{" @ 51..52
@@ -71,7 +74,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Base" @ 73..77
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Base" @ 73..77
             ValueArgumentList
               LParen "(" @ 77..78
               ValueArgumentEntryList
@@ -101,7 +107,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "String" @ 111..117
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 111..117
                 RParen ")" @ 117..118 trailing=[Whitespace " "]
               Block
                 LBrace "{" @ 119..120

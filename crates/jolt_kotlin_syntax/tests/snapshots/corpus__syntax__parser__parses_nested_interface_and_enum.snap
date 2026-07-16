@@ -51,7 +51,10 @@ KotlinFile
                       TypeReference
                         UserType
                           UserTypeSegmentList
-                            Identifier "String" @ 57..63
+                            UserTypeSegment
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 57..63
                       PropertyBodyMemberList
                 RBrace "}" @ 68..69 leading=[Newline "\n", Whitespace "    "]
           ClassMemberDeclaration

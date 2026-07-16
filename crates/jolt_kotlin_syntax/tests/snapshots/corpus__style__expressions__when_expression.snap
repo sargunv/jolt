@@ -59,7 +59,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "Status" @ 83..89
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "Status" @ 83..89
           ClassMemberDeclaration
             ClassDeclaration
               ModifierList
@@ -82,7 +85,10 @@ KotlinFile
                       TypeReference
                         UserType
                           UserTypeSegmentList
-                            Identifier "String" @ 124..130
+                            UserTypeSegment
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 124..130
                   RParen ")" @ 130..131 trailing=[Whitespace " "]
               Colon ":" @ 132..133 trailing=[Whitespace " "]
               DelegationSpecifierList
@@ -91,7 +97,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "Status" @ 134..140
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "Status" @ 134..140
         RBrace "}" @ 141..142 leading=[Newline "\n"]
     FunctionDeclaration
       ModifierList
@@ -113,13 +122,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Status" @ 164..170
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Status" @ 164..170
         RParen ")" @ 170..171
       Colon ":" @ 171..172 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 173..179 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 173..179 trailing=[Whitespace " "]
       Assign "=" @ 180..181
       WhenExpression
         WhenKw "when" @ 186..190 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
@@ -153,9 +168,15 @@ KotlinFile
                 TypeReference
                   UserType
                     UserTypeSegmentList
-                      Identifier "Status" @ 245..251
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Status" @ 245..251
                       Dot "." @ 251..252
-                      Identifier "Failed" @ 252..258 trailing=[Whitespace " "]
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Failed" @ 252..258 trailing=[Whitespace " "]
             Arrow "->" @ 259..261 trailing=[Whitespace " "]
             StringTemplateExpression
               StringTemplateEntryList

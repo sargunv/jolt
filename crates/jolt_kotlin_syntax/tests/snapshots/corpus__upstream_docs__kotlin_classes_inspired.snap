@@ -49,7 +49,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 51..57
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 51..57
           RParen ")" @ 57..58 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 59..60
@@ -67,7 +70,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Int" @ 77..80 trailing=[Whitespace " "]
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Int" @ 77..80 trailing=[Whitespace " "]
               Assign "=" @ 81..82 trailing=[Whitespace " "]
               LiteralExpression
                 IntegerLiteral "0" @ 83..84
@@ -90,7 +96,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 103..109 trailing=[Whitespace " "]
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 103..109 trailing=[Whitespace " "]
               Assign "=" @ 110..111 trailing=[Whitespace " "]
               StringTemplateExpression
                 StringTemplateEntryList

@@ -44,18 +44,21 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "List" @ 21..25
-                  TypeArgumentList
-                    Lt "<" @ 25..26
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "List" @ 21..25
+                    TypeArgumentList
+                      Lt "<" @ 25..26
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "Int" @ 26..29
-                    Gt ">" @ 29..30
+                      Gt ">" @ 29..30
         RParen ")" @ 30..31 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 32..33
@@ -193,12 +196,18 @@ KotlinFile
                           TypeReference
                             UserType
                               UserTypeSegmentList
-                                Identifier "Int" @ 205..208
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
+                                    Identifier "Int" @ 205..208
                       RParen ")" @ 208..209 trailing=[Whitespace " "]
                     Arrow "->" @ 210..212 trailing=[Whitespace " "]
                     UserType
                       UserTypeSegmentList
-                        Identifier "T" @ 213..214
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "T" @ 213..214
           RParen ")" @ 214..215 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 216..217

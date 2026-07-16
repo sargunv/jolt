@@ -55,7 +55,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Int" @ 65..68 trailing=[Whitespace " "]
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Int" @ 65..68 trailing=[Whitespace " "]
               Assign "=" @ 69..70 trailing=[Whitespace " "]
               LiteralExpression
                 IntegerLiteral "0" @ 71..72
@@ -112,7 +115,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Boolean" @ 171..178
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Boolean" @ 171..178
               PropertyBodyMemberList
                 PropertyAccessor
                   ModifierList

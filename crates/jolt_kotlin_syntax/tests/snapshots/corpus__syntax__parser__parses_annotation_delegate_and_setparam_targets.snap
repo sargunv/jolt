@@ -40,7 +40,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 33..39 trailing=[Whitespace " "]
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 33..39 trailing=[Whitespace " "]
               Assign "=" @ 40..41 trailing=[Whitespace " "]
               StringTemplateExpression
                 StringTemplateEntryList
@@ -92,7 +95,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 118..124 trailing=[Whitespace " "]
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 118..124 trailing=[Whitespace " "]
               Identifier "by" @ 125..127 trailing=[Whitespace " "]
               CallExpression
                 NameExpression
@@ -172,7 +178,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 212..218 trailing=[Whitespace " "]
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 212..218 trailing=[Whitespace " "]
               Assign "=" @ 219..220 trailing=[Whitespace " "]
               StringTemplateExpression
                 StringTemplateEntryList

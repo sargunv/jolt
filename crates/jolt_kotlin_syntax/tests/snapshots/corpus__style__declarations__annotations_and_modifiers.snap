@@ -76,7 +76,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 128..134
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 128..134
           RParen ")" @ 134..135
     ClassDeclaration
       ModifierList
@@ -125,7 +128,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 210..216
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 210..216
           RParen ")" @ 216..217 trailing=[Whitespace " "]
       Colon ":" @ 218..219 trailing=[Whitespace " "]
       DelegationSpecifierList
@@ -134,7 +140,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Result" @ 220..226
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Result" @ 220..226
             ValueArgumentList
               LParen "(" @ 226..227
               ValueArgumentEntryList

@@ -36,7 +36,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Int" @ 14..17
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Int" @ 14..17
           Comma "," @ 17..18 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -46,7 +49,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Int" @ 22..25
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Int" @ 22..25
           Comma "," @ 25..26 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -56,13 +62,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Int" @ 30..33
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Int" @ 30..33
         RParen ")" @ 33..34
       Colon ":" @ 34..35 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Int" @ 36..39 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Int" @ 36..39 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 40..41
         BlockItemList

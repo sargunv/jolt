@@ -34,18 +34,21 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "List" @ 29..33
-                  TypeArgumentList
-                    Lt "<" @ 33..34
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "List" @ 29..33
+                    TypeArgumentList
+                      Lt "<" @ 33..34
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "Int" @ 34..37
-                    Gt ">" @ 37..38
+                      Gt ">" @ 37..38
         RParen ")" @ 38..39 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 40..41

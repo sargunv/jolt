@@ -80,7 +80,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Any" @ 124..127
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Any" @ 124..127
           Comma "," @ 127..128
           TypeParameter
             ModifierList
@@ -98,18 +101,21 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Source" @ 187..193
-                  TypeArgumentList
-                    Lt "<" @ 193..194
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Source" @ 187..193
+                    TypeArgumentList
+                      Lt "<" @ 193..194
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "R" @ 194..195
-                    Gt ">" @ 195..196 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:where-first */", Whitespace " "]
+                      Gt ">" @ 195..196 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:where-first */", Whitespace " "]
           Comma "," @ 227..228
           TypeConstraint
             Name
@@ -118,18 +124,21 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Sink" @ 237..241
-                  TypeArgumentList
-                    Lt "<" @ 241..242
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Sink" @ 237..241
+                    TypeArgumentList
+                      Lt "<" @ 241..242
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "R" @ 242..243
-                    Gt ">" @ 243..244 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:where-second */"]
+                      Gt ">" @ 243..244 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:where-second */"]
     FunctionDeclaration
       ModifierList
       ModifierList
@@ -158,13 +167,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "T" @ 335..336
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "T" @ 335..336
         RParen ")" @ 336..337
       Colon ":" @ 337..338 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "T" @ 339..340 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "T" @ 339..340 trailing=[Whitespace " "]
       TypeConstraintList
         Identifier "where" @ 341..346 trailing=[Whitespace " "]
         TypeConstraintSeparatedList
@@ -175,7 +190,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "CharSequence" @ 351..363 trailing=[Whitespace " "]
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "CharSequence" @ 351..363 trailing=[Whitespace " "]
       Assign "=" @ 364..365 trailing=[Whitespace " "]
       NameExpression
         Identifier "value" @ 366..371

@@ -34,19 +34,23 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "List" @ 38..42
-                    TypeArgumentList
-                      Lt "<" @ 42..43
-                      TypeProjectionList
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "List" @ 38..42
+                      TypeArgumentList
+                        Lt "<" @ 42..43
                         TypeProjectionSeparatedList
-                          TypeArgument
-                            TypeProjection
-                              Identifier "out" @ 43..46 trailing=[Whitespace " "]
-                              TypeReference
-                                UserType
-                                  UserTypeSegmentList
-                                    Identifier "Number" @ 47..53
-                      Gt ">" @ 53..54
+                          TypeProjection
+                            Identifier "out" @ 43..46 trailing=[Whitespace " "]
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  UserTypeSegment
+                                    AnnotationList
+                                    Name
+                                      Identifier "Number" @ 47..53
+                        Gt ">" @ 53..54
             Comma "," @ 54..55
             ValueParameter
               ModifierList
@@ -57,19 +61,23 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "MutableList" @ 72..83
-                    TypeArgumentList
-                      Lt "<" @ 83..84
-                      TypeProjectionList
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "MutableList" @ 72..83
+                      TypeArgumentList
+                        Lt "<" @ 83..84
                         TypeProjectionSeparatedList
-                          TypeArgument
-                            TypeProjection
-                              InKw "in" @ 84..86 trailing=[Whitespace " "]
-                              TypeReference
-                                UserType
-                                  UserTypeSegmentList
-                                    Identifier "Int" @ 87..90
-                      Gt ">" @ 90..91
+                          TypeProjection
+                            InKw "in" @ 84..86 trailing=[Whitespace " "]
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  UserTypeSegment
+                                    AnnotationList
+                                    Name
+                                      Identifier "Int" @ 87..90
+                        Gt ">" @ 90..91
             Comma "," @ 91..92
             ValueParameter
               ModifierList
@@ -80,15 +88,16 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "List" @ 110..114
-                    TypeArgumentList
-                      Lt "<" @ 114..115
-                      TypeProjectionList
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "List" @ 110..114
+                      TypeArgumentList
+                        Lt "<" @ 114..115
                         TypeProjectionSeparatedList
-                          TypeArgument
-                            TypeProjection
-                              Star "*" @ 115..116
-                      Gt ">" @ 116..117
+                          StarProjection
+                            Star "*" @ 115..116
+                        Gt ">" @ 116..117
             Comma "," @ 117..118
           RParen ")" @ 119..120 leading=[Newline "\n"]
   Eof "" @ 121..121 leading=[Newline "\n"]

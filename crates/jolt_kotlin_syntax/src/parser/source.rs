@@ -75,11 +75,14 @@ impl<'source> Parser<'source> {
         );
     }
 
-    pub(super) fn malformed_type_argument_list_here(&mut self, message: &str) {
+    pub(super) fn malformed_type_argument_list_here(
+        &mut self,
+        message: &str,
+    ) -> jolt_syntax::DiagnosticMarker {
         self.error_here(
             KotlinParseDiagnosticCode::MalformedTypeArgumentList.id(),
             message,
-        );
+        )
     }
 
     pub(super) fn invalid_when_guard_here(&mut self, message: &str) {

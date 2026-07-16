@@ -46,35 +46,41 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Sequence" @ 53..61
-                  TypeArgumentList
-                    Lt "<" @ 61..62
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Sequence" @ 53..61
+                    TypeArgumentList
+                      Lt "<" @ 61..62
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "String" @ 62..68
-                    Gt ">" @ 68..69
+                      Gt ">" @ 68..69
         RParen ")" @ 69..70
       Colon ":" @ 70..71 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "List" @ 72..76
-            TypeArgumentList
-              Lt "<" @ 76..77
-              TypeProjectionList
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "List" @ 72..76
+              TypeArgumentList
+                Lt "<" @ 76..77
                 TypeProjectionSeparatedList
-                  TypeArgument
-                    TypeProjection
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          AnnotationList
+                          Name
                             Identifier "String" @ 77..83
-              Gt ">" @ 83..84 trailing=[Whitespace " "]
+                Gt ">" @ 83..84 trailing=[Whitespace " "]
       Assign "=" @ 85..86
       CallExpression
         NavigationExpression

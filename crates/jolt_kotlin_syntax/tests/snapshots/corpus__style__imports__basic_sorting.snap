@@ -83,7 +83,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Alpha" @ 127..132
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Alpha" @ 127..132
             Comma "," @ 132..133 trailing=[Whitespace " "]
             ValueParameter
               ModifierList
@@ -94,7 +97,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Zed" @ 143..146
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Zed" @ 143..146
             Comma "," @ 146..147 trailing=[Whitespace " "]
             ValueParameter
               ModifierList
@@ -105,18 +111,21 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "List" @ 159..163
-                    TypeArgumentList
-                      Lt "<" @ 163..164
-                      TypeProjectionList
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "List" @ 159..163
+                      TypeArgumentList
+                        Lt "<" @ 163..164
                         TypeProjectionSeparatedList
-                          TypeArgument
-                            TypeProjection
-                              TypeReference
-                                UserType
-                                  UserTypeSegmentList
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
                                     Identifier "String" @ 164..170
-                      Gt ">" @ 170..171
+                        Gt ">" @ 170..171
           RParen ")" @ 171..172
   Eof "" @ 173..173 leading=[Newline "\n"]
 

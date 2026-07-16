@@ -30,7 +30,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Logger" @ 16..22
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Logger" @ 16..22
         RParen ")" @ 22..23
       ModifierList
       FunKw "fun" @ 24..27 leading=[Newline "\n"] trailing=[Whitespace " "]
@@ -50,13 +53,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "String" @ 56..62
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 56..62
         RParen ")" @ 62..63
       Colon ":" @ 63..64 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Unit" @ 65..69 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Unit" @ 65..69 trailing=[Whitespace " "]
       Assign "=" @ 70..71 trailing=[Whitespace " "]
       CallExpression
         NavigationExpression
@@ -90,7 +99,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Session" @ 120..127
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Session" @ 120..127
           RParen ")" @ 127..128 trailing=[Whitespace " "]
           FunctionType
             ArrowFunctionType
@@ -102,12 +114,18 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "String" @ 130..136
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 130..136
                 RParen ")" @ 136..137 trailing=[Whitespace " "]
               Arrow "->" @ 138..140 trailing=[Whitespace " "]
               UserType
                 UserTypeSegmentList
-                  Identifier "Unit" @ 141..145
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Unit" @ 141..145
     FunctionDeclaration
       ModifierList
       ModifierList
@@ -128,7 +146,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Handler" @ 173..180
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Handler" @ 173..180
         RParen ")" @ 180..181 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 182..183

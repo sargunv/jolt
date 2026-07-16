@@ -50,13 +50,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Int" @ 51..54
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Int" @ 51..54
         RParen ")" @ 54..55
       Colon ":" @ 55..56 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 57..63 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 57..63 trailing=[Whitespace " "]
       Assign "=" @ 64..65
       WhenExpression
         WhenKw "when" @ 70..74 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]

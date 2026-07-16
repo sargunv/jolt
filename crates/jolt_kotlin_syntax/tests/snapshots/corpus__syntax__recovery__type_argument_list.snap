@@ -34,23 +34,24 @@ KotlinFile
                 TypeArgumentListList
                   TypeArgumentList
                     Lt "<" @ 17..18
-                    TypeProjectionList
-                      TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
-                                  Identifier "First" @ 18..23
-                        Comma "," @ 23..24 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
-                        Comma "," @ 38..39 trailing=[Whitespace " "]
-                        ErrorNode
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
-                                  Identifier "Second" @ 40..46
+                    TypeProjectionSeparatedList
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              AnnotationList
+                              Name
+                                Identifier "First" @ 18..23
+                      Comma "," @ 23..24 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
+                      Comma "," @ 38..39 trailing=[Whitespace " "]
+                      BogusTypeArgument
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              AnnotationList
+                              Name
+                                Identifier "Second" @ 40..46
                     Gt ">" @ 46..47
                 ValueArgumentList
                   LParen "(" @ 47..48

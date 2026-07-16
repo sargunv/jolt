@@ -38,7 +38,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Counter" @ 32..39
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Counter" @ 32..39
           Comma "," @ 39..40 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -48,18 +51,21 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "MutableList" @ 49..60
-                  TypeArgumentList
-                    Lt "<" @ 60..61
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "MutableList" @ 49..60
+                    TypeArgumentList
+                      Lt "<" @ 60..61
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "Int" @ 61..64
-                    Gt ">" @ 64..65
+                      Gt ">" @ 64..65
         RParen ")" @ 65..66 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 67..68

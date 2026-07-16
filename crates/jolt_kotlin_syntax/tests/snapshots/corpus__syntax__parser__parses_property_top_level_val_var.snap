@@ -50,7 +50,10 @@ KotlinFile
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Int" @ 47..50 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Int" @ 47..50 trailing=[Whitespace " "]
       Assign "=" @ 51..52 trailing=[Whitespace " "]
       LiteralExpression
         IntegerLiteral "0" @ 53..54
@@ -68,7 +71,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Config" @ 72..78
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Config" @ 72..78
         RParen ")" @ 78..79
       ModifierList
       ValKw "val" @ 80..83 leading=[Newline "\n"] trailing=[Whitespace " "]
@@ -80,7 +86,10 @@ KotlinFile
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 100..106
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 100..106
       PropertyBodyMemberList
         PropertyAccessor
           ModifierList
@@ -117,7 +126,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 165..171
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 165..171
               PropertyBodyMemberList
         RBrace "}" @ 172..173 leading=[Newline "\n"]
   Eof "" @ 174..174 leading=[Newline "\n"]

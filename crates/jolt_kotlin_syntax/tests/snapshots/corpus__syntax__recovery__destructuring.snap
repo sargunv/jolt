@@ -22,7 +22,7 @@ KotlinFile
               Identifier "first" @ 5..10
           Comma "," @ 10..11 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
           Comma "," @ 25..26 trailing=[Whitespace " "]
-          ErrorNode
+          BogusDestructuringEntry
           DestructuringEntry
             Name
               Identifier "second" @ 27..33

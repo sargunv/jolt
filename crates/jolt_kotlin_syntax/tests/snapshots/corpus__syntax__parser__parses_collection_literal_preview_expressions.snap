@@ -32,7 +32,10 @@ KotlinFile
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Any" @ 26..29 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Any" @ 26..29 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 30..31
         BlockItemList

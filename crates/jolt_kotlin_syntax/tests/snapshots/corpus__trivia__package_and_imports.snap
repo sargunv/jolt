@@ -124,18 +124,21 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "List" @ 450..454
-                  TypeArgumentList
-                    Lt "<" @ 454..455
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "List" @ 450..454
+                    TypeArgumentList
+                      Lt "<" @ 454..455
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "String" @ 455..461
-                    Gt ">" @ 461..462
+                      Gt ">" @ 461..462
         RParen ")" @ 462..463 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 464..465

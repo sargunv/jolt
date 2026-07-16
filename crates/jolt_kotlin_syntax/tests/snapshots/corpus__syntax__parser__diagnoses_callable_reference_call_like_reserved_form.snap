@@ -80,14 +80,14 @@ KotlinFile
                 TypeArgumentListList
                   TypeArgumentList
                     Lt "<" @ 107..108
-                    TypeProjectionList
-                      TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
-                                  Identifier "String" @ 108..114
+                    TypeProjectionSeparatedList
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 108..114
                     Gt ">" @ 114..115
               TypeArgumentListList
               ValueArgumentList

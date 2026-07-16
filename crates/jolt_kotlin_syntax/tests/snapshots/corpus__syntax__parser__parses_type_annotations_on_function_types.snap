@@ -48,7 +48,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 61..67
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 61..67
           RParen ")" @ 67..68
     FunctionDeclaration
       ModifierList
@@ -84,7 +87,10 @@ KotlinFile
                   Arrow "->" @ 107..109 trailing=[Whitespace " "]
                   UserType
                     UserTypeSegmentList
-                      Identifier "Unit" @ 110..114
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Unit" @ 110..114
           Comma "," @ 114..115
           ValueParameter
             ModifierList
@@ -108,12 +114,18 @@ KotlinFile
                         TypeReference
                           UserType
                             UserTypeSegmentList
-                              Identifier "PaddingValues" @ 138..151
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "PaddingValues" @ 138..151
                     RParen ")" @ 151..152 trailing=[Whitespace " "]
                   Arrow "->" @ 153..155 trailing=[Whitespace " "]
                   UserType
                     UserTypeSegmentList
-                      Identifier "Unit" @ 156..160
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Unit" @ 156..160
           Comma "," @ 160..161
           ValueParameter
             ModifierList
@@ -144,7 +156,10 @@ KotlinFile
                             Arrow "->" @ 199..201 trailing=[Whitespace " "]
                             UserType
                               UserTypeSegmentList
-                                Identifier "Unit" @ 202..206
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
+                                    Identifier "Unit" @ 202..206
                   RParen ")" @ 206..207
                 Question "?" @ 207..208 trailing=[Whitespace " "]
             Assign "=" @ 209..210 trailing=[Whitespace " "]
@@ -159,26 +174,29 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Annotation
-                    At "@" @ 232..233
-                    QualifiedName
-                      QualifiedNameSegmentList
-                        Name
-                          Identifier "Fancy" @ 233..238
-                    AnnotationArgumentList
-                      LParen "(" @ 238..239
-                      ValueArgumentSeparatedList
-                        ValueArgument
-                          ValueArgumentPrefixList
-                          StringTemplateExpression
-                            StringTemplateEntryList
-                              StringTemplateEntry
-                                OpenQuote "\"" @ 239..240
-                              StringTemplateEntry
-                                RegularStringPart "label" @ 240..245
-                            ClosingQuote "\"" @ 245..246
-                      RParen ")" @ 246..247 trailing=[Whitespace " "]
-                  Identifier "String" @ 248..254
+                  UserTypeSegment
+                    AnnotationList
+                      Annotation
+                        At "@" @ 232..233
+                        QualifiedName
+                          QualifiedNameSegmentList
+                            Name
+                              Identifier "Fancy" @ 233..238
+                        AnnotationArgumentList
+                          LParen "(" @ 238..239
+                          ValueArgumentSeparatedList
+                            ValueArgument
+                              ValueArgumentPrefixList
+                              StringTemplateExpression
+                                StringTemplateEntryList
+                                  StringTemplateEntry
+                                    OpenQuote "\"" @ 239..240
+                                  StringTemplateEntry
+                                    RegularStringPart "label" @ 240..245
+                                ClosingQuote "\"" @ 245..246
+                          RParen ")" @ 246..247 trailing=[Whitespace " "]
+                    Name
+                      Identifier "String" @ 248..254
           Comma "," @ 254..255
         RParen ")" @ 256..257 leading=[Newline "\n"] trailing=[Whitespace " "]
       Assign "=" @ 258..259 trailing=[Whitespace " "]

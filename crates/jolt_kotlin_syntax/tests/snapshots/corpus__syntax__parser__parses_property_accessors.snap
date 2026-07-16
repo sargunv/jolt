@@ -38,7 +38,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 32..38 trailing=[Whitespace " "]
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 32..38 trailing=[Whitespace " "]
               Assign "=" @ 39..40 trailing=[Whitespace " "]
               StringTemplateExpression
                 StringTemplateEntryList

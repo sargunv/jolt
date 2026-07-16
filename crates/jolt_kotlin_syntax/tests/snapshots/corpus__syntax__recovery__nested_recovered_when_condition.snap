@@ -33,7 +33,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Int" @ 40..43
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Int" @ 40..43
         RParen ")" @ 43..44 trailing=[Whitespace " "]
       Assign "=" @ 45..46 trailing=[Whitespace " "]
       WhenExpression

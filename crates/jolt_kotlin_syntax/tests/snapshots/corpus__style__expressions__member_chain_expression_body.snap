@@ -151,13 +151,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "String" @ 169..175
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 169..175
         RParen ")" @ 175..176
       Colon ":" @ 176..177 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 178..184
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 178..184
       Assign "=" @ 184..185
       CallExpression
         NavigationExpression

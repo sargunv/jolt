@@ -64,35 +64,41 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "List" @ 52..56
-                  TypeArgumentList
-                    Lt "<" @ 56..57
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "List" @ 52..56
+                    TypeArgumentList
+                      Lt "<" @ 56..57
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "List" @ 57..61
-                                  TypeArgumentList
-                                    Lt "<" @ 61..62
-                                    TypeProjectionList
-                                      TypeProjectionSeparatedList
-                                        TypeArgument
-                                          TypeProjection
-                                            TypeReference
-                                              UserType
-                                                UserTypeSegmentList
-                                                  Identifier "Int" @ 62..65
-                                    Gt ">" @ 65..66
-                    Gt ">" @ 66..67
+                                TypeArgumentList
+                                  Lt "<" @ 61..62
+                                  TypeProjectionSeparatedList
+                                    TypeReference
+                                      UserType
+                                        UserTypeSegmentList
+                                          UserTypeSegment
+                                            AnnotationList
+                                            Name
+                                              Identifier "Int" @ 62..65
+                                  Gt ">" @ 65..66
+                      Gt ">" @ 66..67
         RParen ")" @ 67..68
       Colon ":" @ 68..69 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 70..76 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 70..76 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 77..78
         BlockItemList
@@ -204,7 +210,10 @@ KotlinFile
                         TypeReference
                           UserType
                             UserTypeSegmentList
-                              Identifier "IllegalStateException" @ 326..347
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "IllegalStateException" @ 326..347
                     RParen ")" @ 347..348 trailing=[Whitespace " "]
                   Block
                     LBrace "{" @ 349..350

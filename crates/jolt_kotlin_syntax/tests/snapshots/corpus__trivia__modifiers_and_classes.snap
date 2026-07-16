@@ -69,7 +69,10 @@ KotlinFile
                       TypeReference
                         UserType
                           UserTypeSegmentList
-                            Identifier "String" @ 204..210
+                            UserTypeSegment
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 204..210
                     Comma "," @ 210..211
                   RParen ")" @ 216..217 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Colon ":" @ 218..219 trailing=[Whitespace " "]
@@ -79,7 +82,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "Node" @ 220..224
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "Node" @ 220..224
                     ValueArgumentList
                       LParen "(" @ 224..225
                       ValueArgumentEntryList
@@ -100,7 +106,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "Node" @ 303..307
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "Node" @ 303..307
                     ValueArgumentList
                       LParen "(" @ 307..308
                       ValueArgumentEntryList
@@ -130,7 +139,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Node" @ 438..442
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Node" @ 438..442
               PropertyBodyMemberList
         RBrace "}" @ 443..444 leading=[Newline "\n"]
   Eof "" @ 445..445 leading=[Newline "\n"]

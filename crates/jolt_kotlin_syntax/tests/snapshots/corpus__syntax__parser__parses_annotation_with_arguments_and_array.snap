@@ -94,7 +94,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 111..117
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 111..117
             Comma "," @ 117..118
             ValueParameter
               ModifierList
@@ -105,18 +108,21 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Array" @ 136..141
-                    TypeArgumentList
-                      Lt "<" @ 141..142
-                      TypeProjectionList
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Array" @ 136..141
+                      TypeArgumentList
+                        Lt "<" @ 141..142
                         TypeProjectionSeparatedList
-                          TypeArgument
-                            TypeProjection
-                              TypeReference
-                                UserType
-                                  UserTypeSegmentList
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
                                     Identifier "String" @ 142..148
-                      Gt ">" @ 148..149
+                        Gt ">" @ 148..149
             Comma "," @ 149..150
           RParen ")" @ 151..152 leading=[Newline "\n"]
   Eof "" @ 153..153 leading=[Newline "\n"]

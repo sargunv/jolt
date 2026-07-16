@@ -31,7 +31,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Logger" @ 29..35
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Logger" @ 29..35
           RParen ")" @ 35..36 trailing=[Whitespace " "]
           FunctionType
             ArrowFunctionType
@@ -44,13 +47,19 @@ KotlinFile
                       NullableType
                         UserType
                           UserTypeSegmentList
-                            Identifier "String" @ 38..44
+                            UserTypeSegment
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 38..44
                         Question "?" @ 44..45
                 RParen ")" @ 45..46 trailing=[Whitespace " "]
               Arrow "->" @ 47..49 trailing=[Whitespace " "]
               UserType
                 UserTypeSegmentList
-                  Identifier "Unit" @ 50..54
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Unit" @ 50..54
     TypeAliasDeclaration
       ModifierList
       ModifierList
@@ -73,7 +82,10 @@ KotlinFile
                     NullableType
                       UserType
                         UserTypeSegmentList
-                          Identifier "String" @ 89..95
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 89..95
                       Question "?" @ 95..96
                 Comma "," @ 96..97 trailing=[Whitespace " "]
                 FunctionTypeParameter
@@ -83,12 +95,18 @@ KotlinFile
                   TypeReference
                     UserType
                       UserTypeSegmentList
-                        Identifier "Int" @ 105..108
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "Int" @ 105..108
               RParen ")" @ 108..109 trailing=[Whitespace " "]
             Arrow "->" @ 110..112 trailing=[Whitespace " "]
             UserType
               UserTypeSegmentList
-                Identifier "Unit" @ 113..117
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "Unit" @ 113..117
     PropertyDeclaration
       ModifierList
       ModifierList
@@ -101,7 +119,10 @@ KotlinFile
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Callback" @ 133..141 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Callback" @ 133..141 trailing=[Whitespace " "]
       Assign "=" @ 142..143 trailing=[Whitespace " "]
       LambdaExpression
         LambdaBody

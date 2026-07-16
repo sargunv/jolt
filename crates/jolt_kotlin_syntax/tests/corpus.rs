@@ -24,7 +24,9 @@ fn kotlin_corpus_syntax_snapshots() {
             "parser reconstruction changed source in {}",
             path.display()
         );
-        if path.ends_with("syntax/recovery/phase-16-program.kt") {
+        if path.ends_with("syntax/recovery/phase-16-program.kt")
+            || path.ends_with("syntax/recovery/phase-17-types-and-parameters.kt")
+        {
             assert_bidirectional_diagnostic_ownership(
                 syntax.syntax_node().expect("physical Kotlin root"),
                 parse.diagnostics(),

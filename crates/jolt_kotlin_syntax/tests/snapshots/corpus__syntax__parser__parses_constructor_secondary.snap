@@ -36,7 +36,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 57..63
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 57..63
           RParen ")" @ 63..64 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 65..66
@@ -86,7 +89,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "Int" @ 124..127
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "Int" @ 124..127
                 RParen ")" @ 127..128 trailing=[Whitespace " "]
               Colon ":" @ 129..130 trailing=[Whitespace " "]
               ConstructorDelegationCall

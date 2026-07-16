@@ -21,12 +21,32 @@ pub(crate) fn format_malformed<'source>(
     let (left, right) = if range.start() == range.end() || !has_tokens {
         (None, None)
     } else {
-        (core.previous_token(), core.next_token())
+        let left = core.previous_token().filter(|token| {
+            !has_line_break(
+                token.source(),
+                token.token_text_range().end().get(),
+                range.start().get(),
+            )
+        });
+        let right = core.next_token().filter(|token| {
+            !has_line_break(
+                token.source(),
+                range.end().get(),
+                token.token_text_range().start().get(),
+            )
+        });
+        (left, right)
     };
     let mut safety = KotlinLexicalSafety;
     let fragment = doc.malformed_verbatim_with_safety(&core, &mut safety);
     let fragment = doc.resolve_exceptional(fragment, left.as_ref(), right.as_ref(), &mut safety);
     format_malformed_with_boundary_comments(&core, fragment, doc)
+}
+
+fn has_line_break(source: &str, start: usize, end: usize) -> bool {
+    source[start..end]
+        .bytes()
+        .any(|byte| matches!(byte, b'\n' | b'\r'))
 }
 
 /// Dispatches a typed Kotlin view exactly once between structured and malformed formatting.

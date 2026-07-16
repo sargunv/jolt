@@ -52,7 +52,10 @@ KotlinFile
               NullableType
                 UserType
                   UserTypeSegmentList
-                    Identifier "Any" @ 47..50
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Any" @ 47..50
                 Question "?" @ 50..51
         RParen ")" @ 51..52 trailing=[Whitespace " "]
       Block
@@ -100,7 +103,10 @@ KotlinFile
                         TypeReference
                           UserType
                             UserTypeSegmentList
-                              Identifier "String" @ 117..123 trailing=[Whitespace " "]
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 117..123 trailing=[Whitespace " "]
                     Arrow "->" @ 124..126 trailing=[Whitespace " "]
                     CallExpression
                       NameExpression

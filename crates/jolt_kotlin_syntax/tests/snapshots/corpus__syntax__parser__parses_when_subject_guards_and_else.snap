@@ -37,13 +37,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Token" @ 23..28
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Token" @ 23..28
         RParen ")" @ 28..29
       Colon ":" @ 29..30 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 31..37 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 31..37 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 38..39
         BlockItemList
@@ -67,9 +73,15 @@ KotlinFile
                           TypeReference
                             UserType
                               UserTypeSegmentList
-                                Identifier "Token" @ 77..82
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
+                                    Identifier "Token" @ 77..82
                                 Dot "." @ 82..83
-                                Identifier "Word" @ 83..87 trailing=[Whitespace " "]
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
+                                    Identifier "Word" @ 83..87 trailing=[Whitespace " "]
                       WhenGuard
                         IfKw "if" @ 88..90 trailing=[Whitespace " "]
                         CallExpression
@@ -102,9 +114,15 @@ KotlinFile
                           TypeReference
                             UserType
                               UserTypeSegmentList
-                                Identifier "Token" @ 136..141
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
+                                    Identifier "Token" @ 136..141
                                 Dot "." @ 141..142
-                                Identifier "Number" @ 142..148 trailing=[Whitespace " "]
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
+                                    Identifier "Number" @ 142..148 trailing=[Whitespace " "]
                       WhenGuard
                         IfKw "if" @ 149..151 trailing=[Whitespace " "]
                         BinaryExpression

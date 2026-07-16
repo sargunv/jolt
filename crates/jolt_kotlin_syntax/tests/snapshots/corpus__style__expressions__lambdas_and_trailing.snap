@@ -51,18 +51,21 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "List" @ 51..55
-                  TypeArgumentList
-                    Lt "<" @ 55..56
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "List" @ 51..55
+                    TypeArgumentList
+                      Lt "<" @ 55..56
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "String" @ 56..62
-                    Gt ">" @ 62..63
+                      Gt ">" @ 62..63
           Comma "," @ 63..64 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -80,12 +83,18 @@ KotlinFile
                         TypeReference
                           UserType
                             UserTypeSegmentList
-                              Identifier "String" @ 72..78
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 72..78
                     RParen ")" @ 78..79 trailing=[Whitespace " "]
                   Arrow "->" @ 80..82 trailing=[Whitespace " "]
                   UserType
                     UserTypeSegmentList
-                      Identifier "Unit" @ 83..87
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Unit" @ 83..87
         RParen ")" @ 87..88 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 89..90

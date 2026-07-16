@@ -39,7 +39,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Int" @ 66..69
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Int" @ 66..69
               PropertyBodyMemberList
           ClassMemberDeclaration
             FunctionDeclaration
@@ -61,7 +64,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 101..107 trailing=[Whitespace " "]
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 101..107 trailing=[Whitespace " "]
               Assign "=" @ 108..109 trailing=[Whitespace " "]
               StringTemplateExpression
                 StringTemplateEntryList

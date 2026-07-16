@@ -1,17 +1,18 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    CallableName, ContextParameter, ContextParameterClause, Declaration, DestructuringDeclaration,
-    DestructuringEntry, EnumEntry, ExplicitBackingField, FunctionDeclaration, InitializerBlock,
-    KotlinFileItem, KotlinNode, KotlinRoleElement, KotlinSyntaxField, KotlinSyntaxListPart,
-    KotlinSyntaxToken, KotlinSyntaxView, ModifierList, Name, PropertyAccessor, PropertyDeclaration,
-    SecondaryConstructor, TypeAliasDeclaration, TypeReference,
+    CallableName, ContextParameter, ContextParameterClause, ContextParameterListEntry, Declaration,
+    DestructuringDeclaration, DestructuringEntry, EnumEntry, ExplicitBackingField,
+    FunctionDeclaration, InitializerBlock, KotlinFileItem, KotlinNode, KotlinRoleElement,
+    KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView, ModifierList,
+    Name, PropertyAccessor, PropertyDeclaration, SecondaryConstructor, TypeAliasDeclaration,
+    TypeReference,
 };
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_removed_separator, format_token,
     trailing_comments_force_line,
 };
-use crate::helpers::lists::{CommaListItem, compact_parenthesized_list};
+use crate::helpers::lists::{CommaListItem, compact_parenthesized_list, physical_comma_list_items};
 use crate::helpers::recovery::{
     KotlinFormatDelimiter, KotlinFormatField, KotlinFormatListPart, format_malformed,
     format_optional_field, format_or_verbatim, format_required_field, resolve_list_part,
@@ -22,7 +23,8 @@ use crate::rules::expressions::format_expression;
 use crate::rules::names::format_name;
 use crate::rules::statements::format_block;
 use crate::rules::types::{
-    format_type_constraint_list, format_type_parameter_list, format_type_reference,
+    format_bogus_list_entry, format_type_constraint_list, format_type_parameter_list,
+    format_type_reference, list_part_has_content,
 };
 use crate::rules::variables::format_value_parameter_list;
 
@@ -583,7 +585,7 @@ fn format_property_accessor_body<'source>(
     }
 }
 
-fn format_destructuring_declaration<'source>(
+pub(crate) fn format_destructuring_declaration<'source>(
     doc: &mut DocBuilder<'source>,
     declaration: &DestructuringDeclaration<'source>,
 ) -> Doc<'source> {
@@ -709,8 +711,12 @@ pub(super) fn format_type_alias_declaration<'source>(
         let ty = format_required_field(declaration.r#type(), doc, |ty, doc| {
             format_type_reference(doc, &ty)
         });
+        let has_type = matches!(
+            declaration.r#type(),
+            Ok(KotlinSyntaxField::Present(ty)) if ty.first_token().is_some()
+        );
         let first_space = doc.space();
-        let second_space = doc.space();
+        let second_space = if has_type { doc.space() } else { Doc::nil() };
         doc.concat([
             modifiers,
             keyword,
@@ -753,48 +759,75 @@ fn format_context_parameter_clause<'source>(
     doc: &mut DocBuilder<'source>,
     clause: &ContextParameterClause<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(clause, doc, |doc| {
-        let context = format_required_field(clause.context_token(), doc, |token, doc| {
-            keyword_token(doc, token)
-        });
-        let open = resolve_required_delimiter(clause.open_paren(), doc);
-        let close = resolve_required_delimiter(clause.close_paren(), doc);
-        let items = match resolve_required_field(clause.entries(), doc) {
-            KotlinFormatField::Present(entries) => {
-                syntax_comma_items(doc, entries.parts(), |parameter, doc| {
-                    format_context_parameter(doc, &parameter)
-                })
-            }
-            KotlinFormatField::Malformed(recovery) => vec![CommaListItem {
-                doc: recovery,
+    let context = format_required_field(clause.context_token(), doc, |token, doc| {
+        keyword_token(doc, token)
+    });
+    let open = resolve_required_delimiter(clause.open_paren(), doc);
+    let close = resolve_required_delimiter(clause.close_paren(), doc);
+    let items = match resolve_required_field(clause.entries(), doc) {
+        KotlinFormatField::Present(entries) => physical_comma_list_items(
+            doc,
+            entries.parts().filter(list_part_has_content),
+            |doc, parameter| CommaListItem {
+                doc: match parameter {
+                    ContextParameterListEntry::ContextParameter(parameter) => {
+                        format_context_parameter(doc, &parameter)
+                    }
+                    ContextParameterListEntry::BogusContextParameter(bogus) => {
+                        format_bogus_list_entry(doc, &bogus)
+                    }
+                },
                 comma: None,
-            }],
-        };
-        let parameters = format_delimited_with_recovery(doc, &open, &close, items);
-        doc.concat([context, parameters])
-    })
+            },
+        ),
+        KotlinFormatField::Malformed(recovery) => vec![CommaListItem {
+            doc: recovery,
+            comma: None,
+        }],
+    };
+    let parameters = format_delimited_with_recovery(doc, &open, &close, items);
+    doc.concat([context, parameters])
 }
 
 fn format_context_parameter<'source>(
     doc: &mut DocBuilder<'source>,
     parameter: &ContextParameter<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(parameter, doc, |doc| {
-        let name =
-            format_optional_field(parameter.name(), doc, |name, doc| format_name(doc, &name));
-        let colon = format_optional_field(parameter.colon(), doc, |colon, doc| {
-            keyword_token(doc, colon)
-        });
-        let ty = format_required_field(parameter.r#type(), doc, |ty, doc| {
-            format_type_reference(doc, &ty)
-        });
-        let space = if matches!(parameter.name(), Ok(KotlinSyntaxField::Present(_))) {
-            doc.space()
+    let has_name = matches!(parameter.name(), Ok(KotlinSyntaxField::Present(_)));
+    let has_colon = matches!(parameter.colon(), Ok(KotlinSyntaxField::Present(_)));
+    let has_type = matches!(
+        parameter.r#type(),
+        Ok(KotlinSyntaxField::Present(ty)) if ty.first_token().is_some()
+    );
+    let has_assign = matches!(parameter.assign(), Ok(KotlinSyntaxField::Present(_)));
+    let name = format_optional_field(parameter.name(), doc, |name, doc| format_name(doc, &name));
+    let colon = format_optional_field(parameter.colon(), doc, |colon, doc| {
+        keyword_token(doc, colon)
+    });
+    let separation = if has_type && (has_name || has_colon) {
+        doc.space()
+    } else {
+        Doc::nil()
+    };
+    let ty = format_required_field(parameter.r#type(), doc, |ty, doc| {
+        format_type_reference(doc, &ty)
+    });
+    let assign = format_optional_field(parameter.assign(), doc, |assign, doc| {
+        let before = doc.space();
+        let assign = keyword_token(doc, assign);
+        let after = doc.space();
+        doc.concat([before, assign, after])
+    });
+    let default = format_optional_field(parameter.default(), doc, |expression, doc| {
+        let expression = format_expression(doc, &expression);
+        if has_assign {
+            expression
         } else {
-            Doc::nil()
-        };
-        doc.concat([name, colon, space, ty])
-    })
+            let space = doc.space();
+            doc.concat([space, expression])
+        }
+    });
+    doc.concat([name, colon, separation, ty, assign, default])
 }
 
 pub(super) fn format_modifier_prefix<'source>(

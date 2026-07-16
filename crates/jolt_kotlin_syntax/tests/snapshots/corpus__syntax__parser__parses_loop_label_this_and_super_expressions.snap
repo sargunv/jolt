@@ -67,7 +67,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Parent" @ 61..67
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Parent" @ 61..67
             ValueArgumentList
               LParen "(" @ 67..68
               ValueArgumentEntryList
@@ -107,18 +110,21 @@ KotlinFile
                             TypeReference
                               UserType
                                 UserTypeSegmentList
-                                  Identifier "List" @ 121..125
-                                  TypeArgumentList
-                                    Lt "<" @ 125..126
-                                    TypeProjectionList
+                                  UserTypeSegment
+                                    AnnotationList
+                                    Name
+                                      Identifier "List" @ 121..125
+                                    TypeArgumentList
+                                      Lt "<" @ 125..126
                                       TypeProjectionSeparatedList
-                                        TypeArgument
-                                          TypeProjection
-                                            TypeReference
-                                              UserType
-                                                UserTypeSegmentList
+                                        TypeReference
+                                          UserType
+                                            UserTypeSegmentList
+                                              UserTypeSegment
+                                                AnnotationList
+                                                Name
                                                   Identifier "String" @ 126..132
-                                    Gt ">" @ 132..133
+                                      Gt ">" @ 132..133
                         RParen ")" @ 133..134 trailing=[Whitespace " "]
                       Block
                         LBrace "{" @ 135..136
@@ -189,14 +195,14 @@ KotlinFile
                                                 SuperKw "super" @ 280..285 leading=[Newline "\n", Whitespace "                "]
                                                 TypeArgumentList
                                                   Lt "<" @ 285..286
-                                                  TypeProjectionList
-                                                    TypeProjectionSeparatedList
-                                                      TypeArgument
-                                                        TypeProjection
-                                                          TypeReference
-                                                            UserType
-                                                              UserTypeSegmentList
-                                                                Identifier "Parent" @ 286..292
+                                                  TypeProjectionSeparatedList
+                                                    TypeReference
+                                                      UserType
+                                                        UserTypeSegmentList
+                                                          UserTypeSegment
+                                                            AnnotationList
+                                                            Name
+                                                              Identifier "Parent" @ 286..292
                                                   Gt ">" @ 292..293
                                               Dot "." @ 293..294
                                               Identifier "visit" @ 294..299

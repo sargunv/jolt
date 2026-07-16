@@ -57,7 +57,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Inner" @ 73..78 trailing=[Whitespace " "]
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Inner" @ 73..78 trailing=[Whitespace " "]
               Assign "=" @ 79..80 trailing=[Whitespace " "]
               CallExpression
                 NameExpression

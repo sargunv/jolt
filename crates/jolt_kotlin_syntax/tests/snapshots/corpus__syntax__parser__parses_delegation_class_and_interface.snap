@@ -56,7 +56,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 36..42
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 36..42
         RBrace "}" @ 43..44 leading=[Newline "\n"]
     ClassDeclaration
       ModifierList
@@ -71,7 +74,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Service" @ 66..73 trailing=[Whitespace " "]
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Service" @ 66..73 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 74..75
         ClassMemberList
@@ -94,7 +100,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 101..107 trailing=[Whitespace " "]
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 101..107 trailing=[Whitespace " "]
               Assign "=" @ 108..109 trailing=[Whitespace " "]
               StringTemplateExpression
                 StringTemplateEntryList
@@ -125,7 +134,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Service" @ 163..170
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Service" @ 163..170
           RParen ")" @ 170..171 trailing=[Whitespace " "]
       Colon ":" @ 172..173 trailing=[Whitespace " "]
       DelegationSpecifierList
@@ -134,7 +146,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Service" @ 174..181 trailing=[Whitespace " "]
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Service" @ 174..181 trailing=[Whitespace " "]
             Identifier "by" @ 182..184 trailing=[Whitespace " "]
             NameExpression
               Identifier "service" @ 185..192
@@ -165,52 +180,61 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "ExpressionValue" @ 252..267 leading=[Newline "\n", Whitespace "    "]
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "ExpressionValue" @ 252..267 leading=[Newline "\n", Whitespace "    "]
           Comma "," @ 267..268
           DelegationSpecifier
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "InterpolatableValue" @ 273..292 leading=[Newline "\n", Whitespace "    "]
-                  TypeArgumentList
-                    Lt "<" @ 292..293
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "InterpolatableValue" @ 273..292 leading=[Newline "\n", Whitespace "    "]
+                    TypeArgumentList
+                      Lt "<" @ 292..293
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "U" @ 293..294
-                    Gt ">" @ 294..295
+                      Gt ">" @ 294..295
           Comma "," @ 295..296
           DelegationSpecifier
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "ComparableValue" @ 301..316 leading=[Newline "\n", Whitespace "    "]
-                  TypeArgumentList
-                    Lt "<" @ 316..317
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "ComparableValue" @ 301..316 leading=[Newline "\n", Whitespace "    "]
+                    TypeArgumentList
+                      Lt "<" @ 316..317
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "NumberValue" @ 317..328
-                                  TypeArgumentList
-                                    Lt "<" @ 328..329
-                                    TypeProjectionList
-                                      TypeProjectionSeparatedList
-                                        TypeArgument
-                                          TypeProjection
-                                            TypeReference
-                                              UserType
-                                                UserTypeSegmentList
-                                                  Identifier "U" @ 329..330
-                                    Gt ">" @ 330..331
-                    Gt ">" @ 331..332
+                                TypeArgumentList
+                                  Lt "<" @ 328..329
+                                  TypeProjectionSeparatedList
+                                    TypeReference
+                                      UserType
+                                        UserTypeSegmentList
+                                          UserTypeSegment
+                                            AnnotationList
+                                            Name
+                                              Identifier "U" @ 329..330
+                                  Gt ">" @ 330..331
+                      Gt ">" @ 331..332
     ClassDeclaration
       ModifierList
       ModifierList
@@ -230,7 +254,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "MapNode" @ 367..374
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "MapNode" @ 367..374
             ValueArgumentList
               LParen "(" @ 374..375
               ValueArgumentEntryList
@@ -240,7 +267,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Service" @ 378..385 trailing=[Whitespace " "]
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Service" @ 378..385 trailing=[Whitespace " "]
             Identifier "by" @ 386..388 trailing=[Whitespace " "]
             CallExpression
               NameExpression

@@ -37,14 +37,20 @@ KotlinFile
               NullableType
                 UserType
                   UserTypeSegmentList
-                    Identifier "Node" @ 20..24
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Node" @ 20..24
                 Question "?" @ 24..25
         RParen ")" @ 25..26
       Colon ":" @ 26..27 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 28..34 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 28..34 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 35..36
         BlockItemList

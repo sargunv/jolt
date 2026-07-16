@@ -50,18 +50,21 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "List" @ 20..24
-                  TypeArgumentList
-                    Lt "<" @ 24..25
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "List" @ 20..24
+                    TypeArgumentList
+                      Lt "<" @ 24..25
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "String" @ 25..31
-                    Gt ">" @ 31..32
+                      Gt ">" @ 31..32
         RParen ")" @ 32..33 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 34..35
@@ -126,7 +129,10 @@ KotlinFile
                           TypeReference
                             UserType
                               UserTypeSegmentList
-                                Identifier "String" @ 116..122 trailing=[Whitespace " "]
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
+                                    Identifier "String" @ 116..122 trailing=[Whitespace " "]
                       Arrow "->" @ 123..125 trailing=[Whitespace " "]
                     LambdaBodyItemList
                       Statement
@@ -246,12 +252,18 @@ KotlinFile
                                 TypeReference
                                   UserType
                                     UserTypeSegmentList
-                                      Identifier "String" @ 287..293
+                                      UserTypeSegment
+                                        AnnotationList
+                                        Name
+                                          Identifier "String" @ 287..293
                             RParen ")" @ 293..294 trailing=[Whitespace " "]
                           Arrow "->" @ 295..297 trailing=[Whitespace " "]
                           UserType
                             UserTypeSegmentList
-                              Identifier "Int" @ 298..301 trailing=[Whitespace " "]
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "Int" @ 298..301 trailing=[Whitespace " "]
                     Assign "=" @ 302..303 trailing=[Whitespace " "]
                     LambdaExpression
                       LambdaBody
@@ -361,12 +373,18 @@ KotlinFile
                                       TypeReference
                                         UserType
                                           UserTypeSegmentList
-                                            Identifier "String" @ 519..525
+                                            UserTypeSegment
+                                              AnnotationList
+                                              Name
+                                                Identifier "String" @ 519..525
                                   RParen ")" @ 525..526 trailing=[Whitespace " "]
                                 Arrow "->" @ 527..529 trailing=[Whitespace " "]
                                 UserType
                                   UserTypeSegmentList
-                                    Identifier "Int" @ 530..533 trailing=[Whitespace " "]
+                                    UserTypeSegment
+                                      AnnotationList
+                                      Name
+                                        Identifier "Int" @ 530..533 trailing=[Whitespace " "]
                       Arrow "->" @ 534..536
                     LambdaBodyItemList
                       Statement

@@ -38,7 +38,10 @@ KotlinFile
               NullableType
                 UserType
                   UserTypeSegmentList
-                    Identifier "Any" @ 23..26
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Any" @ 23..26
                 Question "?" @ 26..27
           Comma "," @ 27..28 trailing=[Whitespace " "]
           ValueParameter
@@ -49,24 +52,30 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "List" @ 36..40
-                  TypeArgumentList
-                    Lt "<" @ 40..41
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "List" @ 36..40
+                    TypeArgumentList
+                      Lt "<" @ 40..41
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "String" @ 41..47
-                    Gt ">" @ 47..48
+                      Gt ">" @ 47..48
         RParen ")" @ 48..49
       Colon ":" @ 49..50 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 51..57 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 51..57 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 58..59
         BlockItemList
@@ -87,7 +96,10 @@ KotlinFile
                 TypeReference
                   UserType
                     UserTypeSegmentList
-                      Identifier "String" @ 85..91 trailing=[Whitespace " "]
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "String" @ 85..91 trailing=[Whitespace " "]
               Elvis "?:" @ 92..94 trailing=[Whitespace " "]
               StringTemplateExpression
                 StringTemplateEntryList
@@ -113,18 +125,21 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "List" @ 132..136
-                    TypeArgumentList
-                      Lt "<" @ 136..137
-                      TypeProjectionList
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "List" @ 132..136
+                      TypeArgumentList
+                        Lt "<" @ 136..137
                         TypeProjectionSeparatedList
-                          TypeArgument
-                            TypeProjection
-                              TypeReference
-                                UserType
-                                  UserTypeSegmentList
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
                                     Identifier "String" @ 137..143
-                      Gt ">" @ 143..144
+                        Gt ">" @ 143..144
             PropertyBodyMemberList
           PropertyDeclaration
             ModifierList
@@ -143,25 +158,29 @@ KotlinFile
                 TypeReference
                   UserType
                     UserTypeSegmentList
-                      Identifier "Map" @ 177..180
-                      TypeArgumentList
-                        Lt "<" @ 180..181
-                        TypeProjectionList
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Map" @ 177..180
+                        TypeArgumentList
+                          Lt "<" @ 180..181
                           TypeProjectionSeparatedList
-                            TypeArgument
-                              TypeProjection
-                                TypeReference
-                                  UserType
-                                    UserTypeSegmentList
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  UserTypeSegment
+                                    AnnotationList
+                                    Name
                                       Identifier "String" @ 181..187
                             Comma "," @ 187..188 trailing=[Whitespace " "]
-                            TypeArgument
-                              TypeProjection
-                                TypeReference
-                                  UserType
-                                    UserTypeSegmentList
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  UserTypeSegment
+                                    AnnotationList
+                                    Name
                                       Identifier "Int" @ 189..192
-                        Gt ">" @ 192..193 trailing=[Whitespace " "]
+                          Gt ">" @ 192..193 trailing=[Whitespace " "]
               Elvis "?:" @ 194..196 trailing=[Whitespace " "]
               CallExpression
                 NameExpression
@@ -207,7 +226,10 @@ KotlinFile
                   TypeReference
                     UserType
                       UserTypeSegmentList
-                        Identifier "CharSequence" @ 265..277 trailing=[Whitespace " "]
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "CharSequence" @ 265..277 trailing=[Whitespace " "]
                 AndAnd "&&" @ 278..280 trailing=[Whitespace " "]
                 BinaryExpression
                   NameExpression
@@ -216,7 +238,10 @@ KotlinFile
                   TypeReference
                     UserType
                       UserTypeSegmentList
-                        Identifier "StringBuilder" @ 291..304 trailing=[Whitespace " "]
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "StringBuilder" @ 291..304 trailing=[Whitespace " "]
               AndAnd "&&" @ 305..307 trailing=[Whitespace " "]
               BinaryExpression
                 NameExpression
@@ -225,15 +250,16 @@ KotlinFile
                 TypeReference
                   UserType
                     UserTypeSegmentList
-                      Identifier "List" @ 317..321
-                      TypeArgumentList
-                        Lt "<" @ 321..322
-                        TypeProjectionList
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "List" @ 317..321
+                        TypeArgumentList
+                          Lt "<" @ 321..322
                           TypeProjectionSeparatedList
-                            TypeArgument
-                              TypeProjection
-                                Star "*" @ 322..323
-                        Gt ">" @ 323..324
+                            StarProjection
+                              Star "*" @ 322..323
+                          Gt ">" @ 323..324
             PropertyBodyMemberList
           Statement
             ExpressionStatement

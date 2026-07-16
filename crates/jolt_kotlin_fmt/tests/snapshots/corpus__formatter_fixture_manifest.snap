@@ -218,6 +218,7 @@ skip syntax/recovery/nested-recovered-when-condition.kt
 skip syntax/recovery/normalizes-package-import-spacing.kt
 skip syntax/recovery/object-delegation.kt
 skip syntax/recovery/phase-16-program.kt
+skip syntax/recovery/phase-17-types-and-parameters.kt
 skip syntax/recovery/preserves-file-annotation-preamble.kt
 skip syntax/recovery/property-body-recovered-gap.kt
 skip syntax/recovery/source-gap-trivia-ownership.kt

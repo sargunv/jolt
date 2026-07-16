@@ -57,13 +57,19 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "String" @ 48..54
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 48..54
                 RParen ")" @ 54..55
               Colon ":" @ 55..56 trailing=[Whitespace " "]
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "T" @ 57..58
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "T" @ 57..58
         RBrace "}" @ 59..60 leading=[Newline "\n"]
     InterfaceDeclaration
       ModifierList

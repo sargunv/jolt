@@ -132,7 +132,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 202..208
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 202..208
           RParen ")" @ 208..209
   Eof "" @ 210..210 leading=[Newline "\n"]
 

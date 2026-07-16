@@ -64,7 +64,10 @@ KotlinFile
                 NullableType
                   UserType
                     UserTypeSegmentList
-                      Identifier "Profile" @ 57..64
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Profile" @ 57..64
                   Question "?" @ 64..65
           RParen ")" @ 65..66
     ClassDeclaration
@@ -88,7 +91,10 @@ KotlinFile
                 NullableType
                   UserType
                     UserTypeSegmentList
-                      Identifier "String" @ 92..98
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "String" @ 92..98
                   Question "?" @ 98..99
           RParen ")" @ 99..100
     FunctionDeclaration
@@ -112,14 +118,20 @@ KotlinFile
               NullableType
                 UserType
                   UserTypeSegmentList
-                    Identifier "User" @ 118..122
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "User" @ 118..122
                 Question "?" @ 122..123
         RParen ")" @ 123..124
       Colon ":" @ 124..125 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 126..132 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 126..132 trailing=[Whitespace " "]
       Assign "=" @ 133..134
       BinaryExpression
         NavigationExpression
@@ -162,7 +174,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Progress" @ 219..227
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Progress" @ 219..227
           RParen ")" @ 227..228
     ClassDeclaration
       ModifierList
@@ -190,7 +205,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Status" @ 270..276
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Status" @ 270..276
           RParen ")" @ 276..277 trailing=[Whitespace " "]
       Colon ":" @ 278..279 trailing=[Whitespace " "]
       DelegationSpecifierList
@@ -199,7 +217,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Progress" @ 280..288
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Progress" @ 280..288
             ValueArgumentList
               LParen "(" @ 288..289
               ValueArgumentEntryList
@@ -240,13 +261,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Pack" @ 344..348
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Pack" @ 344..348
         RParen ")" @ 348..349
       Colon ":" @ 349..350 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Status" @ 351..357 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Status" @ 351..357 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 358..359
         BlockItemList
@@ -273,7 +300,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "Healthy" @ 396..403
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "Healthy" @ 396..403
                   RParen ")" @ 403..404
                 SplitSafeNavigationOperator
                   Question "?" @ 413..414 leading=[Newline "\n", Whitespace "        "]

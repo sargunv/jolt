@@ -43,18 +43,21 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Iterable" @ 18..26
-                  TypeArgumentList
-                    Lt "<" @ 26..27
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Iterable" @ 18..26
+                    TypeArgumentList
+                      Lt "<" @ 26..27
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "String" @ 27..33
-                    Gt ">" @ 33..34
+                      Gt ">" @ 33..34
         RParen ")" @ 34..35 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 36..37

@@ -6,17 +6,7 @@ input:
 fun <T> demo() where T : Any, /* orphan */ , T : Closeable {}
 
 formatted:
-fun <T> demo() where T : Any, /* orphan */
-, T : Closeable {
-
-}
+fun <T> demo() where T : Any, /* orphan */ , T : Closeable {}
 
 diagnostics:
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(44) }) message=expected name
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(44) }) message=expected type constraint
-code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(44) }) message=expected expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(46) }) message=unexpected token in expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(48) }) message=unexpected token in expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(58) }) message=unexpected token in expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(59), end: TextSize(60) }) message=unexpected token in expression
-code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(60), end: TextSize(61) }) message=unexpected closing brace at top level
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(44) }) message=expected type constraint between commas

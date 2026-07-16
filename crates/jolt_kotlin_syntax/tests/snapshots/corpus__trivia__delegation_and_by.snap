@@ -69,7 +69,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "String" @ 68..74
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 68..74
                 RParen ")" @ 74..75
         RBrace "}" @ 76..77 leading=[Newline "\n"]
     ClassDeclaration
@@ -85,7 +88,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Logger" @ 101..107 trailing=[Whitespace " "]
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Logger" @ 101..107 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 108..109
         ClassMemberList
@@ -111,7 +117,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "String" @ 140..146
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 140..146
                 RParen ")" @ 146..147 trailing=[Whitespace " "]
               Block
                 LBrace "{" @ 148..149
@@ -139,7 +148,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Logger" @ 193..199
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Logger" @ 193..199
             Comma "," @ 199..200
           RParen ")" @ 201..202 leading=[Newline "\n"] trailing=[Whitespace " "]
       Colon ":" @ 203..204 trailing=[Whitespace " "]
@@ -149,7 +161,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Logger" @ 205..211 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:delegation-type */", Whitespace " "]
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Logger" @ 205..211 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:delegation-type */", Whitespace " "]
             Identifier "by" @ 246..248 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:delegation-by */", Whitespace " "]
             NameExpression
               Identifier "logger" @ 281..287
@@ -165,7 +180,10 @@ KotlinFile
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 301..307 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-delegate-type */", Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 301..307 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-delegate-type */", Whitespace " "]
       Identifier "by" @ 349..351 trailing=[Whitespace " "]
       CallExpression
         NameExpression

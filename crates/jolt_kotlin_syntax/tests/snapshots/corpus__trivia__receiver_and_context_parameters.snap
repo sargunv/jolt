@@ -65,7 +65,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "String" @ 66..72
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 66..72
                 RParen ")" @ 72..73 trailing=[Whitespace " "]
               Block
                 LBrace "{" @ 74..75
@@ -85,7 +88,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "HtmlScope" @ 126..135 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:context-param */"]
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "HtmlScope" @ 126..135 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:context-param */"]
         RParen ")" @ 167..168
       ModifierList
       FunKw "fun" @ 169..172 leading=[Newline "\n"] trailing=[Whitespace " "]
@@ -95,7 +101,10 @@ KotlinFile
           TypeReference
             UserType
               UserTypeSegmentList
-                Identifier "String" @ 173..179 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:receiver-type */", Whitespace " "]
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "String" @ 173..179 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:receiver-type */", Whitespace " "]
           Dot "." @ 212..213
           Name
             Identifier "render" @ 213..219
@@ -135,7 +144,10 @@ KotlinFile
           TypeReference
             UserType
               UserTypeSegmentList
-                Identifier "HtmlScope" @ 282..291 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-receiver */", Whitespace " "]
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "HtmlScope" @ 282..291 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-receiver */", Whitespace " "]
           Dot "." @ 328..329
           Name
             Identifier "title" @ 329..334
@@ -143,7 +155,10 @@ KotlinFile
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 336..342
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 336..342
       PropertyBodyMemberList
         PropertyAccessor
           ModifierList

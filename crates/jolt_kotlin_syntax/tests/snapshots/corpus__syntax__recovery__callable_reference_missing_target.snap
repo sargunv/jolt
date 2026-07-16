@@ -41,14 +41,14 @@ KotlinFile
               ColonColon "::" @ 59..61
               TypeArgumentList
                 Lt "<" @ 61..62
-                TypeProjectionList
-                  TypeProjectionSeparatedList
-                    TypeArgument
-                      TypeProjection
-                        TypeReference
-                          UserType
-                            UserTypeSegmentList
-                              Identifier "String" @ 62..68
+                TypeProjectionSeparatedList
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          AnnotationList
+                          Name
+                            Identifier "String" @ 62..68
                 Gt ">" @ 68..69
               TypeArgumentListList
             PropertyBodyMemberList

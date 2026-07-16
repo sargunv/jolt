@@ -74,36 +74,43 @@ KotlinFile
               TypeArgumentListList
                 TypeArgumentList
                   Lt "<" @ 131..132
-                  TypeProjectionList
-                    TypeProjectionSeparatedList
-                      TypeArgument
-                        TypeProjection
-                          TypeReference
-                            UserType
-                              UserTypeSegmentList
-                                Identifier "String" @ 132..138
-                      Comma "," @ 138..139 trailing=[Whitespace " "]
-                      TypeArgument
-                        TypeProjection
-                          TypeReference
-                            UserType
-                              UserTypeSegmentList
-                                Identifier "kotlin" @ 140..146
-                                Dot "." @ 146..147
-                                Identifier "collections" @ 147..158
-                                Dot "." @ 158..159
-                                Identifier "List" @ 159..163
-                                TypeArgumentList
-                                  Lt "<" @ 163..164
-                                  TypeProjectionList
-                                    TypeProjectionSeparatedList
-                                      TypeArgument
-                                        TypeProjection
-                                          TypeReference
-                                            UserType
-                                              UserTypeSegmentList
-                                                Identifier "String" @ 164..170
-                                  Gt ">" @ 170..171
+                  TypeProjectionSeparatedList
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 132..138
+                    Comma "," @ 138..139 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "kotlin" @ 140..146
+                          Dot "." @ 146..147
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "collections" @ 147..158
+                          Dot "." @ 158..159
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "List" @ 159..163
+                            TypeArgumentList
+                              Lt "<" @ 163..164
+                              TypeProjectionSeparatedList
+                                TypeReference
+                                  UserType
+                                    UserTypeSegmentList
+                                      UserTypeSegment
+                                        AnnotationList
+                                        Name
+                                          Identifier "String" @ 164..170
+                              Gt ">" @ 170..171
                   Gt ">" @ 171..172
               ValueArgumentList
                 LParen "(" @ 172..173

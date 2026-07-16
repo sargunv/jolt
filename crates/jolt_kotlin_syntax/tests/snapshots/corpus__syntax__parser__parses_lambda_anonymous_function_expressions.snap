@@ -39,18 +39,21 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "List" @ 22..26
-                  TypeArgumentList
-                    Lt "<" @ 26..27
-                    TypeProjectionList
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "List" @ 22..26
+                    TypeArgumentList
+                      Lt "<" @ 26..27
                       TypeProjectionSeparatedList
-                        TypeArgument
-                          TypeProjection
-                            TypeReference
-                              UserType
-                                UserTypeSegmentList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
                                   Identifier "Int" @ 27..30
-                    Gt ">" @ 30..31
+                      Gt ">" @ 30..31
         RParen ")" @ 31..32 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 33..34
@@ -77,13 +80,19 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "Int" @ 62..65
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "Int" @ 62..65
                 RParen ")" @ 65..66
               Colon ":" @ 66..67 trailing=[Whitespace " "]
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Int" @ 68..71 trailing=[Whitespace " "]
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Int" @ 68..71 trailing=[Whitespace " "]
               Block
                 LBrace "{" @ 72..73
                 BlockItemList
@@ -122,13 +131,19 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "Int" @ 137..140
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "Int" @ 137..140
                 RParen ")" @ 140..141
               Colon ":" @ 141..142 trailing=[Whitespace " "]
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "Int" @ 143..146 trailing=[Whitespace " "]
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Int" @ 143..146 trailing=[Whitespace " "]
               Assign "=" @ 147..148 trailing=[Whitespace " "]
               BinaryExpression
                 NameExpression
@@ -151,33 +166,35 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "MutableMap" @ 182..192
-                    TypeArgumentList
-                      Lt "<" @ 192..193
-                      TypeProjectionList
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "MutableMap" @ 182..192
+                      TypeArgumentList
+                        Lt "<" @ 192..193
                         TypeProjectionSeparatedList
-                          TypeArgument
-                            TypeProjection
-                              TypeReference
-                                UserType
-                                  UserTypeSegmentList
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
                                     Identifier "String" @ 193..199
                           Comma "," @ 199..200 trailing=[Whitespace " "]
-                          TypeArgument
-                            TypeProjection
-                              TypeReference
-                                UserType
-                                  UserTypeSegmentList
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
                                     Identifier "Expression" @ 201..211
-                                    TypeArgumentList
-                                      Lt "<" @ 211..212
-                                      TypeProjectionList
-                                        TypeProjectionSeparatedList
-                                          TypeArgument
-                                            TypeProjection
-                                              Star "*" @ 212..213
-                                      Gt ">" @ 213..214
-                      Gt ">" @ 214..215
+                                  TypeArgumentList
+                                    Lt "<" @ 211..212
+                                    TypeProjectionSeparatedList
+                                      StarProjection
+                                        Star "*" @ 212..213
+                                    Gt ">" @ 213..214
+                        Gt ">" @ 214..215
               Dot "." @ 215..216
               ValueParameterList
                 LParen "(" @ 216..217

@@ -66,7 +66,10 @@ KotlinFile
                       TypeReference
                         UserType
                           UserTypeSegmentList
-                            Identifier "Int" @ 86..89
+                            UserTypeSegment
+                              AnnotationList
+                              Name
+                                Identifier "Int" @ 86..89
                   RParen ")" @ 89..90 trailing=[Whitespace " "]
               Colon ":" @ 91..92 trailing=[Whitespace " "]
               DelegationSpecifierList
@@ -75,7 +78,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "Event" @ 93..98
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "Event" @ 93..98
           ClassMemberDeclaration
             ObjectDeclaration
               ModifierList
@@ -91,7 +97,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "Event" @ 122..127
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "Event" @ 122..127
         RBrace "}" @ 128..129 leading=[Newline "\n"]
     FunctionDeclaration
       ModifierList
@@ -113,13 +122,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Event" @ 151..156
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Event" @ 151..156
         RParen ")" @ 156..157
       Colon ":" @ 157..158 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 159..165 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 159..165 trailing=[Whitespace " "]
       Assign "=" @ 166..167
       WhenExpression
         WhenKw "when" @ 172..176 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-keyword */", Whitespace " "]
@@ -137,9 +152,15 @@ KotlinFile
                 TypeReference
                   UserType
                     UserTypeSegmentList
-                      Identifier "Event" @ 229..234
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Event" @ 229..234
                       Dot "." @ 234..235
-                      Identifier "Click" @ 235..240 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-condition */", Whitespace " "]
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Click" @ 235..240 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-condition */", Whitespace " "]
             WhenGuard
               IfKw "if" @ 274..276 trailing=[Whitespace " "]
               BinaryExpression

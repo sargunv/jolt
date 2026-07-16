@@ -50,7 +50,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Int" @ 40..43
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Int" @ 40..43
           Comma "," @ 43..44 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -60,13 +63,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Int" @ 52..55
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Int" @ 52..55
         RParen ")" @ 55..56
       Colon ":" @ 56..57 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Int" @ 58..61 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Int" @ 58..61 trailing=[Whitespace " "]
       Assign "=" @ 62..63 trailing=[Whitespace " "]
       BinaryExpression
         NameExpression

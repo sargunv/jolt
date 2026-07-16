@@ -47,14 +47,14 @@ KotlinFile
               TypeArgumentListList
                 TypeArgumentList
                   Lt "<" @ 68..69
-                  TypeProjectionList
-                    TypeProjectionSeparatedList
-                      TypeArgument
-                        TypeProjection
-                          TypeReference
-                            UserType
-                              UserTypeSegmentList
-                                Identifier "String" @ 69..75
+                  TypeProjectionSeparatedList
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 69..75
                   Gt ">" @ 75..76
             PropertyBodyMemberList
           PropertyDeclaration
@@ -77,14 +77,14 @@ KotlinFile
               TypeArgumentListList
                 TypeArgumentList
                   Lt "<" @ 114..115
-                  TypeProjectionList
-                    TypeProjectionSeparatedList
-                      TypeArgument
-                        TypeProjection
-                          TypeReference
-                            UserType
-                              UserTypeSegmentList
-                                Identifier "Int" @ 115..118
+                  TypeProjectionSeparatedList
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "Int" @ 115..118
                   Gt ">" @ 118..119
             PropertyBodyMemberList
           Statement

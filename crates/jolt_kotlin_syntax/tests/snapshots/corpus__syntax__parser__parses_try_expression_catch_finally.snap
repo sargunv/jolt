@@ -40,13 +40,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "String" @ 24..30
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 24..30
         RParen ")" @ 30..31
       Colon ":" @ 31..32 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 33..39 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 33..39 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 40..41
         BlockItemList
@@ -90,7 +96,10 @@ KotlinFile
                             TypeReference
                               UserType
                                 UserTypeSegmentList
-                                  Identifier "MissingFile" @ 100..111
+                                  UserTypeSegment
+                                    AnnotationList
+                                    Name
+                                      Identifier "MissingFile" @ 100..111
                         RParen ")" @ 111..112 trailing=[Whitespace " "]
                       Block
                         LBrace "{" @ 113..114
@@ -119,7 +128,10 @@ KotlinFile
                             TypeReference
                               UserType
                                 UserTypeSegmentList
-                                  Identifier "Throwable" @ 153..162
+                                  UserTypeSegment
+                                    AnnotationList
+                                    Name
+                                      Identifier "Throwable" @ 153..162
                         RParen ")" @ 162..163 trailing=[Whitespace " "]
                       Block
                         LBrace "{" @ 164..165

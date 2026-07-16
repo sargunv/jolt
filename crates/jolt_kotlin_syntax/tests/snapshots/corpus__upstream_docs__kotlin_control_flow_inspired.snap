@@ -50,13 +50,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Any" @ 46..49
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Any" @ 46..49
         RParen ")" @ 49..50
       Colon ":" @ 50..51 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 52..58 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 52..58 trailing=[Whitespace " "]
       Assign "=" @ 59..60
       WhenExpression
         WhenKw "when" @ 65..69 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
@@ -74,7 +80,10 @@ KotlinFile
                 TypeReference
                   UserType
                     UserTypeSegmentList
-                      Identifier "String" @ 91..97 trailing=[Whitespace " "]
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "String" @ 91..97 trailing=[Whitespace " "]
             Arrow "->" @ 98..100 trailing=[Whitespace " "]
             StringTemplateExpression
               StringTemplateEntryList
@@ -101,7 +110,10 @@ KotlinFile
                 TypeReference
                   UserType
                     UserTypeSegmentList
-                      Identifier "Int" @ 146..149 trailing=[Whitespace " "]
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Int" @ 146..149 trailing=[Whitespace " "]
             Arrow "->" @ 150..152 trailing=[Whitespace " "]
             StringTemplateExpression
               StringTemplateEntryList

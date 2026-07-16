@@ -40,14 +40,20 @@ KotlinFile
                 BangDefinitelyNonNullableType
                   UserType
                     UserTypeSegmentList
-                      Identifier "T" @ 37..38
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "T" @ 37..38
                   BangBang "!!" @ 38..40
         RParen ")" @ 40..41
       Colon ":" @ 41..42 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "T" @ 43..44 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "T" @ 43..44 trailing=[Whitespace " "]
       Assign "=" @ 45..46 trailing=[Whitespace " "]
       NameExpression
         Identifier "value" @ 47..52

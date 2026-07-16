@@ -65,7 +65,10 @@ KotlinFile
                     TypeReference
                       UserType
                         UserTypeSegmentList
-                          Identifier "String" @ 65..71
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 65..71
                 RParen ")" @ 71..72 trailing=[Whitespace " "]
               Assign "=" @ 73..74 trailing=[Whitespace " "]
               ThisExpression
@@ -105,7 +108,10 @@ KotlinFile
               TypeReference
                 UserType
                   UserTypeSegmentList
-                    Identifier "String" @ 120..126 trailing=[Whitespace " "]
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 120..126 trailing=[Whitespace " "]
               Assign "=" @ 127..128 trailing=[Whitespace " "]
               StringTemplateExpression
                 StringTemplateEntryList
@@ -136,7 +142,10 @@ KotlinFile
               NullableType
                 UserType
                   UserTypeSegmentList
-                    Identifier "Builder" @ 158..165
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Builder" @ 158..165
                 Question "?" @ 165..166
           Comma "," @ 166..167 trailing=[Whitespace " "]
           ValueParameter
@@ -147,14 +156,20 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "String" @ 175..181
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 175..181
         RParen ")" @ 181..182
       Colon ":" @ 182..183 trailing=[Whitespace " "]
       TypeReference
         NullableType
           UserType
             UserTypeSegmentList
-              Identifier "String" @ 184..190
+              UserTypeSegment
+                AnnotationList
+                Name
+                  Identifier "String" @ 184..190
           Question "?" @ 190..191 trailing=[Whitespace " "]
       Assign "=" @ 192..193
       CallExpression

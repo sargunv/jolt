@@ -167,7 +167,9 @@ pub(crate) fn physical_comma_list_items<'source, Entry>(
         match resolve_list_part(part, doc) {
             KotlinFormatListPart::Item(entry) => items.push(format_entry(doc, entry)),
             KotlinFormatListPart::Separator(comma) => {
-                if let Some(item) = items.last_mut() {
+                if let Some(item) = items.last_mut()
+                    && item.comma.is_none()
+                {
                     item.comma = Some(comma);
                 } else {
                     let comma = format_separator_with_comments(doc, &comma, Doc::nil());

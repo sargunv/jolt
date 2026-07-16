@@ -26,7 +26,10 @@ KotlinFile
           TypeReference
             UserType
               UserTypeSegmentList
-                Identifier "String" @ 4..10
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "String" @ 4..10
           Dot "." @ 10..11
           Name
             Identifier "lastIndexOrZero" @ 11..26
@@ -34,7 +37,10 @@ KotlinFile
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Int" @ 28..31
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Int" @ 28..31
       PropertyBodyMemberList
         PropertyAccessor
           ModifierList
@@ -59,11 +65,20 @@ KotlinFile
           TypeReference
             UserType
               UserTypeSegmentList
-                Identifier "com" @ 60..63
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "com" @ 60..63
                 Dot "." @ 63..64
-                Identifier "example" @ 64..71
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "example" @ 64..71
                 Dot "." @ 71..72
-                Identifier "Scope" @ 72..77
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "Scope" @ 72..77
           Dot "." @ 77..78
           Name
             Identifier "qualifiedTitle" @ 78..92
@@ -71,7 +86,10 @@ KotlinFile
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 94..100
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 94..100
       PropertyBodyMemberList
         PropertyAccessor
           ModifierList
@@ -99,33 +117,35 @@ KotlinFile
           TypeReference
             UserType
               UserTypeSegmentList
-                Identifier "MutableMap" @ 129..139
-                TypeArgumentList
-                  Lt "<" @ 139..140
-                  TypeProjectionList
+                UserTypeSegment
+                  AnnotationList
+                  Name
+                    Identifier "MutableMap" @ 129..139
+                  TypeArgumentList
+                    Lt "<" @ 139..140
                     TypeProjectionSeparatedList
-                      TypeArgument
-                        TypeProjection
-                          TypeReference
-                            UserType
-                              UserTypeSegmentList
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              AnnotationList
+                              Name
                                 Identifier "String" @ 140..146
                       Comma "," @ 146..147 trailing=[Whitespace " "]
-                      TypeArgument
-                        TypeProjection
-                          TypeReference
-                            UserType
-                              UserTypeSegmentList
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              AnnotationList
+                              Name
                                 Identifier "Expression" @ 148..158
-                                TypeArgumentList
-                                  Lt "<" @ 158..159
-                                  TypeProjectionList
-                                    TypeProjectionSeparatedList
-                                      TypeArgument
-                                        TypeProjection
-                                          Star "*" @ 159..160
-                                  Gt ">" @ 160..161
-                  Gt ">" @ 161..162
+                              TypeArgumentList
+                                Lt "<" @ 158..159
+                                TypeProjectionSeparatedList
+                                  StarProjection
+                                    Star "*" @ 159..160
+                                Gt ">" @ 160..161
+                    Gt ">" @ 161..162
           Dot "." @ 162..163
           Name
             Identifier "entryCount" @ 163..173
@@ -133,7 +153,10 @@ KotlinFile
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Int" @ 175..178
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Int" @ 175..178
       PropertyBodyMemberList
         PropertyAccessor
           ModifierList

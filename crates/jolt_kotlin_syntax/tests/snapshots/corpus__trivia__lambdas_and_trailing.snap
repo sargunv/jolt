@@ -63,12 +63,18 @@ KotlinFile
                         TypeReference
                           UserType
                             UserTypeSegmentList
-                              Identifier "String" @ 48..54
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 48..54
                     RParen ")" @ 54..55 trailing=[Whitespace " "]
                   Arrow "->" @ 56..58 trailing=[Whitespace " "]
                   UserType
                     UserTypeSegmentList
-                      Identifier "Unit" @ 59..63
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Unit" @ 59..63
         RParen ")" @ 63..64 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 65..66
@@ -94,7 +100,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "String" @ 89..95
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 89..95
           Comma "," @ 95..96 trailing=[Whitespace " "]
           ValueParameter
             ModifierList
@@ -112,18 +121,27 @@ KotlinFile
                         TypeReference
                           UserType
                             UserTypeSegmentList
-                              Identifier "String" @ 105..111
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 105..111
                     RParen ")" @ 111..112 trailing=[Whitespace " "]
                   Arrow "->" @ 113..115 trailing=[Whitespace " "]
                   UserType
                     UserTypeSegmentList
-                      Identifier "String" @ 116..122
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "String" @ 116..122
         RParen ")" @ 122..123
       Colon ":" @ 123..124 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 125..131 trailing=[Whitespace " "]
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 125..131 trailing=[Whitespace " "]
       Assign "=" @ 132..133 trailing=[Whitespace " "]
       CallExpression
         NameExpression

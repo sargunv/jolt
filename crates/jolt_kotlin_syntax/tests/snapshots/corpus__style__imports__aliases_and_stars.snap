@@ -105,7 +105,10 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "ToolFactory" @ 158..169
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "ToolFactory" @ 158..169
         RParen ")" @ 169..170 trailing=[Whitespace " "]
       Block
         LBrace "{" @ 171..172

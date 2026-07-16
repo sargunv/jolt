@@ -92,7 +92,10 @@ impl Parser<'_> {
         self.complete(marker, kind);
     }
 
-    fn at_declaration_start(&mut self, allow_class_members: bool) -> bool {
+    pub(in crate::parser::grammar) fn at_declaration_start(
+        &mut self,
+        allow_class_members: bool,
+    ) -> bool {
         let Some(mut index) = self.skip_modifier_prefix(self.position()) else {
             return false;
         };

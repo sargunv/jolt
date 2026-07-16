@@ -69,13 +69,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "Int" @ 70..73
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "Int" @ 70..73
         RParen ")" @ 73..74
       Colon ":" @ 74..75 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "Int" @ 76..79
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "Int" @ 76..79
       Assign "=" @ 79..80
       BinaryExpression
         NameExpression
@@ -103,13 +109,19 @@ KotlinFile
             TypeReference
               UserType
                 UserTypeSegmentList
-                  Identifier "String" @ 106..112
+                  UserTypeSegment
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 106..112
         RParen ")" @ 112..113
       Colon ":" @ 113..114 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
-            Identifier "String" @ 115..121
+            UserTypeSegment
+              AnnotationList
+              Name
+                Identifier "String" @ 115..121
       Assign "=" @ 121..122
       CallExpression
         NavigationExpression
