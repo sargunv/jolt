@@ -18,13 +18,26 @@ use crate::{
 pub struct UnresolvedDiagnosticOwner {
     pub(crate) node: NodeAnchor,
     pub(crate) slot: Option<u16>,
+    pub(crate) directly_malformed: bool,
 }
 
 impl UnresolvedDiagnosticOwner {
     /// Owns a diagnostic with an entire represented node.
     #[must_use]
     pub const fn node(node: NodeAnchor) -> Self {
-        Self { node, slot: None }
+        Self {
+            node,
+            slot: None,
+            directly_malformed: false,
+        }
+    }
+
+    const fn recovery_node(node: NodeAnchor) -> Self {
+        Self {
+            node,
+            slot: None,
+            directly_malformed: true,
+        }
     }
 
     /// Owns a diagnostic with one generated physical slot on a represented node.
@@ -33,6 +46,7 @@ impl UnresolvedDiagnosticOwner {
         Self {
             node,
             slot: Some(slot),
+            directly_malformed: false,
         }
     }
 }
@@ -40,6 +54,28 @@ impl UnresolvedDiagnosticOwner {
 /// Handle used to assign structural ownership after emitting a diagnostic.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct DiagnosticMarker(usize);
+
+/// A parser diagnostic whose source range has been captured but whose
+/// structural consequence has not yet been selected.
+///
+/// Pending diagnostics must be consumed by a recovery operation or explicitly
+/// reported as non-structural.
+#[must_use = "attach this diagnostic to recovery or report it as non-structural"]
+pub struct PendingDiagnostic {
+    index: usize,
+}
+
+struct ParserDiagnostic {
+    diagnostic: Diagnostic,
+    ownership: DiagnosticOwnership,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum DiagnosticOwnership {
+    Pending,
+    Ownerless,
+    Structural(UnresolvedDiagnosticOwner),
+}
 
 pub struct ParseEvents {
     pub events: Vec<Event>,
@@ -54,8 +90,7 @@ pub struct Parser<'source, L: Language> {
     pub buffer: TokenBuffer<'source, L>,
     cursor: TokenCursor,
     events: Vec<Event>,
-    diagnostics: Vec<Diagnostic>,
-    diagnostic_owners: Vec<Option<UnresolvedDiagnosticOwner>>,
+    diagnostics: Vec<ParserDiagnostic>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -77,19 +112,32 @@ impl<'source, L: Language> Parser<'source, L> {
             cursor: TokenCursor::new(),
             events: Vec::with_capacity(L::initial_event_capacity(source.len())),
             diagnostics: Vec::new(),
-            diagnostic_owners: Vec::new(),
         }
     }
 
+    /// Finishes parser event and diagnostic production.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a pending diagnostic was not attached to recovery or
+    /// explicitly reported as non-structural.
     pub fn finish(self) -> ParseEvents {
         let events = self.events;
-        let mut parser_diagnostics = self.diagnostics;
-        let parser_diagnostic_owners = self.diagnostic_owners;
         let committed_len = self.cursor.position();
         let (tokens, trivia, mut diagnostics) = self.buffer.finish(committed_len);
         let mut diagnostic_owners = vec![None; diagnostics.len()];
-        diagnostics.append(&mut parser_diagnostics);
-        diagnostic_owners.extend(parser_diagnostic_owners);
+        diagnostics.reserve(self.diagnostics.len());
+        diagnostic_owners.reserve(self.diagnostics.len());
+        for parser_diagnostic in self.diagnostics {
+            diagnostics.push(parser_diagnostic.diagnostic);
+            diagnostic_owners.push(match parser_diagnostic.ownership {
+                DiagnosticOwnership::Pending => {
+                    panic!("pending parser diagnostic must be consumed before finish")
+                }
+                DiagnosticOwnership::Ownerless => None,
+                DiagnosticOwnership::Structural(owner) => Some(owner),
+            });
+        }
         ParseEvents {
             events,
             tokens,
@@ -116,21 +164,30 @@ impl<'source, L: Language> Parser<'source, L> {
     }
 
     pub fn expected_owned_node(&mut self, message: &str, owner: NodeAnchor) {
-        let diagnostic = self.expected_here(message);
-        self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(owner));
+        let diagnostic = self.pending_expected(message);
+        self.record_recovery(
+            UnresolvedDiagnosticOwner::node(owner),
+            diagnostic,
+            std::iter::empty(),
+        );
     }
 
     pub fn expected_owned_slot(&mut self, message: &str, owner: NodeAnchor, slot: u16) {
-        let diagnostic = self.expected_here(message);
-        self.own_diagnostic(
-            diagnostic,
+        let diagnostic = self.pending_expected(message);
+        self.record_recovery(
             UnresolvedDiagnosticOwner::missing_slot(owner, slot),
+            diagnostic,
+            std::iter::empty(),
         );
     }
 
     pub fn unexpected_owned_node(&mut self, message: &str, owner: NodeAnchor) {
-        let diagnostic = self.unexpected_here(message);
-        self.own_diagnostic(diagnostic, UnresolvedDiagnosticOwner::node(owner));
+        let diagnostic = self.pending_unexpected(message);
+        self.record_recovery(
+            UnresolvedDiagnosticOwner::node(owner),
+            diagnostic,
+            std::iter::empty(),
+        );
     }
 
     pub fn eat(&mut self, kind: L::Kind) -> bool {
@@ -187,11 +244,13 @@ impl<'source, L: Language> Parser<'source, L> {
     }
 
     pub fn expected_here(&mut self, message: &str) -> DiagnosticMarker {
-        self.error_here(L::expected_diagnostic_code(), message)
+        let diagnostic = self.pending_expected(message);
+        self.report_non_structural(diagnostic)
     }
 
     pub fn unexpected_here(&mut self, message: &str) -> DiagnosticMarker {
-        self.error_here(L::unexpected_diagnostic_code(), message)
+        let diagnostic = self.pending_unexpected(message);
+        self.report_non_structural(diagnostic)
     }
 
     /// Adds a parser error at the current token, or at the last token if the cursor is past EOF.
@@ -200,20 +259,168 @@ impl<'source, L: Language> Parser<'source, L> {
     ///
     /// Panics if the parser token stream does not contain EOF.
     pub fn error_here(&mut self, code: DiagnosticCodeId, message: &str) -> DiagnosticMarker {
+        let diagnostic = self.pending_error(code, message);
+        self.report_non_structural(diagnostic)
+    }
+
+    /// Captures an "expected syntax" diagnostic before recovery consumes input.
+    pub fn pending_expected(&mut self, message: &str) -> PendingDiagnostic {
+        self.pending_expected_at(0, message)
+    }
+
+    /// Captures an "expected syntax" diagnostic at a bounded token lookahead
+    /// without consuming parser input.
+    pub fn pending_expected_at(&mut self, offset: usize, message: &str) -> PendingDiagnostic {
+        self.pending_error_at(offset, L::expected_diagnostic_code(), message)
+    }
+
+    /// Captures an "unexpected syntax" diagnostic before recovery consumes
+    /// input.
+    pub fn pending_unexpected(&mut self, message: &str) -> PendingDiagnostic {
+        self.pending_unexpected_at(0, message)
+    }
+
+    /// Captures an "unexpected syntax" diagnostic at a bounded token lookahead
+    /// without consuming parser input.
+    pub fn pending_unexpected_at(&mut self, offset: usize, message: &str) -> PendingDiagnostic {
+        self.pending_error_at(offset, L::unexpected_diagnostic_code(), message)
+    }
+
+    /// Captures a language-specific parser diagnostic before recovery consumes
+    /// input.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the parser token stream does not contain EOF.
+    pub fn pending_error(&mut self, code: DiagnosticCodeId, message: &str) -> PendingDiagnostic {
+        self.pending_error_at(0, code, message)
+    }
+
+    /// Captures a language-specific parser diagnostic at a bounded token
+    /// lookahead without consuming parser input.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `offset` overflows the parser position or the parser token
+    /// stream does not contain EOF.
+    pub fn pending_error_at(
+        &mut self,
+        offset: usize,
+        code: DiagnosticCodeId,
+        message: &str,
+    ) -> PendingDiagnostic {
+        let index = self
+            .position()
+            .checked_add(offset)
+            .expect("diagnostic lookahead position must not overflow");
         let range = self
-            .cursor
-            .range(&mut self.buffer)
+            .buffer
+            .range_at(index)
             .or_else(|| self.buffer.last_token_range())
             .expect("parser token stream must include EOF");
-        self.diagnostics.push(Diagnostic {
-            code,
-            severity: Severity::Error,
-            stage: DiagnosticStage::Parser,
-            message: message.to_owned(),
-            range: Some(range),
+        let index = self.diagnostics.len();
+        self.diagnostics.push(ParserDiagnostic {
+            diagnostic: Diagnostic {
+                code,
+                severity: Severity::Error,
+                stage: DiagnosticStage::Parser,
+                message: message.to_owned(),
+                range: Some(range),
+            },
+            ownership: DiagnosticOwnership::Pending,
         });
-        self.diagnostic_owners.push(None);
-        DiagnosticMarker(self.diagnostics.len() - 1)
+        PendingDiagnostic { index }
+    }
+
+    /// Reports a parser diagnostic that has no structural recovery consequence.
+    pub fn report_non_structural(&mut self, diagnostic: PendingDiagnostic) -> DiagnosticMarker {
+        let index = diagnostic.index;
+        self.finalize_pending(diagnostic, DiagnosticOwnership::Ownerless);
+        DiagnosticMarker(index)
+    }
+
+    /// Completes a malformed node with the diagnostics that structurally caused
+    /// that recovery.
+    ///
+    /// `diagnostics` must contain at least one item. Arrays permit multiple
+    /// diagnostics to share this node without allocating an intermediate
+    /// collection.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `diagnostics` is empty, or under the same conditions as
+    /// [`Parser::complete`].
+    pub fn complete_recovery(
+        &mut self,
+        marker: Marker,
+        kind: L::Kind,
+        diagnostics: impl IntoIterator<Item = PendingDiagnostic>,
+    ) -> CompletedMarker {
+        let mut diagnostics = diagnostics.into_iter();
+        let first = diagnostics
+            .next()
+            .expect("structural recovery must record at least one diagnostic cause");
+        let owner = UnresolvedDiagnosticOwner::recovery_node(marker.anchor());
+        let completed = self.complete(marker, kind);
+        self.record_recovery(owner, first, diagnostics);
+        completed
+    }
+
+    /// Records a required empty slot and all diagnostics that structurally
+    /// caused it.
+    ///
+    /// `diagnostics` must contain at least one item. Arrays permit multiple
+    /// diagnostics to share this slot without allocating an intermediate
+    /// collection.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `diagnostics` is empty.
+    pub fn missing_required_slot(
+        &mut self,
+        owner: NodeAnchor,
+        slot: u16,
+        diagnostics: impl IntoIterator<Item = PendingDiagnostic>,
+    ) {
+        let mut diagnostics = diagnostics.into_iter();
+        let first = diagnostics
+            .next()
+            .expect("structural recovery must record at least one diagnostic cause");
+        self.record_recovery(
+            UnresolvedDiagnosticOwner::missing_slot(owner, slot),
+            first,
+            diagnostics,
+        );
+    }
+
+    fn record_recovery(
+        &mut self,
+        owner: UnresolvedDiagnosticOwner,
+        first: PendingDiagnostic,
+        diagnostics: impl IntoIterator<Item = PendingDiagnostic>,
+    ) {
+        self.finalize_pending(first, DiagnosticOwnership::Structural(owner));
+        for diagnostic in diagnostics {
+            self.finalize_pending(diagnostic, DiagnosticOwnership::Structural(owner));
+        }
+    }
+
+    #[allow(
+        clippy::needless_pass_by_value,
+        reason = "consuming the non-Copy handle enforces one diagnostic finalization"
+    )]
+    fn finalize_pending(&mut self, diagnostic: PendingDiagnostic, ownership: DiagnosticOwnership) {
+        let PendingDiagnostic { index } = diagnostic;
+        let record = self
+            .diagnostics
+            .get_mut(index)
+            .expect("pending diagnostic must belong to this parser");
+        assert_eq!(
+            record.ownership,
+            DiagnosticOwnership::Pending,
+            "pending diagnostic consumed twice"
+        );
+        record.ownership = ownership;
     }
 
     /// Assigns exact structural ownership to a parser diagnostic.
@@ -227,14 +434,16 @@ impl<'source, L: Language> Parser<'source, L> {
         diagnostic: DiagnosticMarker,
         owner: UnresolvedDiagnosticOwner,
     ) {
-        let slot = self
-            .diagnostic_owners
+        let diagnostic = self
+            .diagnostics
             .get_mut(diagnostic.0)
             .expect("diagnostic marker must belong to this parser");
-        assert!(
-            slot.replace(owner).is_none(),
+        assert_eq!(
+            diagnostic.ownership,
+            DiagnosticOwnership::Ownerless,
             "diagnostic owner assigned twice"
         );
+        diagnostic.ownership = DiagnosticOwnership::Structural(owner);
     }
 
     pub fn start(&mut self) -> Marker {
@@ -488,5 +697,339 @@ impl<'source, L: Language> TokenBuffer<'source, L> {
         self.trivia.truncate(trivia_len);
         let diagnostics = self.lexer.finish();
         (self.tokens, self.trivia, diagnostics)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use jolt_diagnostics::{DiagnosticCodeId, DiagnosticStage};
+    use jolt_text::{TextRange, TextSize};
+
+    use crate::{
+        BuildSyntaxTreeError, FactoryNode, FactorySlot, Language, LanguageLexer, LexedToken,
+        ParsedChildren, RawSyntaxKind, SyntaxFactory, SyntaxNode, SyntaxSlot, SyntaxTreeSink,
+        SyntaxTrivia, build_parser_syntax_tree,
+    };
+
+    use super::Parser;
+
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    enum TestKind {
+        Root = 1,
+        Bogus = 2,
+        Delimited = 3,
+        Missing = 4,
+        Word = 5,
+        Eof = 6,
+        RecoveredValid = 7,
+    }
+
+    struct TestLanguage;
+
+    impl Language for TestLanguage {
+        type Kind = TestKind;
+        type Lexer<'source> = TestLexer<'source>;
+        type NormalizationAuthority = ();
+
+        fn kind_from_raw(raw: RawSyntaxKind) -> Self::Kind {
+            match raw.get() {
+                1 => TestKind::Root,
+                2 => TestKind::Bogus,
+                3 => TestKind::Delimited,
+                4 => TestKind::Missing,
+                5 => TestKind::Word,
+                6 => TestKind::Eof,
+                7 => TestKind::RecoveredValid,
+                _ => panic!("unknown test kind"),
+            }
+        }
+
+        fn kind_to_raw(kind: Self::Kind) -> RawSyntaxKind {
+            RawSyntaxKind::new(kind as u16)
+        }
+
+        fn eof_kind() -> Self::Kind {
+            TestKind::Eof
+        }
+
+        fn expected_diagnostic_code() -> DiagnosticCodeId {
+            DiagnosticCodeId::new("test/expected")
+        }
+
+        fn unexpected_diagnostic_code() -> DiagnosticCodeId {
+            DiagnosticCodeId::new("test/unexpected")
+        }
+
+        fn split_token(_token: &LexedToken<Self>) -> Option<&'static [Self::Kind]> {
+            None
+        }
+    }
+
+    struct TestLexer<'source> {
+        source: &'source str,
+        emitted_word: bool,
+    }
+
+    impl<'source> LanguageLexer<'source> for TestLexer<'source> {
+        type Language = TestLanguage;
+
+        fn new(source: &'source str) -> Self {
+            Self {
+                source,
+                emitted_word: false,
+            }
+        }
+
+        fn next_token_into(
+            &mut self,
+            trivia: &mut Vec<SyntaxTrivia>,
+        ) -> LexedToken<Self::Language> {
+            let empty = trivia.len()..trivia.len();
+            if !self.source.is_empty() && !self.emitted_word {
+                self.emitted_word = true;
+                return LexedToken {
+                    kind: TestKind::Word,
+                    range: TextRange::new(TextSize::new(0), TextSize::new(self.source.len())),
+                    leading: empty.clone(),
+                    trailing: empty,
+                };
+            }
+            let end = TextSize::new(self.source.len());
+            LexedToken {
+                kind: TestKind::Eof,
+                range: TextRange::empty(end),
+                leading: empty.clone(),
+                trailing: empty,
+            }
+        }
+
+        fn finish(self) -> Vec<jolt_diagnostics::Diagnostic> {
+            Vec::new()
+        }
+    }
+
+    struct TestFactory;
+
+    impl SyntaxFactory for TestFactory {
+        fn make_syntax(
+            &self,
+            kind: RawSyntaxKind,
+            _children: ParsedChildren<'_>,
+            sink: &mut SyntaxTreeSink<'_>,
+        ) -> Result<FactoryNode, BuildSyntaxTreeError> {
+            Ok(match kind.get() {
+                2 | 3 => sink.raw_malformed(kind),
+                4 => sink.fixed(kind, [FactorySlot::Missing]),
+                _ => sink.raw(kind),
+            })
+        }
+    }
+
+    fn build(
+        source: &str,
+        parse: super::ParseEvents,
+    ) -> (crate::SyntaxTree, Vec<Option<crate::SyntaxDiagnosticOwner>>) {
+        build_parser_syntax_tree(
+            source,
+            parse.events,
+            parse.tokens,
+            parse.trivia,
+            &parse.diagnostic_owners,
+            &TestFactory,
+        )
+        .expect("atomic recovery owners must resolve")
+    }
+
+    #[test]
+    fn malformed_completion_captures_causes_before_consuming_recovery_input() {
+        for recovered_kind in [TestKind::Bogus, TestKind::Delimited] {
+            let mut parser = Parser::<TestLanguage>::new("x");
+            let root = parser.start();
+            let recovered = parser.start();
+            let expected = parser.pending_expected("expected construct");
+            let specific =
+                parser.pending_error(DiagnosticCodeId::new("test/specific"), "invalid construct");
+            parser.bump();
+            parser.complete_recovery(recovered, recovered_kind, [expected, specific]);
+            parser.complete(root, TestKind::Root);
+
+            let parse = parser.finish();
+            assert_eq!(parse.diagnostics.len(), 2);
+            assert!(parse.diagnostics.iter().all(|diagnostic| {
+                diagnostic.stage == DiagnosticStage::Parser
+                    && diagnostic.range == Some(TextRange::new(TextSize::new(0), TextSize::new(1)))
+            }));
+            let (tree, owners) = build("x", parse);
+            let root = SyntaxNode::<TestLanguage>::new_root("x", &tree);
+            let recovered = root.children().next().expect("recovered child");
+            assert!(recovered.is_directly_malformed());
+            assert_eq!(owners[0].expect("first owner").node(), recovered.id());
+            assert_eq!(owners[1].expect("second owner").node(), recovered.id());
+        }
+    }
+
+    #[test]
+    fn required_empty_slot_and_ownerless_diagnostic_remain_distinct() {
+        let mut parser = Parser::<TestLanguage>::new("");
+        let root = parser.start();
+        let structural = parser.pending_expected("expected required field");
+        parser.missing_required_slot(root.anchor(), 0, [structural]);
+        let advisory = parser.pending_error(DiagnosticCodeId::new("test/advisory"), "advisory");
+        parser.report_non_structural(advisory);
+        parser.complete(root, TestKind::Missing);
+
+        let parse = parser.finish();
+        let (tree, owners) = build("", parse);
+        let root = SyntaxNode::<TestLanguage>::new_root("", &tree);
+        assert!(matches!(root.slot_at(0), Some(SyntaxSlot::Empty)));
+        let structural = owners[0].expect("missing slot owner");
+        assert_eq!(structural.node(), root.id());
+        assert_eq!(structural.slot(), Some(0));
+        assert_eq!(owners[1], None);
+    }
+
+    #[test]
+    fn atomic_recovery_marks_a_valid_shape_and_its_ancestor_recovered() {
+        let mut parser = Parser::<TestLanguage>::new("");
+        let root = parser.start();
+        let recovered = parser.start();
+        let diagnostic = parser.pending_expected("invalid valid-shaped construct");
+        parser.complete_recovery(recovered, TestKind::RecoveredValid, [diagnostic]);
+        parser.complete(root, TestKind::Root);
+
+        let parse = parser.finish();
+        assert_eq!(
+            parse.events,
+            [
+                crate::Event::Start {
+                    kind: RawSyntaxKind::new(TestKind::Root as u16),
+                    forward_parent: 0,
+                },
+                crate::Event::Start {
+                    kind: RawSyntaxKind::new(TestKind::RecoveredValid as u16),
+                    forward_parent: 0,
+                },
+                crate::Event::Finish,
+                crate::Event::Finish,
+            ]
+        );
+        let (tree, owners) = build("", parse);
+        let root = SyntaxNode::<TestLanguage>::new_root("", &tree);
+        let recovered = root.children().next().expect("recovered child");
+        assert!(recovered.is_directly_malformed());
+        assert!(!root.is_recovery_free());
+        assert_eq!(owners[0].expect("node owner").node(), recovered.id());
+    }
+
+    #[test]
+    fn unresolved_owner_storage_does_not_grow_for_atomic_recovery() {
+        assert_eq!(
+            std::mem::size_of::<super::UnresolvedDiagnosticOwner>(),
+            std::mem::size_of::<(crate::NodeAnchor, Option<u16>)>()
+        );
+        assert_eq!(
+            std::mem::size_of::<super::ParserDiagnostic>(),
+            std::mem::size_of::<(
+                jolt_diagnostics::Diagnostic,
+                Option<super::UnresolvedDiagnosticOwner>,
+            )>()
+        );
+        assert_eq!(
+            std::mem::size_of::<super::PendingDiagnostic>(),
+            std::mem::size_of::<usize>()
+        );
+    }
+
+    #[test]
+    fn pending_capture_preserves_nested_diagnostic_order() {
+        let mut parser = Parser::<TestLanguage>::new("x");
+        let outer = parser.start();
+        let outer_cause = parser.pending_expected("outer");
+        let inner = parser.start();
+        let inner_cause = parser.pending_unexpected("inner");
+        parser.complete_recovery(inner, TestKind::RecoveredValid, [inner_cause]);
+        parser.complete_recovery(outer, TestKind::RecoveredValid, [outer_cause]);
+
+        let parse = parser.finish();
+        assert_eq!(
+            parse
+                .diagnostics
+                .iter()
+                .map(|diagnostic| diagnostic.message.as_str())
+                .collect::<Vec<_>>(),
+            ["outer", "inner"]
+        );
+        assert!(parse.diagnostics.iter().all(|diagnostic| {
+            diagnostic.range == Some(TextRange::new(TextSize::new(0), TextSize::new(1)))
+        }));
+    }
+
+    #[test]
+    fn lookahead_capture_preserves_cursor_events_and_atomic_ownership() {
+        let mut parser = Parser::<TestLanguage>::new("x");
+        let recovered = parser.start();
+        let diagnostic = parser.pending_expected_at(1, "lookahead");
+        assert_eq!(parser.position(), 0);
+        parser.complete_recovery(recovered, TestKind::RecoveredValid, [diagnostic]);
+
+        let parse = parser.finish();
+        assert_eq!(
+            parse.events,
+            [
+                crate::Event::Start {
+                    kind: RawSyntaxKind::new(TestKind::RecoveredValid as u16),
+                    forward_parent: 0,
+                },
+                crate::Event::Finish,
+            ]
+        );
+        assert_eq!(
+            parse.diagnostics[0].range,
+            Some(TextRange::empty(TextSize::new(1)))
+        );
+        let (tree, owners) = build("x", parse);
+        let root = SyntaxNode::<TestLanguage>::new_root("x", &tree);
+        assert!(root.is_directly_malformed());
+        assert_eq!(owners[0].expect("atomic owner").node(), root.id());
+    }
+
+    #[test]
+    fn pending_diagnostic_cannot_be_consumed_twice() {
+        let mut parser = Parser::<TestLanguage>::new("");
+        let diagnostic = parser.pending_expected("once");
+        let duplicate = super::PendingDiagnostic {
+            index: diagnostic.index,
+        };
+        parser.report_non_structural(diagnostic);
+        let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            parser.report_non_structural(duplicate);
+        }));
+
+        assert!(panic.is_err());
+        assert_eq!(parser.finish().diagnostics.len(), 1);
+    }
+
+    #[test]
+    fn finish_rejects_an_unconsumed_pending_diagnostic() {
+        let mut parser = Parser::<TestLanguage>::new("");
+        let _pending = parser.pending_expected("unfinished");
+
+        let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| parser.finish()));
+        assert!(panic.is_err());
+    }
+
+    #[test]
+    fn malformed_completion_rejects_no_cause_before_mutating_events() {
+        let mut parser = Parser::<TestLanguage>::new("");
+        let marker = parser.start();
+        let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            parser.complete_recovery(marker, TestKind::Bogus, []);
+        }));
+
+        assert!(panic.is_err());
+        assert!(matches!(
+            parser.finish().events.as_slice(),
+            [crate::Event::Tombstone]
+        ));
     }
 }

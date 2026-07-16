@@ -735,7 +735,7 @@ pub fn build_parser_syntax_tree(
     factory: &impl SyntaxFactory,
 ) -> Result<(SyntaxTree, Vec<Option<SyntaxDiagnosticOwner>>), BuildSyntaxTreeError> {
     let resolve = owners.iter().any(Option::is_some);
-    let (tree, event_nodes) = SyntaxTreeBuilder::new(tokens, trivia, events.len(), resolve)
+    let (mut tree, event_nodes) = SyntaxTreeBuilder::new(tokens, trivia, events.len(), resolve)
         .build(source, events, factory)?;
     let mut resolved = Vec::with_capacity(owners.len());
     for (diagnostic, owner) in owners.iter().enumerate() {
@@ -752,10 +752,22 @@ pub fn build_parser_syntax_tree(
                 diagnostic,
                 anchor: owner.node.0,
             })?;
+        if owner.directly_malformed {
+            let syntax = &mut tree.nodes[node.index()];
+            syntax.flags |= DIRECT_MALFORMED | CONTAINS_RECOVERY;
+        }
         resolved.push(Some(SyntaxDiagnosticOwner {
             node: SyntaxNodeId(u32::try_from(node.index()).expect("syntax node index fits u32")),
             slot: owner.slot,
         }));
+    }
+    for index in 0..tree.nodes.len() {
+        if tree.nodes[index].flags & CONTAINS_RECOVERY == 0 {
+            continue;
+        }
+        if let Some(parent) = tree.nodes[index].parent {
+            tree.nodes[parent.index()].flags |= CONTAINS_RECOVERY;
+        }
     }
     Ok((tree, resolved))
 }
@@ -1034,5 +1046,11 @@ mod tests {
         let tree = build(events).expect("deep forward-parent chain is a valid tree");
 
         assert_eq!(tree.nodes.len(), DEPTH);
+    }
+
+    #[test]
+    fn atomic_recovery_adds_no_event_or_node_storage() {
+        assert_eq!(std::mem::size_of::<Event>(), 8);
+        assert_eq!(std::mem::size_of::<super::TreeNode>(), 28);
     }
 }

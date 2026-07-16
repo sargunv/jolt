@@ -1395,21 +1395,174 @@ Rust 1.96 formatting and lints, the external-event validation regression,
 independent architecture review, report source-state verification, and
 `git diff --check` pass.
 
-### New Phase 24: Clean Completion Proof
+The first attempted clean-completion audit exposed three remaining places where
+the architecture still detects drift after the fact instead of making the
+invalid state unrepresentable: structural diagnostics can be attached separately
+from recovery construction, normalization authorization can inspect less than
+the complete construct that gives the rewrite meaning, and rendered source text
+can still be paired with conservation claims through separate bookkeeping.
+Phases 24-29 are the final rearchitecture pivot for those classes of failure.
+They are not fixture-by-fixture repair phases, and no transitional API
+introduced by them survives the final deletion phase.
+
+### New Phase 24: Atomic Recovery Cause Primitive
+
+Add one parser/tree-construction operation that records a structural recovery
+cause while completing its exact category-compatible bogus node,
+directly-malformed delimited node, or required empty-slot anchor. Diagnostic
+payloads remain in the compact separate diagnostic buffer, but their structural
+owner identity is produced by the same parser event or completion operation;
+there is no later range matching, file-level diagnostic flag, owner repair, or
+independent ownership setter. Prove that the representation cannot create a
+structural diagnostic without a reachable owner or a directly malformed node
+without at least one structural cause. Keep non-structural lexer and advisory
+diagnostics explicitly ownerless.
+
+Quality gate: shared parser/tree tests cover bogus-node, directly-malformed, and
+missing-slot construction, multiple diagnostics sharing the smallest complete
+malformed owner, and diagnostics without structural consequences. The shared
+primitive remains linear, adds no per-node allocation, and replaces rather than
+wrapping the current ownership path.
+
+Implementation status: **implemented and independently audited**. A
+`PendingDiagnostic` captures its source range before recovery consumes input.
+`complete_recovery` and `missing_required_slot` require one or more pending
+causes and atomically append their exact structural ownership;
+`report_non_structural` is the explicit ownerless path. Parser diagnostics use
+one private payload-plus-owner record vector, while the public parse result
+retains its compatibility view for the Java and Kotlin migrations. Empty cause
+iterators fail before mutating parser events, multiple causes use arrays or
+iterators without a temporary allocation, and neither events nor syntax nodes
+gain storage. An atomic node cause also marks an otherwise shape-valid semantic
+recovery owner directly malformed during tree construction and propagates its
+existing recovery flag to ancestors; legacy unmigrated owners do not. The legacy
+diagnostic marker and mutating ownership APIs remain only as Phase 25-26
+migration debt.
+
+Pending capture reserves the diagnostic's final position immediately, with a
+private pending ownership state that must be consumed exactly once by structural
+recovery or explicit non-structural reporting. This preserves nested diagnostic
+order as well as the pre-recovery source range; parser completion rejects any
+unconsumed pending diagnostic. Bounded lookahead capture can anchor a pending
+cause on a following buffered token without consuming input or changing parser
+events, so recovery can preserve both its exact tree boundary and existing
+diagnostic range.
+
+Size: the exact implementation projection is +32,588/-25,104 against `2197128`,
+net +7,484. The executable intermediate ceiling is updated to that value; Phase
+29's all-implementation net-negative gate remains binding.
+
+### New Phase 25: Java Atomic Recovery Migration
+
+Move every Java structural diagnostic and recovery completion onto the Phase 24
+primitive. Delete Java post-hoc owner attachment and any parser branch that can
+complete malformed structure separately from its cause. Preserve diagnostic
+codes, messages, counts, represented tree shape, and the narrowest complete
+malformed owner unless the old owner was demonstrably inconsistent with the
+schema.
+
+Quality gate: the full Java syntax corpus proves both directions at the
+invalid-node level: every structural diagnostic names a reachable malformed node
+or declared required-empty slot, and every directly malformed or
+required-incomplete node has a corresponding cause on that node. One cause may
+explain multiple cascading empty slots, and multiple diagnostics may share one
+smallest complete malformed owner. Java formatter, imported-corpus,
+conservation, idempotence, CLI, and dprint tests pass before commit.
+
+### New Phase 26: Kotlin Atomic Recovery Migration And Legacy Deletion
+
+Move every Kotlin structural diagnostic and recovery completion onto the same
+primitive, then delete the old shared and language-local ownership plumbing. Fix
+recovery boundaries only where the atomic operation proves that an existing
+diagnostic and constructed owner disagree; do not add cascade diagnostics to
+satisfy a test and do not widen malformed ownership merely to reduce call-site
+work.
+
+Quality gate: apply the same invalid-node bidirectional proof to the complete
+Kotlin syntax corpus, not a selected phase-fixture subset. Java and Kotlin must
+then expose exactly one structural-diagnostic construction path, with searches
+and architecture gates rejecting the deleted ownership setters, repair maps,
+range inference, and ownerless malformed completion APIs.
+
+### New Phase 27: Complete-Owner Normalization Authority
+
+Make every token removal, replacement, synthesis, and reorder request name the
+smallest complete syntax construct whose valid shape gives that normalization
+semantic meaning. Authorization is local to that complete owner, never the whole
+file: an unrelated malformed subtree must not disable canonical formatting of a
+valid construct. Conversely, a clean child list or token cannot authorize
+normalization when its enclosing initializer, call, declaration, modifier
+sequence, control statement, or other operation owner is malformed.
+
+Generate or centralize the common owner-validity check and retain
+language-specific semantic eligibility only where the language rule genuinely
+differs. Delete smaller-scope and whole-tree recovery gates. Deterministic
+mutations must prove that malformed represented syntax gains no comma,
+semicolon, brace, parenthesis, replacement token, or reordered sequence, while
+valid neighboring constructs remain canonically formatted.
+
+Quality gate: every exceptional output token has a source identity or an exact
+reason-tagged claim tied to its complete owner; denied claims preserve the
+represented tokens and source order. Java and Kotlin normalization,
+conservation, diagnostic-inventory, lexical-equivalence, determinism, and
+idempotence lanes pass.
+
+### New Phase 28: Proof-Carrying Source Documents
+
+Make source emission and conservation ownership one formatter-IR operation.
+Structured token/trivia constructors automatically carry their source identity;
+syntax-owned malformed verbatim constructors automatically carry every token and
+conserved trivia identity in their exact core; reason-tagged normalization
+constructors carry their authorized claim. Rendering the selected document
+branch performs those claims automatically. Formatter rules cannot emit
+source-backed text and separately remember, omit, duplicate, or fabricate its
+claim.
+
+Keep ordinary generated whitespace/layout text distinct from source-backed and
+reason-tagged exceptional text. Preserve branch-sensitive rendering, zero
+release allocation for debug/test proof state, and centralized lexical safety at
+exceptional joins. Delete public/manual claim arrays, independent fragment
+ledgers, and formatter-local conservation loops rather than adapting them to the
+new constructors.
+
+Quality gate: focused renderer tests prove selected-branch accounting,
+unselected-branch non-accounting, foreign-source rejection, malformed-verbatim
+completion, and reason-tagged normalization. Full Java/Kotlin corpora prove
+exact token and comment conservation with no formatter bookkeeping outside the
+IR constructors and renderer.
+
+### New Phase 29: Final Architecture Deletion And Size Closure
+
+Delete every API, test carrier, and compatibility path superseded by Phases
+24-28. Consolidate the shared Java/Kotlin factory, typed projection, audit, and
+proof machinery where the schemas differ only in declared data. Remove
+completion-only migration manifests and post-hoc proof representations once
+their invariants are construction-enforced. Do not meet the size gate through
+minification, moving implementation into excluded files, weakening tests, or
+excluding macro schemas, test support, or tooling.
+
+Quality gate: report macro-schema, generated-consumer, audit/proof, and ordinary
+implementation LOC separately. The architecture's explicit `:(glob)` pathspec
+must prove that all implementation code, including test support but excluding
+fixtures and snapshots, is net negative relative to `2197128`.
+
+### New Phase 30: Clean Completion Proof
 
 Run macro-field exhaustiveness, bogus-category and diagnostic-ownership
 snapshots, token/comment tracking, valid zero-verbatim gates, deterministic
 mutations, in-repository and imported corpora, CLI/dprint tests, `mise run fix`,
-and `mise run test`. Require Phase 5's imported deferred-path manifest to remain
-empty. Scan for valid replay, untracked verbatim, raw-gap layout, repair
-synthesis, panic paths, unbounded algorithms, and formatter-side structural
-layers. Fail if P16-only ordered recovery parts or local replay loops were
-reintroduced. Report macro-schema, consumer, audit, and ordinary implementation
-LOC separately, prove with the architecture's explicit `:(glob)` pathspec
-command that all implementation code, including test support but excluding
-fixtures and snapshots, is net negative relative to `2197128`, and fail if two
-grammar-shape descriptions remain. Change status to `CLEAN` only when every
-correctness, size, and performance gate passes.
+and `mise run test`. Require the imported deferred-path mechanism to be absent,
+not merely empty. Scan for valid replay, untracked verbatim, raw-gap layout,
+repair synthesis, panic paths, unbounded algorithms, formatter-side structural
+layers, independent diagnostic ownership, incomplete-owner normalization, and
+manual source-claim bookkeeping. Fail if P16-only ordered recovery parts or
+local replay loops were reintroduced.
+
+Fail if two grammar-shape descriptions, two structural-diagnostic construction
+paths, two normalization authorization paths, or two source-conservation paths
+remain. Re-run the realistic performance/allocation benchmark after the final
+production deletions. Change status to `CLEAN` only when every correctness,
+architecture, size, and performance gate passes.
 
 ## Kotlin Structural Recovery Debt
 

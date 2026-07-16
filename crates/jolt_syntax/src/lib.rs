@@ -27,7 +27,7 @@ pub use normalization::{
 };
 pub use parser::{
     CursorCheckpoint, DiagnosticMarker, LanguageLexer, LexedToken, ParseEvents, Parser,
-    TokenBuffer, TokenCursor, UnresolvedDiagnosticOwner,
+    PendingDiagnostic, TokenBuffer, TokenCursor, UnresolvedDiagnosticOwner,
 };
 pub use red::{SyntaxElement, SyntaxNode, SyntaxSlot, SyntaxToken, tokens_have_blank_line_between};
 #[cfg(feature = "bench")]
