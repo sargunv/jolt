@@ -65,7 +65,7 @@ CompilationUnit
               BlockStatementList
                 BlockStatement
                   ExpressionStatement
-                    ErrorNode
+                    BogusExpression
                       CastExpression
                         LParen "(" @ 68..69 leading=[Newline "\n", Whitespace "        "]
                         ClassType
@@ -81,37 +81,35 @@ CompilationUnit
                     Semicolon ";" @ 73..74
                 BlockStatement
                   ExpressionStatement
-                    ErrorNode
-                      ThisExpression
-                        ThisKw "this" @ 83..87 leading=[Newline "\n", Whitespace "        "]
-                    ErrorNode
+                    BogusExpression
+                      BogusExpression
+                        ThisExpression
+                          ThisKw "this" @ 83..87 leading=[Newline "\n", Whitespace "        "]
                       LParen "(" @ 87..88
-                    ErrorNode
                       RParen ")" @ 88..89
                     Semicolon ";" @ 89..90
                 BlockStatement
                   ExpressionStatement
-                    ObjectCreationExpression
-                      NewKw "new" @ 99..102 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "C" @ 103..104
-                      ArgumentList
-                        LParen "(" @ 104..105
-                        ExpressionList
-                        RParen ")" @ 105..106
-                    ErrorNode
+                    BogusExpression
+                      ObjectCreationExpression
+                        NewKw "new" @ 99..102 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "C" @ 103..104
+                        ArgumentList
+                          LParen "(" @ 104..105
+                          ExpressionList
+                          RParen ")" @ 105..106
                       LParen "(" @ 106..107
-                    ErrorNode
                       RParen ")" @ 107..108
                     Semicolon ";" @ 108..109
                 BlockStatement
                   ExpressionStatement
                     AssignmentExpression
-                      ErrorNode
+                      BogusAssignmentTarget
                         LiteralExpression
                           IntegerLiteral "1" @ 118..119 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                       Assign "=" @ 120..121 trailing=[Whitespace " "]
@@ -121,7 +119,7 @@ CompilationUnit
                 BlockStatement
                   ExpressionStatement
                     AssignmentExpression
-                      ErrorNode
+                      BogusAssignmentTarget
                         BinaryExpression
                           NameExpression
                             Identifier "a" @ 133..134 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
@@ -135,7 +133,7 @@ CompilationUnit
                 BlockStatement
                   ExpressionStatement
                     AssignmentExpression
-                      ErrorNode
+                      BogusAssignmentTarget
                         ParenthesizedExpression
                           LParen "(" @ 152..153 leading=[Newline "\n", Whitespace "        "]
                           NameExpression
@@ -155,7 +153,6 @@ CompilationUnit
                             AnnotationList
                             Name
                               Identifier "C" @ 173..174
-                      ErrorNode
                     Semicolon ";" @ 174..175
                 BlockStatement
                   ExpressionStatement
@@ -167,7 +164,6 @@ CompilationUnit
                             AnnotationList
                             Name
                               Identifier "C" @ 188..189 trailing=[Whitespace " "]
-                      ErrorNode
                       ClassBody
                         LBrace "{" @ 190..191
                         ClassBodyMemberList
@@ -177,7 +173,7 @@ CompilationUnit
                   ExpressionStatement
                     ObjectCreationExpression
                       NewKw "new" @ 202..205 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      ErrorNode
+                      BogusObjectCreationType
                         AnnotationList
                         IntKw "int" @ 206..209
                       ArgumentList
@@ -221,7 +217,6 @@ CompilationUnit
                                                   Name
                                                     Identifier "String" @ 265..271
                                         Gt ">" @ 271..272
-                                ErrorNode
                               Dot "." @ 272..273
                               Identifier "Inner" @ 273..278
                               ArgumentList
@@ -304,13 +299,12 @@ CompilationUnit
                                   LBracket "[" @ 375..376
                                   RBracket "]" @ 376..377
                             DimExpressionList
-                              ErrorNode
-                                DimExpression
-                                  AnnotationList
-                                  LBracket "[" @ 377..378
-                                  LiteralExpression
-                                    IntegerLiteral "3" @ 378..379
-                                  RBracket "]" @ 379..380
+                              DimExpression
+                                AnnotationList
+                                LBracket "[" @ 377..378
+                                LiteralExpression
+                                  IntegerLiteral "3" @ 378..379
+                                RBracket "]" @ 379..380
                   Semicolon ";" @ 380..381
                 BlockStatement
                   LocalVariableDeclaration
@@ -341,16 +335,15 @@ CompilationUnit
                                 LiteralExpression
                                   IntegerLiteral "3" @ 409..410
                                 RBracket "]" @ 410..411 trailing=[Whitespace " "]
-                            ErrorNode
-                              ArrayInitializer
-                                LBrace "{" @ 412..413
-                                VariableInitializerList
-                                  LiteralExpression
-                                    IntegerLiteral "1" @ 413..414
-                                  Comma "," @ 414..415 trailing=[Whitespace " "]
-                                  LiteralExpression
-                                    IntegerLiteral "2" @ 416..417
-                                RBrace "}" @ 417..418
+                            ArrayInitializer
+                              LBrace "{" @ 412..413
+                              VariableInitializerList
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 413..414
+                                Comma "," @ 414..415 trailing=[Whitespace " "]
+                                LiteralExpression
+                                  IntegerLiteral "2" @ 416..417
+                              RBrace "}" @ 417..418
                   Semicolon ";" @ 418..419
                 BlockStatement
                   LocalVariableDeclaration
@@ -377,12 +370,11 @@ CompilationUnit
   Eof "" @ 484..484 leading=[Newline "\n"]
 
 diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=72..73 message="expected expression"
   code=java.parse.invalid_statement_expression severity=Error stage=Parser range=73..74 message="expected statement expression"
   code=java.parse.invalid_statement_expression severity=Error stage=Parser range=87..88 message="expected statement expression"
   code=java.parse.invalid_statement_expression severity=Error stage=Parser range=87..88 message="unexpected token in statement expression"
-  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=88..89 message="unexpected token in statement expression"
   code=java.parse.invalid_statement_expression severity=Error stage=Parser range=106..107 message="unexpected token in statement expression"
-  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=107..108 message="unexpected token in statement expression"
   code=java.parse.expected_syntax severity=Error stage=Parser range=120..121 message="expected assignment left-hand side"
   code=java.parse.expected_syntax severity=Error stage=Parser range=139..140 message="expected assignment left-hand side"
   code=java.parse.expected_syntax severity=Error stage=Parser range=156..157 message="expected assignment left-hand side"
@@ -395,12 +387,11 @@ diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=474..475 message="expected reference type"
 
 diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(72), end: TextSize(73) }) message=expected expression
 code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(73), end: TextSize(74) }) message=expected statement expression
 code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(87), end: TextSize(88) }) message=expected statement expression
 code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(87), end: TextSize(88) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(88), end: TextSize(89) }) message=unexpected token in statement expression
 code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(106), end: TextSize(107) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(107), end: TextSize(108) }) message=unexpected token in statement expression
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(120), end: TextSize(121) }) message=expected assignment left-hand side
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(139), end: TextSize(140) }) message=expected assignment left-hand side
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(156), end: TextSize(157) }) message=expected assignment left-hand side

@@ -134,17 +134,14 @@ CompilationUnit
                               SwitchLabelItemList
                                 CasePattern
                                   TypePattern
-                                    LocalVariableDeclaration
-                                      ParameterModifierList
-                                      ClassType
-                                        ClassTypeSegmentList
-                                          ClassTypeSegmentNode
-                                            AnnotationList
-                                            Name
-                                              Identifier "Integer" @ 207..214 trailing=[Whitespace " "]
-                                      VariableDeclaratorList
-                                        VariableDeclarator
-                                          Identifier "n" @ 215..216 trailing=[Whitespace " "]
+                                    ParameterModifierList
+                                    ClassType
+                                      ClassTypeSegmentList
+                                        ClassTypeSegmentNode
+                                          AnnotationList
+                                          Name
+                                            Identifier "Integer" @ 207..214 trailing=[Whitespace " "]
+                                    Identifier "n" @ 215..216 trailing=[Whitespace " "]
                             Arrow "->" @ 217..219 trailing=[Whitespace " "]
                             Block
                               LBrace "{" @ 220..221
@@ -162,17 +159,14 @@ CompilationUnit
                               SwitchLabelItemList
                                 CasePattern
                                   TypePattern
-                                    LocalVariableDeclaration
-                                      ParameterModifierList
-                                      ClassType
-                                        ClassTypeSegmentList
-                                          ClassTypeSegmentNode
-                                            AnnotationList
-                                            Name
-                                              Identifier "Character" @ 278..287 trailing=[Whitespace " "]
-                                      VariableDeclaratorList
-                                        VariableDeclarator
-                                          Identifier "c" @ 288..289 trailing=[Whitespace " "]
+                                    ParameterModifierList
+                                    ClassType
+                                      ClassTypeSegmentList
+                                        ClassTypeSegmentNode
+                                          AnnotationList
+                                          Name
+                                            Identifier "Character" @ 278..287 trailing=[Whitespace " "]
+                                    Identifier "c" @ 288..289 trailing=[Whitespace " "]
                             Arrow "->" @ 290..292 trailing=[Whitespace " "]
                             Block
                               LBrace "{" @ 293..294

@@ -11,16 +11,16 @@ CompilationUnit
   CompilationUnitItemList
     BogusCompilationUnitItem
       StringLiteral "\"a" @ 0..2
-      Identifier "b" @ 3..4 leading=[Newline "\n"]
-      StringLiteral "\"" @ 4..5
-  Eof "" @ 5..5
+      Identifier "b" @ 8..9 leading=[Newline "\\u000a"]
+      StringLiteral "\"" @ 9..10
+  Eof "" @ 10..10
 
 diagnostics:
   code=java.lex.unterminated_string_literal severity=Error stage=Lexer range=0..2 message="unterminated string literal"
-  code=java.lex.unterminated_string_literal severity=Error stage=Lexer range=4..5 message="unterminated string literal"
+  code=java.lex.unterminated_string_literal severity=Error stage=Lexer range=9..10 message="unterminated string literal"
   code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..2 message="unexpected token at top level"
 
 diagnostics:
 code=java.lex.unterminated_string_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(2) }) message=unterminated string literal
-code=java.lex.unterminated_string_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(4), end: TextSize(5) }) message=unterminated string literal
+code=java.lex.unterminated_string_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(9), end: TextSize(10) }) message=unterminated string literal
 code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(2) }) message=unexpected token at top level

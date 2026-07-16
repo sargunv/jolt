@@ -11,16 +11,16 @@ CompilationUnit
   CompilationUnitItemList
     BogusCompilationUnitItem
       CharacterLiteral "'" @ 0..1
-      CharacterLiteral "' '" @ 2..5 leading=[Newline "\n"]
-      CharacterLiteral "'" @ 6..7 leading=[Newline "\r"]
-  Eof "" @ 7..7
+      CharacterLiteral "' '" @ 7..10 leading=[Newline "\\u000a"]
+      CharacterLiteral "'" @ 16..17 leading=[Newline "\\u000d"]
+  Eof "" @ 17..17
 
 diagnostics:
   code=java.lex.unterminated_character_literal severity=Error stage=Lexer range=0..1 message="unterminated character literal"
-  code=java.lex.unterminated_character_literal severity=Error stage=Lexer range=6..7 message="unterminated character literal"
+  code=java.lex.unterminated_character_literal severity=Error stage=Lexer range=16..17 message="unterminated character literal"
   code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..1 message="unexpected token at top level"
 
 diagnostics:
 code=java.lex.unterminated_character_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(1) }) message=unterminated character literal
-code=java.lex.unterminated_character_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(6), end: TextSize(7) }) message=unterminated character literal
+code=java.lex.unterminated_character_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(16), end: TextSize(17) }) message=unterminated character literal
 code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(1) }) message=unexpected token at top level

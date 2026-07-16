@@ -865,6 +865,58 @@ Vertically migrate remaining operators, primary expressions, calls, references,
 lambdas, arrays/objects, patterns, and expression-owned lists. Preserve borrowed
 operator identity and delete local recovery formatting.
 
+Implementation status: **implemented, gate-green, and uncommitted**. Java's
+expression and pattern grammar no longer constructs the generic `ErrorNode`.
+Missing delimiters, names, operands, lambda roles, class-literal targets,
+method-reference receivers, creation types, pattern types, and declaration-only
+pattern suffixes now attach diagnostics to their exact required slot or to a
+syntax-owned bogus node. Class literals accept only primitive, `void`, and
+type-name-shaped targets; method references accept only their declared receiver
+grammar; record and type patterns expose their actual ordered roles instead of
+reusing a local-variable declaration.
+
+The generated schema now carries category-compatible bogus variants for the
+remaining heterogeneous expression roles. Syntax exposes typed classifiers for
+invocation names, class-literal targets, lambda modifiers and bodies, assignment
+targets, creation types, method-reference receivers, `instanceof` targets, and
+pattern types. Java formatter rules consume those roles exhaustively. Valid
+expressions and patterns have no replay path and no formatter token parsing;
+only syntax-owned bogus variants use malformed verbatim formatting. Borrowed
+operator tokens feed the shared lexical-safety decision, including the adjacent
+unary `- -1` and `+ +1` cases.
+
+Phase 14 also closes two literal source-identity defects assigned to this slice.
+Legacy string-template literals are scanned contextually after the processor
+dot, including balanced nested interpolations, without accepting `\{` in an
+ordinary string. Java Unicode preprocessing now retains a sparse normalized-to-
+raw source map, remaps token, trivia, and diagnostic ranges, and constructs the
+tree against the original borrowed source. Files without translated Unicode
+escapes retain the previous no-allocation, no-remap path.
+
+The focused Phase-14 recovery fixture covers malformed lambda siblings and
+names, annotated dimensions, method-reference and class-literal receivers,
+member-chain and lambda-close comments, pattern recovery, and unary lexical
+safety. These cases pass exact token and represented-comment conservation,
+reparse, determinism, and idempotence. The prettier template-expression and
+text-block paths leave the deferred queue and enter the permanent conservation
+gate. The two arrow-parenthesis corpora and member-chain corpus remain deferred
+because they intentionally contain invalid standalone lambda statements, but
+their valid expression/comment sections now format idempotently and are captured
+by the focused fixture rather than hidden by the file-level diagnostic gate.
+
+The Phase 14 review point is +28,123/-24,694 implementation lines, net +3,429
+from `2197128`: 921 lines above Phase 13. Java syntax and lossless source-range
+ownership add 778 net lines, Java formatter changes add 143 net lines, and Rust
+test/support code is net zero. A focused reduction pass removed 163 net lines by
+matching small generated categories directly, generating only the two useful
+family projections, remapping Unicode ranges in place, and collapsing parallel
+member-chain state. This remains the largest Java vertical slice because it
+removes the final expression/pattern `ErrorNode` sites and fixes the
+pre-existing Unicode source-reconstruction boundary at the same time. Fixtures,
+snapshots, reports, and documentation are excluded; tests and test support are
+included. The final roadmap remains responsible for deleting the transitional
+architecture and crossing below zero.
+
 ### New Phase 15: Java Statements And Control Flow
 
 Vertically migrate simple statements, loops, switches, resources, catches, and

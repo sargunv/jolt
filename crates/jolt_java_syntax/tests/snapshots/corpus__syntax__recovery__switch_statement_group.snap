@@ -54,10 +54,10 @@ CompilationUnit
                           BlockStatementList
                             BlockStatement
                               ExpressionStatement
-                                ErrorNode
+                                BogusExpression
                                   UnaryExpression
                                     Plus "+" @ 67..68 trailing=[Whitespace " "]
-                                    ErrorNode
+                                    BogusExpression
                                 Semicolon ";" @ 69..70 trailing=[Whitespace " "]
                             BlockStatement
                               ExpressionStatement

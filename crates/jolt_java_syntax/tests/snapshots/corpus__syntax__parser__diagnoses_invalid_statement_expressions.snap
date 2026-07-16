@@ -48,7 +48,7 @@ CompilationUnit
               BlockStatementList
                 BlockStatement
                   ExpressionStatement
-                    ErrorNode
+                    BogusExpression
                       BinaryExpression
                         LiteralExpression
                           IntegerLiteral "1" @ 76..77 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
@@ -58,7 +58,7 @@ CompilationUnit
                     Semicolon ";" @ 81..82
                 BlockStatement
                   ExpressionStatement
-                    ErrorNode
+                    BogusExpression
                       NameExpression
                         Identifier "i" @ 91..92 leading=[Newline "\n", Whitespace "        "]
                     Semicolon ";" @ 92..93
@@ -69,7 +69,7 @@ CompilationUnit
                       LParen "(" @ 106..107
                       ForInitializer
                         StatementExpressionList
-                          ErrorNode
+                          BogusExpression
                             BinaryExpression
                               NameExpression
                                 Identifier "i" @ 107..108 trailing=[Whitespace " "]
@@ -86,7 +86,7 @@ CompilationUnit
                       Semicolon ";" @ 120..121 trailing=[Whitespace " "]
                       ForUpdate
                         StatementExpressionList
-                          ErrorNode
+                          BogusExpression
                             BinaryExpression
                               NameExpression
                                 Identifier "j" @ 122..123 trailing=[Whitespace " "]

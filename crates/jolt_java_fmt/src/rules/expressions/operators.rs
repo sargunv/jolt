@@ -7,21 +7,23 @@ use crate::helpers::recovery::format_required_field;
 use crate::helpers::syntax_tokens::inserted_syntax_token;
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{
-    ExpressionParentRole, JavaOperator, JavaOperatorKind, JavaSyntaxField, JavaSyntaxView,
-    binary_operator_precedence, is_bitwise_or_shift_operator, is_multiplicative_operator,
-    is_shift_operator,
+    AssignmentTargetSyntax, ExpressionParentRole, JavaOperator, JavaOperatorKind, JavaSyntaxField,
+    JavaSyntaxView, binary_operator_precedence, is_bitwise_or_shift_operator,
+    is_multiplicative_operator, is_shift_operator,
 };
 
 pub(super) fn format_assignment_expression<'source>(
     expression: &AssignmentExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let left = format_required_field(expression.left(), doc, |left, doc| {
-        let Some(left) = left.cast_family::<Expression<'source>>() else {
-            doc.block_on_invariant("assignment target was not an expression");
-            return Doc::nil();
-        };
-        format_expression(&left, doc)
+    let left = format_required_field(expression.left(), doc, |left, doc| match left {
+        AssignmentTargetSyntax::NameExpression(left) => format_expression(&left.into(), doc),
+        AssignmentTargetSyntax::FieldAccessExpression(left) => format_expression(&left.into(), doc),
+        AssignmentTargetSyntax::ArrayAccessExpression(left) => format_expression(&left.into(), doc),
+        AssignmentTargetSyntax::BogusExpression(left) => format_expression(&left.into(), doc),
+        AssignmentTargetSyntax::BogusAssignmentTarget(left) => {
+            crate::helpers::recovery::format_malformed(&left, doc)
+        }
     });
     let operator = format_required_field(expression.operator(), doc, |operator, doc| {
         let operator = match operator.as_operator() {
@@ -117,13 +119,19 @@ pub(super) fn format_unary_expression<'source>(
     expression: &UnaryExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    let needs_space = present(expression.operator())
+        .zip(present(expression.operand()).and_then(|operand| operand.first_token()))
+        .is_some_and(|(operator, operand)| {
+            crate::helpers::lexical_safety::structured_tokens_need_space(&operator, &operand)
+        });
     let operator = format_required_field(expression.operator(), doc, |operator, doc| {
         format_token_with_comments(doc, &operator)
     });
     let operand = format_required_field(expression.operand(), doc, |operand, doc| {
         format_expression(&operand, doc)
     });
-    doc_concat!(doc, [operator, operand])
+    let separator = if needs_space { doc.space() } else { Doc::nil() };
+    doc_concat!(doc, [operator, separator, operand])
 }
 
 pub(super) fn format_postfix_expression<'source>(

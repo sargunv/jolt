@@ -7,13 +7,13 @@ use super::{
 };
 use crate::helpers::lists::syntax_comma_list_items;
 use crate::helpers::recovery::{
-    JavaFormatField, format_optional_field, format_required_field, resolve_required_delimiter,
-    resolve_required_field,
+    JavaFormatField, format_malformed, format_optional_field, format_required_field,
+    resolve_required_delimiter, resolve_required_field,
 };
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{
-    NameExpression, QualifiedInvocationName, QualifiedMethodInvocation, UnqualifiedInvocationName,
-    UnqualifiedMethodInvocation,
+    InvocationNameSyntax, MethodInvocationFormSyntax, QualifiedInvocationName,
+    QualifiedMethodInvocation, UnqualifiedInvocationName, UnqualifiedMethodInvocation,
 };
 
 pub(super) fn format_method_invocation_expression_with_leading_comments<'source>(
@@ -38,17 +38,15 @@ pub(super) fn format_method_invocation_expression_with_leading_comments<'source>
             [format_required_field(
                 expression.form(),
                 doc,
-                |form, doc| {
-                    if let Some(qualified) = form.cast_node::<QualifiedMethodInvocation<'source>>()
-                    {
+                |form, doc| match form {
+                    MethodInvocationFormSyntax::QualifiedMethodInvocation(qualified) => {
                         format_qualified_method_invocation(&qualified, leading_comments, doc)
-                    } else if let Some(unqualified) =
-                        form.cast_node::<UnqualifiedMethodInvocation<'source>>()
-                    {
+                    }
+                    MethodInvocationFormSyntax::UnqualifiedMethodInvocation(unqualified) => {
                         format_unqualified_method_invocation(&unqualified, leading_comments, doc)
-                    } else {
-                        doc.block_on_invariant("method invocation form had an unknown shape");
-                        Doc::nil()
+                    }
+                    MethodInvocationFormSyntax::BogusMethodInvocationForm(bogus) => {
+                        format_malformed(&bogus, doc)
                     }
                 }
             )]
@@ -144,12 +142,7 @@ pub(super) fn format_qualified_invocation_name<'source>(
     leading_comments: LeadingComments,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_invocation_name_parts(
-        name.token(),
-        name.cast_node::<NameExpression<'source>>(),
-        leading_comments,
-        doc,
-    )
+    format_invocation_name(name.classify(), leading_comments, doc)
 }
 
 fn format_unqualified_invocation_name<'source>(
@@ -157,27 +150,25 @@ fn format_unqualified_invocation_name<'source>(
     leading_comments: LeadingComments,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_invocation_name_parts(
-        name.token(),
-        name.cast_node::<NameExpression<'source>>(),
-        leading_comments,
-        doc,
-    )
+    format_invocation_name(name.classify(), leading_comments, doc)
 }
 
-fn format_invocation_name_parts<'source>(
-    token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
-    name: Option<NameExpression<'source>>,
+fn format_invocation_name<'source>(
+    name: Result<InvocationNameSyntax<'source>, jolt_java_syntax::JavaSyntaxInvariantError>,
     leading_comments: LeadingComments,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    if let Some(token) = token {
-        format_leaf_token(&token, leading_comments, doc)
-    } else if let Some(name) = name {
-        format_expression_with_leading_comments(&name.into(), leading_comments, doc)
-    } else {
-        doc.block_on_invariant("method invocation name had an unknown shape");
-        Doc::nil()
+    match name {
+        Ok(InvocationNameSyntax::Identifier(token)) => {
+            format_leaf_token(&token, leading_comments, doc)
+        }
+        Ok(InvocationNameSyntax::NameExpression(name)) => {
+            format_expression_with_leading_comments(&name.into(), leading_comments, doc)
+        }
+        Err(error) => {
+            doc.block_on_invariant(error.to_string());
+            Doc::nil()
+        }
     }
 }
 

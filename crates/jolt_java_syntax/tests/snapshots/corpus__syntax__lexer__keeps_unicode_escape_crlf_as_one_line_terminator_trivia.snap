@@ -18,11 +18,11 @@ CompilationUnit
               Identifier "a" @ 0..1
       VariableDeclaratorList
         VariableDeclarator
-          Identifier "b" @ 3..4 leading=[Newline "\r\n"]
-  Eof "" @ 4..4
+          Identifier "b" @ 13..14 leading=[Newline "\\u000d\\u000a"]
+  Eof "" @ 14..14
 
 diagnostics:
-  code=java.parse.expected_syntax severity=Error stage=Parser range=4..4 message="expected `;` after field declaration"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=14..14 message="expected `;` after field declaration"
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(4), end: TextSize(4) }) message=expected `;` after field declaration
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(14) }) message=expected `;` after field declaration

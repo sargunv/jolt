@@ -3,9 +3,11 @@ use super::{
     TrailingTrivia, format_expression, format_pattern, format_token, format_token_with_comments,
     format_token_with_inline_leading_comments, format_type, trailing_comments_force_line,
 };
-use crate::helpers::recovery::{JavaFormatField, format_required_field, resolve_required_field};
+use crate::helpers::recovery::{
+    JavaFormatField, format_malformed, format_required_field, resolve_required_field,
+};
 use jolt_fmt_ir::DocBuilder;
-use jolt_java_syntax::{Pattern, Type};
+use jolt_java_syntax::InstanceofTargetSyntax;
 
 pub(super) fn format_cast_expression<'source>(
     expression: &CastExpression<'source>,
@@ -93,15 +95,13 @@ pub(super) fn format_instanceof_expression<'source>(
     let operator = format_required_field(expression.instanceof_keyword(), doc, |token, doc| {
         format_instanceof_operator(&token, doc)
     });
-    let rhs = format_required_field(expression.target(), doc, |target, doc| {
-        if let Some(ty) = target.cast_family::<Type<'source>>() {
-            format_type(&ty, doc)
-        } else if let Some(pattern) = target.cast_family::<Pattern<'source>>() {
-            format_pattern(&pattern, doc)
-        } else {
-            doc.block_on_invariant("instanceof target was neither a type nor a pattern");
-            Doc::nil()
-        }
+    let rhs = format_required_field(expression.target(), doc, |target, doc| match target {
+        InstanceofTargetSyntax::ClassType(ty) => format_type(&ty.into(), doc),
+        InstanceofTargetSyntax::ArrayType(ty) => format_type(&ty.into(), doc),
+        InstanceofTargetSyntax::TypePattern(pattern) => format_pattern(&pattern.into(), doc),
+        InstanceofTargetSyntax::RecordPattern(pattern) => format_pattern(&pattern.into(), doc),
+        InstanceofTargetSyntax::BogusType(ty) => format_malformed(&ty, doc),
+        InstanceofTargetSyntax::BogusInstanceofTarget(target) => format_malformed(&target, doc),
     });
 
     doc_concat!(doc, [expression_doc, doc.space(), operator, rhs])

@@ -15,15 +15,15 @@ CompilationUnit
           ClassTypeSegmentNode
             AnnotationList
             Name
-              Identifier "𝒂" @ 0..4
+              Identifier "\\uD835\\uDC82" @ 0..12
       VariableDeclaratorList
         VariableDeclarator
-  Eof "" @ 4..4
+  Eof "" @ 12..12
 
 diagnostics:
-  code=java.parse.expected_syntax severity=Error stage=Parser range=4..4 message="expected variable name"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=4..4 message="expected `;` after field declaration"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=12..12 message="expected variable name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=12..12 message="expected `;` after field declaration"
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(4), end: TextSize(4) }) message=expected variable name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(4), end: TextSize(4) }) message=expected `;` after field declaration
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(12), end: TextSize(12) }) message=expected variable name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(12), end: TextSize(12) }) message=expected `;` after field declaration

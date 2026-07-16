@@ -140,7 +140,12 @@ impl Parser<'_> {
             return false;
         }
 
+        let is_void = self.kind_at(index) == JavaSyntaxKind::VoidKw;
         index += 1;
+        if is_void {
+            return self.kind_at(index) == JavaSyntaxKind::Dot
+                && self.kind_at(index + 1) == JavaSyntaxKind::ClassKw;
+        }
         while self.kind_at(index) == JavaSyntaxKind::LBracket
             && self.kind_at(index + 1) == JavaSyntaxKind::RBracket
         {

@@ -61,10 +61,10 @@ CompilationUnit
                   Semicolon ";" @ 68..69
                 BlockStatement
                   ExpressionStatement
-                    ErrorNode
+                    BogusExpression
                       UnaryExpression
                         Plus "+" @ 103..104 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  ", BlockComment "/* block */", Whitespace " "] trailing=[Whitespace " "]
-                        ErrorNode
+                        BogusExpression
                     Semicolon ";" @ 105..106
                 BlockStatement
                   LocalVariableDeclaration

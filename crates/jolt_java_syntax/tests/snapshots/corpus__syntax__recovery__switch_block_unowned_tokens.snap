@@ -45,10 +45,10 @@ CompilationUnit
                         ErrorNode
                           BlockStatement
                             ExpressionStatement
-                              ErrorNode
+                              BogusExpression
                                 UnaryExpression
                                   Plus "+" @ 59..60 trailing=[Whitespace " "]
-                                  ErrorNode
+                                  BogusExpression
                               Semicolon ";" @ 61..62 trailing=[Whitespace " "]
                         SwitchRule
                           SwitchLabel

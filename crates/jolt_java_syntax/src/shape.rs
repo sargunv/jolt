@@ -5,6 +5,12 @@ use jolt_syntax::{
 
 use crate::JavaSyntaxKind;
 
+fn java_contextual_text_is(input: ParsedChildren<'_>, index: usize, expected: &str) -> bool {
+    input
+        .token_text(index)
+        .is_some_and(|text| crate::lexer::lexical_text_is(text, expected))
+}
+
 macro_rules! define_shapes {
     ($($schema:tt)*) => {
         jolt_syntax::__lower_syntax_schema!(JavaSyntaxKind; $($schema)*);
@@ -36,7 +42,7 @@ macro_rules! java_matches {
     ($input:ident, $index:expr, (contextual $text:literal)) => {
         $input.is_token($index)
             && $input.kind($index) == Some(JavaSyntaxKind::Identifier.to_raw())
-            && $input.token_text_is($index, $text)
+            && java_contextual_text_is($input, $index, $text)
     };
     ($input:ident, $index:expr, (node $kind:ident)) => {
         $input.is_node($index) && $input.kind($index) == Some(JavaSyntaxKind::$kind.to_raw())
@@ -336,7 +342,7 @@ macro_rules! java_audit_matches {
         }
     };
     ($slot:ident, (contextual $text:literal)) => {
-        matches!($slot, jolt_syntax::SyntaxSlot::Token(token) if token.kind() == JavaSyntaxKind::Identifier && token.text() == $text)
+        matches!($slot, jolt_syntax::SyntaxSlot::Token(token) if token.kind() == JavaSyntaxKind::Identifier && crate::lexer::lexical_text_is(token.text(), $text))
     };
     ($slot:ident, (node $kind:ident)) => {
         matches!($slot, jolt_syntax::SyntaxSlot::Node(node) if node.kind() == JavaSyntaxKind::$kind)

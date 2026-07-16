@@ -50,7 +50,7 @@ CompilationUnit
                                 LiteralExpression
                                   IntegerLiteral "1" @ 52..53 trailing=[Whitespace " "]
                           Arrow "->" @ 54..56 trailing=[Whitespace " ", BlockComment "/* empty */", Whitespace " "]
-                          ErrorNode
+                          BogusExpression
                           Semicolon ";" @ 69..70 trailing=[Whitespace " "]
                       RBrace "}" @ 71..72 trailing=[Whitespace " "]
               RBrace "}" @ 73..74 trailing=[Whitespace " "]

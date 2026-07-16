@@ -1024,7 +1024,7 @@ impl Parser<'_> {
                     expression = self.complete(access, JavaSyntaxKind::ArrayAccessExpression);
                 }
                 JavaSyntaxKind::Dot if !self.dot_starts_constructor_super_suffix() => {
-                    expression = self.parse_dot_suffix(expression);
+                    expression = self.parse_dot_suffix(expression, false);
                 }
                 _ => break,
             }

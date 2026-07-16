@@ -104,17 +104,14 @@ CompilationUnit
                         Identifier "local" @ 198..203 trailing=[Whitespace " "]
                       InstanceofKw "instanceof" @ 204..214 trailing=[Whitespace " "]
                       TypePattern
-                        LocalVariableDeclaration
-                          ParameterModifierList
-                          ClassType
-                            ClassTypeSegmentList
-                              ClassTypeSegmentNode
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 215..221 trailing=[Whitespace " "]
-                          VariableDeclaratorList
-                            VariableDeclarator
-                              Identifier "s" @ 222..223
+                        ParameterModifierList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 215..221 trailing=[Whitespace " "]
+                        Identifier "s" @ 222..223
                     RParen ")" @ 223..224 trailing=[Whitespace " "]
                     ExpressionStatement
                       MethodInvocationExpression

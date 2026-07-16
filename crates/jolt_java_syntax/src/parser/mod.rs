@@ -5,8 +5,10 @@ use std::{borrow::Cow, fmt};
 
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
 use jolt_syntax::{
-    SyntaxDiagnosticOwner, SyntaxTree, build_syntax_tree_with_factory_and_diagnostic_owners,
+    ParseEvents, SyntaxDiagnosticOwner, SyntaxTokenData, SyntaxTree, SyntaxTrivia,
+    build_syntax_tree_with_factory_and_diagnostic_owners,
 };
+use jolt_text::{TextRange, TextSize};
 
 use crate::{
     CompilationUnit,
@@ -145,9 +147,61 @@ fn fmt_diagnostic(f: &mut fmt::Formatter<'_>, diagnostic: &Diagnostic) -> fmt::R
 /// Parses a Java compilation unit.
 #[must_use]
 pub fn parse_compilation_unit(source: &str) -> JavaParse<'_> {
-    let (source, mut diagnostics) = normalize_unicode_escapes(source);
-    let parse = Parser::new(&source).parse_compilation_unit();
-    finish_parse(source, parse, &mut diagnostics)
+    let mut normalized = normalize_unicode_escapes(source);
+    let mut parse = Parser::new(normalized.source()).parse_compilation_unit();
+    let mut diagnostics = normalized.take_diagnostics();
+
+    if !normalized.has_replacements() {
+        return finish_parse(normalized.into_source(), parse, &mut diagnostics);
+    }
+
+    remap_parse_to_raw_source(&normalized, &mut parse);
+    normalized.remap_diagnostics(&mut diagnostics);
+    finish_parse(Cow::Borrowed(source), parse, &mut diagnostics)
+}
+
+fn remap_parse_to_raw_source(
+    normalized: &crate::lexer::NormalizedJavaSource<'_>,
+    parse: &mut ParseEvents,
+) {
+    normalized.remap_diagnostics(&mut parse.diagnostics);
+
+    for token in &mut parse.tokens {
+        let full_range = token.full_text_range();
+        let text_range = token.token_text_range();
+        let leading = token.leading();
+        let trailing = token.trailing();
+        let mut trivia_start = full_range.start();
+        for index in leading.clone() {
+            trivia_start = remap_trivia(normalized, &mut parse.trivia, index, trivia_start);
+        }
+
+        trivia_start = text_range.end();
+        for index in trailing.clone() {
+            trivia_start = remap_trivia(normalized, &mut parse.trivia, index, trivia_start);
+        }
+
+        *token = SyntaxTokenData::new(
+            token.raw_kind(),
+            normalized.raw_range(full_range),
+            normalized.raw_range(text_range),
+            leading,
+            trailing,
+        );
+    }
+}
+
+fn remap_trivia(
+    normalized: &crate::lexer::NormalizedJavaSource<'_>,
+    trivia: &mut [SyntaxTrivia],
+    index: usize,
+    normalized_start: TextSize,
+) -> TextSize {
+    let piece = trivia[index];
+    let normalized_end = normalized_start + piece.text_len();
+    let raw_range = normalized.raw_range(TextRange::new(normalized_start, normalized_end));
+    trivia[index] = SyntaxTrivia::new(piece.kind(), raw_range.len());
+    normalized_end
 }
 
 fn finish_parse<'source>(
@@ -214,6 +268,8 @@ mod tests {
             "module missing requires dependency; class After {}",
             "native class C { int ; void f(, String... xs, int y) {} }",
             "class C { +; C() { this(); this(); } }",
+            "class C { void f() { 1 = 2; int value = +; Object a = new int(); } }",
+            "class C { void f() { a.; a.(); Object value = (); } }",
         ] {
             let parse = parse_compilation_unit(source);
             let root = parse.syntax().expect("represented compilation unit");
@@ -257,6 +313,10 @@ mod tests {
                         | JavaSyntaxKind::BogusInterfaceBodyMember
                         | JavaSyntaxKind::BogusAnnotationInterfaceBodyMember
                         | JavaSyntaxKind::BogusConstructorBodyEntry
+                        | JavaSyntaxKind::BogusExpression
+                        | JavaSyntaxKind::BogusAssignmentTarget
+                        | JavaSyntaxKind::BogusObjectCreationType
+                        | JavaSyntaxKind::BogusArrayCreationType
                 ) {
                     assert!(node.is_directly_malformed());
                     assert!(
@@ -331,5 +391,43 @@ mod tests {
         check("class C { +; }", unexpected, "unexpected token in type body", JavaSyntaxKind::BogusClassBodyMember, None);
         check("class C { C() { this(); this(); } }", JavaParseDiagnosticCode::MisplacedConstructorInvocation.id(), "constructor body must have at most one explicit constructor invocation", JavaSyntaxKind::BogusConstructorBodyEntry, None);
         check("class C { C() { <T>lost this(); } }", expected, "expected `this` or `super` in constructor invocation", JavaSyntaxKind::BogusConstructorBodyEntry, None);
+    }
+
+    #[test]
+    #[rustfmt::skip] // Keep the owner matrix one case per line.
+    fn phase_fourteen_diagnostics_own_the_declared_node_or_slot() {
+        let expected = JavaParseDiagnosticCode::ExpectedSyntax.id();
+        macro_rules! slot { ($src:literal, $msg:literal, $kind:ident, $shape:ident, $slot:ident) => {
+            check($src, expected, $msg, JavaSyntaxKind::$kind, Some(crate::shape::$shape::Slot::$slot as u16));
+        }; }
+
+        slot!("class C { Object x = value ? left right; }", "expected `:` in conditional expression", ConditionalExpression, conditional_expression, colon);
+        slot!("class C { Object x = values[index; }", "expected `]` after array index", ArrayAccessExpression, array_access_expression, close_bracket);
+        slot!("class C { Object x = new Value; }", "expected constructor arguments", ObjectCreationExpression, object_creation_expression, arguments);
+        slot!("class C { Object x = new int[1; }", "expected `]`", DimExpression, dim_expression, close_bracket);
+        slot!("class C { Object x = new int[] { 1", "expected `}` after array initializer", ArrayInitializer, array_initializer, close_brace);
+        slot!("class C { Object x = value::; }", "expected method reference target", MethodReferenceExpression, method_reference_expression, target);
+        slot!("class C { Object x = (value; }", "expected `)` after expression", ParenthesizedExpression, parenthesized_expression, close_paren);
+        slot!("class C { Object x = (); }", "expected expression", ParenthesizedExpression, parenthesized_expression, expression);
+        slot!("class C { void f() { a.; } }", "expected member name", FieldAccessExpression, field_access_expression, name);
+        slot!("class C { void f() { a.(); } }", "expected member name", QualifiedMethodInvocation, qualified_method_invocation, name);
+        slot!("class C { Object x = (int) -> 1; }", "expected lambda parameter name", LambdaParameter, lambda_parameter, name);
+        slot!("class C { boolean f(Object x) { return x instanceof Point(var y", "expected `)` after record pattern", RecordPattern, record_pattern, close_paren);
+        slot!("class C { boolean f(Object x) { return x instanceof Point(String); } }", "expected pattern variable name", TypePattern, type_pattern, name);
+        check("class C { void f() { 1 = 2; } }", expected, "expected assignment left-hand side", JavaSyntaxKind::BogusAssignmentTarget, None);
+        check("class C { Object x = new int(); }", expected, "expected class type in object creation", JavaSyntaxKind::BogusObjectCreationType, None);
+        check("class C { Class<?> x = new Object().class; }", expected, "expected type name before class literal", JavaSyntaxKind::BogusClassLiteralTarget, None);
+        check("class C { Class<?> x = (value).class; }", expected, "expected type name before class literal", JavaSyntaxKind::BogusClassLiteralTarget, None);
+        check("class C { Class<?> x = (value).field.class; }", expected, "expected type name before class literal", JavaSyntaxKind::BogusClassLiteralTarget, None);
+        check("class C { Class<?> x = new Object().field.class; }", expected, "expected type name before class literal", JavaSyntaxKind::BogusClassLiteralTarget, None);
+        check("class C { Class<?> x = 1 .class; }", expected, "expected type name before class literal", JavaSyntaxKind::BogusClassLiteralTarget, None);
+        check("class C { Class<?> x = void[].class; }", expected, "expected type name before class literal", JavaSyntaxKind::BogusClassLiteralTarget, None);
+        check("class C { Object x = value++::target; }", expected, "expected valid method reference receiver", JavaSyntaxKind::BogusMethodReferenceReceiver, None);
+        check("class C { Object x = a::b::c; }", expected, "expected valid method reference receiver", JavaSyntaxKind::BogusMethodReferenceReceiver, None);
+        check("class C { int x = +; }", expected, "expected expression", JavaSyntaxKind::BogusExpression, None);
+        check("class C { boolean f(Object x) { return x instanceof int value; } }", expected, "expected reference type", JavaSyntaxKind::BogusType, None);
+        check("class C { boolean f(Object x) { return x instanceof var value; } }", expected, "expected reference type", JavaSyntaxKind::BogusType, None);
+        check("class C { boolean f(Object x) { return x instanceof int(String s); } }", expected, "expected class or interface type", JavaSyntaxKind::BogusType, None);
+        check("class C { boolean f(Object x) { return x instanceof Point(String s = value); } }", JavaParseDiagnosticCode::UnexpectedSyntax.id(), "invalid type pattern declaration", JavaSyntaxKind::BogusPattern, None);
     }
 }

@@ -32,7 +32,7 @@ CompilationUnit
               BlockStatementList
                 BlockStatement
                   ExpressionStatement
-                    ErrorNode
+                    BogusExpression
                       Identifier "yield" @ 53..58 leading=[Newline "\n", Whitespace "        "]
                       ArgumentList
                         LParen "(" @ 58..59

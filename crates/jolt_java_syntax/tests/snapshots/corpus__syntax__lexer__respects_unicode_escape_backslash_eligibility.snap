@@ -13,22 +13,22 @@ CompilationUnit
       Unknown "\\" @ 0..1
       Unknown "\\" @ 1..2
       Identifier "u0061" @ 2..7 trailing=[Whitespace " "]
-      Unknown "\\" @ 8..9
-      Identifier "a" @ 9..10 trailing=[Whitespace " "]
-      Unknown "\\" @ 11..12
-      Identifier "u0061" @ 12..17
-  Eof "" @ 17..17
+      Unknown "\\u005c" @ 8..14
+      Identifier "\\u0061" @ 14..20 trailing=[Whitespace " "]
+      Unknown "\\u005c" @ 21..27
+      Identifier "u0061" @ 27..32
+  Eof "" @ 32..32
 
 diagnostics:
   code=java.lex.unknown_character severity=Error stage=Lexer range=0..1 message="unknown character"
   code=java.lex.unknown_character severity=Error stage=Lexer range=1..2 message="unknown character"
-  code=java.lex.unknown_character severity=Error stage=Lexer range=8..9 message="unknown character"
-  code=java.lex.unknown_character severity=Error stage=Lexer range=11..12 message="unknown character"
+  code=java.lex.unknown_character severity=Error stage=Lexer range=8..14 message="unknown character"
+  code=java.lex.unknown_character severity=Error stage=Lexer range=21..27 message="unknown character"
   code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..1 message="unexpected token at top level"
 
 diagnostics:
 code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(1) }) message=unknown character
 code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(1), end: TextSize(2) }) message=unknown character
-code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(8), end: TextSize(9) }) message=unknown character
-code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(11), end: TextSize(12) }) message=unknown character
+code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(8), end: TextSize(14) }) message=unknown character
+code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(21), end: TextSize(27) }) message=unknown character
 code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(1) }) message=unexpected token at top level

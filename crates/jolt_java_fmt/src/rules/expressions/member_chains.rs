@@ -2,18 +2,21 @@ use super::calls::format_qualified_invocation_name;
 use super::{
     Doc, Expression, ExpressionParentRole, FieldAccessExpression, JavaSyntaxToken, LeadingComments,
     LeadingTrivia, MethodInvocationExpression, TrailingTrivia, format_argument_list,
-    format_expression_with_leading_comments, format_leading_comments, format_token,
-    format_token_with_comments, format_type_argument_list, trailing_comments_force_line,
+    format_expression, format_expression_with_leading_comments, format_leading_comments,
+    format_token, format_token_with_comments, format_type_argument_list,
+    trailing_comments_force_line,
 };
 use crate::helpers::recovery::{format_optional_field, format_required_field};
 use jolt_fmt_ir::{ConcatBuilder, DocBuilder};
-use jolt_java_syntax::{JavaSyntaxField, QualifiedMethodInvocation};
+use jolt_java_syntax::{JavaSyntaxField, MethodInvocationFormSyntax, QualifiedMethodInvocation};
+
+type ChainSuffix<'source> = (Doc<'source>, bool);
 
 struct MemberChainBuilder<'source> {
     root: Option<Expression<'source>>,
-    first_suffix: Option<Doc<'source>>,
+    first_suffix: Option<ChainSuffix<'source>>,
     suffix_count: u32,
-    field_run: Option<Doc<'source>>,
+    field_run: Option<ChainSuffix<'source>>,
 }
 
 impl<'source> MemberChainBuilder<'source> {
@@ -22,10 +25,25 @@ impl<'source> MemberChainBuilder<'source> {
         access: &FieldAccessExpression<'source>,
         rest_suffixes: &mut ConcatBuilder<'_, 'source>,
     ) {
+        let has_leading_comments = required_dot_has_leading_comments(access.dot());
         let suffix = format_field_access_suffix(access, rest_suffixes);
         self.field_run = Some(match self.field_run.take() {
-            Some(run) => doc_concat!(rest_suffixes, [run, suffix]),
-            None => suffix,
+            Some((run, run_has_leading_comments)) => (
+                doc_concat!(
+                    rest_suffixes,
+                    [
+                        run,
+                        if has_leading_comments {
+                            rest_suffixes.line()
+                        } else {
+                            Doc::nil()
+                        },
+                        suffix
+                    ]
+                ),
+                run_has_leading_comments,
+            ),
+            None => (suffix, has_leading_comments),
         });
     }
 
@@ -35,8 +53,10 @@ impl<'source> MemberChainBuilder<'source> {
         rest_suffixes: &mut ConcatBuilder<'_, 'source>,
     ) {
         self.flush_field_run(rest_suffixes);
+        let has_leading_comments = qualified_invocation(invocation)
+            .is_some_and(|invocation| required_dot_has_leading_comments(invocation.dot()));
         let suffix = format_method_invocation_suffix(invocation, rest_suffixes);
-        self.push_suffix(suffix, rest_suffixes);
+        self.push_suffix((suffix, has_leading_comments), rest_suffixes);
     }
 
     fn flush_field_run(&mut self, rest_suffixes: &mut ConcatBuilder<'_, 'source>) {
@@ -47,13 +67,18 @@ impl<'source> MemberChainBuilder<'source> {
 
     fn push_suffix(
         &mut self,
-        suffix: Doc<'source>,
+        suffix: ChainSuffix<'source>,
         rest_suffixes: &mut ConcatBuilder<'_, 'source>,
     ) {
         if self.suffix_count == 0 {
             self.first_suffix = Some(suffix);
         } else {
-            let line = rest_suffixes.soft_line();
+            let (suffix, has_leading_comments) = suffix;
+            let line = if has_leading_comments {
+                rest_suffixes.line()
+            } else {
+                rest_suffixes.soft_line()
+            };
             rest_suffixes.push(line);
             rest_suffixes.push(suffix);
         }
@@ -80,11 +105,23 @@ pub(super) fn format_member_chain<'source>(
     });
     let (root, first_suffix, suffix_count) = chain?;
     let root = root?;
-    let first_suffix = first_suffix?;
-    let keep_first_suffix_with_root = is_simple_member_chain_root(&root);
-    let leading_comments = format_expression_leading_comments(&root, doc);
-    let root_doc =
-        format_expression_with_leading_comments(&root, LeadingComments::SuppressFirstToken, doc);
+    let (first_suffix, first_suffix_has_leading_comments) = first_suffix?;
+    let keep_first_suffix_with_root =
+        is_simple_member_chain_root(&root) && !first_suffix_has_leading_comments;
+    let relocate_leading_comments = matches!(
+        root,
+        Expression::LiteralExpression(_) | Expression::NameExpression(_)
+    );
+    let leading_comments = if relocate_leading_comments {
+        format_expression_leading_comments(&root, doc)
+    } else {
+        Doc::nil()
+    };
+    let root_doc = if relocate_leading_comments {
+        format_expression_with_leading_comments(&root, LeadingComments::SuppressFirstToken, doc)
+    } else {
+        format_expression(&root, doc)
+    };
     let chain = member_chain(
         doc,
         root_doc,
@@ -95,6 +132,15 @@ pub(super) fn format_member_chain<'source>(
     );
 
     Some(doc_concat!(doc, [leading_comments, chain]))
+}
+
+fn required_dot_has_leading_comments(
+    dot: Result<
+        JavaSyntaxField<'_, JavaSyntaxToken<'_>>,
+        jolt_java_syntax::JavaSyntaxInvariantError,
+    >,
+) -> bool {
+    matches!(dot, Ok(JavaSyntaxField::Present(dot)) if !dot.leading_comments().is_empty())
 }
 
 fn append_chain_expression<'source>(
@@ -132,7 +178,11 @@ fn present<T>(
 fn qualified_invocation<'source>(
     invocation: &MethodInvocationExpression<'source>,
 ) -> Option<QualifiedMethodInvocation<'source>> {
-    present(invocation.form())?.cast_node()
+    match present(invocation.form())? {
+        MethodInvocationFormSyntax::QualifiedMethodInvocation(invocation) => Some(invocation),
+        MethodInvocationFormSyntax::UnqualifiedMethodInvocation(_)
+        | MethodInvocationFormSyntax::BogusMethodInvocationForm(_) => None,
+    }
 }
 
 fn append_chain_receiver<'source>(

@@ -79,17 +79,14 @@ CompilationUnit
                           Identifier "value" @ 122..127 trailing=[Whitespace " "]
                         InstanceofKw "instanceof" @ 128..138 trailing=[Whitespace " "]
                         TypePattern
-                          LocalVariableDeclaration
-                            ParameterModifierList
-                            ClassType
-                              ClassTypeSegmentList
-                                ClassTypeSegmentNode
-                                  AnnotationList
-                                  Name
-                                    Identifier "String" @ 139..145 trailing=[Whitespace " "]
-                            VariableDeclaratorList
-                              VariableDeclarator
-                                Identifier "text" @ 146..150
+                          ParameterModifierList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 139..145 trailing=[Whitespace " "]
+                          Identifier "text" @ 146..150
                     Semicolon ";" @ 150..151
               RBrace "}" @ 156..157 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 158..159 leading=[Newline "\n"]

@@ -8,7 +8,7 @@
 schema = 1
 baseline_commit = "2197128"
 verified_date = "2026-07-12"
-fixture_count = 50
+fixture_count = 51
 inline_regression_count = 2
 parser_fix_count = 27
 corpus_gate_count = 1
@@ -524,6 +524,17 @@ old_commit = "e47c982"
 owners = [
   { phase = 13, scope = "recovered enum entry annotations, arguments, body, and empty sibling" },
   { phase = 13, scope = "enum separator and following body members" },
+]
+
+[[fixture]]
+id = "phase-14-java-expressions"
+language = "java"
+path = "fixtures/java/syntax/recovery/phase-14-expressions.java"
+location = "current"
+owners = [
+  { phase = 14, scope = "adjacent unary operators requiring lexical separation" },
+  { phase = 14, scope = "recovered concise and parenthesized lambda siblings" },
+  { phase = 14, scope = "annotated array dimensions and malformed method-reference receivers" },
 ]
 
 [[fixture]]

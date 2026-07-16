@@ -1,0 +1,149 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class Phase14Expressions {
+  int negative = - -1;
+  int positive = + +1;
+
+  void lambdasAndArrays() {
+    java.util.function.Function<Integer, Integer> conciseRecovered =
+        item /* lambda-concise-sibling */ @ -> item;
+    java.util.function.Function<Integer, Integer> parenthesizedRecovered =
+        (item, /* lambda-parameter-sibling */ ,) -> item;
+    java.util.function.Function<Integer, Integer> trailingLineComment =
+        (first, second // lambda-last-parameter
+        ) -> first;
+    java.util.function.Function<Integer, Integer> trailingBlockComment =
+        (first, second/* lambda-last-block */
+        ) -> first;
+    java.util.function.Function<Integer, Integer> closeLeadingComment =
+        (first, second
+        // lambda-close-leading
+        ) -> first;
+    int @Dimension [] array = new int[1] @Trailing [];
+  }
+
+  void methodReferences() {
+    Object parenthesized = (/* receiver */)::target;
+    Object primitive = void::target;
+    Object postfix = value++::target;
+    Object nested = value::target::nested;
+  }
+
+  void classLiterals() {
+    Class<?> arrayType = String[].class;
+    Class<?> objectCreation = new Object().class;
+    Class<?> parenthesized = (value).class;
+    Class<?> parenthesizedField = (value).field.class;
+    Class<?> objectField = new Object().field.class;
+    Class<?> literal = 1 .class;
+    Class<?> voidArray = void[].class;
+  }
+
+  void memberComments() {
+    Object
+        // first suffix
+        .something()
+        .more();
+  }
+
+  boolean patterns(Object value) {
+    boolean typed = value instanceof final @Readonly String item @Dimension [];
+    boolean record = value instanceof Point(String name, Point(Integer x, _));
+    boolean missingName = value instanceof Point(String);
+    boolean invalidInitializer = value instanceof Point(String name = other);
+    boolean invalidVar = value instanceof var item;
+    boolean extraDeclarator = value instanceof Point(String first, second);
+    boolean invalidRecordType = value instanceof int(String name);
+    return typed || record || missingName || invalidInitializer || invalidVar || extraDeclarator || invalidRecordType;
+  }
+}
+
+formatted:
+class Phase14Expressions {
+  int negative = - -1;
+  int positive = + +1;
+
+  void lambdasAndArrays() {
+    java.util.function.Function<Integer, Integer> conciseRecovered =
+      item /* lambda-concise-sibling */ @ -> item;
+    java.util.function.Function<Integer, Integer> parenthesizedRecovered =
+      (item, /* lambda-parameter-sibling */ , ) -> item;
+    java.util.function.Function<Integer, Integer> trailingLineComment =
+      (first,
+      second // lambda-last-parameter
+      ) -> first;
+    java.util.function.Function<Integer, Integer> trailingBlockComment =
+      (first, second /* lambda-last-block */) -> first;
+    java.util.function.Function<Integer, Integer> closeLeadingComment =
+      (first,
+      second
+      // lambda-close-leading
+      ) -> first;
+    int @Dimension [] array = new int[1] @Trailing [];
+  }
+
+  void methodReferences() {
+    Object parenthesized = ( /* receiver */ )::target;
+    Object primitive = void::target;
+    Object postfix = value++::target;
+    Object nested = value::target::nested;
+  }
+
+  void classLiterals() {
+    Class<?> arrayType = String[].class;
+    Class<?> objectCreation = new Object().class;
+    Class<?> parenthesized = (value).class;
+    Class<?> parenthesizedField = (value).field.class;
+    Class<?> objectField = new Object().field.class;
+    Class<?> literal = 1 .class;
+    Class<?> voidArray = void[].class;
+  }
+
+  void memberComments() {
+    Object
+      // first suffix
+      .something()
+      .more();
+  }
+
+  boolean patterns(Object value) {
+    boolean typed = value instanceof final @Readonly String item @Dimension [];
+    boolean record = value instanceof Point(String name, Point(Integer x, _));
+    boolean missingName = value instanceof Point(String );
+    boolean invalidInitializer = value instanceof Point(String name = other);
+    boolean invalidVar = value instanceof  var  item;
+    boolean extraDeclarator = value instanceof Point(String first, second );
+    boolean invalidRecordType = value instanceof  int(String name);
+    return typed
+      || record
+      || missingName
+      || invalidInitializer
+      || invalidVar
+      || extraDeclarator
+      || invalidRecordType;
+  }
+}
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(213), end: TextSize(214) }) message=unexpected token in expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(345), end: TextSize(346) }) message=expected lambda parameter name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(913), end: TextSize(914) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(947), end: TextSize(951) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(951), end: TextSize(953) }) message=expected valid method reference receiver
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(989), end: TextSize(991) }) message=expected valid method reference receiver
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1032), end: TextSize(1034) }) message=expected valid method reference receiver
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1156), end: TextSize(1161) }) message=expected type name before class literal
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1200), end: TextSize(1205) }) message=expected type name before class literal
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1255), end: TextSize(1260) }) message=expected type name before class literal
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1308), end: TextSize(1313) }) message=expected type name before class literal
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1341), end: TextSize(1346) }) message=expected type name before class literal
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1373), end: TextSize(1377) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1380), end: TextSize(1385) }) message=expected type name before class literal
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1745), end: TextSize(1746) }) message=expected pattern variable name
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1816), end: TextSize(1817) }) message=invalid type pattern declaration
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1868), end: TextSize(1871) }) message=expected reference type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1951), end: TextSize(1952) }) message=expected pattern variable name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(2003), end: TextSize(2006) }) message=expected class or interface type

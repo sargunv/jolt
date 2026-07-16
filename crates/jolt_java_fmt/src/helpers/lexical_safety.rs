@@ -19,22 +19,45 @@ impl LexicalSafety<JavaLanguage> for JavaLexicalSafety {
     }
 
     fn separator(&mut self, left: LexicalAtom<'_>, right: LexicalAtom<'_>) -> ExceptionalSeparator {
-        use LexicalAtomKind::{Comment, Identifier, Number, Punctuation, String};
-
-        let needs_space = match (left.kind(), right.kind()) {
-            (Identifier | Number, Identifier | Number) | (String, String) => true,
-            (Number, Punctuation) => right.text().starts_with('.'),
-            (Punctuation, Number) => left.text().ends_with('.'),
-            (Punctuation | Comment, Punctuation | Comment) => {
-                punctuation_join_fuses(left.text(), right.text())
-            }
-            _ => false,
-        };
-        if needs_space {
+        if lexical_join_needs_space(left.kind(), left.text(), right.kind(), right.text()) {
             ExceptionalSeparator::Space
         } else {
             ExceptionalSeparator::None
         }
+    }
+}
+
+/// Returns whether two structured source tokens need an explicit space to
+/// retain their lexical identities at a formatter-created boundary.
+pub(crate) fn structured_tokens_need_space(
+    left: &JavaSyntaxToken<'_>,
+    right: &JavaSyntaxToken<'_>,
+) -> bool {
+    let mut safety = JavaLexicalSafety;
+    lexical_join_needs_space(
+        safety.classify(left),
+        left.text(),
+        safety.classify(right),
+        right.text(),
+    )
+}
+
+fn lexical_join_needs_space(
+    left_kind: LexicalAtomKind,
+    left_text: &str,
+    right_kind: LexicalAtomKind,
+    right_text: &str,
+) -> bool {
+    use LexicalAtomKind::{Comment, Identifier, Number, Punctuation, String};
+
+    match (left_kind, right_kind) {
+        (Identifier | Number, Identifier | Number) | (String, String) => true,
+        (Number, Punctuation) => right_text.starts_with('.'),
+        (Punctuation, Number) => left_text.ends_with('.'),
+        (Punctuation | Comment, Punctuation | Comment) => {
+            punctuation_join_fuses(left_text, right_text)
+        }
+        _ => false,
     }
 }
 

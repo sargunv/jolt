@@ -515,7 +515,7 @@ pub struct ParsedChildren<'a> {
     source: &'a str,
 }
 
-impl ParsedChildren<'_> {
+impl<'a> ParsedChildren<'a> {
     #[must_use]
     pub const fn len(self) -> usize {
         self.children.len()
@@ -556,14 +556,17 @@ impl ParsedChildren<'_> {
 
     #[must_use]
     pub fn token_text_is(self, index: usize, expected: &str) -> bool {
-        let Some(child) = self.children.get(index) else {
-            return false;
-        };
+        self.token_text(index) == Some(expected)
+    }
+
+    #[must_use]
+    pub fn token_text(self, index: usize) -> Option<&'a str> {
+        let child = self.children.get(index)?;
         let TreeElement::Token(id) = child.element() else {
-            return false;
+            return None;
         };
         let range = self.tokens[id.index()].token_text_range();
-        &self.source[range.start().get()..range.end().get()] == expected
+        Some(&self.source[range.start().get()..range.end().get()])
     }
 }
 

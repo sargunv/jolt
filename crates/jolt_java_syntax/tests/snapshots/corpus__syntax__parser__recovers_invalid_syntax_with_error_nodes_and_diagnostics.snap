@@ -44,7 +44,7 @@ CompilationUnit
                         Identifier "value" @ 46..51 trailing=[Whitespace " "]
                         Assign "=" @ 52..53 trailing=[Whitespace " "]
                         VariableInitializer
-                          ErrorNode
+                          BogusExpression
                   Semicolon ";" @ 54..55
               RBrace "}" @ 60..61 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 62..63 leading=[Newline "\n"]

@@ -75,18 +75,6 @@
     },
     {
       "suite": "prettier-java/input",
-      "path": "template-expression/template-expression.java",
-      "reasons": ["parser-diagnostics"],
-      "owner_phase": 14
-    },
-    {
-      "suite": "prettier-java/input",
-      "path": "text-blocks/text-blocks.java",
-      "reasons": ["syntax-reconstruction-mismatch"],
-      "owner_phase": 14
-    },
-    {
-      "suite": "prettier-java/input",
       "path": "try_catch/try_catch.java",
       "reasons": ["parser-diagnostics"],
       "owner_phase": 15

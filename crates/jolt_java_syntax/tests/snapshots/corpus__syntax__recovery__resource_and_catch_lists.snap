@@ -37,7 +37,7 @@ CompilationUnit
                                 NameExpression
                                   Identifier "a" @ 26..27 trailing=[Whitespace " "]
                                 Plus "+" @ 28..29 trailing=[Whitespace " ", BlockComment "/* resource */", Whitespace " "]
-                                ErrorNode
+                                BogusExpression
                           Semicolon ";" @ 45..46 trailing=[Whitespace " "]
                           Resource
                             VariableAccess

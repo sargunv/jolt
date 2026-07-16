@@ -1,0 +1,30 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class \u0055nicodeRanges {
+    void malformedInitializer() {
+        int value = ;
+    }
+}
+
+s\u0065aled class EscapedContextualModifier {
+    java.util.function.Function<String, String> identity =
+        (v\u0061r value) -> value;
+}
+
+formatted:
+class \u0055nicodeRanges {
+  void malformedInitializer() {
+    int value = ;
+  }
+}
+
+s\u0065aled class EscapedContextualModifier {
+  java.util.function.Function<String, String> identity =
+    (v\u0061r value) -> value;
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(81), end: TextSize(82) }) message=expected expression

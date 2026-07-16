@@ -29,6 +29,6 @@ class C {
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(23), end: TextSize(24) }) message=expected enum constant name
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(140), end: TextSize(141) }) message=expected type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(140), end: TextSize(141) }) message=expected variable name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(140), end: TextSize(141) }) message=expected pattern variable name
 code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(176), end: TextSize(177) }) message=expected statement expression
 code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(205), end: TextSize(206) }) message=expected statement expression

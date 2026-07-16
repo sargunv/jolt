@@ -109,17 +109,14 @@ CompilationUnit
                               Identifier "value" @ 115..120 trailing=[Whitespace " "]
                           InstanceofKw "instanceof" @ 121..131 trailing=[Whitespace " ", BlockComment "/* target */", Whitespace " "]
                           TypePattern
-                            LocalVariableDeclaration
-                              ParameterModifierList
-                              ClassType
-                                ClassTypeSegmentList
-                                  ClassTypeSegmentNode
-                                    AnnotationList
-                                    Name
-                                      Identifier "String" @ 145..151 trailing=[Whitespace " "]
-                              VariableDeclaratorList
-                                VariableDeclarator
-                                  Identifier "text" @ 152..156
+                            ParameterModifierList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "String" @ 145..151 trailing=[Whitespace " "]
+                            Identifier "text" @ 152..156
                       OrOr "||" @ 156..158
                       InstanceofExpression
                         NameExpression
@@ -378,7 +375,8 @@ CompilationUnit
                           ClassKw "class" @ 518..523 trailing=[Whitespace " "]
                         EqEq "==" @ 524..526 trailing=[Whitespace " "]
                         ClassLiteralExpression
-                          IntKw "int" @ 527..530
+                          PrimitiveType
+                            IntKw "int" @ 527..530
                           Dot "." @ 530..531
                           ClassKw "class" @ 531..536 trailing=[Whitespace " "]
                       Question "?" @ 537..538 trailing=[Whitespace " "]

@@ -181,6 +181,80 @@ macro_rules! java_syntax_schema {
                     LambdaExpression,
                     SwitchExpression,
                 }
+                AssignmentTargetSyntax => BogusAssignmentTarget {
+                    NameExpression,
+                    FieldAccessExpression,
+                    ArrayAccessExpression,
+                    BogusExpression,
+                }
+                MethodInvocationFormSyntax => BogusMethodInvocationForm {
+                    QualifiedMethodInvocation,
+                    UnqualifiedMethodInvocation,
+                }
+                ClassLiteralTargetSyntax => BogusClassLiteralTarget {
+                    PrimitiveType,
+                    VoidType,
+                    NameExpression,
+                    FieldAccessExpression,
+                }
+                MethodReferenceReceiverSyntax => BogusMethodReferenceReceiver {
+                    LiteralExpression,
+                    TemplateExpression,
+                    NameExpression,
+                    ThisExpression,
+                    SuperExpression,
+                    ParenthesizedExpression,
+                    ClassLiteralExpression,
+                    FieldAccessExpression,
+                    ArrayAccessExpression,
+                    MethodInvocationExpression,
+                    ObjectCreationExpression,
+                    ArrayCreationExpression,
+                    SwitchExpression,
+                    ClassType,
+                    ArrayType,
+                }
+                LambdaBodySyntax => BogusLambdaBody {
+                    LiteralExpression,
+                    TemplateExpression,
+                    NameExpression,
+                    ThisExpression,
+                    SuperExpression,
+                    ParenthesizedExpression,
+                    ClassLiteralExpression,
+                    FieldAccessExpression,
+                    ArrayAccessExpression,
+                    MethodInvocationExpression,
+                    MethodReferenceExpression,
+                    ObjectCreationExpression,
+                    ArrayCreationExpression,
+                    AssignmentExpression,
+                    ConditionalExpression,
+                    InstanceofExpression,
+                    BinaryExpression,
+                    UnaryExpression,
+                    PostfixExpression,
+                    CastExpression,
+                    LambdaExpression,
+                    SwitchExpression,
+                    BogusExpression,
+                    Block,
+                }
+                ArrayCreationTypeSyntax => BogusArrayCreationType {
+                    PrimitiveType,
+                    ClassType,
+                    ArrayType,
+                }
+                ObjectCreationTypeSyntax => BogusObjectCreationType {
+                    ClassType,
+                }
+                InstanceofTargetSyntax => BogusInstanceofTarget {
+                    ClassType,
+                    ArrayType,
+                    TypePattern,
+                    RecordPattern,
+                    BogusType,
+                }
                 Type => BogusType {
                     PrimitiveType,
                     VoidType,
@@ -193,7 +267,6 @@ macro_rules! java_syntax_schema {
                 Pattern => BogusPattern {
                     TypePattern,
                     RecordPattern,
-                    ComponentPattern,
                     MatchAllPattern,
                 }
                 NameSyntax => BogusName {
@@ -940,7 +1013,7 @@ macro_rules! java_syntax_schema {
                     close_paren: required (token RParen);
                 }
                 ClassLiteralExpression => ClassLiteralExpression [class_literal_expression valid] {
-                    target: required (choice [(token_set [BooleanKw, ByteKw, CharKw, DoubleKw, FloatKw, IntKw, LongKw, ShortKw]), (node VoidType), (category Expression)]) => ClassLiteralTarget;
+                    target: required (category ClassLiteralTargetSyntax);
                     dimensions: optional (list ArrayDimensions);
                     dot: required (token Dot);
                     class_keyword: required (token ClassKw);
@@ -958,10 +1031,10 @@ macro_rules! java_syntax_schema {
                     close_bracket: required (token RBracket);
                 }
                 MethodInvocationExpression => MethodInvocationExpression [method_invocation_expression valid] {
-                    form: required (choice [(constructed QualifiedMethodInvocation), (constructed UnqualifiedMethodInvocation)]) => MethodInvocationForm [disambiguate longest_then_first];
+                    form: required (category MethodInvocationFormSyntax);
                 }
                 MethodReferenceExpression => MethodReferenceExpression [method_reference_expression valid] {
-                    receiver: required (choice [(category Expression), (node_set [PrimitiveType, VoidType, ClassType, ArrayType])]) => MethodReferenceReceiver;
+                    receiver: required (category MethodReferenceReceiverSyntax);
                     receiver_type_arguments: optional (node TypeArgumentList);
                     double_colon: required (token DoubleColon);
                     target_type_arguments: optional (node TypeArgumentList);
@@ -972,13 +1045,13 @@ macro_rules! java_syntax_schema {
                     dot: optional (token Dot);
                     new_keyword: required (token NewKw);
                     constructor_type_arguments: optional (node TypeArgumentList);
-                    r#type: required (node ClassType);
+                    r#type: required (category ObjectCreationTypeSyntax);
                     arguments: required (node ArgumentList);
                     body: optional (node ClassBody);
                 }
                 ArrayCreationExpression => ArrayCreationExpression [array_creation_expression valid] {
                     new_keyword: required (token NewKw);
-                    r#type: required (node_set [PrimitiveType, ClassType, ArrayType]) => ArrayCreationType;
+                    r#type: required (category ArrayCreationTypeSyntax);
                     dimension_expressions: required (list DimExpressionList);
                     dimensions: optional (list ArrayDimensions);
                     initializer: optional (node ArrayInitializer);
@@ -995,7 +1068,7 @@ macro_rules! java_syntax_schema {
                     close_brace: required (token RBrace);
                 }
                 AssignmentExpression => AssignmentExpression [assignment_expression valid] {
-                    left: required (node_set [NameExpression, FieldAccessExpression, ArrayAccessExpression]) => AssignmentTarget;
+                    left: required (category AssignmentTargetSyntax);
                     operator: required (choice [
                         (token_set [
                             Assign, PlusEq, MinusEq, StarEq, SlashEq, AmpEq, BarEq,
@@ -1016,7 +1089,7 @@ macro_rules! java_syntax_schema {
                 InstanceofExpression => InstanceofExpression [instanceof_expression valid] {
                     expression: required (category Expression);
                     instanceof_keyword: required (token InstanceofKw);
-                    target: required (node_set [PrimitiveType, ClassType, ArrayType, TypePattern, RecordPattern]) => InstanceofTarget;
+                    target: required (category InstanceofTargetSyntax);
                 }
                 BinaryExpression => BinaryExpression [binary_expression valid] {
                     left: required (category Expression);
@@ -1050,7 +1123,7 @@ macro_rules! java_syntax_schema {
                     parameters: required (list LambdaParameterList);
                     close_paren: optional (token RParen);
                     arrow: required (token Arrow);
-                    body: required (choice [(category Expression), (node Block)]) => LambdaBody;
+                    body: required (category LambdaBodySyntax);
                 }
                 LambdaParameterList => LambdaParameterList [lambda_parameter_list list] {
                     parameters: many (node LambdaParameter) [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];
@@ -1076,16 +1149,19 @@ macro_rules! java_syntax_schema {
                     close_paren: required (token RParen);
                 }
                 TypePattern => TypePattern [type_pattern valid] {
-                    declaration: required (node LocalVariableDeclaration);
+                    modifiers: required (list ParameterModifierList);
+                    r#type: required (node_set [PrimitiveType, ClassType, ArrayType, BogusType]) => TypePatternType;
+                    name: required (token_set [Identifier, UnderscoreKw]);
+                    dimensions: optional (list ArrayDimensions);
                 }
                 RecordPattern => RecordPattern [record_pattern valid] {
-                    r#type: required (node ClassType);
+                    r#type: required (node_set [ClassType, BogusType]) => RecordPatternType;
                     open_paren: required (token LParen);
                     components: required (list ComponentPatternList);
                     close_paren: required (token RParen);
                 }
                 ComponentPattern => ComponentPattern [component_pattern valid] {
-                    pattern: required (node_set [TypePattern, RecordPattern, MatchAllPattern]) => ComponentPatternValue;
+                    pattern: required (category Pattern);
                 }
                 MatchAllPattern => MatchAllPattern [match_all_pattern valid] {
                     underscore: required (token UnderscoreKw);

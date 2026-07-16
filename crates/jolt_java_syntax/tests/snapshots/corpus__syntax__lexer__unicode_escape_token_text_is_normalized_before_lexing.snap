@@ -10,13 +10,13 @@ syntax:
 CompilationUnit
   CompilationUnitItemList
     ClassDeclaration
-      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-      Identifier "A" @ 6..7 trailing=[Whitespace " "]
+      ClassKw "cl\\u0061ss" @ 0..10 trailing=[Whitespace " "]
+      Identifier "A" @ 11..12 trailing=[Whitespace " "]
       ClassBody
-        LBrace "{" @ 8..9
+        LBrace "{" @ 13..14
         ClassBodyMemberList
-        RBrace "}" @ 9..10
-  Eof "" @ 10..10
+        RBrace "}" @ 14..15
+  Eof "" @ 15..15
 
 diagnostics:
   (none)

@@ -16,7 +16,7 @@ CompilationUnit
         LBrace "{" @ 8..9
         ClassBodyMemberList
         RBrace "}" @ 9..10
-  Eof "" @ 11..11 leading=[Ignored "\u{1a}"]
+  Eof "" @ 16..16 leading=[Ignored "\\u001a"]
 
 diagnostics:
   (none)

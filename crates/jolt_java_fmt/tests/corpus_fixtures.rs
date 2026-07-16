@@ -8,15 +8,15 @@ use jolt_test_support::{
     represented_comment_inventory, represented_token_loss_report, workspace_root,
 };
 
-// Paths leave the deferred queue only after entering this permanent
-// conservation gate. Later vertical phases extend the list with their paths.
-const PHASE_11_CONSERVATION_PATHS: &[&str] = &[
+const CONSERVATION_PATHS: &[&str] = &[
     "package_and_imports/classWithMixedImports/classWithMixedImports.java",
     "package_and_imports/classWithOnlyNonStaticImports/classWithOnlyNonStaticImports.java",
     "package_and_imports/classWithOnlyStaticImports/classWithOnlyStaticImports.java",
     "package_and_imports/moduleWithMixedImports/moduleWithMixedImports.java",
     "package_and_imports/moduleWithOnlyNonStaticImports/moduleWithOnlyNonStaticImports.java",
     "package_and_imports/moduleWithOnlyStaticImports/moduleWithOnlyStaticImports.java",
+    "template-expression/template-expression.java",
+    "text-blocks/text-blocks.java",
 ];
 
 #[test]
@@ -123,7 +123,7 @@ fn assert_corpus(
             "formatted output did not reconstruct exactly for {}",
             path.display()
         );
-        if suite == "prettier-java" && PHASE_11_CONSERVATION_PATHS.contains(&relative.as_str()) {
+        if suite == "prettier-java" && CONSERVATION_PATHS.contains(&relative.as_str()) {
             let removals = syntax_authorized_removals(syntax);
             let token_loss = represented_token_loss_report(
                 syntax.token_iter(),

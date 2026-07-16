@@ -111,7 +111,6 @@ CompilationUnit
                                   IntKw "int" @ 149..152 trailing=[Whitespace " "]
                                 AnnotationList
                                 Identifier "y" @ 153..154
-                              ErrorNode
                             RParen ")" @ 154..155 trailing=[Whitespace " "]
                             Arrow "->" @ 156..158 trailing=[Whitespace " "]
                             NameExpression
@@ -189,7 +188,6 @@ CompilationUnit
                                 LambdaModifierList
                                 AnnotationList
                                 Identifier "y" @ 258..259
-                              ErrorNode
                             RParen ")" @ 259..260 trailing=[Whitespace " "]
                             Arrow "->" @ 261..263 trailing=[Whitespace " "]
                             NameExpression
@@ -274,8 +272,7 @@ CompilationUnit
                                 AnnotationList
                                 Ellipsis "..." @ 369..372 trailing=[Whitespace " "]
                                 Identifier "values" @ 373..379
-                              ErrorNode
-                                Comma "," @ 379..380 trailing=[Whitespace " "]
+                              Comma "," @ 379..380 trailing=[Whitespace " "]
                               LambdaParameter
                                 LambdaModifierList
                                 ClassType
@@ -351,8 +348,7 @@ CompilationUnit
                                 LambdaModifierList
                                   FinalKw "final" @ 497..502 trailing=[Whitespace " "]
                                 AnnotationList
-                                ErrorNode
-                                  Identifier "x" @ 503..504
+                                Identifier "x" @ 503..504
                             RParen ")" @ 504..505 trailing=[Whitespace " "]
                             Arrow "->" @ 506..508 trailing=[Whitespace " "]
                             NameExpression
@@ -418,8 +414,7 @@ CompilationUnit
                                     Name
                                       Identifier "Deprecated" @ 600..610 trailing=[Whitespace " "]
                                 AnnotationList
-                                ErrorNode
-                                  Identifier "x" @ 611..612
+                                Identifier "x" @ 611..612
                             RParen ")" @ 612..613 trailing=[Whitespace " "]
                             Arrow "->" @ 614..616 trailing=[Whitespace " "]
                             NameExpression

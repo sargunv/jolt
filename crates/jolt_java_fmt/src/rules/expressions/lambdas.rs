@@ -6,12 +6,13 @@ use super::{
 use crate::helpers::comments::token_has_comments;
 use crate::helpers::lists::{CommaListItem, comma_list, syntax_comma_list_items};
 use crate::helpers::recovery::{
-    JavaFormatField, JavaFormatListPart, format_optional_field, format_required_field,
-    resolve_list_part, resolve_required_field,
+    JavaFormatField, JavaFormatListPart, format_malformed, format_optional_field,
+    format_required_field, resolve_list_part, resolve_required_field,
 };
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{
-    Block, Expression, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxView, LambdaModifier,
+    JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxView, LambdaBodySyntax, LambdaBodyValue,
+    LambdaModifier, LambdaModifierSyntax,
 };
 
 pub(super) fn format_lambda_expression<'source>(
@@ -20,18 +21,24 @@ pub(super) fn format_lambda_expression<'source>(
 ) -> Doc<'source> {
     let parameters = format_lambda_parameters(expression, doc);
     let arrow = format_lambda_arrow(expression, doc);
-    let body = format_required_field(expression.body(), doc, |body, doc| {
-        if let Some(expression) = body.cast_family::<Expression<'source>>() {
-            format_expression(&expression, doc)
-        } else if let Some(block) = body.cast_node::<Block<'source>>() {
-            format_block(&block, doc)
-        } else {
-            doc.block_on_invariant("lambda body was neither expression nor block");
-            Doc::nil()
-        }
-    });
+    let body = format_required_field(expression.body(), doc, format_lambda_body);
 
     doc_concat!(doc, [parameters, arrow, body])
+}
+
+fn format_lambda_body<'source>(
+    body: LambdaBodySyntax<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    match body.classify() {
+        Ok(LambdaBodyValue::Expression(expression)) => format_expression(&expression, doc),
+        Ok(LambdaBodyValue::Block(block)) => format_block(&block, doc),
+        Ok(LambdaBodyValue::Bogus(bogus)) => format_malformed(&bogus, doc),
+        Err(error) => {
+            doc.block_on_invariant(error.to_string());
+            Doc::nil()
+        }
+    }
 }
 
 fn format_lambda_arrow<'source>(
@@ -105,7 +112,12 @@ fn format_lambda_parameters<'source>(
         JavaFormatField::Malformed(recovery) => recovery,
     };
     let close = format_optional_field(expression.close_paren(), doc, |token, doc| {
-        format_token_with_comments(doc, &token)
+        let token_doc = format_token_with_comments(doc, &token);
+        if token.leading_comments().is_empty() {
+            token_doc
+        } else {
+            doc_concat!(doc, [doc.line(), token_doc])
+        }
     });
 
     doc_group!(doc, doc_concat!(doc, [open, parameters, close]),)
@@ -230,18 +242,18 @@ fn format_lambda_modifiers<'source>(
             }
             has_parts = true;
             let part = match resolve_list_part(part, docs) {
-                JavaFormatListPart::Item(modifier) => {
-                    if let Some(annotation) =
-                        modifier.cast_node::<jolt_java_syntax::Annotation<'source>>()
-                    {
+                JavaFormatListPart::Item(modifier) => match modifier.classify() {
+                    Ok(LambdaModifierSyntax::Annotation(annotation)) => {
                         format_annotation(&annotation, docs)
-                    } else if let Some(token) = modifier.token() {
+                    }
+                    Ok(LambdaModifierSyntax::Final(token) | LambdaModifierSyntax::Var(token)) => {
                         format_token_with_comments(docs, &token)
-                    } else {
-                        docs.block_on_invariant("lambda modifier had an unknown shape");
+                    }
+                    Err(error) => {
+                        docs.block_on_invariant(error.to_string());
                         Doc::nil()
                     }
-                }
+                },
                 JavaFormatListPart::Separator(separator) => {
                     format_token_with_comments(docs, &separator)
                 }

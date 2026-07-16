@@ -22,9 +22,6 @@ diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(19), end: TextSize(20) }) message=expected `this` or `super` in constructor invocation
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(41), end: TextSize(42) }) message=expected expression
 code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(42), end: TextSize(45) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(46), end: TextSize(52) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(52), end: TextSize(53) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(53), end: TextSize(54) }) message=unexpected token in statement expression
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(56), end: TextSize(57) }) message=expected expression
 code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(57), end: TextSize(61) }) message=unexpected token in statement expression
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=expected expression

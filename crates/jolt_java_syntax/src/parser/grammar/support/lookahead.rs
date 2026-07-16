@@ -391,8 +391,13 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
             return false;
         }
 
+        let is_void = self.kind() == JavaSyntaxKind::VoidKw;
         let mut cursor = self.cursor.fork();
         cursor.bump(self.buffer);
+        if is_void {
+            return cursor.kind(self.buffer) == JavaSyntaxKind::Dot
+                && cursor.nth_kind(self.buffer, 1) == JavaSyntaxKind::ClassKw;
+        }
         while cursor.kind(self.buffer) == JavaSyntaxKind::LBracket
             && cursor.nth_kind(self.buffer, 1) == JavaSyntaxKind::RBracket
         {

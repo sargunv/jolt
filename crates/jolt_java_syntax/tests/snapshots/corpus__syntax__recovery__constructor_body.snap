@@ -31,10 +31,10 @@ CompilationUnit
                   Semicolon ";" @ 22..23 trailing=[Whitespace " ", BlockComment "/* body */", Whitespace " "]
                 BlockStatement
                   ExpressionStatement
-                    ErrorNode
+                    BogusExpression
                       UnaryExpression
                         Plus "+" @ 35..36 trailing=[Whitespace " "]
-                        ErrorNode
+                        BogusExpression
                     Semicolon ";" @ 37..38 trailing=[Whitespace " "]
                 BlockStatement
                   LocalVariableDeclaration

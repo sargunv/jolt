@@ -173,7 +173,6 @@ skip syntax/lexer/recognizes-raw-supplementary-identifier-start.java
 skip syntax/lexer/recognizes-single-character-literals.java
 skip syntax/lexer/recognizes-single-utf16-code-unit-character-literals.java
 skip syntax/lexer/recognizes-supplementary-string-literal-content.java
-skip syntax/lexer/recognizes-template-embedded-expression-escape-01.java
 skip syntax/lexer/recognizes-unicode-escape-surrogate-pair-identifier.java
 skip syntax/lexer/rejects-character-literals-with-multiple-utf16-code-units-01.java
 skip syntax/lexer/rejects-character-literals-with-multiple-utf16-code-units-02.java
@@ -187,6 +186,7 @@ skip syntax/lexer/rejects-non-ascii-separator-and-operator-lookalikes.java
 skip syntax/lexer/rejects-non-jls-whitespace-as-token-separator.java
 skip syntax/lexer/rejects-raw-cr-and-crlf-in-character-literals.java
 skip syntax/lexer/rejects-raw-cr-and-crlf-in-string-literals.java
+skip syntax/lexer/rejects-template-escape-outside-processor.java
 skip syntax/lexer/rejects-text-block-opening-non-jls-whitespace.java
 skip syntax/lexer/rejects-text-block-opening-whitespace-without-line-terminator.java
 skip syntax/lexer/rejects-text-block-without-opening-line-terminator.java
@@ -379,7 +379,9 @@ skip syntax/recovery/phase-11-malformed-import-pieces.java
 skip syntax/recovery/phase-11-program-containers.java
 skip syntax/recovery/phase-12-variable-declarators.java
 skip syntax/recovery/phase-13-declarations.java
+skip syntax/recovery/phase-14-expressions.java
 skip syntax/recovery/qualifier-dots-without-qualifiers.java
+skip syntax/recovery/raw-unicode-escape-ranges.java
 skip syntax/recovery/recovered-declaration-names-and-modifiers.java
 skip syntax/recovery/resource-and-catch-lists.java
 skip syntax/recovery/switch-and-module-lists.java

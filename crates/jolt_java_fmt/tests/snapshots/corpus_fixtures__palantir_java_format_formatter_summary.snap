@@ -9,4 +9,4 @@ syntax blocked: 2
 reconstructed changed: 0
 
 diagnostics:
-  Parser:java.parse.invalid_statement_expression: 46
+  Parser:java.parse.invalid_statement_expression: 10

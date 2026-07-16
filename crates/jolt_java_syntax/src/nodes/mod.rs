@@ -1251,7 +1251,9 @@ impl<'source> ModifierElement<'source> {
         } else if let Some(non_sealed) = self.cast_node::<NonSealedModifier<'source>>() {
             Ok(ModifierItem::NonSealed(non_sealed))
         } else if let Some(token) = self.token() {
-            if token.kind() == JavaSyntaxKind::Identifier && token.text() == "sealed" {
+            if token.kind() == JavaSyntaxKind::Identifier
+                && crate::lexer::lexical_text_is(token.text(), "sealed")
+            {
                 Ok(ModifierItem::Sealed(token))
             } else {
                 Ok(ModifierItem::Token(token))
@@ -1628,6 +1630,127 @@ impl<'source> BinaryOperatorRole<'source> {
     /// Returns an invariant error if the role has an invalid token or node shape.
     pub fn as_operator(&self) -> JavaSyntaxResult<JavaOperator<'source>> {
         operator_from_element(self.element, binary_operator_kind)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum InvocationNameSyntax<'source> {
+    NameExpression(NameExpression<'source>),
+    Identifier(JavaSyntaxToken<'source>),
+}
+
+fn invocation_name_syntax(
+    element: JavaRoleElement<'_>,
+) -> JavaSyntaxResult<InvocationNameSyntax<'_>> {
+    match element {
+        JavaRoleElement::Token(token) if token.kind() == JavaSyntaxKind::Identifier => {
+            Ok(InvocationNameSyntax::Identifier(token))
+        }
+        JavaRoleElement::Node(node) => NameExpression::cast(node)
+            .map(InvocationNameSyntax::NameExpression)
+            .ok_or(JavaSyntaxInvariantError {
+                node: node.kind(),
+                slot: 0,
+            }),
+        JavaRoleElement::Token(token) => Err(JavaSyntaxInvariantError {
+            node: token.kind(),
+            slot: 0,
+        }),
+    }
+}
+
+macro_rules! impl_invocation_name {
+    ($($role:ident),+ $(,)?) => {$(
+        impl<'source> $role<'source> {
+            #[allow(clippy::missing_errors_doc)]
+            pub fn classify(self) -> JavaSyntaxResult<InvocationNameSyntax<'source>> {
+                invocation_name_syntax(self.element)
+            }
+        }
+    )+};
+}
+
+impl_invocation_name!(QualifiedInvocationName, UnqualifiedInvocationName);
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LambdaModifierSyntax<'source> {
+    Annotation(Annotation<'source>),
+    Final(JavaSyntaxToken<'source>),
+    Var(JavaSyntaxToken<'source>),
+}
+
+impl<'source> LambdaModifier<'source> {
+    #[allow(clippy::missing_errors_doc)]
+    pub fn classify(self) -> JavaSyntaxResult<LambdaModifierSyntax<'source>> {
+        match self.element {
+            JavaRoleElement::Node(node) => Annotation::cast(node)
+                .map(LambdaModifierSyntax::Annotation)
+                .ok_or(JavaSyntaxInvariantError {
+                    node: node.kind(),
+                    slot: 0,
+                }),
+            JavaRoleElement::Token(token) if token.kind() == JavaSyntaxKind::FinalKw => {
+                Ok(LambdaModifierSyntax::Final(token))
+            }
+            JavaRoleElement::Token(token)
+                if token.kind() == JavaSyntaxKind::Identifier
+                    && crate::lexer::lexical_text_is(token.text(), "var") =>
+            {
+                Ok(LambdaModifierSyntax::Var(token))
+            }
+            JavaRoleElement::Token(token) => Err(JavaSyntaxInvariantError {
+                node: token.kind(),
+                slot: 0,
+            }),
+        }
+    }
+}
+
+macro_rules! define_family_projection {
+    (
+        $category:ident => $value:ident {
+            special { $($special:ident => $special_value:ident),* $(,)? }
+            families { $($family:ident => $family_value:ident),+ $(,)? }
+        }
+    ) => {
+        #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+        pub enum $value<'source> {
+            $($special_value($special<'source>),)*
+            $($family_value($family<'source>),)+
+        }
+
+        impl<'source> $category<'source> {
+            #[allow(clippy::missing_errors_doc)]
+            pub fn classify(self) -> JavaSyntaxResult<$value<'source>> {
+                match self {
+                    $(Self::$special(value) => Ok($value::$special_value(value)),)*
+                    value => {
+                        let syntax = *value.syntax();
+                        $(if let Some(value) = $family::cast(syntax) {
+                            return Ok($value::$family_value(value));
+                        })+
+                        Err(JavaSyntaxInvariantError {
+                            node: syntax.kind(),
+                            slot: 0,
+                        })
+                    }
+                }
+            }
+        }
+    };
+}
+
+define_family_projection! {
+    LambdaBodySyntax => LambdaBodyValue {
+        special { Block => Block, BogusLambdaBody => Bogus }
+        families { Expression => Expression }
+    }
+}
+
+define_family_projection! {
+    MethodReferenceReceiverSyntax => MethodReferenceReceiverValue {
+        special { BogusMethodReferenceReceiver => Bogus }
+        families { Expression => Expression, Type => Type }
     }
 }
 

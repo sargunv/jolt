@@ -89,17 +89,14 @@ CompilationUnit
                             SwitchLabelItemList
                               CasePattern
                                 TypePattern
-                                  LocalVariableDeclaration
-                                    ParameterModifierList
-                                    ClassType
-                                      ClassTypeSegmentList
-                                        ClassTypeSegmentNode
-                                          AnnotationList
-                                          Name
-                                            Identifier "String" @ 142..148 trailing=[Whitespace " "]
-                                    VariableDeclaratorList
-                                      VariableDeclarator
-                                        Identifier "s" @ 149..150 trailing=[Whitespace " "]
+                                  ParameterModifierList
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "String" @ 142..148 trailing=[Whitespace " "]
+                                  Identifier "s" @ 149..150 trailing=[Whitespace " "]
                             Guard
                               Identifier "when" @ 151..155 trailing=[Whitespace " "]
                               MethodInvocationExpression
@@ -130,17 +127,14 @@ CompilationUnit
                             SwitchLabelItemList
                               CasePattern
                                 TypePattern
-                                  LocalVariableDeclaration
-                                    ParameterModifierList
-                                    ClassType
-                                      ClassTypeSegmentList
-                                        ClassTypeSegmentNode
-                                          AnnotationList
-                                          Name
-                                            Identifier "Integer" @ 198..205 trailing=[Whitespace " "]
-                                    VariableDeclaratorList
-                                      VariableDeclarator
-                                        Identifier "i" @ 206..207 trailing=[Whitespace " "]
+                                  ParameterModifierList
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "Integer" @ 198..205 trailing=[Whitespace " "]
+                                  Identifier "i" @ 206..207 trailing=[Whitespace " "]
                           Arrow "->" @ 208..210 trailing=[Whitespace " "]
                           Block
                             LBrace "{" @ 211..212

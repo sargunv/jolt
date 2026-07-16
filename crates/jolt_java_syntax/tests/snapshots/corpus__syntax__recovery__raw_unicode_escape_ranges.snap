@@ -1,0 +1,127 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class \u0055nicodeRanges {
+    void malformedInitializer() {
+        int value = ;
+    }
+}
+
+s\u0065aled class EscapedContextualModifier {
+    java.util.function.Function<String, String> identity =
+        (v\u0061r value) -> value;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "\\u0055nicodeRanges" @ 6..24 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 25..26
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 31..35 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "malformedInitializer" @ 36..56
+            LParen "(" @ 56..57
+            RParen ")" @ 57..58 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 59..60
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 69..72 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "value" @ 73..78 trailing=[Whitespace " "]
+                        Assign "=" @ 79..80 trailing=[Whitespace " "]
+                        VariableInitializer
+                          BogusExpression
+                  Semicolon ";" @ 81..82
+              RBrace "}" @ 87..88 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 89..90 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+        Identifier "s\\u0065aled" @ 92..103 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ClassKw "class" @ 104..109 trailing=[Whitespace " "]
+      Identifier "EscapedContextualModifier" @ 110..135 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 136..137
+        ClassBodyMemberList
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  QualifiedName
+                    QualifiedNameSegmentNode
+                      AnnotationList
+                      Identifier "java" @ 142..146 leading=[Newline "\n", Whitespace "    "]
+                    Dot "." @ 146..147
+                    NameSegmentDotList
+                      QualifiedNameSegmentNode
+                        AnnotationList
+                        Identifier "util" @ 147..151
+                      Dot "." @ 151..152
+                      QualifiedNameSegmentNode
+                        AnnotationList
+                        Identifier "function" @ 152..160
+                      Dot "." @ 160..161
+                      QualifiedNameSegmentNode
+                        AnnotationList
+                        Identifier "Function" @ 161..169
+                  TypeArgumentList
+                    Lt "<" @ 169..170
+                    TypeArgumentSeparatedList
+                      TypeArgument
+                        AnnotationList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 170..176
+                      Comma "," @ 176..177 trailing=[Whitespace " "]
+                      TypeArgument
+                        AnnotationList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 178..184
+                    Gt ">" @ 184..185 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "identity" @ 186..194 trailing=[Whitespace " "]
+                Assign "=" @ 195..196
+                VariableInitializer
+                  LambdaExpression
+                    LParen "(" @ 205..206 leading=[Newline "\n", Whitespace "        "]
+                    LambdaParameterList
+                      LambdaParameter
+                        LambdaModifierList
+                          Identifier "v\\u0061r" @ 206..214 trailing=[Whitespace " "]
+                        AnnotationList
+                        Identifier "value" @ 215..220
+                    RParen ")" @ 220..221 trailing=[Whitespace " "]
+                    Arrow "->" @ 222..224 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "value" @ 225..230
+            Semicolon ";" @ 230..231
+        RBrace "}" @ 232..233 leading=[Newline "\n"]
+  Eof "" @ 234..234 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=81..82 message="expected expression"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(81), end: TextSize(82) }) message=expected expression

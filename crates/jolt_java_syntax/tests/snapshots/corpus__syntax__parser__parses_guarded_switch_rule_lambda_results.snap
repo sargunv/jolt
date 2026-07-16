@@ -100,17 +100,14 @@ CompilationUnit
                               SwitchLabelItemList
                                 CasePattern
                                   TypePattern
-                                    LocalVariableDeclaration
-                                      ParameterModifierList
-                                      ClassType
-                                        ClassTypeSegmentList
-                                          ClassTypeSegmentNode
-                                            AnnotationList
-                                            Name
-                                              Identifier "Boolean" @ 161..168 trailing=[Whitespace " "]
-                                      VariableDeclaratorList
-                                        VariableDeclarator
-                                          Identifier "enabled" @ 169..176 trailing=[Whitespace " "]
+                                    ParameterModifierList
+                                    ClassType
+                                      ClassTypeSegmentList
+                                        ClassTypeSegmentNode
+                                          AnnotationList
+                                          Name
+                                            Identifier "Boolean" @ 161..168 trailing=[Whitespace " "]
+                                    Identifier "enabled" @ 169..176 trailing=[Whitespace " "]
                               Guard
                                 Identifier "when" @ 177..181 trailing=[Whitespace " "]
                                 NameExpression

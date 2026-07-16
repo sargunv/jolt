@@ -36,7 +36,7 @@ CompilationUnit
                             NameExpression
                               Identifier "first" @ 26..31
                             Comma "," @ 31..32 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
-                            ErrorNode
+                            BogusExpression
                             Comma "," @ 46..47 trailing=[Whitespace " "]
                             NameExpression
                               Identifier "second" @ 48..54

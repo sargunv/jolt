@@ -99,17 +99,14 @@ CompilationUnit
                               SwitchLabelItemList
                                 CasePattern
                                   TypePattern
-                                    LocalVariableDeclaration
-                                      ParameterModifierList
-                                      ClassType
-                                        ClassTypeSegmentList
-                                          ClassTypeSegmentNode
-                                            AnnotationList
-                                            Name
-                                              Identifier "String" @ 132..138 trailing=[Whitespace " "]
-                                      VariableDeclaratorList
-                                        VariableDeclarator
-                                          Identifier "s" @ 139..140 trailing=[Whitespace " "]
+                                    ParameterModifierList
+                                    ClassType
+                                      ClassTypeSegmentList
+                                        ClassTypeSegmentNode
+                                          AnnotationList
+                                          Name
+                                            Identifier "String" @ 132..138 trailing=[Whitespace " "]
+                                    Identifier "s" @ 139..140 trailing=[Whitespace " "]
                               Guard
                                 Identifier "when" @ 141..145 trailing=[Whitespace " "]
                                 MethodInvocationExpression
@@ -142,14 +139,11 @@ CompilationUnit
                                     ComponentPatternList
                                       ComponentPattern
                                         TypePattern
-                                          LocalVariableDeclaration
-                                            ParameterModifierList
-                                            PrimitiveType
-                                              AnnotationList
-                                              IntKw "int" @ 255..258 trailing=[Whitespace " "]
-                                            VariableDeclaratorList
-                                              VariableDeclarator
-                                                Identifier "left" @ 259..263
+                                          ParameterModifierList
+                                          PrimitiveType
+                                            AnnotationList
+                                            IntKw "int" @ 255..258 trailing=[Whitespace " "]
+                                          Identifier "left" @ 259..263
                                       Comma "," @ 263..264 trailing=[Whitespace " "]
                                       ComponentPattern
                                         MatchAllPattern
@@ -248,17 +242,14 @@ CompilationUnit
                               SwitchLabelItemList
                                 CasePattern
                                   TypePattern
-                                    LocalVariableDeclaration
-                                      ParameterModifierList
-                                      ClassType
-                                        ClassTypeSegmentList
-                                          ClassTypeSegmentNode
-                                            AnnotationList
-                                            Name
-                                              Identifier "Boolean" @ 546..553 trailing=[Whitespace " "]
-                                      VariableDeclaratorList
-                                        VariableDeclarator
-                                          Identifier "enabled" @ 554..561 trailing=[Whitespace " "]
+                                    ParameterModifierList
+                                    ClassType
+                                      ClassTypeSegmentList
+                                        ClassTypeSegmentNode
+                                          AnnotationList
+                                          Name
+                                            Identifier "Boolean" @ 546..553 trailing=[Whitespace " "]
+                                    Identifier "enabled" @ 554..561 trailing=[Whitespace " "]
                               Guard
                                 Identifier "when" @ 562..566 trailing=[Whitespace " "]
                                 NameExpression

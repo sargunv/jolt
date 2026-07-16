@@ -96,17 +96,14 @@ CompilationUnit
                             SwitchLabelItemList
                               CasePattern
                                 TypePattern
-                                  LocalVariableDeclaration
-                                    ParameterModifierList
-                                    ClassType
-                                      ClassTypeSegmentList
-                                        ClassTypeSegmentNode
-                                          AnnotationList
-                                          Name
-                                            Identifier "String" @ 114..120 trailing=[Whitespace " "]
-                                    VariableDeclaratorList
-                                      VariableDeclarator
-                                        Identifier "s" @ 121..122 trailing=[Whitespace " "]
+                                  ParameterModifierList
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "String" @ 114..120 trailing=[Whitespace " "]
+                                  Identifier "s" @ 121..122 trailing=[Whitespace " "]
                             Guard
                               Identifier "when" @ 123..127 trailing=[Whitespace " "]
                               MethodInvocationExpression
@@ -137,17 +134,14 @@ CompilationUnit
                             SwitchLabelItemList
                               CasePattern
                                 TypePattern
-                                  LocalVariableDeclaration
-                                    ParameterModifierList
-                                    ClassType
-                                      ClassTypeSegmentList
-                                        ClassTypeSegmentNode
-                                          AnnotationList
-                                          Name
-                                            Identifier "String" @ 164..170 trailing=[Whitespace " "]
-                                    VariableDeclaratorList
-                                      VariableDeclarator
-                                        Identifier "s" @ 171..172 trailing=[Whitespace " "]
+                                  ParameterModifierList
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "String" @ 164..170 trailing=[Whitespace " "]
+                                  Identifier "s" @ 171..172 trailing=[Whitespace " "]
                           Arrow "->" @ 173..175 trailing=[Whitespace " "]
                           Block
                             LBrace "{" @ 176..177 trailing=[Whitespace " "]
@@ -363,14 +357,11 @@ CompilationUnit
                                     ComponentPatternList
                                       ComponentPattern
                                         TypePattern
-                                          LocalVariableDeclaration
-                                            ParameterModifierList
-                                            PrimitiveType
-                                              AnnotationList
-                                              IntKw "int" @ 463..466 trailing=[Whitespace " "]
-                                            VariableDeclaratorList
-                                              VariableDeclarator
-                                                Identifier "left" @ 467..471
+                                          ParameterModifierList
+                                          PrimitiveType
+                                            AnnotationList
+                                            IntKw "int" @ 463..466 trailing=[Whitespace " "]
+                                          Identifier "left" @ 467..471
                                       Comma "," @ 471..472 trailing=[Whitespace " ", LineComment "// left"]
                                       ComponentPattern
                                         MatchAllPattern

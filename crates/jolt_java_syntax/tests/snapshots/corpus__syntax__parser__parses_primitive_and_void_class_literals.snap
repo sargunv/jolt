@@ -45,7 +45,8 @@ CompilationUnit
                         Assign "=" @ 75..76 trailing=[Whitespace " "]
                         VariableInitializer
                           ClassLiteralExpression
-                            IntKw "int" @ 77..80
+                            PrimitiveType
+                              IntKw "int" @ 77..80
                             Dot "." @ 80..81
                             ClassKw "class" @ 81..86
                   Semicolon ";" @ 86..87
@@ -64,7 +65,8 @@ CompilationUnit
                         Assign "=" @ 116..117 trailing=[Whitespace " "]
                         VariableInitializer
                           ClassLiteralExpression
-                            BooleanKw "boolean" @ 118..125
+                            PrimitiveType
+                              BooleanKw "boolean" @ 118..125
                             Dot "." @ 125..126
                             ClassKw "class" @ 126..131
                   Semicolon ";" @ 131..132

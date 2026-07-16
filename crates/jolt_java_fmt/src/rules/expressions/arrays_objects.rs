@@ -15,7 +15,7 @@ use crate::helpers::recovery::{
     resolve_required_field,
 };
 use jolt_fmt_ir::DocBuilder;
-use jolt_java_syntax::Type;
+use jolt_java_syntax::{ArrayCreationTypeSyntax, ObjectCreationTypeSyntax};
 
 pub(super) fn format_array_access_expression<'source>(
     expression: &ArrayAccessExpression<'source>,
@@ -57,8 +57,9 @@ pub(super) fn format_object_creation_expression<'source>(
             )
         },
     );
-    let ty = format_required_field(expression.r#type(), doc, |ty, doc| {
-        format_type(&ty.into(), doc)
+    let ty = format_required_field(expression.r#type(), doc, |ty, doc| match ty {
+        ObjectCreationTypeSyntax::ClassType(ty) => format_type(&ty.into(), doc),
+        ObjectCreationTypeSyntax::BogusObjectCreationType(ty) => format_malformed(&ty, doc),
     });
     let arguments = format_required_field(expression.arguments(), doc, |arguments, doc| {
         format_argument_list(Some(arguments), doc)
@@ -91,12 +92,11 @@ pub(super) fn format_array_creation_expression<'source>(
     let new = format_required_field(expression.new_keyword(), doc, |keyword, doc| {
         format_creation_new_keyword(Some(&keyword), doc)
     });
-    let ty = format_required_field(expression.r#type(), doc, |ty, doc| {
-        let Some(ty) = ty.cast_family::<Type<'source>>() else {
-            doc.block_on_invariant("array creation type was not a type");
-            return Doc::nil();
-        };
-        format_type(&ty, doc)
+    let ty = format_required_field(expression.r#type(), doc, |ty, doc| match ty {
+        ArrayCreationTypeSyntax::PrimitiveType(ty) => format_type(&ty.into(), doc),
+        ArrayCreationTypeSyntax::ClassType(ty) => format_type(&ty.into(), doc),
+        ArrayCreationTypeSyntax::ArrayType(ty) => format_type(&ty.into(), doc),
+        ArrayCreationTypeSyntax::BogusArrayCreationType(ty) => format_malformed(&ty, doc),
     });
     let dimensions = format_required_field(
         expression.dimension_expressions(),

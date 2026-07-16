@@ -2,4 +2,14 @@ class StringTemplates {
     String greeting(String name) {
         return STR."Hello \{name}";
     }
+
+    String nested(boolean ready, String fallback) {
+        return STR."Choice: \{ready ? "yes" : STR."\{fallback}"}";
+    }
+
+    String multiline(String value) {
+        return STR."Value: \{
+            value.trim()
+        }";
+    }
 }

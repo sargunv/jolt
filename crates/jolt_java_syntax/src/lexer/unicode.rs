@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, ops::Range};
 
 use jolt_text::{TextRange, TextSize};
 
@@ -7,16 +7,83 @@ use super::{JavaLexDiagnosticCode, LexerDiagnostic, lexer_diagnostic};
 // Java processes Unicode escapes before tokenization, everywhere in the source.
 // For example, `\u000a` becomes an actual line terminator before string or
 // comment scanning sees it; it is not the same as a string escape like `\n`.
-pub(crate) fn normalize_unicode_escapes(source: &str) -> (Cow<'_, str>, Vec<LexerDiagnostic>) {
+pub(crate) struct NormalizedJavaSource<'source> {
+    source: Cow<'source, str>,
+    diagnostics: Vec<LexerDiagnostic>,
+    replacements: Vec<UnicodeReplacement>,
+}
+
+impl<'source> NormalizedJavaSource<'source> {
+    pub(crate) fn source(&self) -> &str {
+        &self.source
+    }
+
+    pub(crate) fn has_replacements(&self) -> bool {
+        !self.replacements.is_empty()
+    }
+
+    pub(crate) fn raw_range(&self, range: TextRange) -> TextRange {
+        TextRange::new(
+            TextSize::new(self.raw_offset(range.start().get())),
+            TextSize::new(self.raw_offset(range.end().get())),
+        )
+    }
+
+    pub(crate) fn remap_diagnostics(&self, diagnostics: &mut [LexerDiagnostic]) {
+        for diagnostic in diagnostics {
+            diagnostic.range = diagnostic.range.map(|range| self.raw_range(range));
+        }
+    }
+
+    pub(crate) fn take_diagnostics(&mut self) -> Vec<LexerDiagnostic> {
+        std::mem::take(&mut self.diagnostics)
+    }
+
+    pub(crate) fn into_source(self) -> Cow<'source, str> {
+        self.source
+    }
+
+    fn raw_offset(&self, normalized_offset: usize) -> usize {
+        let completed = self
+            .replacements
+            .partition_point(|replacement| replacement.normalized.end <= normalized_offset);
+        let added_raw_bytes = completed
+            .checked_sub(1)
+            .map_or(0, |index| self.replacements[index].added_raw_bytes_after);
+        if let Some(replacement) = self.replacements.get(completed)
+            && replacement.normalized.start < normalized_offset
+        {
+            // Lexer, trivia, and parser diagnostic boundaries are UTF-8 scalar
+            // boundaries, so they cannot split a normalized replacement.
+            debug_assert!(false, "source boundary split a normalized Unicode escape");
+            return replacement.raw.start;
+        }
+        normalized_offset + added_raw_bytes
+    }
+}
+
+#[derive(Clone, Debug)]
+struct UnicodeReplacement {
+    normalized: Range<usize>,
+    raw: Range<usize>,
+    added_raw_bytes_after: usize,
+}
+
+pub(crate) fn normalize_unicode_escapes(source: &str) -> NormalizedJavaSource<'_> {
     // Unicode escapes always begin with a backslash. Most source files do not
     // contain one at all, so avoid decoding every UTF-8 scalar just to discover
     // that normalization has no work to do.
     if !source.as_bytes().contains(&b'\\') {
-        return (Cow::Borrowed(source), Vec::new());
+        return NormalizedJavaSource {
+            source: Cow::Borrowed(source),
+            diagnostics: Vec::new(),
+            replacements: Vec::new(),
+        };
     }
 
     let mut normalized = None;
     let mut diagnostics = Vec::new();
+    let mut replacements = Vec::new();
     let mut eligibility = UnicodeEscapeEligibility::default();
     let mut offset = 0usize;
 
@@ -32,6 +99,7 @@ pub(crate) fn normalize_unicode_escapes(source: &str) -> (Cow<'_, str>, Vec<Lexe
                     && is_low_surrogate(second_escape.value)
                 {
                     let normalized = normalized_source(source, &mut normalized, start);
+                    let normalized_start = normalized.len();
                     let high = first_escape.value - 0xD800;
                     let low = second_escape.value - 0xDC00;
                     let scalar = 0x10000 + ((high << 10) | low);
@@ -41,16 +109,27 @@ pub(crate) fn normalize_unicode_escapes(source: &str) -> (Cow<'_, str>, Vec<Lexe
                         char::from_u32(scalar).expect("valid surrogate pair scalar value"),
                         true,
                     );
+                    record_replacement(
+                        &mut replacements,
+                        normalized_start..normalized.len(),
+                        start..second_escape.end_offset,
+                    );
                     offset = second_escape.end_offset;
                     continue;
                 }
 
                 let normalized = normalized_source(source, &mut normalized, start);
+                let normalized_start = normalized.len();
                 push_char(
                     normalized,
                     &mut eligibility,
                     char::from_u32(first_escape.value).unwrap_or(char::REPLACEMENT_CHARACTER),
                     true,
+                );
+                record_replacement(
+                    &mut replacements,
+                    normalized_start..normalized.len(),
+                    start..first_escape.end_offset,
                 );
                 offset = first_escape.end_offset;
                 continue;
@@ -75,10 +154,28 @@ pub(crate) fn normalize_unicode_escapes(source: &str) -> (Cow<'_, str>, Vec<Lexe
         offset = end;
     }
 
-    match normalized {
-        Some(normalized) => (Cow::Owned(normalized), diagnostics),
-        None => (Cow::Borrowed(source), diagnostics),
+    NormalizedJavaSource {
+        source: normalized.map_or(Cow::Borrowed(source), Cow::Owned),
+        diagnostics,
+        replacements,
     }
+}
+
+fn record_replacement(
+    replacements: &mut Vec<UnicodeReplacement>,
+    normalized: Range<usize>,
+    raw: Range<usize>,
+) {
+    let added_raw_bytes_after = replacements
+        .last()
+        .map_or(0, |replacement| replacement.added_raw_bytes_after)
+        + raw.len()
+        - normalized.len();
+    replacements.push(UnicodeReplacement {
+        normalized,
+        raw,
+        added_raw_bytes_after,
+    });
 }
 
 fn normalized_source<'a>(

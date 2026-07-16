@@ -1,16 +1,16 @@
 use super::{
-    ClassLiteralExpression, Doc, Expression, InlineLeadingTrivia, JavaSyntaxToken, LeadingComments,
+    ClassLiteralExpression, Doc, InlineLeadingTrivia, JavaSyntaxToken, LeadingComments,
     LeadingTrivia, LiteralExpression, NameExpression, SuperExpression, TemplateExpression,
     ThisExpression, TrailingTrivia, format_annotation, format_array_dimensions, format_expression,
     format_member_dot, format_token, format_token_after_relocated_leading_comments,
-    format_token_with_inline_leading_comments, format_void_type,
+    format_token_with_inline_leading_comments, format_type, format_void_type,
 };
 use crate::helpers::recovery::{
-    JavaFormatField, JavaFormatListPart, format_optional_field, format_required_field,
-    resolve_list_part, resolve_optional_field,
+    JavaFormatField, JavaFormatListPart, format_malformed, format_optional_field,
+    format_required_field, resolve_list_part, resolve_optional_field,
 };
 use jolt_fmt_ir::DocBuilder;
-use jolt_java_syntax::JavaSyntaxListPart;
+use jolt_java_syntax::{ClassLiteralTargetSyntax, JavaSyntaxListPart};
 
 pub(super) fn format_literal_expression<'source>(
     expression: &LiteralExpression<'source>,
@@ -164,17 +164,16 @@ pub(super) fn format_class_literal_expression<'source>(
     expression: &ClassLiteralExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let target = format_required_field(expression.target(), doc, |target, doc| {
-        if let Some(target) = target.cast_family::<Expression<'source>>() {
-            format_expression(&target, doc)
-        } else if let Some(ty) = target.cast_node::<jolt_java_syntax::VoidType<'source>>() {
-            format_void_type(&ty, doc)
-        } else if let Some(keyword) = target.token() {
-            format_leaf_token(&keyword, LeadingComments::Preserve, doc)
-        } else {
-            doc.block_on_invariant("class literal target had an unknown shape");
-            Doc::nil()
+    let target = format_required_field(expression.target(), doc, |target, doc| match target {
+        ClassLiteralTargetSyntax::PrimitiveType(ty) => format_type(&ty.into(), doc),
+        ClassLiteralTargetSyntax::VoidType(ty) => format_void_type(&ty, doc),
+        ClassLiteralTargetSyntax::NameExpression(target) => {
+            format_name_expression(&target, LeadingComments::Preserve, doc)
         }
+        ClassLiteralTargetSyntax::FieldAccessExpression(target) => {
+            super::format_field_access_expression(&target, doc)
+        }
+        ClassLiteralTargetSyntax::BogusClassLiteralTarget(bogus) => format_malformed(&bogus, doc),
     });
 
     doc_concat!(

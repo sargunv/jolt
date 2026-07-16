@@ -35,7 +35,7 @@ CompilationUnit
                         Identifier "value" @ 25..30 trailing=[Whitespace " "]
                         Assign "=" @ 31..32 trailing=[Whitespace " ", BlockComment "/* keep */", Whitespace " "]
                         VariableInitializer
-                          ErrorNode
+                          BogusExpression
                   Semicolon ";" @ 44..45 trailing=[Whitespace " "]
               RBrace "}" @ 46..47 trailing=[Whitespace " "]
         RBrace "}" @ 48..49

@@ -4,14 +4,12 @@ expression: prettier_summary.render()
 ---
 suite: prettier-java
 files: 86
-formatted: 73
-syntax blocked: 12
-reconstructed changed: 1
+formatted: 75
+syntax blocked: 11
+reconstructed changed: 0
 
 diagnostics:
-  Lexer:java.lex.unknown_character: 2
-  Lexer:java.lex.unterminated_string_literal: 2
-  Parser:java.parse.expected_syntax: 50
-  Parser:java.parse.invalid_statement_expression: 76
-  Parser:java.parse.unexpected_syntax: 70
+  Parser:java.parse.expected_syntax: 48
+  Parser:java.parse.invalid_statement_expression: 78
+  Parser:java.parse.unexpected_syntax: 38
   Parser:java.parse.unqualified_yield_method_invocation: 2

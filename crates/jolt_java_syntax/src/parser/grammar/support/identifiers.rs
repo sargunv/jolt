@@ -20,11 +20,16 @@ impl Parser<'_> {
         }
     }
 
-    pub(in crate::parser::grammar) fn expect_method_identifier(&mut self, message: &str) {
+    pub(in crate::parser::grammar) fn expect_method_identifier_owned(
+        &mut self,
+        message: &str,
+        owner: NodeAnchor,
+        slot: u16,
+    ) {
         if self.at_name_segment() {
             self.bump();
         } else {
-            self.expected_here(message);
+            self.expected_owned_slot(message, owner, slot);
         }
     }
 

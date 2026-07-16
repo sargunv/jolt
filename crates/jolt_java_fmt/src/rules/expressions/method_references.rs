@@ -1,11 +1,11 @@
 use super::{
-    Doc, Expression, LeadingTrivia, MethodReferenceExpression, TrailingTrivia, format_expression,
-    format_token, format_token_with_comments, format_type, format_type_argument_list,
+    Doc, LeadingTrivia, MethodReferenceExpression, TrailingTrivia, format_expression, format_token,
+    format_token_with_comments, format_type, format_type_argument_list,
     trailing_comments_force_line,
 };
-use crate::helpers::recovery::{format_optional_field, format_required_field};
+use crate::helpers::recovery::{format_malformed, format_optional_field, format_required_field};
 use jolt_fmt_ir::DocBuilder;
-use jolt_java_syntax::Type;
+use jolt_java_syntax::MethodReferenceReceiverValue;
 
 pub(super) fn format_method_reference_expression<'source>(
     expression: &MethodReferenceExpression<'source>,
@@ -66,13 +66,16 @@ fn format_method_reference_receiver<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     format_required_field(expression.receiver(), doc, |receiver, doc| {
-        if let Some(expression) = receiver.cast_family::<Expression<'source>>() {
-            format_expression(&expression, doc)
-        } else if let Some(ty) = receiver.cast_family::<Type<'source>>() {
-            format_type(&ty, doc)
-        } else {
-            doc.block_on_invariant("method reference receiver was neither expression nor type");
-            Doc::nil()
+        match receiver.classify() {
+            Ok(MethodReferenceReceiverValue::Expression(expression)) => {
+                format_expression(&expression, doc)
+            }
+            Ok(MethodReferenceReceiverValue::Type(ty)) => format_type(&ty, doc),
+            Ok(MethodReferenceReceiverValue::Bogus(bogus)) => format_malformed(&bogus, doc),
+            Err(error) => {
+                doc.block_on_invariant(error.to_string());
+                Doc::nil()
+            }
         }
     })
 }

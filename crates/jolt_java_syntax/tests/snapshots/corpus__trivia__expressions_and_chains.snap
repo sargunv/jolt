@@ -152,17 +152,14 @@ CompilationUnit
                                 Identifier "value" @ 498..503 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                               InstanceofKw "instanceof" @ 504..514 trailing=[Whitespace " "]
                               TypePattern
-                                LocalVariableDeclaration
-                                  ParameterModifierList
-                                  ClassType
-                                    ClassTypeSegmentList
-                                      ClassTypeSegmentNode
-                                        AnnotationList
-                                        Name
-                                          Identifier "String" @ 515..521 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:instanceof-type */", Whitespace " "]
-                                  VariableDeclaratorList
-                                    VariableDeclarator
-                                      Identifier "s" @ 556..557
+                                ParameterModifierList
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      Name
+                                        Identifier "String" @ 515..521 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:instanceof-type */", Whitespace " "]
+                                Identifier "s" @ 556..557
                             AndAnd "&&" @ 570..572 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
                             MethodInvocationExpression
                               QualifiedMethodInvocation

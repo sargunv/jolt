@@ -11,7 +11,11 @@ use jolt_text::{TextRange, TextSize};
 use unicode_general_category::{GeneralCategory, get_general_category};
 
 pub(crate) use token::{JavaLexDiagnosticCode, LexerDiagnostic};
-pub(crate) use unicode::normalize_unicode_escapes;
+pub(crate) use unicode::{NormalizedJavaSource, normalize_unicode_escapes};
+
+pub(crate) fn lexical_text_is(text: &str, expected: &str) -> bool {
+    normalize_unicode_escapes(text).source() == expected
+}
 
 pub struct JavaLexer<'source> {
     scanner: Scanner<'source>,
@@ -92,6 +96,7 @@ struct Scanner<'source> {
     pos: usize,
     previous_end: TextSize,
     diagnostics: Vec<LexerDiagnostic>,
+    previous_kind: Option<JavaSyntaxKind>,
 }
 
 fn lexer_diagnostic(code: JavaLexDiagnosticCode, range: TextRange) -> Diagnostic {
@@ -111,22 +116,25 @@ impl<'source> Scanner<'source> {
             pos: 0,
             previous_end: TextSize::new(0),
             diagnostics: Vec::new(),
+            previous_kind: None,
         }
     }
 
     fn token(&mut self) -> (JavaSyntaxKind, TextRange) {
         let start = self.current_range().expect("token called at EOF").start();
+        let allow_template_interpolation = self.previous_kind == Some(JavaSyntaxKind::Dot);
         let kind = match self.current_char().expect("token called at EOF") {
             '\'' => self.character_literal(),
             '"' if self.peek_char(1) == Some('"') && self.peek_char(2) == Some('"') => {
-                self.text_block_literal()
+                self.text_block_literal(allow_template_interpolation)
             }
-            '"' => self.string_literal(),
+            '"' => self.string_literal(allow_template_interpolation),
             '.' if self.peek_char(1).is_some_and(|ch| ch.is_ascii_digit()) => self.number_literal(),
             ch if ch.is_ascii_digit() => self.number_literal(),
             ch if is_java_identifier_start(ch) => self.identifier_or_keyword(),
             _ => self.operator_or_punctuation(),
         };
+        self.previous_kind = Some(kind);
         let end = self.previous_end();
         (kind, TextRange::new(start, end))
     }
@@ -351,7 +359,7 @@ impl<'source> Scanner<'source> {
         JavaSyntaxKind::CharacterLiteral
     }
 
-    fn string_literal(&mut self) -> JavaSyntaxKind {
+    fn string_literal(&mut self, allow_template_interpolation: bool) -> JavaSyntaxKind {
         let start = self
             .current_range()
             .expect("literal starts before EOF")
@@ -373,6 +381,11 @@ impl<'source> Scanner<'source> {
                         .expect("escape starts before EOF")
                         .start();
                     self.bump();
+                    if allow_template_interpolation && self.current_char() == Some('{') {
+                        self.bump();
+                        self.template_interpolation();
+                        continue;
+                    }
                     if self.current_char().is_some_and(is_line_terminator_start) {
                         // Line-continuation escapes are valid only in text blocks;
                         // ordinary string literals still terminate at the line break.
@@ -415,7 +428,7 @@ impl<'source> Scanner<'source> {
         JavaSyntaxKind::StringLiteral
     }
 
-    fn text_block_literal(&mut self) -> JavaSyntaxKind {
+    fn text_block_literal(&mut self, allow_template_interpolation: bool) -> JavaSyntaxKind {
         let start = self
             .current_range()
             .expect("literal starts before EOF")
@@ -456,7 +469,10 @@ impl<'source> Scanner<'source> {
                     .expect("escape starts before EOF")
                     .start();
                 self.bump();
-                if self.current_char().is_some_and(is_line_terminator_start) {
+                if allow_template_interpolation && self.current_char() == Some('{') {
+                    self.bump();
+                    self.template_interpolation();
+                } else if self.current_char().is_some_and(is_line_terminator_start) {
                     // JLS 3.10.7 line-continuation escapes are specific to text blocks.
                     self.bump_line_terminator();
                 } else if !self.at_end() && self.current_char().is_some_and(is_valid_escape_tail) {
@@ -487,6 +503,57 @@ impl<'source> Scanner<'source> {
         }
 
         JavaSyntaxKind::TextBlockLiteral
+    }
+
+    // String-template interpolation is part of the enclosing literal token in
+    // the current syntax model. Scan its balanced Java source so quotes inside
+    // `\{ ... }` cannot terminate the borrowed literal token.
+    fn template_interpolation(&mut self) {
+        let mut brace_depth = 1usize;
+        let mut follows_dot = false;
+
+        while !self.at_end() {
+            match (self.current_char(), self.peek_char(1), self.peek_char(2)) {
+                (Some('{'), _, _) => {
+                    brace_depth += 1;
+                    self.bump();
+                    follows_dot = false;
+                }
+                (Some('}'), _, _) => {
+                    brace_depth -= 1;
+                    self.bump();
+                    if brace_depth == 0 {
+                        return;
+                    }
+                    follows_dot = false;
+                }
+                (Some('"'), Some('"'), Some('"')) => {
+                    self.text_block_literal(follows_dot);
+                    follows_dot = false;
+                }
+                (Some('"'), _, _) => {
+                    self.string_literal(follows_dot);
+                    follows_dot = false;
+                }
+                (Some('\''), _, _) => {
+                    self.character_literal();
+                    follows_dot = false;
+                }
+                (Some('/'), Some('/'), _) => {
+                    self.line_comment();
+                }
+                (Some('/'), Some('*'), _) => {
+                    self.block_comment();
+                }
+                (Some(ch), _, _) => {
+                    self.bump();
+                    if !ch.is_whitespace() {
+                        follows_dot = ch == '.';
+                    }
+                }
+                (None, _, _) => unreachable!("loop checks EOF"),
+            }
+        }
     }
 
     fn number_literal(&mut self) -> JavaSyntaxKind {
@@ -1006,7 +1073,7 @@ fn is_identifier_ignorable(ch: char) -> bool {
 fn is_valid_escape_tail(ch: char) -> bool {
     matches!(
         ch,
-        'b' | 's' | 't' | 'n' | 'f' | 'r' | '"' | '\'' | '\\' | '{' | '0'..='7'
+        'b' | 's' | 't' | 'n' | 'f' | 'r' | '"' | '\'' | '\\' | '0'..='7'
     )
 }
 

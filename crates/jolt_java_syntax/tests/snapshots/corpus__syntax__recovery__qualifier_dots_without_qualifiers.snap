@@ -52,29 +52,26 @@ CompilationUnit
               BlockStatementList
                 BlockStatement
                   ExpressionStatement
-                    ErrorNode
-                      Dot "." @ 41..42
-                    ErrorNode
+                    BogusExpression
+                      BogusExpression
+                        Dot "." @ 41..42
                       NewKw "new" @ 42..45 trailing=[Whitespace " "]
-                    ErrorNode
                       Identifier "Nested" @ 46..52
-                    ErrorNode
                       LParen "(" @ 52..53
-                    ErrorNode
                       RParen ")" @ 53..54
                     Semicolon ";" @ 54..55 trailing=[Whitespace " "]
                 BlockStatement
                   ExpressionStatement
-                    ErrorNode
-                      Dot "." @ 56..57
-                    ErrorNode
+                    BogusExpression
+                      BogusExpression
+                        Dot "." @ 56..57
                       ThisKw "this" @ 57..61
                     Semicolon ";" @ 61..62 trailing=[Whitespace " "]
                 BlockStatement
                   ExpressionStatement
-                    ErrorNode
-                      Dot "." @ 63..64
-                    ErrorNode
+                    BogusExpression
+                      BogusExpression
+                        Dot "." @ 63..64
                       SuperKw "super" @ 64..69
                     Semicolon ";" @ 69..70 trailing=[Whitespace " "]
               RBrace "}" @ 71..72 trailing=[Whitespace " "]
@@ -85,9 +82,6 @@ diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=19..20 message="expected `this` or `super` in constructor invocation"
   code=java.parse.expected_syntax severity=Error stage=Parser range=41..42 message="expected expression"
   code=java.parse.invalid_statement_expression severity=Error stage=Parser range=42..45 message="unexpected token in statement expression"
-  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=46..52 message="unexpected token in statement expression"
-  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=52..53 message="unexpected token in statement expression"
-  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=53..54 message="unexpected token in statement expression"
   code=java.parse.expected_syntax severity=Error stage=Parser range=56..57 message="expected expression"
   code=java.parse.invalid_statement_expression severity=Error stage=Parser range=57..61 message="unexpected token in statement expression"
   code=java.parse.expected_syntax severity=Error stage=Parser range=63..64 message="expected expression"
@@ -97,9 +91,6 @@ diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(19), end: TextSize(20) }) message=expected `this` or `super` in constructor invocation
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(41), end: TextSize(42) }) message=expected expression
 code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(42), end: TextSize(45) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(46), end: TextSize(52) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(52), end: TextSize(53) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(53), end: TextSize(54) }) message=unexpected token in statement expression
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(56), end: TextSize(57) }) message=expected expression
 code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(57), end: TextSize(61) }) message=unexpected token in statement expression
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=expected expression

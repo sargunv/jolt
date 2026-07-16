@@ -26,12 +26,12 @@ CompilationUnit
               BlockStatementList
                 BlockStatement
                   ExpressionStatement
-                    ErrorNode
+                    BogusExpression
                       BinaryExpression
                         NameExpression
                           Identifier "value" @ 21..26 trailing=[Whitespace " "]
                         Plus "+" @ 27..28 trailing=[Whitespace " ", BlockComment "/* rhs */", Whitespace " "]
-                        ErrorNode
+                        BogusExpression
                     Semicolon ";" @ 39..40 trailing=[Whitespace " "]
               RBrace "}" @ 41..42 trailing=[Whitespace " "]
         RBrace "}" @ 43..44

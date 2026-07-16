@@ -20,12 +20,12 @@ CompilationUnit
     FieldDeclaration
       PrimitiveType
         AnnotationList
-        IntKw "int" @ 20..23 leading=[Newline "\n", Whitespace " "] trailing=[Whitespace " "]
+        IntKw "int" @ 25..28 leading=[Newline "\\u000a", Whitespace " "] trailing=[Whitespace " "]
       VariableDeclaratorList
         VariableDeclarator
-          Identifier "b" @ 24..25
-      Semicolon ";" @ 25..26
-  Eof "" @ 26..26
+          Identifier "b" @ 29..30
+      Semicolon ";" @ 30..31
+  Eof "" @ 31..31
 
 diagnostics:
   (none)

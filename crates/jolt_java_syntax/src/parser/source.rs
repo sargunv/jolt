@@ -73,10 +73,10 @@ pub(super) trait JavaParserExt {
     fn expect_contextual(&mut self, text: &str, message: &str);
     fn eat_contextual(&mut self, text: &str) -> bool;
     fn at_contextual(&mut self, text: &str) -> bool;
-    fn invalid_statement_expression_here(&mut self, message: &str);
+    fn invalid_statement_expression_here(&mut self, message: &str) -> DiagnosticMarker;
     fn invalid_resource_variable_access_here(&mut self, message: &str);
     fn invalid_switch_guard_here(&mut self, message: &str);
-    fn unqualified_yield_method_invocation_here(&mut self, message: &str);
+    fn unqualified_yield_method_invocation_here(&mut self, message: &str) -> DiagnosticMarker;
     fn decimal_integer_boundary_literal_here(&mut self, message: &str);
     fn misplaced_receiver_parameter_here(&mut self, message: &str) -> DiagnosticMarker;
     fn misplaced_constructor_invocation_here(&mut self, message: &str) -> DiagnosticMarker;
@@ -103,11 +103,11 @@ impl JavaParserExt for Parser<'_> {
         self.current_kind() == JavaSyntaxKind::Identifier && self.current_text() == Some(text)
     }
 
-    fn invalid_statement_expression_here(&mut self, message: &str) {
+    fn invalid_statement_expression_here(&mut self, message: &str) -> DiagnosticMarker {
         self.error_here(
             JavaParseDiagnosticCode::InvalidStatementExpression.id(),
             message,
-        );
+        )
     }
 
     fn invalid_resource_variable_access_here(&mut self, message: &str) {
@@ -121,11 +121,11 @@ impl JavaParserExt for Parser<'_> {
         self.error_here(JavaParseDiagnosticCode::InvalidSwitchGuard.id(), message);
     }
 
-    fn unqualified_yield_method_invocation_here(&mut self, message: &str) {
+    fn unqualified_yield_method_invocation_here(&mut self, message: &str) -> DiagnosticMarker {
         self.error_here(
             JavaParseDiagnosticCode::UnqualifiedYieldMethodInvocation.id(),
             message,
-        );
+        )
     }
 
     fn decimal_integer_boundary_literal_here(&mut self, message: &str) {

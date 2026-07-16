@@ -7,4 +7,4 @@ files: 209
 reconstructed changed: 0
 
 diagnostics:
-  Parser:java.parse.invalid_statement_expression: 20
+  Parser:java.parse.invalid_statement_expression: 8
