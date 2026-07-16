@@ -1,8 +1,7 @@
 use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    KotlinSyntaxView, LabeledLambdaExpression, LambdaBody, LambdaBodyItemSyntax, LambdaExpression,
-    LambdaForm, LambdaParameter, LambdaParameterBindingSyntax, LambdaParameterList,
-    LambdaParameterListEntry,
+    LabeledLambdaExpression, LambdaBody, LambdaBodyItemSyntax, LambdaExpression, LambdaForm,
+    LambdaParameter, LambdaParameterBindingSyntax, LambdaParameterList, LambdaParameterListEntry,
 };
 
 use crate::helpers::comments::{
@@ -148,18 +147,8 @@ fn format_lambda_parameter_prefix<'source>(
     parameter_list: &LambdaParameterList<'source>,
 ) -> Doc<'source> {
     let items = match resolve_required_field(parameter_list.parameters(), doc) {
-        KotlinFormatField::Present(parameters) => physical_comma_list_items(
-            doc,
-            parameters.parts().filter(|part| match part {
-                Ok(jolt_kotlin_syntax::KotlinSyntaxListPart::Item(
-                    LambdaParameterListEntry::BogusLambdaParameter(bogus),
-                )) => bogus.first_token().is_some(),
-                Ok(jolt_kotlin_syntax::KotlinSyntaxListPart::Malformed(malformed)) => {
-                    malformed.first_token().is_some()
-                }
-                _ => true,
-            }),
-            |doc, parameter| CommaListItem {
+        KotlinFormatField::Present(parameters) => {
+            physical_comma_list_items(doc, parameters.parts(), |doc, parameter| CommaListItem {
                 doc: match parameter {
                     LambdaParameterListEntry::LambdaParameter(parameter) => {
                         format_lambda_parameter(doc, &parameter)
@@ -169,11 +158,13 @@ fn format_lambda_parameter_prefix<'source>(
                     }
                 },
                 comma: None,
-            },
-        ),
+                layout_visible: true,
+            })
+        }
         KotlinFormatField::Malformed(recovery) => vec![CommaListItem {
             doc: recovery,
             comma: None,
+            layout_visible: true,
         }],
     };
     let arrow = format_required_field(parameter_list.arrow(), doc, |arrow, doc| {
@@ -277,6 +268,10 @@ pub(super) fn lambda_body_doc<'source>(
                         Doc::nil()
                     }
                     KotlinFormatListPart::Malformed(recovery) => recovery,
+                    KotlinFormatListPart::Invisible(recovery) => {
+                        docs.push(recovery);
+                        continue;
+                    }
                 };
                 if item != Doc::nil() {
                     push_lambda_body_doc(docs, &mut count, item);

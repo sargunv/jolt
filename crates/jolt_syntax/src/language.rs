@@ -45,9 +45,6 @@ pub trait Language: 'static {
     /// Returns the kind that marks end-of-file.
     fn eof_kind() -> Self::Kind;
 
-    /// Returns the kind that marks an error/recovery node.
-    fn error_node_kind() -> Self::Kind;
-
     /// Returns the diagnostic code id for "expected syntax" parser errors.
     fn expected_diagnostic_code() -> DiagnosticCodeId;
 

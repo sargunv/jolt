@@ -202,12 +202,6 @@ pub trait KotlinSyntaxView<'source>: private::Sealed {
         self.syntax_node().and_then(|syntax| syntax.first_token())
     }
 
-    #[must_use]
-    fn is_malformed(&self) -> bool {
-        self.syntax_node()
-            .is_some_and(|syntax| syntax.is_directly_malformed())
-    }
-
     /// Whether this represented subtree contains no missing or malformed
     /// recovery syntax.
     #[must_use]
@@ -258,6 +252,14 @@ pub enum KotlinRoleElement<'source> {
 }
 
 impl<'source> KotlinRoleElement<'source> {
+    #[inline]
+    fn kind(self) -> KotlinSyntaxKind {
+        match self {
+            Self::Node(node) => node.kind(),
+            Self::Token(token) => token.kind(),
+        }
+    }
+
     #[must_use]
     pub fn token(self) -> Option<KotlinSyntaxToken<'source>> {
         match self {
@@ -994,13 +996,8 @@ macro_rules! define_kotlin_accessors_from_schema {
 
 kotlin_syntax_schema!(define_kotlin_accessors_from_schema);
 
-fn invalid_role_projection(
-    first_token: Option<KotlinSyntaxToken<'_>>,
-) -> KotlinSyntaxInvariantError {
-    KotlinSyntaxInvariantError {
-        node: first_token.map_or(KotlinSyntaxKind::ErrorNode, |token| token.kind()),
-        slot: 0,
-    }
+fn invalid_role_projection(node: KotlinSyntaxKind) -> KotlinSyntaxInvariantError {
+    KotlinSyntaxInvariantError { node, slot: 0 }
 }
 
 macro_rules! define_kotlin_role_projection {
@@ -1025,7 +1022,7 @@ macro_rules! define_kotlin_role_projection {
                 $(if let Some(value) = self.cast_node::<$node<'source>>() {
                     return Ok($value::$node_variant(value));
                 })*
-                Err(invalid_role_projection(self.first_token()))
+                Err(invalid_role_projection(self.element.kind()))
             }
         }
     };
@@ -1112,7 +1109,7 @@ impl<'source> BlockItemListElement<'source> {
         } else if let Some(token) = self.token() {
             Ok(BlockItemListElementSyntax::Terminator(token))
         } else {
-            Err(invalid_role_projection(self.first_token()))
+            Err(invalid_role_projection(self.element.kind()))
         }
     }
 }
@@ -1131,7 +1128,7 @@ impl<'source> LambdaBodyItem<'source> {
         } else if let Some(token) = self.token() {
             Ok(LambdaBodyItemSyntax::Terminator(token))
         } else {
-            Err(invalid_role_projection(self.first_token()))
+            Err(invalid_role_projection(self.element.kind()))
         }
     }
 }
@@ -1150,7 +1147,7 @@ impl<'source> WhenEntryListElement<'source> {
         } else if let Some(token) = self.token() {
             Ok(WhenEntryListElementSyntax::Terminator(token))
         } else {
-            Err(invalid_role_projection(self.first_token()))
+            Err(invalid_role_projection(self.element.kind()))
         }
     }
 }
@@ -1166,7 +1163,7 @@ impl<'source> BinaryOperatorValue<'source> {
     pub fn classify(self) -> KotlinSyntaxResult<BinaryOperatorSyntax<'source>> {
         let token = self
             .token()
-            .ok_or_else(|| invalid_role_projection(self.first_token()))?;
+            .ok_or_else(|| invalid_role_projection(self.element.kind()))?;
         if token.kind() == KotlinSyntaxKind::Identifier {
             Ok(BinaryOperatorSyntax::InfixFunction(token))
         } else {
@@ -1189,7 +1186,7 @@ impl<'source> BinaryExpressionRightValue<'source> {
         } else if let Some(value) = self.cast_node::<TypeReference<'source>>() {
             Ok(BinaryExpressionRightSyntax::TypeReference(value))
         } else {
-            Err(invalid_role_projection(self.first_token()))
+            Err(invalid_role_projection(self.element.kind()))
         }
     }
 }
@@ -1208,7 +1205,7 @@ impl<'source> NavigationOperatorValue<'source> {
         } else if let Some(value) = self.cast_node::<SplitSafeNavigationOperator<'source>>() {
             Ok(NavigationOperatorSyntax::SplitSafe(value))
         } else {
-            Err(invalid_role_projection(self.first_token()))
+            Err(invalid_role_projection(self.element.kind()))
         }
     }
 }
@@ -1227,7 +1224,7 @@ impl<'source> CallableReferenceReceiverValue<'source> {
         } else if let Some(value) = self.cast_node::<TypeReference<'source>>() {
             Ok(CallableReferenceReceiverSyntax::TypeReference(value))
         } else {
-            Err(invalid_role_projection(self.first_token()))
+            Err(invalid_role_projection(self.element.kind()))
         }
     }
 }
@@ -1249,7 +1246,7 @@ impl<'source> StringTemplateContentValue<'source> {
         } else if let Some(value) = self.cast_node::<LongStringTemplateEntry<'source>>() {
             Ok(StringTemplateContentSyntax::LongEntry(value))
         } else {
-            Err(invalid_role_projection(self.first_token()))
+            Err(invalid_role_projection(self.element.kind()))
         }
     }
 }
@@ -1268,7 +1265,7 @@ impl<'source> LambdaParameterBindingValue<'source> {
         } else if let Some(value) = self.cast_node::<DestructuringDeclaration<'source>>() {
             Ok(LambdaParameterBindingSyntax::Destructuring(value))
         } else {
-            Err(invalid_role_projection(self.first_token()))
+            Err(invalid_role_projection(self.element.kind()))
         }
     }
 }
@@ -1287,7 +1284,7 @@ impl<'source> ValueArgumentPrefixValue<'source> {
         } else if let Some(value) = self.cast_node::<Annotation<'source>>() {
             Ok(ValueArgumentPrefixSyntax::Annotation(value))
         } else {
-            Err(invalid_role_projection(self.first_token()))
+            Err(invalid_role_projection(self.element.kind()))
         }
     }
 }

@@ -241,11 +241,6 @@ impl<'source, L: Language> Parser<'source, L> {
         marker.precede(&mut self.events)
     }
 
-    #[must_use]
-    pub fn completed_is_error_node(marker: &CompletedMarker) -> bool {
-        marker.kind() == L::kind_to_raw(L::error_node_kind())
-    }
-
     pub fn abandon(&mut self, marker: Marker) {
         marker.abandon(&mut self.events);
     }

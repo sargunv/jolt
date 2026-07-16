@@ -50,10 +50,6 @@ impl Language for KotlinLanguage {
         KotlinSyntaxKind::Eof
     }
 
-    fn error_node_kind() -> Self::Kind {
-        KotlinSyntaxKind::ErrorNode
-    }
-
     fn expected_diagnostic_code() -> DiagnosticCodeId {
         KotlinParseDiagnosticCode::ExpectedSyntax.id()
     }

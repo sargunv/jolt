@@ -456,12 +456,6 @@ pub trait JavaSyntaxView<'source>: private::Sealed {
         self.syntax_node().and_then(|syntax| syntax.first_token())
     }
 
-    #[must_use]
-    fn is_malformed(&self) -> bool {
-        self.syntax_node()
-            .is_some_and(|syntax| syntax.is_directly_malformed())
-    }
-
     /// Whether this represented subtree contains no missing or malformed
     /// recovery syntax.
     #[must_use]
@@ -512,6 +506,13 @@ pub enum JavaRoleElement<'source> {
 }
 
 impl<'source> JavaRoleElement<'source> {
+    fn kind(self) -> JavaSyntaxKind {
+        match self {
+            Self::Node(node) => node.kind(),
+            Self::Token(token) => token.kind(),
+        }
+    }
+
     #[must_use]
     pub fn token(self) -> Option<JavaSyntaxToken<'source>> {
         match self {
@@ -1285,8 +1286,8 @@ impl<'source> ModifierList<'source> {
     ) -> impl Iterator<Item = Result<PartitionedModifierItem<'source>, JavaSyntaxInvariantError>> + '_
     {
         let mut saw_modifier = false;
-        self.parts().filter_map(move |part| match part {
-            Ok(JavaSyntaxListPart::Item(item)) => Some(match item.classify() {
+        self.parts().map(move |part| match part {
+            Ok(JavaSyntaxListPart::Item(item)) => match item.classify() {
                 Ok(ModifierItem::Annotation(annotation)) if saw_modifier => {
                     Ok(PartitionedModifierItem::TypeUseAnnotation(annotation))
                 }
@@ -1310,15 +1311,18 @@ impl<'source> ModifierList<'source> {
                     Ok(PartitionedModifierItem::Bogus(bogus))
                 }
                 Err(error) => Err(error),
-            }),
+            },
             Ok(JavaSyntaxListPart::Malformed(malformed)) => {
-                Some(Ok(PartitionedModifierItem::Malformed(malformed)))
+                Ok(PartitionedModifierItem::Malformed(malformed))
             }
             Ok(JavaSyntaxListPart::Missing(missing)) => {
-                Some(Ok(PartitionedModifierItem::Missing(missing)))
+                Ok(PartitionedModifierItem::Missing(missing))
             }
-            Ok(JavaSyntaxListPart::Separator(_)) => None,
-            Err(error) => Some(Err(error)),
+            Ok(JavaSyntaxListPart::Separator(_)) => Err(JavaSyntaxInvariantError {
+                node: JavaSyntaxKind::ModifierList,
+                slot: 0,
+            }),
+            Err(error) => Err(error),
         })
     }
 }
@@ -1332,8 +1336,8 @@ impl<'source> ParameterModifierList<'source> {
     ) -> impl Iterator<Item = Result<PartitionedModifierItem<'source>, JavaSyntaxInvariantError>> + '_
     {
         let mut saw_modifier = false;
-        self.parts().filter_map(move |part| match part {
-            Ok(JavaSyntaxListPart::Item(item)) => Some(
+        self.parts().map(move |part| match part {
+            Ok(JavaSyntaxListPart::Item(item)) => {
                 if let Some(annotation) = item.cast_node::<Annotation<'source>>() {
                     if saw_modifier {
                         Ok(PartitionedModifierItem::TypeUseAnnotation(annotation))
@@ -1351,16 +1355,19 @@ impl<'source> ParameterModifierList<'source> {
                         node: JavaSyntaxKind::ParameterModifierList,
                         slot: 0,
                     })
-                },
-            ),
+                }
+            }
             Ok(JavaSyntaxListPart::Malformed(malformed)) => {
-                Some(Ok(PartitionedModifierItem::Malformed(malformed)))
+                Ok(PartitionedModifierItem::Malformed(malformed))
             }
             Ok(JavaSyntaxListPart::Missing(missing)) => {
-                Some(Ok(PartitionedModifierItem::Missing(missing)))
+                Ok(PartitionedModifierItem::Missing(missing))
             }
-            Ok(JavaSyntaxListPart::Separator(_)) => None,
-            Err(error) => Some(Err(error)),
+            Ok(JavaSyntaxListPart::Separator(_)) => Err(JavaSyntaxInvariantError {
+                node: JavaSyntaxKind::ParameterModifierList,
+                slot: 0,
+            }),
+            Err(error) => Err(error),
         })
     }
 }
@@ -1768,9 +1775,7 @@ macro_rules! define_node_role_projection {
                     return Ok($value::$node(value));
                 })+
                 Err(JavaSyntaxInvariantError {
-                    node: self
-                        .first_token()
-                        .map_or(JavaSyntaxKind::ErrorNode, |token| token.kind()),
+                    node: self.element.kind(),
                     slot: 0,
                 })
             }
@@ -1828,9 +1833,7 @@ impl<'source> SwitchRuleBody<'source> {
             Ok(SwitchRuleBodySyntax::ThrowStatement(value))
         } else {
             Err(JavaSyntaxInvariantError {
-                node: self
-                    .first_token()
-                    .map_or(JavaSyntaxKind::ErrorNode, |token| token.kind()),
+                node: self.element.kind(),
                 slot: 0,
             })
         }
@@ -1860,9 +1863,7 @@ impl<'source> SwitchLabelItem<'source> {
             Ok(SwitchLabelItemSyntax::Default(token))
         } else {
             Err(JavaSyntaxInvariantError {
-                node: self
-                    .first_token()
-                    .map_or(JavaSyntaxKind::ErrorNode, |token| token.kind()),
+                node: self.element.kind(),
                 slot: 0,
             })
         }
@@ -1884,7 +1885,7 @@ fn classify_variable_type(
         Ok(VariableTypeSyntax::Var(token))
     } else {
         Err(JavaSyntaxInvariantError {
-            node: JavaSyntaxKind::ErrorNode,
+            node: element.kind(),
             slot: 0,
         })
     }
@@ -1912,9 +1913,7 @@ impl<'source> CatchParameterTypes<'source> {
     pub fn as_type(self) -> JavaSyntaxResult<Type<'source>> {
         self.cast_family::<Type<'source>>()
             .ok_or(JavaSyntaxInvariantError {
-                node: self
-                    .first_token()
-                    .map_or(JavaSyntaxKind::ErrorNode, |token| token.kind()),
+                node: self.element.kind(),
                 slot: 0,
             })
     }

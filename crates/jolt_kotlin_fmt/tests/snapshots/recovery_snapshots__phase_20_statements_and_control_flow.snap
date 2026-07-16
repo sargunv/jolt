@@ -94,7 +94,7 @@ fun missingWhenBraces(value: Int) {
 
 fun malformedWhenEntries(value: Int) {
   when (value) {
-    ,   1 -> one
+    , 1 -> one
     2 two
     3 -> three
     4 if -> four
@@ -103,7 +103,7 @@ fun malformedWhenEntries(value: Int) {
 }
 
 fun malformedTry() {
-  try catch  {} finally {} catch (late: Throwable) {}
+  try catch {} finally {} catch (late: Throwable) {}
 }
 
 fun malformedLoops(items: List<Any>, ready: Boolean) {

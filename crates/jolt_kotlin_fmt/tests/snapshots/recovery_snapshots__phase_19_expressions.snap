@@ -42,21 +42,21 @@ fun missingSelector() = target.
 
 fun missingReference() = target::
 
-fun argumentGap() = call(,  value)
+fun argumentGap() = call(, value)
 
 fun emptyArgumentGap() = call(
   ,
 )
 
-fun indexGap() = value[,  index]
+fun indexGap() = value[, index]
 
-fun lambdaGap() = { ,  value -> value }
+fun lambdaGap() = { , value -> value }
 
-fun emptyLambdaGap() = { ,  -> 1 }
+fun emptyLambdaGap() = { , -> 1 }
 
 fun emptyParenthesized() = ()
 
-fun collectionGap() = [,  value]
+fun collectionGap() = [, value]
 
 fun emptyCollectionGap() = [
   ,

@@ -115,18 +115,12 @@ pub(crate) fn inline_modifier_prefix_from_docs<'source>(
 }
 
 fn sorted_modifier_entries(mut entries: Vec<ModifierEntry<'_>>) -> Vec<ModifierEntry<'_>> {
-    if entries
-        .iter()
-        .any(|entry| matches!(entry, ModifierEntry::Malformed(_)))
-    {
-        return entries;
-    }
     let is_barrier = |entry: &ModifierEntry<'_>| match entry {
         ModifierEntry::Token(token) | ModifierEntry::Sealed(token) => token_has_comments(token),
         ModifierEntry::NonSealed(non_sealed) => non_sealed
             .token_iter()
             .any(|token| token_has_comments(&token)),
-        ModifierEntry::Malformed(_) => false,
+        ModifierEntry::Malformed(_) => true,
     };
     let mut run_start = None;
     for index in 0..entries.len() {

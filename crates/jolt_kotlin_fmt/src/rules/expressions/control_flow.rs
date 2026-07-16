@@ -102,20 +102,27 @@ pub(super) fn format_when_expression<'source>(
     };
     let open = resolve_required_delimiter(expression.open_brace(), doc);
     let close = resolve_required_delimiter(expression.close_brace(), doc);
-    let entries = match resolve_required_field(expression.entries(), doc) {
+    let (entries, invisible) = match resolve_required_field(expression.entries(), doc) {
         KotlinFormatField::Present(entries) => {
             let mut parts = Vec::new();
+            let mut invisible = Vec::new();
             for part in entries.parts() {
                 let part = match resolve_list_part(part, doc) {
                     KotlinFormatListPart::Item(element) => format_when_entry_element(doc, element),
                     KotlinFormatListPart::Separator(token) => format_plain_token(doc, token),
                     KotlinFormatListPart::Malformed(recovery) => recovery,
+                    KotlinFormatListPart::Invisible(recovery) => {
+                        if recovery != Doc::nil() {
+                            invisible.push(recovery);
+                        }
+                        continue;
+                    }
                 };
                 parts.push(part);
             }
-            parts
+            (parts, invisible)
         }
-        KotlinFormatField::Malformed(recovery) => vec![recovery],
+        KotlinFormatField::Malformed(recovery) => (vec![recovery], Vec::new()),
     };
     let has_close = close.source().is_some();
     let entries = if entries.is_empty() {
@@ -132,6 +139,8 @@ pub(super) fn format_when_expression<'source>(
             entries
         }
     };
+    let invisible = doc.concat(invisible);
+    let entries = doc.concat([invisible, entries]);
     let space = if open.source().is_some() {
         doc.space()
     } else {
@@ -171,6 +180,10 @@ pub(super) fn format_try_expression<'source>(
                     }
                     KotlinFormatListPart::Separator(token) => format_plain_token(docs, token),
                     KotlinFormatListPart::Malformed(recovery) => recovery,
+                    KotlinFormatListPart::Invisible(recovery) => {
+                        docs.push(recovery);
+                        continue;
+                    }
                 };
                 if part != Doc::nil() {
                     let space = docs.space();
@@ -560,6 +573,7 @@ fn format_when_conditions<'source>(
                         }
                     },
                     comma: None,
+                    layout_visible: true,
                 }
             });
             let mut items = items.into_iter().peekable();

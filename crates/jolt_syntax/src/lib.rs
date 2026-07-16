@@ -29,10 +29,7 @@ pub use parser::{
     CursorCheckpoint, DiagnosticMarker, LanguageLexer, LexedToken, ParseEvents, Parser,
     TokenBuffer, TokenCursor, UnresolvedDiagnosticOwner,
 };
-pub use red::{
-    SyntaxElement, SyntaxNode, SyntaxSlot, SyntaxToken, represented_range_is_trivia,
-    tokens_between, tokens_have_blank_line_between,
-};
+pub use red::{SyntaxElement, SyntaxNode, SyntaxSlot, SyntaxToken, tokens_have_blank_line_between};
 #[cfg(feature = "bench")]
 pub use syntax_tree::SyntaxTreeMetrics;
 pub use syntax_tree::{

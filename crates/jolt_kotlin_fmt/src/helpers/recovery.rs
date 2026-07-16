@@ -16,53 +16,16 @@ pub(crate) fn format_malformed<'source>(
         doc.block_on_invariant("malformed Kotlin syntax did not own a verbatim core");
         return Doc::nil();
     };
-    let range = core.text_range();
     let has_tokens = core.tokens().next().is_some();
-    let (left, right) = if range.start() == range.end() || !has_tokens {
-        (None, None)
+    let (left, right) = if has_tokens {
+        (core.previous_token(), core.next_token())
     } else {
-        let left = core.previous_token().filter(|token| {
-            !has_line_break(
-                token.source(),
-                token.token_text_range().end().get(),
-                range.start().get(),
-            )
-        });
-        let right = core.next_token().filter(|token| {
-            !has_line_break(
-                token.source(),
-                range.end().get(),
-                token.token_text_range().start().get(),
-            )
-        });
-        (left, right)
+        (None, None)
     };
     let mut safety = KotlinLexicalSafety;
     let fragment = doc.malformed_verbatim_with_safety(&core, &mut safety);
     let fragment = doc.resolve_exceptional(fragment, left.as_ref(), right.as_ref(), &mut safety);
     format_malformed_with_boundary_comments(&core, fragment, doc)
-}
-
-fn has_line_break(source: &str, start: usize, end: usize) -> bool {
-    source[start..end]
-        .bytes()
-        .any(|byte| matches!(byte, b'\n' | b'\r'))
-}
-
-/// Dispatches a typed Kotlin view exactly once between structured and malformed formatting.
-pub(crate) fn format_or_verbatim<'source, V>(
-    view: &V,
-    doc: &mut DocBuilder<'source>,
-    structured: impl FnOnce(&mut DocBuilder<'source>) -> Doc<'source>,
-) -> Doc<'source>
-where
-    V: KotlinSyntaxView<'source>,
-{
-    if view.is_malformed() {
-        format_malformed(view, doc)
-    } else {
-        structured(doc)
-    }
 }
 
 #[derive(Clone, Copy)]
@@ -75,6 +38,7 @@ pub(crate) enum KotlinFormatListPart<'source, T> {
     Item(T),
     Separator(KotlinSyntaxToken<'source>),
     Malformed(Doc<'source>),
+    Invisible(Doc<'source>),
 }
 
 /// A delimiter slot resolved without losing its exact source position.
@@ -91,6 +55,22 @@ impl<'source> KotlinFormatDelimiter<'source> {
             Self::Recovery(_) => None,
         }
     }
+
+    const fn recovery(&self) -> Doc<'source> {
+        match self {
+            Self::Source(_) => Doc::nil(),
+            Self::Recovery(recovery) => *recovery,
+        }
+    }
+}
+
+pub(crate) fn join_delimited_recovery<'source>(
+    doc: &mut DocBuilder<'source>,
+    open: &KotlinFormatDelimiter<'source>,
+    contents: Doc<'source>,
+    close: &KotlinFormatDelimiter<'source>,
+) -> Doc<'source> {
+    doc.concat([open.recovery(), contents, close.recovery()])
 }
 
 pub(crate) fn resolve_required_delimiter<'source>(
@@ -116,14 +96,19 @@ pub(crate) fn resolve_list_part<'source, T>(
             KotlinFormatListPart::Separator(separator)
         }
         Ok(KotlinSyntaxListPart::Missing(missing)) => {
-            KotlinFormatListPart::Malformed(format_missing(&missing, doc))
+            KotlinFormatListPart::Invisible(format_missing(&missing, doc))
         }
         Ok(KotlinSyntaxListPart::Malformed(malformed)) => {
-            KotlinFormatListPart::Malformed(format_malformed(&malformed, doc))
+            let recovery = format_malformed(&malformed, doc);
+            if malformed.first_token().is_some() {
+                KotlinFormatListPart::Malformed(recovery)
+            } else {
+                KotlinFormatListPart::Invisible(recovery)
+            }
         }
         Err(error) => {
             doc.block_on_invariant(error.to_string());
-            KotlinFormatListPart::Malformed(Doc::nil())
+            KotlinFormatListPart::Invisible(Doc::nil())
         }
     }
 }
@@ -191,13 +176,10 @@ pub(crate) fn format_missing<'source>(
     missing: &KotlinMissingSyntax<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let Ok(core) = missing.verbatim_core() else {
+    if missing.verbatim_core().is_err() {
         doc.block_on_invariant("missing Kotlin role did not own an empty verbatim core");
-        return Doc::nil();
-    };
-    let mut safety = KotlinLexicalSafety;
-    let fragment = doc.malformed_verbatim_with_safety(&core, &mut safety);
-    doc.resolve_exceptional(fragment, None, None, &mut safety)
+    }
+    Doc::nil()
 }
 
 fn format_malformed_with_boundary_comments<'source>(

@@ -13,10 +13,12 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_removed_separator, format_token,
     trailing_comments_force_line,
 };
-use crate::helpers::lists::{CommaListItem, compact_parenthesized_list, physical_comma_list_items};
+use crate::helpers::lists::{
+    CommaListItem, compact_parenthesized_list, physical_comma_list_items, push_recovery_item,
+};
 use crate::helpers::recovery::{
-    KotlinFormatDelimiter, KotlinFormatField, KotlinFormatListPart, format_malformed,
-    format_optional_field, format_required_field, resolve_list_part, resolve_optional_field,
+    KotlinFormatField, KotlinFormatListPart, format_malformed, format_optional_field,
+    format_required_field, join_delimited_recovery, resolve_list_part, resolve_optional_field,
     resolve_required_delimiter, resolve_required_field,
 };
 use crate::rules::annotations::format_annotation_with_leading;
@@ -25,7 +27,7 @@ use crate::rules::names::format_name;
 use crate::rules::statements::format_block;
 use crate::rules::types::{
     format_bogus_list_entry, format_type_constraint_list, format_type_parameter_list,
-    format_type_reference, list_part_has_content,
+    format_type_reference,
 };
 use crate::rules::variables::format_value_parameter_list;
 
@@ -421,7 +423,8 @@ fn format_property_members<'source>(
                     );
                     docs.push(removed);
                 }
-                KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
+                KotlinFormatListPart::Malformed(recovery)
+                | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
             }
         }
     });
@@ -515,9 +518,11 @@ pub(crate) fn format_destructuring_declaration<'source>(
         KotlinFormatField::Malformed(recovery) => vec![CommaListItem {
             doc: recovery,
             comma: None,
+            layout_visible: true,
         }],
     };
-    format_delimited_with_recovery(doc, &open, &close, items)
+    let list = compact_parenthesized_list(doc, open.source(), close.source(), items);
+    join_delimited_recovery(doc, &open, list, &close)
 }
 
 fn format_destructuring_entry<'source>(
@@ -659,10 +664,8 @@ fn format_context_parameter_clause<'source>(
     let open = resolve_required_delimiter(clause.open_paren(), doc);
     let close = resolve_required_delimiter(clause.close_paren(), doc);
     let items = match resolve_required_field(clause.entries(), doc) {
-        KotlinFormatField::Present(entries) => physical_comma_list_items(
-            doc,
-            entries.parts().filter(list_part_has_content),
-            |doc, parameter| CommaListItem {
+        KotlinFormatField::Present(entries) => {
+            physical_comma_list_items(doc, entries.parts(), |doc, parameter| CommaListItem {
                 doc: match parameter {
                     ContextParameterListEntry::ContextParameter(parameter) => {
                         format_context_parameter(doc, &parameter)
@@ -672,14 +675,17 @@ fn format_context_parameter_clause<'source>(
                     }
                 },
                 comma: None,
-            },
-        ),
+                layout_visible: true,
+            })
+        }
         KotlinFormatField::Malformed(recovery) => vec![CommaListItem {
             doc: recovery,
             comma: None,
+            layout_visible: true,
         }],
     };
-    let parameters = format_delimited_with_recovery(doc, &open, &close, items);
+    let parameters = compact_parenthesized_list(doc, open.source(), close.source(), items);
+    let parameters = join_delimited_recovery(doc, &open, parameters, &close);
     doc.concat([context, parameters])
 }
 
@@ -809,6 +815,10 @@ pub(crate) fn format_modifier_list_with_leading<'source>(
                 }
                 KotlinFormatListPart::Separator(_) => {}
                 KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
+                KotlinFormatListPart::Invisible(recovery) => {
+                    docs.push(recovery);
+                    continue;
+                }
             }
             first = false;
         }
@@ -992,40 +1002,28 @@ fn syntax_comma_items<'source, T>(
             KotlinFormatListPart::Item(item) => items.push(CommaListItem {
                 doc: format_item(item, doc),
                 comma: None,
+                layout_visible: true,
             }),
             KotlinFormatListPart::Separator(comma) => {
-                if let Some(item) = items.last_mut() {
+                if let Some(item) = items.iter_mut().rev().find(|item| item.layout_visible)
+                    && item.comma.is_none()
+                {
                     item.comma = Some(comma);
                 } else {
                     items.push(CommaListItem {
                         doc: keyword_token(doc, comma),
                         comma: None,
+                        layout_visible: true,
                     });
                 }
             }
-            KotlinFormatListPart::Malformed(recovery) => items.push(CommaListItem {
-                doc: recovery,
-                comma: None,
-            }),
+            KotlinFormatListPart::Malformed(recovery) => {
+                push_recovery_item(&mut items, recovery, true);
+            }
+            KotlinFormatListPart::Invisible(recovery) => {
+                push_recovery_item(&mut items, recovery, false);
+            }
         }
     }
     items
-}
-
-fn format_delimited_with_recovery<'source>(
-    doc: &mut DocBuilder<'source>,
-    open: &KotlinFormatDelimiter<'source>,
-    close: &KotlinFormatDelimiter<'source>,
-    items: Vec<CommaListItem<'source>>,
-) -> Doc<'source> {
-    let open_recovery = match open {
-        KotlinFormatDelimiter::Source(_) => Doc::nil(),
-        KotlinFormatDelimiter::Recovery(doc) => *doc,
-    };
-    let close_recovery = match close {
-        KotlinFormatDelimiter::Source(_) => Doc::nil(),
-        KotlinFormatDelimiter::Recovery(doc) => *doc,
-    };
-    let list = compact_parenthesized_list(doc, open.source(), close.source(), items);
-    doc.concat([open_recovery, list, close_recovery])
 }

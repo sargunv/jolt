@@ -1,51 +1,9 @@
-use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const IMPLEMENTATION_BASELINE: &str = "2197128";
-const MAX_IMPLEMENTATION_NET_DELTA: usize = 6_570;
-
-const ERROR_NODE_SITE_LIMITS: &[(&str, usize)] = &[
-    (
-        "crates/jolt_java_syntax/src/parser/grammar/declarations.rs",
-        0,
-    ),
-    (
-        "crates/jolt_java_syntax/src/parser/grammar/expressions.rs",
-        0,
-    ),
-    (
-        "crates/jolt_java_syntax/src/parser/grammar/statements.rs",
-        0,
-    ),
-    (
-        "crates/jolt_java_syntax/src/parser/grammar/support/identifiers.rs",
-        0,
-    ),
-    ("crates/jolt_java_syntax/src/parser/grammar/types.rs", 0),
-    (
-        "crates/jolt_kotlin_syntax/src/parser/grammar/declarations/callables.rs",
-        3,
-    ),
-    (
-        "crates/jolt_kotlin_syntax/src/parser/grammar/expressions.rs",
-        8,
-    ),
-    (
-        "crates/jolt_kotlin_syntax/src/parser/grammar/expressions/literals.rs",
-        1,
-    ),
-    (
-        "crates/jolt_kotlin_syntax/src/parser/grammar/statements.rs",
-        1,
-    ),
-    (
-        "crates/jolt_kotlin_syntax/src/parser/grammar/support/recovery.rs",
-        1,
-    ),
-    ("crates/jolt_kotlin_syntax/src/parser/grammar/types.rs", 5),
-];
+const MAX_IMPLEMENTATION_NET_DELTA: usize = 6_439;
 
 #[test]
 fn forbidden_architecture_patterns_do_not_regress() {
@@ -60,30 +18,15 @@ fn forbidden_architecture_patterns_do_not_regress() {
             "FormatterInsertedToken",
             "ReferenceSyntaxFactory",
             "build_reference_syntax_tree",
+            "completed_is_error_node",
+            "error_node_kind",
+            "ErrorNode",
+            "represented_range_is_trivia",
+            "tokens_between",
         ] {
             if source.contains(forbidden) {
                 failures.push(format!("{relative}: forbidden pattern {forbidden:?}"));
             }
-        }
-    }
-
-    let mut allowed_error_node_sites = ERROR_NODE_SITE_LIMITS
-        .iter()
-        .copied()
-        .collect::<BTreeMap<_, _>>();
-    for path in production
-        .iter()
-        .filter(|path| relative(&workspace, path).contains("_syntax/src/parser/grammar/"))
-    {
-        let relative = relative(&workspace, path);
-        let count = read(path).matches("ErrorNode").count();
-        let maximum = allowed_error_node_sites
-            .remove(relative.as_str())
-            .unwrap_or(0);
-        if count > maximum {
-            failures.push(format!(
-                "{relative}: generic ErrorNode uses grew from {maximum} to {count}"
-            ));
         }
     }
 
@@ -110,14 +53,14 @@ fn forbidden_architecture_patterns_do_not_regress() {
 /// construction. Untracked implementation files are added to the projection so
 /// a local `mise run test` cannot evade the gate before staging them.
 #[test]
-fn implementation_projection_stays_within_phase_twenty_one_budget() {
+fn implementation_projection_stays_within_phase_twenty_two_budget() {
     let workspace = workspace_root();
     let (additions, deletions) = implementation_projection(&workspace);
     let net = additions.saturating_sub(deletions);
 
     assert!(
         net <= MAX_IMPLEMENTATION_NET_DELTA,
-        "Phase 21 implementation projection against {IMPLEMENTATION_BASELINE} is \
+        "Phase 22 implementation projection against {IMPLEMENTATION_BASELINE} is \
          +{additions}/-{deletions}, net +{net}; maximum net delta is \
          +{MAX_IMPLEMENTATION_NET_DELTA}. The projection includes crates/**/*.rs and \
          tools/**/*.py, including tests and test support."

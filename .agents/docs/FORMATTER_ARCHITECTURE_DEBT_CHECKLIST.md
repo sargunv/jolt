@@ -1309,6 +1309,45 @@ ownership, recovery sorters, and local recovery join helpers. Prove that every
 valid node kind has a structured rule, every malformed category has tracked
 verbatim dispatch, and clean corpora emit zero verbatim tags.
 
+Status: complete.
+
+Implementation: the final generic `ErrorNode` kind and parser/language special
+cases are deleted; parser recovery is owned only by category-compatible bogus
+nodes and directly malformed valid nodes. The unused shared token-range filter
+module is gone. Kotlin's remaining whole-node `format_or_verbatim` wrappers,
+empty-token/list filters, source-gap boundary inference, and duplicated
+delimiter-recovery joins are deleted. Java modifier recovery is an ordinary
+malformed sort barrier rather than a whole-list fallback, and modifier accessors
+no longer silently filter unexpected separators.
+
+The retained `FormatField`, `FormatListPart`, and `FormatDelimiter` types are
+small behavioral results over generated borrowed syntax roles: they centralize
+value-versus-recovery document handling and do not describe or reconstruct tree
+shape. A trial direct-match rewrite was rejected during the quality audit
+because it duplicated hundreds of call-site matches without deleting a syntax
+model.
+
+Proof: syntax corpus audits require every directly malformed node to own a
+tracked verbatim core and every physical empty slot to own a zero-width core.
+Formatter dispatch is exhaustive over generated node/category/list enums;
+recovery corpora complete token/comment conservation and idempotence, while the
+debug render gate rejects any malformed-verbatim fragment for a recovery-free
+tree. Zero-width missing roles validate their core and emit no layout fragment.
+The renderer now defers and coalesces layout spaces, discarding them before line
+breaks and indentation, so centralized exceptional joins cannot create trailing
+or duplicate whitespace.
+
+Size: Phase 22 adds 611 and removes 742 implementation lines, net -131. The
+cumulative projection against `2197128` is +31,536/-25,097, net +6,439.
+Fixtures, snapshots, reports, and documentation are excluded. Phase 24's
+net-negative completion gate remains binding.
+
+Quality audit: Java and Kotlin syntax/formatter corpora, imported idempotence,
+recovery snapshots, trivia conservation, shared renderer/conservation tests,
+schema audits, forbidden transitional-pattern scans, Rust checks,
+`git diff --check`, `mise run fix`, and `mise run test` pass. No benchmark was
+run; Phase 23 is the designated cumulative performance gate.
+
 ### New Phase 23: Final Performance Gate
 
 Repeat the Phase 3 release benchmarks on the same machine and manifests. Reject

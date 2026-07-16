@@ -12,7 +12,7 @@ public /* JOLT-TRIVIA:public-final-gap */ final /* JOLT-TRIVIA:final-class-gap *
   private /* JOLT-TRIVIA:private-static-gap */ static /* JOLT-TRIVIA:static-final-gap */ final String /* JOLT-TRIVIA:const-type-name */ VALUE /* JOLT-TRIVIA:const-name-equals */ =
     "x";
 
-  @Deprecated /* JOLT-TRIVIA:method-annotation-tail */ 
+  @Deprecated /* JOLT-TRIVIA:method-annotation-tail */
   public <
     T /* JOLT-TRIVIA:annotated-method-type-param */
   > T identity /* JOLT-TRIVIA:generic-method-name-before-paren */(

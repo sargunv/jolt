@@ -38,7 +38,7 @@ fn format_structured_file<'source>(
     file: &KotlinFile<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let annotations = format_file_annotations(doc, file);
+    let (annotations, annotations_visible) = format_file_annotations(doc, file);
     let mut entries = Vec::new();
 
     collect_items(file, doc, &mut entries);
@@ -66,14 +66,13 @@ fn format_structured_file<'source>(
             }
         })
     });
-    let contents = match (annotations, contents) {
-        (Some(annotations), Some(contents)) => {
+    let contents = match (annotations_visible, contents) {
+        (true, Some(contents)) => {
             let line = doc.empty_line();
             doc.concat([annotations, line, contents])
         }
-        (Some(annotations), None) => annotations,
-        (None, Some(contents)) => contents,
-        (None, None) => Doc::nil(),
+        (_, None) => annotations,
+        (false, Some(contents)) => doc.concat([annotations, contents]),
     };
     let line = doc.hard_line();
     doc.concat([contents, eof, line])
@@ -354,12 +353,13 @@ impl<'source> FileSection<'source> {
 fn format_file_annotations<'source>(
     doc: &mut DocBuilder<'source>,
     file: &KotlinFile<'source>,
-) -> Option<Doc<'source>> {
+) -> (Doc<'source>, bool) {
     let annotations = match resolve_required_field(file.annotations(), doc) {
         KotlinFormatField::Present(annotations) => annotations,
-        KotlinFormatField::Malformed(recovery) => return Some(recovery),
+        KotlinFormatField::Malformed(recovery) => return (recovery, recovery != Doc::nil()),
     };
     let mut formatted = Vec::new();
+    let mut invisible = Vec::new();
     for part in annotations.parts() {
         match resolve_list_part(part, doc) {
             KotlinFormatListPart::Item(annotation) => {
@@ -372,9 +372,18 @@ fn format_file_annotations<'source>(
                 TrailingTrivia::Preserve,
             )),
             KotlinFormatListPart::Malformed(recovery) => formatted.push(recovery),
+            KotlinFormatListPart::Invisible(recovery) if recovery != Doc::nil() => {
+                invisible.push(recovery);
+            }
+            KotlinFormatListPart::Invisible(_) => {}
         }
     }
-    (!formatted.is_empty()).then(|| join_hard_lines(doc, formatted))
+    let invisible = doc.concat(invisible);
+    if formatted.is_empty() {
+        return (invisible, false);
+    }
+    let formatted = join_hard_lines(doc, formatted);
+    (doc.concat([invisible, formatted]), true)
 }
 
 fn format_source_body<'source>(

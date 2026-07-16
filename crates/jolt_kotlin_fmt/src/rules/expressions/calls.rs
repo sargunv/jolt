@@ -1,10 +1,10 @@
 use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     CallExpression, CollectionLiteralExpression, Expression, IndexExpression, KotlinSyntaxField,
-    KotlinSyntaxInvariantError, KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView,
-    NavigationExpression, NavigationOperator, NavigationOperatorSyntax, NavigationSelector,
-    ValueArgument, ValueArgumentEntryList, ValueArgumentList, ValueArgumentListEntry,
-    ValueArgumentPrefix, ValueArgumentPrefixSyntax,
+    KotlinSyntaxInvariantError, KotlinSyntaxListPart, KotlinSyntaxToken, NavigationExpression,
+    NavigationOperator, NavigationOperatorSyntax, NavigationSelector, ValueArgument,
+    ValueArgumentEntryList, ValueArgumentList, ValueArgumentListEntry, ValueArgumentPrefix,
+    ValueArgumentPrefixSyntax,
 };
 
 use crate::helpers::comments::{
@@ -12,11 +12,11 @@ use crate::helpers::comments::{
 };
 use crate::helpers::lists::{
     CommaListItem, compact_parenthesized_list, compact_square_bracket_list,
-    force_parenthesized_list, parenthesized_list, square_bracket_list,
+    force_parenthesized_list, parenthesized_list, push_recovery_item, square_bracket_list,
 };
 use crate::helpers::recovery::{
-    KotlinFormatDelimiter, KotlinFormatField, KotlinFormatListPart, format_optional_field,
-    format_required_field, resolve_list_part, resolve_required_delimiter, resolve_required_field,
+    KotlinFormatField, KotlinFormatListPart, format_optional_field, format_required_field,
+    join_delimited_recovery, resolve_list_part, resolve_required_delimiter, resolve_required_field,
 };
 use crate::rules::annotations::format_annotation;
 use crate::rules::names::format_name;
@@ -322,7 +322,8 @@ fn format_call_arguments<'source>(
                         "unexpected type-argument-list separator: {:?}",
                         separator.kind()
                     )),
-                    KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
+                    KotlinFormatListPart::Malformed(recovery)
+                    | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
                 }
             }
         })
@@ -345,7 +346,8 @@ fn format_call_arguments<'source>(
                         "unexpected lambda-list separator: {:?}",
                         separator.kind()
                     )),
-                    KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
+                    KotlinFormatListPart::Malformed(recovery)
+                    | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
                 }
             }
         })
@@ -471,16 +473,21 @@ fn format_square_argument_list<'source>(
             vec![CommaListItem {
                 doc: recovery,
                 comma: None,
+                layout_visible: true,
             }]
         }
     };
-    let trailing = items.last().is_some_and(|item| item.comma.is_some());
+    let trailing = items
+        .iter()
+        .rev()
+        .find(|item| item.layout_visible)
+        .is_some_and(|item| item.comma.is_some());
     let list = if trailing {
         square_bracket_list(doc, open.source(), close.source(), items)
     } else {
         compact_square_bracket_list(doc, open.source(), close.source(), items)
     };
-    concat_delimiter_recovery(doc, &open, list, &close)
+    join_delimited_recovery(doc, &open, list, &close)
 }
 
 const fn is_simple_member_chain_root(expression: &Expression<'_>) -> bool {
@@ -520,12 +527,19 @@ pub(crate) fn format_value_argument_list<'source>(
             vec![CommaListItem {
                 doc: recovery,
                 comma: None,
+                layout_visible: true,
             }]
         }
     };
-    let has_comments = items.iter().any(|item| item.doc != Doc::nil())
+    let has_comments = items
+        .iter()
+        .any(|item| item.layout_visible && item.doc != Doc::nil())
         && value_argument_list_has_leading_comments(arguments);
-    let trailing = items.last().is_some_and(|item| item.comma.is_some());
+    let trailing = items
+        .iter()
+        .rev()
+        .find(|item| item.layout_visible)
+        .is_some_and(|item| item.comma.is_some());
     let delimiter_comments = open.source().is_some_and(token_has_comments)
         || close.source().is_some_and(token_has_comments);
     let list = if has_comments {
@@ -535,7 +549,7 @@ pub(crate) fn format_value_argument_list<'source>(
     } else {
         compact_parenthesized_list(doc, open.source(), close.source(), items)
     };
-    concat_delimiter_recovery(doc, &open, list, &close)
+    join_delimited_recovery(doc, &open, list, &close)
 }
 
 fn value_argument_list_entry_items<'source>(
@@ -549,10 +563,6 @@ fn value_argument_list_entry_items<'source>(
 ) -> Vec<CommaListItem<'source>> {
     let mut items: Vec<CommaListItem<'source>> = Vec::new();
     for part in parts {
-        let empty_malformed = matches!(
-            &part,
-            Ok(KotlinSyntaxListPart::Malformed(malformed)) if malformed.first_token().is_none()
-        );
         match resolve_list_part(part, doc) {
             KotlinFormatListPart::Item(entry) => {
                 let formatted = match entry {
@@ -560,35 +570,33 @@ fn value_argument_list_entry_items<'source>(
                         format_value_argument(doc, &argument)
                     }
                     ValueArgumentListEntry::BogusValueArgument(bogus) => {
-                        if bogus.first_token().is_none() {
-                            continue;
-                        }
                         crate::helpers::recovery::format_malformed(&bogus, doc)
                     }
                 };
                 items.push(CommaListItem {
                     doc: formatted,
                     comma: None,
+                    layout_visible: true,
                 });
             }
             KotlinFormatListPart::Separator(comma) => {
-                if let Some(item) = items.last_mut() {
+                if let Some(item) = items.iter_mut().rev().find(|item| item.layout_visible)
+                    && item.comma.is_none()
+                {
                     item.comma = Some(comma);
                 } else {
                     items.push(CommaListItem {
                         doc: Doc::nil(),
                         comma: Some(comma),
+                        layout_visible: true,
                     });
                 }
             }
             KotlinFormatListPart::Malformed(recovery) => {
-                if empty_malformed {
-                    continue;
-                }
-                items.push(CommaListItem {
-                    doc: recovery,
-                    comma: None,
-                });
+                push_recovery_item(&mut items, recovery, true);
+            }
+            KotlinFormatListPart::Invisible(recovery) => {
+                push_recovery_item(&mut items, recovery, false);
             }
         }
     }
@@ -638,7 +646,8 @@ pub(crate) fn format_value_argument<'source>(
                             separator.kind()
                         ));
                     }
-                    KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
+                    KotlinFormatListPart::Malformed(recovery)
+                    | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
                 }
             }
         })
@@ -708,22 +717,4 @@ fn present_required<T>(
         KotlinSyntaxField::Present(value) => Some(value),
         KotlinSyntaxField::Missing(_) | KotlinSyntaxField::Malformed(_) => None,
     }
-}
-
-fn delimiter_recovery<'source>(delimiter: &KotlinFormatDelimiter<'source>) -> Doc<'source> {
-    match delimiter {
-        KotlinFormatDelimiter::Source(_) => Doc::nil(),
-        KotlinFormatDelimiter::Recovery(recovery) => *recovery,
-    }
-}
-
-fn concat_delimiter_recovery<'source>(
-    doc: &mut DocBuilder<'source>,
-    open: &KotlinFormatDelimiter<'source>,
-    list: Doc<'source>,
-    close: &KotlinFormatDelimiter<'source>,
-) -> Doc<'source> {
-    let open = delimiter_recovery(open);
-    let close = delimiter_recovery(close);
-    doc.concat([open, list, close])
 }

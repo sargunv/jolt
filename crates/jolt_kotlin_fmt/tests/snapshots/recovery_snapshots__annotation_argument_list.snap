@@ -9,7 +9,6 @@ class Demo
 formatted:
 @Anno( /* orphan */
   ,
-
   value
 )
 

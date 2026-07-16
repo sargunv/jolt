@@ -17,9 +17,9 @@ use crate::helpers::lists::{
     physical_comma_list_items,
 };
 use crate::helpers::recovery::{
-    KotlinFormatDelimiter, KotlinFormatField, KotlinFormatListPart, format_malformed,
-    format_optional_field, format_or_verbatim, format_required_field, resolve_list_part,
-    resolve_required_delimiter, resolve_required_field,
+    KotlinFormatField, KotlinFormatListPart, format_malformed, format_optional_field,
+    format_required_field, join_delimited_recovery, resolve_list_part, resolve_required_delimiter,
+    resolve_required_field,
 };
 use crate::rules::annotations::format_annotation;
 use crate::rules::names::format_name;
@@ -34,10 +34,8 @@ pub(crate) fn format_type_parameter_list<'source>(
     let open = resolve_required_delimiter(parameters.open_angle(), doc);
     let close = resolve_required_delimiter(parameters.close_angle(), doc);
     let items = match resolve_required_field(parameters.entries(), doc) {
-        KotlinFormatField::Present(entries) => physical_comma_list_items(
-            doc,
-            entries.parts().filter(list_part_has_content),
-            |doc, parameter| CommaListItem {
+        KotlinFormatField::Present(entries) => {
+            physical_comma_list_items(doc, entries.parts(), |doc, parameter| CommaListItem {
                 doc: match parameter {
                     TypeParameterListEntry::TypeParameter(parameter) => {
                         format_type_parameter(doc, &parameter)
@@ -47,11 +45,13 @@ pub(crate) fn format_type_parameter_list<'source>(
                     }
                 },
                 comma: None,
-            },
-        ),
+                layout_visible: true,
+            })
+        }
         KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
     };
-    format_angle_delimiters(doc, &open, &close, items, false)
+    let list = angle_bracket_list(doc, open.source(), close.source(), items);
+    join_delimited_recovery(doc, &open, list, &close)
 }
 
 pub(crate) fn format_type_constraint_list<'source>(
@@ -71,10 +71,8 @@ pub(crate) fn format_type_constraint_list<'source>(
         )
     });
     let items = match resolve_required_field(constraints.entries(), doc) {
-        KotlinFormatField::Present(entries) => physical_comma_list_items(
-            doc,
-            entries.parts().filter(list_part_has_content),
-            |doc, constraint| CommaListItem {
+        KotlinFormatField::Present(entries) => {
+            physical_comma_list_items(doc, entries.parts(), |doc, constraint| CommaListItem {
                 doc: match constraint {
                     TypeConstraintListEntry::TypeConstraint(constraint) => {
                         format_type_constraint(doc, &constraint)
@@ -84,8 +82,9 @@ pub(crate) fn format_type_constraint_list<'source>(
                     }
                 },
                 comma: None,
-            },
-        ),
+                layout_visible: true,
+            })
+        }
         KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
     };
     let constraints = format_indented_comma_items(doc, items);
@@ -247,7 +246,8 @@ fn format_user_type<'source>(
                         );
                         docs.push(separator);
                     }
-                    KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
+                    KotlinFormatListPart::Malformed(recovery)
+                    | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
                 }
             }
         }),
@@ -274,7 +274,8 @@ fn format_user_type_segment<'source>(
                         "unexpected annotation separator: {:?}",
                         separator.kind()
                     )),
-                    KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
+                    KotlinFormatListPart::Malformed(recovery)
+                    | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
                 }
             }
         })
@@ -293,18 +294,26 @@ pub(crate) fn format_type_argument_list<'source>(
     let open = resolve_required_delimiter(arguments.open_angle(), doc);
     let close = resolve_required_delimiter(arguments.close_angle(), doc);
     let items = match resolve_required_field(arguments.entries(), doc) {
-        KotlinFormatField::Present(entries) => physical_comma_list_items(
-            doc,
-            entries.parts().filter(list_part_has_content),
-            |doc, argument| CommaListItem {
+        KotlinFormatField::Present(entries) => {
+            physical_comma_list_items(doc, entries.parts(), |doc, argument| CommaListItem {
                 doc: format_type_argument(doc, &argument),
                 comma: None,
-            },
-        ),
+                layout_visible: true,
+            })
+        }
         KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
     };
-    let expanded = items.last().is_some_and(|item| item.comma.is_some());
-    format_angle_delimiters(doc, &open, &close, items, !expanded)
+    let expanded = items
+        .iter()
+        .rev()
+        .find(|item| item.layout_visible)
+        .is_some_and(|item| item.comma.is_some());
+    let list = if expanded {
+        angle_bracket_list(doc, open.source(), close.source(), items)
+    } else {
+        compact_angle_bracket_list(doc, open.source(), close.source(), items)
+    };
+    join_delimited_recovery(doc, &open, list, &close)
 }
 
 fn format_type_argument<'source>(
@@ -394,7 +403,8 @@ fn format_parenthesized_type<'source>(
                         "unexpected annotation separator: {:?}",
                         separator.kind()
                     )),
-                    KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
+                    KotlinFormatListPart::Malformed(recovery)
+                    | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
                 }
             }
         })
@@ -402,17 +412,17 @@ fn format_parenthesized_type<'source>(
     let open = resolve_required_delimiter(ty.open_paren(), doc);
     let close = resolve_required_delimiter(ty.close_paren(), doc);
     let items = match resolve_required_field(ty.entries(), doc) {
-        KotlinFormatField::Present(entries) => physical_comma_list_items(
-            doc,
-            entries.parts().filter(list_part_has_content),
-            |doc, entry| CommaListItem {
+        KotlinFormatField::Present(entries) => {
+            physical_comma_list_items(doc, entries.parts(), |doc, entry| CommaListItem {
                 doc: format_function_type_parameter_entry(doc, &entry),
                 comma: None,
-            },
-        ),
+                layout_visible: true,
+            })
+        }
         KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
     };
-    let list = format_parenthesized_delimiters(doc, &open, &close, items);
+    let list = parenthesized_list(doc, open.source(), close.source(), items);
+    let list = join_delimited_recovery(doc, &open, list, &close);
     doc.concat([annotations, list])
 }
 
@@ -545,17 +555,17 @@ fn format_context_function_type<'source>(
     let open = resolve_required_delimiter(ty.open_paren(), doc);
     let close = resolve_required_delimiter(ty.close_paren(), doc);
     let items = match resolve_required_field(ty.context_parameters(), doc) {
-        KotlinFormatField::Present(entries) => physical_comma_list_items(
-            doc,
-            entries.parts().filter(list_part_has_content),
-            |doc, entry| CommaListItem {
+        KotlinFormatField::Present(entries) => {
+            physical_comma_list_items(doc, entries.parts(), |doc, entry| CommaListItem {
                 doc: format_function_type_parameter_entry(doc, &entry),
                 comma: None,
-            },
-        ),
+                layout_visible: true,
+            })
+        }
         KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
     };
-    let parameters = format_parenthesized_delimiters(doc, &open, &close, items);
+    let parameters = parenthesized_list(doc, open.source(), close.source(), items);
+    let parameters = join_delimited_recovery(doc, &open, parameters, &close);
     let function = format_required_field(ty.function_type(), doc, |function, doc| {
         format_function_type(doc, &function)
     });
@@ -619,38 +629,37 @@ pub(crate) fn format_modifier_sequence<'source>(
     doc: &mut DocBuilder<'source>,
     modifiers: &ModifierList<'source>,
 ) -> Doc<'source> {
-    format_or_verbatim(modifiers, doc, |doc| {
-        doc.concat_list(|docs| {
-            for part in modifiers.parts() {
-                match resolve_list_part(part, docs) {
-                    KotlinFormatListPart::Item(role) => {
-                        if let Some(annotation) = role.cast_node::<Annotation<'source>>() {
-                            let annotation = format_annotation(docs, &annotation);
-                            docs.push(annotation);
-                            let line = docs.hard_line();
-                            docs.push(line);
-                        } else if let Some(token) = role.token() {
-                            let token = format_token(
-                                docs,
-                                &token,
-                                LeadingTrivia::Preserve,
-                                TrailingTrivia::Preserve,
-                            );
-                            docs.push(token);
-                            let space = docs.space();
-                            docs.push(space);
-                        } else {
-                            docs.block_on_invariant("invalid modifier-list item");
-                        }
+    doc.concat_list(|docs| {
+        for part in modifiers.parts() {
+            match resolve_list_part(part, docs) {
+                KotlinFormatListPart::Item(role) => {
+                    if let Some(annotation) = role.cast_node::<Annotation<'source>>() {
+                        let annotation = format_annotation(docs, &annotation);
+                        docs.push(annotation);
+                        let line = docs.hard_line();
+                        docs.push(line);
+                    } else if let Some(token) = role.token() {
+                        let token = format_token(
+                            docs,
+                            &token,
+                            LeadingTrivia::Preserve,
+                            TrailingTrivia::Preserve,
+                        );
+                        docs.push(token);
+                        let space = docs.space();
+                        docs.push(space);
+                    } else {
+                        docs.block_on_invariant("invalid modifier-list item");
                     }
-                    KotlinFormatListPart::Separator(separator) => docs.block_on_invariant(format!(
-                        "unexpected modifier separator: {:?}",
-                        separator.kind()
-                    )),
-                    KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
                 }
+                KotlinFormatListPart::Separator(separator) => docs.block_on_invariant(format!(
+                    "unexpected modifier separator: {:?}",
+                    separator.kind()
+                )),
+                KotlinFormatListPart::Malformed(recovery)
+                | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
             }
-        })
+        }
     })
 }
 
@@ -670,6 +679,7 @@ fn malformed_item(recovery: Doc<'_>) -> Vec<CommaListItem<'_>> {
     vec![CommaListItem {
         doc: recovery,
         comma: None,
+        layout_visible: true,
     }]
 }
 
@@ -677,27 +687,7 @@ pub(crate) fn format_bogus_list_entry<'source>(
     doc: &mut DocBuilder<'source>,
     bogus: &impl KotlinSyntaxView<'source>,
 ) -> Doc<'source> {
-    if bogus.first_token().is_none() {
-        Doc::nil()
-    } else {
-        format_malformed(bogus, doc)
-    }
-}
-
-pub(crate) fn list_part_has_content<'source, T>(
-    part: &Result<jolt_kotlin_syntax::KotlinSyntaxListPart<'source, T>, KotlinSyntaxInvariantError>,
-) -> bool
-where
-    T: KotlinSyntaxView<'source>,
-{
-    match part {
-        Ok(jolt_kotlin_syntax::KotlinSyntaxListPart::Item(item)) => item.first_token().is_some(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxListPart::Separator(_)) | Err(_) => true,
-        Ok(jolt_kotlin_syntax::KotlinSyntaxListPart::Malformed(malformed)) => {
-            malformed.first_token().is_some()
-        }
-        Ok(jolt_kotlin_syntax::KotlinSyntaxListPart::Missing(_)) => false,
-    }
+    format_malformed(bogus, doc)
 }
 
 fn format_indented_comma_items<'source>(
@@ -730,40 +720,4 @@ fn format_indented_comma_items<'source>(
         crate::helpers::comments::format_separator_with_comments(doc, &comma, Doc::nil())
     });
     doc.concat([first_doc, rest, trailing_comma])
-}
-
-fn delimiter_recovery<'source>(delimiter: &KotlinFormatDelimiter<'source>) -> Doc<'source> {
-    match delimiter {
-        KotlinFormatDelimiter::Source(_) => Doc::nil(),
-        KotlinFormatDelimiter::Recovery(recovery) => *recovery,
-    }
-}
-
-fn format_angle_delimiters<'source>(
-    doc: &mut DocBuilder<'source>,
-    open: &KotlinFormatDelimiter<'source>,
-    close: &KotlinFormatDelimiter<'source>,
-    items: Vec<CommaListItem<'source>>,
-    compact: bool,
-) -> Doc<'source> {
-    let open_recovery = delimiter_recovery(open);
-    let close_recovery = delimiter_recovery(close);
-    let list = if compact {
-        compact_angle_bracket_list(doc, open.source(), close.source(), items)
-    } else {
-        angle_bracket_list(doc, open.source(), close.source(), items)
-    };
-    doc.concat([open_recovery, list, close_recovery])
-}
-
-fn format_parenthesized_delimiters<'source>(
-    doc: &mut DocBuilder<'source>,
-    open: &KotlinFormatDelimiter<'source>,
-    close: &KotlinFormatDelimiter<'source>,
-    items: Vec<CommaListItem<'source>>,
-) -> Doc<'source> {
-    let open_recovery = delimiter_recovery(open);
-    let close_recovery = delimiter_recovery(close);
-    let list = parenthesized_list(doc, open.source(), close.source(), items);
-    doc.concat([open_recovery, list, close_recovery])
 }

@@ -804,10 +804,6 @@ mod tests {
             TestKind::Eof
         }
 
-        fn error_node_kind() -> Self::Kind {
-            TestKind::Error
-        }
-
         fn expected_diagnostic_code() -> DiagnosticCodeId {
             DiagnosticCodeId::new("test.expected")
         }

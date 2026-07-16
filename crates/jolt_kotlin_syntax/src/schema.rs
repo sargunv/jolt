@@ -344,9 +344,6 @@ macro_rules! kotlin_syntax_schema {
                 }
             }
             nodes {
-                ErrorNode => ErrorNode [error_node malformed] {
-                    elements: required (list ErrorElementList);
-                }
                 KotlinFile => KotlinFile [kotlin_file valid] {
                     annotations: required (list AnnotationList);
                     items: required (list KotlinFileItemList);
@@ -999,9 +996,6 @@ macro_rules! kotlin_syntax_schema {
                 BangDefinitelyNonNullableType => BangDefinitelyNonNullableType [bang_definitely_non_nullable_type valid] {
                     inner: required (category TypeSyntax);
                     bang_bang: required (token BangBang);
-                }
-                ErrorElementList => ErrorElementList [error_element_list list] {
-                    elements: many (any_element);
                 }
                 AnnotationList => AnnotationList [annotation_list list] {
                     annotations: many (node Annotation);

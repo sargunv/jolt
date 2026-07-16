@@ -8,7 +8,7 @@ fun demo(x: Int) { when (x) { 1, /* orphan */ , 2 -> hit() } }
 formatted:
 fun demo(x: Int) {
   when (x) {
-    1, /* orphan */  ,   2 -> hit()
+    1, /* orphan */ , 2 -> hit()
   }
 }
 

@@ -104,19 +104,19 @@ class Phase15Statements {
       /* switch-unowned */
       @;
       case 1 when ready() -> use();
-      case  2 /* case-junk */ @ -> use();
+      case 2 /* case-junk */ @ -> use();
       case 3 -> /* switch-empty-rule */ ;
       case 4:
       /* switch-label-sibling */
       case :
         use();
-      case String text when ( /* guard-open */ ? ? ? /* guard-close */  ) ->
+      case String text when ( /* guard-open */ ? ? ? /* guard-close */ ) ->
         use();
     }
   }
 
   void missingIf(boolean value) {
-    if (value) 
+    if (value)
   }
 
   void missingElse(boolean value) {
@@ -125,37 +125,37 @@ class Phase15Statements {
   }
 
   void missingWhile(boolean value) {
-    while (value) 
+    while (value)
   }
 
   void missingDo(boolean value) {
-    do  while (value);
+    do while (value);
   }
 
   void missingFor() {
-    for (;;) 
+    for (;;)
   }
 
   void missingEnhancedFor(int[] values) {
-    for (int value : values) 
+    for (int value : values)
   }
 
   void missingSwitch(int value) {
-    switch (value) 
+    switch (value)
   }
 
   void missingSynchronized(Object lock) {
-    synchronized (lock) 
+    synchronized (lock)
   }
 
   void missingTry() {
-    try  catch (Exception exception)  finally 
+    try catch (Exception exception) finally
   }
 
   void missingResourceTry(AutoCloseable resource) {
     try (
       resource
-    )  catch (Exception exception) {
+    ) catch (Exception exception) {
     }
   }
 }

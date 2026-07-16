@@ -217,7 +217,7 @@ mod tests {
         let formatted =
             format_java("class", FormatOptions::default()).expect("format should complete");
 
-        assert_eq!(formatted, Some(b"class \n".to_vec()));
+        assert_eq!(formatted, Some(b"class\n".to_vec()));
     }
 
     #[test]

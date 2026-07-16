@@ -194,6 +194,14 @@ struct PendingIndent {
     count: u32,
 }
 
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+enum HorizontalWhitespace {
+    #[default]
+    None,
+    Pending,
+    Emitted,
+}
+
 #[derive(Clone, Copy, Debug)]
 enum RenderCommand<'source> {
     Doc(Doc<'source>, Mode),
@@ -227,6 +235,7 @@ struct Renderer<'arena, 'proof, 'source, S> {
     column: TextWidth,
     indent_levels: i32,
     pending_indent: Option<PendingIndent>,
+    horizontal_whitespace: HorizontalWhitespace,
     group_stack: Vec<GroupFrame>,
     command_stack: Vec<RenderCommand<'source>>,
     fit_group_stack: Vec<GroupFrame>,
@@ -251,6 +260,7 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
             column: TextWidth::ZERO,
             indent_levels: 0,
             pending_indent: None,
+            horizontal_whitespace: HorizontalWhitespace::None,
             group_stack: Vec::new(),
             command_stack: Vec::new(),
             fit_group_stack: Vec::new(),
@@ -307,7 +317,13 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         match arena.node(doc) {
             None => Ok(()),
             Some(DocNode::Text(text)) => {
-                self.write_measured_str(&text.text, text.width);
+                if text.text == " " {
+                    if self.horizontal_whitespace == HorizontalWhitespace::None {
+                        self.horizontal_whitespace = HorizontalWhitespace::Pending;
+                    }
+                } else {
+                    self.write_measured_str(&text.text, text.width);
+                }
                 Ok(())
             }
             Some(DocNode::LiteralText(text)) => {
@@ -473,12 +489,17 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
     fn write_flat_line(&mut self, flat: &FlatLine) {
         match flat {
             FlatLine::Empty => {}
-            FlatLine::Space => self.write_measured_str(" ", TextWidth::new(1)),
+            FlatLine::Space => {
+                if self.horizontal_whitespace == HorizontalWhitespace::None {
+                    self.horizontal_whitespace = HorizontalWhitespace::Pending;
+                }
+            }
         }
     }
 
     fn write_newline(&mut self, indent_delta: i16, count: u32) {
         self.pending_indent = None;
+        self.horizontal_whitespace = HorizontalWhitespace::None;
         for _ in 0..count {
             self.write_sink_str("\n");
             self.column = TextWidth::ZERO;
@@ -500,7 +521,17 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         if text.is_empty() || self.halted {
             return;
         }
+        if matches!(text.as_bytes().first(), Some(b'\n' | b'\r')) {
+            self.pending_indent = None;
+            self.horizontal_whitespace = HorizontalWhitespace::None;
+        } else if matches!(text.as_bytes().first(), Some(b' ' | b'\t')) {
+            self.horizontal_whitespace = HorizontalWhitespace::None;
+        }
+        if self.pending_indent.is_some() {
+            self.horizontal_whitespace = HorizontalWhitespace::None;
+        }
         self.flush_pending_indent();
+        self.flush_pending_spaces();
         self.write_sink_str(text);
     }
 
@@ -509,7 +540,14 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
             return;
         }
         match self.sink.write_str(text) {
-            RenderControl::Continue => {}
+            RenderControl::Continue => {
+                self.horizontal_whitespace = if matches!(text.as_bytes().last(), Some(b' ' | b'\t'))
+                {
+                    HorizontalWhitespace::Emitted
+                } else {
+                    HorizontalWhitespace::None
+                };
+            }
             RenderControl::Halt => {
                 self.halted = true;
             }
@@ -521,6 +559,13 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
             return;
         };
         self.write_repeated(indent.character, indent.count);
+    }
+
+    fn flush_pending_spaces(&mut self) {
+        if self.horizontal_whitespace == HorizontalWhitespace::Pending {
+            self.write_sink_str(" ");
+            self.add_width(TextWidth::new(1));
+        }
     }
 
     fn write_repeated(&mut self, ch: char, count: u32) {
@@ -552,6 +597,8 @@ struct FitChecker<'base, 'scratch, 'source> {
     arena: &'base DocArena<'source>,
     options: RenderOptions,
     column: TextWidth,
+    horizontal_whitespace: HorizontalWhitespace,
+    pending_indent: bool,
     indent_levels: i32,
     base_group_stack: &'base [GroupFrame],
     base_group_len: usize,
@@ -568,6 +615,8 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
             arena: renderer.arena,
             options: renderer.options,
             column: renderer.column,
+            horizontal_whitespace: renderer.horizontal_whitespace,
+            pending_indent: renderer.pending_indent.is_some(),
             indent_levels: renderer.indent_levels,
             base_group_stack: &renderer.group_stack,
             base_group_len: renderer.group_stack.len(),
@@ -626,12 +675,18 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
         let arena = self.arena;
         match arena.node(doc) {
             None => FitResult::Continue,
-            Some(DocNode::Text(text)) => self.width_result(text.width),
+            Some(DocNode::Text(text)) if text.text == " " => {
+                if self.horizontal_whitespace == HorizontalWhitespace::None {
+                    self.horizontal_whitespace = HorizontalWhitespace::Pending;
+                }
+                FitResult::Continue
+            }
+            Some(DocNode::Text(text)) => self.text_width_result(&text.text, text.width),
             Some(DocNode::LiteralText(text)) => {
                 if text.is_multiline() {
                     FitResult::No
                 } else {
-                    self.width_result(text.final_width())
+                    self.text_width_result(&text.text, text.final_width())
                 }
             }
             #[cfg(debug_assertions)]
@@ -639,7 +694,7 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
                 if fragment.is_multiline() {
                     FitResult::No
                 } else {
-                    self.width_result(fragment.final_width())
+                    self.text_width_result(&fragment.text, fragment.final_width())
                 }
             }
             Some(DocNode::InlineConcat { docs, len }) => {
@@ -753,7 +808,12 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
     fn fit_flat_line(&mut self, flat: &FlatLine) -> FitResult {
         match flat {
             FlatLine::Empty => FitResult::Continue,
-            FlatLine::Space => self.width_result(TextWidth::new(1)),
+            FlatLine::Space => {
+                if self.horizontal_whitespace == HorizontalWhitespace::None {
+                    self.horizontal_whitespace = HorizontalWhitespace::Pending;
+                }
+                FitResult::Continue
+            }
         }
     }
 
@@ -772,6 +832,28 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
         } else {
             FitResult::No
         }
+    }
+
+    fn text_width_result(&mut self, text: &str, width: TextWidth) -> FitResult {
+        if self.pending_indent {
+            self.horizontal_whitespace = HorizontalWhitespace::None;
+            self.pending_indent = false;
+        }
+        if matches!(text.as_bytes().first(), Some(b' ' | b'\t')) {
+            self.horizontal_whitespace = HorizontalWhitespace::None;
+        }
+        if self.horizontal_whitespace == HorizontalWhitespace::Pending
+            && self.width_result(TextWidth::new(1)) == FitResult::No
+        {
+            return FitResult::No;
+        }
+        let result = self.width_result(width);
+        self.horizontal_whitespace = if matches!(text.as_bytes().last(), Some(b' ' | b'\t')) {
+            HorizontalWhitespace::Emitted
+        } else {
+            HorizontalWhitespace::None
+        };
+        result
     }
 }
 
@@ -849,7 +931,7 @@ mod tests {
             _children: ParsedChildren<'_>,
             sink: &mut SyntaxTreeSink<'_>,
         ) -> Result<FactoryNode, BuildSyntaxTreeError> {
-            if kind == JavaLanguage::kind_to_raw(JavaLanguage::error_node_kind()) {
+            if kind == JavaLanguage::kind_to_raw(JavaSyntaxKind::BogusExpression) {
                 Ok(sink.raw_malformed(kind))
             } else {
                 Ok(sink.raw(kind))
@@ -872,10 +954,6 @@ mod tests {
 
         fn eof_kind() -> Self::Kind {
             JavaLanguage::eof_kind()
-        }
-
-        fn error_node_kind() -> Self::Kind {
-            JavaLanguage::error_node_kind()
         }
 
         fn expected_diagnostic_code() -> DiagnosticCodeId {
@@ -982,7 +1060,7 @@ mod tests {
     }
 
     fn bogus_syntax_tree(source: &str) -> jolt_syntax::SyntaxTree {
-        syntax_tree_with_root_kind(source, JavaLanguage::error_node_kind())
+        syntax_tree_with_root_kind(source, JavaSyntaxKind::BogusExpression)
     }
 
     fn mixed_syntax_tree() -> jolt_syntax::SyntaxTree {
@@ -1007,7 +1085,7 @@ mod tests {
             },
             Event::Token,
             Event::Start {
-                kind: JavaLanguage::kind_to_raw(JavaLanguage::error_node_kind()),
+                kind: JavaLanguage::kind_to_raw(JavaSyntaxKind::BogusExpression),
                 forward_parent: 0,
             },
             Event::Token,
@@ -1545,6 +1623,59 @@ mod tests {
         render_to(&arena, doc, options(), &mut sink).expect("document renders");
 
         assert_eq!(sink.0, "\n    indented");
+    }
+
+    #[test]
+    fn layout_spaces_are_discarded_before_line_breaks() {
+        let mut builder = DocBuilder::new();
+        let doc = builder.concat_list(|contents| {
+            let text = contents.text("text");
+            contents.push(text);
+            let space = contents.space();
+            contents.push(space);
+            let line = contents.hard_line();
+            contents.push(line);
+            let trailing_space = contents.space();
+            contents.push(trailing_space);
+        });
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        render_to(&arena, doc, options(), &mut sink).expect("document renders");
+
+        assert_eq!(sink.0, "text\n");
+    }
+
+    #[test]
+    fn fit_check_discards_layout_space_before_pending_indent() {
+        let mut builder = DocBuilder::new();
+        let contents = builder.concat_list(|contents| {
+            let line = contents.hard_line();
+            contents.push(line);
+            let grouped = contents.concat_list(|grouped| {
+                let space = grouped.space();
+                grouped.push(space);
+                let text = grouped.text("y");
+                grouped.push(text);
+                let breaks = grouped.text("B");
+                let flat = grouped.nil();
+                let conditional = grouped.if_break(breaks, flat);
+                grouped.push(conditional);
+            });
+            let grouped = contents.group(grouped);
+            contents.push(grouped);
+        });
+        let doc = builder.indent(contents);
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+        let options = RenderOptions {
+            line_width: TextWidth::new(5),
+            ..options()
+        };
+
+        render_to(&arena, doc, options, &mut sink).expect("document renders");
+
+        assert_eq!(sink.0, "\n    y");
     }
 
     #[test]

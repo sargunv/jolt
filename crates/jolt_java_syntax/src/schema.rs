@@ -393,9 +393,6 @@ macro_rules! java_syntax_schema {
                 }
             }
             nodes {
-                ErrorNode => ErrorNode [error_node malformed] {
-                    elements: many (any_element) => ErrorElement;
-                }
                 BogusSwitchLabelItem => BogusSwitchLabelItem [bogus_switch_label_item malformed] {
                     elements: many (any_element) => BogusSwitchLabelItemElement;
                 }

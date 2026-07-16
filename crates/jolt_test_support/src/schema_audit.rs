@@ -28,7 +28,6 @@ pub struct SchemaAudit<K> {
     diagnostic_missing: Vec<String>,
     clean_unexpected: Vec<String>,
     diagnostic_unexpected: Vec<String>,
-    owners: Vec<String>,
     kind: PhantomData<K>,
 }
 
@@ -46,7 +45,6 @@ impl<K: Copy + Eq + Debug> SchemaAudit<K> {
             diagnostic_missing: Vec::new(),
             clean_unexpected: Vec::new(),
             diagnostic_unexpected: Vec::new(),
-            owners: Vec::new(),
             kind: PhantomData,
         }
     }
@@ -101,14 +99,6 @@ impl<K: Copy + Eq + Debug> SchemaAudit<K> {
                 );
             }
         }
-        if node.kind() == L::error_node_kind() {
-            let owner = node.parent().map_or_else(
-                || "<root>".to_owned(),
-                |parent| format!("{:?}", parent.kind()),
-            );
-            self.owners.push(format!("{node_label} owned by {owner}"));
-        }
-
         let children = node.children_with_tokens().collect::<Vec<_>>();
         let expected = audit_node(node);
         let directly_malformed = node.is_directly_malformed();
@@ -174,7 +164,6 @@ impl<K: Copy + Eq + Debug> SchemaAudit<K> {
                 "diagnostic_unexpected_shapes",
                 self.diagnostic_unexpected.len(),
             ),
-            ("error_node_owners", self.owners.len()),
         ] {
             writeln!(output, "{name} = {count}").unwrap();
         }
@@ -183,7 +172,6 @@ impl<K: Copy + Eq + Debug> SchemaAudit<K> {
             ("diagnostic_missing_required", &self.diagnostic_missing),
             ("clean_unexpected", &self.clean_unexpected),
             ("diagnostic_unexpected", &self.diagnostic_unexpected),
-            ("error_node_ownership", &self.owners),
         ] {
             writeln!(output, "\n[{section}]").unwrap();
             for item in items {

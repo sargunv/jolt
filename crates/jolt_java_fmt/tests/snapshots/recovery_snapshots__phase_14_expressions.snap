@@ -114,9 +114,9 @@ class Phase14Expressions {
     boolean record = value instanceof Point(String name, Point(Integer x, _));
     boolean missingName = value instanceof Point(String );
     boolean invalidInitializer = value instanceof Point(String name = other);
-    boolean invalidVar = value instanceof  var  item;
+    boolean invalidVar = value instanceof var item;
     boolean extraDeclarator = value instanceof Point(String first, second );
-    boolean invalidRecordType = value instanceof  int(String name);
+    boolean invalidRecordType = value instanceof int(String name);
     return typed
       || record
       || missingName

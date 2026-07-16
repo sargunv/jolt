@@ -12,7 +12,6 @@ clean_missing_required_shapes = 3
 diagnostic_missing_required_shapes = 118
 clean_unexpected_shapes = 0
 diagnostic_unexpected_shapes = 0
-error_node_owners = 0
 
 [clean_missing_required]
 style__expressions__casts_instanceof_arrays: PrimitiveType occurrence 7 (IntKw("int"))
@@ -142,5 +141,3 @@ syntax__recovery__type_annotation_and_parameter_lists: TypeParameter occurrence 
 [clean_unexpected]
 
 [diagnostic_unexpected]
-
-[error_node_ownership]

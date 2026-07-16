@@ -33,10 +33,6 @@ impl Language for JavaLanguage {
         JavaSyntaxKind::Eof
     }
 
-    fn error_node_kind() -> Self::Kind {
-        JavaSyntaxKind::ErrorNode
-    }
-
     fn expected_diagnostic_code() -> DiagnosticCodeId {
         JavaParseDiagnosticCode::ExpectedSyntax.id()
     }

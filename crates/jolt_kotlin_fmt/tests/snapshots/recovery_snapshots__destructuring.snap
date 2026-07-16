@@ -6,7 +6,7 @@ input:
 val (first, /* orphan */ , second) = pair
 
 formatted:
-val (first, /* orphan */ ,   second) = pair
+val (first, /* orphan */ , second) = pair
 
 diagnostics:
 code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(27), end: TextSize(33) }) message=expected destructuring entry between commas

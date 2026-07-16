@@ -11,6 +11,22 @@ use crate::helpers::comments::{
 pub(crate) struct CommaListItem<'source> {
     pub(crate) doc: Doc<'source>,
     pub(crate) comma: Option<KotlinSyntaxToken<'source>>,
+    pub(crate) layout_visible: bool,
+}
+
+pub(crate) fn push_recovery_item<'source>(
+    items: &mut Vec<CommaListItem<'source>>,
+    recovery: Doc<'source>,
+    layout_visible: bool,
+) {
+    if !layout_visible && recovery == Doc::nil() {
+        return;
+    }
+    items.push(CommaListItem {
+        doc: recovery,
+        comma: None,
+        layout_visible,
+    });
 }
 
 pub(crate) fn parenthesized_list<'source>(
@@ -100,20 +116,31 @@ fn delimited_comma_list<'source>(
     force_multiline: bool,
     close_trailing: TrailingTrivia,
 ) -> Doc<'source> {
-    if items.is_empty() {
-        return empty_delimited_list(doc, open, close, close_trailing);
+    let visible_count = items.iter().filter(|item| item.layout_visible).count();
+    if visible_count == 0 {
+        let claims = doc.concat(items.into_iter().map(|item| item.doc));
+        let list = empty_delimited_list(doc, open, close, close_trailing);
+        return doc.concat([claims, list]);
     }
-    if let [item] = items.as_slice()
+    if visible_count == 1
         && !force_multiline
-        && item.comma.is_none()
+        && items
+            .iter()
+            .find(|item| item.layout_visible)
+            .is_some_and(|item| item.comma.is_none())
         && !has_delimiter_dangling_comments(open, close)
     {
         let open = format_open_delimiter(doc, open);
         let close = format_close_delimiter(doc, close, close_trailing);
-        return doc.concat([open, item.doc, close]);
+        let item = doc.concat(items.into_iter().map(|item| item.doc));
+        return doc.concat([open, item, close]);
     }
 
-    let has_trailing_comma = items.last().is_some_and(|item| item.comma.is_some());
+    let has_trailing_comma = items
+        .iter()
+        .rev()
+        .find(|item| item.layout_visible)
+        .is_some_and(|item| item.comma.is_some());
     let open_doc = format_open_delimiter_before_items(doc, open);
     let list = comma_list(doc, items);
     let close_comments = format_close_leading_comments(doc, close);
@@ -133,10 +160,14 @@ pub(crate) fn comma_list<'source>(
     doc: &mut DocBuilder<'source>,
     items: Vec<CommaListItem<'source>>,
 ) -> Doc<'source> {
-    let item_count = items.len();
+    let item_count = items.iter().filter(|item| item.layout_visible).count();
     doc.concat_list(|docs| {
-        for (index, item) in items.into_iter().enumerate() {
+        let mut index = 0;
+        for item in items {
             docs.push(item.doc);
+            if !item.layout_visible {
+                continue;
+            }
             if let Some(comma) = item.comma {
                 let line = if index + 1 < item_count {
                     docs.line()
@@ -149,6 +180,7 @@ pub(crate) fn comma_list<'source>(
                 let line = docs.line();
                 docs.push(line);
             }
+            index += 1;
         }
     })
 }
@@ -167,7 +199,7 @@ pub(crate) fn physical_comma_list_items<'source, Entry>(
         match resolve_list_part(part, doc) {
             KotlinFormatListPart::Item(entry) => items.push(format_entry(doc, entry)),
             KotlinFormatListPart::Separator(comma) => {
-                if let Some(item) = items.last_mut()
+                if let Some(item) = items.iter_mut().rev().find(|item| item.layout_visible)
                     && item.comma.is_none()
                 {
                     item.comma = Some(comma);
@@ -176,13 +208,16 @@ pub(crate) fn physical_comma_list_items<'source, Entry>(
                     items.push(CommaListItem {
                         doc: comma,
                         comma: None,
+                        layout_visible: true,
                     });
                 }
             }
-            KotlinFormatListPart::Malformed(malformed) => items.push(CommaListItem {
-                doc: malformed,
-                comma: None,
-            }),
+            KotlinFormatListPart::Malformed(malformed) => {
+                push_recovery_item(&mut items, malformed, true);
+            }
+            KotlinFormatListPart::Invisible(recovery) => {
+                push_recovery_item(&mut items, recovery, false);
+            }
         }
     }
     items

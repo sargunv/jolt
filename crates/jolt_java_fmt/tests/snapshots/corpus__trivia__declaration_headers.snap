@@ -3,7 +3,7 @@ source: crates/jolt_java_fmt/tests/corpus.rs
 expression: snapshot
 ---
 formatted:
-@Deprecated /* JOLT-TRIVIA:after-annotation */ 
+@Deprecated /* JOLT-TRIVIA:after-annotation */
 public /* JOLT-TRIVIA:after-public */ final class DeclarationHeaders<
   T /* JOLT-TRIVIA:type-param */ extends Number /* JOLT-TRIVIA:type-bound */
 >

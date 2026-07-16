@@ -155,13 +155,10 @@ pub(crate) fn format_missing<'source>(
     missing: &JavaMissingSyntax<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let Ok(core) = missing.verbatim_core() else {
+    if missing.verbatim_core().is_err() {
         doc.block_on_invariant("missing Java role did not own an empty verbatim core");
-        return Doc::nil();
-    };
-    let mut safety = JavaLexicalSafety;
-    let fragment = doc.malformed_verbatim_with_safety(&core, &mut safety);
-    doc.resolve_exceptional(fragment, None, None, &mut safety)
+    }
+    Doc::nil()
 }
 
 fn format_malformed_with_boundary_comments<'source>(
