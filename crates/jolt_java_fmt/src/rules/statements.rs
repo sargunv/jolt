@@ -128,14 +128,7 @@ fn format_empty_statement<'source>(
     statement: &jolt_java_syntax::EmptyStatement<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    match resolve_required_field(statement.semicolon(), doc) {
-        JavaFormatField::Present(_) => {
-            let removed = empty_statement_removal(statement, doc);
-            let comments = format_empty_statement_comments(statement, doc).unwrap_or_else(Doc::nil);
-            doc_concat!(doc, [removed, comments])
-        }
-        JavaFormatField::Malformed(recovery) => recovery,
-    }
+    format_statement_semicolon(statement.semicolon(), doc)
 }
 
 fn empty_statement_removal<'source>(

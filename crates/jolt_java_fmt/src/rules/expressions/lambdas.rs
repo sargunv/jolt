@@ -11,8 +11,8 @@ use crate::helpers::recovery::{
 };
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{
-    JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxView, LambdaBodySyntax, LambdaBodyValue,
-    LambdaModifier, LambdaModifierSyntax,
+    JavaSyntaxField, JavaSyntaxListPart, LambdaBodySyntax, LambdaBodyValue, LambdaModifier,
+    LambdaModifierSyntax,
 };
 
 pub(super) fn format_lambda_expression<'source>(
@@ -81,13 +81,11 @@ fn format_lambda_parameters<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let parameters = resolve_required_field(expression.parameters(), doc);
-    if let JavaFormatField::Present(parameters) = &parameters
-        && expression.is_recovery_free()
+    if let Some(removal) = expression.simple_parameter_parenthesis_removal()
         && optional_delimiter_is_comment_free(expression.open_paren())
         && optional_delimiter_is_comment_free(expression.close_paren())
-        && let Some(parameter) = single_lambda_parameter(parameters)
-        && is_simple_untyped_lambda_parameter(&parameter)
     {
+        let parameter = removal.parameter;
         let parameter = if token_iter_has_comments(parameter.token_iter()) {
             format_lambda_parameter(&parameter, doc)
         } else {
@@ -95,13 +93,8 @@ fn format_lambda_parameters<'source>(
                 format_token_with_comments(doc, &name)
             })
         };
-        let removals = expression.parameter_parenthesis_removal_claims();
-        let open = removals
-            .open
-            .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
-        let close = removals
-            .close
-            .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
+        let open = doc.removed_source(removal.open);
+        let close = doc.removed_source(removal.close);
         return doc_concat!(doc, [open, parameter, close]);
     }
     let open = format_optional_field(expression.open_paren(), doc, |token, doc| {
@@ -153,40 +146,11 @@ fn lambda_parameter_items<'source, 'fmt>(
     })
 }
 
-fn single_lambda_parameter<'source>(
-    parameters: &jolt_java_syntax::LambdaParameterList<'source>,
-) -> Option<LambdaParameter<'source>> {
-    let mut parts = parameters.parts();
-    let parameter = match parts.next()?.ok()? {
-        JavaSyntaxListPart::Item(parameter) => parameter,
-        JavaSyntaxListPart::Separator(_)
-        | JavaSyntaxListPart::Missing(_)
-        | JavaSyntaxListPart::Malformed(_) => return None,
-    };
-    parts.next().is_none().then_some(parameter)
-}
-
 #[allow(clippy::needless_pass_by_value)]
 fn optional_is_absent<T>(
     field: Result<JavaSyntaxField<'_, T>, jolt_java_syntax::JavaSyntaxInvariantError>,
 ) -> bool {
     matches!(field, Ok(JavaSyntaxField::Missing(_)))
-}
-
-fn required_list_is_empty<'source, T>(
-    field: Result<JavaSyntaxField<'source, T>, jolt_java_syntax::JavaSyntaxInvariantError>,
-) -> bool
-where
-    T: JavaSyntaxView<'source>,
-{
-    matches!(field, Ok(JavaSyntaxField::Present(list)) if list.is_recovery_free() && list.first_token().is_none())
-}
-
-fn is_simple_untyped_lambda_parameter(parameter: &LambdaParameter<'_>) -> bool {
-    optional_is_absent(parameter.r#type())
-        && optional_is_absent(parameter.ellipsis())
-        && required_list_is_empty(parameter.modifiers())
-        && required_list_is_empty(parameter.varargs_annotations())
 }
 
 fn format_lambda_parameter<'source>(

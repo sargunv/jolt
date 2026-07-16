@@ -17,28 +17,44 @@ pub(crate) fn format_imports<'source>(
         return None;
     }
 
-    // Malformed imports are fixed boundaries: only consecutive fully structured
-    // imports may be reordered. This keeps recovery source in place while retaining
-    // the normal/static grouping and stable name sort for valid syntax.
+    if imports.iter().any(|import| !import.is_recovery_free()) {
+        return Some(format_imports_in_source_order(imports, doc));
+    }
+
     let mut sections = Vec::new();
     let mut sortable = Vec::new();
-    for import in imports {
-        if let Some(formatted) = FormattedImport::new(import) {
-            if !sortable.is_empty()
-                && import
-                    .first_token()
-                    .is_some_and(|token| !token.leading_comments().is_empty())
-            {
-                flush_sortable(&mut sortable, &mut sections, doc);
-            }
-            sortable.push(formatted);
-        } else {
+    for declaration in imports.iter().copied() {
+        let Some(import) = FormattedImport::new(declaration) else {
+            return Some(format_imports_in_source_order(imports, doc));
+        };
+        if !sortable.is_empty()
+            && import
+                .import
+                .first_token()
+                .is_some_and(|token| !token.leading_comments().is_empty())
+        {
             flush_sortable(&mut sortable, &mut sections, doc);
-            sections.push(format_import(&import, doc));
         }
+        sortable.push(import);
     }
     flush_sortable(&mut sortable, &mut sections, doc);
     Some(join_empty_lines(doc, sections))
+}
+
+fn format_imports_in_source_order<'source>(
+    imports: Vec<ImportDeclaration<'source>>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    doc.concat_list(|docs| {
+        for import in imports {
+            if !docs.is_empty() {
+                let line = docs.hard_line();
+                docs.push(line);
+            }
+            let import = format_import(&import, docs);
+            docs.push(import);
+        }
+    })
 }
 
 fn flush_sortable<'source>(

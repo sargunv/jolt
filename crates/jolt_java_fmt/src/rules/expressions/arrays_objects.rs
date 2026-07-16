@@ -404,6 +404,7 @@ pub(crate) fn format_variable_initializer_value<'source>(
         VariableInitializerValue::ArrayInitializer(initializer) => {
             format_array_initializer(&initializer, doc)
         }
+        VariableInitializerValue::BogusExpression(value) => format_malformed(&value, doc),
         VariableInitializerValue::BogusVariableInitializer(value) => format_malformed(&value, doc),
     }
 }

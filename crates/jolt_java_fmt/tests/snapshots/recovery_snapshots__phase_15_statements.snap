@@ -17,6 +17,7 @@ class Phase15Statements {
     try (/* resource-missing-access */) {}
     try (existing /* resource-junk */ @) {}
     try (call() /* resource-invalid-access */) {}
+    try (var malformed = /* resource-trailing */ ;) {}
     try {} catch (Exception exception /* catch-dimension */ []) {}
   }
 
@@ -28,6 +29,7 @@ class Phase15Statements {
       case 3 -> /* switch-empty-rule */ ;
       case 4:
       /* switch-label-sibling */ case : use();
+      case String text when (/* guard-open */ ??? /* guard-close */) -> use();
     }
   }
 
@@ -88,6 +90,10 @@ class Phase15Statements {
       call() /* resource-invalid-access */
     ) {
     }
+    try (
+      var malformed = /* resource-trailing */ ;
+    ) {
+    }
     try {
     } catch (Exception exception /* catch-dimension */[]) {
     }
@@ -103,6 +109,8 @@ class Phase15Statements {
       case 4:
       /* switch-label-sibling */
       case :
+        use();
+      case String text when ( /* guard-open */ ? ? ? /* guard-close */  ) ->
         use();
     }
   }
@@ -162,21 +170,26 @@ code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRan
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(537), end: TextSize(538) }) message=expected resource
 code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=Some(TextRange { start: TextSize(580), end: TextSize(581) }) message=unexpected token in resource variable access
 code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=Some(TextRange { start: TextSize(631), end: TextSize(632) }) message=expected resource variable declaration or variable access
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(785), end: TextSize(786) }) message=expected switch label
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(786), end: TextSize(787) }) message=expected identifier
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(786), end: TextSize(787) }) message=expected expression after annotation
-code=java.parse.invalid_switch_guard severity=Error stage=Parser range=Some(TextRange { start: TextSize(801), end: TextSize(805) }) message=switch guard requires a pattern
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(853), end: TextSize(854) }) message=unexpected token in case constant
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(905), end: TextSize(906) }) message=expected expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1024), end: TextSize(1025) }) message=expected statement
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1081), end: TextSize(1082) }) message=expected statement
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1134), end: TextSize(1135) }) message=expected statement
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1173), end: TextSize(1178) }) message=expected statement
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1221), end: TextSize(1222) }) message=expected statement
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1290), end: TextSize(1291) }) message=expected statement
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1341), end: TextSize(1342) }) message=expected switch block
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1405), end: TextSize(1406) }) message=expected synchronized body
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1442), end: TextSize(1447) }) message=expected try body
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1474), end: TextSize(1481) }) message=expected catch body
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1484), end: TextSize(1485) }) message=expected finally body
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1562), end: TextSize(1567) }) message=expected try body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(685), end: TextSize(686) }) message=expected expression
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(840), end: TextSize(841) }) message=expected switch label
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(841), end: TextSize(842) }) message=expected identifier
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(841), end: TextSize(842) }) message=expected expression after annotation
+code=java.parse.invalid_switch_guard severity=Error stage=Parser range=Some(TextRange { start: TextSize(856), end: TextSize(860) }) message=switch guard requires a pattern
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(908), end: TextSize(909) }) message=unexpected token in case constant
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(960), end: TextSize(961) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1069), end: TextSize(1070) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1071), end: TextSize(1072) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1090), end: TextSize(1091) }) message=expected `:` in conditional expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1090), end: TextSize(1091) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1158), end: TextSize(1159) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1215), end: TextSize(1216) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1268), end: TextSize(1269) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1307), end: TextSize(1312) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1355), end: TextSize(1356) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1424), end: TextSize(1425) }) message=expected statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1475), end: TextSize(1476) }) message=expected switch block
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1539), end: TextSize(1540) }) message=expected synchronized body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1576), end: TextSize(1581) }) message=expected try body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1608), end: TextSize(1615) }) message=expected catch body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1618), end: TextSize(1619) }) message=expected finally body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1696), end: TextSize(1701) }) message=expected try body

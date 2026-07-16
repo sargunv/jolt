@@ -547,13 +547,22 @@ fn format_guard<'source>(
             if !token_has_comments(&open) && !token_has_comments(&close) =>
         {
             let removals = guard.redundant_parenthesis_removal_claims();
-            let open = removals
-                .open
-                .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
-            let close = removals
-                .close
-                .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
-            doc_concat!(doc, [open, condition, close])
+            match (removals.open, removals.close) {
+                (Some(open), Some(close)) => doc_concat!(
+                    doc,
+                    [
+                        doc.removed_source(open),
+                        condition,
+                        doc.removed_source(close)
+                    ]
+                ),
+                _ => format_parenthesized_statement_expression(
+                    doc,
+                    JavaFormatDelimiter::Source(open),
+                    condition,
+                    JavaFormatDelimiter::Source(close),
+                ),
+            }
         }
         (JavaFormatField::Present(Some(open)), JavaFormatField::Present(Some(close))) => {
             format_parenthesized_statement_expression(

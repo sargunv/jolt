@@ -231,7 +231,11 @@ fn syntax_authorized_removals(
         let parentheses = if let Some(guard) = Guard::cast(node) {
             Some(guard.redundant_parenthesis_removal_claims())
         } else if let Some(lambda) = LambdaExpression::cast(node) {
-            Some(lambda.parameter_parenthesis_removal_claims())
+            if lambda.simple_parameter_parenthesis_removal().is_some() {
+                redundant_open_parentheses += 1;
+                redundant_close_parentheses += 1;
+            }
+            None
         } else {
             ParenthesizedExpression::cast(node)
                 .map(|expression| expression.redundant_parenthesis_removal_claims())

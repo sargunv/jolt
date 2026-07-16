@@ -1,9 +1,10 @@
 use std::path::PathBuf;
 
-use jolt_java_syntax::parse_compilation_unit;
+use jolt_diagnostics::{DiagnosticCodeId, DiagnosticStage};
+use jolt_java_syntax::{JavaSyntaxView, parse_compilation_unit};
 use jolt_test_support::{
-    CorpusSummary, DeferredReason, ObservedDeferredPath, assert_deferred_import_manifest,
-    collect_java_files, read_to_string, workspace_root,
+    CorpusSummary, DeferredReason, ObservedDeferredPath, assert_bidirectional_diagnostic_ownership,
+    assert_deferred_import_manifest, collect_java_files, read_to_string, workspace_root,
 };
 
 #[test]
@@ -48,6 +49,15 @@ fn assert_corpus(suite: &str, deferred: &mut Vec<ObservedDeferredPath>) -> Corpu
         let syntax = parse.syntax();
         let mut reasons = Vec::new();
 
+        if let Some(syntax) = syntax {
+            assert_bidirectional_diagnostic_ownership(
+                syntax.syntax_node().expect("represented compilation unit"),
+                parse.diagnostics(),
+                parse.structural_diagnostic_owners(),
+                java_diagnostic_requires_owner,
+                path.display(),
+            );
+        }
         if syntax.is_none() {
             reasons.push(DeferredReason::NoSyntaxTree);
         } else if syntax.is_some_and(|syntax| syntax.source_text() != source) {
@@ -66,6 +76,13 @@ fn assert_corpus(suite: &str, deferred: &mut Vec<ObservedDeferredPath>) -> Corpu
     }
 
     summary
+}
+
+fn java_diagnostic_requires_owner(diagnostic: &jolt_diagnostics::Diagnostic) -> bool {
+    diagnostic.stage == DiagnosticStage::Parser
+        && diagnostic.code
+            != DiagnosticCodeId::new("java.parse.unqualified_yield_method_invocation")
+        && diagnostic.code != DiagnosticCodeId::new("java.parse.decimal_integer_boundary_literal")
 }
 
 fn fixture_root(suite: &str) -> PathBuf {

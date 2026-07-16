@@ -100,6 +100,7 @@ pub(super) fn format_instanceof_expression<'source>(
         InstanceofTargetSyntax::ArrayType(ty) => format_type(&ty.into(), doc),
         InstanceofTargetSyntax::TypePattern(pattern) => format_pattern(&pattern.into(), doc),
         InstanceofTargetSyntax::RecordPattern(pattern) => format_pattern(&pattern.into(), doc),
+        InstanceofTargetSyntax::BogusPattern(pattern) => format_malformed(&pattern, doc),
         InstanceofTargetSyntax::BogusType(ty) => format_malformed(&ty, doc),
         InstanceofTargetSyntax::BogusInstanceofTarget(target) => format_malformed(&target, doc),
     });

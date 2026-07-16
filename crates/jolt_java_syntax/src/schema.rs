@@ -267,6 +267,7 @@ macro_rules! java_syntax_schema {
                     ArrayType,
                     TypePattern,
                     RecordPattern,
+                    BogusPattern,
                     BogusType,
                 }
                 Type => BogusType {
@@ -303,6 +304,7 @@ macro_rules! java_syntax_schema {
                     ProvidesDirective,
                 }
                 BlockItem => BogusBlockItem {
+                    BogusStatement,
                     LocalVariableDeclaration,
                     LocalClassOrInterfaceDeclaration,
                     Block,
@@ -364,6 +366,7 @@ macro_rules! java_syntax_schema {
                     BlockStatement,
                 }
                 VariableInitializerValue => BogusVariableInitializer {
+                    BogusExpression,
                     LiteralExpression,
                     TemplateExpression,
                     NameExpression,
@@ -477,7 +480,7 @@ macro_rules! java_syntax_schema {
                             PublicKw, StaticKw, StrictfpKw, SynchronizedKw,
                             TransientKw, VolatileKw
                         ]),
-                        (contextual "default"),
+                        (token DefaultKw),
                         (contextual "sealed"),
                         (constructed NonSealedModifier)
                     ]) => ModifierElement;
@@ -584,7 +587,7 @@ macro_rules! java_syntax_schema {
                 }
                 TypeBoundList => TypeBoundList [type_bound_list valid] {
                     extends_keyword: required (token ExtendsKw);
-                    bounds: required (node_set [ClassType, IntersectionType]) => TypeBound;
+                    bounds: required (node_set [ClassType, IntersectionType, BogusType]) => TypeBound;
                 }
                 ExtendsClause => ExtendsClause [extends_clause valid] {
                     extends_keyword: required (token ExtendsKw);
@@ -750,7 +753,11 @@ macro_rules! java_syntax_schema {
                     declarators: required (list VariableDeclaratorList);
                 }
                 LocalClassOrInterfaceDeclaration => LocalClassOrInterfaceDeclaration [local_class_or_interface_declaration valid] {
-                    declaration: required (node_set [ClassDeclaration, InterfaceDeclaration, BogusTypeDeclaration]) => LocalTypeDeclaration;
+                    declaration: required (node_set [
+                        ClassDeclaration, RecordDeclaration, EnumDeclaration,
+                        InterfaceDeclaration, AnnotationInterfaceDeclaration,
+                        BogusTypeDeclaration
+                    ]) => LocalTypeDeclaration;
                 }
                 EmptyStatement => EmptyStatement [empty_statement valid] {
                     semicolon: required (token Semicolon);
@@ -932,7 +939,7 @@ macro_rules! java_syntax_schema {
                     dimensions: optional (list ArrayDimensions);
                 }
                 CatchTypeList => CatchTypeList [catch_type_list valid] {
-                    types: required (node_set [ClassType, UnionType]) => CatchParameterTypes;
+                    types: required (node_set [ClassType, UnionType, BogusType]) => CatchParameterTypes;
                 }
                 FinallyClause => FinallyClause [finally_clause valid] {
                     finally_keyword: required (token FinallyKw);

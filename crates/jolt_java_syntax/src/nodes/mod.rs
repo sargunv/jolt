@@ -1795,7 +1795,10 @@ define_node_role_projection! {
 define_node_role_projection! {
     LocalTypeDeclaration => LocalTypeDeclarationSyntax {
         ClassDeclaration,
+        RecordDeclaration,
+        EnumDeclaration,
         InterfaceDeclaration,
+        AnnotationInterfaceDeclaration,
         BogusTypeDeclaration,
     }
 }

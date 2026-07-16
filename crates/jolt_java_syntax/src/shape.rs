@@ -84,10 +84,6 @@ macro_rules! java_fixed_slot {
             let slot = FactorySlot::Input($cursor);
             $cursor += 1;
             slot
-        } else if java_is_recovery_item($input, $cursor) {
-            let slot = FactorySlot::Input($cursor);
-            $cursor += 1;
-            slot
         } else {
             FactorySlot::Missing
         }
@@ -103,14 +99,9 @@ macro_rules! java_fixed_slot {
     }};
 }
 
-#[inline]
-fn java_is_recovery_item(input: ParsedChildren<'_>, index: usize) -> bool {
-    input.is_directly_malformed(index)
-}
-
 macro_rules! java_item_matches {
     ($input:ident, $index:expr, $matcher:tt) => {
-        java_matches!($input, $index, $matcher) || java_is_recovery_item($input, $index)
+        java_matches!($input, $index, $matcher)
     };
 }
 

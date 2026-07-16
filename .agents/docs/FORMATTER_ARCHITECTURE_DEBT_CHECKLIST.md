@@ -869,15 +869,15 @@ Vertically migrate remaining operators, primary expressions, calls, references,
 lambdas, arrays/objects, patterns, and expression-owned lists. Preserve borrowed
 operator identity and delete local recovery formatting.
 
-Implementation status: **implemented, gate-green, and uncommitted**. Java's
-expression and pattern grammar no longer constructs the generic `ErrorNode`.
-Missing delimiters, names, operands, lambda roles, class-literal targets,
-method-reference receivers, creation types, pattern types, and declaration-only
-pattern suffixes now attach diagnostics to their exact required slot or to a
-syntax-owned bogus node. Class literals accept only primitive, `void`, and
-type-name-shaped targets; method references accept only their declared receiver
-grammar; record and type patterns expose their actual ordered roles instead of
-reusing a local-variable declaration.
+Implementation status: **implemented, gate-green, and committed as `17c30ab`**.
+Java's expression and pattern grammar no longer constructs the generic
+`ErrorNode`. Missing delimiters, names, operands, lambda roles, class-literal
+targets, method-reference receivers, creation types, pattern types, and
+declaration-only pattern suffixes now attach diagnostics to their exact required
+slot or to a syntax-owned bogus node. Class literals accept only primitive,
+`void`, and type-name-shaped targets; method references accept only their
+declared receiver grammar; record and type patterns expose their actual ordered
+roles instead of reusing a local-variable declaration.
 
 The generated schema now carries category-compatible bogus variants for the
 remaining heterogeneous expression roles. Syntax exposes typed classifiers for
@@ -962,6 +962,60 @@ adds 57 net test lines and empties the deferred manifest. Fixtures, snapshots,
 reports, and documentation are excluded; tests and test support are included.
 The later transitional-architecture deletion phase remains responsible for
 crossing below zero.
+
+### Java Closure Tranche
+
+Before starting Kotlin, execute the Java-local portions of Phases 21–24 so that
+Java becomes a closed reference implementation without prematurely deleting
+shared machinery that Kotlin still uses.
+
+1. **Normalization and totality audit.** Verify every Java token removal,
+   reordering, and panic/empty fallback against parser-reachable malformed
+   trees. Syntax must issue exact normalization claims; denied claims preserve
+   represented tokens.
+2. **Java-local transitional cleanup.** Delete duplicated Java recovery wrappers
+   and partial canonicalization of valid islands inside malformed containers. A
+   malformed modifier, import, module-directive, or requires-modifier container
+   preserves its complete source order; a clean container retains canonical
+   sorting and comment barriers.
+3. **Java closure proof.** Run the realistic benchmark, all Java conservation
+   and idempotence lanes, and a corpus-wide bidirectional diagnostic-ownership
+   proof. Every structural diagnostic names a reachable node or declared empty
+   slot, and every directly malformed Java node has an exact diagnostic owner.
+
+Implementation status: **implemented, review-ready, and uncommitted**. The
+normalization audit found and fixed three source-loss paths: labeled empty
+statements, denied trailing-resource-semicolon removal, and denied
+switch-guard-parenthesis removal. Lambda parenthesis removal now requires the
+exact single simple untyped, unmodified parameter shape in syntax rather than a
+broader formatter predicate.
+
+The Java factory no longer treats an arbitrary directly malformed child as
+compatible with every required field. Required fields and list items now accept
+only their declared token, node, or category. The schema explicitly declares the
+parser-reachable nested bogus compatibility needed by block items, variable
+initializers, type bounds, catch types, and `instanceof` patterns. The modifier
+schema now uses the lexer's actual `DefaultKw`, and the typed local-declaration
+role covers every declaration the parser accepts, including records, enums, and
+annotation interfaces. This keeps missing token slots physical and exact instead
+of greedily shifting a later bogus node into them. The full in-repository and
+521-file imported Java fixture corpus now proves both directions of structural
+diagnostic ownership.
+
+The same-machine realistic benchmark is stable relative to Phase 15: Java parse
+is +0.17%, format is -1.42%, and end-to-end is +1.72%; RSS is flat or lower,
+format/end-to-end allocation counts are lower, allocated bytes move by less than
+0.4%, and tree bytes per token fall 0.70%. Parse allocation calls rise 2.74%
+while allocated bytes fall 0.12% because formerly raw-malformed `default`
+modifier lists now construct their required fixed slots. Relative to Phase 3,
+Java remains +2.20% parse, +3.38% format, and +7.63% end-to-end while allocation
+bytes and tree storage are substantially lower; the final Phase 23 cumulative
+timing gate remains open.
+
+This tranche removes 125 net Java implementation lines relative to Phase 15.
+Java-specific implementation remains 209 lines above `2197128`; the shared Phase
+22 deletion and final cross-language proof remain responsible for the roadmap's
+net-negative completion gate.
 
 ### New Phase 16: Kotlin Programs, Packages, Imports, And Names
 

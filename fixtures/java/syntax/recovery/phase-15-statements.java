@@ -12,6 +12,7 @@ class Phase15Statements {
     try (/* resource-missing-access */) {}
     try (existing /* resource-junk */ @) {}
     try (call() /* resource-invalid-access */) {}
+    try (var malformed = /* resource-trailing */ ;) {}
     try {} catch (Exception exception /* catch-dimension */ []) {}
   }
 
@@ -23,6 +24,7 @@ class Phase15Statements {
       case 3 -> /* switch-empty-rule */ ;
       case 4:
       /* switch-label-sibling */ case : use();
+      case String text when (/* guard-open */ ??? /* guard-close */) -> use();
     }
   }
 

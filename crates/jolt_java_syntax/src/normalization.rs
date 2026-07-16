@@ -6,7 +6,7 @@ use crate::language::{JavaLanguage, NORMALIZATION_AUTHORITY};
 use crate::{
     AnnotationArrayInitializer, ArrayInitializer, ClassBodyMember, EmptyDeclaration,
     EmptyStatement, EnumBody, Expression, Guard, JavaSyntaxField, JavaSyntaxListPart,
-    JavaSyntaxToken, JavaSyntaxView, LambdaExpression, ParenthesizedExpression,
+    JavaSyntaxToken, JavaSyntaxView, LambdaExpression, LambdaParameter, ParenthesizedExpression,
     ResourceSpecification, Statement,
 };
 
@@ -324,44 +324,59 @@ impl<'source> EnumBody<'source> {
 
 impl<'source> LambdaExpression<'source> {
     /// Authorizes omission of represented parentheses around a canonical
-    /// single untyped parameter. Policy still decides whether to use it.
+    /// single untyped, unmodified parameter.
     #[must_use]
-    pub fn parameter_parenthesis_removal_claims(&self) -> JavaDelimiterRemoval<'source> {
-        let recovery_free_shape = present(self.parameters())
-            .is_some_and(|list| list.is_recovery_free())
-            && present(self.arrow()).is_some()
-            && present(self.body()).is_some();
-        if !self.is_recovery_free() || !recovery_free_shape {
-            return JavaDelimiterRemoval {
-                open: None,
-                close: None,
-            };
+    pub fn simple_parameter_parenthesis_removal(
+        &self,
+    ) -> Option<JavaLambdaParameterParenthesisRemoval<'source>> {
+        if !self.is_recovery_free()
+            || present(self.arrow()).is_none()
+            || present(self.body()).is_none()
+        {
+            return None;
         }
-        let open = match self.open_paren() {
-            Ok(JavaSyntaxField::Present(token)) => Some(token),
-            _ => None,
+        let parameters = present(self.parameters())?;
+        let mut parts = parameters.parts();
+        let parameter = match parts.next()?.ok()? {
+            JavaSyntaxListPart::Item(parameter) => parameter,
+            JavaSyntaxListPart::Separator(_)
+            | JavaSyntaxListPart::Missing(_)
+            | JavaSyntaxListPart::Malformed(_) => return None,
         };
-        let close = match self.close_paren() {
-            Ok(JavaSyntaxField::Present(token)) => Some(token),
-            _ => None,
-        };
-        JavaDelimiterRemoval {
-            open: open.map(|token| {
-                RemovalClaim::authorized::<JavaLanguage>(
-                    NORMALIZATION_AUTHORITY,
-                    SourceIdentity::Token(token.source_id()),
-                    RemovalReason::RedundantDelimiter,
-                )
-            }),
-            close: close.map(|token| {
-                RemovalClaim::authorized::<JavaLanguage>(
-                    NORMALIZATION_AUTHORITY,
-                    SourceIdentity::Token(token.source_id()),
-                    RemovalReason::RedundantDelimiter,
-                )
-            }),
+        let modifiers = present(parameter.modifiers())?;
+        let varargs_annotations = present(parameter.varargs_annotations())?;
+        if parts.next().is_some()
+            || !matches!(parameter.r#type(), Ok(JavaSyntaxField::Missing(_)))
+            || !matches!(parameter.ellipsis(), Ok(JavaSyntaxField::Missing(_)))
+            || !modifiers.is_recovery_free()
+            || modifiers.first_token().is_some()
+            || !varargs_annotations.is_recovery_free()
+            || varargs_annotations.first_token().is_some()
+        {
+            return None;
         }
+        let open = present(self.open_paren())?;
+        let close = present(self.close_paren())?;
+        Some(JavaLambdaParameterParenthesisRemoval {
+            parameter,
+            open: RemovalClaim::authorized::<JavaLanguage>(
+                NORMALIZATION_AUTHORITY,
+                SourceIdentity::Token(open.source_id()),
+                RemovalReason::RedundantDelimiter,
+            ),
+            close: RemovalClaim::authorized::<JavaLanguage>(
+                NORMALIZATION_AUTHORITY,
+                SourceIdentity::Token(close.source_id()),
+                RemovalReason::RedundantDelimiter,
+            ),
+        })
     }
+}
+
+pub struct JavaLambdaParameterParenthesisRemoval<'source> {
+    pub parameter: LambdaParameter<'source>,
+    pub open: RemovalClaim<'source>,
+    pub close: RemovalClaim<'source>,
 }
 
 impl<'source> ParenthesizedExpression<'source> {

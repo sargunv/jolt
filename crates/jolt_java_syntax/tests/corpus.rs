@@ -1,7 +1,8 @@
-use jolt_java_syntax::parse_compilation_unit;
+use jolt_diagnostics::{DiagnosticCodeId, DiagnosticStage};
+use jolt_java_syntax::{JavaSyntaxView, parse_compilation_unit};
 use jolt_test_support::{
-    SnapshotBuilder, collect_java_files, fixture_manifest, fixture_snapshot_name,
-    java_fixture_root, read_to_string, render_diagnostics,
+    SnapshotBuilder, assert_bidirectional_diagnostic_ownership, collect_java_files,
+    fixture_manifest, fixture_snapshot_name, java_fixture_root, read_to_string, render_diagnostics,
 };
 
 #[test]
@@ -17,6 +18,15 @@ fn java_corpus_syntax_snapshots() {
         let source = read_to_string(&path);
         let parse = parse_compilation_unit(&source);
 
+        if let Some(syntax) = parse.syntax() {
+            assert_bidirectional_diagnostic_ownership(
+                syntax.syntax_node().expect("represented compilation unit"),
+                parse.diagnostics(),
+                parse.structural_diagnostic_owners(),
+                java_diagnostic_requires_owner,
+                path.display(),
+            );
+        }
         if !is_lexer_fixture {
             let syntax = parse
                 .syntax()
@@ -37,4 +47,11 @@ fn java_corpus_syntax_snapshots() {
 
         insta::assert_snapshot!(fixture_snapshot_name(&root, &path), snapshot);
     }
+}
+
+fn java_diagnostic_requires_owner(diagnostic: &jolt_diagnostics::Diagnostic) -> bool {
+    diagnostic.stage == DiagnosticStage::Parser
+        && diagnostic.code
+            != DiagnosticCodeId::new("java.parse.unqualified_yield_method_invocation")
+        && diagnostic.code != DiagnosticCodeId::new("java.parse.decimal_integer_boundary_literal")
 }

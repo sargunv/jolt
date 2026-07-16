@@ -110,16 +110,32 @@ fn format_resource_specification<'source>(
     let (trailing, trailing_removal) =
         match resolve_optional_field(specification.trailing_semicolon(), doc) {
             JavaFormatField::Present(Some(separator)) => {
-                let removed = specification
-                    .trailing_separator_removal_claim()
-                    .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
-                match format_removed_resource_separator_comments(&separator, doc) {
-                    Some(comments) => (Some(doc_concat!(doc, [removed, comments])), Doc::nil()),
-                    None => (None, removed),
+                if let Some(claim) = specification.trailing_separator_removal_claim() {
+                    let removed = doc.removed_source(claim);
+                    match format_removed_resource_separator_comments(&separator, doc) {
+                        Some(comments) => (
+                            Some((doc_concat!(doc, [removed, comments]), true)),
+                            Doc::nil(),
+                        ),
+                        None => (None, removed),
+                    }
+                } else {
+                    (
+                        Some((
+                            format_token(
+                                doc,
+                                &separator,
+                                LeadingTrivia::Preserve,
+                                TrailingTrivia::BeforeLineBreak,
+                            ),
+                            false,
+                        )),
+                        Doc::nil(),
+                    )
                 }
             }
             JavaFormatField::Present(None) => (None, Doc::nil()),
-            JavaFormatField::Malformed(malformed) => (Some(malformed), Doc::nil()),
+            JavaFormatField::Malformed(malformed) => (Some((malformed, true)), Doc::nil()),
         };
     let resources = format_resource_lines(&resources, trailing, doc);
     let open_source = open.source().copied();
@@ -204,14 +220,14 @@ fn format_resource_close_paren<'source>(
 
 fn format_resource_lines<'source>(
     list: &ResourceList<'source>,
-    trailing_comments: Option<Doc<'source>>,
+    trailing: Option<(Doc<'source>, bool)>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     let mut parts = list.parts().peekable();
     if parts.peek().is_none() {
-        return trailing_comments;
+        return trailing.map(|(trailing, _)| trailing);
     }
-    let mut trailing_comments = trailing_comments;
+    let mut trailing = trailing;
     Some(doc.concat_list(|joined| {
         let mut needs_line = false;
         for part in parts {
@@ -245,10 +261,12 @@ fn format_resource_lines<'source>(
                 }
             }
         }
-        if let Some(comments) = trailing_comments.take() {
-            let line = joined.hard_line();
-            joined.push(line);
-            joined.push(comments);
+        if let Some((trailing, starts_line)) = trailing.take() {
+            if starts_line {
+                let line = joined.hard_line();
+                joined.push(line);
+            }
+            joined.push(trailing);
         }
     }))
 }

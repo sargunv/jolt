@@ -115,53 +115,41 @@ pub(crate) fn inline_modifier_prefix_from_docs<'source>(
 }
 
 fn sorted_modifier_entries(mut entries: Vec<ModifierEntry<'_>>) -> Vec<ModifierEntry<'_>> {
-    sort_modifier_runs(
-        &mut entries,
-        |entry| match entry {
-            ModifierEntry::Token(token) | ModifierEntry::Sealed(token) => token_has_comments(token),
-            ModifierEntry::NonSealed(non_sealed) => non_sealed
-                .token_iter()
-                .any(|token| token_has_comments(&token)),
-            ModifierEntry::Malformed(_) => true,
-        },
-        |run| {
-            if !run
-                .windows(2)
-                .all(|pair| modifier_entry_order(&pair[0]) <= modifier_entry_order(&pair[1]))
-            {
-                run.sort_by_key(modifier_entry_order);
-            }
-        },
-    );
-    entries
-}
-
-/// Stably orders the comment-free runs among `m` modifier entries.
-///
-/// The runs partition the input, so their stable comparison sorts perform
-/// O(m log m) comparisons in total and use O(m) auxiliary storage. Each key is
-/// a constant-size grammar-order integer; there is no layout search or retry.
-fn sort_modifier_runs<T>(
-    items: &mut [T],
-    mut is_barrier: impl FnMut(&T) -> bool,
-    mut sort_run: impl FnMut(&mut [T]),
-) {
-    // Comment-bearing modifiers keep their original position; only the
-    // comment-free runs between them are reorderable.
+    if entries
+        .iter()
+        .any(|entry| matches!(entry, ModifierEntry::Malformed(_)))
+    {
+        return entries;
+    }
+    let is_barrier = |entry: &ModifierEntry<'_>| match entry {
+        ModifierEntry::Token(token) | ModifierEntry::Sealed(token) => token_has_comments(token),
+        ModifierEntry::NonSealed(non_sealed) => non_sealed
+            .token_iter()
+            .any(|token| token_has_comments(&token)),
+        ModifierEntry::Malformed(_) => false,
+    };
     let mut run_start = None;
-
-    for index in 0..items.len() {
-        if is_barrier(&items[index]) {
+    for index in 0..entries.len() {
+        if is_barrier(&entries[index]) {
             if let Some(start) = run_start.take() {
-                sort_run(&mut items[start..index]);
+                sort_modifier_run(&mut entries[start..index]);
             }
         } else if run_start.is_none() {
             run_start = Some(index);
         }
     }
-
     if let Some(start) = run_start {
-        sort_run(&mut items[start..]);
+        sort_modifier_run(&mut entries[start..]);
+    }
+    entries
+}
+
+fn sort_modifier_run(run: &mut [ModifierEntry<'_>]) {
+    if !run
+        .windows(2)
+        .all(|pair| modifier_entry_order(&pair[0]) <= modifier_entry_order(&pair[1]))
+    {
+        run.sort_by_key(modifier_entry_order);
     }
 }
 

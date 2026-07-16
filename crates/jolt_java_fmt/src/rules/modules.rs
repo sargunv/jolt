@@ -217,58 +217,48 @@ fn format_directive_entries<'source>(
     entries: Vec<DirectiveEntry<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let entry_count = entries.len();
-    // Delay the section allocation for the common case where the whole list
-    // is one sortable run and can be formatted directly.
-    let mut sections = Vec::new();
-    let mut sortable = Vec::with_capacity(entry_count);
-    for entry in entries {
-        match entry {
-            DirectiveEntry::Node(node) => {
-                let has_leading_comments = node
-                    .first_token()
-                    .is_some_and(|token| !token.leading_comments().is_empty());
-                if !has_leading_comments && let Some(formatted) = FormattedDirective::new(node) {
-                    sortable.push(formatted);
-                } else {
-                    if sections.capacity() == 0 {
-                        sections.reserve_exact(entry_count);
+    let sortable = entries
+        .iter()
+        .map(|entry| match entry {
+            DirectiveEntry::Node(node) => Some((*node, FormattedDirective::new(*node)?)),
+            DirectiveEntry::Token(_)
+            | DirectiveEntry::Malformed(_)
+            | DirectiveEntry::Missing(_) => None,
+        })
+        .collect::<Option<Vec<_>>>();
+    let Some(sortable) = sortable else {
+        return doc.concat_list(|docs| {
+            for entry in entries {
+                if !docs.is_empty() {
+                    let line = docs.hard_line();
+                    docs.push(line);
+                }
+                let entry = match entry {
+                    DirectiveEntry::Node(node) => format_directive_node(&node, docs),
+                    DirectiveEntry::Token(token) => format_token_with_comments(docs, &token),
+                    DirectiveEntry::Malformed(malformed) => format_malformed(&malformed, docs),
+                    DirectiveEntry::Missing(missing) => {
+                        crate::helpers::recovery::format_missing(&missing, docs)
                     }
-                    flush_directives(&mut sortable, &mut sections, doc);
-                    sections.push(format_directive_node(&node, doc));
-                }
+                };
+                docs.push(entry);
             }
-            DirectiveEntry::Token(token) => {
-                if sections.capacity() == 0 {
-                    sections.reserve_exact(entry_count);
-                }
-                flush_directives(&mut sortable, &mut sections, doc);
-                sections.push(format_token_with_comments(doc, &token));
-            }
-            DirectiveEntry::Malformed(malformed) => {
-                if sections.capacity() == 0 {
-                    sections.reserve_exact(entry_count);
-                }
-                flush_directives(&mut sortable, &mut sections, doc);
-                sections.push(format_malformed(&malformed, doc));
-            }
-            DirectiveEntry::Missing(missing) => {
-                if sections.capacity() == 0 {
-                    sections.reserve_exact(entry_count);
-                }
-                flush_directives(&mut sortable, &mut sections, doc);
-                sections.push(crate::helpers::recovery::format_missing(&missing, doc));
-            }
+        });
+    };
+    let mut sections = Vec::new();
+    let mut run = Vec::new();
+    for (node, formatted) in sortable {
+        if node
+            .first_token()
+            .is_some_and(|token| !token.leading_comments().is_empty())
+        {
+            flush_directives(&mut run, &mut sections, doc);
+            sections.push(format_directive_node(&node, doc));
+        } else {
+            run.push(formatted);
         }
     }
-    if sections.is_empty() {
-        if sortable.is_empty() {
-            return Doc::nil();
-        }
-        sort_directives_if_needed(&mut sortable);
-        return format_sorted_directives(sortable, doc);
-    }
-    flush_directives(&mut sortable, &mut sections, doc);
+    flush_directives(&mut run, &mut sections, doc);
     join_empty_lines(doc, sections)
 }
 
@@ -277,16 +267,13 @@ fn flush_directives<'source>(
     sections: &mut Vec<Doc<'source>>,
     doc: &mut DocBuilder<'source>,
 ) {
-    if directives.is_empty() {
-        return;
+    if !directives.is_empty() {
+        sort_directives_if_needed(directives);
+        sections.push(format_sorted_directives(directives.drain(..), doc));
     }
-    sort_directives_if_needed(directives);
-    sections.push(format_sorted_directives(directives.drain(..), doc));
 }
 
 fn sort_directives_if_needed(directives: &mut [FormattedDirective<'_>]) {
-    // Each recovery-, ignore-, and comment-delimited run has
-    // `r <= represented tokens`; sorting is O(r log r) time and O(r) scratch.
     let compare = |left: &FormattedDirective<'_>, right: &FormattedDirective<'_>| {
         left.kind
             .cmp(&right.kind)
@@ -441,9 +428,6 @@ fn format_directive_node<'source>(
     node: &ModuleDirective<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    if let ModuleDirective::BogusModuleDirective(bogus) = node {
-        return format_malformed(bogus, doc);
-    }
     {
         let first = node.first_token();
         let last = node.last_token();
@@ -453,7 +437,7 @@ fn format_directive_node<'source>(
             ModuleDirective::OpensDirective(value) => format_opens(value, doc),
             ModuleDirective::UsesDirective(value) => format_uses(value, doc),
             ModuleDirective::ProvidesDirective(value) => format_provides(value, doc),
-            ModuleDirective::BogusModuleDirective(_) => unreachable!(),
+            ModuleDirective::BogusModuleDirective(bogus) => return format_malformed(bogus, doc),
         };
         let trailing = last.map_or_else(Doc::nil, |token| {
             format_inline_trailing_comment_list(doc, token.trailing_comments())
@@ -563,29 +547,14 @@ fn format_requires<'source>(
 fn sort_requires_modifier_runs<'source>(
     parts: &mut [JavaFormatListPart<'source, jolt_java_syntax::RequiresModifier<'source>>],
 ) {
-    // Each malformed- or comment-delimited run has `r <= represented tokens`;
-    // sorting is O(r log r) time and O(r) scratch.
-    let is_barrier = |part: &JavaFormatListPart<
-        'source,
-        jolt_java_syntax::RequiresModifier<'source>,
-    >| match part {
+    let sortable = parts.iter().all(|part| match part {
         JavaFormatListPart::Item(modifier) => modifier
             .token()
-            .is_none_or(|token| token_has_comments(&token)),
-        JavaFormatListPart::Separator(_) | JavaFormatListPart::Malformed(_) => true,
-    };
-    let mut run_start = None;
-    for index in 0..parts.len() {
-        if is_barrier(&parts[index]) {
-            if let Some(start) = run_start.take() {
-                parts[start..index].sort_by_key(requires_modifier_order);
-            }
-        } else if run_start.is_none() {
-            run_start = Some(index);
-        }
-    }
-    if let Some(start) = run_start {
-        parts[start..].sort_by_key(requires_modifier_order);
+            .is_some_and(|token| !token_has_comments(&token)),
+        JavaFormatListPart::Separator(_) | JavaFormatListPart::Malformed(_) => false,
+    });
+    if sortable {
+        parts.sort_by_key(requires_modifier_order);
     }
 }
 

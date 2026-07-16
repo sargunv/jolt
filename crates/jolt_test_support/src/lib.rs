@@ -1,7 +1,7 @@
 #![allow(clippy::missing_panics_doc)]
 
-use std::collections::BTreeMap;
-use std::fmt::{Debug, Write as _};
+use std::collections::{BTreeMap, HashMap, HashSet};
+use std::fmt::{Debug, Display, Write as _};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -16,6 +16,62 @@ use unicode_width::UnicodeWidthStr;
 mod schema_audit;
 
 pub use schema_audit::{PhysicalNodeAudit, SchemaAudit};
+
+pub fn assert_bidirectional_diagnostic_ownership<L>(
+    root: SyntaxNode<'_, L>,
+    diagnostics: &[Diagnostic],
+    owners: &[Option<SyntaxDiagnosticOwner>],
+    requires_owner: impl Fn(&Diagnostic) -> bool,
+    context: impl Display,
+) where
+    L: Language,
+    L::Kind: Debug,
+{
+    assert_eq!(
+        owners.len(),
+        diagnostics.len(),
+        "diagnostic owner count changed in {context}"
+    );
+    let mut nodes = vec![root];
+    let mut cursor = 0;
+    while let Some(node) = nodes.get(cursor).copied() {
+        nodes.extend(node.children());
+        cursor += 1;
+    }
+    let nodes_by_id = nodes
+        .iter()
+        .copied()
+        .map(|node| (node.id(), node))
+        .collect::<HashMap<_, _>>();
+    let mut owned_nodes = HashSet::new();
+    for (diagnostic, owner) in diagnostics.iter().zip(owners) {
+        let Some(owner) = owner else {
+            assert!(
+                !requires_owner(diagnostic),
+                "unowned structural diagnostic in {context}: {diagnostic:?}"
+            );
+            continue;
+        };
+        let node = nodes_by_id
+            .get(&owner.node())
+            .unwrap_or_else(|| panic!("unreachable diagnostic owner in {context}: {diagnostic:?}"));
+        if let Some(slot) = owner.slot() {
+            assert!(
+                matches!(node.slot_at(slot as usize), Some(SyntaxSlot::Empty)),
+                "diagnostic owner is not an empty slot in {context}: {diagnostic:?}; owner={owner:?}; node={node:#?}"
+            );
+        }
+        owned_nodes.insert(owner.node());
+    }
+    for node in nodes {
+        if node.is_directly_malformed() {
+            assert!(
+                owned_nodes.contains(&node.id()),
+                "directly malformed node has no diagnostic owner in {context}: {node:#?}"
+            );
+        }
+    }
+}
 
 pub fn assert_exact_diagnostic_owner<L>(
     root: SyntaxNode<'_, L>,

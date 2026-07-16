@@ -21,113 +21,58 @@ use jolt_java_syntax::{
 
 type PartResult<'source, T> = Result<JavaSyntaxListPart<'source, T>, JavaSyntaxInvariantError>;
 
-pub(super) fn format_class_body<'source>(
-    body: &ClassBody<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> BodyContent<'source> {
-    let open = present_token(body.open_brace());
-    let close = present_token(body.close_brace());
-    let open_comments = format_body_open_dangling_comments(open, doc);
-    let close_comments = format_body_close_dangling_comments(close, doc);
-    let members = match resolve_required_field(body.members(), doc) {
-        JavaFormatField::Present(members) => members,
-        JavaFormatField::Malformed(malformed) => {
-            return BodyContent::new(
-                format_recovered_member_body(open_comments, malformed, close_comments, doc),
-                true,
-                true,
-            );
+macro_rules! standard_member_body {
+    ($name:ident, $body:ty, $category:path, $format:path) => {
+        pub(super) fn $name<'source>(
+            body: &$body,
+            doc: &mut DocBuilder<'source>,
+        ) -> BodyContent<'source> {
+            let open = present_token(body.open_brace());
+            let close = present_token(body.close_brace());
+            let open_comments = format_body_open_dangling_comments(open, doc);
+            let close_comments = format_body_close_dangling_comments(close, doc);
+            let members = match resolve_required_field(body.members(), doc) {
+                JavaFormatField::Present(members) => members,
+                JavaFormatField::Malformed(malformed) => {
+                    return recovered_member_body(open_comments, malformed, close_comments, doc);
+                }
+            };
+            let body_start = body.text_range().start().get();
+            let ignored =
+                formatter_ignore_ranges(body.source_text(), body_start, body.token_iter());
+            format_member_parts(
+                body_start,
+                &ignored,
+                members.parts(),
+                open_comments,
+                close_comments,
+                |member| family_token_range(member, body_start),
+                $category,
+                |member, doc| Some($format(member, doc)),
+                doc,
+            )
         }
     };
-    let ignored = formatter_ignore_ranges(
-        body.source_text(),
-        body.text_range().start().get(),
-        body.token_iter(),
-    );
-    format_member_parts(
-        body.text_range().start().get(),
-        &ignored,
-        members.parts(),
-        open_comments,
-        close_comments,
-        |member| family_token_range(member, body.text_range().start().get()),
-        member_category,
-        |member, doc| Some(FormattedMember::from_member(member, doc)),
-        doc,
-    )
 }
 
-pub(super) fn format_record_body<'source>(
-    body: &RecordBody<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> BodyContent<'source> {
-    let open = present_token(body.open_brace());
-    let close = present_token(body.close_brace());
-    let open_comments = format_body_open_dangling_comments(open, doc);
-    let close_comments = format_body_close_dangling_comments(close, doc);
-    let members = match resolve_required_field(body.members(), doc) {
-        JavaFormatField::Present(members) => members,
-        JavaFormatField::Malformed(malformed) => {
-            return BodyContent::new(
-                format_recovered_member_body(open_comments, malformed, close_comments, doc),
-                true,
-                true,
-            );
-        }
-    };
-    let ignored = formatter_ignore_ranges(
-        body.source_text(),
-        body.text_range().start().get(),
-        body.token_iter(),
-    );
-    format_member_parts(
-        body.text_range().start().get(),
-        &ignored,
-        members.parts(),
-        open_comments,
-        close_comments,
-        |member| family_token_range(member, body.text_range().start().get()),
-        member_category,
-        |member, doc| Some(FormattedMember::from_member(member, doc)),
-        doc,
-    )
-}
-
-pub(super) fn format_interface_body<'source>(
-    body: &InterfaceBody<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> BodyContent<'source> {
-    let open = present_token(body.open_brace());
-    let close = present_token(body.close_brace());
-    let open_comments = format_body_open_dangling_comments(open, doc);
-    let close_comments = format_body_close_dangling_comments(close, doc);
-    let members = match resolve_required_field(body.members(), doc) {
-        JavaFormatField::Present(members) => members,
-        JavaFormatField::Malformed(malformed) => {
-            return BodyContent::new(
-                format_recovered_member_body(open_comments, malformed, close_comments, doc),
-                true,
-                true,
-            );
-        }
-    };
-    let ignored = formatter_ignore_ranges(
-        body.source_text(),
-        body.text_range().start().get(),
-        body.token_iter(),
-    );
-    format_member_parts(
-        body.text_range().start().get(),
-        &ignored,
-        members.parts(),
-        open_comments,
-        close_comments,
-        |member| family_token_range(member, body.text_range().start().get()),
-        interface_member_category,
-        |member, doc| Some(FormattedMember::from_interface_member(member, doc)),
-        doc,
-    )
-}
+standard_member_body!(
+    format_class_body,
+    ClassBody<'source>,
+    member_category,
+    FormattedMember::from_member
+);
+standard_member_body!(
+    format_record_body,
+    RecordBody<'source>,
+    member_category,
+    FormattedMember::from_member
+);
+standard_member_body!(
+    format_interface_body,
+    InterfaceBody<'source>,
+    interface_member_category,
+    FormattedMember::from_interface_member
+);
 
 pub(super) fn format_annotation_interface_body<'source>(
     body: &jolt_java_syntax::AnnotationInterfaceBody<'source>,
@@ -140,11 +85,7 @@ pub(super) fn format_annotation_interface_body<'source>(
     let elements = match resolve_optional_field(body.elements(), doc) {
         JavaFormatField::Present(elements) => elements,
         JavaFormatField::Malformed(malformed) => {
-            return BodyContent::new(
-                format_recovered_member_body(open_comments, malformed, close_comments, doc),
-                true,
-                true,
-            );
+            return recovered_member_body(open_comments, malformed, close_comments, doc);
         }
     };
     let Some(elements) = elements else {
@@ -156,11 +97,7 @@ pub(super) fn format_annotation_interface_body<'source>(
         match resolve_required_field(elements.declarations(), doc) {
             JavaFormatField::Present(declarations) => declarations,
             JavaFormatField::Malformed(malformed) => {
-                return BodyContent::new(
-                    format_recovered_member_body(open_comments, malformed, close_comments, doc),
-                    true,
-                    true,
-                );
+                return recovered_member_body(open_comments, malformed, close_comments, doc);
             }
         };
     let ignored = formatter_ignore_ranges(
@@ -181,20 +118,21 @@ pub(super) fn format_annotation_interface_body<'source>(
     )
 }
 
-fn format_recovered_member_body<'source>(
+fn recovered_member_body<'source>(
     open: Option<FormattedMember<'source>>,
     malformed: Doc<'source>,
     close: Option<FormattedMember<'source>>,
     doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    doc_concat!(
+) -> BodyContent<'source> {
+    let contents = doc_concat!(
         doc,
         [
             open.map_or_else(Doc::nil, |member| member.doc),
             malformed,
             close.map_or_else(Doc::nil, |member| member.doc)
         ]
-    )
+    );
+    BodyContent::new(contents, true, true)
 }
 
 fn present_token<'source>(

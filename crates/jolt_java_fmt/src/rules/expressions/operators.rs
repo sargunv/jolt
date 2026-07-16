@@ -77,25 +77,14 @@ pub(super) fn format_binary_expression<'source>(
     expression: &BinaryExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    if !expression.is_recovery_free() {
-        return format_recovered_binary_expression(expression, doc);
+    if expression.is_recovery_free()
+        && let Some(operator) = binary_operator(expression)
+    {
+        let parent_operator = operator.kind();
+        let (first, rest, has_rest) = flatten_binary_expression(expression, operator, doc);
+        let first = format_binary_operand(&first, parent_operator, doc);
+        return binary_chain(doc, first, rest, has_rest);
     }
-
-    let Some(operator) = binary_operator(expression) else {
-        doc.block_on_invariant("recovery-free binary expression lacked an operator");
-        return Doc::nil();
-    };
-
-    let parent_operator = operator.kind();
-    let (first, rest, has_rest) = flatten_binary_expression(expression, operator, doc);
-    let first = format_binary_operand(&first, parent_operator, doc);
-    binary_chain(doc, first, rest, has_rest)
-}
-
-fn format_recovered_binary_expression<'source>(
-    expression: &BinaryExpression<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
     let left = format_required_field(expression.left(), doc, |left, doc| {
         format_expression(&left, doc)
     });

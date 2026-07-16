@@ -259,7 +259,16 @@ pub(crate) fn format_block_statement_item<'source>(
                     Ok(LocalTypeDeclarationSyntax::ClassDeclaration(declaration)) => {
                         format_type_declaration(&declaration.into(), doc)
                     }
+                    Ok(LocalTypeDeclarationSyntax::RecordDeclaration(declaration)) => {
+                        format_type_declaration(&declaration.into(), doc)
+                    }
+                    Ok(LocalTypeDeclarationSyntax::EnumDeclaration(declaration)) => {
+                        format_type_declaration(&declaration.into(), doc)
+                    }
                     Ok(LocalTypeDeclarationSyntax::InterfaceDeclaration(declaration)) => {
+                        format_type_declaration(&declaration.into(), doc)
+                    }
+                    Ok(LocalTypeDeclarationSyntax::AnnotationInterfaceDeclaration(declaration)) => {
                         format_type_declaration(&declaration.into(), doc)
                     }
                     Ok(LocalTypeDeclarationSyntax::BogusTypeDeclaration(declaration)) => {
@@ -275,6 +284,7 @@ pub(crate) fn format_block_statement_item<'source>(
         }
         BlockItem::Block(block) => format_block(&block, doc),
         BlockItem::BogusBlockItem(value) => format_malformed(&value, doc),
+        BlockItem::BogusStatement(value) => format_malformed(&value, doc),
         BlockItem::LabeledStatement(statement) => format_statement(&statement.into(), doc),
         BlockItem::ExpressionStatement(statement) => format_statement(&statement.into(), doc),
         BlockItem::IfStatement(statement) => format_statement(&statement.into(), doc),

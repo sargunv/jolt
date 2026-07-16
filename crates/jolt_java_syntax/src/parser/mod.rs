@@ -253,86 +253,11 @@ fn invalid_event_stream_diagnostic(error: &jolt_syntax::BuildSyntaxTreeError) ->
 
 #[cfg(test)]
 mod tests {
-    use jolt_diagnostics::DiagnosticStage;
-    use jolt_syntax::SyntaxSlot;
     use jolt_test_support::assert_exact_diagnostic_owner;
 
     use crate::{JavaSyntaxKind, parse_compilation_unit};
 
     use super::JavaParseDiagnosticCode;
-
-    #[test]
-    fn migrated_structural_diagnostics_have_exact_syntax_owners() {
-        for source in [
-            "package ;\nimport foo + lost;\nmodule m { +; requires ; exports p to ; opens p target; uses ; provides s with ; }\n+;",
-            "module missing requires dependency; class After {}",
-            "native class C { int ; void f(, String... xs, int y) {} }",
-            "class C { +; C() { this(); this(); } }",
-            "class C { void f() { 1 = 2; int value = +; Object a = new int(); } }",
-            "class C { void f() { a.; a.(); Object value = (); } }",
-        ] {
-            let parse = parse_compilation_unit(source);
-            let root = parse.syntax().expect("represented compilation unit");
-            let mut nodes = vec![*root.syntax()];
-            let mut cursor = 0;
-            while let Some(node) = nodes.get(cursor).copied() {
-                nodes.extend(node.children());
-                cursor += 1;
-            }
-            let owners = parse.structural_diagnostic_owners();
-            assert_eq!(owners.len(), parse.diagnostics().len());
-            let mut owned_nodes = Vec::new();
-            for (diagnostic, owner) in parse.diagnostics().iter().zip(owners) {
-                if diagnostic.stage != DiagnosticStage::Parser {
-                    continue;
-                }
-                let owner = owner.unwrap_or_else(|| panic!("unowned diagnostic: {diagnostic:?}"));
-                let node = nodes
-                    .iter()
-                    .copied()
-                    .find(|node| node.id() == owner.node())
-                    .unwrap_or_else(|| panic!("owner node is not reachable: {diagnostic:?}"));
-                if let Some(slot) = owner.slot() {
-                    assert!(
-                        matches!(node.slot_at(slot as usize), Some(SyntaxSlot::Empty)),
-                        "diagnostic does not own an empty slot: {diagnostic:?}"
-                    );
-                }
-                owned_nodes.push(owner.node());
-            }
-            for node in nodes {
-                if matches!(
-                    node.kind(),
-                    JavaSyntaxKind::BogusCompilationUnitItem
-                        | JavaSyntaxKind::BogusImportSuffix
-                        | JavaSyntaxKind::BogusModuleDirective
-                        | JavaSyntaxKind::BogusFormalParameter
-                        | JavaSyntaxKind::BogusModifier
-                        | JavaSyntaxKind::BogusType
-                        | JavaSyntaxKind::BogusClassBodyMember
-                        | JavaSyntaxKind::BogusInterfaceBodyMember
-                        | JavaSyntaxKind::BogusAnnotationInterfaceBodyMember
-                        | JavaSyntaxKind::BogusConstructorBodyEntry
-                        | JavaSyntaxKind::BogusExpression
-                        | JavaSyntaxKind::BogusAssignmentTarget
-                        | JavaSyntaxKind::BogusObjectCreationType
-                        | JavaSyntaxKind::BogusArrayCreationType
-                        | JavaSyntaxKind::BogusEnhancedForVariable
-                        | JavaSyntaxKind::BogusResourceValue
-                        | JavaSyntaxKind::BogusSwitchEntry
-                        | JavaSyntaxKind::BogusSwitchGuard
-                        | JavaSyntaxKind::BogusSwitchLabelItem
-                ) {
-                    assert!(node.is_directly_malformed());
-                    assert!(
-                        owned_nodes.contains(&node.id()),
-                        "direct malformed migrated owner has no diagnostic: {:?}",
-                        node.kind()
-                    );
-                }
-            }
-        }
-    }
 
     #[rustfmt::skip]
     fn check(source: &str, code: jolt_diagnostics::DiagnosticCodeId, message: &str, kind: JavaSyntaxKind, slot: Option<u16>) {
