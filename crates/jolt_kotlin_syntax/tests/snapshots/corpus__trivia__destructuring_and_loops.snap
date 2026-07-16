@@ -130,9 +130,11 @@ KotlinFile
                           BinaryExpression
                             NameExpression
                               Identifier "name" @ 246..250 trailing=[Whitespace " "]
-                            Identifier "to" @ 251..253 trailing=[Whitespace " "]
-                            NameExpression
-                              Identifier "count" @ 254..259
+                            BinaryOperator
+                              Identifier "to" @ 251..253 trailing=[Whitespace " "]
+                            BinaryExpressionRight
+                              NameExpression
+                                Identifier "count" @ 254..259
                         PropertyBodyMemberList
                       Statement
                         ExpressionStatement
@@ -148,17 +150,23 @@ KotlinFile
                                   StringTemplateExpression
                                     StringTemplateEntryList
                                       StringTemplateEntry
-                                        OpenQuote "\"" @ 276..277
+                                        StringTemplateContent
+                                          OpenQuote "\"" @ 276..277
                                       StringTemplateEntry
-                                        ShortTemplateEntryStart "$" @ 277..278
+                                        StringTemplateContent
+                                          ShortTemplateEntryStart "$" @ 277..278
                                       StringTemplateEntry
-                                        Identifier "first" @ 278..283
+                                        StringTemplateContent
+                                          Identifier "first" @ 278..283
                                       StringTemplateEntry
-                                        RegularStringPart ":" @ 283..284
+                                        StringTemplateContent
+                                          RegularStringPart ":" @ 283..284
                                       StringTemplateEntry
-                                        ShortTemplateEntryStart "$" @ 284..285
+                                        StringTemplateContent
+                                          ShortTemplateEntryStart "$" @ 284..285
                                       StringTemplateEntry
-                                        Identifier "second" @ 285..291
+                                        StringTemplateContent
+                                          Identifier "second" @ 285..291
                                     ClosingQuote "\"" @ 291..292
                               RParen ")" @ 292..293
                             LambdaExpressionList

@@ -91,9 +91,11 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "context" @ 88..95 trailing=[Whitespace " "]
-                  Plus "+" @ 96..97 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "1" @ 98..99
+                  BinaryOperator
+                    Plus "+" @ 96..97 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    LiteralExpression
+                      IntegerLiteral "1" @ 98..99
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -106,8 +108,10 @@ KotlinFile
                 NavigationExpression
                   NameExpression
                     Identifier "field" @ 113..118
-                  Dot "." @ 118..119
-                  Identifier "length" @ 119..125
+                  NavigationOperator
+                    Dot "." @ 118..119
+                  NameExpression
+                    Identifier "length" @ 119..125
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -120,13 +124,17 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "value" @ 140..145 trailing=[Whitespace " "]
-                  AndAnd "&&" @ 146..148 trailing=[Whitespace " "]
-                  BinaryExpression
-                    NameExpression
-                      Identifier "where" @ 149..154 trailing=[Whitespace " "]
-                    Gt ">" @ 155..156 trailing=[Whitespace " "]
-                    NameExpression
-                      Identifier "by" @ 157..159
+                  BinaryOperator
+                    AndAnd "&&" @ 146..148 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    BinaryExpression
+                      NameExpression
+                        Identifier "where" @ 149..154 trailing=[Whitespace " "]
+                      BinaryOperator
+                        Gt ">" @ 155..156 trailing=[Whitespace " "]
+                      BinaryExpressionRight
+                        NameExpression
+                          Identifier "by" @ 157..159
               PropertyBodyMemberList
             Statement
               ExpressionStatement
@@ -145,9 +153,11 @@ KotlinFile
                     StringTemplateExpression
                       StringTemplateEntryList
                         StringTemplateEntry
-                          OpenQuote "\"" @ 191..192
+                          StringTemplateContent
+                            OpenQuote "\"" @ 191..192
                         StringTemplateEntry
-                          RegularStringPart "none" @ 192..196
+                          StringTemplateContent
+                            RegularStringPart "none" @ 192..196
                       ClosingQuote "\"" @ 196..197
               TerminatorList
           RBrace "}" @ 198..199 leading=[Newline "\n"]
@@ -186,10 +196,12 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "open" @ 244..248 leading=[Newline "\n", Whitespace "    "]
-                    SplitSafeNavigationOperator
-                      Question "?" @ 248..249
-                      Dot "." @ 249..250
-                    Identifier "member" @ 250..256
+                    NavigationOperator
+                      SplitSafeNavigationOperator
+                        Question "?" @ 248..249
+                        Dot "." @ 249..250
+                    NameExpression
+                      Identifier "member" @ 250..256
                   TypeArgumentListList
                   ValueArgumentList
                     LParen "(" @ 256..257

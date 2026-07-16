@@ -45,9 +45,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 32..33
+                              StringTemplateContent
+                                OpenQuote "\"" @ 32..33
                             StringTemplateEntry
-                              RegularStringPart "user" @ 33..37
+                              StringTemplateContent
+                                RegularStringPart "user" @ 33..37
                           ClosingQuote "\"" @ 37..38
                     RParen ")" @ 38..39
               ValKw "val" @ 44..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]

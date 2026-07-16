@@ -77,15 +77,21 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "bits" @ 66..70 trailing=[Whitespace " "]
-                    Identifier "or" @ 71..73 trailing=[Whitespace " "]
-                    NameExpression
-                      Identifier "mask" @ 74..78 trailing=[Whitespace " "]
-                  Identifier "and" @ 79..82 trailing=[Whitespace " "]
-                  NavigationExpression
-                    NameExpression
-                      Identifier "Bits" @ 83..87
-                    Dot "." @ 87..88
-                    Identifier "Enabled" @ 88..95
+                    BinaryOperator
+                      Identifier "or" @ 71..73 trailing=[Whitespace " "]
+                    BinaryExpressionRight
+                      NameExpression
+                        Identifier "mask" @ 74..78 trailing=[Whitespace " "]
+                  BinaryOperator
+                    Identifier "and" @ 79..82 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    NavigationExpression
+                      NameExpression
+                        Identifier "Bits" @ 83..87
+                      NavigationOperator
+                        Dot "." @ 87..88
+                      NameExpression
+                        Identifier "Enabled" @ 88..95
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -99,15 +105,21 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "bits" @ 115..119 trailing=[Whitespace " "]
-                    Identifier "and" @ 120..123 trailing=[Whitespace " "]
-                    NameExpression
-                      Identifier "mask" @ 124..128 trailing=[Whitespace " "]
-                  Identifier "or" @ 129..131 trailing=[Whitespace " "]
-                  NavigationExpression
-                    NameExpression
-                      Identifier "Bits" @ 132..136
-                    Dot "." @ 136..137
-                    Identifier "Enabled" @ 137..144
+                    BinaryOperator
+                      Identifier "and" @ 120..123 trailing=[Whitespace " "]
+                    BinaryExpressionRight
+                      NameExpression
+                        Identifier "mask" @ 124..128 trailing=[Whitespace " "]
+                  BinaryOperator
+                    Identifier "or" @ 129..131 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    NavigationExpression
+                      NameExpression
+                        Identifier "Bits" @ 132..136
+                      NavigationOperator
+                        Dot "." @ 136..137
+                      NameExpression
+                        Identifier "Enabled" @ 137..144
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -120,16 +132,22 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "bits" @ 168..172 trailing=[Whitespace " "]
-                  Identifier "context" @ 173..180 trailing=[Whitespace " "]
-                  BinaryExpression
-                    NameExpression
-                      Identifier "mask" @ 181..185 trailing=[Whitespace " "]
-                    Plus "+" @ 186..187 trailing=[Whitespace " "]
-                    NavigationExpression
+                  BinaryOperator
+                    Identifier "context" @ 173..180 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    BinaryExpression
                       NameExpression
-                        Identifier "Bits" @ 188..192
-                      Dot "." @ 192..193
-                      Identifier "Enabled" @ 193..200
+                        Identifier "mask" @ 181..185 trailing=[Whitespace " "]
+                      BinaryOperator
+                        Plus "+" @ 186..187 trailing=[Whitespace " "]
+                      BinaryExpressionRight
+                        NavigationExpression
+                          NameExpression
+                            Identifier "Bits" @ 188..192
+                          NavigationOperator
+                            Dot "." @ 192..193
+                          NameExpression
+                            Identifier "Enabled" @ 193..200
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -143,15 +161,21 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "bits" @ 223..227 trailing=[Whitespace " "]
-                    Plus "+" @ 228..229 trailing=[Whitespace " "]
-                    NameExpression
-                      Identifier "mask" @ 230..234 trailing=[Whitespace " "]
-                  Identifier "context" @ 235..242 trailing=[Whitespace " "]
-                  NavigationExpression
-                    NameExpression
-                      Identifier "Bits" @ 243..247
-                    Dot "." @ 247..248
-                    Identifier "Enabled" @ 248..255
+                    BinaryOperator
+                      Plus "+" @ 228..229 trailing=[Whitespace " "]
+                    BinaryExpressionRight
+                      NameExpression
+                        Identifier "mask" @ 230..234 trailing=[Whitespace " "]
+                  BinaryOperator
+                    Identifier "context" @ 235..242 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    NavigationExpression
+                      NameExpression
+                        Identifier "Bits" @ 243..247
+                      NavigationOperator
+                        Dot "." @ 247..248
+                      NameExpression
+                        Identifier "Enabled" @ 248..255
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -164,9 +188,11 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "combined" @ 272..280 trailing=[Whitespace " "]
-                  Identifier "context" @ 281..288 trailing=[Whitespace " "]
-                  NameExpression
-                    Identifier "mask" @ 289..293
+                  BinaryOperator
+                    Identifier "context" @ 281..288 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    NameExpression
+                      Identifier "mask" @ 289..293
               PropertyBodyMemberList
             Statement
               ExpressionStatement

@@ -75,9 +75,11 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "value" @ 79..84
-                  Star "*" @ 84..85
-                  LiteralExpression
-                    IntegerLiteral "2" @ 85..86
+                  BinaryOperator
+                    Star "*" @ 84..85
+                  BinaryExpressionRight
+                    LiteralExpression
+                      IntegerLiteral "2" @ 85..86
               PropertyBodyMemberList
             Statement
               ExpressionStatement
@@ -93,9 +95,11 @@ KotlinFile
                         BinaryExpression
                           NameExpression
                             Identifier "doubled" @ 99..106
-                          Plus "+" @ 106..107
-                          LiteralExpression
-                            IntegerLiteral "1" @ 107..108
+                          BinaryOperator
+                            Plus "+" @ 106..107
+                          BinaryExpressionRight
+                            LiteralExpression
+                              IntegerLiteral "1" @ 107..108
                     RParen ")" @ 108..109
                   LambdaExpressionList
               TerminatorList
@@ -106,9 +110,11 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "doubled" @ 121..128
-                    Plus "+" @ 128..129
-                    LiteralExpression
-                      IntegerLiteral "1" @ 129..130
+                    BinaryOperator
+                      Plus "+" @ 128..129
+                    BinaryExpressionRight
+                      LiteralExpression
+                        IntegerLiteral "1" @ 129..130
               TerminatorList
           RBrace "}" @ 131..132 leading=[Newline "\n"]
   Eof "" @ 133..133 leading=[Newline "\n"]

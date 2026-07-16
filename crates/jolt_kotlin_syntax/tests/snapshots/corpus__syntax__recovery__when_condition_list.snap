@@ -55,7 +55,7 @@ KotlinFile
                             IntegerLiteral "1" @ 30..31
                         Comma "," @ 31..32 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
                         WhenCondition
-                          ErrorNode
+                          BogusExpression
                         Comma "," @ 46..47 trailing=[Whitespace " "]
                         WhenCondition
                           LiteralExpression

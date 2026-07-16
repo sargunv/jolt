@@ -89,9 +89,11 @@ KotlinFile
                               StringTemplateExpression
                                 StringTemplateEntryList
                                   StringTemplateEntry
-                                    OpenQuote "\"" @ 98..99
+                                    StringTemplateContent
+                                      OpenQuote "\"" @ 98..99
                                   StringTemplateEntry
-                                    RegularStringPart "null" @ 99..103
+                                    StringTemplateContent
+                                      RegularStringPart "null" @ 99..103
                                 ClosingQuote "\"" @ 103..104
                           RParen ")" @ 104..105
                         LambdaExpressionList
@@ -119,8 +121,10 @@ KotlinFile
                               NavigationExpression
                                 NameExpression
                                   Identifier "value" @ 135..140
-                                Dot "." @ 140..141
-                                Identifier "length" @ 141..147
+                                NavigationOperator
+                                  Dot "." @ 140..141
+                                NameExpression
+                                  Identifier "length" @ 141..147
                           RParen ")" @ 147..148
                         LambdaExpressionList
                     WhenEntry

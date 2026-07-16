@@ -91,24 +91,30 @@ KotlinFile
                     BinaryExpression
                       NameExpression
                         Identifier "count" @ 100..105 trailing=[Whitespace " "]
-                      EqEq "==" @ 106..108 trailing=[Whitespace " "]
-                      LiteralExpression
-                        IntegerLiteral "1" @ 109..110
+                      BinaryOperator
+                        EqEq "==" @ 106..108 trailing=[Whitespace " "]
+                      BinaryExpressionRight
+                        LiteralExpression
+                          IntegerLiteral "1" @ 109..110
                     RParen ")" @ 110..111 trailing=[Whitespace " "]
                   StringTemplateExpression
                     StringTemplateEntryList
                       StringTemplateEntry
-                        OpenQuote "\"" @ 112..113
+                        StringTemplateContent
+                          OpenQuote "\"" @ 112..113
                       StringTemplateEntry
-                        RegularStringPart "item" @ 113..117
+                        StringTemplateContent
+                          RegularStringPart "item" @ 113..117
                     ClosingQuote "\"" @ 117..118 trailing=[Whitespace " "]
                   ElseKw "else" @ 119..123 trailing=[Whitespace " "]
                   StringTemplateExpression
                     StringTemplateEntryList
                       StringTemplateEntry
-                        OpenQuote "\"" @ 124..125
+                        StringTemplateContent
+                          OpenQuote "\"" @ 124..125
                       StringTemplateEntry
-                        RegularStringPart "items" @ 125..130
+                        StringTemplateContent
+                          RegularStringPart "items" @ 125..130
                     ClosingQuote "\"" @ 130..131
               PropertyBodyMemberList
             Statement
@@ -118,29 +124,39 @@ KotlinFile
                   StringTemplateExpression
                     StringTemplateEntryList
                       StringTemplateEntry
-                        OpenQuote "\"" @ 143..144
+                        StringTemplateContent
+                          OpenQuote "\"" @ 143..144
                       StringTemplateEntry
-                        ShortTemplateEntryStart "$" @ 144..145
+                        StringTemplateContent
+                          ShortTemplateEntryStart "$" @ 144..145
                       StringTemplateEntry
-                        Identifier "name" @ 145..149
+                        StringTemplateContent
+                          Identifier "name" @ 145..149
                       StringTemplateEntry
-                        RegularStringPart " has " @ 149..154
+                        StringTemplateContent
+                          RegularStringPart " has " @ 149..154
                       StringTemplateEntry
-                        LongStringTemplateEntry
-                          LongTemplateEntryStart "${" @ 154..156
-                          BinaryExpression
-                            NameExpression
-                              Identifier "count" @ 156..161 trailing=[Whitespace " "]
-                            Plus "+" @ 162..163 trailing=[Whitespace " "]
-                            LiteralExpression
-                              IntegerLiteral "1" @ 164..165
-                          LongTemplateEntryEnd "}" @ 165..166
+                        StringTemplateContent
+                          LongStringTemplateEntry
+                            LongTemplateEntryStart "${" @ 154..156
+                            BinaryExpression
+                              NameExpression
+                                Identifier "count" @ 156..161 trailing=[Whitespace " "]
+                              BinaryOperator
+                                Plus "+" @ 162..163 trailing=[Whitespace " "]
+                              BinaryExpressionRight
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 164..165
+                            LongTemplateEntryEnd "}" @ 165..166
                       StringTemplateEntry
-                        RegularStringPart " " @ 166..167
+                        StringTemplateContent
+                          RegularStringPart " " @ 166..167
                       StringTemplateEntry
-                        ShortTemplateEntryStart "$" @ 167..168
+                        StringTemplateContent
+                          ShortTemplateEntryStart "$" @ 167..168
                       StringTemplateEntry
-                        Identifier "plural" @ 168..174
+                        StringTemplateContent
+                          Identifier "plural" @ 168..174
                     ClosingQuote "\"" @ 174..175
               TerminatorList
           RBrace "}" @ 176..177 leading=[Newline "\n"]

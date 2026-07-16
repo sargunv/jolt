@@ -69,15 +69,15 @@ KotlinFile
                           WhenCondition
                             LiteralExpression
                               IntegerLiteral "0" @ 71..72 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                            ErrorNode
+                            BogusExpression
                               OpenQuote "\"" @ 73..74
-                            ErrorNode
+                            BogusExpression
                               RegularStringPart "zero" @ 74..78
-                            ErrorNode
+                            BogusExpression
                               ClosingQuote "\"" @ 78..79
                         LiteralExpression
                           IntegerLiteral "1" @ 88..89 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                        ErrorNode
+                        BogusExpression
                           Arrow "->" @ 90..92
                       WhenEntry
                         ElseKw "else" @ 101..105 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
@@ -86,9 +86,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 109..110
+                              StringTemplateContent
+                                OpenQuote "\"" @ 109..110
                             StringTemplateEntry
-                              RegularStringPart "other" @ 110..115
+                              StringTemplateContent
+                                RegularStringPart "other" @ 110..115
                           ClosingQuote "\"" @ 115..116
                     RBrace "}" @ 121..122 leading=[Newline "\n", Whitespace "    "]
               TerminatorList

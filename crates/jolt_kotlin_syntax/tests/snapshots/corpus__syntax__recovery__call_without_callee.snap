@@ -27,17 +27,17 @@ KotlinFile
           BlockItemList
             Statement
               ExpressionStatement
-                ErrorNode
+                BogusExpression
                   Lt "<" @ 13..14
-                ErrorNode
+                BogusExpression
                   Identifier "String" @ 14..20
-                ErrorNode
+                BogusExpression
                   Gt ">" @ 20..21
-                ErrorNode
+                BogusExpression
                   LParen "(" @ 21..22
-                ErrorNode
+                BogusExpression
                   Identifier "value" @ 22..27
-                ErrorNode
+                BogusExpression
                   RParen ")" @ 27..28 trailing=[Whitespace " "]
               TerminatorList
           RBrace "}" @ 29..30

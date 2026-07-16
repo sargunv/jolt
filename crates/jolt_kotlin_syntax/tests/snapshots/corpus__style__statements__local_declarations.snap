@@ -119,8 +119,10 @@ KotlinFile
                           NavigationExpression
                             NameExpression
                               Identifier "prefix" @ 143..149
-                            Dot "." @ 149..150
-                            Identifier "trim" @ 150..154
+                            NavigationOperator
+                              Dot "." @ 149..150
+                            NameExpression
+                              Identifier "trim" @ 150..154
                           TypeArgumentListList
                           ValueArgumentList
                             LParen "(" @ 154..155
@@ -143,8 +145,10 @@ KotlinFile
                             NavigationExpression
                               NameExpression
                                 Identifier "local" @ 171..176
-                              Dot "." @ 176..177
-                              Identifier "value" @ 177..182 trailing=[Whitespace " "]
+                              NavigationOperator
+                                Dot "." @ 176..177
+                              NameExpression
+                                Identifier "value" @ 177..182 trailing=[Whitespace " "]
                           TerminatorList
                       RBrace "}" @ 183..184
               TerminatorList

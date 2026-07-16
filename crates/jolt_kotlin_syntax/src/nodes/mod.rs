@@ -994,6 +994,152 @@ macro_rules! define_kotlin_accessors_from_schema {
 
 kotlin_syntax_schema!(define_kotlin_accessors_from_schema);
 
+fn invalid_role_projection(
+    first_token: Option<KotlinSyntaxToken<'_>>,
+) -> KotlinSyntaxInvariantError {
+    KotlinSyntaxInvariantError {
+        node: first_token.map_or(KotlinSyntaxKind::ErrorNode, |token| token.kind()),
+        slot: 0,
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BinaryOperatorSyntax<'source> {
+    Operator(KotlinSyntaxToken<'source>),
+    InfixFunction(KotlinSyntaxToken<'source>),
+}
+
+impl<'source> BinaryOperatorValue<'source> {
+    #[allow(clippy::missing_errors_doc)]
+    pub fn classify(self) -> KotlinSyntaxResult<BinaryOperatorSyntax<'source>> {
+        let token = self
+            .token()
+            .ok_or_else(|| invalid_role_projection(self.first_token()))?;
+        if token.kind() == KotlinSyntaxKind::Identifier {
+            Ok(BinaryOperatorSyntax::InfixFunction(token))
+        } else {
+            Ok(BinaryOperatorSyntax::Operator(token))
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BinaryExpressionRightSyntax<'source> {
+    Expression(Expression<'source>),
+    TypeReference(TypeReference<'source>),
+}
+
+impl<'source> BinaryExpressionRightValue<'source> {
+    #[allow(clippy::missing_errors_doc)]
+    pub fn classify(self) -> KotlinSyntaxResult<BinaryExpressionRightSyntax<'source>> {
+        if let Some(value) = self.cast_family::<Expression<'source>>() {
+            Ok(BinaryExpressionRightSyntax::Expression(value))
+        } else if let Some(value) = self.cast_node::<TypeReference<'source>>() {
+            Ok(BinaryExpressionRightSyntax::TypeReference(value))
+        } else {
+            Err(invalid_role_projection(self.first_token()))
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum NavigationOperatorSyntax<'source> {
+    Token(KotlinSyntaxToken<'source>),
+    SplitSafe(SplitSafeNavigationOperator<'source>),
+}
+
+impl<'source> NavigationOperatorValue<'source> {
+    #[allow(clippy::missing_errors_doc)]
+    pub fn classify(self) -> KotlinSyntaxResult<NavigationOperatorSyntax<'source>> {
+        if let Some(token) = self.token() {
+            Ok(NavigationOperatorSyntax::Token(token))
+        } else if let Some(value) = self.cast_node::<SplitSafeNavigationOperator<'source>>() {
+            Ok(NavigationOperatorSyntax::SplitSafe(value))
+        } else {
+            Err(invalid_role_projection(self.first_token()))
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CallableReferenceReceiverSyntax<'source> {
+    Expression(Expression<'source>),
+    TypeReference(TypeReference<'source>),
+}
+
+impl<'source> CallableReferenceReceiverValue<'source> {
+    #[allow(clippy::missing_errors_doc)]
+    pub fn classify(self) -> KotlinSyntaxResult<CallableReferenceReceiverSyntax<'source>> {
+        if let Some(value) = self.cast_family::<Expression<'source>>() {
+            Ok(CallableReferenceReceiverSyntax::Expression(value))
+        } else if let Some(value) = self.cast_node::<TypeReference<'source>>() {
+            Ok(CallableReferenceReceiverSyntax::TypeReference(value))
+        } else {
+            Err(invalid_role_projection(self.first_token()))
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum StringTemplateContentSyntax<'source> {
+    Token(KotlinSyntaxToken<'source>),
+    Expression(Expression<'source>),
+    LongEntry(LongStringTemplateEntry<'source>),
+}
+
+impl<'source> StringTemplateContentValue<'source> {
+    #[allow(clippy::missing_errors_doc)]
+    pub fn classify(self) -> KotlinSyntaxResult<StringTemplateContentSyntax<'source>> {
+        if let Some(token) = self.token() {
+            Ok(StringTemplateContentSyntax::Token(token))
+        } else if let Some(value) = self.cast_family::<Expression<'source>>() {
+            Ok(StringTemplateContentSyntax::Expression(value))
+        } else if let Some(value) = self.cast_node::<LongStringTemplateEntry<'source>>() {
+            Ok(StringTemplateContentSyntax::LongEntry(value))
+        } else {
+            Err(invalid_role_projection(self.first_token()))
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LambdaParameterBindingSyntax<'source> {
+    Name(Name<'source>),
+    Destructuring(DestructuringDeclaration<'source>),
+}
+
+impl<'source> LambdaParameterBindingValue<'source> {
+    #[allow(clippy::missing_errors_doc)]
+    pub fn classify(self) -> KotlinSyntaxResult<LambdaParameterBindingSyntax<'source>> {
+        if let Some(value) = self.cast_node::<Name<'source>>() {
+            Ok(LambdaParameterBindingSyntax::Name(value))
+        } else if let Some(value) = self.cast_node::<DestructuringDeclaration<'source>>() {
+            Ok(LambdaParameterBindingSyntax::Destructuring(value))
+        } else {
+            Err(invalid_role_projection(self.first_token()))
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ValueArgumentPrefixSyntax<'source> {
+    Spread(KotlinSyntaxToken<'source>),
+    Annotation(Annotation<'source>),
+}
+
+impl<'source> ValueArgumentPrefixValue<'source> {
+    #[allow(clippy::missing_errors_doc)]
+    pub fn classify(self) -> KotlinSyntaxResult<ValueArgumentPrefixSyntax<'source>> {
+        if let Some(token) = self.token() {
+            Ok(ValueArgumentPrefixSyntax::Spread(token))
+        } else if let Some(value) = self.cast_node::<Annotation<'source>>() {
+            Ok(ValueArgumentPrefixSyntax::Annotation(value))
+        } else {
+            Err(invalid_role_projection(self.first_token()))
+        }
+    }
+}
+
 impl Block<'_> {
     /// Returns whether the represented block interior contains only trivia.
     #[must_use]

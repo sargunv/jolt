@@ -65,10 +65,14 @@ KotlinFile
                     NavigationExpression
                       NameExpression
                         Identifier "kotlin" @ 100..106
-                      Dot "." @ 106..107
-                      Identifier "collections" @ 107..118
-                    Dot "." @ 118..119
-                    Identifier "mutableMapOf" @ 119..131
+                      NavigationOperator
+                        Dot "." @ 106..107
+                      NameExpression
+                        Identifier "collections" @ 107..118
+                    NavigationOperator
+                      Dot "." @ 118..119
+                    NameExpression
+                      Identifier "mutableMapOf" @ 119..131
                   TypeArgumentListList
                     TypeArgumentList
                       Lt "<" @ 131..132

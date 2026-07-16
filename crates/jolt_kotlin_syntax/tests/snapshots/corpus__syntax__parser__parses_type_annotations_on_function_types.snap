@@ -188,9 +188,11 @@ KotlinFile
                               StringTemplateExpression
                                 StringTemplateEntryList
                                   StringTemplateEntry
-                                    OpenQuote "\"" @ 239..240
+                                    StringTemplateContent
+                                      OpenQuote "\"" @ 239..240
                                   StringTemplateEntry
-                                    RegularStringPart "label" @ 240..245
+                                    StringTemplateContent
+                                      RegularStringPart "label" @ 240..245
                                 ClosingQuote "\"" @ 245..246
                           RParen ")" @ 246..247 trailing=[Whitespace " "]
                     Name

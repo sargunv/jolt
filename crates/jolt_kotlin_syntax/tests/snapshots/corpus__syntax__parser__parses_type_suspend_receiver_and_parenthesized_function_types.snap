@@ -150,8 +150,9 @@ KotlinFile
             LambdaParameterList
               LambdaParameterSeparatedList
                 LambdaParameter
-                  Name
-                    Identifier "count" @ 183..188 trailing=[Whitespace " "]
+                  LambdaParameterBinding
+                    Name
+                      Identifier "count" @ 183..188 trailing=[Whitespace " "]
               Arrow "->" @ 189..191 trailing=[Whitespace " "]
             LambdaBodyItemList
               Statement

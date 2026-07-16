@@ -20,8 +20,8 @@ KotlinFile
         Assign "=" @ 10..11 trailing=[Whitespace " "]
         ObjectExpression
           ObjectKw "object" @ 12..18 trailing=[Whitespace " "]
-          Colon ":" @ 19..20 trailing=[Whitespace " "]
-          DelegationSpecifierList
+          DelegationClause
+            Colon ":" @ 19..20 trailing=[Whitespace " "]
             DelegationSpecifierSeparatedList
               DelegationSpecifier
                 TypeReference

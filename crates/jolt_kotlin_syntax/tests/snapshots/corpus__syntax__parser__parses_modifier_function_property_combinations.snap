@@ -69,13 +69,17 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      OpenQuote "\"" @ 110..111
+                      StringTemplateContent
+                        OpenQuote "\"" @ 110..111
                     StringTemplateEntry
-                      RegularStringPart "size=" @ 111..116
+                      StringTemplateContent
+                        RegularStringPart "size=" @ 111..116
                     StringTemplateEntry
-                      ShortTemplateEntryStart "$" @ 116..117
+                      StringTemplateContent
+                        ShortTemplateEntryStart "$" @ 116..117
                     StringTemplateEntry
-                      Identifier "size" @ 117..121
+                      StringTemplateContent
+                        Identifier "size" @ 117..121
                   ClosingQuote "\"" @ 121..122
         RBrace "}" @ 123..124 leading=[Newline "\n"]
   Eof "" @ 125..125 leading=[Newline "\n"]

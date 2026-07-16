@@ -52,21 +52,21 @@ KotlinFile
                 WhenCondition
                   LiteralExpression
                     IntegerLiteral "0" @ 66..67 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                  ErrorNode
+                  BogusExpression
                     OpenQuote "\"" @ 68..69
-                  ErrorNode
+                  BogusExpression
                     RegularStringPart "zero" @ 69..73
-                  ErrorNode
+                  BogusExpression
                     ClosingQuote "\"" @ 73..74
-              ErrorNode
+              BogusExpression
                 ElseKw "else" @ 79..83 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              ErrorNode
+              BogusExpression
                 Arrow "->" @ 84..86 trailing=[Whitespace " "]
-              ErrorNode
+              BogusExpression
                 OpenQuote "\"" @ 87..88
-              ErrorNode
+              BogusExpression
                 RegularStringPart "other" @ 88..93
-              ErrorNode
+              BogusExpression
                 ClosingQuote "\"" @ 93..94
           RBrace "}" @ 95..96 leading=[Newline "\n"]
   Eof "" @ 97..97 leading=[Newline "\n"]

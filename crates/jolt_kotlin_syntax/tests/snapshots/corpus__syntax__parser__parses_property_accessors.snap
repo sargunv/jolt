@@ -45,7 +45,8 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      OpenQuote "\"" @ 41..42
+                      StringTemplateContent
+                        OpenQuote "\"" @ 41..42
                   ClosingQuote "\"" @ 42..43
               PropertyBodyMemberList
                 PropertyAccessor
@@ -61,8 +62,10 @@ KotlinFile
                       NavigationExpression
                         NameExpression
                           Identifier "field" @ 60..65
-                        Dot "." @ 65..66
-                        Identifier "ifBlank" @ 66..73 trailing=[Whitespace " "]
+                        NavigationOperator
+                          Dot "." @ 65..66
+                        NameExpression
+                          Identifier "ifBlank" @ 66..73 trailing=[Whitespace " "]
                       TypeArgumentListList
                       LambdaExpressionList
                         LambdaExpression
@@ -74,9 +77,11 @@ KotlinFile
                                   StringTemplateExpression
                                     StringTemplateEntryList
                                       StringTemplateEntry
-                                        OpenQuote "\"" @ 76..77
+                                        StringTemplateContent
+                                          OpenQuote "\"" @ 76..77
                                       StringTemplateEntry
-                                        RegularStringPart "unknown" @ 77..84
+                                        StringTemplateContent
+                                          RegularStringPart "unknown" @ 77..84
                                     ClosingQuote "\"" @ 84..85 trailing=[Whitespace " "]
                                 TerminatorList
                             RBrace "}" @ 86..87
@@ -106,8 +111,10 @@ KotlinFile
                                 NavigationExpression
                                   NameExpression
                                     Identifier "value" @ 137..142
-                                  Dot "." @ 142..143
-                                  Identifier "trim" @ 143..147
+                                  NavigationOperator
+                                    Dot "." @ 142..143
+                                  NameExpression
+                                    Identifier "trim" @ 143..147
                                 TypeArgumentListList
                                 ValueArgumentList
                                   LParen "(" @ 147..148

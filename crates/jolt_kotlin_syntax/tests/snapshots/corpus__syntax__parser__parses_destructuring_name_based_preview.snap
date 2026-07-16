@@ -95,8 +95,10 @@ KotlinFile
                 NavigationExpression
                   NameExpression
                     Identifier "user" @ 138..142
-                  Dot "." @ 142..143
-                  Identifier "profile" @ 143..150
+                  NavigationOperator
+                    Dot "." @ 142..143
+                  NameExpression
+                    Identifier "profile" @ 143..150
               PropertyBodyMemberList
             Statement
               ExpressionStatement

@@ -19,7 +19,7 @@ use crate::helpers::recovery::{
     format_optional_field, format_required_field, resolve_list_part, resolve_optional_field,
     resolve_required_delimiter, resolve_required_field,
 };
-use crate::rules::annotations::format_annotation;
+use crate::rules::annotations::format_annotation_with_leading;
 use crate::rules::expressions::{format_expression, format_value_argument_list};
 use crate::rules::names::format_name;
 use crate::rules::statements::format_block;
@@ -763,12 +763,28 @@ fn format_modifier_list<'source>(
     list: &ModifierList<'source>,
     annotations_break: bool,
 ) -> Doc<'source> {
+    format_modifier_list_with_leading(doc, list, annotations_break, LeadingTrivia::Preserve)
+}
+
+pub(crate) fn format_modifier_list_with_leading<'source>(
+    doc: &mut DocBuilder<'source>,
+    list: &ModifierList<'source>,
+    annotations_break: bool,
+    leading: LeadingTrivia,
+) -> Doc<'source> {
     doc.concat_list(|docs| {
+        let mut first = true;
         for part in list.parts() {
             match resolve_list_part(part, docs) {
                 KotlinFormatListPart::Item(KotlinRoleElement::Node(node)) => {
                     if let Some(annotation) = jolt_kotlin_syntax::Annotation::cast(node) {
-                        let annotation = format_annotation(docs, &annotation);
+                        let item_leading = if first {
+                            leading
+                        } else {
+                            LeadingTrivia::Preserve
+                        };
+                        let annotation =
+                            format_annotation_with_leading(docs, &annotation, item_leading);
                         docs.push(annotation);
                         let separator = if annotations_break {
                             docs.hard_line()
@@ -781,12 +797,12 @@ fn format_modifier_list<'source>(
                     }
                 }
                 KotlinFormatListPart::Item(KotlinRoleElement::Token(token)) => {
-                    let token = format_token(
-                        docs,
-                        &token,
-                        LeadingTrivia::Preserve,
-                        TrailingTrivia::Preserve,
-                    );
+                    let item_leading = if first {
+                        leading
+                    } else {
+                        LeadingTrivia::Preserve
+                    };
+                    let token = format_token(docs, &token, item_leading, TrailingTrivia::Preserve);
                     docs.push(token);
                     let space = docs.space();
                     docs.push(space);
@@ -794,6 +810,7 @@ fn format_modifier_list<'source>(
                 KotlinFormatListPart::Separator(_) => {}
                 KotlinFormatListPart::Malformed(recovery) => docs.push(recovery),
             }
+            first = false;
         }
     })
 }
@@ -825,7 +842,7 @@ pub(crate) fn format_type_annotation<'source>(
     doc.concat([colon, ty])
 }
 
-fn format_declaration_body<'source>(
+pub(crate) fn format_declaration_body<'source>(
     doc: &mut DocBuilder<'source>,
     body: &DeclarationBody<'source>,
 ) -> Doc<'source> {
@@ -841,7 +858,7 @@ fn format_declaration_body<'source>(
     }
 }
 
-fn format_optional_declaration_body<'source>(
+pub(crate) fn format_optional_declaration_body<'source>(
     doc: &mut DocBuilder<'source>,
     body: Result<
         KotlinSyntaxField<'source, DeclarationBody<'source>>,

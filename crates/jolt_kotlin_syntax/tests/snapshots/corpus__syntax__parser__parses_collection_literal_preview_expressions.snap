@@ -48,7 +48,7 @@ KotlinFile
                 Assign "=" @ 46..47 trailing=[Whitespace " "]
                 CollectionLiteralExpression
                   LBracket "[" @ 48..49
-                  ValueArgumentSeparatedList
+                  ValueArgumentEntryList
                   RBracket "]" @ 49..50
               PropertyBodyMemberList
             PropertyDeclaration
@@ -61,7 +61,7 @@ KotlinFile
                 Assign "=" @ 67..68 trailing=[Whitespace " "]
                 CollectionLiteralExpression
                   LBracket "[" @ 69..70
-                  ValueArgumentSeparatedList
+                  ValueArgumentEntryList
                     ValueArgument
                       ValueArgumentPrefixList
                       LiteralExpression
@@ -88,12 +88,12 @@ KotlinFile
                 Assign "=" @ 94..95 trailing=[Whitespace " "]
                 CollectionLiteralExpression
                   LBracket "[" @ 96..97
-                  ValueArgumentSeparatedList
+                  ValueArgumentEntryList
                     ValueArgument
                       ValueArgumentPrefixList
                       CollectionLiteralExpression
                         LBracket "[" @ 97..98
-                        ValueArgumentSeparatedList
+                        ValueArgumentEntryList
                           ValueArgument
                             ValueArgumentPrefixList
                             LiteralExpression
@@ -104,7 +104,7 @@ KotlinFile
                       ValueArgumentPrefixList
                       CollectionLiteralExpression
                         LBracket "[" @ 102..103
-                        ValueArgumentSeparatedList
+                        ValueArgumentEntryList
                           ValueArgument
                             ValueArgumentPrefixList
                             LiteralExpression
@@ -120,7 +120,7 @@ KotlinFile
                       ValueArgumentPrefixList
                       CollectionLiteralExpression
                         LBracket "[" @ 110..111
-                        ValueArgumentSeparatedList
+                        ValueArgumentEntryList
                         RBracket "]" @ 111..112
                   RBracket "]" @ 112..113
               PropertyBodyMemberList
@@ -130,7 +130,7 @@ KotlinFile
                   ReturnKw "return" @ 118..124 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                   CollectionLiteralExpression
                     LBracket "[" @ 125..126
-                    ValueArgumentSeparatedList
+                    ValueArgumentEntryList
                       ValueArgument
                         ValueArgumentPrefixList
                         NameExpression

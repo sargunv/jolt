@@ -108,9 +108,11 @@ KotlinFile
                                 StringTemplateExpression
                                   StringTemplateEntryList
                                     StringTemplateEntry
-                                      OpenQuote "\"" @ 123..124 leading=[Newline "\n", Whitespace "        "]
+                                      StringTemplateContent
+                                        OpenQuote "\"" @ 123..124 leading=[Newline "\n", Whitespace "        "]
                                     StringTemplateEntry
-                                      RegularStringPart "missing" @ 124..131
+                                      StringTemplateContent
+                                        RegularStringPart "missing" @ 124..131
                                   ClosingQuote "\"" @ 131..132
                               TerminatorList
                           RBrace "}" @ 137..138 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
@@ -140,9 +142,11 @@ KotlinFile
                                 StringTemplateExpression
                                   StringTemplateEntryList
                                     StringTemplateEntry
-                                      OpenQuote "\"" @ 174..175 leading=[Newline "\n", Whitespace "        "]
+                                      StringTemplateContent
+                                        OpenQuote "\"" @ 174..175 leading=[Newline "\n", Whitespace "        "]
                                     StringTemplateEntry
-                                      RegularStringPart "error" @ 175..180
+                                      StringTemplateContent
+                                        RegularStringPart "error" @ 175..180
                                   ClosingQuote "\"" @ 180..181
                               TerminatorList
                           RBrace "}" @ 186..187 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]

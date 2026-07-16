@@ -96,19 +96,25 @@ KotlinFile
                       StringTemplateExpression
                         StringTemplateEntryList
                           StringTemplateEntry
-                            OpenQuote "\"" @ 98..99
+                            StringTemplateContent
+                              OpenQuote "\"" @ 98..99
                           StringTemplateEntry
-                            RegularStringPart "fallback" @ 99..107
+                            StringTemplateContent
+                              RegularStringPart "fallback" @ 99..107
                         ClosingQuote "\"" @ 107..108
                     RParen ")" @ 108..109 trailing=[Whitespace " "]
-                  Elvis "?:" @ 110..112 trailing=[Whitespace " "]
-                  StringTemplateExpression
-                    StringTemplateEntryList
-                      StringTemplateEntry
-                        OpenQuote "\"" @ 113..114
-                      StringTemplateEntry
-                        RegularStringPart "empty" @ 114..119
-                    ClosingQuote "\"" @ 119..120
+                  BinaryOperator
+                    Elvis "?:" @ 110..112 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    StringTemplateExpression
+                      StringTemplateEntryList
+                        StringTemplateEntry
+                          StringTemplateContent
+                            OpenQuote "\"" @ 113..114
+                        StringTemplateEntry
+                          StringTemplateContent
+                            RegularStringPart "empty" @ 114..119
+                      ClosingQuote "\"" @ 119..120
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -134,9 +140,11 @@ KotlinFile
                           BinaryExpression
                             LiteralExpression
                               IntegerLiteral "0" @ 152..153 trailing=[Whitespace " "]
-                            Identifier "until" @ 154..159 trailing=[Whitespace " "]
-                            LiteralExpression
-                              IntegerLiteral "10" @ 160..162
+                            BinaryOperator
+                              Identifier "until" @ 154..159 trailing=[Whitespace " "]
+                            BinaryExpressionRight
+                              LiteralExpression
+                                IntegerLiteral "10" @ 160..162
                           RParen ")" @ 162..163 trailing=[Whitespace " "]
                         ElseKw "else" @ 164..168 trailing=[Whitespace " "]
                         ParenthesizedExpression
@@ -144,13 +152,17 @@ KotlinFile
                           BinaryExpression
                             LiteralExpression
                               IntegerLiteral "10" @ 170..172 trailing=[Whitespace " "]
-                            Identifier "downTo" @ 173..179 trailing=[Whitespace " "]
-                            LiteralExpression
-                              IntegerLiteral "0" @ 180..181
+                            BinaryOperator
+                              Identifier "downTo" @ 173..179 trailing=[Whitespace " "]
+                            BinaryExpressionRight
+                              LiteralExpression
+                                IntegerLiteral "0" @ 180..181
                           RParen ")" @ 181..182
                       RParen ")" @ 182..183
-                    Dot "." @ 183..184
-                    Identifier "toList" @ 184..190
+                    NavigationOperator
+                      Dot "." @ 183..184
+                    NameExpression
+                      Identifier "toList" @ 184..190
                   TypeArgumentListList
                   ValueArgumentList
                     LParen "(" @ 190..191
@@ -176,9 +188,11 @@ KotlinFile
                           BinaryExpression
                             LiteralExpression
                               IntegerLiteral "0" @ 209..210 trailing=[Whitespace " "]
-                            Identifier "until" @ 211..216 trailing=[Whitespace " "]
-                            LiteralExpression
-                              IntegerLiteral "10" @ 217..219
+                            BinaryOperator
+                              Identifier "until" @ 211..216 trailing=[Whitespace " "]
+                            BinaryExpressionRight
+                              LiteralExpression
+                                IntegerLiteral "10" @ 217..219
                           RParen ")" @ 219..220 trailing=[Whitespace " "]
                         ElseKw "else" @ 221..225 trailing=[Whitespace " "]
                         ParenthesizedExpression
@@ -186,13 +200,17 @@ KotlinFile
                           BinaryExpression
                             LiteralExpression
                               IntegerLiteral "10" @ 227..229 trailing=[Whitespace " "]
-                            Identifier "downTo" @ 230..236 trailing=[Whitespace " "]
-                            LiteralExpression
-                              IntegerLiteral "0" @ 237..238
+                            BinaryOperator
+                              Identifier "downTo" @ 230..236 trailing=[Whitespace " "]
+                            BinaryExpressionRight
+                              LiteralExpression
+                                IntegerLiteral "0" @ 237..238
                           RParen ")" @ 238..239
                       RParen ")" @ 239..240
-                    Dot "." @ 240..241
-                    Identifier "forEach" @ 241..248 trailing=[Whitespace " "]
+                    NavigationOperator
+                      Dot "." @ 240..241
+                    NameExpression
+                      Identifier "forEach" @ 241..248 trailing=[Whitespace " "]
                   TypeArgumentListList
                   LambdaExpressionList
                     LambdaExpression
@@ -201,8 +219,9 @@ KotlinFile
                         LambdaParameterList
                           LambdaParameterSeparatedList
                             LambdaParameter
-                              Name
-                                Identifier "index" @ 251..256 trailing=[Whitespace " "]
+                              LambdaParameterBinding
+                                Name
+                                  Identifier "index" @ 251..256 trailing=[Whitespace " "]
                           Arrow "->" @ 257..259
                         LambdaBodyItemList
                           Statement
@@ -211,8 +230,10 @@ KotlinFile
                                 NavigationExpression
                                   NameExpression
                                     Identifier "index" @ 268..273 leading=[Newline "\n", Whitespace "        "]
-                                  Dot "." @ 273..274
-                                  Identifier "toString" @ 274..282
+                                  NavigationOperator
+                                    Dot "." @ 273..274
+                                  NameExpression
+                                    Identifier "toString" @ 274..282
                                 TypeArgumentListList
                                 ValueArgumentList
                                   LParen "(" @ 282..283
@@ -243,8 +264,10 @@ KotlinFile
                               NavigationExpression
                                 NameExpression
                                   Identifier "chosen" @ 326..332 leading=[Newline "\n", Whitespace "        "]
-                                Dot "." @ 332..333
-                                Identifier "trim" @ 333..337
+                                NavigationOperator
+                                  Dot "." @ 332..333
+                                NameExpression
+                                  Identifier "trim" @ 333..337
                               TypeArgumentListList
                               ValueArgumentList
                                 LParen "(" @ 337..338
@@ -280,9 +303,11 @@ KotlinFile
                                 StringTemplateExpression
                                   StringTemplateEntryList
                                     StringTemplateEntry
-                                      OpenQuote "\"" @ 381..382 leading=[Newline "\n", Whitespace "        "]
+                                      StringTemplateContent
+                                        OpenQuote "\"" @ 381..382 leading=[Newline "\n", Whitespace "        "]
                                     StringTemplateEntry
-                                      RegularStringPart "error" @ 382..387
+                                      StringTemplateContent
+                                        RegularStringPart "error" @ 382..387
                                   ClosingQuote "\"" @ 387..388
                               TerminatorList
                           RBrace "}" @ 393..394 leading=[Newline "\n", Whitespace "    "]

@@ -1,16 +1,15 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     ClassBody, ClassDeclaration, CompanionObject, DelegationClause, DelegationSpecifier,
-    DelegationSpecifierEntry, DelegationSpecifierList, InterfaceDeclaration, KotlinSyntaxField,
-    KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView, ObjectDeclaration, ObjectExpression,
-    PrimaryConstructor,
+    DelegationSpecifierEntry, InterfaceDeclaration, KotlinSyntaxField, KotlinSyntaxListPart,
+    KotlinSyntaxToken, KotlinSyntaxView, ObjectDeclaration, ObjectExpression, PrimaryConstructor,
 };
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
 use crate::helpers::lists::{CommaListItem, comma_list};
 use crate::helpers::recovery::{
-    KotlinFormatField, KotlinFormatListPart, format_optional_field, format_or_verbatim,
-    format_required_field, resolve_list_part, resolve_required_field,
+    KotlinFormatField, KotlinFormatListPart, format_optional_field, format_required_field,
+    resolve_list_part, resolve_required_field,
 };
 use crate::rules::expressions::{format_expression, format_value_argument_list};
 use crate::rules::names::format_name;
@@ -133,23 +132,27 @@ pub(crate) fn format_object_expression<'source>(
     expression: &ObjectExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    format_or_verbatim(expression, doc, |doc| {
-        let keyword = format_required_field(expression.object_token(), doc, |token, doc| {
-            format_token(
-                doc,
-                &token,
-                leading,
-                TrailingTrivia::RelocatedToEnclosingContext,
-            )
-        });
-        let delegation =
-            format_object_expression_delegation(doc, expression.colon(), expression.delegation());
-        let body = format_optional_field(expression.body(), doc, |body, doc| {
+    let keyword = format_required_field(expression.object_token(), doc, |token, doc| {
+        format_token(
+            doc,
+            &token,
+            leading,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        )
+    });
+    let delegation = format_optional_field(expression.delegation(), doc, |delegation, doc| {
+        let delegation = format_delegation_clause(doc, &delegation);
+        doc.group(delegation)
+    });
+    let body = format_required_field(expression.body(), doc, |body, doc| {
+        if body.first_token().is_none() {
+            Doc::nil()
+        } else {
             format_class_body(doc, Some(body))
-        });
-        let expression = doc.concat([keyword, delegation, body]);
-        doc.group(expression)
-    })
+        }
+    });
+    let expression = doc.concat([keyword, delegation, body]);
+    doc.group(expression)
 }
 
 fn format_type_tail<'source>(
@@ -210,59 +213,6 @@ fn format_delegation_clause<'source>(
         Doc::nil()
     };
     let specifiers = doc.concat([between, specifiers]);
-    let specifiers = doc.group(specifiers);
-    let specifiers = doc.indent(specifiers);
-    let tail = doc.concat([line, colon, specifiers]);
-    doc.indent(tail)
-}
-
-fn format_object_expression_delegation<'source>(
-    doc: &mut DocBuilder<'source>,
-    colon: Result<
-        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
-    delegation: Result<
-        KotlinSyntaxField<'source, DelegationSpecifierList<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
-) -> Doc<'source> {
-    let delegation = match crate::helpers::recovery::resolve_optional_field(delegation, doc) {
-        KotlinFormatField::Present(Some(delegation)) => delegation,
-        KotlinFormatField::Present(None) => return Doc::nil(),
-        KotlinFormatField::Malformed(recovery) => return recovery,
-    };
-    let entries = match resolve_required_field(delegation.entries(), doc) {
-        KotlinFormatField::Present(entries) => entries,
-        KotlinFormatField::Malformed(recovery) => return recovery,
-    };
-    let items = physical_delegation_items(doc, entries.parts());
-    if delegation.is_recovery_free()
-        && let [
-            CommaListItem {
-                doc: specifier,
-                comma: None,
-            },
-        ] = items.as_slice()
-    {
-        let before = doc.space();
-        let colon = format_optional_field(colon, doc, |colon, doc| {
-            format_token(
-                doc,
-                &colon,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::RelocatedToEnclosingContext,
-            )
-        });
-        let after = doc.space();
-        return doc.concat([before, colon, after, *specifier]);
-    }
-
-    let colon = format_optional_field(colon, doc, |colon, doc| format_keyword_token(doc, colon));
-    let line = doc.line();
-    let inner_line = doc.line();
-    let specifiers = comma_list(doc, items);
-    let specifiers = doc.concat([inner_line, specifiers]);
     let specifiers = doc.group(specifiers);
     let specifiers = doc.indent(specifiers);
     let tail = doc.concat([line, colon, specifiers]);

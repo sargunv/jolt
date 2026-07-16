@@ -79,9 +79,11 @@ KotlinFile
         BinaryExpression
           NameExpression
             Identifier "left" @ 64..68 trailing=[Whitespace " "]
-          Plus "+" @ 69..70 trailing=[Whitespace " "]
-          NameExpression
-            Identifier "right" @ 71..76
+          BinaryOperator
+            Plus "+" @ 69..70 trailing=[Whitespace " "]
+          BinaryExpressionRight
+            NameExpression
+              Identifier "right" @ 71..76
     FunctionDeclaration
       ModifierList
       ModifierList
@@ -138,13 +140,17 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 129..130
+                              StringTemplateContent
+                                OpenQuote "\"" @ 129..130
                             StringTemplateEntry
-                              RegularStringPart "total = " @ 130..138
+                              StringTemplateContent
+                                RegularStringPart "total = " @ 130..138
                             StringTemplateEntry
-                              ShortTemplateEntryStart "$" @ 138..139
+                              StringTemplateContent
+                                ShortTemplateEntryStart "$" @ 138..139
                             StringTemplateEntry
-                              Identifier "total" @ 139..144
+                              StringTemplateContent
+                                Identifier "total" @ 139..144
                           ClosingQuote "\"" @ 144..145
                     RParen ")" @ 145..146
                   LambdaExpressionList

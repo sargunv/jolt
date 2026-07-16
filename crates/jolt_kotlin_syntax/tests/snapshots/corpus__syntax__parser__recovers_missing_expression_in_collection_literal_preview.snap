@@ -46,14 +46,14 @@ KotlinFile
                 Assign "=" @ 53..54 trailing=[Whitespace " "]
                 CollectionLiteralExpression
                   LBracket "[" @ 55..56
-                  ValueArgumentSeparatedList
+                  ValueArgumentEntryList
                     ValueArgument
                       ValueArgumentPrefixList
                       LiteralExpression
                         IntegerLiteral "1" @ 56..57
                     Comma "," @ 57..58 trailing=[Whitespace " "]
                     Comma "," @ 59..60 trailing=[Whitespace " "]
-                    ErrorNode
+                    BogusValueArgument
                     ValueArgument
                       ValueArgumentPrefixList
                       LiteralExpression

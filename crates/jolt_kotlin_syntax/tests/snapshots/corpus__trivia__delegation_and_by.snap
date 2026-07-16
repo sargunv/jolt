@@ -196,9 +196,11 @@ KotlinFile
                       StringTemplateExpression
                         StringTemplateEntryList
                           StringTemplateEntry
-                            OpenQuote "\"" @ 393..394 leading=[Newline "\n", Whitespace "    "]
+                            StringTemplateContent
+                              OpenQuote "\"" @ 393..394 leading=[Newline "\n", Whitespace "    "]
                           StringTemplateEntry
-                            RegularStringPart "value" @ 394..399
+                            StringTemplateContent
+                              RegularStringPart "value" @ 394..399
                         ClosingQuote "\"" @ 399..400
                     TerminatorList
                 RBrace "}" @ 401..402 leading=[Newline "\n"]

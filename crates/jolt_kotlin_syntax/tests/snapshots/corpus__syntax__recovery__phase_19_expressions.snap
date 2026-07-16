@@ -1,0 +1,687 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun missingRight() = 1 +
+val invalidTarget = 1 = 2
+fun missingSelector() = target.
+fun missingReference() = target::
+fun argumentGap() = call(, value)
+fun emptyArgumentGap() = call(,)
+fun indexGap() = value[, index]
+fun lambdaGap() = { , value -> value }
+fun emptyLambdaGap() = { , -> 1 }
+fun emptyParenthesized() = ()
+fun collectionGap() = [, value]
+fun emptyCollectionGap() = [,]
+fun stringTemplate() = "value: $value"
+fun anonymous() = fun(value: Int) = value
+val missingAnonymousBody = fun()
+val missingAnonymousParameters = fun {}
+val validAnonymousExpressionBody = fun() = 1
+val validAnonymousBlockBody = fun() {}
+fun objectLiteral() = object : Base by delegate {
+}
+val missingObjectBody = object
+val missingDelegatedObjectBody = object : Base
+val validObjectBody = object {}
+val validDelegatedObjectBody = object : Base {}
+val missingThisLabel = this@
+val missingSuperLabel = super@
+val validThisLabel = this@owner
+val validSuperLabel = super<Base>@owner
+fun missingCollectionClose() = [value
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "missingRight" @ 4..16
+      ValueParameterList
+        LParen "(" @ 16..17
+        ValueParameterSeparatedList
+        RParen ")" @ 17..18 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 19..20 trailing=[Whitespace " "]
+        BinaryExpression
+          LiteralExpression
+            IntegerLiteral "1" @ 21..22 trailing=[Whitespace " "]
+          BinaryOperator
+            Plus "+" @ 23..24
+          BinaryExpressionRight
+            BogusExpression
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 25..28 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "invalidTarget" @ 29..42 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 43..44 trailing=[Whitespace " "]
+        AssignmentExpression
+          BogusExpression
+            LiteralExpression
+              IntegerLiteral "1" @ 45..46 trailing=[Whitespace " "]
+          Assign "=" @ 47..48 trailing=[Whitespace " "]
+          LiteralExpression
+            IntegerLiteral "2" @ 49..50
+      PropertyBodyMemberList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 51..54 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "missingSelector" @ 55..70
+      ValueParameterList
+        LParen "(" @ 70..71
+        ValueParameterSeparatedList
+        RParen ")" @ 71..72 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 73..74 trailing=[Whitespace " "]
+        NavigationExpression
+          NameExpression
+            Identifier "target" @ 75..81
+          NavigationOperator
+            Dot "." @ 81..82
+          BogusNavigationSelector
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 83..86 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "missingReference" @ 87..103
+      ValueParameterList
+        LParen "(" @ 103..104
+        ValueParameterSeparatedList
+        RParen ")" @ 104..105 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 106..107 trailing=[Whitespace " "]
+        CallableReferenceExpression
+          CallableReferenceReceiver
+            NameExpression
+              Identifier "target" @ 108..114
+          ColonColon "::" @ 114..116
+          CallableReferenceTarget
+          TypeArgumentListList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 117..120 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "argumentGap" @ 121..132
+      ValueParameterList
+        LParen "(" @ 132..133
+        ValueParameterSeparatedList
+        RParen ")" @ 133..134 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 135..136 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "call" @ 137..141
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 141..142
+            ValueArgumentEntryList
+              Comma "," @ 142..143 trailing=[Whitespace " "]
+              BogusValueArgument
+              ValueArgument
+                ValueArgumentPrefixList
+                NameExpression
+                  Identifier "value" @ 144..149
+            RParen ")" @ 149..150
+          LambdaExpressionList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 151..154 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "emptyArgumentGap" @ 155..171
+      ValueParameterList
+        LParen "(" @ 171..172
+        ValueParameterSeparatedList
+        RParen ")" @ 172..173 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 174..175 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "call" @ 176..180
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 180..181
+            ValueArgumentEntryList
+              Comma "," @ 181..182
+              BogusValueArgument
+            RParen ")" @ 182..183
+          LambdaExpressionList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 184..187 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "indexGap" @ 188..196
+      ValueParameterList
+        LParen "(" @ 196..197
+        ValueParameterSeparatedList
+        RParen ")" @ 197..198 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 199..200 trailing=[Whitespace " "]
+        IndexExpression
+          NameExpression
+            Identifier "value" @ 201..206
+          LBracket "[" @ 206..207
+          ValueArgumentEntryList
+            Comma "," @ 207..208 trailing=[Whitespace " "]
+            BogusValueArgument
+            ValueArgument
+              ValueArgumentPrefixList
+              NameExpression
+                Identifier "index" @ 209..214
+          RBracket "]" @ 214..215
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 216..219 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "lambdaGap" @ 220..229
+      ValueParameterList
+        LParen "(" @ 229..230
+        ValueParameterSeparatedList
+        RParen ")" @ 230..231 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 232..233 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 234..235 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                Comma "," @ 236..237 trailing=[Whitespace " "]
+                BogusLambdaParameter
+                LambdaParameter
+                  LambdaParameterBinding
+                    Name
+                      Identifier "value" @ 238..243 trailing=[Whitespace " "]
+              Arrow "->" @ 244..246 trailing=[Whitespace " "]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  NameExpression
+                    Identifier "value" @ 247..252 trailing=[Whitespace " "]
+                TerminatorList
+            RBrace "}" @ 253..254
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 255..258 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "emptyLambdaGap" @ 259..273
+      ValueParameterList
+        LParen "(" @ 273..274
+        ValueParameterSeparatedList
+        RParen ")" @ 274..275 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 276..277 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 278..279 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                Comma "," @ 280..281 trailing=[Whitespace " "]
+                BogusLambdaParameter
+              Arrow "->" @ 282..284 trailing=[Whitespace " "]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  LiteralExpression
+                    IntegerLiteral "1" @ 285..286 trailing=[Whitespace " "]
+                TerminatorList
+            RBrace "}" @ 287..288
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 289..292 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "emptyParenthesized" @ 293..311
+      ValueParameterList
+        LParen "(" @ 311..312
+        ValueParameterSeparatedList
+        RParen ")" @ 312..313 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 314..315 trailing=[Whitespace " "]
+        ParenthesizedExpression
+          LParen "(" @ 316..317
+          BogusExpression
+          RParen ")" @ 317..318
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 319..322 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "collectionGap" @ 323..336
+      ValueParameterList
+        LParen "(" @ 336..337
+        ValueParameterSeparatedList
+        RParen ")" @ 337..338 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 339..340 trailing=[Whitespace " "]
+        CollectionLiteralExpression
+          LBracket "[" @ 341..342
+          ValueArgumentEntryList
+            Comma "," @ 342..343 trailing=[Whitespace " "]
+            BogusValueArgument
+            ValueArgument
+              ValueArgumentPrefixList
+              NameExpression
+                Identifier "value" @ 344..349
+          RBracket "]" @ 349..350
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 351..354 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "emptyCollectionGap" @ 355..373
+      ValueParameterList
+        LParen "(" @ 373..374
+        ValueParameterSeparatedList
+        RParen ")" @ 374..375 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 376..377 trailing=[Whitespace " "]
+        CollectionLiteralExpression
+          LBracket "[" @ 378..379
+          ValueArgumentEntryList
+            Comma "," @ 379..380
+            BogusValueArgument
+          RBracket "]" @ 380..381
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 382..385 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "stringTemplate" @ 386..400
+      ValueParameterList
+        LParen "(" @ 400..401
+        ValueParameterSeparatedList
+        RParen ")" @ 401..402 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 403..404 trailing=[Whitespace " "]
+        StringTemplateExpression
+          StringTemplateEntryList
+            StringTemplateEntry
+              StringTemplateContent
+                OpenQuote "\"" @ 405..406
+            StringTemplateEntry
+              StringTemplateContent
+                RegularStringPart "value: " @ 406..413
+            StringTemplateEntry
+              StringTemplateContent
+                ShortTemplateEntryStart "$" @ 413..414
+            StringTemplateEntry
+              StringTemplateContent
+                Identifier "value" @ 414..419
+          ClosingQuote "\"" @ 419..420
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 421..424 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "anonymous" @ 425..434
+      ValueParameterList
+        LParen "(" @ 434..435
+        ValueParameterSeparatedList
+        RParen ")" @ 435..436 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 437..438 trailing=[Whitespace " "]
+        AnonymousFunctionExpression
+          FunKw "fun" @ 439..442
+          ValueParameterList
+            LParen "(" @ 442..443
+            ValueParameterSeparatedList
+              ValueParameter
+                ModifierList
+                Name
+                  Identifier "value" @ 443..448
+                Colon ":" @ 448..449 trailing=[Whitespace " "]
+                TypeReference
+                  UserType
+                    UserTypeSegmentList
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Int" @ 450..453
+            RParen ")" @ 453..454 trailing=[Whitespace " "]
+          ExpressionBody
+            Assign "=" @ 455..456 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "value" @ 457..462
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 463..466 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "missingAnonymousBody" @ 467..487 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 488..489 trailing=[Whitespace " "]
+        AnonymousFunctionExpression
+          FunKw "fun" @ 490..493
+          ValueParameterList
+            LParen "(" @ 493..494
+            ValueParameterSeparatedList
+            RParen ")" @ 494..495
+          BogusDeclarationBody
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 496..499 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "missingAnonymousParameters" @ 500..526 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 527..528 trailing=[Whitespace " "]
+        AnonymousFunctionExpression
+          FunKw "fun" @ 529..532 trailing=[Whitespace " "]
+          ValueParameterList
+            ValueParameterSeparatedList
+          BlockBody
+            Block
+              LBrace "{" @ 533..534
+              BlockItemList
+              RBrace "}" @ 534..535
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 536..539 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "validAnonymousExpressionBody" @ 540..568 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 569..570 trailing=[Whitespace " "]
+        AnonymousFunctionExpression
+          FunKw "fun" @ 571..574
+          ValueParameterList
+            LParen "(" @ 574..575
+            ValueParameterSeparatedList
+            RParen ")" @ 575..576 trailing=[Whitespace " "]
+          ExpressionBody
+            Assign "=" @ 577..578 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "1" @ 579..580
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 581..584 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "validAnonymousBlockBody" @ 585..608 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 609..610 trailing=[Whitespace " "]
+        AnonymousFunctionExpression
+          FunKw "fun" @ 611..614
+          ValueParameterList
+            LParen "(" @ 614..615
+            ValueParameterSeparatedList
+            RParen ")" @ 615..616 trailing=[Whitespace " "]
+          BlockBody
+            Block
+              LBrace "{" @ 617..618
+              BlockItemList
+              RBrace "}" @ 618..619
+      PropertyBodyMemberList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 620..623 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "objectLiteral" @ 624..637
+      ValueParameterList
+        LParen "(" @ 637..638
+        ValueParameterSeparatedList
+        RParen ")" @ 638..639 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 640..641 trailing=[Whitespace " "]
+        ObjectExpression
+          ObjectKw "object" @ 642..648 trailing=[Whitespace " "]
+          DelegationClause
+            Colon ":" @ 649..650 trailing=[Whitespace " "]
+            DelegationSpecifierSeparatedList
+              DelegationSpecifier
+                TypeReference
+                  UserType
+                    UserTypeSegmentList
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Base" @ 651..655 trailing=[Whitespace " "]
+                DelegationByClause
+                  Identifier "by" @ 656..658 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "delegate" @ 659..667 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 668..669
+            ClassMemberList
+            RBrace "}" @ 670..671 leading=[Newline "\n"]
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 672..675 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "missingObjectBody" @ 676..693 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 694..695 trailing=[Whitespace " "]
+        ObjectExpression
+          ObjectKw "object" @ 696..702
+          ClassBody
+            ClassMemberList
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 703..706 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "missingDelegatedObjectBody" @ 707..733 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 734..735 trailing=[Whitespace " "]
+        ObjectExpression
+          ObjectKw "object" @ 736..742 trailing=[Whitespace " "]
+          DelegationClause
+            Colon ":" @ 743..744 trailing=[Whitespace " "]
+            DelegationSpecifierSeparatedList
+              DelegationSpecifier
+                TypeReference
+                  UserType
+                    UserTypeSegmentList
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Base" @ 745..749
+          ClassBody
+            ClassMemberList
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 750..753 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "validObjectBody" @ 754..769 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 770..771 trailing=[Whitespace " "]
+        ObjectExpression
+          ObjectKw "object" @ 772..778 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 779..780
+            ClassMemberList
+            RBrace "}" @ 780..781
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 782..785 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "validDelegatedObjectBody" @ 786..810 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 811..812 trailing=[Whitespace " "]
+        ObjectExpression
+          ObjectKw "object" @ 813..819 trailing=[Whitespace " "]
+          DelegationClause
+            Colon ":" @ 820..821 trailing=[Whitespace " "]
+            DelegationSpecifierSeparatedList
+              DelegationSpecifier
+                TypeReference
+                  UserType
+                    UserTypeSegmentList
+                      UserTypeSegment
+                        AnnotationList
+                        Name
+                          Identifier "Base" @ 822..826 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 827..828
+            ClassMemberList
+            RBrace "}" @ 828..829
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 830..833 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "missingThisLabel" @ 834..850 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 851..852 trailing=[Whitespace " "]
+        ThisExpression
+          ThisKw "this" @ 853..857
+          LabelReference
+            At "@" @ 857..858
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 859..862 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "missingSuperLabel" @ 863..880 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 881..882 trailing=[Whitespace " "]
+        SuperExpression
+          SuperKw "super" @ 883..888
+          LabelReference
+            At "@" @ 888..889
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 890..893 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "validThisLabel" @ 894..908 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 909..910 trailing=[Whitespace " "]
+        ThisExpression
+          ThisKw "this" @ 911..915
+          LabelReference
+            At "@" @ 915..916
+            Identifier "owner" @ 916..921
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 922..925 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "validSuperLabel" @ 926..941 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 942..943 trailing=[Whitespace " "]
+        SuperExpression
+          SuperKw "super" @ 944..949
+          TypeArgumentList
+            Lt "<" @ 949..950
+            TypeProjectionSeparatedList
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      AnnotationList
+                      Name
+                        Identifier "Base" @ 950..954
+            Gt ">" @ 954..955
+          LabelReference
+            At "@" @ 955..956
+            Identifier "owner" @ 956..961
+      PropertyBodyMemberList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 962..965 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "missingCollectionClose" @ 966..988
+      ValueParameterList
+        LParen "(" @ 988..989
+        ValueParameterSeparatedList
+        RParen ")" @ 989..990 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 991..992 trailing=[Whitespace " "]
+        CollectionLiteralExpression
+          LBracket "[" @ 993..994
+          ValueArgumentEntryList
+            ValueArgument
+              ValueArgumentPrefixList
+              NameExpression
+                Identifier "value" @ 994..999
+  Eof "" @ 1000..1000 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=25..28 message="expected expression after operator"
+  code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=47..48 message="invalid assignment target"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=83..86 message="expected member name"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=117..120 message="expected callable reference name"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=144..149 message="expected list item"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=182..183 message="expected list item"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=209..214 message="expected list item"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=238..243 message="expected lambda parameter between commas"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=282..284 message="expected lambda parameter between commas"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=317..318 message="expected parenthesized expression"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=344..349 message="expected list item"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=380..381 message="expected list item"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=496..499 message="expected anonymous function body"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=533..534 message="expected value parameter list"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=703..706 message="expected object body"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=750..753 message="expected object body"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=859..862 message="expected label name"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=890..893 message="expected label name"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=1000..1000 message="expected ']' after collection literal"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(25), end: TextSize(28) }) message=expected expression after operator
+code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(48) }) message=invalid assignment target
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(83), end: TextSize(86) }) message=expected member name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(117), end: TextSize(120) }) message=expected callable reference name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(144), end: TextSize(149) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(182), end: TextSize(183) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(209), end: TextSize(214) }) message=expected list item
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(238), end: TextSize(243) }) message=expected lambda parameter between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(282), end: TextSize(284) }) message=expected lambda parameter between commas
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(317), end: TextSize(318) }) message=expected parenthesized expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(344), end: TextSize(349) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(380), end: TextSize(381) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(496), end: TextSize(499) }) message=expected anonymous function body
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(533), end: TextSize(534) }) message=expected value parameter list
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(703), end: TextSize(706) }) message=expected object body
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(750), end: TextSize(753) }) message=expected object body
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(859), end: TextSize(862) }) message=expected label name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(890), end: TextSize(893) }) message=expected label name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1000), end: TextSize(1000) }) message=expected ']' after collection literal

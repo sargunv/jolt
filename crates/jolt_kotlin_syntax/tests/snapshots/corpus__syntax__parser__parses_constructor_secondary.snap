@@ -68,9 +68,11 @@ KotlinFile
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                OpenQuote "\"" @ 92..93
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 92..93
                               StringTemplateEntry
-                                RegularStringPart "default" @ 93..100
+                                StringTemplateContent
+                                  RegularStringPart "default" @ 93..100
                             ClosingQuote "\"" @ 100..101
                       RParen ")" @ 101..102
                     LambdaExpressionList
@@ -111,8 +113,10 @@ KotlinFile
                             NavigationExpression
                               NameExpression
                                 Identifier "id" @ 136..138
-                              Dot "." @ 138..139
-                              Identifier "toString" @ 139..147
+                              NavigationOperator
+                                Dot "." @ 138..139
+                              NameExpression
+                                Identifier "toString" @ 139..147
                             TypeArgumentListList
                             ValueArgumentList
                               LParen "(" @ 147..148

@@ -27,9 +27,11 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              OpenQuote "\"" @ 40..41
+              StringTemplateContent
+                OpenQuote "\"" @ 40..41
             StringTemplateEntry
-              RegularStringPart "jolt" @ 41..45
+              StringTemplateContent
+                RegularStringPart "jolt" @ 41..45
           ClosingQuote "\"" @ 45..46
       PropertyBodyMemberList
     Statement
@@ -46,13 +48,17 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      OpenQuote "\"" @ 55..56
+                      StringTemplateContent
+                        OpenQuote "\"" @ 55..56
                     StringTemplateEntry
-                      RegularStringPart "running " @ 56..64
+                      StringTemplateContent
+                        RegularStringPart "running " @ 56..64
                     StringTemplateEntry
-                      ShortTemplateEntryStart "$" @ 64..65
+                      StringTemplateContent
+                        ShortTemplateEntryStart "$" @ 64..65
                     StringTemplateEntry
-                      Identifier "scriptName" @ 65..75
+                      StringTemplateContent
+                        Identifier "scriptName" @ 65..75
                   ClosingQuote "\"" @ 75..76
             RParen ")" @ 76..77
           LambdaExpressionList
@@ -67,8 +73,10 @@ KotlinFile
               NavigationExpression
                 NameExpression
                   Identifier "scriptName" @ 82..92
-                Dot "." @ 92..93
-                Identifier "isNotEmpty" @ 93..103
+                NavigationOperator
+                  Dot "." @ 92..93
+                NameExpression
+                  Identifier "isNotEmpty" @ 93..103
               TypeArgumentListList
               ValueArgumentList
                 LParen "(" @ 103..104
@@ -94,8 +102,10 @@ KotlinFile
                             NavigationExpression
                               NameExpression
                                 Identifier "scriptName" @ 121..131
-                              Dot "." @ 131..132
-                              Identifier "uppercase" @ 132..141
+                              NavigationOperator
+                                Dot "." @ 131..132
+                              NameExpression
+                                Identifier "uppercase" @ 132..141
                             TypeArgumentListList
                             ValueArgumentList
                               LParen "(" @ 141..142

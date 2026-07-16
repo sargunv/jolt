@@ -150,15 +150,19 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "Status" @ 210..216 leading=[Newline "\n", Whitespace "        "]
-                    Dot "." @ 216..217
-                    Identifier "Ready" @ 217..222 trailing=[Whitespace " "]
+                    NavigationOperator
+                      Dot "." @ 216..217
+                    NameExpression
+                      Identifier "Ready" @ 217..222 trailing=[Whitespace " "]
               Arrow "->" @ 223..225 trailing=[Whitespace " "]
               StringTemplateExpression
                 StringTemplateEntryList
                   StringTemplateEntry
-                    OpenQuote "\"" @ 226..227
+                    StringTemplateContent
+                      OpenQuote "\"" @ 226..227
                   StringTemplateEntry
-                    RegularStringPart "ready" @ 227..232
+                    StringTemplateContent
+                      RegularStringPart "ready" @ 227..232
                 ClosingQuote "\"" @ 232..233
             WhenEntry
               WhenConditionSeparatedList
@@ -180,18 +184,23 @@ KotlinFile
               StringTemplateExpression
                 StringTemplateEntryList
                   StringTemplateEntry
-                    OpenQuote "\"" @ 262..263
+                    StringTemplateContent
+                      OpenQuote "\"" @ 262..263
                   StringTemplateEntry
-                    RegularStringPart "failed: " @ 263..271
+                    StringTemplateContent
+                      RegularStringPart "failed: " @ 263..271
                   StringTemplateEntry
-                    LongStringTemplateEntry
-                      LongTemplateEntryStart "${" @ 271..273
-                      NavigationExpression
-                        NameExpression
-                          Identifier "status" @ 273..279
-                        Dot "." @ 279..280
-                        Identifier "reason" @ 280..286
-                      LongTemplateEntryEnd "}" @ 286..287
+                    StringTemplateContent
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 271..273
+                        NavigationExpression
+                          NameExpression
+                            Identifier "status" @ 273..279
+                          NavigationOperator
+                            Dot "." @ 279..280
+                          NameExpression
+                            Identifier "reason" @ 280..286
+                        LongTemplateEntryEnd "}" @ 286..287
                 ClosingQuote "\"" @ 287..288
           RBrace "}" @ 293..294 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 295..295 leading=[Newline "\n"]

@@ -12,7 +12,7 @@ KotlinFile
   KotlinFileItemList
     Statement
       ExpressionStatement
-        ErrorNode
+        BogusExpression
           Reserved "..." @ 0..3
       TerminatorList
   Eof "" @ 4..4 leading=[Newline "\n"]

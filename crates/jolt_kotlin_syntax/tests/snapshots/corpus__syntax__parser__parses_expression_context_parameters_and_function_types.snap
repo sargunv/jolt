@@ -70,8 +70,10 @@ KotlinFile
           NavigationExpression
             NameExpression
               Identifier "logger" @ 72..78
-            Dot "." @ 78..79
-            Identifier "info" @ 79..83
+            NavigationOperator
+              Dot "." @ 78..79
+            NameExpression
+              Identifier "info" @ 79..83
           TypeArgumentListList
           ValueArgumentList
             LParen "(" @ 83..84
@@ -166,9 +168,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 196..197
+                              StringTemplateContent
+                                OpenQuote "\"" @ 196..197
                             StringTemplateEntry
-                              RegularStringPart "ready" @ 197..202
+                              StringTemplateContent
+                                RegularStringPart "ready" @ 197..202
                           ClosingQuote "\"" @ 202..203
                     RParen ")" @ 203..204
                   LambdaExpressionList

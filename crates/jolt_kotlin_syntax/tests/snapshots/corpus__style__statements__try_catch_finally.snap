@@ -85,16 +85,20 @@ KotlinFile
                                   NavigationExpression
                                     NameExpression
                                       Identifier "text" @ 94..98 leading=[Newline "\n", Whitespace "        "]
-                                    Dot "." @ 98..99
-                                    Identifier "trim" @ 99..103
+                                    NavigationOperator
+                                      Dot "." @ 98..99
+                                    NameExpression
+                                      Identifier "trim" @ 99..103
                                   TypeArgumentListList
                                   ValueArgumentList
                                     LParen "(" @ 103..104
                                     ValueArgumentEntryList
                                     RParen ")" @ 104..105
                                   LambdaExpressionList
-                                Dot "." @ 105..106
-                                Identifier "toInt" @ 106..111
+                                NavigationOperator
+                                  Dot "." @ 105..106
+                                NameExpression
+                                  Identifier "toInt" @ 106..111
                               TypeArgumentListList
                               ValueArgumentList
                                 LParen "(" @ 111..112
@@ -150,9 +154,11 @@ KotlinFile
                                       StringTemplateExpression
                                         StringTemplateEntryList
                                           StringTemplateEntry
-                                            OpenQuote "\"" @ 201..202
+                                            StringTemplateContent
+                                              OpenQuote "\"" @ 201..202
                                           StringTemplateEntry
-                                            RegularStringPart "parsed" @ 202..208
+                                            StringTemplateContent
+                                              RegularStringPart "parsed" @ 202..208
                                         ClosingQuote "\"" @ 208..209
                                   RParen ")" @ 209..210
                                 LambdaExpressionList

@@ -182,7 +182,7 @@ KotlinFile
                               NameExpression
                                 Identifier "result" @ 188..194 leading=[Newline "\n", Whitespace "        "]
                               LBracket "[" @ 194..195
-                              ValueArgumentSeparatedList
+                              ValueArgumentEntryList
                                 ValueArgument
                                   ValueArgumentPrefixList
                                   NameExpression
@@ -197,19 +197,23 @@ KotlinFile
                                     NameExpression
                                       Identifier "result" @ 204..210
                                     LBracket "[" @ 210..211
-                                    ValueArgumentSeparatedList
+                                    ValueArgumentEntryList
                                       ValueArgument
                                         ValueArgumentPrefixList
                                         NameExpression
                                           Identifier "name" @ 211..215
                                     RBracket "]" @ 215..216 trailing=[Whitespace " "]
-                                  Elvis "?:" @ 217..219 trailing=[Whitespace " "]
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 220..221
+                                  BinaryOperator
+                                    Elvis "?:" @ 217..219 trailing=[Whitespace " "]
+                                  BinaryExpressionRight
+                                    LiteralExpression
+                                      IntegerLiteral "0" @ 220..221
                                 RParen ")" @ 221..222 trailing=[Whitespace " "]
-                              Plus "+" @ 223..224 trailing=[Whitespace " "]
-                              NameExpression
-                                Identifier "count" @ 225..230
+                              BinaryOperator
+                                Plus "+" @ 223..224 trailing=[Whitespace " "]
+                              BinaryExpressionRight
+                                NameExpression
+                                  Identifier "count" @ 225..230
                         TerminatorList
                     RBrace "}" @ 235..236 leading=[Newline "\n", Whitespace "    "]
               TerminatorList

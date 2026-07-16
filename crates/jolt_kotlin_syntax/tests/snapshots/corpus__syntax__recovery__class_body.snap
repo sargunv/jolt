@@ -43,13 +43,13 @@ KotlinFile
               ExpressionStatement
                 UnaryExpression
                   Plus "+" @ 38..39 leading=[Newline "\n", BlockComment "/* orphan */", Whitespace " "]
-                  ErrorNode
+                  BogusExpression
                     ValKw "val" @ 40..43 leading=[Newline "\n"] trailing=[Whitespace " "]
-                ErrorNode
+                BogusExpression
                   Identifier "value" @ 44..49 trailing=[Whitespace " "]
-                ErrorNode
+                BogusExpression
                   Assign "=" @ 50..51 trailing=[Whitespace " "]
-                ErrorNode
+                BogusExpression
                   IntegerLiteral "1" @ 52..53 trailing=[Whitespace " "]
               TerminatorList
         RBrace "}" @ 54..55

@@ -137,8 +137,10 @@ KotlinFile
                             NavigationExpression
                               NameExpression
                                 Identifier "values" @ 115..121
-                              Dot "." @ 130..131 leading=[Newline "\n", Whitespace "        "]
-                              Identifier "map" @ 131..134 trailing=[Whitespace " "]
+                              NavigationOperator
+                                Dot "." @ 130..131 leading=[Newline "\n", Whitespace "        "]
+                              NameExpression
+                                Identifier "map" @ 131..134 trailing=[Whitespace " "]
                             TypeArgumentListList
                             LambdaExpressionList
                               LambdaExpression
@@ -147,8 +149,9 @@ KotlinFile
                                   LambdaParameterList
                                     LambdaParameterSeparatedList
                                       LambdaParameter
-                                        Name
-                                          Identifier "raw" @ 137..140 trailing=[Whitespace " "]
+                                        LambdaParameterBinding
+                                          Name
+                                            Identifier "raw" @ 137..140 trailing=[Whitespace " "]
                                     Arrow "->" @ 141..143
                                   LambdaBodyItemList
                                     PropertyDeclaration
@@ -163,8 +166,10 @@ KotlinFile
                                           NavigationExpression
                                             NameExpression
                                               Identifier "raw" @ 170..173
-                                            Dot "." @ 173..174
-                                            Identifier "trim" @ 174..178
+                                            NavigationOperator
+                                              Dot "." @ 173..174
+                                            NameExpression
+                                              Identifier "trim" @ 174..178
                                           TypeArgumentListList
                                           ValueArgumentList
                                             LParen "(" @ 178..179
@@ -182,8 +187,10 @@ KotlinFile
                                               NavigationExpression
                                                 NameExpression
                                                   Identifier "trimmed" @ 197..204
-                                                Dot "." @ 204..205
-                                                Identifier "isEmpty" @ 205..212
+                                                NavigationOperator
+                                                  Dot "." @ 204..205
+                                                NameExpression
+                                                  Identifier "isEmpty" @ 205..212
                                               TypeArgumentListList
                                               ValueArgumentList
                                                 LParen "(" @ 212..213
@@ -226,12 +233,16 @@ KotlinFile
                                         NavigationExpression
                                           NameExpression
                                             Identifier "trimmed" @ 299..306 leading=[Newline "\n", Whitespace "            "]
-                                          Dot "." @ 306..307
-                                          Identifier "length" @ 307..313
+                                          NavigationOperator
+                                            Dot "." @ 306..307
+                                          NameExpression
+                                            Identifier "length" @ 307..313
                                       TerminatorList
                                   RBrace "}" @ 322..323 leading=[Newline "\n", Whitespace "        "]
-                          Dot "." @ 332..333 leading=[Newline "\n", Whitespace "        "]
-                          Identifier "filter" @ 333..339 trailing=[Whitespace " "]
+                          NavigationOperator
+                            Dot "." @ 332..333 leading=[Newline "\n", Whitespace "        "]
+                          NameExpression
+                            Identifier "filter" @ 333..339 trailing=[Whitespace " "]
                         TypeArgumentListList
                         LambdaExpressionList
                           LambdaExpression
@@ -240,8 +251,9 @@ KotlinFile
                               LambdaParameterList
                                 LambdaParameterSeparatedList
                                   LambdaParameter
-                                    Name
-                                      Identifier "length" @ 342..348 trailing=[Whitespace " "]
+                                    LambdaParameterBinding
+                                      Name
+                                        Identifier "length" @ 342..348 trailing=[Whitespace " "]
                                 Arrow "->" @ 349..351
                               LambdaBodyItemList
                                 Statement
@@ -249,13 +261,17 @@ KotlinFile
                                     BinaryExpression
                                       NameExpression
                                         Identifier "length" @ 364..370 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                                      Gt ">" @ 371..372 trailing=[Whitespace " "]
-                                      LiteralExpression
-                                        IntegerLiteral "1" @ 373..374
+                                      BinaryOperator
+                                        Gt ">" @ 371..372 trailing=[Whitespace " "]
+                                      BinaryExpressionRight
+                                        LiteralExpression
+                                          IntegerLiteral "1" @ 373..374
                                   TerminatorList
                               RBrace "}" @ 383..384 leading=[Newline "\n", Whitespace "        "]
-                      Dot "." @ 393..394 leading=[Newline "\n", Whitespace "        "]
-                      Identifier "sorted" @ 394..400
+                      NavigationOperator
+                        Dot "." @ 393..394 leading=[Newline "\n", Whitespace "        "]
+                      NameExpression
+                        Identifier "sorted" @ 394..400
                     TypeArgumentListList
                     ValueArgumentList
                       LParen "(" @ 400..401

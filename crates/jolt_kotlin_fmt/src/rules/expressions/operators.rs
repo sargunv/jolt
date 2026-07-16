@@ -1,8 +1,8 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    AssignmentExpression, BinaryExpression, Expression, KotlinRoleElement, KotlinSyntaxField,
-    KotlinSyntaxKind, KotlinSyntaxToken, ParenthesizedExpression, PostfixExpression,
-    UnaryExpression,
+    AssignmentExpression, BinaryExpression, BinaryExpressionRight, BinaryExpressionRightSyntax,
+    BinaryOperatorSyntax, Expression, KotlinSyntaxField, KotlinSyntaxKind, KotlinSyntaxToken,
+    KotlinSyntaxView, ParenthesizedExpression, PostfixExpression, UnaryExpression,
 };
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, comment_forces_line, format_token};
@@ -85,15 +85,7 @@ pub(super) fn format_binary_expression<'source>(
     if is_type_binary_operator(&operator) {
         let left = format_expression_with_leading(doc, &left, leading);
         let operator_doc = format_binary_operator(doc, &operator).doc;
-        let right =
-            if let Some(ty) = right.cast_node::<jolt_kotlin_syntax::TypeReference<'source>>() {
-                format_type_reference(doc, &ty)
-            } else if let Some(expression) = right.cast_family::<Expression<'source>>() {
-                format_expression(doc, &expression)
-            } else {
-                doc.block_on_invariant("type binary expression had an unsupported right role");
-                Doc::nil()
-            };
+        let right = format_binary_right(doc, &right);
         let space = doc.space();
         let line = doc.line();
         let right = doc.concat([line, right]);
@@ -102,7 +94,7 @@ pub(super) fn format_binary_expression<'source>(
         return doc.group(contents);
     }
 
-    let Some(right) = right.cast_family::<Expression<'source>>() else {
+    let Some(right) = binary_right_expression(&right) else {
         return format_binary_fields(doc, expression, leading);
     };
     let root = Expression::from(*expression);
@@ -132,27 +124,41 @@ fn format_binary_fields<'source>(
     expression: &BinaryExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
+    let has_right = matches!(
+        expression.right(),
+        Ok(KotlinSyntaxField::Present(ref right)) if right.first_token().is_some()
+    ) || matches!(
+        expression.right(),
+        Ok(KotlinSyntaxField::Malformed(ref malformed)) if malformed.first_token().is_some()
+    );
     let left = format_required_field(expression.left(), doc, |left, doc| {
         format_expression_with_leading(doc, &left, leading)
     });
     let operator = format_required_field(expression.operator(), doc, |operator, doc| {
-        if let Some(operator) = operator.token() {
+        format_required_field(operator.operator(), doc, |operator, doc| {
+            let operator = match operator.classify() {
+                Ok(
+                    BinaryOperatorSyntax::Operator(operator)
+                    | BinaryOperatorSyntax::InfixFunction(operator),
+                ) => operator,
+                Err(error) => {
+                    doc.block_on_invariant(error.to_string());
+                    return Doc::nil();
+                }
+            };
             format_token(
                 doc,
                 &operator,
                 LeadingTrivia::Preserve,
                 TrailingTrivia::Preserve,
             )
-        } else {
-            doc.block_on_invariant("binary operator role was not a token");
-            Doc::nil()
-        }
+        })
     });
     let right = format_required_field(expression.right(), doc, |right, doc| {
-        format_binary_right(doc, right)
+        format_binary_right(doc, &right)
     });
     let space = doc.space();
-    let line = doc.line();
+    let line = if has_right { doc.line() } else { Doc::nil() };
     let right = doc.concat([line, right]);
     let right = doc.indent(right);
     let contents = doc.concat([left, space, operator, right]);
@@ -161,22 +167,39 @@ fn format_binary_fields<'source>(
 
 fn format_binary_right<'source>(
     doc: &mut DocBuilder<'source>,
-    right: KotlinRoleElement<'source>,
+    right: &BinaryExpressionRight<'source>,
 ) -> Doc<'source> {
-    if let Some(expression) = right.cast_family::<Expression<'source>>() {
-        format_expression(doc, &expression)
-    } else if let Some(ty) = right.cast_node::<jolt_kotlin_syntax::TypeReference<'source>>() {
-        format_type_reference(doc, &ty)
-    } else {
-        doc.block_on_invariant("binary expression had an unsupported right role");
-        Doc::nil()
+    format_required_field(right.value(), doc, |right, doc| match right.classify() {
+        Ok(BinaryExpressionRightSyntax::Expression(expression)) => {
+            format_expression(doc, &expression)
+        }
+        Ok(BinaryExpressionRightSyntax::TypeReference(ty)) => format_type_reference(doc, &ty),
+        Err(error) => {
+            doc.block_on_invariant(error.to_string());
+            Doc::nil()
+        }
+    })
+}
+
+fn binary_right_expression<'source>(
+    right: &BinaryExpressionRight<'source>,
+) -> Option<Expression<'source>> {
+    match present(right.value())?.classify().ok()? {
+        BinaryExpressionRightSyntax::Expression(expression) => Some(expression),
+        BinaryExpressionRightSyntax::TypeReference(_) => None,
     }
 }
 
 fn binary_operator<'source>(
     expression: &BinaryExpression<'source>,
 ) -> Option<KotlinSyntaxToken<'source>> {
-    present(expression.operator())?.token()
+    match present(present(expression.operator())?.operator())?
+        .classify()
+        .ok()?
+    {
+        BinaryOperatorSyntax::Operator(operator)
+        | BinaryOperatorSyntax::InfixFunction(operator) => Some(operator),
+    }
 }
 
 fn present<T>(
@@ -251,8 +274,7 @@ fn collect_binary_chain<'source>(
         operands.push(expression);
         return;
     };
-    let Some(right) =
-        present(binary.right()).and_then(KotlinRoleElement::cast_family::<Expression>)
+    let Some(right) = present(binary.right()).and_then(|right| binary_right_expression(&right))
     else {
         operands.push(expression);
         return;

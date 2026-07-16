@@ -17,7 +17,7 @@ KotlinFile
             CallExpression
               CollectionLiteralExpression
                 LBracket "[" @ 0..1 trailing=[Whitespace " "]
-                ValueArgumentSeparatedList
+                ValueArgumentEntryList
                 RBracket "]" @ 2..3 trailing=[Whitespace " "]
               TypeArgumentListList
               LambdaExpressionList
@@ -32,12 +32,14 @@ KotlinFile
               ValueArgumentEntryList
               RParen ")" @ 10..11 trailing=[Whitespace " "]
             LambdaExpressionList
-          Dot "." @ 12..13 trailing=[Whitespace " "]
-        ErrorNode
+          NavigationOperator
+            Dot "." @ 12..13 trailing=[Whitespace " "]
+          BogusNavigationSelector
+        BogusExpression
           Question "?" @ 14..15 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           ColonColon "::" @ 16..18 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           Colon ":" @ 19..20 trailing=[Whitespace " "]
       TerminatorList
         Semicolon ";" @ 21..22 trailing=[Whitespace " "]
@@ -45,16 +47,18 @@ KotlinFile
     Statement
       ExpressionStatement
         BinaryExpression
-          ErrorNode
+          BogusExpression
             Range ".." @ 26..28 trailing=[Whitespace " "]
-          RangeUntil "..<" @ 29..32 trailing=[Whitespace " "]
-          ErrorNode
-            Assign "=" @ 33..34 trailing=[Whitespace " "]
-        ErrorNode
+          BinaryOperator
+            RangeUntil "..<" @ 29..32 trailing=[Whitespace " "]
+          BinaryExpressionRight
+            BogusExpression
+              Assign "=" @ 33..34 trailing=[Whitespace " "]
+        BogusExpression
           Hash "#" @ 35..36 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           At "@" @ 37..38 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           Comma "," @ 39..40
       TerminatorList
   Eof "" @ 41..41 leading=[Newline "\n"]

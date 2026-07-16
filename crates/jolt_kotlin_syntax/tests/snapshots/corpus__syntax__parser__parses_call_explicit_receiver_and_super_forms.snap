@@ -119,8 +119,10 @@ KotlinFile
                           NavigationExpression
                             ThisExpression
                               ThisKw "this" @ 129..133 leading=[Newline "\n", Whitespace "        "]
-                            Dot "." @ 133..134
-                            Identifier "call" @ 134..138
+                            NavigationOperator
+                              Dot "." @ 133..134
+                            NameExpression
+                              Identifier "call" @ 134..138
                           TypeArgumentListList
                           ValueArgumentList
                             LParen "(" @ 138..139
@@ -134,8 +136,10 @@ KotlinFile
                                   NavigationExpression
                                     NameExpression
                                       Identifier "value" @ 147..152
-                                    Dot "." @ 152..153
-                                    Identifier "trim" @ 153..157
+                                    NavigationOperator
+                                      Dot "." @ 152..153
+                                    NameExpression
+                                      Identifier "trim" @ 153..157
                                   TypeArgumentListList
                                   ValueArgumentList
                                     LParen "(" @ 157..158
@@ -151,8 +155,10 @@ KotlinFile
                           NavigationExpression
                             SuperExpression
                               SuperKw "super" @ 169..174 leading=[Newline "\n", Whitespace "        "]
-                            Dot "." @ 174..175
-                            Identifier "call" @ 175..179
+                            NavigationOperator
+                              Dot "." @ 174..175
+                            NameExpression
+                              Identifier "call" @ 175..179
                           TypeArgumentListList
                           ValueArgumentList
                             LParen "(" @ 179..180

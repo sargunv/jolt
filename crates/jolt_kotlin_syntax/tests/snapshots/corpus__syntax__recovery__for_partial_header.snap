@@ -59,13 +59,15 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "items" @ 45..50 trailing=[Whitespace " "]
-                    Identifier "print" @ 51..56
-                    ParenthesizedExpression
-                      LParen "(" @ 56..57
-                      NameExpression
-                        Identifier "item" @ 57..61
-                      RParen ")" @ 61..62 trailing=[Whitespace " "]
-                  ErrorNode
+                    BinaryOperator
+                      Identifier "print" @ 51..56
+                    BinaryExpressionRight
+                      ParenthesizedExpression
+                        LParen "(" @ 56..57
+                        NameExpression
+                          Identifier "item" @ 57..61
+                        RParen ")" @ 61..62 trailing=[Whitespace " "]
+                  BogusExpression
               TerminatorList
           RBrace "}" @ 63..64
   Eof "" @ 65..65 leading=[Newline "\n"]

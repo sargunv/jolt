@@ -249,6 +249,18 @@ macro_rules! kotlin_syntax_schema {
                 StringTemplatePart => BogusStringTemplatePart {
                     StringTemplateEntry,
                 }
+                NavigationSelector => BogusNavigationSelector {
+                    NameExpression,
+                    ThisExpression,
+                    SuperExpression,
+                }
+                LambdaForm => BogusLambdaForm {
+                    LabeledLambdaExpression,
+                    LambdaBody,
+                }
+                LambdaParameterListEntry => BogusLambdaParameter {
+                    LambdaParameter,
+                }
                 ValueArgumentListEntry => BogusValueArgument {
                     ValueArgument,
                 }
@@ -506,7 +518,7 @@ macro_rules! kotlin_syntax_schema {
                     return_colon: optional (token Colon);
                     return_type: optional (node TypeReference);
                     constraints: optional (node TypeConstraintList);
-                    body: optional (category DeclarationBody);
+                    body: required (category DeclarationBody);
                 }
                 PropertyDeclaration => PropertyDeclaration [property_declaration valid] {
                     leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
@@ -588,9 +600,6 @@ macro_rules! kotlin_syntax_schema {
                     r#type: required (node TypeReference);
                     assign: optional (token Assign);
                     default: optional (category Expression);
-                }
-                DelegationSpecifierList => DelegationSpecifierList [delegation_specifier_list valid] {
-                    entries: required (list DelegationSpecifierSeparatedList);
                 }
                 DelegationClause => DelegationClause [delegation_clause valid] {
                     colon: required (token Colon);
@@ -675,6 +684,10 @@ macro_rules! kotlin_syntax_schema {
                 }
                 BinaryExpression => BinaryExpression [binary_expression valid] {
                     left: required (category Expression);
+                    operator: required (node BinaryOperator);
+                    right: required (node BinaryExpressionRight);
+                }
+                BinaryOperator => BinaryOperator [binary_operator valid] {
                     operator: required (choice [
                         (token_set [
                             Star, Slash, Percent, Plus, Minus, Range, RangeUntil,
@@ -683,8 +696,10 @@ macro_rules! kotlin_syntax_schema {
                             AsKw, AsSafe
                         ]),
                         (token Identifier)
-                    ]);
-                    right: required (choice [(category Expression), (node TypeReference)]);
+                    ]) => BinaryOperatorValue;
+                }
+                BinaryExpressionRight => BinaryExpressionRight [binary_expression_right valid] {
+                    value: required (choice [(category Expression), (node TypeReference)]) => BinaryExpressionRightValue;
                 }
                 UnaryExpression => UnaryExpression [unary_expression valid] {
                     operator: required (token_set [Plus, Minus, Bang, PlusPlus, MinusMinus, Star]);
@@ -703,18 +718,21 @@ macro_rules! kotlin_syntax_schema {
                 IndexExpression => IndexExpression [index_expression valid] {
                     receiver: required (category Expression);
                     open_bracket: required (token LBracket);
-                    entries: required (list ValueArgumentSeparatedList);
+                    entries: required (list ValueArgumentEntryList);
                     close_bracket: required (token RBracket);
                 }
                 NavigationExpression => NavigationExpression [navigation_expression valid] {
                     receiver: required (category Expression);
-                    operator: required (choice [(token_set [Dot, SafeAccess]), (constructed SplitSafeNavigationOperator)]);
-                    selector: required (choice [(token_set [Identifier, FieldIdentifier]), (category Expression)]);
+                    operator: required (node NavigationOperator);
+                    selector: required (category NavigationSelector);
+                }
+                NavigationOperator => NavigationOperator [navigation_operator valid] {
+                    operator: required (choice [(token_set [Dot, SafeAccess]), (node SplitSafeNavigationOperator)]) => NavigationOperatorValue;
                 }
                 CallableReferenceExpression => CallableReferenceExpression [callable_reference_expression valid] {
-                    receiver: optional (choice [(category Expression), (node TypeReference)]);
+                    receiver: optional (node CallableReferenceReceiver);
                     separator: required (token ColonColon);
-                    target: required (token_set [Identifier, ClassKw]);
+                    target: required (node CallableReferenceTarget);
                     type_arguments: required (list TypeArgumentListList);
                 }
                 LiteralExpression => LiteralExpression [literal_expression valid] {
@@ -725,6 +743,9 @@ macro_rules! kotlin_syntax_schema {
                     close_quote: required (token ClosingQuote);
                 }
                 StringTemplateEntry => StringTemplateEntry [string_template_entry valid] {
+                    content: required (node StringTemplateContent);
+                }
+                StringTemplateContent => StringTemplateContent [string_template_content valid] {
                     content: required (choice [
                         (token_set [
                             InterpolationPrefix, OpenQuote, RegularStringPart,
@@ -734,7 +755,7 @@ macro_rules! kotlin_syntax_schema {
                         ]),
                         (category Expression),
                         (constructed LongStringTemplateEntry)
-                    ]) [disambiguate longest_then_first];
+                    ]) => StringTemplateContentValue [disambiguate longest_then_first];
                 }
                 NameExpression => NameExpression [name_expression valid] {
                     name: required (token_set [Identifier, FieldIdentifier]);
@@ -743,14 +764,16 @@ macro_rules! kotlin_syntax_schema {
                 }
                 ThisExpression => ThisExpression [this_expression valid] {
                     this_token: required (token ThisKw);
-                    at: optional (token At);
-                    label: optional (token Identifier);
+                    label: optional (node LabelReference);
                 }
                 SuperExpression => SuperExpression [super_expression valid] {
                     super_token: required (token SuperKw);
                     type_arguments: optional (node TypeArgumentList);
-                    at: optional (token At);
-                    label: optional (token Identifier);
+                    label: optional (node LabelReference);
+                }
+                LabelReference => LabelReference [label_reference valid] {
+                    at: required (token At);
+                    label: required (token Identifier);
                 }
                 ParenthesizedExpression => ParenthesizedExpression [parenthesized_expression valid] {
                     open_paren: required (token LParen);
@@ -849,14 +872,14 @@ macro_rules! kotlin_syntax_schema {
                     expression: required (category Expression);
                 }
                 LambdaExpression => LambdaExpression [lambda_expression valid] {
-                    form: required (choice [(constructed LabeledLambdaExpression), (constructed LambdaBody)]);
+                    form: required (category LambdaForm);
                 }
                 LambdaParameterList => LambdaParameterList [lambda_parameter_list valid] {
                     parameters: required (list LambdaParameterSeparatedList);
                     arrow: required (token Arrow);
                 }
                 LambdaParameter => LambdaParameter [lambda_parameter valid] {
-                    binding: required (node_set [Name, DestructuringDeclaration]);
+                    binding: required (node LambdaParameterBinding);
                     colon: optional (token Colon);
                     r#type: optional (node TypeReference);
                 }
@@ -867,18 +890,16 @@ macro_rules! kotlin_syntax_schema {
                     parameters: required (node ValueParameterList);
                     return_colon: optional (token Colon);
                     return_type: optional (node TypeReference);
-                    assign: optional (token Assign);
-                    body: optional (choice [(node Block), (category Expression)]);
+                    body: required (category DeclarationBody);
                 }
                 ObjectExpression => ObjectExpression [object_expression valid] {
                     object_token: required (token ObjectKw);
-                    colon: optional (token Colon);
-                    delegation: optional (node DelegationSpecifierList);
-                    body: optional (node ClassBody);
+                    delegation: optional (node DelegationClause);
+                    body: required (node ClassBody);
                 }
                 CollectionLiteralExpression => CollectionLiteralExpression [collection_literal_expression valid] {
                     open_bracket: required (token LBracket);
-                    entries: required (list ValueArgumentSeparatedList);
+                    entries: required (list ValueArgumentEntryList);
                     close_bracket: required (token RBracket);
                 }
                 DestructuringDeclaration => DestructuringDeclaration [destructuring_declaration valid] {
@@ -938,6 +959,18 @@ macro_rules! kotlin_syntax_schema {
                     items: required (list LambdaBodyItemList);
                     close_brace: required (token RBrace);
                 }
+                CallableReferenceTarget => CallableReferenceTarget [callable_reference_target valid] {
+                    target: required (token_set [Identifier, ClassKw]);
+                }
+                CallableReferenceReceiver => CallableReferenceReceiver [callable_reference_receiver valid] {
+                    receiver: required (choice [(category Expression), (node TypeReference)]) => CallableReferenceReceiverValue;
+                }
+                LambdaParameterBinding => LambdaParameterBinding [lambda_parameter_binding valid] {
+                    binding: required (node_set [Name, DestructuringDeclaration]) => LambdaParameterBindingValue;
+                }
+                ValueArgumentPrefix => ValueArgumentPrefix [value_argument_prefix valid] {
+                    prefix: required (choice [(token Star), (node Annotation)]) => ValueArgumentPrefixValue;
+                }
                 IntersectionDefinitelyNonNullableType => IntersectionDefinitelyNonNullableType [intersection_definitely_non_nullable_type valid] {
                     left: required (category TypeSyntax);
                     amp: required (token Amp);
@@ -990,7 +1023,7 @@ macro_rules! kotlin_syntax_schema {
                     entries: many (category ValueArgumentListEntry) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];
                 }
                 ValueArgumentPrefixList => ValueArgumentPrefixList [value_argument_prefix_list list] {
-                    entries: many (choice [(token Star), (node Annotation)]);
+                    entries: many (node ValueArgumentPrefix);
                 }
                 QualifiedNameSegmentList => QualifiedNameSegmentList [qualified_name_segment_list list] {
                     segments: one_or_more (category QualifiedNameSegment) [separated (token Dot), minimum 1, trailing forbidden, recovery bogus_owner];
@@ -1035,7 +1068,7 @@ macro_rules! kotlin_syntax_schema {
                     lambdas: many (node LambdaExpression);
                 }
                 StringTemplateEntryList => StringTemplateEntryList [string_template_entry_list list] {
-                    entries: one_or_more (node StringTemplateEntry);
+                    entries: one_or_more (category StringTemplatePart);
                 }
                 WhenEntryList => WhenEntryList [when_entry_list list] {
                     entries: many (choice [(node WhenEntry), (token_set [EolOrSemicolon, Semicolon, DoubleSemicolon])]);
@@ -1050,7 +1083,7 @@ macro_rules! kotlin_syntax_schema {
                     items: many (choice [(category BlockItem), (token_set [EolOrSemicolon, Semicolon, DoubleSemicolon])]);
                 }
                 LambdaParameterSeparatedList => LambdaParameterSeparatedList [lambda_parameter_separated_list list] {
-                    parameters: many (node LambdaParameter) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];
+                    parameters: many (category LambdaParameterListEntry) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];
                 }
                 DestructuringEntrySeparatedList => DestructuringEntrySeparatedList [destructuring_entry_separated_list list] {
                     entries: many (category DestructuringPatternEntry) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];

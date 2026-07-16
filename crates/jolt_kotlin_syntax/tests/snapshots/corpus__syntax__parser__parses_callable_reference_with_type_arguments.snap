@@ -38,10 +38,12 @@ KotlinFile
               PropertyInitializer
                 Assign "=" @ 55..56 trailing=[Whitespace " "]
                 CallableReferenceExpression
-                  NameExpression
-                    Identifier "Box" @ 57..60
+                  CallableReferenceReceiver
+                    NameExpression
+                      Identifier "Box" @ 57..60
                   ColonColon "::" @ 60..62
-                  Identifier "create" @ 62..68
+                  CallableReferenceTarget
+                    Identifier "create" @ 62..68
                   TypeArgumentListList
                     TypeArgumentList
                       Lt "<" @ 68..69
@@ -64,13 +66,17 @@ KotlinFile
               PropertyInitializer
                 Assign "=" @ 92..93 trailing=[Whitespace " "]
                 CallableReferenceExpression
-                  NavigationExpression
-                    NameExpression
-                      Identifier "Registry" @ 94..102
-                    Dot "." @ 102..103
-                    Identifier "Entry" @ 103..108
+                  CallableReferenceReceiver
+                    NavigationExpression
+                      NameExpression
+                        Identifier "Registry" @ 94..102
+                      NavigationOperator
+                        Dot "." @ 102..103
+                      NameExpression
+                        Identifier "Entry" @ 103..108
                   ColonColon "::" @ 108..110
-                  Identifier "from" @ 110..114
+                  CallableReferenceTarget
+                    Identifier "from" @ 110..114
                   TypeArgumentListList
                     TypeArgumentList
                       Lt "<" @ 114..115

@@ -66,8 +66,10 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "logger" @ 62..68 leading=[Newline "\n", Whitespace "    "]
-                    Dot "." @ 68..69
-                    Identifier "write" @ 69..74
+                    NavigationOperator
+                      Dot "." @ 68..69
+                    NameExpression
+                      Identifier "write" @ 69..74
                   TypeArgumentListList
                   ValueArgumentList
                     LParen "(" @ 74..75

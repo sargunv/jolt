@@ -91,12 +91,16 @@ KotlinFile
                         BinaryExpression
                           NameExpression
                             Identifier "value" @ 89..94 trailing=[Whitespace " "]
-                          Plus "+" @ 95..96 trailing=[Whitespace " "]
-                          NavigationExpression
-                            NameExpression
-                              Identifier "other" @ 97..102
-                            Dot "." @ 102..103
-                            Identifier "value" @ 103..108
+                          BinaryOperator
+                            Plus "+" @ 95..96 trailing=[Whitespace " "]
+                          BinaryExpressionRight
+                            NavigationExpression
+                              NameExpression
+                                Identifier "other" @ 97..102
+                              NavigationOperator
+                                Dot "." @ 102..103
+                              NameExpression
+                                Identifier "value" @ 103..108
                     RParen ")" @ 108..109
                   LambdaExpressionList
           ClassMemberDeclaration
@@ -137,12 +141,16 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "value" @ 158..163 trailing=[Whitespace " "]
-                  Gt ">" @ 164..165 trailing=[Whitespace " "]
-                  NavigationExpression
-                    NameExpression
-                      Identifier "other" @ 166..171
-                    Dot "." @ 171..172
-                    Identifier "value" @ 172..177
+                  BinaryOperator
+                    Gt ">" @ 164..165 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    NavigationExpression
+                      NameExpression
+                        Identifier "other" @ 166..171
+                      NavigationOperator
+                        Dot "." @ 171..172
+                      NameExpression
+                        Identifier "value" @ 172..177
         RBrace "}" @ 178..179 leading=[Newline "\n"]
     FunctionDeclaration
       ModifierList
@@ -169,9 +177,11 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              OpenQuote "\"" @ 216..217
+              StringTemplateContent
+                OpenQuote "\"" @ 216..217
             StringTemplateEntry
-              RegularStringPart "value" @ 217..222
+              StringTemplateContent
+                RegularStringPart "value" @ 217..222
           ClosingQuote "\"" @ 222..223
   Eof "" @ 224..224 leading=[Newline "\n"]
 

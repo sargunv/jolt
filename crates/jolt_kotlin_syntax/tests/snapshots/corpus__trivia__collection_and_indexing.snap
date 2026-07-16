@@ -85,15 +85,17 @@ KotlinFile
                 ValueArgumentPrefixList
                 CollectionLiteralExpression
                   LBracket "[" @ 83..84 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:collection-literal-open */", Whitespace " "]
-                  ValueArgumentSeparatedList
+                  ValueArgumentEntryList
                     ValueArgument
                       ValueArgumentPrefixList
                       StringTemplateExpression
                         StringTemplateEntryList
                           StringTemplateEntry
-                            OpenQuote "\"" @ 127..128
+                            StringTemplateContent
+                              OpenQuote "\"" @ 127..128
                           StringTemplateEntry
-                            RegularStringPart "alpha" @ 128..133
+                            StringTemplateContent
+                              RegularStringPart "alpha" @ 128..133
                         ClosingQuote "\"" @ 133..134
                     Comma "," @ 134..135 trailing=[Whitespace " "]
                     ValueArgument
@@ -101,9 +103,11 @@ KotlinFile
                       StringTemplateExpression
                         StringTemplateEntryList
                           StringTemplateEntry
-                            OpenQuote "\"" @ 136..137
+                            StringTemplateContent
+                              OpenQuote "\"" @ 136..137
                           StringTemplateEntry
-                            RegularStringPart "beta" @ 137..141
+                            StringTemplateContent
+                              RegularStringPart "beta" @ 137..141
                         ClosingQuote "\"" @ 141..142 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:collection-literal-close */", Whitespace " "]
                   RBracket "]" @ 186..187
             RParen ")" @ 187..188
@@ -136,13 +140,17 @@ KotlinFile
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                OpenQuote "\"" @ 242..243 leading=[Newline "\n", Whitespace "        "]
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 242..243 leading=[Newline "\n", Whitespace "        "]
                               StringTemplateEntry
-                                RegularStringPart "one" @ 243..246
+                                StringTemplateContent
+                                  RegularStringPart "one" @ 243..246
                             ClosingQuote "\"" @ 246..247 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:pair-key */", Whitespace " "]
-                          Identifier "to" @ 275..277 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:to-call */", Whitespace " "]
-                          LiteralExpression
-                            IntegerLiteral "1" @ 304..305
+                          BinaryOperator
+                            Identifier "to" @ 275..277 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:to-call */", Whitespace " "]
+                          BinaryExpressionRight
+                            LiteralExpression
+                              IntegerLiteral "1" @ 304..305
                       Comma "," @ 305..306
                       ValueArgument
                         ValueArgumentPrefixList
@@ -150,13 +158,17 @@ KotlinFile
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                OpenQuote "\"" @ 315..316 leading=[Newline "\n", Whitespace "        "]
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 315..316 leading=[Newline "\n", Whitespace "        "]
                               StringTemplateEntry
-                                RegularStringPart "two" @ 316..319
+                                StringTemplateContent
+                                  RegularStringPart "two" @ 316..319
                             ClosingQuote "\"" @ 319..320 trailing=[Whitespace " "]
-                          Identifier "to" @ 321..323 trailing=[Whitespace " "]
-                          LiteralExpression
-                            IntegerLiteral "2" @ 324..325
+                          BinaryOperator
+                            Identifier "to" @ 321..323 trailing=[Whitespace " "]
+                          BinaryExpressionRight
+                            LiteralExpression
+                              IntegerLiteral "2" @ 324..325
                       Comma "," @ 325..326
                     RParen ")" @ 331..332 leading=[Newline "\n", Whitespace "    "]
                   LambdaExpressionList

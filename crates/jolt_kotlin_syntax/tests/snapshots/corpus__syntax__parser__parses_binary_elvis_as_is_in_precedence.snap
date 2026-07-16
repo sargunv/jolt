@@ -90,22 +90,28 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "input" @ 75..80 trailing=[Whitespace " "]
-                    AsSafe "as?" @ 81..84 trailing=[Whitespace " "]
-                    TypeReference
-                      UserType
-                        UserTypeSegmentList
-                          UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "String" @ 85..91 trailing=[Whitespace " "]
-                  Elvis "?:" @ 92..94 trailing=[Whitespace " "]
-                  StringTemplateExpression
-                    StringTemplateEntryList
-                      StringTemplateEntry
-                        OpenQuote "\"" @ 95..96
-                      StringTemplateEntry
-                        RegularStringPart "guest" @ 96..101
-                    ClosingQuote "\"" @ 101..102
+                    BinaryOperator
+                      AsSafe "as?" @ 81..84 trailing=[Whitespace " "]
+                    BinaryExpressionRight
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 85..91 trailing=[Whitespace " "]
+                  BinaryOperator
+                    Elvis "?:" @ 92..94 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    StringTemplateExpression
+                      StringTemplateEntryList
+                        StringTemplateEntry
+                          StringTemplateContent
+                            OpenQuote "\"" @ 95..96
+                        StringTemplateEntry
+                          StringTemplateContent
+                            RegularStringPart "guest" @ 96..101
+                      ClosingQuote "\"" @ 101..102
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -118,25 +124,27 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "input" @ 123..128 trailing=[Whitespace " "]
-                  AsKw "as" @ 129..131 trailing=[Whitespace " "]
-                  TypeReference
-                    UserType
-                      UserTypeSegmentList
-                        UserTypeSegment
-                          AnnotationList
-                          Name
-                            Identifier "List" @ 132..136
-                          TypeArgumentList
-                            Lt "<" @ 136..137
-                            TypeProjectionSeparatedList
-                              TypeReference
-                                UserType
-                                  UserTypeSegmentList
-                                    UserTypeSegment
-                                      AnnotationList
-                                      Name
-                                        Identifier "String" @ 137..143
-                            Gt ">" @ 143..144
+                  BinaryOperator
+                    AsKw "as" @ 129..131 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "List" @ 132..136
+                            TypeArgumentList
+                              Lt "<" @ 136..137
+                              TypeProjectionSeparatedList
+                                TypeReference
+                                  UserType
+                                    UserTypeSegmentList
+                                      UserTypeSegment
+                                        AnnotationList
+                                        Name
+                                          Identifier "String" @ 137..143
+                              Gt ">" @ 143..144
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -150,43 +158,47 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "input" @ 167..172 trailing=[Whitespace " "]
-                    AsSafe "as?" @ 173..176 trailing=[Whitespace " "]
-                    TypeReference
-                      UserType
-                        UserTypeSegmentList
-                          UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "Map" @ 177..180
-                            TypeArgumentList
-                              Lt "<" @ 180..181
-                              TypeProjectionSeparatedList
-                                TypeReference
-                                  UserType
-                                    UserTypeSegmentList
-                                      UserTypeSegment
-                                        AnnotationList
-                                        Name
-                                          Identifier "String" @ 181..187
-                                Comma "," @ 187..188 trailing=[Whitespace " "]
-                                TypeReference
-                                  UserType
-                                    UserTypeSegmentList
-                                      UserTypeSegment
-                                        AnnotationList
-                                        Name
-                                          Identifier "Int" @ 189..192
-                              Gt ">" @ 192..193 trailing=[Whitespace " "]
-                  Elvis "?:" @ 194..196 trailing=[Whitespace " "]
-                  CallExpression
-                    NameExpression
-                      Identifier "emptyMap" @ 197..205
-                    TypeArgumentListList
-                    ValueArgumentList
-                      LParen "(" @ 205..206
-                      ValueArgumentEntryList
-                      RParen ")" @ 206..207
-                    LambdaExpressionList
+                    BinaryOperator
+                      AsSafe "as?" @ 173..176 trailing=[Whitespace " "]
+                    BinaryExpressionRight
+                      TypeReference
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              AnnotationList
+                              Name
+                                Identifier "Map" @ 177..180
+                              TypeArgumentList
+                                Lt "<" @ 180..181
+                                TypeProjectionSeparatedList
+                                  TypeReference
+                                    UserType
+                                      UserTypeSegmentList
+                                        UserTypeSegment
+                                          AnnotationList
+                                          Name
+                                            Identifier "String" @ 181..187
+                                  Comma "," @ 187..188 trailing=[Whitespace " "]
+                                  TypeReference
+                                    UserType
+                                      UserTypeSegmentList
+                                        UserTypeSegment
+                                          AnnotationList
+                                          Name
+                                            Identifier "Int" @ 189..192
+                                Gt ">" @ 192..193 trailing=[Whitespace " "]
+                  BinaryOperator
+                    Elvis "?:" @ 194..196 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    CallExpression
+                      NameExpression
+                        Identifier "emptyMap" @ 197..205
+                      TypeArgumentListList
+                      ValueArgumentList
+                        LParen "(" @ 205..206
+                        ValueArgumentEntryList
+                        RParen ")" @ 206..207
+                      LambdaExpressionList
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -199,9 +211,11 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "name" @ 226..230 trailing=[Whitespace " "]
-                  InKw "in" @ 231..233 trailing=[Whitespace " "]
-                  NameExpression
-                    Identifier "names" @ 234..239
+                  BinaryOperator
+                    InKw "in" @ 231..233 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    NameExpression
+                      Identifier "names" @ 234..239
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -216,44 +230,54 @@ KotlinFile
                     BinaryExpression
                       NameExpression
                         Identifier "input" @ 256..261 trailing=[Whitespace " "]
-                      IsKw "is" @ 262..264 trailing=[Whitespace " "]
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
-                            UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "CharSequence" @ 265..277 trailing=[Whitespace " "]
-                    AndAnd "&&" @ 278..280 trailing=[Whitespace " "]
+                      BinaryOperator
+                        IsKw "is" @ 262..264 trailing=[Whitespace " "]
+                      BinaryExpressionRight
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "CharSequence" @ 265..277 trailing=[Whitespace " "]
+                    BinaryOperator
+                      AndAnd "&&" @ 278..280 trailing=[Whitespace " "]
+                    BinaryExpressionRight
+                      BinaryExpression
+                        NameExpression
+                          Identifier "input" @ 281..286 trailing=[Whitespace " "]
+                        BinaryOperator
+                          NotIs "!is" @ 287..290 trailing=[Whitespace " "]
+                        BinaryExpressionRight
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
+                                    Identifier "StringBuilder" @ 291..304 trailing=[Whitespace " "]
+                  BinaryOperator
+                    AndAnd "&&" @ 305..307 trailing=[Whitespace " "]
+                  BinaryExpressionRight
                     BinaryExpression
                       NameExpression
-                        Identifier "input" @ 281..286 trailing=[Whitespace " "]
-                      NotIs "!is" @ 287..290 trailing=[Whitespace " "]
-                      TypeReference
-                        UserType
-                          UserTypeSegmentList
-                            UserTypeSegment
-                              AnnotationList
-                              Name
-                                Identifier "StringBuilder" @ 291..304 trailing=[Whitespace " "]
-                  AndAnd "&&" @ 305..307 trailing=[Whitespace " "]
-                  BinaryExpression
-                    NameExpression
-                      Identifier "input" @ 308..313 trailing=[Whitespace " "]
-                    IsKw "is" @ 314..316 trailing=[Whitespace " "]
-                    TypeReference
-                      UserType
-                        UserTypeSegmentList
-                          UserTypeSegment
-                            AnnotationList
-                            Name
-                              Identifier "List" @ 317..321
-                            TypeArgumentList
-                              Lt "<" @ 321..322
-                              TypeProjectionSeparatedList
-                                StarProjection
-                                  Star "*" @ 322..323
-                              Gt ">" @ 323..324
+                        Identifier "input" @ 308..313 trailing=[Whitespace " "]
+                      BinaryOperator
+                        IsKw "is" @ 314..316 trailing=[Whitespace " "]
+                      BinaryExpressionRight
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                AnnotationList
+                                Name
+                                  Identifier "List" @ 317..321
+                                TypeArgumentList
+                                  Lt "<" @ 321..322
+                                  TypeProjectionSeparatedList
+                                    StarProjection
+                                      Star "*" @ 322..323
+                                  Gt ">" @ 323..324
               PropertyBodyMemberList
             Statement
               ExpressionStatement
@@ -266,33 +290,45 @@ KotlinFile
                       BinaryExpression
                         NameExpression
                           Identifier "present" @ 340..347 trailing=[Whitespace " "]
-                        AndAnd "&&" @ 348..350 trailing=[Whitespace " "]
-                        NameExpression
-                          Identifier "typed" @ 351..356
+                        BinaryOperator
+                          AndAnd "&&" @ 348..350 trailing=[Whitespace " "]
+                        BinaryExpressionRight
+                          NameExpression
+                            Identifier "typed" @ 351..356
                       RParen ")" @ 356..357 trailing=[Whitespace " "]
                     BinaryExpression
                       BinaryExpression
                         NameExpression
                           Identifier "name" @ 358..362 trailing=[Whitespace " "]
-                        Plus "+" @ 363..364 trailing=[Whitespace " "]
+                        BinaryOperator
+                          Plus "+" @ 363..364 trailing=[Whitespace " "]
+                        BinaryExpressionRight
+                          NavigationExpression
+                            NameExpression
+                              Identifier "typedList" @ 365..374
+                            NavigationOperator
+                              Dot "." @ 374..375
+                            NameExpression
+                              Identifier "size" @ 375..379 trailing=[Whitespace " "]
+                      BinaryOperator
+                        Plus "+" @ 380..381 trailing=[Whitespace " "]
+                      BinaryExpressionRight
                         NavigationExpression
                           NameExpression
-                            Identifier "typedList" @ 365..374
-                          Dot "." @ 374..375
-                          Identifier "size" @ 375..379 trailing=[Whitespace " "]
-                      Plus "+" @ 380..381 trailing=[Whitespace " "]
-                      NavigationExpression
-                        NameExpression
-                          Identifier "nullableMap" @ 382..393
-                        Dot "." @ 393..394
-                        Identifier "size" @ 394..398 trailing=[Whitespace " "]
+                            Identifier "nullableMap" @ 382..393
+                          NavigationOperator
+                            Dot "." @ 393..394
+                          NameExpression
+                            Identifier "size" @ 394..398 trailing=[Whitespace " "]
                     ElseKw "else" @ 399..403 trailing=[Whitespace " "]
                     StringTemplateExpression
                       StringTemplateEntryList
                         StringTemplateEntry
-                          OpenQuote "\"" @ 404..405
+                          StringTemplateContent
+                            OpenQuote "\"" @ 404..405
                         StringTemplateEntry
-                          RegularStringPart "missing" @ 405..412
+                          StringTemplateContent
+                            RegularStringPart "missing" @ 405..412
                       ClosingQuote "\"" @ 412..413
               TerminatorList
           RBrace "}" @ 414..415 leading=[Newline "\n"]

@@ -41,7 +41,8 @@ KotlinFile
                 Assign "=" @ 39..40 trailing=[Whitespace " "]
                 CallableReferenceExpression
                   ColonColon "::" @ 41..43
-                  Identifier "topLevel" @ 43..51
+                  CallableReferenceTarget
+                    Identifier "topLevel" @ 43..51
                   TypeArgumentListList
               PropertyBodyMemberList
             PropertyDeclaration
@@ -53,10 +54,12 @@ KotlinFile
               PropertyInitializer
                 Assign "=" @ 67..68 trailing=[Whitespace " "]
                 CallableReferenceExpression
-                  NameExpression
-                    Identifier "String" @ 69..75
+                  CallableReferenceReceiver
+                    NameExpression
+                      Identifier "String" @ 69..75
                   ColonColon "::" @ 75..77
-                  Identifier "trim" @ 77..81
+                  CallableReferenceTarget
+                    Identifier "trim" @ 77..81
                   TypeArgumentListList
               PropertyBodyMemberList
             PropertyDeclaration
@@ -68,15 +71,19 @@ KotlinFile
               PropertyInitializer
                 Assign "=" @ 96..97 trailing=[Whitespace " "]
                 CallableReferenceExpression
-                  StringTemplateExpression
-                    StringTemplateEntryList
-                      StringTemplateEntry
-                        OpenQuote "\"" @ 98..99
-                      StringTemplateEntry
-                        RegularStringPart "value" @ 99..104
-                    ClosingQuote "\"" @ 104..105
+                  CallableReferenceReceiver
+                    StringTemplateExpression
+                      StringTemplateEntryList
+                        StringTemplateEntry
+                          StringTemplateContent
+                            OpenQuote "\"" @ 98..99
+                        StringTemplateEntry
+                          StringTemplateContent
+                            RegularStringPart "value" @ 99..104
+                      ClosingQuote "\"" @ 104..105
                   ColonColon "::" @ 105..107
-                  Identifier "length" @ 107..113
+                  CallableReferenceTarget
+                    Identifier "length" @ 107..113
                   TypeArgumentListList
               PropertyBodyMemberList
             PropertyDeclaration
@@ -88,10 +95,12 @@ KotlinFile
               PropertyInitializer
                 Assign "=" @ 128..129 trailing=[Whitespace " "]
                 CallableReferenceExpression
-                  NameExpression
-                    Identifier "String" @ 130..136
+                  CallableReferenceReceiver
+                    NameExpression
+                      Identifier "String" @ 130..136
                   ColonColon "::" @ 136..138
-                  ClassKw "class" @ 138..143
+                  CallableReferenceTarget
+                    ClassKw "class" @ 138..143
                   TypeArgumentListList
               PropertyBodyMemberList
             Statement

@@ -105,9 +105,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 156..157
+                              StringTemplateContent
+                                OpenQuote "\"" @ 156..157
                             StringTemplateEntry
-                              RegularStringPart "default" @ 157..164
+                              StringTemplateContent
+                                RegularStringPart "default" @ 157..164
                           ClosingQuote "\"" @ 164..165
                 RBrace "}" @ 170..171 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 172..173 leading=[Newline "\n"]

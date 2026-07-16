@@ -144,9 +144,11 @@ KotlinFile
                                           BinaryExpression
                                             NameExpression
                                               Identifier "cell" @ 175..179 trailing=[Whitespace " "]
-                                            EqEq "==" @ 180..182 trailing=[Whitespace " "]
-                                            NameExpression
-                                              Identifier "needle" @ 183..189
+                                            BinaryOperator
+                                              EqEq "==" @ 180..182 trailing=[Whitespace " "]
+                                            BinaryExpressionRight
+                                              NameExpression
+                                                Identifier "needle" @ 183..189
                                           RParen ")" @ 189..190 trailing=[Whitespace " "]
                                         JumpExpression
                                           BreakKw "break" @ 191..196

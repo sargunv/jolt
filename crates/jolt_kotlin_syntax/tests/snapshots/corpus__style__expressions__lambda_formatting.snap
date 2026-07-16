@@ -47,8 +47,9 @@ KotlinFile
             LambdaParameterList
               LambdaParameterSeparatedList
                 LambdaParameter
-                  Name
-                    Identifier "value" @ 47..52 trailing=[Whitespace "   "]
+                  LambdaParameterBinding
+                    Name
+                      Identifier "value" @ 47..52 trailing=[Whitespace "   "]
                   Colon ":" @ 55..56 trailing=[Whitespace "   "]
                   TypeReference
                     UserType
@@ -64,14 +65,18 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "value" @ 69..74 trailing=[Whitespace " "]
-                    Plus "+" @ 75..76 trailing=[Whitespace " "]
-                    StringTemplateExpression
-                      StringTemplateEntryList
-                        StringTemplateEntry
-                          OpenQuote "\"" @ 77..78
-                        StringTemplateEntry
-                          RegularStringPart "!" @ 78..79
-                      ClosingQuote "\"" @ 79..80 trailing=[Whitespace " "]
+                    BinaryOperator
+                      Plus "+" @ 75..76 trailing=[Whitespace " "]
+                    BinaryExpressionRight
+                      StringTemplateExpression
+                        StringTemplateEntryList
+                          StringTemplateEntry
+                            StringTemplateContent
+                              OpenQuote "\"" @ 77..78
+                          StringTemplateEntry
+                            StringTemplateContent
+                              RegularStringPart "!" @ 78..79
+                        ClosingQuote "\"" @ 79..80 trailing=[Whitespace " "]
                 TerminatorList
             RBrace "}" @ 81..82
       PropertyBodyMemberList
@@ -89,8 +94,9 @@ KotlinFile
             LambdaParameterList
               LambdaParameterSeparatedList
                 LambdaParameter
-                  Name
-                    Identifier "left" @ 96..100
+                  LambdaParameterBinding
+                    Name
+                      Identifier "left" @ 96..100
                   Colon ":" @ 100..101 trailing=[Whitespace " "]
                   TypeReference
                     UserType
@@ -101,8 +107,9 @@ KotlinFile
                             Identifier "Int" @ 102..105
                 Comma "," @ 105..106 trailing=[Whitespace " "]
                 LambdaParameter
-                  Name
-                    Identifier "right" @ 107..112
+                  LambdaParameterBinding
+                    Name
+                      Identifier "right" @ 107..112
                   Colon ":" @ 112..113 trailing=[Whitespace " "]
                   TypeReference
                     UserType
@@ -118,9 +125,11 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "left" @ 125..129 leading=[Newline "\n", Whitespace "    "]
-                    Plus "+" @ 129..130
-                    NameExpression
-                      Identifier "right" @ 130..135
+                    BinaryOperator
+                      Plus "+" @ 129..130
+                    BinaryExpressionRight
+                      NameExpression
+                        Identifier "right" @ 130..135
                 TerminatorList
             RBrace "}" @ 136..137 leading=[Newline "\n"]
       PropertyBodyMemberList
@@ -205,8 +214,9 @@ KotlinFile
                 LambdaParameterList
                   LambdaParameterSeparatedList
                     LambdaParameter
-                      Name
-                        Identifier "value" @ 211..216 trailing=[Whitespace " "]
+                      LambdaParameterBinding
+                        Name
+                          Identifier "value" @ 211..216 trailing=[Whitespace " "]
                   Arrow "->" @ 217..219 trailing=[Whitespace " "]
                 LambdaBodyItemList
                   Statement
@@ -214,9 +224,11 @@ KotlinFile
                       BinaryExpression
                         NameExpression
                           Identifier "value" @ 220..225
-                        Star "*" @ 225..226
-                        LiteralExpression
-                          IntegerLiteral "2" @ 226..227 trailing=[Whitespace " "]
+                        BinaryOperator
+                          Star "*" @ 225..226
+                        BinaryExpressionRight
+                          LiteralExpression
+                            IntegerLiteral "2" @ 226..227 trailing=[Whitespace " "]
                     TerminatorList
                 RBrace "}" @ 228..229
       PropertyBodyMemberList

@@ -15,27 +15,36 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              InterpolationPrefix "$$" @ 0..2
+              StringTemplateContent
+                InterpolationPrefix "$$" @ 0..2
             StringTemplateEntry
-              OpenQuote "\"" @ 2..3
+              StringTemplateContent
+                OpenQuote "\"" @ 2..3
             StringTemplateEntry
-              RegularStringPart "price " @ 3..9
+              StringTemplateContent
+                RegularStringPart "price " @ 3..9
             StringTemplateEntry
-              RegularStringPart "$" @ 9..10
+              StringTemplateContent
+                RegularStringPart "$" @ 9..10
             StringTemplateEntry
-              RegularStringPart "amount and " @ 10..21
+              StringTemplateContent
+                RegularStringPart "amount and " @ 10..21
             StringTemplateEntry
-              ShortTemplateEntryStart "$$" @ 21..23
+              StringTemplateContent
+                ShortTemplateEntryStart "$$" @ 21..23
             StringTemplateEntry
-              Identifier "name" @ 23..27
+              StringTemplateContent
+                Identifier "name" @ 23..27
             StringTemplateEntry
-              RegularStringPart " and " @ 27..32
+              StringTemplateContent
+                RegularStringPart " and " @ 27..32
             StringTemplateEntry
-              LongStringTemplateEntry
-                LongTemplateEntryStart "$${" @ 32..35
-                NameExpression
-                  Identifier "expr" @ 35..39
-                LongTemplateEntryEnd "}" @ 39..40
+              StringTemplateContent
+                LongStringTemplateEntry
+                  LongTemplateEntryStart "$${" @ 32..35
+                  NameExpression
+                    Identifier "expr" @ 35..39
+                  LongTemplateEntryEnd "}" @ 39..40
           ClosingQuote "\"" @ 40..41
       TerminatorList
   Eof "" @ 42..42 leading=[Newline "\n"]

@@ -58,8 +58,10 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "values" @ 46..52 leading=[Newline "\n", Whitespace "    "]
-                    Dot "." @ 52..53
-                    Identifier "map" @ 53..56 trailing=[Whitespace " "]
+                    NavigationOperator
+                      Dot "." @ 52..53
+                    NameExpression
+                      Identifier "map" @ 53..56 trailing=[Whitespace " "]
                   TypeArgumentListList
                   LambdaExpressionList
                     LambdaExpression
@@ -68,8 +70,9 @@ KotlinFile
                         LambdaParameterList
                           LambdaParameterSeparatedList
                             LambdaParameter
-                              Name
-                                Identifier "value" @ 59..64 trailing=[Whitespace " "]
+                              LambdaParameterBinding
+                                Name
+                                  Identifier "value" @ 59..64 trailing=[Whitespace " "]
                           Arrow "->" @ 65..67
                         LambdaBodyItemList
                           Statement
@@ -77,9 +80,11 @@ KotlinFile
                               BinaryExpression
                                 NameExpression
                                   Identifier "value" @ 76..81 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                                Plus "+" @ 82..83 trailing=[Whitespace " "]
-                                LiteralExpression
-                                  IntegerLiteral "1" @ 84..85
+                                BinaryOperator
+                                  Plus "+" @ 82..83 trailing=[Whitespace " "]
+                                BinaryExpressionRight
+                                  LiteralExpression
+                                    IntegerLiteral "1" @ 84..85
                             TerminatorList
                           Statement
                             ExpressionStatement
@@ -87,15 +92,17 @@ KotlinFile
                                 NavigationExpression
                                   NameExpression
                                     Identifier "values" @ 90..96 leading=[Newline "\n", Whitespace "    "]
-                                  Dot "." @ 96..97
-                                  Identifier "filter" @ 97..103
+                                  NavigationOperator
+                                    Dot "." @ 96..97
+                                  NameExpression
+                                    Identifier "filter" @ 97..103
                                 TypeArgumentListList
                                 ValueArgumentList
                                   LParen "(" @ 103..104
                                   ValueArgumentEntryList
                                     ValueArgument
                                       ValueArgumentPrefixList
-                                      ErrorNode
+                                      BogusExpression
                                         RBrace "}" @ 105..106 leading=[Newline "\n"]
                                 LambdaExpressionList
                             TerminatorList

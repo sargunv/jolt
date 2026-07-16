@@ -95,9 +95,11 @@ KotlinFile
             StringTemplateExpression
               StringTemplateEntryList
                 StringTemplateEntry
-                  OpenQuote "\"" @ 101..102 leading=[Newline "\n", Whitespace "    ", BlockComment "/* JOLT-TRIVIA:file-annotation-open */", Newline "\n", Whitespace "    "]
+                  StringTemplateContent
+                    OpenQuote "\"" @ 101..102 leading=[Newline "\n", Whitespace "    ", BlockComment "/* JOLT-TRIVIA:file-annotation-open */", Newline "\n", Whitespace "    "]
                 StringTemplateEntry
-                  RegularStringPart "unused" @ 102..108
+                  StringTemplateContent
+                    RegularStringPart "unused" @ 102..108
               ClosingQuote "\"" @ 108..109
           Comma "," @ 109..110
           ValueArgument
@@ -105,9 +107,11 @@ KotlinFile
             StringTemplateExpression
               StringTemplateEntryList
                 StringTemplateEntry
-                  OpenQuote "\"" @ 159..160 leading=[Newline "\n", Whitespace "    ", BlockComment "/* JOLT-TRIVIA:file-annotation-comma */", Newline "\n", Whitespace "    "]
+                  StringTemplateContent
+                    OpenQuote "\"" @ 159..160 leading=[Newline "\n", Whitespace "    ", BlockComment "/* JOLT-TRIVIA:file-annotation-comma */", Newline "\n", Whitespace "    "]
                 StringTemplateEntry
-                  RegularStringPart "UNUSED_PARAMETER" @ 160..176
+                  StringTemplateContent
+                    RegularStringPart "UNUSED_PARAMETER" @ 160..176
               ClosingQuote "\"" @ 176..177
           Comma "," @ 177..178
         RParen ")" @ 223..224 leading=[Newline "\n", Whitespace "    ", BlockComment "/* JOLT-TRIVIA:file-annotation-close */", Newline "\n"]
@@ -154,7 +158,8 @@ KotlinFile
               StringTemplateExpression
                 StringTemplateEntryList
                   StringTemplateEntry
-                    OpenQuote "\"" @ 577..578
+                    StringTemplateContent
+                      OpenQuote "\"" @ 577..578
                 ClosingQuote "\"" @ 578..579
             Comma "," @ 579..580
           RParen ")" @ 581..582 leading=[Newline "\n"]
@@ -420,9 +425,11 @@ KotlinFile
             StringTemplateExpression
               StringTemplateEntryList
                 StringTemplateEntry
-                  OpenQuote "\"" @ 2221..2222
+                  StringTemplateContent
+                    OpenQuote "\"" @ 2221..2222
                 StringTemplateEntry
-                  RegularStringPart "empty" @ 2222..2227
+                  StringTemplateContent
+                    RegularStringPart "empty" @ 2222..2227
               ClosingQuote "\"" @ 2227..2228
           Comma "," @ 2228..2229
         RParen ")" @ 2230..2231 leading=[Newline "\n"] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:before-return-type */", Whitespace " "]
@@ -470,7 +477,7 @@ KotlinFile
                           NameExpression
                             Identifier "input" @ 2560..2565
                           LBracket "[" @ 2565..2566
-                          ValueArgumentSeparatedList
+                          ValueArgumentEntryList
                             ValueArgument
                               ValueArgumentPrefixList
                               LiteralExpression
@@ -501,23 +508,25 @@ KotlinFile
                     NameExpression
                       Identifier "input" @ 2747..2752
                     LBracket "[" @ 2752..2753
-                    ValueArgumentSeparatedList
+                    ValueArgumentEntryList
                       ValueArgument
                         ValueArgumentPrefixList
                         LiteralExpression
                           IntegerLiteral "0" @ 2753..2754 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:index-zero */"]
                     RBracket "]" @ 2783..2784 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:to-receiver */", Whitespace " "]
-                  Identifier "to" @ 2815..2817 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:to-name */", Whitespace " "]
-                  IndexExpression
-                    NameExpression
-                      Identifier "input" @ 2844..2849
-                    LBracket "[" @ 2849..2850
-                    ValueArgumentSeparatedList
-                      ValueArgument
-                        ValueArgumentPrefixList
-                        LiteralExpression
-                          IntegerLiteral "1" @ 2850..2851 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:index-one */"]
-                    RBracket "]" @ 2879..2880
+                  BinaryOperator
+                    Identifier "to" @ 2815..2817 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:to-name */", Whitespace " "]
+                  BinaryExpressionRight
+                    IndexExpression
+                      NameExpression
+                        Identifier "input" @ 2844..2849
+                      LBracket "[" @ 2849..2850
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          LiteralExpression
+                            IntegerLiteral "1" @ 2850..2851 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:index-one */"]
+                      RBracket "]" @ 2879..2880
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -548,33 +557,39 @@ KotlinFile
                                         Identifier "first" @ 2979..2984 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-arg */", Whitespace " "]
                                   RParen ")" @ 3012..3013 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:binary-left */", Whitespace " "]
                                 LambdaExpressionList
-                              Plus "+" @ 3044..3045 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:binary-plus */", Whitespace " "]
-                              CallExpression
-                                NameExpression
-                                  Identifier "transform" @ 3076..3085
-                                TypeArgumentListList
-                                ValueArgumentList
-                                  LParen "(" @ 3085..3086
-                                  ValueArgumentEntryList
-                                    ValueArgument
-                                      ValueArgumentPrefixList
-                                      NameExpression
-                                        Identifier "second" @ 3086..3092
-                                  RParen ")" @ 3092..3093
-                                LambdaExpressionList
+                              BinaryOperator
+                                Plus "+" @ 3044..3045 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:binary-plus */", Whitespace " "]
+                              BinaryExpressionRight
+                                CallExpression
+                                  NameExpression
+                                    Identifier "transform" @ 3076..3085
+                                  TypeArgumentListList
+                                  ValueArgumentList
+                                    LParen "(" @ 3085..3086
+                                    ValueArgumentEntryList
+                                      ValueArgument
+                                        ValueArgumentPrefixList
+                                        NameExpression
+                                          Identifier "second" @ 3086..3092
+                                    RParen ")" @ 3092..3093
+                                  LambdaExpressionList
                             RParen ")" @ 3093..3094
-                          Dot "." @ 3142..3143 leading=[Newline "\n", Whitespace "            ", BlockComment "/* JOLT-TRIVIA:before-chain-dot */", Whitespace " "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:chain-dot */", Whitespace " "]
-                          Identifier "trim" @ 3172..3176 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:trim-name */", Whitespace " "]
+                          NavigationOperator
+                            Dot "." @ 3142..3143 leading=[Newline "\n", Whitespace "            ", BlockComment "/* JOLT-TRIVIA:before-chain-dot */", Whitespace " "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:chain-dot */", Whitespace " "]
+                          NameExpression
+                            Identifier "trim" @ 3172..3176 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:trim-name */", Whitespace " "]
                         TypeArgumentListList
                         ValueArgumentList
                           LParen "(" @ 3205..3206
                           ValueArgumentEntryList
                           RParen ")" @ 3206..3207
                         LambdaExpressionList
-                      SplitSafeNavigationOperator
-                        Question "?" @ 3220..3221 leading=[Newline "\n", Whitespace "            "]
-                        Dot "." @ 3221..3222 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:safe-chain */", Whitespace " "]
-                      Identifier "ifEmpty" @ 3252..3259 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-empty-name */", Whitespace " "]
+                      NavigationOperator
+                        SplitSafeNavigationOperator
+                          Question "?" @ 3220..3221 leading=[Newline "\n", Whitespace "            "]
+                          Dot "." @ 3221..3222 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:safe-chain */", Whitespace " "]
+                      NameExpression
+                        Identifier "ifEmpty" @ 3252..3259 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-empty-name */", Whitespace " "]
                     TypeArgumentListList
                     LambdaExpressionList
                       LambdaExpression
@@ -587,9 +602,11 @@ KotlinFile
                                   Identifier "fallback" @ 3326..3334 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-empty-body */", Whitespace " "]
                               TerminatorList
                           RBrace "}" @ 3367..3368
-                  Elvis "?:" @ 3381..3383 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:elvis */", Whitespace " "]
-                  NameExpression
-                    Identifier "fallback" @ 3408..3416
+                  BinaryOperator
+                    Elvis "?:" @ 3381..3383 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:elvis */", Whitespace " "]
+                  BinaryExpressionRight
+                    NameExpression
+                      Identifier "fallback" @ 3408..3416
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -602,24 +619,31 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      OpenQuote "\"" @ 3436..3437
+                      StringTemplateContent
+                        OpenQuote "\"" @ 3436..3437
                     StringTemplateEntry
-                      RegularStringPart "value=" @ 3437..3443
+                      StringTemplateContent
+                        RegularStringPart "value=" @ 3437..3443
                     StringTemplateEntry
-                      LongStringTemplateEntry
-                        LongTemplateEntryStart "${" @ 3443..3445 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:template-open */", Whitespace " "]
-                        BinaryExpression
-                          NameExpression
-                            Identifier "computed" @ 3478..3486 trailing=[Whitespace " "]
-                          Plus "+" @ 3487..3488 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:template-plus */", Whitespace " "]
-                          StringTemplateExpression
-                            StringTemplateEntryList
-                              StringTemplateEntry
-                                OpenQuote "\"" @ 3521..3522
-                              StringTemplateEntry
-                                RegularStringPart "!" @ 3522..3523
-                            ClosingQuote "\"" @ 3523..3524 trailing=[Whitespace " "]
-                        LongTemplateEntryEnd "}" @ 3525..3526
+                      StringTemplateContent
+                        LongStringTemplateEntry
+                          LongTemplateEntryStart "${" @ 3443..3445 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:template-open */", Whitespace " "]
+                          BinaryExpression
+                            NameExpression
+                              Identifier "computed" @ 3478..3486 trailing=[Whitespace " "]
+                            BinaryOperator
+                              Plus "+" @ 3487..3488 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:template-plus */", Whitespace " "]
+                            BinaryExpressionRight
+                              StringTemplateExpression
+                                StringTemplateEntryList
+                                  StringTemplateEntry
+                                    StringTemplateContent
+                                      OpenQuote "\"" @ 3521..3522
+                                  StringTemplateEntry
+                                    StringTemplateContent
+                                      RegularStringPart "!" @ 3522..3523
+                                ClosingQuote "\"" @ 3523..3524 trailing=[Whitespace " "]
+                          LongTemplateEntryEnd "}" @ 3525..3526
                   ClosingQuote "\"" @ 3526..3527
               PropertyBodyMemberList
             PropertyDeclaration
@@ -633,14 +657,16 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "rendered" @ 3545..3553 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:as-left */", Whitespace " "]
-                  AsSafe "as?" @ 3580..3583 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:as-operator */", Whitespace " "]
-                  TypeReference
-                    UserType
-                      UserTypeSegmentList
-                        UserTypeSegment
-                          AnnotationList
-                          Name
-                            Identifier "String" @ 3614..3620
+                  BinaryOperator
+                    AsSafe "as?" @ 3580..3583 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:as-operator */", Whitespace " "]
+                  BinaryExpressionRight
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 3614..3620
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -653,14 +679,16 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "casted" @ 3639..3645 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:is-left */", Whitespace " "]
-                  NotIs "!is" @ 3672..3675 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:is-operator */", Whitespace " "]
-                  TypeReference
-                    UserType
-                      UserTypeSegmentList
-                        UserTypeSegment
-                          AnnotationList
-                          Name
-                            Identifier "Nothing" @ 3706..3713
+                  BinaryOperator
+                    NotIs "!is" @ 3672..3675 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:is-operator */", Whitespace " "]
+                  BinaryExpressionRight
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            AnnotationList
+                            Name
+                              Identifier "Nothing" @ 3706..3713
               PropertyBodyMemberList
             Statement
               ExpressionStatement
@@ -671,27 +699,32 @@ KotlinFile
                     BinaryExpression
                       NameExpression
                         Identifier "checked" @ 3779..3786 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-condition */", Whitespace " "]
-                      AndAnd "&&" @ 3818..3820 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-and */", Whitespace " "]
-                      BinaryExpression
-                        NameExpression
-                          Identifier "computed" @ 3846..3854 trailing=[Whitespace " "]
-                        NotIn "!in" @ 3855..3858 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:not-in */", Whitespace " "]
-                        CallExpression
+                      BinaryOperator
+                        AndAnd "&&" @ 3818..3820 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-and */", Whitespace " "]
+                      BinaryExpressionRight
+                        BinaryExpression
                           NameExpression
-                            Identifier "listOf" @ 3884..3890
-                          TypeArgumentListList
-                          ValueArgumentList
-                            LParen "(" @ 3890..3891
-                            ValueArgumentEntryList
-                              ValueArgument
-                                ValueArgumentPrefixList
-                                StringTemplateExpression
-                                  StringTemplateEntryList
-                                    StringTemplateEntry
-                                      OpenQuote "\"" @ 3891..3892
-                                  ClosingQuote "\"" @ 3892..3893
-                            RParen ")" @ 3893..3894 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-close */", Whitespace " "]
-                          LambdaExpressionList
+                            Identifier "computed" @ 3846..3854 trailing=[Whitespace " "]
+                          BinaryOperator
+                            NotIn "!in" @ 3855..3858 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:not-in */", Whitespace " "]
+                          BinaryExpressionRight
+                            CallExpression
+                              NameExpression
+                                Identifier "listOf" @ 3884..3890
+                              TypeArgumentListList
+                              ValueArgumentList
+                                LParen "(" @ 3890..3891
+                                ValueArgumentEntryList
+                                  ValueArgument
+                                    ValueArgumentPrefixList
+                                    StringTemplateExpression
+                                      StringTemplateEntryList
+                                        StringTemplateEntry
+                                          StringTemplateContent
+                                            OpenQuote "\"" @ 3891..3892
+                                      ClosingQuote "\"" @ 3892..3893
+                                RParen ")" @ 3893..3894 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-close */", Whitespace " "]
+                              LambdaExpressionList
                     RParen ")" @ 3922..3923 trailing=[Whitespace " "]
                   Block
                     LBrace "{" @ 3924..3925
@@ -756,8 +789,10 @@ KotlinFile
                     NavigationExpression
                       NameExpression
                         Identifier "input" @ 4252..4257
-                      Dot "." @ 4257..4258
-                      Identifier "withIndex" @ 4258..4267
+                      NavigationOperator
+                        Dot "." @ 4257..4258
+                      NameExpression
+                        Identifier "withIndex" @ 4258..4267
                     TypeArgumentListList
                     ValueArgumentList
                       LParen "(" @ 4267..4268
@@ -782,17 +817,23 @@ KotlinFile
                                   StringTemplateExpression
                                     StringTemplateEntryList
                                       StringTemplateEntry
-                                        OpenQuote "\"" @ 4315..4316
+                                        StringTemplateContent
+                                          OpenQuote "\"" @ 4315..4316
                                       StringTemplateEntry
-                                        ShortTemplateEntryStart "$" @ 4316..4317
+                                        StringTemplateContent
+                                          ShortTemplateEntryStart "$" @ 4316..4317
                                       StringTemplateEntry
-                                        Identifier "index" @ 4317..4322
+                                        StringTemplateContent
+                                          Identifier "index" @ 4317..4322
                                       StringTemplateEntry
-                                        RegularStringPart ":" @ 4322..4323
+                                        StringTemplateContent
+                                          RegularStringPart ":" @ 4322..4323
                                       StringTemplateEntry
-                                        ShortTemplateEntryStart "$" @ 4323..4324
+                                        StringTemplateContent
+                                          ShortTemplateEntryStart "$" @ 4323..4324
                                       StringTemplateEntry
-                                        Identifier "item" @ 4324..4328
+                                        StringTemplateContent
+                                          Identifier "item" @ 4324..4328
                                     ClosingQuote "\"" @ 4328..4329
                               RParen ")" @ 4329..4330
                             LambdaExpressionList
@@ -820,7 +861,8 @@ KotlinFile
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                OpenQuote "\"" @ 4543..4544 leading=[Newline "\n", Whitespace "        "]
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 4543..4544 leading=[Newline "\n", Whitespace "        "]
                             ClosingQuote "\"" @ 4544..4545 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-empty-condition */", Whitespace " "]
                       Arrow "->" @ 4585..4587 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-empty-arrow */", Whitespace " "]
                       CallExpression
@@ -835,9 +877,11 @@ KotlinFile
                               StringTemplateExpression
                                 StringTemplateEntryList
                                   StringTemplateEntry
-                                    OpenQuote "\"" @ 4628..4629
+                                    StringTemplateContent
+                                      OpenQuote "\"" @ 4628..4629
                                   StringTemplateEntry
-                                    RegularStringPart "blank" @ 4629..4634
+                                    StringTemplateContent
+                                      RegularStringPart "blank" @ 4629..4634
                                 ClosingQuote "\"" @ 4634..4635
                           RParen ")" @ 4635..4636
                         LambdaExpressionList
@@ -905,8 +949,10 @@ KotlinFile
                       NavigationExpression
                         NameExpression
                           Identifier "input" @ 4845..4850
-                        Dot "." @ 4850..4851
-                        Identifier "joinToString" @ 4851..4863 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:trailing-lambda-call */", Whitespace " "]
+                        NavigationOperator
+                          Dot "." @ 4850..4851
+                        NameExpression
+                          Identifier "joinToString" @ 4851..4863 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:trailing-lambda-call */", Whitespace " "]
                       TypeArgumentListList
                       ValueArgumentList
                         LParen "(" @ 4903..4904
@@ -919,9 +965,11 @@ KotlinFile
                             StringTemplateExpression
                               StringTemplateEntryList
                                 StringTemplateEntry
-                                  OpenQuote "\"" @ 4960..4961
+                                  StringTemplateContent
+                                    OpenQuote "\"" @ 4960..4961
                                 StringTemplateEntry
-                                  RegularStringPart "," @ 4961..4962
+                                  StringTemplateContent
+                                    RegularStringPart "," @ 4961..4962
                               ClosingQuote "\"" @ 4962..4963
                           Comma "," @ 4963..4964
                         RParen ")" @ 4969..4970 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:before-trailing-lambda */", Whitespace " "]
@@ -932,8 +980,9 @@ KotlinFile
                             LambdaParameterList
                               LambdaParameterSeparatedList
                                 LambdaParameter
-                                  Name
-                                    Identifier "item" @ 5014..5018 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lambda-param */", Whitespace " "]
+                                  LambdaParameterBinding
+                                    Name
+                                      Identifier "item" @ 5014..5018 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lambda-param */", Whitespace " "]
                               Arrow "->" @ 5050..5052
                             LambdaBodyItemList
                               PropertyDeclaration
@@ -968,8 +1017,10 @@ KotlinFile
                                         NavigationExpression
                                           NameExpression
                                             Identifier "local" @ 5137..5142
-                                          Dot "." @ 5142..5143
-                                          Identifier "isEmpty" @ 5143..5150
+                                          NavigationOperator
+                                            Dot "." @ 5142..5143
+                                          NameExpression
+                                            Identifier "isEmpty" @ 5143..5150
                                         TypeArgumentListList
                                         ValueArgumentList
                                           LParen "(" @ 5150..5151
@@ -997,13 +1048,17 @@ KotlinFile
                                     Identifier "local" @ 5248..5253 leading=[Newline "\n", Whitespace "        "]
                                 TerminatorList
                             RBrace "}" @ 5258..5259 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                    Plus "+" @ 5260..5261 trailing=[Whitespace " "]
-                    CallableReferenceExpression
-                      NameExpression
-                        Identifier "holder" @ 5262..5268 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-left */", Whitespace " "]
-                      ColonColon "::" @ 5311..5313 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-operator */", Whitespace " "]
-                      Identifier "component1" @ 5360..5370 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-name */"]
-                      TypeArgumentListList
+                    BinaryOperator
+                      Plus "+" @ 5260..5261 trailing=[Whitespace " "]
+                    BinaryExpressionRight
+                      CallableReferenceExpression
+                        CallableReferenceReceiver
+                          NameExpression
+                            Identifier "holder" @ 5262..5268 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-left */", Whitespace " "]
+                        ColonColon "::" @ 5311..5313 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-operator */", Whitespace " "]
+                        CallableReferenceTarget
+                          Identifier "component1" @ 5360..5370 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-name */"]
+                        TypeArgumentListList
               TerminatorList
           RBrace "}" @ 5413..5414 leading=[Newline "\n"]
   Eof "" @ 5415..5415 leading=[Newline "\n"]

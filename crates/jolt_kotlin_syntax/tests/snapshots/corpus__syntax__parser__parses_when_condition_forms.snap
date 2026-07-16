@@ -78,9 +78,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 82..83
+                              StringTemplateContent
+                                OpenQuote "\"" @ 82..83
                             StringTemplateEntry
-                              RegularStringPart "small" @ 83..88
+                              StringTemplateContent
+                                RegularStringPart "small" @ 83..88
                           ClosingQuote "\"" @ 88..89
                       WhenEntry
                         WhenConditionSeparatedList
@@ -89,16 +91,20 @@ KotlinFile
                             BinaryExpression
                               LiteralExpression
                                 IntegerLiteral "2" @ 101..102
-                              Range ".." @ 102..104
-                              LiteralExpression
-                                IntegerLiteral "10" @ 104..106 trailing=[Whitespace " "]
+                              BinaryOperator
+                                Range ".." @ 102..104
+                              BinaryExpressionRight
+                                LiteralExpression
+                                  IntegerLiteral "10" @ 104..106 trailing=[Whitespace " "]
                         Arrow "->" @ 107..109 trailing=[Whitespace " "]
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 110..111
+                              StringTemplateContent
+                                OpenQuote "\"" @ 110..111
                             StringTemplateEntry
-                              RegularStringPart "medium" @ 111..117
+                              StringTemplateContent
+                                RegularStringPart "medium" @ 111..117
                           ClosingQuote "\"" @ 117..118
                       WhenEntry
                         WhenConditionSeparatedList
@@ -107,16 +113,20 @@ KotlinFile
                             BinaryExpression
                               LiteralExpression
                                 IntegerLiteral "11" @ 131..133
-                              RangeUntil "..<" @ 133..136
-                              LiteralExpression
-                                IntegerLiteral "20" @ 136..138 trailing=[Whitespace " "]
+                              BinaryOperator
+                                RangeUntil "..<" @ 133..136
+                              BinaryExpressionRight
+                                LiteralExpression
+                                  IntegerLiteral "20" @ 136..138 trailing=[Whitespace " "]
                         Arrow "->" @ 139..141 trailing=[Whitespace " "]
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 142..143
+                              StringTemplateContent
+                                OpenQuote "\"" @ 142..143
                             StringTemplateEntry
-                              RegularStringPart "outside" @ 143..150
+                              StringTemplateContent
+                                RegularStringPart "outside" @ 143..150
                           ClosingQuote "\"" @ 150..151
                       WhenEntry
                         ElseKw "else" @ 160..164 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
@@ -125,9 +135,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 168..169
+                              StringTemplateContent
+                                OpenQuote "\"" @ 168..169
                             StringTemplateEntry
-                              RegularStringPart "large" @ 169..174
+                              StringTemplateContent
+                                RegularStringPart "large" @ 169..174
                           ClosingQuote "\"" @ 174..175
                     RBrace "}" @ 180..181 leading=[Newline "\n", Whitespace "    "]
               TerminatorList

@@ -162,7 +162,7 @@ impl Parser<'_> {
                     self.current_kind(),
                     K::Semicolon | K::DoubleSemicolon | K::RBrace | K::Eof
                 )
-                || (self.newline_before_current() && self.at_declaration_start(true))
+                || self.at_expression_rhs_declaration_boundary()
             {
                 let diagnostic = self.expected_here("expected property initializer expression");
                 self.own_diagnostic(
@@ -182,7 +182,7 @@ impl Parser<'_> {
         if self.at_semicolon_boundary()
             || self.at_property_accessor_start()
             || self.at_soft_keyword("field")
-            || (self.newline_before_current() && self.at_declaration_start(true))
+            || self.at_expression_rhs_declaration_boundary()
         {
             return;
         }
@@ -426,12 +426,6 @@ impl Parser<'_> {
         self.complete(entries, K::ContextParameterSeparatedList);
         self.expect(K::RParen, "expected ')' after context parameters");
         self.complete(marker, K::ContextParameterClause);
-    }
-
-    pub(in crate::parser::grammar) fn parse_delegation_specifier_list(&mut self) {
-        let marker = self.start();
-        self.parse_delegation_specifier_entries();
-        self.complete(marker, K::DelegationSpecifierList);
     }
 
     pub(in crate::parser::grammar) fn parse_delegation_specifier_entries(&mut self) {
@@ -841,7 +835,7 @@ impl Parser<'_> {
         let separated_expression = accessor_keyword
             .is_some_and(|keyword| keyword > position && self.newline_between(position, keyword));
         if (accessor_keyword.is_none() || separated_expression)
-            && !(self.newline_before_current() && self.at_declaration_start(true))
+            && !self.at_expression_rhs_declaration_boundary()
             && !matches!(
                 self.current_kind(),
                 K::Semicolon | K::DoubleSemicolon | K::RBrace | K::Eof
@@ -901,7 +895,7 @@ impl Parser<'_> {
             self.current_kind(),
             K::Semicolon | K::DoubleSemicolon | K::RBrace | K::Eof
         ) || accessor && self.at_property_accessor_start()
-            || self.newline_before_current() && self.at_declaration_start(true);
+            || self.at_expression_rhs_declaration_boundary();
         if missing_expression {
             let diagnostic = self.expected_here("expected declaration body expression");
             self.own_diagnostic(

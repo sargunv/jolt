@@ -182,8 +182,9 @@ KotlinFile
                         LambdaParameterList
                           LambdaParameterSeparatedList
                             LambdaParameter
-                              Name
-                                Identifier "value" @ 217..222 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lambda-param */", Whitespace " "]
+                              LambdaParameterBinding
+                                Name
+                                  Identifier "value" @ 217..222 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lambda-param */", Whitespace " "]
                           Arrow "->" @ 254..256
                         LambdaBodyItemList
                           Statement
@@ -224,9 +225,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 312..313
+                              StringTemplateContent
+                                OpenQuote "\"" @ 312..313
                             StringTemplateEntry
-                              RegularStringPart "name" @ 313..317
+                              StringTemplateContent
+                                RegularStringPart "name" @ 313..317
                           ClosingQuote "\"" @ 317..318
                     RParen ")" @ 318..319 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:before-trailing */", Whitespace " "]
                   LambdaExpressionList
@@ -240,8 +243,10 @@ KotlinFile
                                 NavigationExpression
                                   NameExpression
                                     Identifier "it" @ 364..366 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:implicit-it */", Whitespace " "]
-                                  Dot "." @ 397..398
-                                  Identifier "uppercase" @ 398..407
+                                  NavigationOperator
+                                    Dot "." @ 397..398
+                                  NameExpression
+                                    Identifier "uppercase" @ 398..407
                                 TypeArgumentListList
                                 ValueArgumentList
                                   LParen "(" @ 407..408

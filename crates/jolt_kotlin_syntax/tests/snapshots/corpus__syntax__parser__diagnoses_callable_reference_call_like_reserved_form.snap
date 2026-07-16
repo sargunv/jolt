@@ -39,10 +39,12 @@ KotlinFile
                 Assign "=" @ 52..53 trailing=[Whitespace " "]
                 CallExpression
                   CallableReferenceExpression
-                    NameExpression
-                      Identifier "String" @ 54..60
+                    CallableReferenceReceiver
+                      NameExpression
+                        Identifier "String" @ 54..60
                     ColonColon "::" @ 60..62
-                    Identifier "trim" @ 62..66
+                    CallableReferenceTarget
+                      Identifier "trim" @ 62..66
                     TypeArgumentListList
                   TypeArgumentListList
                   ValueArgumentList
@@ -53,9 +55,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 67..68
+                              StringTemplateContent
+                                OpenQuote "\"" @ 67..68
                             StringTemplateEntry
-                              RegularStringPart " value " @ 68..75
+                              StringTemplateContent
+                                RegularStringPart " value " @ 68..75
                           ClosingQuote "\"" @ 75..76
                     RParen ")" @ 76..77
                   LambdaExpressionList
@@ -70,10 +74,12 @@ KotlinFile
                 Assign "=" @ 94..95 trailing=[Whitespace " "]
                 CallExpression
                   CallableReferenceExpression
-                    NameExpression
-                      Identifier "Box" @ 96..99
+                    CallableReferenceReceiver
+                      NameExpression
+                        Identifier "Box" @ 96..99
                     ColonColon "::" @ 99..101
-                    Identifier "create" @ 101..107
+                    CallableReferenceTarget
+                      Identifier "create" @ 101..107
                     TypeArgumentListList
                       TypeArgumentList
                         Lt "<" @ 107..108
@@ -95,9 +101,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 116..117
+                              StringTemplateContent
+                                OpenQuote "\"" @ 116..117
                             StringTemplateEntry
-                              RegularStringPart "value" @ 117..122
+                              StringTemplateContent
+                                RegularStringPart "value" @ 117..122
                           ClosingQuote "\"" @ 122..123
                     RParen ")" @ 123..124
                   LambdaExpressionList

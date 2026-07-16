@@ -14,7 +14,7 @@ KotlinFile
       ExpressionStatement
         CollectionLiteralExpression
           LBracket "[" @ 0..1
-          ValueArgumentSeparatedList
+          ValueArgumentEntryList
             ValueArgument
               ValueArgumentPrefixList
               LiteralExpression

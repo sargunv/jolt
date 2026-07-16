@@ -1161,6 +1161,54 @@ Vertically migrate operators, strings, lambdas, collections, callable
 references, object literals, and remaining call/navigation families. Delete
 filtered token fallback and expression-local recovery state.
 
+Implementation status: **complete and gate-green**. Assignment, binary, unary,
+postfix, parenthesized, annotated, call, index, collection, navigation, callable
+reference, string-template, lambda, anonymous-function, and object-expression
+roles now expose exact typed fields. Expression holes, invalid assignment
+targets, missing selectors and reference targets, delimiter gaps, template
+closes, and list/lambda comma gaps use the smallest category-compatible bogus
+node with exact diagnostic ownership. Anonymous functions require represented
+parameters and bodies; object expressions require a represented class body; and
+`this`/`super` labels use a shared required `LabelReference`.
+
+Operator recovery uses a bounded declaration discriminator: a missing operand
+stops before a named declaration on the next line without rejecting valid
+multiline, anonymous-function, or receiver-function operands. Empty-first commas
+in calls, indexes, collections, and lambda parameters receive bogus owners,
+while a trailing comma after a real item remains valid. String-template parts,
+long-template boundaries, object delegation, and anonymous declaration bodies
+are syntax-owned and ordered. Existing expression lookaheads remain explicitly
+capped, and all list and member-chain walks remain linear.
+
+Seven heterogeneous roles use the schema's named projections plus syntax-owned
+exhaustive classifiers: binary operators and right operands, navigation
+operators, callable-reference receivers, string-template content, lambda
+bindings, and value-argument prefixes. Formatter rules match those enums
+directly; structural casts remain only for lambda-body `BlockItem` handling,
+which belongs to Phase 20.
+
+The formatter removes all 17 in-scope whole-node fallbacks, duplicate lambda
+destructuring, anonymous-body state inference, object-delegation duplication,
+generic square-list collectors, and argument recovery flags. Only the
+`LoopExpression` fallback remains for Phase 20. Missing zero-token operands,
+bodies, and labels add no synthetic or trailing layout. Malformed leading-comma
+examples retain a harmless double internal space, but have exact owners and pass
+conservation and idempotence without per-list repair exceptions.
+
+Phase 19 adds 208 net implementation lines, moving the cumulative baseline delta
+to +5,058. Scoped formatter/helper source shrinks by 274 net lines; the
+remaining growth is exact parser recovery, typed schema projections/classifiers,
+diagnostic ownership, and their tests. Fixtures and mechanically changed
+snapshots are excluded. Phase 22 and the Phase 24 net-negative gate remain
+binding.
+
+Quality audit: Rust checks, focused and imported Kotlin parse/format corpora,
+recovery and trivia conservation, idempotence, schema exactness, parser
+progress, bidirectional diagnostic ownership, exhaustive projection review,
+bounded-algorithm review, valid formatter snapshot review, and
+`git diff --check` pass. No benchmark was run; Phase 23 remains the designated
+cumulative performance gate.
+
 ### New Phase 20: Kotlin Statements And Control Flow
 
 Vertically migrate branches, loops, `when`, `try`, and remaining statements and

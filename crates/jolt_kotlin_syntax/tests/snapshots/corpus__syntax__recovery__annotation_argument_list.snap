@@ -20,7 +20,7 @@ KotlinFile
         LParen "(" @ 5..6 trailing=[BlockComment "/* orphan */", Whitespace " "]
         ValueArgumentSeparatedList
           Comma "," @ 19..20 trailing=[Whitespace " "]
-          ErrorNode
+          BogusValueArgument
           ValueArgument
             ValueArgumentPrefixList
             NameExpression

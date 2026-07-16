@@ -133,7 +133,7 @@ KotlinFile
                             NameExpression
                               Identifier "values" @ 159..165 leading=[Newline "\n", Whitespace "        "]
                             LBracket "[" @ 165..166
-                            ValueArgumentSeparatedList
+                            ValueArgumentEntryList
                               ValueArgument
                                 ValueArgumentPrefixList
                                 NameExpression
@@ -176,9 +176,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 258..259
+                              StringTemplateContent
+                                OpenQuote "\"" @ 258..259
                             StringTemplateEntry
-                              RegularStringPart "fixture" @ 259..266
+                              StringTemplateContent
+                                RegularStringPart "fixture" @ 259..266
                           ClosingQuote "\"" @ 266..267
                       PropertyBodyMemberList
                 RBrace "}" @ 272..273 leading=[Newline "\n", Whitespace "    "]

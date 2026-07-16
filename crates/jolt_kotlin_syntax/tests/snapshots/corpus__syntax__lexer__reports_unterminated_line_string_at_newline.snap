@@ -16,24 +16,33 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              OpenQuote "\"" @ 0..1
+              StringTemplateContent
+                OpenQuote "\"" @ 0..1
             StringTemplateEntry
-              RegularStringPart "abc" @ 1..4
+              StringTemplateContent
+                RegularStringPart "abc" @ 1..4
             StringTemplateEntry
-              DanglingNewline "" @ 4..4
+              StringTemplateContent
+                DanglingNewline "" @ 4..4
             StringTemplateEntry
-              ValKw "val" @ 5..8 leading=[Newline "\n"] trailing=[Whitespace " "]
+              StringTemplateContent
+                ValKw "val" @ 5..8 leading=[Newline "\n"] trailing=[Whitespace " "]
             StringTemplateEntry
-              Identifier "x" @ 9..10 trailing=[Whitespace " "]
+              StringTemplateContent
+                Identifier "x" @ 9..10 trailing=[Whitespace " "]
             StringTemplateEntry
-              Assign "=" @ 11..12 trailing=[Whitespace " "]
+              StringTemplateContent
+                Assign "=" @ 11..12 trailing=[Whitespace " "]
             StringTemplateEntry
-              IntegerLiteral "1" @ 13..14
+              StringTemplateContent
+                IntegerLiteral "1" @ 13..14
       TerminatorList
   Eof "" @ 15..15 leading=[Newline "\n"]
 
 diagnostics:
   code=kotlin.lex.unterminated_string_literal severity=Error stage=Lexer range=0..4 message="unterminated string literal"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=15..15 message="expected closing quote"
 
 diagnostics:
 code=kotlin.lex.unterminated_string_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(4) }) message=unterminated string literal
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(15), end: TextSize(15) }) message=expected closing quote

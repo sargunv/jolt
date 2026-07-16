@@ -36,9 +36,11 @@ KotlinFile
             StringTemplateExpression
               StringTemplateEntryList
                 StringTemplateEntry
-                  OpenQuote "\"" @ 17..18
+                  StringTemplateContent
+                    OpenQuote "\"" @ 17..18
                 StringTemplateEntry
-                  RegularStringPart "parser" @ 18..24
+                  StringTemplateContent
+                    RegularStringPart "parser" @ 18..24
               ClosingQuote "\"" @ 24..25
         RParen ")" @ 25..26
     Annotation
@@ -58,9 +60,11 @@ KotlinFile
             StringTemplateExpression
               StringTemplateEntryList
                 StringTemplateEntry
-                  OpenQuote "\"" @ 42..43
+                  StringTemplateContent
+                    OpenQuote "\"" @ 42..43
                 StringTemplateEntry
-                  RegularStringPart "unused" @ 43..49
+                  StringTemplateContent
+                    RegularStringPart "unused" @ 43..49
               ClosingQuote "\"" @ 49..50
         RParen ")" @ 50..51
   KotlinFileItemList
@@ -110,8 +114,10 @@ KotlinFile
                 NavigationExpression
                   NameExpression
                     Identifier "AnnotationTarget" @ 140..156
-                  Dot "." @ 156..157
-                  Identifier "FILE" @ 157..161
+                  NavigationOperator
+                    Dot "." @ 156..157
+                  NameExpression
+                    Identifier "FILE" @ 157..161
             RParen ")" @ 161..162
         Identifier "annotation" @ 163..173 leading=[Newline "\n"] trailing=[Whitespace " "]
       ModifierList

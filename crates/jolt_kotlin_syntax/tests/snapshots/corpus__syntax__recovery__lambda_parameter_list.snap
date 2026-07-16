@@ -33,14 +33,16 @@ KotlinFile
                     LambdaParameterList
                       LambdaParameterSeparatedList
                         LambdaParameter
-                          Name
-                            Identifier "first" @ 15..20
+                          LambdaParameterBinding
+                            Name
+                              Identifier "first" @ 15..20
                         Comma "," @ 20..21 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
                         Comma "," @ 35..36 trailing=[Whitespace " "]
-                        ErrorNode
+                        BogusLambdaParameter
                         LambdaParameter
-                          Name
-                            Identifier "second" @ 37..43 trailing=[Whitespace " "]
+                          LambdaParameterBinding
+                            Name
+                              Identifier "second" @ 37..43 trailing=[Whitespace " "]
                       Arrow "->" @ 44..46 trailing=[Whitespace " "]
                     LambdaBodyItemList
                       Statement

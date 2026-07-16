@@ -78,10 +78,12 @@ KotlinFile
               PropertyInitializer
                 Assign "=" @ 82..83 trailing=[Whitespace " "]
                 CallableReferenceExpression
-                  NameExpression
-                    Identifier "String" @ 84..90 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-receiver */", Whitespace " "]
+                  CallableReferenceReceiver
+                    NameExpression
+                      Identifier "String" @ 84..90 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-receiver */", Whitespace " "]
                   ColonColon "::" @ 137..139 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-operator */", Whitespace " "]
-                  Identifier "trim" @ 186..190
+                  CallableReferenceTarget
+                    Identifier "trim" @ 186..190
                   TypeArgumentListList
               PropertyBodyMemberList
             Statement
@@ -90,8 +92,10 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "values" @ 195..201 leading=[Newline "\n", Whitespace "    "]
-                    Dot "." @ 201..202
-                    Identifier "forEach" @ 202..209 trailing=[Whitespace " "]
+                    NavigationOperator
+                      Dot "." @ 201..202
+                    NameExpression
+                      Identifier "forEach" @ 202..209 trailing=[Whitespace " "]
                   TypeArgumentListList
                   LambdaExpressionList
                     LambdaExpression
@@ -112,8 +116,10 @@ KotlinFile
                                         NavigationExpression
                                           NameExpression
                                             Identifier "it" @ 262..264
-                                          Dot "." @ 264..265
-                                          Identifier "isBlank" @ 265..272
+                                          NavigationOperator
+                                            Dot "." @ 264..265
+                                          NameExpression
+                                            Identifier "isBlank" @ 265..272
                                         TypeArgumentListList
                                         ValueArgumentList
                                           LParen "(" @ 272..273

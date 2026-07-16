@@ -65,18 +65,24 @@ KotlinFile
                             NavigationExpression
                               NameExpression
                                 Identifier "node" @ 48..52
+                              NavigationOperator
+                                SplitSafeNavigationOperator
+                                  Question "?" @ 61..62 leading=[Newline "\n", Whitespace "        "]
+                                  Dot "." @ 62..63
+                              NameExpression
+                                Identifier "parent" @ 63..69
+                            NavigationOperator
                               SplitSafeNavigationOperator
-                                Question "?" @ 61..62 leading=[Newline "\n", Whitespace "        "]
-                                Dot "." @ 62..63
-                              Identifier "parent" @ 63..69
+                                Question "?" @ 78..79 leading=[Newline "\n", Whitespace "        "]
+                                Dot "." @ 79..80
+                            NameExpression
+                              Identifier "children" @ 80..88
+                          NavigationOperator
                             SplitSafeNavigationOperator
-                              Question "?" @ 78..79 leading=[Newline "\n", Whitespace "        "]
-                              Dot "." @ 79..80
-                            Identifier "children" @ 80..88
-                          SplitSafeNavigationOperator
-                            Question "?" @ 97..98 leading=[Newline "\n", Whitespace "        "]
-                            Dot "." @ 98..99
-                          Identifier "get" @ 99..102
+                              Question "?" @ 97..98 leading=[Newline "\n", Whitespace "        "]
+                              Dot "." @ 98..99
+                          NameExpression
+                            Identifier "get" @ 99..102
                         TypeArgumentListList
                         ValueArgumentList
                           LParen "(" @ 102..103
@@ -87,10 +93,12 @@ KotlinFile
                                 IntegerLiteral "0" @ 103..104
                           RParen ")" @ 104..105
                         LambdaExpressionList
-                      SplitSafeNavigationOperator
-                        Question "?" @ 114..115 leading=[Newline "\n", Whitespace "        "]
-                        Dot "." @ 115..116
-                      Identifier "name" @ 116..120
+                      NavigationOperator
+                        SplitSafeNavigationOperator
+                          Question "?" @ 114..115 leading=[Newline "\n", Whitespace "        "]
+                          Dot "." @ 115..116
+                      NameExpression
+                        Identifier "name" @ 116..120
                     BangBang "!!" @ 120..122
               TerminatorList
           RBrace "}" @ 123..124 leading=[Newline "\n"]

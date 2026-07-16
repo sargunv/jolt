@@ -154,8 +154,10 @@ KotlinFile
                                                   NavigationExpression
                                                     NameExpression
                                                       Identifier "item" @ 198..202
-                                                    Dot "." @ 202..203
-                                                    Identifier "isEmpty" @ 203..210
+                                                    NavigationOperator
+                                                      Dot "." @ 202..203
+                                                    NameExpression
+                                                      Identifier "isEmpty" @ 203..210
                                                   TypeArgumentListList
                                                   ValueArgumentList
                                                     LParen "(" @ 210..211
@@ -174,10 +176,13 @@ KotlinFile
                                               NavigationExpression
                                                 ThisExpression
                                                   ThisKw "this" @ 245..249 leading=[Newline "\n", Whitespace "                "]
-                                                  At "@" @ 249..250
-                                                  Identifier "Child" @ 250..255
-                                                Dot "." @ 255..256
-                                                Identifier "visit" @ 256..261
+                                                  LabelReference
+                                                    At "@" @ 249..250
+                                                    Identifier "Child" @ 250..255
+                                                NavigationOperator
+                                                  Dot "." @ 255..256
+                                                NameExpression
+                                                  Identifier "visit" @ 256..261
                                               TypeArgumentListList
                                               ValueArgumentList
                                                 LParen "(" @ 261..262
@@ -202,8 +207,10 @@ KotlinFile
                                                               Name
                                                                 Identifier "Parent" @ 286..292
                                                     Gt ">" @ 292..293
-                                                Dot "." @ 293..294
-                                                Identifier "visit" @ 294..299
+                                                NavigationOperator
+                                                  Dot "." @ 293..294
+                                                NameExpression
+                                                  Identifier "visit" @ 294..299
                                               TypeArgumentListList
                                               ValueArgumentList
                                                 LParen "(" @ 299..300

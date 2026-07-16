@@ -136,9 +136,11 @@ KotlinFile
             BinaryExpression
               NameExpression
                 Identifier "left" @ 101..105 trailing=[Whitespace " "]
-              GtEq ">=" @ 106..108 trailing=[Whitespace " "]
-              NameExpression
-                Identifier "right" @ 109..114
+              BinaryOperator
+                GtEq ">=" @ 106..108 trailing=[Whitespace " "]
+              BinaryExpressionRight
+                NameExpression
+                  Identifier "right" @ 109..114
             RParen ")" @ 114..115 trailing=[Whitespace " "]
           NameExpression
             Identifier "left" @ 116..120 trailing=[Whitespace " "]

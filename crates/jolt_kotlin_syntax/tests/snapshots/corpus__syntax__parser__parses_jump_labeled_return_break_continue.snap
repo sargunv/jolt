@@ -92,9 +92,11 @@ KotlinFile
                                 BinaryExpression
                                   NameExpression
                                     Identifier "value" @ 82..87 trailing=[Whitespace " "]
-                                  Lt "<" @ 88..89 trailing=[Whitespace " "]
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 90..91
+                                  BinaryOperator
+                                    Lt "<" @ 88..89 trailing=[Whitespace " "]
+                                  BinaryExpressionRight
+                                    LiteralExpression
+                                      IntegerLiteral "0" @ 90..91
                                 RParen ")" @ 91..92 trailing=[Whitespace " "]
                               JumpExpression
                                 ContinueKw "continue" @ 93..101
@@ -110,9 +112,11 @@ KotlinFile
                                 BinaryExpression
                                   NameExpression
                                     Identifier "value" @ 119..124 trailing=[Whitespace " "]
-                                  EqEq "==" @ 125..127 trailing=[Whitespace " "]
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 128..129
+                                  BinaryOperator
+                                    EqEq "==" @ 125..127 trailing=[Whitespace " "]
+                                  BinaryExpressionRight
+                                    LiteralExpression
+                                      IntegerLiteral "0" @ 128..129
                                 RParen ")" @ 129..130 trailing=[Whitespace " "]
                               JumpExpression
                                 BreakKw "break" @ 131..136
@@ -125,8 +129,10 @@ KotlinFile
                               NavigationExpression
                                 NameExpression
                                   Identifier "values" @ 150..156 leading=[Newline "\n", Whitespace "        "]
-                                Dot "." @ 156..157
-                                Identifier "forEach" @ 157..164 trailing=[Whitespace " "]
+                                NavigationOperator
+                                  Dot "." @ 156..157
+                                NameExpression
+                                  Identifier "forEach" @ 157..164 trailing=[Whitespace " "]
                               TypeArgumentListList
                               LambdaExpressionList
                                 LambdaExpression
@@ -146,9 +152,11 @@ KotlinFile
                                                   BinaryExpression
                                                     NameExpression
                                                       Identifier "it" @ 189..191 trailing=[Whitespace " "]
-                                                    EqEq "==" @ 192..194 trailing=[Whitespace " "]
-                                                    NameExpression
-                                                      Identifier "value" @ 195..200
+                                                    BinaryOperator
+                                                      EqEq "==" @ 192..194 trailing=[Whitespace " "]
+                                                    BinaryExpressionRight
+                                                      NameExpression
+                                                        Identifier "value" @ 195..200
                                                   RParen ")" @ 200..201 trailing=[Whitespace " "]
                                                 JumpExpression
                                                   ReturnKw "return" @ 202..208

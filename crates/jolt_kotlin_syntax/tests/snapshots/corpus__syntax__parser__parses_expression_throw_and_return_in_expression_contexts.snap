@@ -66,18 +66,20 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "value" @ 64..69 trailing=[Whitespace " "]
-                  Elvis "?:" @ 70..72 trailing=[Whitespace " "]
-                  ThrowExpression
-                    ThrowKw "throw" @ 73..78 trailing=[Whitespace " "]
-                    CallExpression
-                      NameExpression
-                        Identifier "MissingValue" @ 79..91
-                      TypeArgumentListList
-                      ValueArgumentList
-                        LParen "(" @ 91..92
-                        ValueArgumentEntryList
-                        RParen ")" @ 92..93
-                      LambdaExpressionList
+                  BinaryOperator
+                    Elvis "?:" @ 70..72 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    ThrowExpression
+                      ThrowKw "throw" @ 73..78 trailing=[Whitespace " "]
+                      CallExpression
+                        NameExpression
+                          Identifier "MissingValue" @ 79..91
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 91..92
+                          ValueArgumentEntryList
+                          RParen ")" @ 92..93
+                        LambdaExpressionList
               PropertyBodyMemberList
             Statement
               ExpressionStatement
@@ -88,8 +90,10 @@ KotlinFile
                       NavigationExpression
                         NameExpression
                           Identifier "checked" @ 105..112
-                        Dot "." @ 112..113
-                        Identifier "takeIf" @ 113..119 trailing=[Whitespace " "]
+                        NavigationOperator
+                          Dot "." @ 112..113
+                        NameExpression
+                          Identifier "takeIf" @ 113..119 trailing=[Whitespace " "]
                       TypeArgumentListList
                       LambdaExpressionList
                         LambdaExpression
@@ -102,8 +106,10 @@ KotlinFile
                                     NavigationExpression
                                       NameExpression
                                         Identifier "it" @ 122..124
-                                      Dot "." @ 124..125
-                                      Identifier "isNotEmpty" @ 125..135
+                                      NavigationOperator
+                                        Dot "." @ 124..125
+                                      NameExpression
+                                        Identifier "isNotEmpty" @ 125..135
                                     TypeArgumentListList
                                     ValueArgumentList
                                       LParen "(" @ 135..136
@@ -112,16 +118,20 @@ KotlinFile
                                     LambdaExpressionList
                                 TerminatorList
                             RBrace "}" @ 138..139 trailing=[Whitespace " "]
-                    Elvis "?:" @ 140..142 trailing=[Whitespace " "]
-                    JumpExpression
-                      ReturnKw "return" @ 143..149 trailing=[Whitespace " "]
-                      StringTemplateExpression
-                        StringTemplateEntryList
-                          StringTemplateEntry
-                            OpenQuote "\"" @ 150..151
-                          StringTemplateEntry
-                            RegularStringPart "empty" @ 151..156
-                        ClosingQuote "\"" @ 156..157
+                    BinaryOperator
+                      Elvis "?:" @ 140..142 trailing=[Whitespace " "]
+                    BinaryExpressionRight
+                      JumpExpression
+                        ReturnKw "return" @ 143..149 trailing=[Whitespace " "]
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              StringTemplateContent
+                                OpenQuote "\"" @ 150..151
+                            StringTemplateEntry
+                              StringTemplateContent
+                                RegularStringPart "empty" @ 151..156
+                          ClosingQuote "\"" @ 156..157
               TerminatorList
           RBrace "}" @ 158..159 leading=[Newline "\n"]
     FunctionDeclaration

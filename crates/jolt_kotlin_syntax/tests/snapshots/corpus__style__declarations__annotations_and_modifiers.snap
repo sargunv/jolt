@@ -46,16 +46,20 @@ KotlinFile
                 NavigationExpression
                   NameExpression
                     Identifier "AnnotationTarget" @ 42..58
-                  Dot "." @ 58..59
-                  Identifier "CLASS" @ 59..64
+                  NavigationOperator
+                    Dot "." @ 58..59
+                  NameExpression
+                    Identifier "CLASS" @ 59..64
               Comma "," @ 64..65 trailing=[Whitespace " "]
               ValueArgument
                 ValueArgumentPrefixList
                 NavigationExpression
                   NameExpression
                     Identifier "AnnotationTarget" @ 66..82
-                  Dot "." @ 82..83
-                  Identifier "FUNCTION" @ 83..91
+                  NavigationOperator
+                    Dot "." @ 82..83
+                  NameExpression
+                    Identifier "FUNCTION" @ 83..91
             RParen ")" @ 91..92
         Identifier "annotation" @ 93..103 leading=[Newline "\n"] trailing=[Whitespace " "]
       ModifierList
@@ -97,9 +101,11 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      OpenQuote "\"" @ 148..149
+                      StringTemplateContent
+                        OpenQuote "\"" @ 148..149
                     StringTemplateEntry
-                      RegularStringPart "fixture" @ 149..156
+                      StringTemplateContent
+                        RegularStringPart "fixture" @ 149..156
                   ClosingQuote "\"" @ 156..157
             RParen ")" @ 157..158 trailing=[Whitespace " "]
         Identifier "sealed" @ 159..165 trailing=[Whitespace " "]

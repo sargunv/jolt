@@ -264,6 +264,58 @@ mod tests {
         check("enum class E { A,,B }\n", "unexpected orphan class member comma", KotlinSyntaxKind::BogusClassMember, None);
         check("class C {\n", "expected '}' after class body", KotlinSyntaxKind::ClassBody, Some(crate::shape::class_body::Slot::close_brace as u16));
     }
+
+    #[test]
+    #[rustfmt::skip]
+    fn phase_nineteen_diagnostics_own_the_declared_node_or_slot() {
+        check("fun f() = 1 +\n", "expected expression after operator", KotlinSyntaxKind::BogusExpression, None);
+        check("fun f() = 1 +\nval next = 2\n", "expected expression after operator", KotlinSyntaxKind::BogusExpression, None);
+        check("fun f() = !\n", "expected expression", KotlinSyntaxKind::BogusExpression, None);
+        check_code("fun f() = 1 = 2\n", "invalid assignment target", KotlinParseDiagnosticCode::InvalidAssignmentTarget, KotlinSyntaxKind::BogusExpression, None);
+        check("fun f() = target.\n", "expected member name", KotlinSyntaxKind::BogusNavigationSelector, None);
+        check("fun f() = target::\n", "expected callable reference name", KotlinSyntaxKind::CallableReferenceTarget, Some(crate::shape::callable_reference_target::Slot::target as u16));
+        check("fun f() = call(, value)\n", "expected list item", KotlinSyntaxKind::BogusValueArgument, None);
+        check("fun f() = call(,)\n", "expected list item", KotlinSyntaxKind::BogusValueArgument, None);
+        check("fun f() = [,]\n", "expected list item", KotlinSyntaxKind::BogusValueArgument, None);
+        check("fun f() = value[, index]\n", "expected list item", KotlinSyntaxKind::BogusValueArgument, None);
+        check("fun f() = value[index\n", "expected ']'", KotlinSyntaxKind::IndexExpression, Some(crate::shape::index_expression::Slot::close_bracket as u16));
+        check("fun f() = call(value\n", "expected ')' after arguments", KotlinSyntaxKind::ValueArgumentList, Some(crate::shape::value_argument_list::Slot::close_paren as u16));
+        check_code("fun f() = { , value -> value }\n", "expected lambda parameter between commas", KotlinParseDiagnosticCode::UnexpectedSyntax, KotlinSyntaxKind::BogusLambdaParameter, None);
+        check_code("fun f() = { , -> 1 }\n", "expected lambda parameter between commas", KotlinParseDiagnosticCode::UnexpectedSyntax, KotlinSyntaxKind::BogusLambdaParameter, None);
+        check("fun f() = ()\n", "expected parenthesized expression", KotlinSyntaxKind::BogusExpression, None);
+        check("fun f() = [value\n", "expected ']' after collection literal", KotlinSyntaxKind::CollectionLiteralExpression, Some(crate::shape::collection_literal_expression::Slot::close_bracket as u16));
+        check("val f = fun()\n", "expected anonymous function body", KotlinSyntaxKind::BogusDeclarationBody, None);
+        check("val f = fun()\nval next = 1\n", "expected anonymous function body", KotlinSyntaxKind::BogusDeclarationBody, None);
+        check("val f = fun {}\n", "expected value parameter list", KotlinSyntaxKind::ValueParameterList, None);
+        check("val x = object\n", "expected object body", KotlinSyntaxKind::ClassBody, None);
+        check("val x = object : A\n", "expected object body", KotlinSyntaxKind::ClassBody, None);
+        check("val x = object\nval next = 1\n", "expected object body", KotlinSyntaxKind::ClassBody, None);
+        check("val x = object : A\nval next = 1\n", "expected object body", KotlinSyntaxKind::ClassBody, None);
+        check("val x = this@\n", "expected label name", KotlinSyntaxKind::LabelReference, Some(crate::shape::label_reference::Slot::label as u16));
+        check("val x = super@\n", "expected label name", KotlinSyntaxKind::LabelReference, Some(crate::shape::label_reference::Slot::label as u16));
+    }
+
+    #[test]
+    fn phase_nineteen_valid_multiline_rhs_stays_expression_owned() {
+        for source in [
+            "fun f() = 1 +\n !value\n",
+            "val f =\n fun(value: Int) = value\n",
+            "fun f() = predicate &&\n fun(value: Int) = value\n",
+            "val f = fun() = 1\n",
+            "val f = fun() {}\n",
+            "val x = object {}\n",
+            "val x = object : A {}\n",
+            "val x = this@owner\n",
+            "val x = super<Base>@owner\n",
+        ] {
+            let parse = parse_kotlin_file(source);
+            assert!(
+                parse.diagnostics().is_empty(),
+                "valid multiline RHS produced diagnostics for {source:?}: {:?}",
+                parse.diagnostics(),
+            );
+        }
+    }
 }
 
 fn invalid_event_stream_diagnostic(error: &jolt_syntax::BuildSyntaxTreeError) -> Diagnostic {

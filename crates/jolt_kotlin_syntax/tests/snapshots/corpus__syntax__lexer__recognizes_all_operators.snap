@@ -27,54 +27,60 @@ KotlinFile
                         Minus "-" @ 10..11 trailing=[Whitespace " "]
                         UnaryExpression
                           Bang "!" @ 12..13 trailing=[Whitespace " "]
-                          ErrorNode
+                          BogusExpression
                             Slash "/" @ 14..15 trailing=[Whitespace " "]
-              Percent "%" @ 16..17 trailing=[Whitespace " "]
-              ErrorNode
-                Lt "<" @ 18..19 trailing=[Whitespace " "]
-            Gt ">" @ 20..21 trailing=[Whitespace " "]
-            ErrorNode
-              LtEq "<=" @ 22..24 trailing=[Whitespace " "]
-          GtEq ">=" @ 25..27 trailing=[Whitespace " "]
-          ErrorNode
-            EqEqEq "===" @ 28..31 trailing=[Whitespace " "]
-        ErrorNode
+              BinaryOperator
+                Percent "%" @ 16..17 trailing=[Whitespace " "]
+              BinaryExpressionRight
+                BogusExpression
+                  Lt "<" @ 18..19 trailing=[Whitespace " "]
+            BinaryOperator
+              Gt ">" @ 20..21 trailing=[Whitespace " "]
+            BinaryExpressionRight
+              BogusExpression
+                LtEq "<=" @ 22..24 trailing=[Whitespace " "]
+          BinaryOperator
+            GtEq ">=" @ 25..27 trailing=[Whitespace " "]
+          BinaryExpressionRight
+            BogusExpression
+              EqEqEq "===" @ 28..31 trailing=[Whitespace " "]
+        BogusExpression
           Arrow "->" @ 32..34 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           DoubleArrow "=>" @ 35..37 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           BangEqEqEq "!==" @ 38..41 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           EqEq "==" @ 42..44 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           BangEq "!=" @ 45..47 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           BangBang "!!" @ 48..50 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           AndAnd "&&" @ 51..53 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           Amp "&" @ 54..55 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           OrOr "||" @ 56..58 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           Question "?" @ 59..60
-        ErrorNode
+        BogusExpression
           Dot "." @ 60..61 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           Elvis "?:" @ 62..64 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           StarEq "*=" @ 65..67 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           SlashEq "/=" @ 68..70 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           PercentEq "%=" @ 71..73 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           PlusEq "+=" @ 74..76 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           MinusEq "-=" @ 77..79 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           NotIn "!in" @ 80..83 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           NotIs "!is" @ 84..87
       TerminatorList
   Eof "" @ 88..88 leading=[Newline "\n"]

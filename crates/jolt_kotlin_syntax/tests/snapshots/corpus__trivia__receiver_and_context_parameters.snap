@@ -120,8 +120,10 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "scope" @ 258..263 leading=[Newline "\n", Whitespace "    "]
-                    Dot "." @ 263..264
-                    Identifier "text" @ 264..268
+                    NavigationOperator
+                      Dot "." @ 263..264
+                    NameExpression
+                      Identifier "text" @ 264..268
                   TypeArgumentListList
                   ValueArgumentList
                     LParen "(" @ 268..269
@@ -170,9 +172,11 @@ KotlinFile
             StringTemplateExpression
               StringTemplateEntryList
                 StringTemplateEntry
-                  OpenQuote "\"" @ 355..356
+                  StringTemplateContent
+                    OpenQuote "\"" @ 355..356
                 StringTemplateEntry
-                  RegularStringPart "ready" @ 356..361
+                  StringTemplateContent
+                    RegularStringPart "ready" @ 356..361
               ClosingQuote "\"" @ 361..362
   Eof "" @ 363..363 leading=[Newline "\n"]
 

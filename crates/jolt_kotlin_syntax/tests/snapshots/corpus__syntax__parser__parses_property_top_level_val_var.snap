@@ -32,9 +32,11 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              OpenQuote "\"" @ 22..23
+              StringTemplateContent
+                OpenQuote "\"" @ 22..23
             StringTemplateEntry
-              RegularStringPart "dev" @ 23..26
+              StringTemplateContent
+                RegularStringPart "dev" @ 23..26
           ClosingQuote "\"" @ 26..27
       PropertyBodyMemberList
     PropertyDeclaration
@@ -99,8 +101,10 @@ KotlinFile
             NavigationExpression
               NameExpression
                 Identifier "config" @ 119..125
-              Dot "." @ 125..126
-              Identifier "name" @ 126..130
+              NavigationOperator
+                Dot "." @ 125..126
+              NameExpression
+                Identifier "name" @ 126..130
     InterfaceDeclaration
       ModifierList
       ModifierList

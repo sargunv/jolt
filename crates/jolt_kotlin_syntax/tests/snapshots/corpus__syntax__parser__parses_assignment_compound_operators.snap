@@ -90,8 +90,10 @@ KotlinFile
                     NavigationExpression
                       NameExpression
                         Identifier "counter" @ 100..107
-                      Dot "." @ 107..108
-                      Identifier "next" @ 108..112
+                      NavigationOperator
+                        Dot "." @ 107..108
+                      NameExpression
+                        Identifier "next" @ 108..112
                     TypeArgumentListList
                     ValueArgumentList
                       LParen "(" @ 112..113
@@ -142,7 +144,7 @@ KotlinFile
                     NameExpression
                       Identifier "values" @ 179..185 leading=[Newline "\n", Whitespace "    "]
                     LBracket "[" @ 185..186
-                    ValueArgumentSeparatedList
+                    ValueArgumentEntryList
                       ValueArgument
                         ValueArgumentPrefixList
                         LiteralExpression

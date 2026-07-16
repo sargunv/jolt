@@ -14,7 +14,7 @@ KotlinFile
       ExpressionStatement
         NameExpression
           FieldIdentifier "$field" @ 0..6 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           FieldIdentifier "$`strange field`" @ 7..23
       TerminatorList
   Eof "" @ 24..24 leading=[Newline "\n"]

@@ -111,8 +111,10 @@ KotlinFile
                 NavigationExpression
                   NameExpression
                     Identifier "record" @ 126..132
-                  Dot "." @ 132..133
-                  Identifier "bounds" @ 133..139
+                  NavigationOperator
+                    Dot "." @ 132..133
+                  NameExpression
+                    Identifier "bounds" @ 133..139
               PropertyBodyMemberList
             Statement
               ExpressionStatement

@@ -53,9 +53,11 @@ KotlinFile
                 BinaryExpression
                   LiteralExpression
                     IntegerLiteral "1" @ 60..61
-                  Plus "+" @ 61..62
-                  LiteralExpression
-                    IntegerLiteral "2" @ 62..63
+                  BinaryOperator
+                    Plus "+" @ 61..62
+                  BinaryExpressionRight
+                    LiteralExpression
+                      IntegerLiteral "2" @ 62..63
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList

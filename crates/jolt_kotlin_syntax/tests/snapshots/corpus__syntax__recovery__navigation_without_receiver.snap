@@ -27,9 +27,9 @@ KotlinFile
           BlockItemList
             Statement
               ExpressionStatement
-                ErrorNode
+                BogusExpression
                   Dot "." @ 13..14
-                ErrorNode
+                BogusExpression
                   Identifier "next" @ 14..18 trailing=[Whitespace " "]
               TerminatorList
           RBrace "}" @ 19..20

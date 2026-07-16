@@ -58,9 +58,11 @@ KotlinFile
                       StringTemplateExpression
                         StringTemplateEntryList
                           StringTemplateEntry
-                            OpenQuote "\"" @ 72..73
+                            StringTemplateContent
+                              OpenQuote "\"" @ 72..73
                           StringTemplateEntry
-                            RegularStringPart "legacy" @ 73..79
+                            StringTemplateContent
+                              RegularStringPart "legacy" @ 73..79
                         ClosingQuote "\"" @ 79..80
                   RParen ")" @ 80..81
             Name

@@ -88,8 +88,10 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "logger" @ 75..81 leading=[Newline "\n", Whitespace "    "]
-                    Dot "." @ 81..82
-                    Identifier "write" @ 82..87
+                    NavigationOperator
+                      Dot "." @ 81..82
+                    NameExpression
+                      Identifier "write" @ 82..87
                   TypeArgumentListList
                   ValueArgumentList
                     LParen "(" @ 87..88
@@ -305,12 +307,16 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "value" @ 355..360 trailing=[Whitespace " "]
-                  Plus "+" @ 361..362 trailing=[Whitespace " "]
-                  NavigationExpression
-                    NameExpression
-                      Identifier "right" @ 363..368
-                    Dot "." @ 368..369
-                    Identifier "value" @ 369..374
+                  BinaryOperator
+                    Plus "+" @ 361..362 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    NavigationExpression
+                      NameExpression
+                        Identifier "right" @ 363..368
+                      NavigationOperator
+                        Dot "." @ 368..369
+                      NameExpression
+                        Identifier "value" @ 369..374
             RParen ")" @ 374..375
           LambdaExpressionList
     FunctionDeclaration

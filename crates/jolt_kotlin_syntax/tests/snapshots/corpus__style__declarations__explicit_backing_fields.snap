@@ -66,9 +66,11 @@ KotlinFile
                   StringTemplateExpression
                     StringTemplateEntryList
                       StringTemplateEntry
-                        OpenQuote "\"" @ 88..89
+                        StringTemplateContent
+                          OpenQuote "\"" @ 88..89
                       StringTemplateEntry
-                        RegularStringPart "Paris" @ 89..94
+                        StringTemplateContent
+                          RegularStringPart "Paris" @ 89..94
                     ClosingQuote "\"" @ 94..95
           ClassMemberDeclaration
             PropertyDeclaration
@@ -92,9 +94,11 @@ KotlinFile
                   StringTemplateExpression
                     StringTemplateEntryList
                       StringTemplateEntry
-                        OpenQuote "\"" @ 137..138
+                        StringTemplateContent
+                          OpenQuote "\"" @ 137..138
                       StringTemplateEntry
-                        RegularStringPart "FR" @ 138..140
+                        StringTemplateContent
+                          RegularStringPart "FR" @ 138..140
                     ClosingQuote "\"" @ 140..141
                 PropertyAccessor
                   ModifierList
@@ -109,8 +113,10 @@ KotlinFile
                       NavigationExpression
                         NameExpression
                           Identifier "field" @ 158..163
-                        Dot "." @ 163..164
-                        Identifier "uppercase" @ 164..173
+                        NavigationOperator
+                          Dot "." @ 163..164
+                        NameExpression
+                          Identifier "uppercase" @ 164..173
                       TypeArgumentListList
                       ValueArgumentList
                         LParen "(" @ 173..174
@@ -142,8 +148,10 @@ KotlinFile
                                 NavigationExpression
                                   NameExpression
                                     Identifier "value" @ 217..222
-                                  Dot "." @ 222..223
-                                  Identifier "trim" @ 223..227
+                                  NavigationOperator
+                                    Dot "." @ 222..223
+                                  NameExpression
+                                    Identifier "trim" @ 223..227
                                 TypeArgumentListList
                                 ValueArgumentList
                                   LParen "(" @ 227..228

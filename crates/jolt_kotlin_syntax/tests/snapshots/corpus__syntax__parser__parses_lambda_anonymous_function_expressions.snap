@@ -91,21 +91,24 @@ KotlinFile
                           AnnotationList
                           Name
                             Identifier "Int" @ 68..71 trailing=[Whitespace " "]
-                  Block
-                    LBrace "{" @ 72..73
-                    BlockItemList
-                      Statement
-                        ExpressionStatement
-                          JumpExpression
-                            ReturnKw "return" @ 82..88 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                            BinaryExpression
-                              NameExpression
-                                Identifier "value" @ 89..94 trailing=[Whitespace " "]
-                              Star "*" @ 95..96 trailing=[Whitespace " "]
-                              LiteralExpression
-                                IntegerLiteral "2" @ 97..98
-                        TerminatorList
-                    RBrace "}" @ 103..104 leading=[Newline "\n", Whitespace "    "]
+                  BlockBody
+                    Block
+                      LBrace "{" @ 72..73
+                      BlockItemList
+                        Statement
+                          ExpressionStatement
+                            JumpExpression
+                              ReturnKw "return" @ 82..88 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "value" @ 89..94 trailing=[Whitespace " "]
+                                BinaryOperator
+                                  Star "*" @ 95..96 trailing=[Whitespace " "]
+                                BinaryExpressionRight
+                                  LiteralExpression
+                                    IntegerLiteral "2" @ 97..98
+                          TerminatorList
+                      RBrace "}" @ 103..104 leading=[Newline "\n", Whitespace "    "]
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -141,13 +144,16 @@ KotlinFile
                           AnnotationList
                           Name
                             Identifier "Int" @ 143..146 trailing=[Whitespace " "]
-                  Assign "=" @ 147..148 trailing=[Whitespace " "]
-                  BinaryExpression
-                    NameExpression
-                      Identifier "value" @ 149..154 trailing=[Whitespace " "]
-                    Plus "+" @ 155..156 trailing=[Whitespace " "]
-                    LiteralExpression
-                      IntegerLiteral "1" @ 157..158
+                  ExpressionBody
+                    Assign "=" @ 147..148 trailing=[Whitespace " "]
+                    BinaryExpression
+                      NameExpression
+                        Identifier "value" @ 149..154 trailing=[Whitespace " "]
+                      BinaryOperator
+                        Plus "+" @ 155..156 trailing=[Whitespace " "]
+                      BinaryExpressionRight
+                        LiteralExpression
+                          IntegerLiteral "1" @ 157..158
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -196,36 +202,39 @@ KotlinFile
                     LParen "(" @ 216..217
                     ValueParameterSeparatedList
                     RParen ")" @ 217..218 trailing=[Whitespace " "]
-                  Block
-                    LBrace "{" @ 219..220
-                    BlockItemList
-                      Statement
-                        ExpressionStatement
-                          CallExpression
-                            NameExpression
-                              Identifier "put" @ 229..232 leading=[Newline "\n", Whitespace "        "]
-                            TypeArgumentListList
-                            ValueArgumentList
-                              LParen "(" @ 232..233
-                              ValueArgumentEntryList
-                                ValueArgument
-                                  ValueArgumentPrefixList
-                                  StringTemplateExpression
-                                    StringTemplateEntryList
-                                      StringTemplateEntry
-                                        OpenQuote "\"" @ 233..234
-                                      StringTemplateEntry
-                                        RegularStringPart "value" @ 234..239
-                                    ClosingQuote "\"" @ 239..240
-                                Comma "," @ 240..241 trailing=[Whitespace " "]
-                                ValueArgument
-                                  ValueArgumentPrefixList
-                                  NameExpression
-                                    Identifier "expression" @ 242..252
-                              RParen ")" @ 252..253
-                            LambdaExpressionList
-                        TerminatorList
-                    RBrace "}" @ 258..259 leading=[Newline "\n", Whitespace "    "]
+                  BlockBody
+                    Block
+                      LBrace "{" @ 219..220
+                      BlockItemList
+                        Statement
+                          ExpressionStatement
+                            CallExpression
+                              NameExpression
+                                Identifier "put" @ 229..232 leading=[Newline "\n", Whitespace "        "]
+                              TypeArgumentListList
+                              ValueArgumentList
+                                LParen "(" @ 232..233
+                                ValueArgumentEntryList
+                                  ValueArgument
+                                    ValueArgumentPrefixList
+                                    StringTemplateExpression
+                                      StringTemplateEntryList
+                                        StringTemplateEntry
+                                          StringTemplateContent
+                                            OpenQuote "\"" @ 233..234
+                                        StringTemplateEntry
+                                          StringTemplateContent
+                                            RegularStringPart "value" @ 234..239
+                                      ClosingQuote "\"" @ 239..240
+                                  Comma "," @ 240..241 trailing=[Whitespace " "]
+                                  ValueArgument
+                                    ValueArgumentPrefixList
+                                    NameExpression
+                                      Identifier "expression" @ 242..252
+                                RParen ")" @ 252..253
+                              LambdaExpressionList
+                          TerminatorList
+                      RBrace "}" @ 258..259 leading=[Newline "\n", Whitespace "    "]
               PropertyBodyMemberList
             Statement
               ExpressionStatement
@@ -235,8 +244,10 @@ KotlinFile
                       NavigationExpression
                         NameExpression
                           Identifier "values" @ 264..270 leading=[Newline "\n", Whitespace "    "]
-                        Dot "." @ 270..271
-                        Identifier "map" @ 271..274
+                        NavigationOperator
+                          Dot "." @ 270..271
+                        NameExpression
+                          Identifier "map" @ 271..274
                       TypeArgumentListList
                       ValueArgumentList
                         LParen "(" @ 274..275
@@ -247,8 +258,10 @@ KotlinFile
                               Identifier "block" @ 275..280
                         RParen ")" @ 280..281
                       LambdaExpressionList
-                    Dot "." @ 281..282
-                    Identifier "map" @ 282..285
+                    NavigationOperator
+                      Dot "." @ 281..282
+                    NameExpression
+                      Identifier "map" @ 282..285
                   TypeArgumentListList
                   ValueArgumentList
                     LParen "(" @ 285..286

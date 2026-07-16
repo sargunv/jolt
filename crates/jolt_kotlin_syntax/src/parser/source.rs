@@ -68,11 +68,14 @@ impl<'source> Parser<'source> {
         }
     }
 
-    pub(super) fn invalid_assignment_target_here(&mut self, message: &str) {
+    pub(super) fn invalid_assignment_target_here(
+        &mut self,
+        message: &str,
+    ) -> jolt_syntax::DiagnosticMarker {
         self.error_here(
             KotlinParseDiagnosticCode::InvalidAssignmentTarget.id(),
             message,
-        );
+        )
     }
 
     pub(super) fn malformed_type_argument_list_here(

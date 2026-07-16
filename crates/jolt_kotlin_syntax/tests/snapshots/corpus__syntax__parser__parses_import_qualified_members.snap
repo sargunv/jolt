@@ -55,8 +55,10 @@ KotlinFile
         NavigationExpression
           LiteralExpression
             IntegerLiteral "5" @ 86..87
-          Dot "." @ 87..88
-          Identifier "seconds" @ 88..95
+          NavigationOperator
+            Dot "." @ 87..88
+          NameExpression
+            Identifier "seconds" @ 88..95
       PropertyBodyMemberList
   Eof "" @ 96..96 leading=[Newline "\n"]
 

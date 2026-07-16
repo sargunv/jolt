@@ -81,14 +81,14 @@ KotlinFile
                 Assign "=" @ 80..81 trailing=[Whitespace " "]
                 CollectionLiteralExpression
                   LBracket "[" @ 82..83
-                  ValueArgumentSeparatedList
+                  ValueArgumentEntryList
                     ValueArgument
                       ValueArgumentPrefixList
                       IndexExpression
                         NameExpression
                           Identifier "values" @ 83..89
                         LBracket "[" @ 89..90
-                        ValueArgumentSeparatedList
+                        ValueArgumentEntryList
                           ValueArgument
                             ValueArgumentPrefixList
                             LiteralExpression
@@ -101,7 +101,7 @@ KotlinFile
                         NameExpression
                           Identifier "values" @ 94..100
                         LBracket "[" @ 100..101
-                        ValueArgumentSeparatedList
+                        ValueArgumentEntryList
                           ValueArgument
                             ValueArgumentPrefixList
                             LiteralExpression
@@ -122,14 +122,14 @@ KotlinFile
                     NameExpression
                       Identifier "literal" @ 123..130
                     LBracket "[" @ 130..131
-                    ValueArgumentSeparatedList
+                    ValueArgumentEntryList
                       ValueArgument
                         ValueArgumentPrefixList
                         LiteralExpression
                           IntegerLiteral "0" @ 131..132
                     RBracket "]" @ 132..133
                   LBracket "[" @ 133..134
-                  ValueArgumentSeparatedList
+                  ValueArgumentEntryList
                     ValueArgument
                       ValueArgumentPrefixList
                       LiteralExpression
@@ -142,7 +142,7 @@ KotlinFile
                   ReturnKw "return" @ 141..147 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                   CollectionLiteralExpression
                     LBracket "[" @ 148..149
-                    ValueArgumentSeparatedList
+                    ValueArgumentEntryList
                       ValueArgument
                         ValueArgumentPrefixList
                         NameExpression
@@ -154,7 +154,7 @@ KotlinFile
                           NameExpression
                             Identifier "values" @ 158..164
                           LBracket "[" @ 164..165
-                          ValueArgumentSeparatedList
+                          ValueArgumentEntryList
                             ValueArgument
                               ValueArgumentPrefixList
                               LiteralExpression

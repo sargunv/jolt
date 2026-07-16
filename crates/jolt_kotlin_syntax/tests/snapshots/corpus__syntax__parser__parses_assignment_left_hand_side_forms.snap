@@ -74,8 +74,10 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "target" @ 71..77 leading=[Newline "\n", Whitespace "    "]
-                    Dot "." @ 77..78
-                    Identifier "name" @ 78..82 trailing=[Whitespace " "]
+                    NavigationOperator
+                      Dot "." @ 77..78
+                    NameExpression
+                      Identifier "name" @ 78..82 trailing=[Whitespace " "]
                   Assign "=" @ 83..84 trailing=[Whitespace " "]
                   NameExpression
                     Identifier "value" @ 85..90
@@ -87,7 +89,7 @@ KotlinFile
                     NameExpression
                       Identifier "target" @ 95..101 leading=[Newline "\n", Whitespace "    "]
                     LBracket "[" @ 101..102
-                    ValueArgumentSeparatedList
+                    ValueArgumentEntryList
                       ValueArgument
                         ValueArgumentPrefixList
                         NameExpression
@@ -105,11 +107,15 @@ KotlinFile
                       NavigationExpression
                         NameExpression
                           Identifier "target" @ 121..127 leading=[Newline "\n", Whitespace "    "]
-                        Dot "." @ 127..128
-                        Identifier "child" @ 128..133
+                        NavigationOperator
+                          Dot "." @ 127..128
+                        NameExpression
+                          Identifier "child" @ 128..133
                       BangBang "!!" @ 133..135
-                    Dot "." @ 135..136
-                    Identifier "name" @ 136..140 trailing=[Whitespace " "]
+                    NavigationOperator
+                      Dot "." @ 135..136
+                    NameExpression
+                      Identifier "name" @ 136..140 trailing=[Whitespace " "]
                   Assign "=" @ 141..142 trailing=[Whitespace " "]
                   NameExpression
                     Identifier "value" @ 143..148
@@ -122,17 +128,21 @@ KotlinFile
                       NavigationExpression
                         NameExpression
                           Identifier "target" @ 153..159 leading=[Newline "\n", Whitespace "    "]
-                        Dot "." @ 159..160
-                        Identifier "items" @ 160..165
+                        NavigationOperator
+                          Dot "." @ 159..160
+                        NameExpression
+                          Identifier "items" @ 160..165
                       LBracket "[" @ 165..166
-                      ValueArgumentSeparatedList
+                      ValueArgumentEntryList
                         ValueArgument
                           ValueArgumentPrefixList
                           NameExpression
                             Identifier "index" @ 166..171
                       RBracket "]" @ 171..172
-                    Dot "." @ 172..173
-                    Identifier "label" @ 173..178 trailing=[Whitespace " "]
+                    NavigationOperator
+                      Dot "." @ 172..173
+                    NameExpression
+                      Identifier "label" @ 173..178 trailing=[Whitespace " "]
                   Assign "=" @ 179..180 trailing=[Whitespace " "]
                   NameExpression
                     Identifier "value" @ 181..186

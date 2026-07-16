@@ -1,0 +1,119 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+fun missingRight() = 1 +
+val invalidTarget = 1 = 2
+fun missingSelector() = target.
+fun missingReference() = target::
+fun argumentGap() = call(, value)
+fun emptyArgumentGap() = call(,)
+fun indexGap() = value[, index]
+fun lambdaGap() = { , value -> value }
+fun emptyLambdaGap() = { , -> 1 }
+fun emptyParenthesized() = ()
+fun collectionGap() = [, value]
+fun emptyCollectionGap() = [,]
+fun stringTemplate() = "value: $value"
+fun anonymous() = fun(value: Int) = value
+val missingAnonymousBody = fun()
+val missingAnonymousParameters = fun {}
+val validAnonymousExpressionBody = fun() = 1
+val validAnonymousBlockBody = fun() {}
+fun objectLiteral() = object : Base by delegate {
+}
+val missingObjectBody = object
+val missingDelegatedObjectBody = object : Base
+val validObjectBody = object {}
+val validDelegatedObjectBody = object : Base {}
+val missingThisLabel = this@
+val missingSuperLabel = super@
+val validThisLabel = this@owner
+val validSuperLabel = super<Base>@owner
+fun missingCollectionClose() = [value
+
+formatted:
+fun missingRight() = 1 +
+
+val invalidTarget = 1 = 2
+
+fun missingSelector() = target.
+
+fun missingReference() = target::
+
+fun argumentGap() = call(,  value)
+
+fun emptyArgumentGap() = call(
+  ,
+)
+
+fun indexGap() = value[,  index]
+
+fun lambdaGap() = { ,  value -> value }
+
+fun emptyLambdaGap() = { ,  -> 1 }
+
+fun emptyParenthesized() = ()
+
+fun collectionGap() = [,  value]
+
+fun emptyCollectionGap() = [
+  ,
+]
+
+fun stringTemplate() = "value: $value"
+
+fun anonymous() = fun(value: Int) = value
+
+val missingAnonymousBody = fun()
+
+val missingAnonymousParameters = fun {}
+
+val validAnonymousExpressionBody = fun() = 1
+
+val validAnonymousBlockBody = fun() {}
+
+fun objectLiteral() = object : Base by delegate {
+}
+
+val missingObjectBody = object
+
+val missingDelegatedObjectBody = object : Base
+
+val validObjectBody = object {
+}
+
+val validDelegatedObjectBody = object : Base {
+}
+
+val missingThisLabel = this@
+
+val missingSuperLabel = super@
+
+val validThisLabel = this@owner
+
+val validSuperLabel = super<Base>@owner
+
+fun missingCollectionClose() = [value
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(25), end: TextSize(28) }) message=expected expression after operator
+code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(48) }) message=invalid assignment target
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(83), end: TextSize(86) }) message=expected member name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(117), end: TextSize(120) }) message=expected callable reference name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(144), end: TextSize(149) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(182), end: TextSize(183) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(209), end: TextSize(214) }) message=expected list item
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(238), end: TextSize(243) }) message=expected lambda parameter between commas
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(282), end: TextSize(284) }) message=expected lambda parameter between commas
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(317), end: TextSize(318) }) message=expected parenthesized expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(344), end: TextSize(349) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(380), end: TextSize(381) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(496), end: TextSize(499) }) message=expected anonymous function body
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(533), end: TextSize(534) }) message=expected value parameter list
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(703), end: TextSize(706) }) message=expected object body
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(750), end: TextSize(753) }) message=expected object body
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(859), end: TextSize(862) }) message=expected label name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(890), end: TextSize(893) }) message=expected label name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1000), end: TextSize(1000) }) message=expected ']' after collection literal

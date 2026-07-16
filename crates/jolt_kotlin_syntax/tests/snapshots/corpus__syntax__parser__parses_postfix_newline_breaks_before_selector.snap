@@ -59,10 +59,14 @@ KotlinFile
                     NavigationExpression
                       NameExpression
                         Identifier "receiver" @ 62..70
-                      Dot "." @ 79..80 leading=[Newline "\n", Whitespace "        "]
-                      Identifier "child" @ 80..85
-                    Dot "." @ 94..95 leading=[Newline "\n", Whitespace "        "]
-                    Identifier "call" @ 95..99
+                      NavigationOperator
+                        Dot "." @ 79..80 leading=[Newline "\n", Whitespace "        "]
+                      NameExpression
+                        Identifier "child" @ 80..85
+                    NavigationOperator
+                      Dot "." @ 94..95 leading=[Newline "\n", Whitespace "        "]
+                    NameExpression
+                      Identifier "call" @ 95..99
                   TypeArgumentListList
                   ValueArgumentList
                     LParen "(" @ 99..100

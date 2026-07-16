@@ -121,9 +121,11 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "dx" @ 115..117 trailing=[Whitespace " "]
-                  EqEq "==" @ 118..120 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "0" @ 121..122
+                  BinaryOperator
+                    EqEq "==" @ 118..120 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    LiteralExpression
+                      IntegerLiteral "0" @ 121..122
         RBrace "}" @ 123..124 leading=[Newline "\n"]
   Eof "" @ 125..125 leading=[Newline "\n"]
 

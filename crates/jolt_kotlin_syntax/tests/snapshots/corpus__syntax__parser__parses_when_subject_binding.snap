@@ -65,14 +65,16 @@ KotlinFile
                       BinaryExpression
                         NameExpression
                           Identifier "input" @ 66..71 trailing=[Whitespace " "]
-                        AsSafe "as?" @ 72..75 trailing=[Whitespace " "]
-                        TypeReference
-                          UserType
-                            UserTypeSegmentList
-                              UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "String" @ 76..82
+                        BinaryOperator
+                          AsSafe "as?" @ 72..75 trailing=[Whitespace " "]
+                        BinaryExpressionRight
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
+                                    Identifier "String" @ 76..82
                       RParen ")" @ 82..83 trailing=[Whitespace " "]
                     LBrace "{" @ 84..85
                     WhenEntryList
@@ -91,8 +93,10 @@ KotlinFile
                         NavigationExpression
                           NameExpression
                             Identifier "text" @ 120..124
-                          Dot "." @ 124..125
-                          Identifier "length" @ 125..131
+                          NavigationOperator
+                            Dot "." @ 124..125
+                          NameExpression
+                            Identifier "length" @ 125..131
                     RBrace "}" @ 136..137 leading=[Newline "\n", Whitespace "    "]
               TerminatorList
           RBrace "}" @ 138..139 leading=[Newline "\n"]

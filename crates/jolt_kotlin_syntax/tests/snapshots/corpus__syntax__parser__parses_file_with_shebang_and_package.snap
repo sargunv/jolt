@@ -55,9 +55,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 76..77
+                              StringTemplateContent
+                                OpenQuote "\"" @ 76..77
                             StringTemplateEntry
-                              RegularStringPart "ready" @ 77..82
+                              StringTemplateContent
+                                RegularStringPart "ready" @ 77..82
                           ClosingQuote "\"" @ 82..83
                     RParen ")" @ 83..84
                   LambdaExpressionList

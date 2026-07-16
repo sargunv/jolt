@@ -40,13 +40,17 @@ KotlinFile
         BinaryExpression
           LiteralExpression
             IntegerLiteral "1" @ 44..45
-          Plus "+" @ 45..46
-          BinaryExpression
-            LiteralExpression
-              IntegerLiteral "2" @ 46..47
-            Star "*" @ 47..48
-            LiteralExpression
-              IntegerLiteral "3" @ 48..49
+          BinaryOperator
+            Plus "+" @ 45..46
+          BinaryExpressionRight
+            BinaryExpression
+              LiteralExpression
+                IntegerLiteral "2" @ 46..47
+              BinaryOperator
+                Star "*" @ 47..48
+              BinaryExpressionRight
+                LiteralExpression
+                  IntegerLiteral "3" @ 48..49
       PropertyBodyMemberList
     FunctionDeclaration
       ModifierList
@@ -84,9 +88,11 @@ KotlinFile
         BinaryExpression
           NameExpression
             Identifier "value" @ 80..85
-          Star "*" @ 85..86
-          LiteralExpression
-            IntegerLiteral "2" @ 86..87
+          BinaryOperator
+            Star "*" @ 85..86
+          BinaryExpressionRight
+            LiteralExpression
+              IntegerLiteral "2" @ 86..87
     FunctionDeclaration
       ModifierList
       ModifierList
@@ -126,16 +132,20 @@ KotlinFile
               NavigationExpression
                 NameExpression
                   Identifier "input" @ 122..127
-                Dot "." @ 127..128
-                Identifier "trim" @ 128..132
+                NavigationOperator
+                  Dot "." @ 127..128
+                NameExpression
+                  Identifier "trim" @ 128..132
               TypeArgumentListList
               ValueArgumentList
                 LParen "(" @ 132..133
                 ValueArgumentEntryList
                 RParen ")" @ 133..134
               LambdaExpressionList
-            Dot "." @ 134..135
-            Identifier "lowercase" @ 135..144
+            NavigationOperator
+              Dot "." @ 134..135
+            NameExpression
+              Identifier "lowercase" @ 135..144
           TypeArgumentListList
           ValueArgumentList
             LParen "(" @ 144..145

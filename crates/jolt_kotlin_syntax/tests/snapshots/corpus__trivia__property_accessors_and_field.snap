@@ -100,8 +100,10 @@ KotlinFile
                                 NavigationExpression
                                   NameExpression
                                     Identifier "value" @ 259..264
-                                  Dot "." @ 264..265
-                                  Identifier "coerceAtLeast" @ 265..278
+                                  NavigationOperator
+                                    Dot "." @ 264..265
+                                  NameExpression
+                                    Identifier "coerceAtLeast" @ 265..278
                                 TypeArgumentListList
                                 ValueArgumentList
                                   LParen "(" @ 278..279
@@ -142,9 +144,11 @@ KotlinFile
                     BinaryExpression
                       NameExpression
                         Identifier "count" @ 370..375 trailing=[Whitespace " "]
-                      EqEq "==" @ 376..378 trailing=[Whitespace " "]
-                      LiteralExpression
-                        IntegerLiteral "0" @ 379..380
+                      BinaryOperator
+                        EqEq "==" @ 376..378 trailing=[Whitespace " "]
+                      BinaryExpressionRight
+                        LiteralExpression
+                          IntegerLiteral "0" @ 379..380
         RBrace "}" @ 381..382 leading=[Newline "\n"]
   Eof "" @ 383..383 leading=[Newline "\n"]
 

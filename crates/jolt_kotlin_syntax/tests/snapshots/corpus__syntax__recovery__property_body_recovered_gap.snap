@@ -27,7 +27,7 @@ KotlinFile
                 Identifier "Int" @ 14..17 trailing=[Whitespace " "]
       PropertyInitializer
         AssignmentExpression
-          ErrorNode
+          BogusExpression
             UnaryExpression
               Plus "+" @ 18..19
               CallExpression

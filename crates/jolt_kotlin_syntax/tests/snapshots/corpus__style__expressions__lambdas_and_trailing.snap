@@ -104,8 +104,10 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "items" @ 95..100 leading=[Newline "\n", Whitespace "    "]
-                    Dot "." @ 100..101
-                    Identifier "forEach" @ 101..108 trailing=[Whitespace " "]
+                    NavigationOperator
+                      Dot "." @ 100..101
+                    NameExpression
+                      Identifier "forEach" @ 101..108 trailing=[Whitespace " "]
                   TypeArgumentListList
                   LambdaExpressionList
                     LambdaExpression
@@ -114,8 +116,9 @@ KotlinFile
                         LambdaParameterList
                           LambdaParameterSeparatedList
                             LambdaParameter
-                              Name
-                                Identifier "item" @ 111..115 trailing=[Whitespace " "]
+                              LambdaParameterBinding
+                                Name
+                                  Identifier "item" @ 111..115 trailing=[Whitespace " "]
                           Arrow "->" @ 116..118
                         LambdaBodyItemList
                           Statement
@@ -133,8 +136,10 @@ KotlinFile
                                         NavigationExpression
                                           NameExpression
                                             Identifier "item" @ 132..136
-                                          Dot "." @ 136..137
-                                          Identifier "uppercase" @ 137..146
+                                          NavigationOperator
+                                            Dot "." @ 136..137
+                                          NameExpression
+                                            Identifier "uppercase" @ 137..146
                                         TypeArgumentListList
                                         ValueArgumentList
                                           LParen "(" @ 146..147
@@ -169,9 +174,11 @@ KotlinFile
                     StringTemplateExpression
                       StringTemplateEntryList
                         StringTemplateEntry
-                          OpenQuote "\"" @ 179..180
+                          StringTemplateContent
+                            OpenQuote "\"" @ 179..180
                         StringTemplateEntry
-                          RegularStringPart "a" @ 180..181
+                          StringTemplateContent
+                            RegularStringPart "a" @ 180..181
                       ClosingQuote "\"" @ 181..182
                   Comma "," @ 182..183 trailing=[Whitespace " "]
                   ValueArgument
@@ -179,9 +186,11 @@ KotlinFile
                     StringTemplateExpression
                       StringTemplateEntryList
                         StringTemplateEntry
-                          OpenQuote "\"" @ 184..185
+                          StringTemplateContent
+                            OpenQuote "\"" @ 184..185
                         StringTemplateEntry
-                          RegularStringPart "b" @ 185..186
+                          StringTemplateContent
+                            RegularStringPart "b" @ 185..186
                       ClosingQuote "\"" @ 186..187
                   Comma "," @ 187..188 trailing=[Whitespace " "]
                   ValueArgument
@@ -189,14 +198,18 @@ KotlinFile
                     StringTemplateExpression
                       StringTemplateEntryList
                         StringTemplateEntry
-                          OpenQuote "\"" @ 189..190
+                          StringTemplateContent
+                            OpenQuote "\"" @ 189..190
                         StringTemplateEntry
-                          RegularStringPart "c" @ 190..191
+                          StringTemplateContent
+                            RegularStringPart "c" @ 190..191
                       ClosingQuote "\"" @ 191..192
                 RParen ")" @ 192..193
               LambdaExpressionList
-            Dot "." @ 193..194
-            Identifier "joinToString" @ 194..206
+            NavigationOperator
+              Dot "." @ 193..194
+            NameExpression
+              Identifier "joinToString" @ 194..206
           TypeArgumentListList
           ValueArgumentList
             LParen "(" @ 206..207
@@ -209,9 +222,11 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      OpenQuote "\"" @ 219..220
+                      StringTemplateContent
+                        OpenQuote "\"" @ 219..220
                     StringTemplateEntry
-                      RegularStringPart "," @ 220..221
+                      StringTemplateContent
+                        RegularStringPart "," @ 220..221
                   ClosingQuote "\"" @ 221..222
             RParen ")" @ 222..223 trailing=[Whitespace " "]
           LambdaExpressionList
@@ -225,8 +240,10 @@ KotlinFile
                         NavigationExpression
                           NameExpression
                             Identifier "it" @ 226..228
-                          Dot "." @ 228..229
-                          Identifier "uppercase" @ 229..238
+                          NavigationOperator
+                            Dot "." @ 228..229
+                          NameExpression
+                            Identifier "uppercase" @ 229..238
                         TypeArgumentListList
                         ValueArgumentList
                           LParen "(" @ 238..239

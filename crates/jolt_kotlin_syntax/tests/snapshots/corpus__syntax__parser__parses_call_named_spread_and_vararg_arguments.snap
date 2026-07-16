@@ -72,9 +72,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 70..71
+                              StringTemplateContent
+                                OpenQuote "\"" @ 70..71
                             StringTemplateEntry
-                              RegularStringPart "one" @ 71..74
+                              StringTemplateContent
+                                RegularStringPart "one" @ 71..74
                           ClosingQuote "\"" @ 74..75
                       Comma "," @ 75..76
                       ValueArgument
@@ -94,7 +96,8 @@ KotlinFile
                       Comma "," @ 103..104
                       ValueArgument
                         ValueArgumentPrefixList
-                          Star "*" @ 113..114 leading=[Newline "\n", Whitespace "        "]
+                          ValueArgumentPrefix
+                            Star "*" @ 113..114 leading=[Newline "\n", Whitespace "        "]
                         NameExpression
                           Identifier "items" @ 114..119
                       Comma "," @ 119..120

@@ -73,24 +73,30 @@ KotlinFile
                     NavigationExpression
                       NameExpression
                         Identifier "value" @ 79..84
-                      Dot "." @ 84..85
-                      Identifier "hashCode" @ 85..93
+                      NavigationOperator
+                        Dot "." @ 84..85
+                      NameExpression
+                        Identifier "hashCode" @ 85..93
                     TypeArgumentListList
                     ValueArgumentList
                       LParen "(" @ 93..94
                       ValueArgumentEntryList
                       RParen ")" @ 94..95 trailing=[Whitespace " "]
                     LambdaExpressionList
-                  GtEq ">=" @ 96..98 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "0" @ 99..100 trailing=[Whitespace " "]
+                  BinaryOperator
+                    GtEq ">=" @ 96..98 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    LiteralExpression
+                      IntegerLiteral "0" @ 99..100 trailing=[Whitespace " "]
               Arrow "->" @ 101..103 trailing=[Whitespace " "]
               StringTemplateExpression
                 StringTemplateEntryList
                   StringTemplateEntry
-                    OpenQuote "\"" @ 104..105
+                    StringTemplateContent
+                      OpenQuote "\"" @ 104..105
                   StringTemplateEntry
-                    RegularStringPart "small" @ 105..110
+                    StringTemplateContent
+                      RegularStringPart "small" @ 105..110
                 ClosingQuote "\"" @ 110..111
             WhenEntry
               WhenConditionSeparatedList
@@ -121,16 +127,20 @@ KotlinFile
                       NavigationExpression
                         NameExpression
                           Identifier "value" @ 150..155
-                        Dot "." @ 155..156
-                        Identifier "toString" @ 156..164
+                        NavigationOperator
+                          Dot "." @ 155..156
+                        NameExpression
+                          Identifier "toString" @ 156..164
                       TypeArgumentListList
                       ValueArgumentList
                         LParen "(" @ 164..165
                         ValueArgumentEntryList
                         RParen ")" @ 165..166
                       LambdaExpressionList
-                    Dot "." @ 166..167
-                    Identifier "isNotEmpty" @ 167..177
+                    NavigationOperator
+                      Dot "." @ 166..167
+                    NameExpression
+                      Identifier "isNotEmpty" @ 167..177
                   TypeArgumentListList
                   ValueArgumentList
                     LParen "(" @ 177..178
@@ -141,9 +151,11 @@ KotlinFile
               StringTemplateExpression
                 StringTemplateEntryList
                   StringTemplateEntry
-                    OpenQuote "\"" @ 183..184
+                    StringTemplateContent
+                      OpenQuote "\"" @ 183..184
                   StringTemplateEntry
-                    RegularStringPart "text" @ 184..188
+                    StringTemplateContent
+                      RegularStringPart "text" @ 184..188
                 ClosingQuote "\"" @ 188..189
             WhenEntry
               ElseKw "else" @ 198..202 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
@@ -152,9 +164,11 @@ KotlinFile
               StringTemplateExpression
                 StringTemplateEntryList
                   StringTemplateEntry
-                    OpenQuote "\"" @ 206..207
+                    StringTemplateContent
+                      OpenQuote "\"" @ 206..207
                   StringTemplateEntry
-                    RegularStringPart "other" @ 207..212
+                    StringTemplateContent
+                      RegularStringPart "other" @ 207..212
                 ClosingQuote "\"" @ 212..213
           RBrace "}" @ 218..219 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 220..220 leading=[Newline "\n"]

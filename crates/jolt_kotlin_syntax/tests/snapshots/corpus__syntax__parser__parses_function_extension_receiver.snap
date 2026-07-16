@@ -78,12 +78,16 @@ KotlinFile
           BinaryExpression
             NameExpression
               Identifier "prefix" @ 68..74 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            Plus "+" @ 75..76 trailing=[Whitespace " "]
-            ThisExpression
-              ThisKw "this" @ 77..81 trailing=[Whitespace " "]
-          Plus "+" @ 82..83 trailing=[Whitespace " "]
-          NameExpression
-            Identifier "suffix" @ 84..90
+            BinaryOperator
+              Plus "+" @ 75..76 trailing=[Whitespace " "]
+            BinaryExpressionRight
+              ThisExpression
+                ThisKw "this" @ 77..81 trailing=[Whitespace " "]
+          BinaryOperator
+            Plus "+" @ 82..83 trailing=[Whitespace " "]
+          BinaryExpressionRight
+            NameExpression
+              Identifier "suffix" @ 84..90
     FunctionDeclaration
       ModifierList
       ModifierList

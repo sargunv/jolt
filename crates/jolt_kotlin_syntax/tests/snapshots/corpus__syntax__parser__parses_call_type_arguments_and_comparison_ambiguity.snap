@@ -83,8 +83,10 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "factory" @ 61..68
-                    Dot "." @ 68..69
-                    Identifier "create" @ 69..75
+                    NavigationOperator
+                      Dot "." @ 68..69
+                    NameExpression
+                      Identifier "create" @ 69..75
                   TypeArgumentListList
                     TypeArgumentList
                       Lt "<" @ 75..76
@@ -177,8 +179,10 @@ KotlinFile
                     NavigationExpression
                       NameExpression
                         Identifier "factory" @ 148..155
-                      Dot "." @ 155..156
-                      Identifier "create" @ 156..162
+                      NavigationOperator
+                        Dot "." @ 155..156
+                      NameExpression
+                        Identifier "create" @ 156..162
                     TypeArgumentListList
                       TypeArgumentList
                         Lt "<" @ 162..163
@@ -196,10 +200,12 @@ KotlinFile
                       ValueArgumentEntryList
                       RParen ")" @ 171..172
                     LambdaExpressionList
-                  SplitSafeNavigationOperator
-                    Question "?" @ 172..173
-                    Dot "." @ 173..174
-                  Identifier "value" @ 174..179
+                  NavigationOperator
+                    SplitSafeNavigationOperator
+                      Question "?" @ 172..173
+                      Dot "." @ 173..174
+                  NameExpression
+                    Identifier "value" @ 174..179
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -213,16 +219,22 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "a" @ 199..200 trailing=[Whitespace " "]
-                    Lt "<" @ 201..202 trailing=[Whitespace " "]
-                    NameExpression
-                      Identifier "b" @ 203..204 trailing=[Whitespace " "]
-                  AndAnd "&&" @ 205..207 trailing=[Whitespace " "]
-                  BinaryExpression
-                    NameExpression
-                      Identifier "b" @ 208..209 trailing=[Whitespace " "]
-                    Gt ">" @ 210..211 trailing=[Whitespace " "]
-                    NameExpression
-                      Identifier "c" @ 212..213
+                    BinaryOperator
+                      Lt "<" @ 201..202 trailing=[Whitespace " "]
+                    BinaryExpressionRight
+                      NameExpression
+                        Identifier "b" @ 203..204 trailing=[Whitespace " "]
+                  BinaryOperator
+                    AndAnd "&&" @ 205..207 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    BinaryExpression
+                      NameExpression
+                        Identifier "b" @ 208..209 trailing=[Whitespace " "]
+                      BinaryOperator
+                        Gt ">" @ 210..211 trailing=[Whitespace " "]
+                      BinaryExpressionRight
+                        NameExpression
+                          Identifier "c" @ 212..213
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -236,12 +248,16 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "value" @ 231..236 trailing=[Whitespace " "]
-                    Lt "<" @ 237..238 trailing=[Whitespace " "]
+                    BinaryOperator
+                      Lt "<" @ 237..238 trailing=[Whitespace " "]
+                    BinaryExpressionRight
+                      NameExpression
+                        Identifier "other" @ 239..244 trailing=[Whitespace " "]
+                  BinaryOperator
+                    Gt ">" @ 245..246 trailing=[Whitespace " "]
+                  BinaryExpressionRight
                     NameExpression
-                      Identifier "other" @ 239..244 trailing=[Whitespace " "]
-                  Gt ">" @ 245..246 trailing=[Whitespace " "]
-                  NameExpression
-                    Identifier "fallback" @ 247..255
+                      Identifier "fallback" @ 247..255
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -254,16 +270,20 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "value" @ 280..285 trailing=[Whitespace " "]
-                  Lt "<" @ 286..287 trailing=[Whitespace " "]
-                  ParenthesizedExpression
-                    LParen "(" @ 288..289
-                    BinaryExpression
-                      NameExpression
-                        Identifier "other" @ 289..294 trailing=[Whitespace " "]
-                      Plus "+" @ 295..296 trailing=[Whitespace " "]
-                      NameExpression
-                        Identifier "fallback" @ 297..305
-                    RParen ")" @ 305..306
+                  BinaryOperator
+                    Lt "<" @ 286..287 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    ParenthesizedExpression
+                      LParen "(" @ 288..289
+                      BinaryExpression
+                        NameExpression
+                          Identifier "other" @ 289..294 trailing=[Whitespace " "]
+                        BinaryOperator
+                          Plus "+" @ 295..296 trailing=[Whitespace " "]
+                        BinaryExpressionRight
+                          NameExpression
+                            Identifier "fallback" @ 297..305
+                      RParen ")" @ 305..306
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -277,19 +297,23 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "a" @ 326..327 trailing=[Whitespace " "]
-                    Lt "<" @ 328..329 trailing=[Whitespace " "]
-                    LiteralExpression
-                      IntegerLiteral "2" @ 330..331 trailing=[Whitespace " "]
-                  OrOr "||" @ 332..334 trailing=[Whitespace " "]
-                  CallExpression
-                    NameExpression
-                      Identifier "fallback" @ 335..343
-                    TypeArgumentListList
-                    ValueArgumentList
-                      LParen "(" @ 343..344
-                      ValueArgumentEntryList
-                      RParen ")" @ 344..345
-                    LambdaExpressionList
+                    BinaryOperator
+                      Lt "<" @ 328..329 trailing=[Whitespace " "]
+                    BinaryExpressionRight
+                      LiteralExpression
+                        IntegerLiteral "2" @ 330..331 trailing=[Whitespace " "]
+                  BinaryOperator
+                    OrOr "||" @ 332..334 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    CallExpression
+                      NameExpression
+                        Identifier "fallback" @ 335..343
+                      TypeArgumentListList
+                      ValueArgumentList
+                        LParen "(" @ 343..344
+                        ValueArgumentEntryList
+                        RParen ")" @ 344..345
+                      LambdaExpressionList
               PropertyBodyMemberList
             Statement
               ExpressionStatement

@@ -53,9 +53,11 @@ KotlinFile
             BinaryExpression
               NameExpression
                 Identifier "length" @ 44..50 trailing=[Whitespace " "]
-              Minus "-" @ 51..52 trailing=[Whitespace " "]
-              LiteralExpression
-                IntegerLiteral "1" @ 53..54
+              BinaryOperator
+                Minus "-" @ 51..52 trailing=[Whitespace " "]
+              BinaryExpressionRight
+                LiteralExpression
+                  IntegerLiteral "1" @ 53..54
     PropertyDeclaration
       ModifierList
       ModifierList

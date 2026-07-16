@@ -191,14 +191,29 @@ impl Parser<'_> {
         }
         if self.at(K::LParen) {
             self.parse_value_parameter_list();
+        } else {
+            self.complete_missing_value_parameter_list();
         }
         if self.eat(K::Colon) {
             self.parse_type_reference_until(&[K::Assign, K::LBrace, K::Semicolon, K::RBrace]);
         }
-        if self.eat(K::Assign) {
+        if self.at(K::Assign) {
+            let body = self.start();
+            self.bump();
             self.parse_expression_until(&[K::Semicolon, K::DoubleSemicolon, K::RBrace]);
+            self.complete(body, K::ExpressionBody);
         } else if self.at(K::LBrace) {
+            let body = self.start();
             self.parse_block();
+            self.complete(body, K::BlockBody);
+        } else {
+            let body = self.start();
+            let diagnostic = self.expected_here("expected anonymous function body");
+            self.own_diagnostic(
+                diagnostic,
+                jolt_syntax::UnresolvedDiagnosticOwner::node(body.anchor()),
+            );
+            self.complete(body, K::BogusDeclarationBody);
         }
         self.complete(marker, K::AnonymousFunctionExpression)
     }
@@ -206,11 +221,24 @@ impl Parser<'_> {
     pub(super) fn parse_object_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
         self.expect(K::ObjectKw, "expected object");
-        if self.eat(K::Colon) {
-            self.parse_delegation_specifier_list();
+        if self.at(K::Colon) {
+            let delegation = self.start();
+            self.bump();
+            self.parse_delegation_specifier_entries();
+            self.complete(delegation, K::DelegationClause);
         }
         if self.at(K::LBrace) {
             self.parse_class_body();
+        } else {
+            let body = self.start();
+            let diagnostic = self.expected_here("expected object body");
+            self.own_diagnostic(
+                diagnostic,
+                jolt_syntax::UnresolvedDiagnosticOwner::node(body.anchor()),
+            );
+            let members = self.start();
+            self.complete(members, K::ClassMemberList);
+            self.complete(body, K::ClassBody);
         }
         self.complete(marker, K::ObjectExpression)
     }

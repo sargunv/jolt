@@ -1,5 +1,5 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_kotlin_syntax::{CallableReferenceExpression, Expression, TypeReference};
+use jolt_kotlin_syntax::{CallableReferenceExpression, CallableReferenceReceiverSyntax};
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
 use crate::helpers::recovery::{
@@ -17,20 +17,21 @@ pub(super) fn format_callable_reference_expression<'source>(
 ) -> Doc<'source> {
     let (receiver, has_receiver) = match resolve_optional_field(expression.receiver(), doc) {
         KotlinFormatField::Present(Some(receiver)) => {
-            if let Some(receiver) = receiver.cast_family::<Expression<'source>>() {
-                (
-                    format_expression_with_leading(doc, &receiver, leading),
-                    true,
-                )
-            } else if let Some(receiver) = receiver.cast_node::<TypeReference<'source>>() {
-                (
-                    crate::rules::types::format_type_reference(doc, &receiver),
-                    true,
-                )
-            } else {
-                doc.block_on_invariant("callable-reference receiver had an unknown declared role");
-                (Doc::nil(), true)
-            }
+            let receiver = format_required_field(receiver.receiver(), doc, |receiver, doc| {
+                match receiver.classify() {
+                    Ok(CallableReferenceReceiverSyntax::Expression(receiver)) => {
+                        format_expression_with_leading(doc, &receiver, leading)
+                    }
+                    Ok(CallableReferenceReceiverSyntax::TypeReference(receiver)) => {
+                        crate::rules::types::format_type_reference(doc, &receiver)
+                    }
+                    Err(error) => {
+                        doc.block_on_invariant(error.to_string());
+                        Doc::nil()
+                    }
+                }
+            });
+            (receiver, true)
         }
         KotlinFormatField::Present(None) => (Doc::nil(), false),
         KotlinFormatField::Malformed(recovery) => (recovery, true),
@@ -48,12 +49,14 @@ pub(super) fn format_callable_reference_expression<'source>(
         )
     });
     let target = format_required_field(expression.target(), doc, |target, doc| {
-        format_token(
-            doc,
-            &target,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::Preserve,
-        )
+        format_required_field(target.target(), doc, |target, doc| {
+            format_token(
+                doc,
+                &target,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::Preserve,
+            )
+        })
     });
     let arguments = format_required_field(expression.type_arguments(), doc, |arguments, doc| {
         doc.concat_list(|docs| {

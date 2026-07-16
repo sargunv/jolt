@@ -12,29 +12,29 @@ KotlinFile
   KotlinFileItemList
     Statement
       ExpressionStatement
-        ErrorNode
+        BogusExpression
           AsSafe "as?" @ 0..3 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           Identifier "a" @ 4..5
-        ErrorNode
+        BogusExpression
           Question "?" @ 5..6
-        ErrorNode
+        BogusExpression
           Dot "." @ 6..7
-        ErrorNode
+        BogusExpression
           Identifier "b" @ 7..8 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           Identifier "a" @ 9..10 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           Elvis "?:" @ 11..13 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           Identifier "b" @ 14..15 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           Identifier "T" @ 16..17
-        ErrorNode
+        BogusExpression
           Question "?" @ 17..18 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           ColonColon "::" @ 19..21
-        ErrorNode
+        BogusExpression
           Identifier "ref" @ 21..24
       TerminatorList
   Eof "" @ 25..25 leading=[Newline "\n"]

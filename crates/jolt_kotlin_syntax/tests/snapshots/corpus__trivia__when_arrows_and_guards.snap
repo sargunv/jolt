@@ -166,18 +166,24 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "event" @ 277..282
-                    Dot "." @ 282..283
-                    Identifier "button" @ 283..289 trailing=[Whitespace " "]
-                  EqEq "==" @ 290..292 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "1" @ 293..294 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-guard */", Whitespace " "]
+                    NavigationOperator
+                      Dot "." @ 282..283
+                    NameExpression
+                      Identifier "button" @ 283..289 trailing=[Whitespace " "]
+                  BinaryOperator
+                    EqEq "==" @ 290..292 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    LiteralExpression
+                      IntegerLiteral "1" @ 293..294 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:when-guard */", Whitespace " "]
               Arrow "->" @ 324..326 trailing=[Whitespace " "]
               StringTemplateExpression
                 StringTemplateEntryList
                   StringTemplateEntry
-                    OpenQuote "\"" @ 327..328
+                    StringTemplateContent
+                      OpenQuote "\"" @ 327..328
                   StringTemplateEntry
-                    RegularStringPart "primary" @ 328..335
+                    StringTemplateContent
+                      RegularStringPart "primary" @ 328..335
                 ClosingQuote "\"" @ 335..336
             WhenEntry
               WhenConditionSeparatedList
@@ -185,15 +191,19 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "Event" @ 345..350 leading=[Newline "\n", Whitespace "        "]
-                    Dot "." @ 350..351
-                    Identifier "Idle" @ 351..355 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:object-case */", Whitespace " "]
+                    NavigationOperator
+                      Dot "." @ 350..351
+                    NameExpression
+                      Identifier "Idle" @ 351..355 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:object-case */", Whitespace " "]
               Arrow "->" @ 386..388 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:arrow-right */", Whitespace " "]
               StringTemplateExpression
                 StringTemplateEntryList
                   StringTemplateEntry
-                    OpenQuote "\"" @ 419..420
+                    StringTemplateContent
+                      OpenQuote "\"" @ 419..420
                   StringTemplateEntry
-                    RegularStringPart "idle" @ 420..424
+                    StringTemplateContent
+                      RegularStringPart "idle" @ 420..424
                 ClosingQuote "\"" @ 424..425
           RBrace "}" @ 430..431 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 432..432 leading=[Newline "\n"]

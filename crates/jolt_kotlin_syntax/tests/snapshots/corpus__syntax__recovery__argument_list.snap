@@ -37,7 +37,7 @@ KotlinFile
                     LParen "(" @ 17..18 trailing=[BlockComment "/* before */"]
                     ValueArgumentEntryList
                       Comma "," @ 30..31
-                      ErrorNode
+                      BogusValueArgument
                       ValueArgument
                         ValueArgumentPrefixList
                         NameExpression

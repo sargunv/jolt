@@ -24,8 +24,8 @@ KotlinFile
         Assign "=" @ 13..14 trailing=[Whitespace " "]
         ObjectExpression
           ObjectKw "object" @ 15..21 trailing=[Whitespace " "]
-          Colon ":" @ 22..23 trailing=[Whitespace " "]
-          DelegationSpecifierList
+          DelegationClause
+            Colon ":" @ 22..23 trailing=[Whitespace " "]
             DelegationSpecifierSeparatedList
               DelegationSpecifier
                 TypeReference
@@ -69,9 +69,11 @@ KotlinFile
                                     StringTemplateExpression
                                       StringTemplateEntryList
                                         StringTemplateEntry
-                                          OpenQuote "\"" @ 76..77
+                                          StringTemplateContent
+                                            OpenQuote "\"" @ 76..77
                                         StringTemplateEntry
-                                          RegularStringPart "tick" @ 77..81
+                                          StringTemplateContent
+                                            RegularStringPart "tick" @ 77..81
                                       ClosingQuote "\"" @ 81..82
                                 RParen ")" @ 82..83
                               LambdaExpressionList

@@ -174,8 +174,10 @@ KotlinFile
                     NavigationExpression
                       NameExpression
                         Identifier "values" @ 204..210
-                      Dot "." @ 210..211
-                      Identifier "withIndex" @ 211..220
+                      NavigationOperator
+                        Dot "." @ 210..211
+                      NameExpression
+                        Identifier "withIndex" @ 211..220
                     TypeArgumentListList
                     ValueArgumentList
                       LParen "(" @ 220..221

@@ -48,6 +48,7 @@ KotlinFile
                               Name
                                 Identifier "String" @ 62..68
                     Gt ">" @ 68..69
+                  CallableReferenceTarget
                   TypeArgumentListList
               PropertyBodyMemberList
           RBrace "}" @ 70..71 leading=[Newline "\n"]

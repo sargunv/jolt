@@ -88,10 +88,14 @@ KotlinFile
                               NavigationExpression
                                 NameExpression
                                   Identifier "token" @ 91..96
-                                Dot "." @ 96..97
-                                Identifier "text" @ 97..101
-                              Dot "." @ 101..102
-                              Identifier "isNotEmpty" @ 102..112
+                                NavigationOperator
+                                  Dot "." @ 96..97
+                                NameExpression
+                                  Identifier "text" @ 97..101
+                              NavigationOperator
+                                Dot "." @ 101..102
+                              NameExpression
+                                Identifier "isNotEmpty" @ 102..112
                             TypeArgumentListList
                             ValueArgumentList
                               LParen "(" @ 112..113
@@ -102,9 +106,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 118..119
+                              StringTemplateContent
+                                OpenQuote "\"" @ 118..119
                             StringTemplateEntry
-                              RegularStringPart "word" @ 119..123
+                              StringTemplateContent
+                                RegularStringPart "word" @ 119..123
                           ClosingQuote "\"" @ 123..124
                       WhenEntry
                         WhenConditionSeparatedList
@@ -128,18 +134,24 @@ KotlinFile
                             NavigationExpression
                               NameExpression
                                 Identifier "token" @ 152..157
-                              Dot "." @ 157..158
-                              Identifier "value" @ 158..163 trailing=[Whitespace " "]
-                            Gt ">" @ 164..165 trailing=[Whitespace " "]
-                            LiteralExpression
-                              IntegerLiteral "0" @ 166..167 trailing=[Whitespace " "]
+                              NavigationOperator
+                                Dot "." @ 157..158
+                              NameExpression
+                                Identifier "value" @ 158..163 trailing=[Whitespace " "]
+                            BinaryOperator
+                              Gt ">" @ 164..165 trailing=[Whitespace " "]
+                            BinaryExpressionRight
+                              LiteralExpression
+                                IntegerLiteral "0" @ 166..167 trailing=[Whitespace " "]
                         Arrow "->" @ 168..170 trailing=[Whitespace " "]
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 171..172
+                              StringTemplateContent
+                                OpenQuote "\"" @ 171..172
                             StringTemplateEntry
-                              RegularStringPart "number" @ 172..178
+                              StringTemplateContent
+                                RegularStringPart "number" @ 172..178
                           ClosingQuote "\"" @ 178..179
                       WhenEntry
                         WhenConditionSeparatedList
@@ -150,9 +162,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 196..197
+                              StringTemplateContent
+                                OpenQuote "\"" @ 196..197
                             StringTemplateEntry
-                              RegularStringPart "missing" @ 197..204
+                              StringTemplateContent
+                                RegularStringPart "missing" @ 197..204
                           ClosingQuote "\"" @ 204..205
                       WhenEntry
                         ElseKw "else" @ 214..218 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
@@ -161,9 +175,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 222..223
+                              StringTemplateContent
+                                OpenQuote "\"" @ 222..223
                             StringTemplateEntry
-                              RegularStringPart "other" @ 223..228
+                              StringTemplateContent
+                                RegularStringPart "other" @ 223..228
                           ClosingQuote "\"" @ 228..229
                     RBrace "}" @ 234..235 leading=[Newline "\n", Whitespace "    "]
               TerminatorList

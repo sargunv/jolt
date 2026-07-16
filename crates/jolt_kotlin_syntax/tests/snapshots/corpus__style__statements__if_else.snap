@@ -76,9 +76,11 @@ KotlinFile
                     BinaryExpression
                       NameExpression
                         Identifier "value" @ 73..78 trailing=[Whitespace " "]
-                      Lt "<" @ 79..80 trailing=[Whitespace " "]
-                      LiteralExpression
-                        IntegerLiteral "0" @ 81..82
+                      BinaryOperator
+                        Lt "<" @ 79..80 trailing=[Whitespace " "]
+                      BinaryExpressionRight
+                        LiteralExpression
+                          IntegerLiteral "0" @ 81..82
                     RParen ")" @ 82..83 trailing=[Whitespace " "]
                   Block
                     LBrace "{" @ 84..85
@@ -90,9 +92,11 @@ KotlinFile
                             StringTemplateExpression
                               StringTemplateEntryList
                                 StringTemplateEntry
-                                  OpenQuote "\"" @ 101..102
+                                  StringTemplateContent
+                                    OpenQuote "\"" @ 101..102
                                 StringTemplateEntry
-                                  RegularStringPart "negative" @ 102..110
+                                  StringTemplateContent
+                                    RegularStringPart "negative" @ 102..110
                               ClosingQuote "\"" @ 110..111
                         TerminatorList
                     RBrace "}" @ 116..117 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
@@ -104,9 +108,11 @@ KotlinFile
                       BinaryExpression
                         NameExpression
                           Identifier "value" @ 127..132 trailing=[Whitespace " "]
-                        EqEq "==" @ 133..135 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "0" @ 136..137
+                        BinaryOperator
+                          EqEq "==" @ 133..135 trailing=[Whitespace " "]
+                        BinaryExpressionRight
+                          LiteralExpression
+                            IntegerLiteral "0" @ 136..137
                       RParen ")" @ 137..138 trailing=[Whitespace " "]
                     Block
                       LBrace "{" @ 139..140
@@ -118,9 +124,11 @@ KotlinFile
                               StringTemplateExpression
                                 StringTemplateEntryList
                                   StringTemplateEntry
-                                    OpenQuote "\"" @ 156..157
+                                    StringTemplateContent
+                                      OpenQuote "\"" @ 156..157
                                   StringTemplateEntry
-                                    RegularStringPart "zero" @ 157..161
+                                    StringTemplateContent
+                                      RegularStringPart "zero" @ 157..161
                                 ClosingQuote "\"" @ 161..162
                           TerminatorList
                       RBrace "}" @ 167..168 leading=[Newline "\n", Whitespace "    "]
@@ -132,9 +140,11 @@ KotlinFile
                   StringTemplateExpression
                     StringTemplateEntryList
                       StringTemplateEntry
-                        OpenQuote "\"" @ 180..181
+                        StringTemplateContent
+                          OpenQuote "\"" @ 180..181
                       StringTemplateEntry
-                        RegularStringPart "positive" @ 181..189
+                        StringTemplateContent
+                          RegularStringPart "positive" @ 181..189
                     ClosingQuote "\"" @ 189..190
               TerminatorList
           RBrace "}" @ 191..192 leading=[Newline "\n"]

@@ -52,28 +52,36 @@ KotlinFile
                             StringTemplateExpression
                               StringTemplateEntryList
                                 StringTemplateEntry
-                                  OpenQuote "\"" @ 53..54 leading=[Newline "\n", Whitespace "    "]
+                                  StringTemplateContent
+                                    OpenQuote "\"" @ 53..54 leading=[Newline "\n", Whitespace "    "]
                                 StringTemplateEntry
-                                  RegularStringPart " Alpha-Beta Gamma " @ 54..72
+                                  StringTemplateContent
+                                    RegularStringPart " Alpha-Beta Gamma " @ 54..72
                               ClosingQuote "\"" @ 72..73
-                            Dot "." @ 82..83 leading=[Newline "\n", Whitespace "        "]
-                            Identifier "trim" @ 83..87
+                            NavigationOperator
+                              Dot "." @ 82..83 leading=[Newline "\n", Whitespace "        "]
+                            NameExpression
+                              Identifier "trim" @ 83..87
                           TypeArgumentListList
                           ValueArgumentList
                             LParen "(" @ 87..88
                             ValueArgumentEntryList
                             RParen ")" @ 88..89
                           LambdaExpressionList
-                        Dot "." @ 98..99 leading=[Newline "\n", Whitespace "        "]
-                        Identifier "lowercase" @ 99..108
+                        NavigationOperator
+                          Dot "." @ 98..99 leading=[Newline "\n", Whitespace "        "]
+                        NameExpression
+                          Identifier "lowercase" @ 99..108
                       TypeArgumentListList
                       ValueArgumentList
                         LParen "(" @ 108..109
                         ValueArgumentEntryList
                         RParen ")" @ 109..110
                       LambdaExpressionList
-                    Dot "." @ 119..120 leading=[Newline "\n", Whitespace "        "]
-                    Identifier "replace" @ 120..127
+                    NavigationOperator
+                      Dot "." @ 119..120 leading=[Newline "\n", Whitespace "        "]
+                    NameExpression
+                      Identifier "replace" @ 120..127
                   TypeArgumentListList
                   ValueArgumentList
                     LParen "(" @ 127..128
@@ -83,9 +91,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 128..129
+                              StringTemplateContent
+                                OpenQuote "\"" @ 128..129
                             StringTemplateEntry
-                              RegularStringPart " " @ 129..130
+                              StringTemplateContent
+                                RegularStringPart " " @ 129..130
                           ClosingQuote "\"" @ 130..131
                       Comma "," @ 131..132 trailing=[Whitespace " "]
                       ValueArgument
@@ -93,14 +103,18 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 133..134
+                              StringTemplateContent
+                                OpenQuote "\"" @ 133..134
                             StringTemplateEntry
-                              RegularStringPart "_" @ 134..135
+                              StringTemplateContent
+                                RegularStringPart "_" @ 134..135
                           ClosingQuote "\"" @ 135..136
                     RParen ")" @ 136..137
                   LambdaExpressionList
-                Dot "." @ 146..147 leading=[Newline "\n", Whitespace "        "]
-                Identifier "removePrefix" @ 147..159
+                NavigationOperator
+                  Dot "." @ 146..147 leading=[Newline "\n", Whitespace "        "]
+                NameExpression
+                  Identifier "removePrefix" @ 147..159
               TypeArgumentListList
               ValueArgumentList
                 LParen "(" @ 159..160
@@ -110,14 +124,18 @@ KotlinFile
                     StringTemplateExpression
                       StringTemplateEntryList
                         StringTemplateEntry
-                          OpenQuote "\"" @ 160..161
+                          StringTemplateContent
+                            OpenQuote "\"" @ 160..161
                         StringTemplateEntry
-                          RegularStringPart "tmp_" @ 161..165
+                          StringTemplateContent
+                            RegularStringPart "tmp_" @ 161..165
                       ClosingQuote "\"" @ 165..166
                 RParen ")" @ 166..167
               LambdaExpressionList
-            Dot "." @ 176..177 leading=[Newline "\n", Whitespace "        "]
-            Identifier "removeSuffix" @ 177..189
+            NavigationOperator
+              Dot "." @ 176..177 leading=[Newline "\n", Whitespace "        "]
+            NameExpression
+              Identifier "removeSuffix" @ 177..189
           TypeArgumentListList
           ValueArgumentList
             LParen "(" @ 189..190
@@ -127,9 +145,11 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      OpenQuote "\"" @ 190..191
+                      StringTemplateContent
+                        OpenQuote "\"" @ 190..191
                     StringTemplateEntry
-                      RegularStringPart "_old" @ 191..195
+                      StringTemplateContent
+                        RegularStringPart "_old" @ 191..195
                   ClosingQuote "\"" @ 195..196
             RParen ")" @ 196..197
           LambdaExpressionList

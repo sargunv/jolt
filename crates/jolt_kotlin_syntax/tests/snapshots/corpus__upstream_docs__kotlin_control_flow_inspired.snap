@@ -87,20 +87,26 @@ KotlinFile
               StringTemplateExpression
                 StringTemplateEntryList
                   StringTemplateEntry
-                    OpenQuote "\"" @ 101..102
+                    StringTemplateContent
+                      OpenQuote "\"" @ 101..102
                   StringTemplateEntry
-                    RegularStringPart "text with " @ 102..112
+                    StringTemplateContent
+                      RegularStringPart "text with " @ 102..112
                   StringTemplateEntry
-                    LongStringTemplateEntry
-                      LongTemplateEntryStart "${" @ 112..114
-                      NavigationExpression
-                        NameExpression
-                          Identifier "value" @ 114..119
-                        Dot "." @ 119..120
-                        Identifier "length" @ 120..126
-                      LongTemplateEntryEnd "}" @ 126..127
+                    StringTemplateContent
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 112..114
+                        NavigationExpression
+                          NameExpression
+                            Identifier "value" @ 114..119
+                          NavigationOperator
+                            Dot "." @ 119..120
+                          NameExpression
+                            Identifier "length" @ 120..126
+                        LongTemplateEntryEnd "}" @ 126..127
                   StringTemplateEntry
-                    RegularStringPart " chars" @ 127..133
+                    StringTemplateContent
+                      RegularStringPart " chars" @ 127..133
                 ClosingQuote "\"" @ 133..134
             WhenEntry
               WhenConditionSeparatedList
@@ -117,13 +123,17 @@ KotlinFile
               StringTemplateExpression
                 StringTemplateEntryList
                   StringTemplateEntry
-                    OpenQuote "\"" @ 153..154
+                    StringTemplateContent
+                      OpenQuote "\"" @ 153..154
                   StringTemplateEntry
-                    RegularStringPart "number " @ 154..161
+                    StringTemplateContent
+                      RegularStringPart "number " @ 154..161
                   StringTemplateEntry
-                    ShortTemplateEntryStart "$" @ 161..162
+                    StringTemplateContent
+                      ShortTemplateEntryStart "$" @ 161..162
                   StringTemplateEntry
-                    Identifier "value" @ 162..167
+                    StringTemplateContent
+                      Identifier "value" @ 162..167
                 ClosingQuote "\"" @ 167..168
             WhenEntry
               ElseKw "else" @ 177..181 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
@@ -132,9 +142,11 @@ KotlinFile
               StringTemplateExpression
                 StringTemplateEntryList
                   StringTemplateEntry
-                    OpenQuote "\"" @ 185..186
+                    StringTemplateContent
+                      OpenQuote "\"" @ 185..186
                   StringTemplateEntry
-                    RegularStringPart "unknown" @ 186..193
+                    StringTemplateContent
+                      RegularStringPart "unknown" @ 186..193
                 ClosingQuote "\"" @ 193..194
           RBrace "}" @ 199..200 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 201..201 leading=[Newline "\n"]

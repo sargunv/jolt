@@ -53,9 +53,9 @@ KotlinFile
               ExpressionStatement
                 CollectionLiteralExpression
                   LBracket "[" @ 30..31 trailing=[BlockComment "/* collection */", Whitespace " "]
-                  ValueArgumentSeparatedList
+                  ValueArgumentEntryList
                     Comma "," @ 48..49 trailing=[Whitespace " "]
-                    ErrorNode
+                    BogusValueArgument
                     ValueArgument
                       ValueArgumentPrefixList
                       NameExpression
@@ -68,9 +68,9 @@ KotlinFile
                   NameExpression
                     Identifier "values" @ 57..63 leading=[Newline "\n"]
                   LBracket "[" @ 63..64 trailing=[BlockComment "/* index */", Whitespace " "]
-                  ValueArgumentSeparatedList
+                  ValueArgumentEntryList
                     Comma "," @ 76..77 trailing=[Whitespace " "]
-                    ErrorNode
+                    BogusValueArgument
                     ValueArgument
                       ValueArgumentPrefixList
                       LiteralExpression

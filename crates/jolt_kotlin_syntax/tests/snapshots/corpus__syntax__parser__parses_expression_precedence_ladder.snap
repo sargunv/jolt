@@ -100,24 +100,34 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "a" @ 79..80 trailing=[Whitespace " "]
-                    Plus "+" @ 81..82 trailing=[Whitespace " "]
+                    BinaryOperator
+                      Plus "+" @ 81..82 trailing=[Whitespace " "]
+                    BinaryExpressionRight
+                      BinaryExpression
+                        NameExpression
+                          Identifier "b" @ 83..84 trailing=[Whitespace " "]
+                        BinaryOperator
+                          Star "*" @ 85..86 trailing=[Whitespace " "]
+                        BinaryExpressionRight
+                          NameExpression
+                            Identifier "c" @ 87..88 trailing=[Whitespace " "]
+                  BinaryOperator
+                    Minus "-" @ 89..90 trailing=[Whitespace " "]
+                  BinaryExpressionRight
                     BinaryExpression
-                      NameExpression
-                        Identifier "b" @ 83..84 trailing=[Whitespace " "]
-                      Star "*" @ 85..86 trailing=[Whitespace " "]
-                      NameExpression
-                        Identifier "c" @ 87..88 trailing=[Whitespace " "]
-                  Minus "-" @ 89..90 trailing=[Whitespace " "]
-                  BinaryExpression
-                    BinaryExpression
-                      NameExpression
-                        Identifier "d" @ 91..92 trailing=[Whitespace " "]
-                      Slash "/" @ 93..94 trailing=[Whitespace " "]
-                      LiteralExpression
-                        IntegerLiteral "2" @ 95..96 trailing=[Whitespace " "]
-                    Percent "%" @ 97..98 trailing=[Whitespace " "]
-                    LiteralExpression
-                      IntegerLiteral "3" @ 99..100
+                      BinaryExpression
+                        NameExpression
+                          Identifier "d" @ 91..92 trailing=[Whitespace " "]
+                        BinaryOperator
+                          Slash "/" @ 93..94 trailing=[Whitespace " "]
+                        BinaryExpressionRight
+                          LiteralExpression
+                            IntegerLiteral "2" @ 95..96 trailing=[Whitespace " "]
+                      BinaryOperator
+                        Percent "%" @ 97..98 trailing=[Whitespace " "]
+                      BinaryExpressionRight
+                        LiteralExpression
+                          IntegerLiteral "3" @ 99..100
               PropertyBodyMemberList
             PropertyDeclaration
               ModifierList
@@ -131,12 +141,16 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "arithmetic" @ 119..129 trailing=[Whitespace " "]
-                    Identifier "shl" @ 130..133 trailing=[Whitespace " "]
+                    BinaryOperator
+                      Identifier "shl" @ 130..133 trailing=[Whitespace " "]
+                    BinaryExpressionRight
+                      LiteralExpression
+                        IntegerLiteral "1" @ 134..135 trailing=[Whitespace " "]
+                  BinaryOperator
+                    Identifier "and" @ 136..139 trailing=[Whitespace " "]
+                  BinaryExpressionRight
                     LiteralExpression
-                      IntegerLiteral "1" @ 134..135 trailing=[Whitespace " "]
-                  Identifier "and" @ 136..139 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "255" @ 140..143
+                      IntegerLiteral "255" @ 140..143
               PropertyBodyMemberList
             Statement
               ExpressionStatement
@@ -147,23 +161,33 @@ KotlinFile
                       BinaryExpression
                         NameExpression
                           Identifier "arithmetic" @ 155..165 trailing=[Whitespace " "]
-                        Gt ">" @ 166..167 trailing=[Whitespace " "]
-                        NameExpression
-                          Identifier "shifted" @ 168..175 trailing=[Whitespace " "]
-                      AndAnd "&&" @ 176..178 trailing=[Whitespace " "]
+                        BinaryOperator
+                          Gt ">" @ 166..167 trailing=[Whitespace " "]
+                        BinaryExpressionRight
+                          NameExpression
+                            Identifier "shifted" @ 168..175 trailing=[Whitespace " "]
+                      BinaryOperator
+                        AndAnd "&&" @ 176..178 trailing=[Whitespace " "]
+                      BinaryExpressionRight
+                        BinaryExpression
+                          NameExpression
+                            Identifier "shifted" @ 179..186 trailing=[Whitespace " "]
+                          BinaryOperator
+                            BangEq "!=" @ 187..189 trailing=[Whitespace " "]
+                          BinaryExpressionRight
+                            LiteralExpression
+                              IntegerLiteral "0" @ 190..191 trailing=[Whitespace " "]
+                    BinaryOperator
+                      OrOr "||" @ 192..194 trailing=[Whitespace " "]
+                    BinaryExpressionRight
                       BinaryExpression
                         NameExpression
-                          Identifier "shifted" @ 179..186 trailing=[Whitespace " "]
-                        BangEq "!=" @ 187..189 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "0" @ 190..191 trailing=[Whitespace " "]
-                    OrOr "||" @ 192..194 trailing=[Whitespace " "]
-                    BinaryExpression
-                      NameExpression
-                        Identifier "a" @ 195..196 trailing=[Whitespace " "]
-                      EqEq "==" @ 197..199 trailing=[Whitespace " "]
-                      NameExpression
-                        Identifier "b" @ 200..201
+                          Identifier "a" @ 195..196 trailing=[Whitespace " "]
+                        BinaryOperator
+                          EqEq "==" @ 197..199 trailing=[Whitespace " "]
+                        BinaryExpressionRight
+                          NameExpression
+                            Identifier "b" @ 200..201
               TerminatorList
           RBrace "}" @ 202..203 leading=[Newline "\n"]
   Eof "" @ 204..204 leading=[Newline "\n"]

@@ -44,7 +44,7 @@ KotlinFile
             Statement
               ExpressionStatement
                 AssignmentExpression
-                  ErrorNode
+                  BogusExpression
                     LiteralExpression
                       IntegerLiteral "1" @ 47..48 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                   Assign "=" @ 49..50 trailing=[Whitespace " "]
@@ -54,13 +54,15 @@ KotlinFile
             Statement
               ExpressionStatement
                 AssignmentExpression
-                  ErrorNode
+                  BogusExpression
                     BinaryExpression
                       NameExpression
                         Identifier "value" @ 61..66 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                      Plus "+" @ 67..68 trailing=[Whitespace " "]
-                      LiteralExpression
-                        IntegerLiteral "1" @ 69..70 trailing=[Whitespace " "]
+                      BinaryOperator
+                        Plus "+" @ 67..68 trailing=[Whitespace " "]
+                      BinaryExpressionRight
+                        LiteralExpression
+                          IntegerLiteral "1" @ 69..70 trailing=[Whitespace " "]
                   Assign "=" @ 71..72 trailing=[Whitespace " "]
                   NameExpression
                     Identifier "value" @ 73..78
@@ -68,7 +70,7 @@ KotlinFile
             Statement
               ExpressionStatement
                 AssignmentExpression
-                  ErrorNode
+                  BogusExpression
                     CallExpression
                       NameExpression
                         Identifier "value" @ 83..88 leading=[Newline "\n", Whitespace "    "]

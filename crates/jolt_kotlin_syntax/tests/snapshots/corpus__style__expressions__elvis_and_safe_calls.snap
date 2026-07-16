@@ -137,22 +137,30 @@ KotlinFile
             NavigationExpression
               NameExpression
                 Identifier "user" @ 139..143 leading=[Newline "\n", Whitespace "    "]
+              NavigationOperator
+                SplitSafeNavigationOperator
+                  Question "?" @ 143..144
+                  Dot "." @ 144..145
+              NameExpression
+                Identifier "profile" @ 145..152
+            NavigationOperator
               SplitSafeNavigationOperator
-                Question "?" @ 143..144
-                Dot "." @ 144..145
-              Identifier "profile" @ 145..152
-            SplitSafeNavigationOperator
-              Question "?" @ 152..153
-              Dot "." @ 153..154
-            Identifier "email" @ 154..159
-          Elvis "?:" @ 168..170 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-          StringTemplateExpression
-            StringTemplateEntryList
-              StringTemplateEntry
-                OpenQuote "\"" @ 171..172
-              StringTemplateEntry
-                RegularStringPart "missing@example.com" @ 172..191
-            ClosingQuote "\"" @ 191..192
+                Question "?" @ 152..153
+                Dot "." @ 153..154
+            NameExpression
+              Identifier "email" @ 154..159
+          BinaryOperator
+            Elvis "?:" @ 168..170 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+          BinaryExpressionRight
+            StringTemplateExpression
+              StringTemplateEntryList
+                StringTemplateEntry
+                  StringTemplateContent
+                    OpenQuote "\"" @ 171..172
+                StringTemplateEntry
+                  StringTemplateContent
+                    RegularStringPart "missing@example.com" @ 172..191
+              ClosingQuote "\"" @ 191..192
     ClassDeclaration
       ModifierList
       ModifierList
@@ -291,29 +299,39 @@ KotlinFile
                         NavigationExpression
                           NameExpression
                             Identifier "pack" @ 378..382
-                          Dot "." @ 382..383
-                          Identifier "progress" @ 383..391 trailing=[Whitespace " "]
-                        AsSafe "as?" @ 392..395 trailing=[Whitespace " "]
-                        TypeReference
-                          UserType
-                            UserTypeSegmentList
-                              UserTypeSegment
-                                AnnotationList
-                                Name
-                                  Identifier "Healthy" @ 396..403
+                          NavigationOperator
+                            Dot "." @ 382..383
+                          NameExpression
+                            Identifier "progress" @ 383..391 trailing=[Whitespace " "]
+                        BinaryOperator
+                          AsSafe "as?" @ 392..395 trailing=[Whitespace " "]
+                        BinaryExpressionRight
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  AnnotationList
+                                  Name
+                                    Identifier "Healthy" @ 396..403
                       RParen ")" @ 403..404
-                    SplitSafeNavigationOperator
-                      Question "?" @ 413..414 leading=[Newline "\n", Whitespace "        "]
-                      Dot "." @ 414..415
-                    Identifier "status" @ 415..421 trailing=[Whitespace " "]
-                  Elvis "?:" @ 422..424 trailing=[Whitespace " "]
-                  JumpExpression
-                    ReturnKw "return" @ 425..431 trailing=[Whitespace " "]
-                    NavigationExpression
-                      NameExpression
-                        Identifier "Status" @ 432..438
-                      Dot "." @ 438..439
-                      Identifier "Unknown" @ 439..446
+                    NavigationOperator
+                      SplitSafeNavigationOperator
+                        Question "?" @ 413..414 leading=[Newline "\n", Whitespace "        "]
+                        Dot "." @ 414..415
+                    NameExpression
+                      Identifier "status" @ 415..421 trailing=[Whitespace " "]
+                  BinaryOperator
+                    Elvis "?:" @ 422..424 trailing=[Whitespace " "]
+                  BinaryExpressionRight
+                    JumpExpression
+                      ReturnKw "return" @ 425..431 trailing=[Whitespace " "]
+                      NavigationExpression
+                        NameExpression
+                          Identifier "Status" @ 432..438
+                        NavigationOperator
+                          Dot "." @ 438..439
+                        NameExpression
+                          Identifier "Unknown" @ 439..446
               PropertyBodyMemberList
             Statement
               ExpressionStatement

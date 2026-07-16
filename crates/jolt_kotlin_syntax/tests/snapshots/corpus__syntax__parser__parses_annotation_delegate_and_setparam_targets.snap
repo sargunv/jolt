@@ -48,7 +48,8 @@ KotlinFile
               StringTemplateExpression
                 StringTemplateEntryList
                   StringTemplateEntry
-                    OpenQuote "\"" @ 42..43
+                    StringTemplateContent
+                      OpenQuote "\"" @ 42..43
                 ClosingQuote "\"" @ 43..44
           RParen ")" @ 44..45
     ClassDeclaration
@@ -80,9 +81,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 94..95
+                              StringTemplateContent
+                                OpenQuote "\"" @ 94..95
                             StringTemplateEntry
-                              RegularStringPart "lazy" @ 95..99
+                              StringTemplateContent
+                                RegularStringPart "lazy" @ 95..99
                           ClosingQuote "\"" @ 99..100
                     RParen ")" @ 100..101
               ModifierList
@@ -113,9 +116,11 @@ KotlinFile
                               StringTemplateExpression
                                 StringTemplateEntryList
                                   StringTemplateEntry
-                                    OpenQuote "\"" @ 135..136
+                                    StringTemplateContent
+                                      OpenQuote "\"" @ 135..136
                                   StringTemplateEntry
-                                    RegularStringPart "ready" @ 136..141
+                                    StringTemplateContent
+                                      RegularStringPart "ready" @ 136..141
                                 ClosingQuote "\"" @ 141..142 trailing=[Whitespace " "]
                             TerminatorList
                         RBrace "}" @ 143..144
@@ -140,9 +145,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 160..161
+                              StringTemplateContent
+                                OpenQuote "\"" @ 160..161
                             StringTemplateEntry
-                              RegularStringPart "setter" @ 161..167
+                              StringTemplateContent
+                                RegularStringPart "setter" @ 161..167
                           ClosingQuote "\"" @ 167..168
                     RParen ")" @ 168..169
                 Annotation
@@ -162,9 +169,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 189..190
+                              StringTemplateContent
+                                OpenQuote "\"" @ 189..190
                             StringTemplateEntry
-                              RegularStringPart "value" @ 190..195
+                              StringTemplateContent
+                                RegularStringPart "value" @ 190..195
                           ClosingQuote "\"" @ 195..196
                     RParen ")" @ 196..197
               ModifierList
@@ -184,7 +193,8 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      OpenQuote "\"" @ 221..222
+                      StringTemplateContent
+                        OpenQuote "\"" @ 221..222
                   ClosingQuote "\"" @ 222..223
               PropertyBodyMemberList
         RBrace "}" @ 224..225 leading=[Newline "\n"]

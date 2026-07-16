@@ -34,9 +34,11 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      OpenQuote "\"" @ 39..40
+                      StringTemplateContent
+                        OpenQuote "\"" @ 39..40
                     StringTemplateEntry
-                      RegularStringPart "jolt" @ 40..44
+                      StringTemplateContent
+                        RegularStringPart "jolt" @ 40..44
                   ClosingQuote "\"" @ 44..45
               PropertyBodyMemberList
         RBrace "}" @ 46..47 leading=[Newline "\n"]

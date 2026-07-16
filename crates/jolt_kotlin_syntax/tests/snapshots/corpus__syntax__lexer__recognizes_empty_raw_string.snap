@@ -15,7 +15,8 @@ KotlinFile
         StringTemplateExpression
           StringTemplateEntryList
             StringTemplateEntry
-              OpenQuote "\"\"\"" @ 0..3
+              StringTemplateContent
+                OpenQuote "\"\"\"" @ 0..3
           ClosingQuote "\"\"\"" @ 3..6
       TerminatorList
   Eof "" @ 7..7 leading=[Newline "\n"]

@@ -71,9 +71,11 @@ KotlinFile
                   BinaryExpression
                     NameExpression
                       Identifier "left" @ 49..53 trailing=[Whitespace " "]
-                    Plus "+" @ 54..55 trailing=[Whitespace " "]
-                    NameExpression
-                      Identifier "right" @ 56..61
+                    BinaryOperator
+                      Plus "+" @ 54..55 trailing=[Whitespace " "]
+                    BinaryExpressionRight
+                      NameExpression
+                        Identifier "right" @ 56..61
               TerminatorList
           RBrace "}" @ 62..63 leading=[Newline "\n"]
     FunctionDeclaration

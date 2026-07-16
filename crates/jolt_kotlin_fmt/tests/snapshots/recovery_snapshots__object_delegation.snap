@@ -6,8 +6,7 @@ input:
 val value = object : First, /* orphan */ , Second {}
 
 formatted:
-val value = object
-  : First, /* orphan */ , Second {
+val value = object : First, /* orphan */ , Second {
 }
 
 diagnostics:

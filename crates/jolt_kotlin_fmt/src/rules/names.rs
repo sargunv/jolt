@@ -18,13 +18,16 @@ pub(crate) fn format_name<'source>(
     doc: &mut DocBuilder<'source>,
     name: &Name<'source>,
 ) -> Doc<'source> {
+    format_name_with_leading(doc, name, LeadingTrivia::Preserve)
+}
+
+pub(crate) fn format_name_with_leading<'source>(
+    doc: &mut DocBuilder<'source>,
+    name: &Name<'source>,
+    leading: LeadingTrivia,
+) -> Doc<'source> {
     format_required_field(name.identifier(), doc, |token, doc| {
-        format_token(
-            doc,
-            &token,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::Preserve,
-        )
+        format_token(doc, &token, leading, TrailingTrivia::Preserve)
     })
 }
 

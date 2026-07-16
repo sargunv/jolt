@@ -38,9 +38,11 @@ KotlinFile
             StringTemplateExpression
               StringTemplateEntryList
                 StringTemplateEntry
-                  OpenQuote "\"" @ 45..46
+                  StringTemplateContent
+                    OpenQuote "\"" @ 45..46
                 StringTemplateEntry
-                  RegularStringPart "unused" @ 46..52
+                  StringTemplateContent
+                    RegularStringPart "unused" @ 46..52
               ClosingQuote "\"" @ 52..53
         RParen ")" @ 53..54 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:file-annotation */"]
   KotlinFileItemList
@@ -157,8 +159,10 @@ KotlinFile
                           NavigationExpression
                             NameExpression
                               Identifier "names" @ 474..479
-                            Dot "." @ 479..480
-                            Identifier "joinToString" @ 480..492
+                            NavigationOperator
+                              Dot "." @ 479..480
+                            NameExpression
+                              Identifier "joinToString" @ 480..492
                           TypeArgumentListList
                           ValueArgumentList
                             LParen "(" @ 492..493

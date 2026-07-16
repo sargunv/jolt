@@ -32,9 +32,11 @@ KotlinFile
             StringTemplateExpression
               StringTemplateEntryList
                 StringTemplateEntry
-                  OpenQuote "\"" @ 14..15
+                  StringTemplateContent
+                    OpenQuote "\"" @ 14..15
                 StringTemplateEntry
-                  RegularStringPart "/items" @ 15..21
+                  StringTemplateContent
+                    RegularStringPart "/items" @ 15..21
               ClosingQuote "\"" @ 21..22
           Comma "," @ 22..23 trailing=[Whitespace " "]
           ValueArgument
@@ -44,15 +46,17 @@ KotlinFile
             Assign "=" @ 32..33 trailing=[Whitespace " "]
             CollectionLiteralExpression
               LBracket "[" @ 34..35
-              ValueArgumentSeparatedList
+              ValueArgumentEntryList
                 ValueArgument
                   ValueArgumentPrefixList
                   StringTemplateExpression
                     StringTemplateEntryList
                       StringTemplateEntry
-                        OpenQuote "\"" @ 35..36
+                        StringTemplateContent
+                          OpenQuote "\"" @ 35..36
                       StringTemplateEntry
-                        RegularStringPart "GET" @ 36..39
+                        StringTemplateContent
+                          RegularStringPart "GET" @ 36..39
                     ClosingQuote "\"" @ 39..40
                 Comma "," @ 40..41 trailing=[Whitespace " "]
                 ValueArgument
@@ -60,9 +64,11 @@ KotlinFile
                   StringTemplateExpression
                     StringTemplateEntryList
                       StringTemplateEntry
-                        OpenQuote "\"" @ 42..43
+                        StringTemplateContent
+                          OpenQuote "\"" @ 42..43
                       StringTemplateEntry
-                        RegularStringPart "POST" @ 43..47
+                        StringTemplateContent
+                          RegularStringPart "POST" @ 43..47
                     ClosingQuote "\"" @ 47..48
               RBracket "]" @ 48..49
         RParen ")" @ 49..50

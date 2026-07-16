@@ -7,7 +7,7 @@ fun demo() { { first, /* orphan */ , second -> first } }
 
 formatted:
 fun demo() {
-  { first, /* orphan */ ,   second -> first }
+  { first, /* orphan */ ,  second -> first }
 }
 
 diagnostics:

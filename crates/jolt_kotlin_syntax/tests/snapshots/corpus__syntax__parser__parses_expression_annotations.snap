@@ -79,9 +79,11 @@ KotlinFile
                             StringTemplateExpression
                               StringTemplateEntryList
                                 StringTemplateEntry
-                                  OpenQuote "\"" @ 82..83
+                                  StringTemplateContent
+                                    OpenQuote "\"" @ 82..83
                                 StringTemplateEntry
-                                  RegularStringPart "OPT_IN_USAGE_ERROR" @ 83..101
+                                  StringTemplateContent
+                                    RegularStringPart "OPT_IN_USAGE_ERROR" @ 83..101
                               ClosingQuote "\"" @ 101..102
                         RParen ")" @ 102..103 trailing=[Whitespace " ", LineComment "// createForProduction uses an internal opt-in"]
                   CallExpression
@@ -118,9 +120,11 @@ KotlinFile
                             StringTemplateExpression
                               StringTemplateEntryList
                                 StringTemplateEntry
-                                  OpenQuote "\"" @ 215..216
+                                  StringTemplateContent
+                                    OpenQuote "\"" @ 215..216
                                 StringTemplateEntry
-                                  RegularStringPart "DEPRECATION" @ 216..227
+                                  StringTemplateContent
+                                    RegularStringPart "DEPRECATION" @ 216..227
                               ClosingQuote "\"" @ 227..228
                         RParen ")" @ 228..229
                   WhenExpression
@@ -141,9 +145,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 272..273
+                              StringTemplateContent
+                                OpenQuote "\"" @ 272..273
                             StringTemplateEntry
-                              RegularStringPart "yes" @ 273..276
+                              StringTemplateContent
+                                RegularStringPart "yes" @ 273..276
                           ClosingQuote "\"" @ 276..277
                       WhenEntry
                         WhenConditionSeparatedList
@@ -154,9 +160,11 @@ KotlinFile
                         StringTemplateExpression
                           StringTemplateEntryList
                             StringTemplateEntry
-                              OpenQuote "\"" @ 299..300
+                              StringTemplateContent
+                                OpenQuote "\"" @ 299..300
                             StringTemplateEntry
-                              RegularStringPart "no" @ 300..302
+                              StringTemplateContent
+                                RegularStringPart "no" @ 300..302
                           ClosingQuote "\"" @ 302..303
                     RBrace "}" @ 312..313 leading=[Newline "\n", Whitespace "        "]
               PropertyBodyMemberList
@@ -184,9 +192,11 @@ KotlinFile
                             StringTemplateExpression
                               StringTemplateEntryList
                                 StringTemplateEntry
-                                  OpenQuote "\"" @ 350..351
+                                  StringTemplateContent
+                                    OpenQuote "\"" @ 350..351
                                 StringTemplateEntry
-                                  RegularStringPart "DEPRECATION" @ 351..362
+                                  StringTemplateContent
+                                    RegularStringPart "DEPRECATION" @ 351..362
                               ClosingQuote "\"" @ 362..363
                         RParen ")" @ 363..364
                   NavigationExpression
@@ -208,9 +218,11 @@ KotlinFile
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                OpenQuote "\"" @ 407..408
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 407..408
                               StringTemplateEntry
-                                RegularStringPart "yes" @ 408..411
+                                StringTemplateContent
+                                  RegularStringPart "yes" @ 408..411
                             ClosingQuote "\"" @ 411..412
                         WhenEntry
                           WhenConditionSeparatedList
@@ -221,13 +233,17 @@ KotlinFile
                           StringTemplateExpression
                             StringTemplateEntryList
                               StringTemplateEntry
-                                OpenQuote "\"" @ 434..435
+                                StringTemplateContent
+                                  OpenQuote "\"" @ 434..435
                               StringTemplateEntry
-                                RegularStringPart "no" @ 435..437
+                                StringTemplateContent
+                                  RegularStringPart "no" @ 435..437
                             ClosingQuote "\"" @ 437..438
                       RBrace "}" @ 447..448 leading=[Newline "\n", Whitespace "        "]
-                    Dot "." @ 448..449
-                    Identifier "length" @ 449..455
+                    NavigationOperator
+                      Dot "." @ 448..449
+                    NameExpression
+                      Identifier "length" @ 449..455
               PropertyBodyMemberList
           RBrace "}" @ 456..457 leading=[Newline "\n"]
   Eof "" @ 458..458 leading=[Newline "\n"]

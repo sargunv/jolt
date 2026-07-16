@@ -95,8 +95,10 @@ KotlinFile
                       NavigationExpression
                         NameExpression
                           Identifier "source" @ 94..100 leading=[Newline "\n", Whitespace "    "]
-                        Dot "." @ 109..110 leading=[Newline "\n", Whitespace "        "]
-                        Identifier "map" @ 110..113 trailing=[Whitespace " "]
+                        NavigationOperator
+                          Dot "." @ 109..110 leading=[Newline "\n", Whitespace "        "]
+                        NameExpression
+                          Identifier "map" @ 110..113 trailing=[Whitespace " "]
                       TypeArgumentListList
                       LambdaExpressionList
                         LambdaExpression
@@ -109,8 +111,10 @@ KotlinFile
                                     NavigationExpression
                                       NameExpression
                                         Identifier "it" @ 116..118
-                                      Dot "." @ 118..119
-                                      Identifier "trim" @ 119..123
+                                      NavigationOperator
+                                        Dot "." @ 118..119
+                                      NameExpression
+                                        Identifier "trim" @ 119..123
                                     TypeArgumentListList
                                     ValueArgumentList
                                       LParen "(" @ 123..124
@@ -119,8 +123,10 @@ KotlinFile
                                     LambdaExpressionList
                                 TerminatorList
                             RBrace "}" @ 126..127
-                    Dot "." @ 136..137 leading=[Newline "\n", Whitespace "        "]
-                    Identifier "filter" @ 137..143 trailing=[Whitespace " "]
+                    NavigationOperator
+                      Dot "." @ 136..137 leading=[Newline "\n", Whitespace "        "]
+                    NameExpression
+                      Identifier "filter" @ 137..143 trailing=[Whitespace " "]
                   TypeArgumentListList
                   LambdaExpressionList
                     LambdaExpression
@@ -133,8 +139,10 @@ KotlinFile
                                 NavigationExpression
                                   NameExpression
                                     Identifier "it" @ 146..148
-                                  Dot "." @ 148..149
-                                  Identifier "isNotEmpty" @ 149..159
+                                  NavigationOperator
+                                    Dot "." @ 148..149
+                                  NameExpression
+                                    Identifier "isNotEmpty" @ 149..159
                                 TypeArgumentListList
                                 ValueArgumentList
                                   LParen "(" @ 159..160
@@ -143,16 +151,20 @@ KotlinFile
                                 LambdaExpressionList
                             TerminatorList
                         RBrace "}" @ 162..163
-                Dot "." @ 172..173 leading=[Newline "\n", Whitespace "        "]
-                Identifier "sorted" @ 173..179
+                NavigationOperator
+                  Dot "." @ 172..173 leading=[Newline "\n", Whitespace "        "]
+                NameExpression
+                  Identifier "sorted" @ 173..179
               TypeArgumentListList
               ValueArgumentList
                 LParen "(" @ 179..180
                 ValueArgumentEntryList
                 RParen ")" @ 180..181
               LambdaExpressionList
-            Dot "." @ 190..191 leading=[Newline "\n", Whitespace "        "]
-            Identifier "toList" @ 191..197
+            NavigationOperator
+              Dot "." @ 190..191 leading=[Newline "\n", Whitespace "        "]
+            NameExpression
+              Identifier "toList" @ 191..197
           TypeArgumentListList
           ValueArgumentList
             LParen "(" @ 197..198

@@ -113,9 +113,11 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      OpenQuote "\"" @ 129..130
+                      StringTemplateContent
+                        OpenQuote "\"" @ 129..130
                     StringTemplateEntry
-                      RegularStringPart "done" @ 130..134
+                      StringTemplateContent
+                        RegularStringPart "done" @ 130..134
                   ClosingQuote "\"" @ 134..135
         RBrace "}" @ 136..137 leading=[Newline "\n"]
     FunctionDeclaration
@@ -176,10 +178,12 @@ KotlinFile
                   NavigationExpression
                     NameExpression
                       Identifier "builder" @ 198..205 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:chain-target */"]
-                    SplitSafeNavigationOperator
-                      Question "?" @ 245..246 leading=[Newline "\n", Whitespace "        "]
-                      Dot "." @ 246..247
-                    Identifier "first" @ 247..252
+                    NavigationOperator
+                      SplitSafeNavigationOperator
+                        Question "?" @ 245..246 leading=[Newline "\n", Whitespace "        "]
+                        Dot "." @ 246..247
+                    NameExpression
+                      Identifier "first" @ 247..252
                   TypeArgumentListList
                   ValueArgumentList
                     LParen "(" @ 252..253 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:safe-call-open */", Whitespace " "]
@@ -190,20 +194,24 @@ KotlinFile
                           Identifier "value" @ 287..292 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:first-arg */"]
                     RParen ")" @ 320..321
                   LambdaExpressionList
-                SplitSafeNavigationOperator
-                  Question "?" @ 330..331 leading=[Newline "\n", Whitespace "        "]
-                  Dot "." @ 331..332
-                Identifier "second" @ 332..338
+                NavigationOperator
+                  SplitSafeNavigationOperator
+                    Question "?" @ 330..331 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 331..332
+                NameExpression
+                  Identifier "second" @ 332..338
               TypeArgumentListList
               ValueArgumentList
                 LParen "(" @ 338..339
                 ValueArgumentEntryList
                 RParen ")" @ 339..340 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:after-second */"]
               LambdaExpressionList
-            SplitSafeNavigationOperator
-              Question "?" @ 380..381 leading=[Newline "\n", Whitespace "        "]
-              Dot "." @ 381..382
-            Identifier "done" @ 382..386 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-ref-gap */", Whitespace " "]
+            NavigationOperator
+              SplitSafeNavigationOperator
+                Question "?" @ 380..381 leading=[Newline "\n", Whitespace "        "]
+                Dot "." @ 381..382
+            NameExpression
+              Identifier "done" @ 382..386 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-ref-gap */", Whitespace " "]
           TypeArgumentListList
           ValueArgumentList
             LParen "(" @ 422..423

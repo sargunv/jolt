@@ -56,7 +56,7 @@ KotlinFile
                       RParen ")" @ 40..41 trailing=[Whitespace " "]
                     LambdaExpressionList
                   ElseKw "else" @ 42..46 trailing=[Whitespace " "]
-                  ErrorNode
+                  BogusExpression
               TerminatorList
           RBrace "}" @ 47..48
   Eof "" @ 49..49 leading=[Newline "\n"]

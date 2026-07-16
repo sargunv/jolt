@@ -221,6 +221,7 @@ syntax/recovery/object-delegation.kt
 syntax/recovery/phase-16-program.kt
 syntax/recovery/phase-17-types-and-parameters.kt
 syntax/recovery/phase-18-declarations.kt
+syntax/recovery/phase-19-expressions.kt
 syntax/recovery/preserves-file-annotation-preamble.kt
 syntax/recovery/property-body-recovered-gap.kt
 syntax/recovery/source-gap-trivia-ownership.kt

@@ -105,9 +105,11 @@ KotlinFile
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      OpenQuote "\"" @ 110..111
+                      StringTemplateContent
+                        OpenQuote "\"" @ 110..111
                     StringTemplateEntry
-                      RegularStringPart "ok" @ 111..113
+                      StringTemplateContent
+                        RegularStringPart "ok" @ 111..113
                   ClosingQuote "\"" @ 113..114
         RBrace "}" @ 115..116 leading=[Newline "\n"]
     ClassDeclaration

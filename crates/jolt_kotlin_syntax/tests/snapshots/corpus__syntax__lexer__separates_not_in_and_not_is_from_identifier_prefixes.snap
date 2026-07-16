@@ -12,17 +12,17 @@ KotlinFile
   KotlinFileItemList
     Statement
       ExpressionStatement
-        ErrorNode
+        BogusExpression
           NotIn "!in" @ 0..3 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           Bang "!" @ 4..5
-        ErrorNode
+        BogusExpression
           Identifier "inside" @ 5..11 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           NotIs "!is" @ 12..15 trailing=[Whitespace " "]
-        ErrorNode
+        BogusExpression
           Bang "!" @ 16..17
-        ErrorNode
+        BogusExpression
           Identifier "issue" @ 17..22
       TerminatorList
   Eof "" @ 23..23 leading=[Newline "\n"]

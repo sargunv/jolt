@@ -30,9 +30,11 @@ KotlinFile
             StringTemplateExpression
               StringTemplateEntryList
                 StringTemplateEntry
-                  OpenQuote "\"" @ 15..16
+                  StringTemplateContent
+                    OpenQuote "\"" @ 15..16
                 StringTemplateEntry
-                  RegularStringPart "unused" @ 16..22
+                  StringTemplateContent
+                    RegularStringPart "unused" @ 16..22
               ClosingQuote "\"" @ 22..23
         RParen ")" @ 23..24
   KotlinFileItemList

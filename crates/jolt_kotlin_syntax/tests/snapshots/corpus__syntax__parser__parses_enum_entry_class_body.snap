@@ -62,9 +62,11 @@ KotlinFile
                       StringTemplateExpression
                         StringTemplateEntryList
                           StringTemplateEntry
-                            OpenQuote "\"" @ 68..69
+                            StringTemplateContent
+                              OpenQuote "\"" @ 68..69
                           StringTemplateEntry
-                            RegularStringPart "word" @ 69..73
+                            StringTemplateContent
+                              RegularStringPart "word" @ 69..73
                         ClosingQuote "\"" @ 73..74
               RBrace "}" @ 79..80 leading=[Newline "\n", Whitespace "    "]
             Comma "," @ 80..81
@@ -101,9 +103,11 @@ KotlinFile
                       StringTemplateExpression
                         StringTemplateEntryList
                           StringTemplateEntry
-                            OpenQuote "\"" @ 133..134
+                            StringTemplateContent
+                              OpenQuote "\"" @ 133..134
                           StringTemplateEntry
-                            RegularStringPart "number" @ 134..140
+                            StringTemplateContent
+                              RegularStringPart "number" @ 134..140
                         ClosingQuote "\"" @ 140..141
               RBrace "}" @ 146..147 leading=[Newline "\n", Whitespace "    "]
           Semicolon ";" @ 147..148

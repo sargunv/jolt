@@ -61,8 +61,10 @@ KotlinFile
                 BinaryExpression
                   NameExpression
                     Identifier "value" @ 67..72 trailing=[Whitespace " "]
-                  Elvis "?:" @ 73..75
-                  ErrorNode
+                  BinaryOperator
+                    Elvis "?:" @ 73..75
+                  BinaryExpressionRight
+                    BogusExpression
               PropertyBodyMemberList
             Statement
               ExpressionStatement
