@@ -440,6 +440,7 @@ impl SyntaxTree {
         self.trivia.len()
     }
 
+    #[cfg(debug_assertions)]
     pub(crate) fn trivia_at(&self, index: usize) -> SyntaxTrivia {
         self.trivia[index]
     }

@@ -13,6 +13,163 @@ pub enum PhysicalNodeAudit {
     Malformed,
 }
 
+/// Generates the mechanical physical-slot audit from a language schema.
+/// Languages provide only their matcher and malformed-child policy.
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __define_physical_schema_audit {
+    (
+        kind: $kind:ident,
+        language: $language:path,
+        matches: $matches:ident,
+        accepts_malformed: $accepts_malformed:expr,
+        visibility: $visibility:vis,
+        tokens { $($token:ident,)* }
+        categories { $($family:ident => $bogus:ident { $($member:ident,)* })* }
+        nodes { $($node_kind:ident => $wrapper:ident [$module:ident $class:ident] { $($fields:tt)* })* }
+    ) => {
+        $visibility fn audit_physical_node(
+            node: $crate::__private::SyntaxNode<'_, $language>,
+        ) -> $crate::PhysicalNodeAudit {
+            match node.kind() {
+                $($kind::$node_kind => $crate::__physical_node_audit!(
+                    $matches, $accepts_malformed, node, $class; $($fields)*
+                ),)*
+                $($kind::$bogus => $crate::PhysicalNodeAudit::Malformed,)*
+                _ => $crate::PhysicalNodeAudit::Unexpected,
+            }
+        }
+
+        $visibility fn is_required_slot(
+            node: $crate::__private::SyntaxNode<'_, $language>,
+            slot: usize,
+        ) -> bool {
+            match node.kind() {
+                $($kind::$node_kind => $crate::__physical_required_slot!(slot, $class; $($fields)*),)*
+                $($kind::$bogus => false,)*
+                _ => false,
+            }
+        }
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __physical_node_audit {
+    ($matches:ident, $accepts_malformed:expr, $node:ident, valid;
+        $($field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)? $([$($policy:tt)*])?;)*) => {{
+        let mut cursor = 0;
+        #[allow(unused_mut)]
+        let mut missing = false;
+        $(
+            let Some(slot) = $node.slot_at(cursor) else {
+                return $crate::PhysicalNodeAudit::Unexpected;
+            };
+            $crate::__physical_fixed_field!(
+                $matches, $accepts_malformed, slot, missing, $cardinality, $matcher
+            );
+            cursor += 1;
+        )*
+        if cursor != $node.slot_count() {
+            $crate::PhysicalNodeAudit::Unexpected
+        } else if missing {
+            $crate::PhysicalNodeAudit::MissingRequired
+        } else {
+            $crate::PhysicalNodeAudit::Exact
+        }
+    }};
+    ($matches:ident, $accepts_malformed:expr, $node:ident, constructed; $($fields:tt)*) => {
+        $crate::__physical_node_audit!(
+            $matches, $accepts_malformed, $node, valid; $($fields)*
+        )
+    };
+    ($matches:ident, $accepts_malformed:expr, $node:ident, list;
+        $field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)?;) => {{
+        let mut missing = false;
+        for index in 0..$node.slot_count() {
+            let slot = $node.slot_at(index).expect("physical list slot");
+            match slot {
+                $crate::__private::SyntaxSlot::Empty => missing = true,
+                _ if ($accepts_malformed)(slot) || $matches!(slot, $matcher) => {}
+                _ => return $crate::PhysicalNodeAudit::Unexpected,
+            }
+        }
+        if missing {
+            $crate::PhysicalNodeAudit::MissingRequired
+        } else {
+            $crate::PhysicalNodeAudit::Exact
+        }
+    }};
+    ($matches:ident, $accepts_malformed:expr, $node:ident, list;
+        $field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)? [disambiguate $policy:ident];) => {
+        $crate::__physical_node_audit!(
+            $matches, $accepts_malformed, $node, list;
+            $field: $cardinality $matcher $(=> $role)?;
+        )
+    };
+    ($matches:ident, $accepts_malformed:expr, $node:ident, list;
+        $field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)?
+        [separated $separator:tt, minimum $minimum:literal, trailing $trailing:ident, recovery bogus_owner];) => {{
+        let mut missing = false;
+        for index in 0..$node.slot_count() {
+            let slot = $node.slot_at(index).expect("physical separated-list slot");
+            if matches!(slot, $crate::__private::SyntaxSlot::Empty) {
+                missing = true;
+            } else if index % 2 == 0 {
+                if !($accepts_malformed)(slot) && !$matches!(slot, $matcher) {
+                    return $crate::PhysicalNodeAudit::Unexpected;
+                }
+            } else if !$matches!(slot, $separator) {
+                return $crate::PhysicalNodeAudit::Unexpected;
+            }
+        }
+        if missing {
+            $crate::PhysicalNodeAudit::MissingRequired
+        } else {
+            $crate::PhysicalNodeAudit::Exact
+        }
+    }};
+    ($matches:ident, $accepts_malformed:expr, $node:ident, malformed; $($fields:tt)*) => {
+        $crate::PhysicalNodeAudit::Malformed
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __physical_fixed_field {
+    ($matches:ident, $accepts_malformed:expr, $slot:ident, $missing:ident, required, $matcher:tt) => {
+        match $slot {
+            $crate::__private::SyntaxSlot::Empty => $missing = true,
+            _ if ($accepts_malformed)($slot) || $matches!($slot, $matcher) => {}
+            _ => return $crate::PhysicalNodeAudit::Unexpected,
+        }
+    };
+    ($matches:ident, $accepts_malformed:expr, $slot:ident, $missing:ident, optional, $matcher:tt) => {
+        match $slot {
+            $crate::__private::SyntaxSlot::Empty => {}
+            _ if $matches!($slot, $matcher) => {}
+            _ => return $crate::PhysicalNodeAudit::Unexpected,
+        }
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __physical_required_slot {
+    ($slot:ident, valid;
+        $($field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)? $([$($policy:tt)*])?;)*) => {
+        [$(matches!(stringify!($cardinality), "required")),*]
+            .get($slot)
+            .copied()
+            .unwrap_or(false)
+    };
+    ($slot:ident, constructed; $($fields:tt)*) => {
+        $crate::__physical_required_slot!($slot, valid; $($fields)*)
+    };
+    ($slot:ident, list; $($fields:tt)*) => { true };
+    ($slot:ident, malformed; $($fields:tt)*) => { false };
+}
+
 /// Corpus audit of the production physical tree. Language crates generate the
 /// node check directly from the same schema invocation as their factory and
 /// typed accessors; there is no second schema interpreter or reconstructed

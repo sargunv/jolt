@@ -324,9 +324,17 @@ impl<'tree> SourceRangeClaim<'tree> {
             range.end().get() <= token.source().len(),
             "source claim range belongs to its syntax source"
         );
+        Self::from_tree(token.source_id().tree, range, include_line_ending_at_end)
+    }
+
+    fn from_tree(
+        tree: &'tree SyntaxTree,
+        range: TextRange,
+        include_line_ending_at_end: bool,
+    ) -> Self {
         #[cfg(debug_assertions)]
         {
-            let tokens = token.source_id().tree.token_data();
+            let tokens = tree.token_data();
             let token_start =
                 tokens.partition_point(|token| token.full_text_range().end() <= range.start());
             let token_end = tokens.partition_point(|token| {
@@ -337,7 +345,7 @@ impl<'tree> SourceRangeClaim<'tree> {
                 }
             });
             Self {
-                tree: token.source_id().tree,
+                tree,
                 range,
                 include_line_ending_at_end,
                 token_start,
@@ -346,7 +354,7 @@ impl<'tree> SourceRangeClaim<'tree> {
         }
         #[cfg(not(debug_assertions))]
         {
-            let _ = (token, range, include_line_ending_at_end);
+            let _ = (tree, range, include_line_ending_at_end);
             Self {
                 marker: std::marker::PhantomData,
             }
@@ -529,24 +537,6 @@ impl<'tree> SyntaxConservationTracker<'tree> {
         }
         #[cfg(not(debug_assertions))]
         let _ = identity;
-        Ok(())
-    }
-
-    /// Claims every conserved identity inside a syntax-owned verbatim core.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if any identity is foreign, unauthorized, or duplicate.
-    pub fn claim_verbatim<L: Language>(
-        &mut self,
-        core: &SyntaxVerbatimCore<'tree, L>,
-    ) -> Result<(), ConservationError> {
-        #[cfg(debug_assertions)]
-        for identity in core.identities() {
-            self.claim(identity)?;
-        }
-        #[cfg(not(debug_assertions))]
-        let _ = core;
         Ok(())
     }
 
@@ -873,27 +863,15 @@ impl<'tree, L: Language> SyntaxVerbatimCore<'tree, L> {
         })
     }
 
-    /// Returns every conserved source identity wholly owned by this core.
-    pub fn identities(&self) -> impl Iterator<Item = SourceIdentity<'tree>> + use<'tree, L> {
-        let range = self.range;
-        self.node.tokens().flat_map(move |token| {
-            let leading = token.leading_trivia_with_ids().filter_map(move |piece| {
-                (range_contains(range, piece.text_range()) && is_conserved_trivia(piece.id()))
-                    .then_some(SourceIdentity::Trivia(piece.id()))
-            });
-            let token_identity = (range_contains(range, token.token_text_range())
-                && token.token_text_range().start() != token.token_text_range().end())
-            .then_some(SourceIdentity::Token(token.source_id()))
-            .into_iter();
-            let trailing = token.trailing_trivia_with_ids().filter_map(move |piece| {
-                (range_contains(range, piece.text_range()) && is_conserved_trivia(piece.id()))
-                    .then_some(SourceIdentity::Trivia(piece.id()))
-            });
-            leading.chain(token_identity).chain(trailing)
-        })
+    /// Returns the compact syntax-owned claim for every conserved identity in
+    /// this malformed core. The formatter cannot enumerate or widen it.
+    #[must_use]
+    pub fn source_claim(&self) -> SourceRangeClaim<'tree> {
+        SourceRangeClaim::from_tree(self.node.tree(), self.range, false)
     }
 }
 
+#[cfg(debug_assertions)]
 fn is_conserved_trivia(identity: SourceTriviaId<'_>) -> bool {
     let token = identity.token.tree.token(identity.token.id);
     let range = match identity.side {
@@ -1238,7 +1216,7 @@ mod tests {
         let mut tracker = root.conservation_tracker();
         let core = SyntaxVerbatimCore::new(root);
         tracker
-            .claim_verbatim(&core)
+            .claim_source_range(core.source_claim())
             .expect("whole source is an exact verbatim range");
         tracker.finish().expect("verbatim claims all identities");
     }

@@ -99,6 +99,7 @@ enum RenderErrorKind {
     NoCurrentGroup,
     #[cfg_attr(not(debug_assertions), allow(dead_code))]
     MissingConservationProof,
+    #[cfg_attr(not(debug_assertions), allow(dead_code))]
     Conservation(ConservationError),
     SyntaxInvariant(String),
 }
@@ -136,7 +137,7 @@ pub fn render_to<S: RenderSink>(
     if let Some(error) = arena.invariant_error() {
         return Err(RenderError::syntax_invariant(error));
     }
-    let mut renderer = Renderer::new(arena, options, sink, None);
+    let mut renderer = Renderer::new(arena, options, sink, None, false);
     renderer.render_doc(doc, Mode::Break)?;
     Ok(renderer.finish())
 }
@@ -158,8 +159,18 @@ pub fn render_source_to<'source, L: Language, S: RenderSink>(
     if let Some(error) = arena.invariant_error() {
         return Err(RenderError::syntax_invariant(error));
     }
-    let mut proof = RenderProof::new(root.conservation_tracker());
-    let mut renderer = Renderer::new(arena, options, sink, Some(&mut proof));
+    #[cfg(debug_assertions)]
+    let used_malformed_verbatim = {
+        let mut proof = RenderProof::new(root.conservation_tracker());
+        let mut renderer = Renderer::new(arena, options, DiscardSink, Some(&mut proof), false);
+        renderer.render_doc(doc, Mode::Break)?;
+        proof.finish().map_err(|error| RenderError {
+            kind: RenderErrorKind::Conservation(error),
+        })?
+    };
+    #[cfg(not(debug_assertions))]
+    let _ = root;
+    let mut renderer = Renderer::new(arena, options, sink, None, true);
     renderer.render_doc(doc, Mode::Break)?;
     let render = renderer.finish();
     if render.halted {
@@ -168,13 +179,22 @@ pub fn render_source_to<'source, L: Language, S: RenderSink>(
             used_malformed_verbatim: false,
         });
     }
-    let used_malformed_verbatim = proof.finish().map_err(|error| RenderError {
-        kind: RenderErrorKind::Conservation(error),
-    })?;
+    #[cfg(not(debug_assertions))]
+    let used_malformed_verbatim = false;
     Ok(SourceRenderOutcome {
         halted: false,
         used_malformed_verbatim,
     })
+}
+
+#[cfg(debug_assertions)]
+struct DiscardSink;
+
+#[cfg(debug_assertions)]
+impl RenderSink for DiscardSink {
+    fn write_str(&mut self, _text: &str) -> RenderControl {
+        RenderControl::Continue
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -243,6 +263,8 @@ struct Renderer<'arena, 'proof, 'source, S> {
     measured_group_fits: bool,
     #[cfg_attr(not(debug_assertions), allow(dead_code))]
     proof: Option<&'proof mut RenderProof<'source>>,
+    #[cfg_attr(not(debug_assertions), allow(dead_code))]
+    source_verified: bool,
 }
 
 impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S> {
@@ -251,6 +273,7 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         options: RenderOptions,
         sink: S,
         proof: Option<&'proof mut RenderProof<'source>>,
+        source_verified: bool,
     ) -> Self {
         Self {
             arena,
@@ -267,6 +290,7 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
             fit_overlay_stack: Vec::new(),
             measured_group_fits: false,
             proof,
+            source_verified,
         }
     }
 
@@ -318,14 +342,12 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
             None => Ok(()),
             Some(DocNode::Text(text)) => {
                 #[cfg(debug_assertions)]
-                if let Some(source) = &text.proof {
+                if let Some(claim) = text.claim {
                     if let Some(proof) = self.proof.as_mut() {
-                        proof
-                            .render_fragment(source, arena.source_claims(source))
-                            .map_err(|error| RenderError {
-                                kind: RenderErrorKind::Conservation(error),
-                            })?;
-                    } else {
+                        proof.consume(claim).map_err(|error| RenderError {
+                            kind: RenderErrorKind::Conservation(error),
+                        })?;
+                    } else if !self.source_verified {
                         return Err(RenderError::missing_conservation_proof());
                     }
                 }
@@ -890,7 +912,7 @@ mod tests {
     use crate::document::DocNode;
     use crate::formatter_ignore::formatter_ignore_ranges_with_safety;
     #[cfg(debug_assertions)]
-    use crate::source_fragment::SourceProofKind;
+    use crate::source_fragment::SourceClaim;
     use crate::source_fragment::{ExceptionalSeparators, exceptional_separators};
     use crate::{
         DocBuilder, ExceptionalSeparator, FragmentBoundary, LexicalAtom, LexicalAtomKind,
@@ -1227,6 +1249,27 @@ mod tests {
             .expect_err("ordinary text cannot stand in for structured source");
 
         assert!(error.to_string().starts_with("MissingToken"));
+        assert!(sink.0.is_empty());
+    }
+
+    #[test]
+    fn duplicate_claim_is_rejected_before_any_output() {
+        let source = "ab";
+        let tree = syntax_tree(source);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
+        let token = root.first_token().expect("first token");
+        let mut builder = DocBuilder::new();
+        let first = builder.source_token(&token);
+        let duplicate = builder.source_token(&token);
+        let document = builder.concat([first, duplicate]);
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        let error = render_source_to(&arena, document, options(), &mut sink, &root)
+            .expect_err("duplicate claim must fail conservation");
+
+        assert!(error.to_string().starts_with("DuplicateToken"));
+        assert!(sink.0.is_empty());
     }
 
     #[test]
@@ -1551,8 +1594,8 @@ mod tests {
             panic!("reorder marker must be a source-aware text node");
         };
         assert!(matches!(
-            text.proof.as_ref().and_then(|proof| proof.kind),
-            Some(SourceProofKind::Reordered {
+            text.claim,
+            Some(SourceClaim::Reordered {
                 reason: ReorderReason::ModuleDirectives,
                 ..
             })
@@ -1629,18 +1672,18 @@ mod tests {
             token.source_id(),
             NormalizedToken::EnumSemicolon,
         ));
-        let synthesized_proof = synthesized.proof();
+        let synthesized_doc = synthesized.doc();
         let source_doc = builder.source_token(&token);
         let mut safety = CountingSafety::default();
         let synthesized = builder.resolve_exceptional(synthesized, Some(&token), None, &mut safety);
         let document = builder.concat([source_doc, synthesized]);
         let arena = builder.into_arena();
-        let Some(DocNode::Text(text)) = arena.node(synthesized_proof) else {
+        let Some(DocNode::Text(text)) = arena.node(synthesized_doc) else {
             panic!("synthesis must be a source-aware text node");
         };
         assert!(matches!(
-            text.proof.as_ref().and_then(|proof| proof.kind),
-            Some(SourceProofKind::Synthesized {
+            text.claim,
+            Some(SourceClaim::Synthesized {
                 token: NormalizedToken::EnumSemicolon,
                 ..
             })
@@ -1670,7 +1713,7 @@ mod tests {
         ));
 
         assert_eq!(reordered, Doc::nil());
-        assert_eq!(synthesized.proof(), Doc::nil());
+        assert_ne!(synthesized.doc(), Doc::nil());
     }
 
     #[test]

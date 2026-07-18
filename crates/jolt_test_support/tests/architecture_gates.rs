@@ -3,7 +3,43 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const IMPLEMENTATION_BASELINE: &str = "2197128";
-const MAX_IMPLEMENTATION_NET_DELTA: usize = 8_489;
+const IMPLEMENTATION_PATHS: &[&str] = &[":(glob)crates/**/*.rs", ":(glob)tools/**/*.py"];
+const MACRO_SCHEMA_PATHS: &[&str] = &[
+    "crates/jolt_java_syntax/src/schema.rs",
+    "crates/jolt_kotlin_syntax/src/schema.rs",
+    "crates/jolt_syntax/src/projection.rs",
+    "crates/jolt_syntax/src/schema.rs",
+];
+const GENERATED_CONSUMER_PATHS: &[&str] = &[
+    "crates/jolt_java_syntax/src/kind.rs",
+    "crates/jolt_java_syntax/src/nodes/mod.rs",
+    "crates/jolt_java_syntax/src/shape.rs",
+    "crates/jolt_kotlin_syntax/src/kind.rs",
+    "crates/jolt_kotlin_syntax/src/nodes/mod.rs",
+    "crates/jolt_kotlin_syntax/src/shape.rs",
+];
+const AUDIT_PROOF_PATHS: &[&str] = &[
+    "crates/jolt_fmt_ir/src/document.rs",
+    "crates/jolt_fmt_ir/src/formatter_ignore.rs",
+    "crates/jolt_fmt_ir/src/render.rs",
+    "crates/jolt_fmt_ir/src/source_fragment.rs",
+    "crates/jolt_java_fmt/tests/normalization_authority.rs",
+    "crates/jolt_java_syntax/src/normalization.rs",
+    "crates/jolt_java_syntax/src/schema_audit.rs",
+    "crates/jolt_java_syntax/tests/normalization.rs",
+    "crates/jolt_kotlin_fmt/tests/normalization_authority.rs",
+    "crates/jolt_kotlin_syntax/src/normalization.rs",
+    "crates/jolt_kotlin_syntax/src/schema_audit.rs",
+    "crates/jolt_kotlin_syntax/tests/normalization.rs",
+    "crates/jolt_syntax/src/conservation.rs",
+    "crates/jolt_syntax/src/normalization.rs",
+    "crates/jolt_test_support/src/diagnostic_ownership.rs",
+    "crates/jolt_test_support/src/schema_audit.rs",
+    "crates/jolt_test_support/tests/architecture_gates.rs",
+];
+const MAX_MACRO_SCHEMA_NET_DELTA: isize = 3_490;
+const MAX_GENERATED_CONSUMER_NET_DELTA: isize = -24;
+const MAX_AUDIT_PROOF_NET_DELTA: isize = 5_768;
 
 #[test]
 fn forbidden_architecture_patterns_do_not_regress() {
@@ -12,73 +48,7 @@ fn forbidden_architecture_patterns_do_not_regress() {
     let mut failures = Vec::new();
 
     for path in &production {
-        let source = read(path);
-        let relative = relative(&workspace, path);
-        for forbidden in [
-            "DiagnosticMarker",
-            "FormatterInsertedToken",
-            "ReferenceSyntaxFactory",
-            "build_reference_syntax_tree",
-            "build_syntax_tree_with_factory_and_diagnostic_owners",
-            "completed_is_error_node",
-            "directive_reorder_claim",
-            "error_node_kind",
-            "ErrorNode",
-            "expect_owned(",
-            "expected_here(",
-            "expected_owned_",
-            "own_diagnostic(",
-            "modifier_reorder_claim",
-            "represented_range_is_trivia",
-            "tokens_between",
-            "unexpected_here(",
-            "unexpected_owned_",
-            "canonical_reorder_claim().is_none()",
-            "canonical_reorder_claim().is_some()",
-            "claimed_source(",
-            "claimed_trivia(",
-            "render_to_tracked(",
-            "rendered_fragments(",
-            "RenderedSourceFragment",
-            "let _authorization =",
-        ] {
-            if source.contains(forbidden) {
-                failures.push(format!("{relative}: forbidden pattern {forbidden:?}"));
-            }
-        }
-
-        if relative.starts_with("crates/jolt_java_syntax/src/parser/")
-            || relative.starts_with("crates/jolt_kotlin_syntax/src/parser/")
-        {
-            for forbidden in ["UnresolvedDiagnosticOwner", "complete_owned_"] {
-                if source.contains(forbidden) {
-                    failures.push(format!(
-                        "{relative}: language atomic recovery migration forbids {forbidden:?}"
-                    ));
-                }
-            }
-            if relative.contains("/grammar/") {
-                for forbidden in [
-                    "ensure_progress(",
-                    "error_here(",
-                    "expected_here(",
-                    "unexpected_here(",
-                    "self.expect(",
-                    "self.expect_contextual(",
-                    "self.expect_variable_identifier(",
-                    "self.expect_named_variable_identifier(",
-                    "self.consume_qualified_name(",
-                    "report_non_structural(",
-                ] {
-                    if source.contains(forbidden) {
-                        failures.push(format!(
-                            "{relative}: language grammar must classify structural diagnostics; \
-                             forbidden ownerless path {forbidden:?}"
-                        ));
-                    }
-                }
-            }
-        }
+        scan_production_file(&workspace, path, &mut failures);
     }
 
     let audit = read(&workspace.join("crates/jolt_test_support/src/schema_audit.rs"));
@@ -137,37 +107,159 @@ fn forbidden_architecture_patterns_do_not_regress() {
     );
 }
 
+fn scan_production_file(workspace: &Path, path: &Path, failures: &mut Vec<String>) {
+    let source = read(path);
+    let relative = relative(workspace, path);
+    for forbidden in [
+        "DiagnosticMarker",
+        "FormatterInsertedToken",
+        "ReferenceSyntaxFactory",
+        "build_reference_syntax_tree",
+        "build_syntax_tree_with_factory_and_diagnostic_owners",
+        "completed_is_error_node",
+        "directive_reorder_claim",
+        "error_node_kind",
+        "ErrorNode",
+        "expect_owned(",
+        "expected_here(",
+        "expected_owned_",
+        "own_diagnostic(",
+        "modifier_reorder_claim",
+        "represented_range_is_trivia",
+        "tokens_between",
+        "unexpected_here(",
+        "unexpected_owned_",
+        "canonical_reorder_claim().is_none()",
+        "canonical_reorder_claim().is_some()",
+        "claimed_source(",
+        "claimed_trivia(",
+        "render_to_tracked(",
+        "rendered_fragments(",
+        "RenderedSourceFragment",
+        "let _authorization =",
+    ] {
+        if source.contains(forbidden) {
+            failures.push(format!("{relative}: forbidden pattern {forbidden:?}"));
+        }
+    }
+
+    if !(relative.starts_with("crates/jolt_java_syntax/src/parser/")
+        || relative.starts_with("crates/jolt_kotlin_syntax/src/parser/"))
+    {
+        return;
+    }
+    for forbidden in ["UnresolvedDiagnosticOwner", "complete_owned_"] {
+        if source.contains(forbidden) {
+            failures.push(format!(
+                "{relative}: language atomic recovery migration forbids {forbidden:?}"
+            ));
+        }
+    }
+    if relative.contains("/grammar/") {
+        for forbidden in [
+            "ensure_progress(",
+            "error_here(",
+            "expected_here(",
+            "unexpected_here(",
+            "self.expect(",
+            "self.expect_contextual(",
+            "self.expect_variable_identifier(",
+            "self.expect_named_variable_identifier(",
+            "self.consume_qualified_name(",
+            "report_non_structural(",
+        ] {
+            if source.contains(forbidden) {
+                failures.push(format!(
+                    "{relative}: language grammar must classify structural diagnostics; \
+                     forbidden ownerless path {forbidden:?}"
+                ));
+            }
+        }
+    }
+}
+
 /// Enforces the roadmap's formal implementation-size projection. The explicit
 /// pathspec includes production, tests, test support, and benchmark/import
 /// tooling while excluding fixtures, snapshots, reports, and documentation by
 /// construction. Untracked implementation files are added to the projection so
 /// a local `mise run test` cannot evade the gate before staging them.
 #[test]
-fn implementation_projection_stays_within_phase_twenty_eight_budget() {
+fn implementation_projection_has_bounded_architecture_and_negative_ordinary_code() {
     let workspace = workspace_root();
-    let (additions, deletions) = implementation_projection(&workspace);
-    let net = additions.saturating_sub(deletions);
+    let total = implementation_projection(&workspace, IMPLEMENTATION_PATHS);
+    let macro_schema = implementation_projection(&workspace, MACRO_SCHEMA_PATHS);
+    let generated_consumer = implementation_projection(&workspace, GENERATED_CONSUMER_PATHS);
+    let audit_proof = implementation_projection(&workspace, AUDIT_PROOF_PATHS);
+    let categorized = macro_schema + generated_consumer + audit_proof;
+    let ordinary = total - categorized;
 
     assert!(
-        net <= MAX_IMPLEMENTATION_NET_DELTA,
-        "Phase 28 implementation projection against {IMPLEMENTATION_BASELINE} is \
-         +{additions}/-{deletions}, net +{net}; maximum net delta is \
-         +{MAX_IMPLEMENTATION_NET_DELTA}. The projection includes crates/**/*.rs and \
-         tools/**/*.py, including tests and test support."
+        macro_schema.net() <= MAX_MACRO_SCHEMA_NET_DELTA
+            && generated_consumer.net() <= MAX_GENERATED_CONSUMER_NET_DELTA
+            && audit_proof.net() <= MAX_AUDIT_PROOF_NET_DELTA
+            && ordinary.net() < 0,
+        "Phase 29 projection against {IMPLEMENTATION_BASELINE}: total {total}, \
+         macro schema/projection {macro_schema} (maximum {MAX_MACRO_SCHEMA_NET_DELTA:+}), \
+         generated consumers {generated_consumer} (maximum \
+         {MAX_GENERATED_CONSUMER_NET_DELTA:+}), audit/proof {audit_proof} (maximum \
+         {MAX_AUDIT_PROOF_NET_DELTA:+}), ordinary implementation {ordinary} (must be \
+         negative). The projection includes crates/**/*.rs and tools/**/*.py, including \
+         tests and test support."
     );
 }
 
-fn implementation_projection(workspace: &Path) -> (usize, usize) {
+#[derive(Clone, Copy)]
+struct Projection {
+    additions: isize,
+    deletions: isize,
+}
+
+impl Projection {
+    const fn net(self) -> isize {
+        self.additions - self.deletions
+    }
+}
+
+impl std::fmt::Display for Projection {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "+{}/-{}, net {:+}",
+            self.additions,
+            self.deletions,
+            self.net()
+        )
+    }
+}
+
+impl std::ops::Add for Projection {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            additions: self.additions + other.additions,
+            deletions: self.deletions + other.deletions,
+        }
+    }
+}
+
+impl std::ops::Sub for Projection {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self {
+            additions: self.additions - other.additions,
+            deletions: self.deletions - other.deletions,
+        }
+    }
+}
+
+fn implementation_projection(workspace: &Path, paths: &[&str]) -> Projection {
+    let mut arguments = vec!["diff", "--numstat", IMPLEMENTATION_BASELINE, "--"];
+    arguments.extend_from_slice(paths);
     let output = Command::new("git")
         .current_dir(workspace)
-        .args([
-            "diff",
-            "--numstat",
-            IMPLEMENTATION_BASELINE,
-            "--",
-            ":(glob)crates/**/*.rs",
-            ":(glob)tools/**/*.py",
-        ])
+        .args(arguments)
         .output()
         .expect("architecture size gate requires git");
     assert!(
@@ -176,8 +268,8 @@ fn implementation_projection(workspace: &Path) -> (usize, usize) {
         String::from_utf8_lossy(&output.stderr)
     );
 
-    let mut additions = 0;
-    let mut deletions = 0;
+    let mut additions = 0_isize;
+    let mut deletions = 0_isize;
     for line in String::from_utf8(output.stdout)
         .expect("git numstat must be UTF-8")
         .lines()
@@ -186,12 +278,12 @@ fn implementation_projection(workspace: &Path) -> (usize, usize) {
         additions += fields
             .next()
             .expect("numstat addition field")
-            .parse::<usize>()
+            .parse::<isize>()
             .expect("implementation files must have textual numstat additions");
         deletions += fields
             .next()
             .expect("numstat deletion field")
-            .parse::<usize>()
+            .parse::<isize>()
             .expect("implementation files must have textual numstat deletions");
     }
 
@@ -215,12 +307,24 @@ fn implementation_projection(workspace: &Path) -> (usize, usize) {
     for relative in String::from_utf8(untracked.stdout)
         .expect("git file names must be UTF-8")
         .lines()
-        .filter(|path| path.ends_with(".rs") || path.ends_with(".py"))
+        .filter(|path| projection_includes_untracked(path, paths))
     {
-        additions += read(&workspace.join(relative)).lines().count();
+        additions += isize::try_from(read(&workspace.join(relative)).lines().count())
+            .expect("implementation line count fits isize");
     }
 
-    (additions, deletions)
+    Projection {
+        additions,
+        deletions,
+    }
+}
+
+fn projection_includes_untracked(relative: &str, paths: &[&str]) -> bool {
+    if paths == IMPLEMENTATION_PATHS {
+        let extension = Path::new(relative).extension();
+        return extension.is_some_and(|extension| extension == "rs" || extension == "py");
+    }
+    paths.contains(&relative)
 }
 
 fn workspace_root() -> PathBuf {

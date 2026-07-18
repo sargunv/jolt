@@ -3,24 +3,13 @@ use std::path::PathBuf;
 use jolt_kotlin_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
 use jolt_kotlin_syntax::parse_kotlin_file;
 use jolt_test_support::{
-    DeferredReason, ImportedFormatterSummary, ObservedDeferredPath, StringSink,
-    assert_deferred_import_manifest, collect_kotlin_files, read_to_string, workspace_root,
+    ImportedFormatterSummary, StringSink, collect_kotlin_files, read_to_string, workspace_root,
 };
 
 #[test]
 fn imported_fixture_inputs_format_idempotently_and_parse() {
-    let mut deferred = Vec::new();
-    let ktfmt_summary = assert_corpus("ktfmt", &mut deferred);
-    let maplibre_summary = assert_corpus("maplibre-compose", &mut deferred);
-
-    let workspace = workspace_root(env!("CARGO_MANIFEST_DIR"));
-    assert_deferred_import_manifest(
-        &workspace,
-        &workspace.join("tools/import/.imports"),
-        &["ktfmt/source", "maplibre-compose/source"],
-        &[],
-        &deferred,
-    );
+    let ktfmt_summary = assert_corpus("ktfmt");
+    let maplibre_summary = assert_corpus("maplibre-compose");
 
     insta::assert_snapshot!("ktfmt_formatter_summary", ktfmt_summary.render());
     insta::assert_snapshot!(
@@ -29,42 +18,35 @@ fn imported_fixture_inputs_format_idempotently_and_parse() {
     );
 }
 
-fn assert_corpus(
-    suite: &str,
-    deferred: &mut Vec<ObservedDeferredPath>,
-) -> ImportedFormatterSummary {
+fn assert_corpus(suite: &str) -> ImportedFormatterSummary {
     let root = fixture_root(suite);
     let files = collect_kotlin_files(&root);
-    let suite_name = format!("{suite}/source");
     let mut summary = ImportedFormatterSummary::new(suite, files.len());
     let options = FormatOptions::default();
 
     for path in files {
         let source = read_to_string(&path);
         let parse = parse_kotlin_file(&source);
-        let syntax = parse.syntax();
-        let mut reasons = Vec::new();
-        if syntax.is_none() {
-            reasons.push(DeferredReason::NoSyntaxTree);
-        } else if syntax.is_some_and(|syntax| syntax.source_text() != source) {
-            summary.note_reconstruction_changed();
-            reasons.push(DeferredReason::SyntaxReconstructionMismatch);
-        }
+        let syntax = parse.syntax().unwrap_or_else(|| {
+            panic!(
+                "parser produced no represented tree for {}: {:#?}",
+                path.display(),
+                parse.diagnostics()
+            )
+        });
+        assert_eq!(
+            syntax.source_text(),
+            source,
+            "syntax tree did not reconstruct exactly for {}",
+            path.display()
+        );
         summary.record_diagnostics(parse.diagnostics());
-        if !parse.diagnostics().is_empty() {
-            summary.note_syntax_blocked();
-            reasons.push(DeferredReason::ParserDiagnostics);
-        }
-        if !reasons.is_empty() {
-            deferred.push(ObservedDeferredPath::new(
-                &suite_name,
-                &root,
-                &path,
-                reasons,
-            ));
-            continue;
-        }
-        let _syntax = syntax.expect("active imported path has syntax");
+        assert!(
+            parse.diagnostics().is_empty(),
+            "imported Kotlin source produced diagnostics for {}: {:#?}",
+            path.display(),
+            parse.diagnostics()
+        );
 
         let formatted = match format_source(&source, options) {
             Ok(formatted) => formatted,

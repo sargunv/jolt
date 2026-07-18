@@ -10,7 +10,6 @@ use jolt_fmt_ir::{RenderControl, RenderSink};
 use jolt_syntax::{
     CommentKind, Language, SyntaxDiagnosticOwner, SyntaxNode, SyntaxSlot, SyntaxToken,
 };
-use serde::Deserialize;
 use unicode_width::UnicodeWidthStr;
 
 mod diagnostic_ownership;
@@ -20,6 +19,28 @@ pub use diagnostic_ownership::{
     assert_exact_structural_ownership, assert_exact_structural_ownership_requiring,
 };
 pub use schema_audit::{PhysicalNodeAudit, SchemaAudit};
+
+#[doc(hidden)]
+pub mod __private {
+    pub use jolt_syntax::{SyntaxNode, SyntaxSlot};
+}
+
+/// Inventories parser diagnostic classification without unstable source ranges.
+#[must_use]
+pub fn diagnostic_inventory(diagnostics: &[Diagnostic]) -> BTreeMap<String, usize> {
+    let mut inventory = BTreeMap::new();
+    for diagnostic in diagnostics {
+        let key = format!(
+            "{:?}:{:?}:{}:{}",
+            diagnostic.stage,
+            diagnostic.severity,
+            diagnostic.code.as_str(),
+            diagnostic.message
+        );
+        *inventory.entry(key).or_default() += 1;
+    }
+    inventory
+}
 
 pub fn assert_bidirectional_diagnostic_ownership<L>(
     root: SyntaxNode<'_, L>,
@@ -287,157 +308,6 @@ pub fn fixture_manifest(root: &Path, paths: &[PathBuf]) -> String {
         })
         .collect::<Vec<_>>()
         .join("\n")
-}
-
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd)]
-#[serde(rename_all = "kebab-case")]
-pub enum DeferredReason {
-    ParserDiagnostics,
-    NoSyntaxTree,
-    SyntaxReconstructionMismatch,
-}
-
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct ObservedDeferredPath {
-    suite: String,
-    path: String,
-    reasons: Vec<DeferredReason>,
-}
-
-impl ObservedDeferredPath {
-    #[must_use]
-    pub fn new(
-        suite: &str,
-        suite_root: &Path,
-        path: &Path,
-        reasons: impl IntoIterator<Item = DeferredReason>,
-    ) -> Self {
-        let relative = path
-            .strip_prefix(suite_root)
-            .unwrap_or_else(|error| {
-                panic!(
-                    "{} is outside {}: {error}",
-                    path.display(),
-                    suite_root.display()
-                )
-            })
-            .to_string_lossy()
-            .replace('\\', "/");
-        let mut reasons = reasons.into_iter().collect::<Vec<_>>();
-        reasons.sort_unstable();
-        reasons.dedup();
-        assert!(!reasons.is_empty(), "deferred path must have a reason");
-        Self {
-            suite: suite.to_owned(),
-            path: relative,
-            reasons,
-        }
-    }
-}
-
-#[derive(Deserialize)]
-struct DeferredManifest {
-    version: u8,
-    entries: Vec<DeferredEntry>,
-}
-
-#[derive(Deserialize)]
-struct DeferredEntry {
-    suite: String,
-    path: String,
-    reasons: Vec<DeferredReason>,
-    owner_phase: u8,
-}
-
-/// Verifies that the exact imported migration queue matches the paths which
-/// cannot yet enter the hard formatter gate.
-pub fn assert_deferred_import_manifest(
-    workspace_root: &Path,
-    imports_root: &Path,
-    suite_names: &[&str],
-    reason_filter: &[DeferredReason],
-    observed: &[ObservedDeferredPath],
-) {
-    const HARD_GATE_SUITES: &[&str] = &[
-        "google-java-format/input",
-        "palantir-java-format/input",
-        "prettier-java/input",
-        "ktfmt/source",
-        "maplibre-compose/source",
-    ];
-    let manifest_path = workspace_root.join("tools/import/deferred-formatter-paths.json");
-    let manifest: DeferredManifest = serde_json::from_str(&read_to_string(&manifest_path))
-        .unwrap_or_else(|error| panic!("failed to parse {}: {error}", manifest_path.display()));
-    assert_eq!(
-        manifest.version, 1,
-        "unsupported deferred formatter manifest version"
-    );
-
-    let mut expected = Vec::with_capacity(manifest.entries.len());
-    let mut unique_paths = std::collections::BTreeSet::new();
-    for entry in manifest.entries {
-        assert!(
-            HARD_GATE_SUITES.contains(&entry.suite.as_str()),
-            "deferred path belongs to a suite outside the formatter hard gate: {}/{}",
-            entry.suite,
-            entry.path
-        );
-        assert!(
-            unique_paths.insert((entry.suite.clone(), entry.path.clone())),
-            "duplicate deferred formatter path: {}/{}",
-            entry.suite,
-            entry.path
-        );
-        assert!(
-            (8..=20).contains(&entry.owner_phase),
-            "invalid owner phase {} for {}/{}",
-            entry.owner_phase,
-            entry.suite,
-            entry.path
-        );
-        let path = imports_root.join(&entry.suite).join(&entry.path);
-        assert!(path.is_file(), "missing deferred path {}", path.display());
-        let mut reasons = entry.reasons;
-        let reason_count = reasons.len();
-        reasons.sort_unstable();
-        reasons.dedup();
-        assert!(
-            !reasons.is_empty(),
-            "deferred path has no reason: {}/{}",
-            entry.suite,
-            entry.path
-        );
-        assert_eq!(
-            reasons.len(),
-            reason_count,
-            "duplicate deferred reason for {}/{}",
-            entry.suite,
-            entry.path
-        );
-        if suite_names.contains(&entry.suite.as_str())
-            && (reason_filter.is_empty()
-                || reasons.iter().any(|reason| reason_filter.contains(reason)))
-        {
-            expected.push(ObservedDeferredPath {
-                suite: entry.suite,
-                path: entry.path,
-                reasons,
-            });
-        }
-    }
-    expected.sort();
-    let mut actual = observed.to_vec();
-    assert!(
-        actual
-            .iter()
-            .all(|entry| suite_names.contains(&entry.suite.as_str())),
-        "observed a deferred path outside the selected suites"
-    );
-    actual.sort();
-    assert_eq!(
-        actual, expected,
-        "deferred formatter paths changed; fix a path in its owning phase or update the reviewed migration queue"
-    );
 }
 
 #[must_use]

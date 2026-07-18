@@ -1686,8 +1686,10 @@ phase.
 
 Size: the isolated Phase 28 implementation projection is +33,883/-25,394 against
 `2197128`, net +8,489. Phase 28 adds 404 net implementation/test lines while
-deleting the public proof ledger and manual formatter claim paths; Phase 29's
-all-implementation net-negative gate remains binding.
+deleting the public proof ledger and manual formatter claim paths. Phase 29
+audits that total by architectural category rather than assuming that explicit
+grammar schemas and executable correctness proofs can be deleted as ordinary
+implementation.
 
 ### New Phase 29: Final Architecture Deletion And Size Closure
 
@@ -1701,8 +1703,30 @@ excluding macro schemas, test support, or tooling.
 
 Quality gate: report macro-schema, generated-consumer, audit/proof, and ordinary
 implementation LOC separately. The architecture's explicit `:(glob)` pathspec
-must prove that all implementation code, including test support but excluding
-fixtures and snapshots, is net negative relative to `2197128`.
+includes all implementation code and test support while excluding fixtures and
+snapshots. Ordinary implementation must be net negative relative to `2197128`.
+The explicit schema/projection, generated-consumer, and executable audit/proof
+categories have separate checked ceilings, must contain one shared mechanism per
+invariant, and may not hide legacy or parallel implementations.
+
+Implementation status: **implemented and quality-audited**. The Java and Kotlin
+factories, typed CST fields/views, and physical schema audit now share one set
+of declarative Rust macros while retaining language-declared schemas and
+malformed-child policies. Proof-carrying documents attach compact source claims
+directly to the selected document node; the indexed proof side ledger,
+exceptional proof documents, malformed identity enumeration, and post-hoc
+verbatim claim path are gone. Imported corpora now require a represented,
+exactly reconstructing tree directly; the deferred-path manifest, data types,
+dependencies, and assertion API are deleted rather than emptied.
+
+The exact projection against `2197128` is +33,090/-25,610, net +7,480. Its
+disjoint categories are: macro schema/projection +3,490, generated consumers
+-24, executable audit/proof +5,768, and ordinary implementation -1,754. This
+phase removes 1,009 net lines from Phase 28. The original all-code net-negative
+hypothesis is rejected by the audit: exhaustive schemas and executable proofs
+are explicit architecture, while the ordinary implementation that they replace
+is net negative. The checked category ceilings and single-path architecture scan
+prevent that distinction from becoming permission for new duplication.
 
 ### New Phase 30: Clean Completion Proof
 

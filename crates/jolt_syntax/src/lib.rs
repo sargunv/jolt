@@ -7,6 +7,7 @@ mod kind;
 mod language;
 mod normalization;
 mod parser;
+mod projection;
 #[doc(hidden)]
 pub mod schema;
 mod syntax_tree;

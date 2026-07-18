@@ -12,159 +12,16 @@ pub type JavaSyntaxNode<'source> = SyntaxNode<'source, JavaLanguage>;
 pub type JavaSyntaxToken<'source> = SyntaxToken<'source, JavaLanguage>;
 pub type JavaSyntaxVerbatimCore<'source> = SyntaxVerbatimCore<'source, JavaLanguage>;
 
-/// A fixed Java syntax slot did not contain the element declared by the schema.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct JavaSyntaxInvariantError {
-    pub node: JavaSyntaxKind,
-    pub slot: usize,
-}
-
-impl fmt::Display for JavaSyntaxInvariantError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            formatter,
-            "{:?} has an invalid element in slot {}",
-            self.node, self.slot
-        )
-    }
-}
-
-impl std::error::Error for JavaSyntaxInvariantError {}
-
-type JavaSyntaxResult<T> = Result<T, JavaSyntaxInvariantError>;
-
-/// A declared grammar role, including represented malformed alternatives.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum JavaSyntaxField<'source, T> {
-    Present(T),
-    Missing(JavaMissingSyntax<'source>),
-    Malformed(JavaMalformedSyntax<'source>),
-}
-
-impl<'source, T> JavaSyntaxField<'source, T> {
-    pub fn as_ref(&self) -> JavaSyntaxField<'source, &T> {
-        match self {
-            Self::Present(value) => JavaSyntaxField::Present(value),
-            Self::Missing(missing) => JavaSyntaxField::Missing(*missing),
-            Self::Malformed(node) => JavaSyntaxField::Malformed(*node),
-        }
-    }
-
-    pub fn map<U>(self, map: impl FnOnce(T) -> U) -> JavaSyntaxField<'source, U> {
-        match self {
-            Self::Present(value) => JavaSyntaxField::Present(map(value)),
-            Self::Missing(missing) => JavaSyntaxField::Missing(missing),
-            Self::Malformed(node) => JavaSyntaxField::Malformed(node),
-        }
-    }
-}
-
-/// A syntax-owned malformed node occupying a declared role.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct JavaMalformedSyntax<'source> {
-    syntax: JavaSyntaxNode<'source>,
-}
-
-/// Syntax-owned evidence for one represented empty required or optional slot.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct JavaMissingSyntax<'source> {
-    owner: JavaSyntaxNode<'source>,
-    slot: usize,
-}
-
-impl<'source> JavaMissingSyntax<'source> {
-    /// Returns the exact zero-width source boundary represented by this missing slot.
-    ///
-    /// # Errors
-    ///
-    /// Returns an invariant error if the slot is not a represented missing boundary.
-    pub fn verbatim_core(
-        self,
-    ) -> Result<SyntaxVerbatimCore<'source, JavaLanguage>, JavaSyntaxInvariantError> {
-        let core = self.owner.missing_verbatim_core(self.slot);
-        core.ok_or(JavaSyntaxInvariantError {
-            node: self.owner.kind(),
-            slot: self.slot,
-        })
-    }
-}
-
-#[derive(Clone, Copy)]
-struct JavaFixedSyntax<'source>(JavaSyntaxNode<'source>);
-
-impl<'source> JavaFixedSyntax<'source> {
-    #[inline]
-    fn kind(self) -> JavaSyntaxKind {
-        self.0.kind()
-    }
-
-    #[inline]
-    fn slot_at(self, slot: usize) -> Option<SyntaxSlot<'source, JavaLanguage>> {
-        self.0.slot_at(slot)
-    }
-
-    #[inline]
-    fn missing_owner(self) -> JavaSyntaxNode<'source> {
-        self.0
-    }
-
-    #[inline]
-    fn text_range(self) -> TextRange {
-        self.0.text_range()
-    }
-
-    #[inline]
-    fn source(self) -> &'source str {
-        self.0.source()
-    }
-}
-
-#[inline]
-fn required_slot(
-    syntax: JavaFixedSyntax<'_>,
-    slot: usize,
-) -> JavaSyntaxResult<JavaSyntaxField<'_, SyntaxElement<'_, JavaLanguage>>> {
-    match syntax.slot_at(slot) {
-        Some(SyntaxSlot::Node(node)) if node.is_directly_malformed() => {
-            Ok(JavaSyntaxField::Malformed(JavaMalformedSyntax {
-                syntax: node,
-            }))
-        }
-        Some(SyntaxSlot::Node(node)) => Ok(JavaSyntaxField::Present(SyntaxElement::Node(node))),
-        Some(SyntaxSlot::Token(token)) => Ok(JavaSyntaxField::Present(SyntaxElement::Token(token))),
-        None => Err(JavaSyntaxInvariantError {
-            node: syntax.kind(),
-            slot,
-        }),
-        Some(SyntaxSlot::Empty) => Ok(JavaSyntaxField::Missing(JavaMissingSyntax {
-            owner: syntax.missing_owner(),
-            slot,
-        })),
-    }
-}
-
-#[inline]
-fn optional_slot(
-    syntax: JavaFixedSyntax<'_>,
-    slot: usize,
-) -> JavaSyntaxResult<JavaSyntaxField<'_, SyntaxElement<'_, JavaLanguage>>> {
-    match syntax.slot_at(slot) {
-        Some(SyntaxSlot::Node(node)) if node.is_directly_malformed() => {
-            Ok(JavaSyntaxField::Malformed(JavaMalformedSyntax {
-                syntax: node,
-            }))
-        }
-        Some(SyntaxSlot::Node(node)) => Ok(JavaSyntaxField::Present(SyntaxElement::Node(node))),
-        Some(SyntaxSlot::Token(token)) => Ok(JavaSyntaxField::Present(SyntaxElement::Token(token))),
-        None => Err(JavaSyntaxInvariantError {
-            node: syntax.kind(),
-            slot,
-        }),
-        Some(SyntaxSlot::Empty) => Ok(JavaSyntaxField::Missing(JavaMissingSyntax {
-            owner: syntax.missing_owner(),
-            slot,
-        })),
-    }
+jolt_syntax::define_typed_cst_fields! {
+    language: JavaLanguage,
+    syntax_kind: JavaSyntaxKind,
+    syntax_node: JavaSyntaxNode,
+    invariant_error: JavaSyntaxInvariantError,
+    syntax_result: JavaSyntaxResult,
+    syntax_field: JavaSyntaxField,
+    malformed_syntax: JavaMalformedSyntax,
+    missing_syntax: JavaMissingSyntax,
+    fixed_syntax: JavaFixedSyntax,
 }
 
 /// A Java operator, which may span multiple syntax tokens in ambiguous `>` forms.
@@ -442,322 +299,25 @@ pub const fn is_multiplicative_operator(kind: JavaOperatorKind) -> bool {
     )
 }
 
-mod private {
-    pub trait Sealed {}
-}
-
-/// Sealed access to behavior shared by every typed Java syntax view.
-pub trait JavaSyntaxView<'source>: private::Sealed {
-    /// Returns the ordinary physical syntax node backing this view.
-    fn syntax_node(&self) -> Option<JavaSyntaxNode<'source>>;
-
-    /// Returns the first token represented by this view.
-    fn first_token(&self) -> Option<JavaSyntaxToken<'source>> {
-        self.syntax_node().and_then(|syntax| syntax.first_token())
-    }
-
-    /// Whether this represented subtree contains no missing or malformed
-    /// recovery syntax.
-    #[must_use]
-    fn is_recovery_free(&self) -> bool {
-        self.syntax_node()
-            .is_none_or(|syntax| syntax.is_recovery_free())
-    }
-
-    #[must_use]
-    fn malformed_verbatim_core(&self) -> Option<SyntaxVerbatimCore<'source, JavaLanguage>> {
-        self.syntax_node()
-            .and_then(|syntax| syntax.malformed_verbatim_core())
-    }
-
-    /// Whether trivia before this view's first token contains a blank line.
-    #[must_use]
-    fn starts_after_blank_line(&self) -> bool {
-        self.first_token()
-            .is_some_and(|token| token.has_leading_blank_line())
-    }
-}
-
-impl private::Sealed for JavaMalformedSyntax<'_> {}
-
-impl<'source> JavaSyntaxView<'source> for JavaMalformedSyntax<'source> {
-    fn syntax_node(&self) -> Option<JavaSyntaxNode<'source>> {
-        Some(self.syntax)
-    }
-}
-
-pub trait JavaTypedNode<'source>: Clone + private::Sealed {
-    #[doc(hidden)]
-    fn cast_element(element: JavaRoleElement<'source>) -> Option<Self>;
-}
-
-pub trait JavaNode<'source>: JavaTypedNode<'source> {
-    fn cast(syntax: JavaSyntaxNode<'source>) -> Option<Self>;
-}
-
-pub trait JavaFamily<'source>: Clone + private::Sealed {
-    fn cast(syntax: JavaSyntaxNode<'source>) -> Option<Self>;
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum JavaRoleElement<'source> {
-    Node(JavaSyntaxNode<'source>),
-    Token(JavaSyntaxToken<'source>),
-}
-
-impl<'source> JavaRoleElement<'source> {
-    fn kind(self) -> JavaSyntaxKind {
-        match self {
-            Self::Node(node) => node.kind(),
-            Self::Token(token) => token.kind(),
-        }
-    }
-
-    #[must_use]
-    pub fn token(self) -> Option<JavaSyntaxToken<'source>> {
-        match self {
-            Self::Token(token) => Some(token),
-            Self::Node(_) => None,
-        }
-    }
-
-    #[must_use]
-    pub fn cast_node<N: JavaTypedNode<'source>>(self) -> Option<N> {
-        N::cast_element(self)
-    }
-
-    #[must_use]
-    pub fn cast_family<F: JavaFamily<'source>>(self) -> Option<F> {
-        match self {
-            Self::Node(node) => F::cast(node),
-            Self::Token(_) => None,
-        }
-    }
-}
-
-trait JavaListItem<'source>: Sized {
-    const IS_FAMILY: bool;
-
-    fn cast_element(element: JavaRoleElement<'source>) -> Option<Self>;
-}
-
-impl<'source> JavaListItem<'source> for JavaRoleElement<'source> {
-    const IS_FAMILY: bool = false;
-
-    fn cast_element(element: JavaRoleElement<'source>) -> Option<Self> {
-        Some(element)
-    }
-}
-
-/// One represented part of a variable-length Java syntax-list node.
-#[derive(Clone, Copy, Debug)]
-pub enum JavaSyntaxListPart<'source, T> {
-    Item(T),
-    Separator(JavaSyntaxToken<'source>),
-    Missing(JavaMissingSyntax<'source>),
-    Malformed(JavaMalformedSyntax<'source>),
-}
-
-fn list_parts<'source, T: JavaListItem<'source>>(
-    syntax: JavaSyntaxNode<'source>,
-    separated: bool,
-) -> impl Iterator<Item = JavaSyntaxResult<JavaSyntaxListPart<'source, T>>> + use<'source, T> {
-    (0..syntax.slot_count()).map(move |index| {
-        let Some(slot) = syntax.slot_at(index) else {
-            return Err(JavaSyntaxInvariantError {
-                node: syntax.kind(),
-                slot: index,
-            });
-        };
-        match slot {
-            SyntaxSlot::Token(token) if separated && index % 2 == 1 => {
-                Ok(JavaSyntaxListPart::Separator(token))
-            }
-            SyntaxSlot::Node(node) => {
-                let item = T::cast_element(JavaRoleElement::Node(node));
-                match item {
-                    Some(item)
-                        if !node.is_directly_malformed()
-                            || (T::IS_FAMILY && java_kind_is_category_bogus(node.kind())) =>
-                    {
-                        Ok(JavaSyntaxListPart::Item(item))
-                    }
-                    _ if node.is_directly_malformed() => {
-                        Ok(JavaSyntaxListPart::Malformed(JavaMalformedSyntax {
-                            syntax: node,
-                        }))
-                    }
-                    _ => Err(JavaSyntaxInvariantError {
-                        node: syntax.kind(),
-                        slot: index,
-                    }),
-                }
-            }
-            SyntaxSlot::Token(token) => T::cast_element(JavaRoleElement::Token(token))
-                .map(JavaSyntaxListPart::Item)
-                .ok_or(JavaSyntaxInvariantError {
-                    node: syntax.kind(),
-                    slot: index,
-                }),
-            SyntaxSlot::Empty => Ok(JavaSyntaxListPart::Missing(JavaMissingSyntax {
-                owner: syntax,
-                slot: index,
-            })),
-        }
-    })
-}
-
-#[inline]
-fn required_token(
-    syntax: JavaFixedSyntax<'_>,
-    slot: usize,
-) -> JavaSyntaxResult<JavaSyntaxField<'_, JavaSyntaxToken<'_>>> {
-    match required_slot(syntax, slot)? {
-        JavaSyntaxField::Present(SyntaxElement::Token(token)) => {
-            Ok(JavaSyntaxField::Present(token))
-        }
-        JavaSyntaxField::Missing(missing) => Ok(JavaSyntaxField::Missing(missing)),
-        JavaSyntaxField::Malformed(node) => Ok(JavaSyntaxField::Malformed(node)),
-        JavaSyntaxField::Present(SyntaxElement::Node(_)) => Err(JavaSyntaxInvariantError {
-            node: syntax.kind(),
-            slot,
-        }),
-    }
-}
-
-#[inline]
-fn optional_token(
-    syntax: JavaFixedSyntax<'_>,
-    slot: usize,
-) -> JavaSyntaxResult<JavaSyntaxField<'_, JavaSyntaxToken<'_>>> {
-    match optional_slot(syntax, slot)? {
-        JavaSyntaxField::Present(SyntaxElement::Token(token)) => {
-            Ok(JavaSyntaxField::Present(token))
-        }
-        JavaSyntaxField::Missing(missing) => Ok(JavaSyntaxField::Missing(missing)),
-        JavaSyntaxField::Malformed(node) => Ok(JavaSyntaxField::Malformed(node)),
-        JavaSyntaxField::Present(SyntaxElement::Node(_)) => Err(JavaSyntaxInvariantError {
-            node: syntax.kind(),
-            slot,
-        }),
-    }
-}
-
-#[inline]
-fn required_node<'source, N: JavaNode<'source>>(
-    syntax: JavaFixedSyntax<'source>,
-    slot: usize,
-) -> JavaSyntaxResult<JavaSyntaxField<'source, N>> {
-    match required_slot(syntax, slot)? {
-        JavaSyntaxField::Present(SyntaxElement::Node(node)) => N::cast(node)
-            .map(JavaSyntaxField::Present)
-            .ok_or(JavaSyntaxInvariantError {
-                node: syntax.kind(),
-                slot,
-            }),
-        JavaSyntaxField::Missing(missing) => Ok(JavaSyntaxField::Missing(missing)),
-        JavaSyntaxField::Malformed(node) => Ok(JavaSyntaxField::Malformed(node)),
-        JavaSyntaxField::Present(SyntaxElement::Token(_)) => Err(JavaSyntaxInvariantError {
-            node: syntax.kind(),
-            slot,
-        }),
-    }
-}
-
-#[inline]
-fn optional_node<'source, N: JavaNode<'source>>(
-    syntax: JavaFixedSyntax<'source>,
-    slot: usize,
-) -> JavaSyntaxResult<JavaSyntaxField<'source, N>> {
-    match optional_slot(syntax, slot)? {
-        JavaSyntaxField::Present(SyntaxElement::Node(node)) => N::cast(node)
-            .map(JavaSyntaxField::Present)
-            .ok_or(JavaSyntaxInvariantError {
-                node: syntax.kind(),
-                slot,
-            }),
-        JavaSyntaxField::Missing(missing) => Ok(JavaSyntaxField::Missing(missing)),
-        JavaSyntaxField::Malformed(node) => Ok(JavaSyntaxField::Malformed(node)),
-        JavaSyntaxField::Present(SyntaxElement::Token(_)) => Err(JavaSyntaxInvariantError {
-            node: syntax.kind(),
-            slot,
-        }),
-    }
-}
-
-#[inline]
-fn required_role_element(
-    syntax: JavaFixedSyntax<'_>,
-    slot: usize,
-) -> JavaSyntaxResult<JavaSyntaxField<'_, JavaRoleElement<'_>>> {
-    match syntax.slot_at(slot) {
-        Some(SyntaxSlot::Node(node)) if node.is_directly_malformed() => {
-            Ok(JavaSyntaxField::Malformed(JavaMalformedSyntax {
-                syntax: node,
-            }))
-        }
-        Some(SyntaxSlot::Node(node)) => Ok(JavaSyntaxField::Present(JavaRoleElement::Node(node))),
-        Some(SyntaxSlot::Token(token)) => {
-            Ok(JavaSyntaxField::Present(JavaRoleElement::Token(token)))
-        }
-        Some(SyntaxSlot::Empty) => Ok(JavaSyntaxField::Missing(JavaMissingSyntax {
-            owner: syntax.missing_owner(),
-            slot,
-        })),
-        None => Err(JavaSyntaxInvariantError {
-            node: syntax.kind(),
-            slot,
-        }),
-    }
-}
-
-#[inline]
-fn required_family<'source, F: JavaFamily<'source>>(
-    syntax: JavaFixedSyntax<'source>,
-    slot: usize,
-) -> JavaSyntaxResult<JavaSyntaxField<'source, F>> {
-    match syntax.slot_at(slot) {
-        Some(SyntaxSlot::Node(node)) => match F::cast(node) {
-            Some(value)
-                if !node.is_directly_malformed() || java_kind_is_category_bogus(node.kind()) =>
-            {
-                Ok(JavaSyntaxField::Present(value))
-            }
-            Some(_) => Ok(JavaSyntaxField::Malformed(JavaMalformedSyntax {
-                syntax: node,
-            })),
-            None if node.is_directly_malformed() => {
-                Ok(JavaSyntaxField::Malformed(JavaMalformedSyntax {
-                    syntax: node,
-                }))
-            }
-            None => Err(JavaSyntaxInvariantError {
-                node: syntax.kind(),
-                slot,
-            }),
-        },
-        Some(SyntaxSlot::Empty) => Ok(JavaSyntaxField::Missing(JavaMissingSyntax {
-            owner: syntax.missing_owner(),
-            slot,
-        })),
-        Some(SyntaxSlot::Token(_)) | None => Err(JavaSyntaxInvariantError {
-            node: syntax.kind(),
-            slot,
-        }),
-    }
-}
-
-#[inline]
-fn optional_family<'source, F: JavaFamily<'source>>(
-    syntax: JavaFixedSyntax<'source>,
-    slot: usize,
-) -> JavaSyntaxResult<JavaSyntaxField<'source, F>> {
-    required_family(syntax, slot)
-}
-
-fn syntax_source_text(syntax: JavaFixedSyntax<'_>) -> &str {
-    let range = syntax.text_range();
-    &syntax.source()[range.start().get()..range.end().get()]
+jolt_syntax::define_typed_cst_access! {
+    language: JavaLanguage,
+    syntax_kind: JavaSyntaxKind,
+    syntax_node: JavaSyntaxNode,
+    syntax_token: JavaSyntaxToken,
+    invariant_error: JavaSyntaxInvariantError,
+    syntax_result: JavaSyntaxResult,
+    syntax_field: JavaSyntaxField,
+    malformed_syntax: JavaMalformedSyntax,
+    missing_syntax: JavaMissingSyntax,
+    fixed_syntax: JavaFixedSyntax,
+    syntax_view: JavaSyntaxView,
+    typed_node: JavaTypedNode,
+    node: JavaNode,
+    family: JavaFamily,
+    role_element: JavaRoleElement,
+    list_item: JavaListItem,
+    list_part: JavaSyntaxListPart,
+    category_bogus: java_kind_is_category_bogus,
 }
 
 macro_rules! java_field_accessor {
@@ -985,206 +545,41 @@ macro_rules! java_variable_slot_view {
     ($class:ident; $($fields:tt)*) => {};
 }
 
-macro_rules! define_java_cst_node {
-    ($node:ident => $kind:ident [list]) => {
-        define_java_cst_node!($node => $kind [physical]);
-    };
-    ($node:ident => $kind:ident [constructed]) => {
-        define_java_cst_node!($node => $kind [physical]);
-    };
-    ($node:ident => $kind:ident [$class:ident]) => {
-        #[derive(Clone, Copy, Eq, PartialEq)]
-        pub struct $node<'source> {
-            syntax: JavaSyntaxNode<'source>,
-        }
-
-        impl<'source> $node<'source> {
-            #[inline]
-            fn fixed_syntax(&self) -> JavaFixedSyntax<'source> {
-                JavaFixedSyntax(self.syntax)
-            }
-            #[must_use]
-            pub fn kind(&self) -> JavaSyntaxKind {
-                self.syntax.kind()
-            }
-
-            #[must_use]
-            pub fn text_range(&self) -> TextRange {
-                self.syntax.text_range()
-            }
-
-            #[must_use]
-            pub fn source_text(&self) -> &'source str {
-                syntax_source_text(self.fixed_syntax())
-            }
-
-            pub fn token_iter(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + '_ {
-                token_iter(&self.syntax)
-            }
-
-            #[must_use]
-            pub fn first_token(&self) -> Option<JavaSyntaxToken<'source>> {
-                first_token(&self.syntax)
-            }
-
-            #[must_use]
-            pub fn last_token(&self) -> Option<JavaSyntaxToken<'source>> {
-                last_token(&self.syntax)
-            }
-        }
-
-        impl private::Sealed for $node<'_> {}
-
-        impl<'source> JavaSyntaxView<'source> for $node<'source> {
-            fn syntax_node(&self) -> Option<JavaSyntaxNode<'source>> {
-                Some(self.syntax)
-            }
-        }
-
-        impl<'source> JavaNode<'source> for $node<'source> {
-            fn cast(syntax: JavaSyntaxNode<'source>) -> Option<Self> {
-                matches!(syntax.kind(), JavaSyntaxKind::$kind).then_some(Self { syntax })
-            }
-        }
-
-        impl<'source> JavaTypedNode<'source> for $node<'source> {
-            fn cast_element(element: JavaRoleElement<'source>) -> Option<Self> {
-                match element {
-                    JavaRoleElement::Node(node) => Self::cast(node),
-                    JavaRoleElement::Token(_) => None,
-                }
-            }
-        }
-
-        impl<'source> JavaListItem<'source> for $node<'source> {
-            const IS_FAMILY: bool = false;
-
-            fn cast_element(element: JavaRoleElement<'source>) -> Option<Self> {
-                <Self as JavaTypedNode<'source>>::cast_element(element)
-            }
-        }
-
-        impl fmt::Debug for $node<'_> {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                self.syntax.fmt(f)
-            }
-        }
-    };
-}
-
-macro_rules! java_cst {
-    (
-        nodes {
-            $($node:ident => $kind:ident [$class:ident],)*
-        }
-        enums {
-            $(
-                $family:ident =
-                    $($variant:ident)|+;
-            )*
-        }
-    ) => {
-        $(define_java_cst_node!($node => $kind [$class]);)*
-
-        $(
-            #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-            pub enum $family<'source> {
-                $($variant($variant<'source>),)+
-            }
-
-            impl<'source> $family<'source> {
-                #[must_use]
-                pub fn kind(&self) -> JavaSyntaxKind {
-                    self.syntax().kind()
-                }
-
-                #[must_use]
-                pub fn text_range(&self) -> TextRange {
-                    self.syntax().text_range()
-                }
-
-                #[must_use]
-                pub fn source_text(&self) -> &'source str {
-                    syntax_source_text(JavaFixedSyntax(*self.syntax()))
-                }
-
-                pub fn token_iter(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + '_ {
-                    token_iter(self.syntax())
-                }
-
-                #[must_use]
-                pub fn first_token(&self) -> Option<JavaSyntaxToken<'source>> {
-                    first_token(self.syntax())
-                }
-
-                #[must_use]
-                pub fn last_token(&self) -> Option<JavaSyntaxToken<'source>> {
-                    last_token(self.syntax())
-                }
-
-                pub(crate) fn syntax(&self) -> &JavaSyntaxNode<'source> {
-                    match self {
-                        $(Self::$variant(node) => &node.syntax,)+
-                    }
-                }
-            }
-
-            impl<'source> JavaFamily<'source> for $family<'source> {
-                fn cast(syntax: JavaSyntaxNode<'source>) -> Option<Self> {
-                    match syntax.kind() {
-                        $(
-                            JavaSyntaxKind::$variant => {
-                                <$variant<'source> as JavaNode<'source>>::cast(syntax).map(Self::$variant)
-                            }
-                        )+
-                        _ => None,
-                    }
-                }
-            }
-
-            impl<'source> JavaListItem<'source> for $family<'source> {
-                const IS_FAMILY: bool = true;
-
-                fn cast_element(element: JavaRoleElement<'source>) -> Option<Self> {
-                    match element {
-                        JavaRoleElement::Node(node) => Self::cast(node),
-                        JavaRoleElement::Token(_) => None,
-                    }
-                }
-
-            }
-
-            impl private::Sealed for $family<'_> {}
-
-            impl<'source> JavaSyntaxView<'source> for $family<'source> {
-                fn syntax_node(&self) -> Option<JavaSyntaxNode<'source>> {
-                    Some(*self.syntax())
-                }
-            }
-
-            $(
-                impl<'source> From<$variant<'source>> for $family<'source> {
-                    fn from(node: $variant<'source>) -> Self {
-                        Self::$variant(node)
-                    }
-                }
-            )+
-        )*
-
-    };
-}
-
 macro_rules! define_java_cst_from_schema {
     (
         tokens { $($token:ident,)* }
         categories { $($family:ident => $bogus:ident { $($member:ident,)* })* }
         nodes { $($kind:ident => $wrapper:ident [$module:ident $class:ident] { $($fields:tt)* })* }
     ) => {
+        macro_rules! ordinary_list_item {
+            () => {
+                const IS_FAMILY: bool = false;
+            };
+        }
+        macro_rules! family_list_item {
+            () => {
+                const IS_FAMILY: bool = true;
+            };
+        }
+
         fn java_kind_is_category_bogus(kind: JavaSyntaxKind) -> bool {
             matches!(kind, $(JavaSyntaxKind::$bogus)|*)
         }
 
-        java_cst! {
+        jolt_syntax::define_typed_cst_projection! {
+            syntax_node: JavaSyntaxNode,
+            syntax_token: JavaSyntaxToken,
+            syntax_kind: JavaSyntaxKind,
+            fixed_syntax: JavaFixedSyntax,
+            role_element: JavaRoleElement,
+            node_trait: JavaNode,
+            typed_node_trait: JavaTypedNode,
+            family_trait: JavaFamily,
+            list_item_trait: JavaListItem,
+            syntax_view_trait: JavaSyntaxView,
+            any_node: {},
+            node_list_item_marker: ordinary_list_item,
+            family_list_item_marker: family_list_item,
             nodes {
                 $($wrapper => $kind [$class],)*
                 $($bogus => $bogus [malformed],)*
@@ -1520,20 +915,6 @@ pub enum ExpressionParentRole {
 
 pub(crate) fn cast_compilation_unit(syntax: JavaSyntaxNode<'_>) -> Option<CompilationUnit<'_>> {
     <CompilationUnit<'_> as JavaNode<'_>>::cast(syntax)
-}
-
-fn token_iter<'source>(
-    syntax: &JavaSyntaxNode<'source>,
-) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
-    syntax.tokens()
-}
-
-fn first_token<'source>(syntax: &JavaSyntaxNode<'source>) -> Option<JavaSyntaxToken<'source>> {
-    syntax.first_token()
-}
-
-fn last_token<'source>(syntax: &JavaSyntaxNode<'source>) -> Option<JavaSyntaxToken<'source>> {
-    syntax.last_token()
 }
 
 fn operator_from_element(

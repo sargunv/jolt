@@ -288,7 +288,6 @@ fn separators<'source, L: Language>(
         previous,
         ExceptionalFragment::new(
             Doc::nil(),
-            Doc::nil(),
             FragmentBoundary {
                 first: boundary.first,
                 last: boundary.last,

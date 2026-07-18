@@ -6,9 +6,9 @@ use jolt_java_syntax::{
     LambdaExpression, ParenthesizedExpression, ResourceSpecification, parse_compilation_unit,
 };
 use jolt_test_support::{
-    DeferredReason, ImportedFormatterSummary, ObservedDeferredPath, RepresentedTokenRemoval,
-    StringSink, assert_deferred_import_manifest, collect_java_files, read_to_string,
-    represented_comment_inventory, represented_token_loss_report, workspace_root,
+    ImportedFormatterSummary, RepresentedTokenRemoval, StringSink, collect_java_files,
+    diagnostic_inventory, read_to_string, represented_comment_inventory,
+    represented_token_loss_report, workspace_root,
 };
 
 const CONSERVATION_PATHS: &[&str] = &[
@@ -24,23 +24,9 @@ const CONSERVATION_PATHS: &[&str] = &[
 
 #[test]
 fn imported_fixture_inputs_format_idempotently_and_conserve_represented_syntax() {
-    let mut deferred = Vec::new();
-    let google_summary = assert_corpus("google-java-format", &mut deferred);
-    let palantir_summary = assert_corpus("palantir-java-format", &mut deferred);
-    let prettier_summary = assert_corpus("prettier-java", &mut deferred);
-
-    let workspace = workspace_root(env!("CARGO_MANIFEST_DIR"));
-    assert_deferred_import_manifest(
-        &workspace,
-        &workspace.join("tools/import/.imports"),
-        &[
-            "google-java-format/input",
-            "palantir-java-format/input",
-            "prettier-java/input",
-        ],
-        &[],
-        &deferred,
-    );
+    let google_summary = assert_corpus("google-java-format");
+    let palantir_summary = assert_corpus("palantir-java-format");
+    let prettier_summary = assert_corpus("prettier-java");
 
     insta::assert_snapshot!(
         "google_java_format_formatter_summary",
@@ -53,14 +39,9 @@ fn imported_fixture_inputs_format_idempotently_and_conserve_represented_syntax()
     insta::assert_snapshot!("prettier_java_formatter_summary", prettier_summary.render());
 }
 
-#[allow(clippy::too_many_lines)]
-fn assert_corpus(
-    suite: &str,
-    deferred: &mut Vec<ObservedDeferredPath>,
-) -> ImportedFormatterSummary {
+fn assert_corpus(suite: &str) -> ImportedFormatterSummary {
     let root = fixture_root(suite);
     let files = collect_java_files(&root);
-    let suite_name = format!("{suite}/input");
     let mut summary = ImportedFormatterSummary::new(suite, files.len());
     let options = FormatOptions::default();
 
@@ -74,25 +55,20 @@ fn assert_corpus(
             .replace('\\', "/");
         let source = read_to_string(&path);
         let parse = parse_compilation_unit(&source);
-        let syntax = parse.syntax();
-        let mut reasons = Vec::new();
-        if syntax.is_none() {
-            reasons.push(DeferredReason::NoSyntaxTree);
-        } else if syntax.is_some_and(|syntax| syntax.source_text() != source) {
-            summary.note_reconstruction_changed();
-            reasons.push(DeferredReason::SyntaxReconstructionMismatch);
-        }
+        let syntax = parse.syntax().unwrap_or_else(|| {
+            panic!(
+                "parser produced no represented tree for {}: {:#?}",
+                path.display(),
+                parse.diagnostics()
+            )
+        });
+        assert_eq!(
+            syntax.source_text(),
+            source,
+            "syntax tree did not reconstruct exactly for {}",
+            path.display()
+        );
         summary.record_diagnostics(parse.diagnostics());
-        if !reasons.is_empty() {
-            deferred.push(ObservedDeferredPath::new(
-                &suite_name,
-                &root,
-                &path,
-                reasons,
-            ));
-            continue;
-        }
-        let syntax = syntax.expect("active imported path has syntax");
 
         let formatted = match format_source(&source, options) {
             Ok(formatted) => formatted,
@@ -184,23 +160,6 @@ fn assert_corpus(
     }
 
     summary
-}
-
-fn diagnostic_inventory(
-    diagnostics: &[jolt_diagnostics::Diagnostic],
-) -> std::collections::BTreeMap<String, usize> {
-    let mut inventory = std::collections::BTreeMap::new();
-    for diagnostic in diagnostics {
-        let key = format!(
-            "{:?}:{:?}:{}:{}",
-            diagnostic.stage,
-            diagnostic.severity,
-            diagnostic.code.as_str(),
-            diagnostic.message
-        );
-        *inventory.entry(key).or_default() += 1;
-    }
-    inventory
 }
 
 fn syntax_authorized_removals(

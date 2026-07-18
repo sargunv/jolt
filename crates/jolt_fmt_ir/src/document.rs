@@ -2,13 +2,11 @@ use std::borrow::Cow;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
-#[cfg(debug_assertions)]
-use crate::source_fragment::SourceProof;
 use crate::width::{TextWidth, display_width, literal_text_metrics};
 use crate::{
     ExceptionalFragment, ExceptionalSeparator, FragmentBoundary, LexicalAtom, LexicalSafety,
     source_fragment::{
-        ExceptionalSeparators, SourceProofKind, exceptional_separators, normalized_lexical_kind,
+        ExceptionalSeparators, SourceClaim, exceptional_separators, normalized_lexical_kind,
     },
 };
 use jolt_syntax::{
@@ -60,8 +58,6 @@ pub struct DocArena<'source> {
     nodes: Vec<DocNode<'source>>,
     children: Vec<Doc<'source>>,
     invariant_error: Option<String>,
-    #[cfg(debug_assertions)]
-    source_claims: Vec<SourceIdentity<'source>>,
 }
 
 /// Formatter document arena measurements exposed only to the benchmark driver.
@@ -103,13 +99,6 @@ impl<'source> DocArena<'source> {
 
     pub(crate) fn child(&self, index: u32) -> Doc<'source> {
         self.children[usize::try_from(index).expect("doc child index fits usize")]
-    }
-
-    #[cfg(debug_assertions)]
-    pub(crate) fn source_claims(&self, proof: &SourceProof<'source>) -> &[SourceIdentity<'source>] {
-        let start = usize::try_from(proof.claims_start).expect("source claim index fits usize");
-        let len = usize::try_from(proof.claims_len).expect("source claim length fits usize");
-        &self.source_claims[start..start + len]
     }
 
     fn child_count(&self) -> u32 {
@@ -175,8 +164,6 @@ impl<'source> DocBuilder<'source> {
                 nodes: Vec::with_capacity(node_capacity),
                 children: Vec::with_capacity(child_capacity),
                 invariant_error: None,
-                #[cfg(debug_assertions)]
-                source_claims: Vec::new(),
             },
             list_scratch: Vec::new(),
         }
@@ -196,7 +183,7 @@ impl<'source> DocBuilder<'source> {
             final_width,
             line_count: 1,
             #[cfg(debug_assertions)]
-            proof: None,
+            claim: None,
         }))
     }
 
@@ -214,7 +201,7 @@ impl<'source> DocBuilder<'source> {
             final_width: metrics.final_width,
             line_count: metrics.line_count,
             #[cfg(debug_assertions)]
-            proof: None,
+            claim: None,
         }))
     }
 
@@ -223,8 +210,7 @@ impl<'source> DocBuilder<'source> {
     pub fn source_token<L: Language>(&mut self, token: &SyntaxToken<'source, L>) -> Doc<'source> {
         self.source_fragment(
             Cow::Borrowed(token.text()),
-            None,
-            [SourceIdentity::Token(token.source_id())],
+            SourceClaim::Identity(SourceIdentity::Token(token.source_id())),
         )
     }
 
@@ -239,13 +225,15 @@ impl<'source> DocBuilder<'source> {
         build: impl FnOnce(&mut Self) -> Doc<'source>,
     ) -> Doc<'source> {
         let contents = build(self);
-        let claim = self.source_fragment(
-            Cow::Borrowed(""),
-            None,
-            pieces
-                .into_iter()
-                .map(|piece| SourceIdentity::Trivia(piece.id())),
-        );
+        let claim = self.concat_list(|docs| {
+            for piece in pieces {
+                let claim = docs.source_fragment(
+                    Cow::Borrowed(""),
+                    SourceClaim::Identity(SourceIdentity::Trivia(piece.id())),
+                );
+                docs.push(claim);
+            }
+        });
         self.concat([claim, contents])
     }
 
@@ -257,11 +245,7 @@ impl<'source> DocBuilder<'source> {
         range: SourceRangeClaim<'source>,
         separators: ExceptionalSeparators,
     ) -> Doc<'source> {
-        let claim = self.source_fragment(
-            Cow::Borrowed(""),
-            Some(SourceProofKind::FormatterIgnore { range }),
-            [],
-        );
+        let claim = self.source_fragment(Cow::Borrowed(""), SourceClaim::FormatterIgnore { range });
         let before = self.exceptional_separator(separators.before);
         let after = self.exceptional_separator(separators.after);
         self.concat([claim, before, contents, after])
@@ -283,16 +267,15 @@ impl<'source> DocBuilder<'source> {
         core: &SyntaxVerbatimCore<'source, L>,
         boundary: FragmentBoundary<'source>,
     ) -> ExceptionalFragment<'source> {
-        let proof = self.source_fragment(
-            Cow::Borrowed(""),
-            Some(SourceProofKind::MalformedVerbatim {
+        let contents = self.source_fragment(
+            Cow::Borrowed(core.text()),
+            SourceClaim::MalformedVerbatim {
+                claim: core.source_claim(),
                 kind: core.raw_kind(),
                 range: core.text_range(),
-            }),
-            core.identities(),
+            },
         );
-        let contents = self.literal_text(core.text());
-        ExceptionalFragment::new(proof, contents, boundary)
+        ExceptionalFragment::new(contents, boundary)
     }
 
     /// Emits malformed source and derives lexical boundaries from syntax.
@@ -321,15 +304,10 @@ impl<'source> DocBuilder<'source> {
     ) -> ExceptionalFragment<'source> {
         let (source, token) = claim.into_parts();
         let text = token.text();
-        let proof = self.source_fragment(
-            Cow::Borrowed(""),
-            Some(SourceProofKind::Replaced { token }),
-            [SourceIdentity::Token(source)],
-        );
-        let contents = self.literal_text(text);
+        let contents =
+            self.source_fragment(Cow::Borrowed(text), SourceClaim::Replaced { source, token });
         let atom = LexicalAtom::new(normalized_lexical_kind(token), text);
         ExceptionalFragment::new(
-            proof,
             contents,
             FragmentBoundary {
                 first: Some(atom),
@@ -343,11 +321,7 @@ impl<'source> DocBuilder<'source> {
     #[must_use]
     pub fn removed_source(&mut self, claim: RemovalClaim<'source>) -> Doc<'source> {
         let (source, reason) = claim.into_parts();
-        self.source_fragment(
-            Cow::Borrowed(""),
-            Some(SourceProofKind::Removed { reason }),
-            [source],
-        )
+        self.source_fragment(Cow::Borrowed(""), SourceClaim::Removed { source, reason })
     }
 
     /// Emits an authorized source-free token anchored near represented syntax.
@@ -358,15 +332,12 @@ impl<'source> DocBuilder<'source> {
     ) -> ExceptionalFragment<'source> {
         let (anchor, token) = claim.into_parts();
         let text = token.text();
-        let proof = self.source_fragment(
-            Cow::Borrowed(""),
-            Some(SourceProofKind::Synthesized { token, anchor }),
-            [],
+        let contents = self.source_fragment(
+            Cow::Borrowed(text),
+            SourceClaim::Synthesized { token, anchor },
         );
-        let contents = self.literal_text(text);
         let atom = LexicalAtom::new(normalized_lexical_kind(token), text);
         ExceptionalFragment::new(
-            proof,
             contents,
             FragmentBoundary {
                 first: Some(atom),
@@ -384,11 +355,8 @@ impl<'source> DocBuilder<'source> {
         claim: ReorderClaim<'source>,
     ) -> Doc<'source> {
         let (anchor, reason) = claim.into_parts();
-        let marker = self.source_fragment(
-            Cow::Borrowed(""),
-            Some(SourceProofKind::Reordered { reason, anchor }),
-            [],
-        );
+        let marker =
+            self.source_fragment(Cow::Borrowed(""), SourceClaim::Reordered { reason, anchor });
         self.concat([marker, contents])
     }
 
@@ -406,7 +374,7 @@ impl<'source> DocBuilder<'source> {
         let separators = exceptional_separators(left, fragment, right, safety);
         let before = self.exceptional_separator(separators.before);
         let after = self.exceptional_separator(separators.after);
-        self.concat([fragment.proof(), before, fragment.doc(), after])
+        self.concat([before, fragment.doc(), after])
     }
 
     /// Joins two exceptional fragments while retaining their outer boundary.
@@ -431,11 +399,9 @@ impl<'source> DocBuilder<'source> {
             }
         };
         let separator = self.exceptional_separator(separator);
-        let proof = self.concat([left.proof(), right.proof()]);
         let doc = self.concat([left.doc(), separator, right.doc()]);
         let right_has_boundary = right_boundary.first.is_some() || right_boundary.last.is_some();
         ExceptionalFragment::new(
-            proof,
             doc,
             FragmentBoundary {
                 first: left_boundary.first.or(right_boundary.first),
@@ -583,19 +549,8 @@ impl<'source> DocBuilder<'source> {
     fn source_fragment(
         &mut self,
         text: Cow<'source, str>,
-        kind: Option<SourceProofKind<'source>>,
-        claims: impl IntoIterator<Item = SourceIdentity<'source>>,
+        claim: SourceClaim<'source>,
     ) -> Doc<'source> {
-        #[cfg(debug_assertions)]
-        let (claims_start, claims_len) = {
-            let start =
-                u32::try_from(self.arena.source_claims.len()).expect("source claim index fits u32");
-            self.arena.source_claims.extend(claims);
-            let len = u32::try_from(self.arena.source_claims.len())
-                .expect("source claim count fits u32")
-                - start;
-            (start, len)
-        };
         #[cfg(debug_assertions)]
         {
             let metrics = literal_text_metrics(&text);
@@ -603,12 +558,12 @@ impl<'source> DocBuilder<'source> {
                 text,
                 final_width: metrics.final_width,
                 line_count: metrics.line_count,
-                proof: Some(SourceProof::new(kind, claims_start, claims_len)),
+                claim: Some(claim),
             }))
         }
         #[cfg(not(debug_assertions))]
         {
-            let _ = (kind, claims);
+            let _ = claim;
             if text.is_empty() {
                 self.nil()
             } else {
@@ -826,7 +781,7 @@ pub(crate) struct DocumentText<'source> {
     final_width: TextWidth,
     line_count: usize,
     #[cfg(debug_assertions)]
-    pub(crate) proof: Option<SourceProof<'source>>,
+    pub(crate) claim: Option<SourceClaim<'source>>,
 }
 
 #[cfg(not(debug_assertions))]

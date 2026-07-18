@@ -1,8 +1,6 @@
-#[cfg(debug_assertions)]
-use jolt_syntax::SourceIdentity;
 use jolt_syntax::{
     ConservationError, Language, NormalizedToken, RawSyntaxKind, RemovalReason, ReorderReason,
-    SourceRangeClaim, SourceTokenId, SyntaxConservationTracker, SyntaxToken,
+    SourceIdentity, SourceRangeClaim, SourceTokenId, SyntaxConservationTracker, SyntaxToken,
 };
 use jolt_text::TextRange;
 
@@ -125,27 +123,13 @@ pub(crate) fn exceptional_separators<L: Language>(
 /// renderer nodes do not pay for metadata used only at exceptional joins.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExceptionalFragment<'source> {
-    proof: Doc<'source>,
     doc: Doc<'source>,
     boundary: FragmentBoundary<'source>,
 }
 
 impl<'source> ExceptionalFragment<'source> {
-    pub(crate) const fn new(
-        proof: Doc<'source>,
-        doc: Doc<'source>,
-        boundary: FragmentBoundary<'source>,
-    ) -> Self {
-        Self {
-            proof,
-            doc,
-            boundary,
-        }
-    }
-
-    #[must_use]
-    pub(crate) const fn proof(self) -> Doc<'source> {
-        self.proof
+    pub(crate) const fn new(doc: Doc<'source>, boundary: FragmentBoundary<'source>) -> Self {
+        Self { doc, boundary }
     }
 
     #[must_use]
@@ -161,15 +145,19 @@ impl<'source> ExceptionalFragment<'source> {
 
 /// The exceptional source operation represented by a fragment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum SourceProofKind<'tree> {
+pub(crate) enum SourceClaim<'tree> {
+    Identity(SourceIdentity<'tree>),
     MalformedVerbatim {
+        claim: SourceRangeClaim<'tree>,
         kind: RawSyntaxKind,
         range: TextRange,
     },
     Replaced {
+        source: SourceTokenId<'tree>,
         token: NormalizedToken,
     },
     Removed {
+        source: SourceIdentity<'tree>,
         reason: RemovalReason,
     },
     Synthesized {
@@ -185,12 +173,9 @@ pub(crate) enum SourceProofKind<'tree> {
     },
 }
 
-/// Render-time conservation proof and exceptional-fragment ledger.
-///
-/// The syntax tracker compiles to zero state in optimized builds. The fragment
-/// ledger likewise exists only with debug assertions, so ordinary release
-/// formatting adds no tracker or comment-map allocation.
+/// Render-time checker for the claims carried by the selected document branch.
 pub(crate) struct RenderProof<'tree> {
+    #[cfg_attr(not(debug_assertions), allow(dead_code))]
     conservation: SyntaxConservationTracker<'tree>,
     #[cfg(debug_assertions)]
     malformed_verbatim_count: usize,
@@ -198,6 +183,7 @@ pub(crate) struct RenderProof<'tree> {
 
 impl<'tree> RenderProof<'tree> {
     #[must_use]
+    #[cfg_attr(not(debug_assertions), allow(dead_code))]
     pub(crate) fn new(conservation: SyntaxConservationTracker<'tree>) -> Self {
         Self {
             conservation,
@@ -207,36 +193,29 @@ impl<'tree> RenderProof<'tree> {
     }
 
     #[cfg(debug_assertions)]
-    pub(crate) fn render_fragment(
-        &mut self,
-        fragment: &SourceProof<'tree>,
-        claims: &[SourceIdentity<'tree>],
-    ) -> Result<(), ConservationError> {
-        #[cfg(not(debug_assertions))]
-        let _ = fragment;
-        #[cfg(debug_assertions)]
-        if let Some(
-            SourceProofKind::Synthesized { anchor, .. } | SourceProofKind::Reordered { anchor, .. },
-        ) = fragment.kind
-        {
-            self.conservation.validate_token(anchor)?;
-        }
-        if let Some(SourceProofKind::FormatterIgnore { range }) = fragment.kind {
-            self.conservation.claim_source_range(range)?;
-        }
-        for identity in claims {
-            self.conservation.claim(*identity)?;
-        }
-        #[cfg(debug_assertions)]
-        if matches!(
-            fragment.kind,
-            Some(SourceProofKind::MalformedVerbatim { .. })
-        ) {
-            self.malformed_verbatim_count += 1;
+    pub(crate) fn consume(&mut self, claim: SourceClaim<'tree>) -> Result<(), ConservationError> {
+        match claim {
+            SourceClaim::Identity(identity) => self.conservation.claim(identity)?,
+            SourceClaim::MalformedVerbatim { claim, .. } => {
+                self.conservation.claim_source_range(claim)?;
+                #[cfg(debug_assertions)]
+                {
+                    self.malformed_verbatim_count += 1;
+                }
+            }
+            SourceClaim::Replaced { source, .. } => self.conservation.claim_token(source)?,
+            SourceClaim::Removed { source, .. } => self.conservation.claim(source)?,
+            SourceClaim::Synthesized { anchor, .. } | SourceClaim::Reordered { anchor, .. } => {
+                self.conservation.validate_token(anchor)?;
+            }
+            SourceClaim::FormatterIgnore { range } => {
+                self.conservation.claim_source_range(range)?;
+            }
         }
         Ok(())
     }
 
+    #[cfg_attr(not(debug_assertions), allow(dead_code))]
     pub(crate) fn finish(self) -> Result<bool, ConservationError> {
         self.conservation.finish()?;
         #[cfg(debug_assertions)]
@@ -246,29 +225,6 @@ impl<'tree> RenderProof<'tree> {
         #[cfg(not(debug_assertions))]
         {
             Ok(false)
-        }
-    }
-}
-
-#[cfg(debug_assertions)]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct SourceProof<'tree> {
-    pub(crate) kind: Option<SourceProofKind<'tree>>,
-    pub(crate) claims_start: u32,
-    pub(crate) claims_len: u32,
-}
-
-#[cfg(debug_assertions)]
-impl<'tree> SourceProof<'tree> {
-    pub(crate) const fn new(
-        kind: Option<SourceProofKind<'tree>>,
-        claims_start: u32,
-        claims_len: u32,
-    ) -> Self {
-        Self {
-            kind,
-            claims_start,
-            claims_len,
         }
     }
 }

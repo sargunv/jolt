@@ -1,7 +1,7 @@
 use jolt_diagnostics::{Diagnostic, DiagnosticStage};
 use jolt_test_support::{
-    PhysicalNodeAudit, SchemaAudit, assert_exact_structural_ownership_requiring,
-    collect_kotlin_files, fixture_snapshot_name, kotlin_fixture_root, read_to_string,
+    SchemaAudit, assert_exact_structural_ownership_requiring, collect_kotlin_files,
+    fixture_snapshot_name, kotlin_fixture_root, read_to_string,
 };
 
 use crate::{
@@ -51,151 +51,31 @@ macro_rules! kotlin_audit_matches {
     };
 }
 
-macro_rules! kotlin_audit_fixed_field {
-    ($slot:ident, $missing:ident, required, $matcher:tt) => {
-        match $slot {
-            jolt_syntax::SyntaxSlot::Empty => $missing = true,
-            _ if kotlin_audit_matches!($slot, $matcher) => {}
-            _ => return PhysicalNodeAudit::Unexpected,
-        }
-    };
-    ($slot:ident, $missing:ident, optional, $matcher:tt) => {
-        match $slot {
-            jolt_syntax::SyntaxSlot::Empty => {}
-            _ if kotlin_audit_matches!($slot, $matcher) => {}
-            _ => return PhysicalNodeAudit::Unexpected,
-        }
-    };
-}
-
-macro_rules! kotlin_audit_required {
-    (required) => {
-        true
-    };
-    ($cardinality:ident) => {
-        false
-    };
-}
-
-macro_rules! kotlin_audit_node {
-    ($node:ident, valid; $($field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)? $([$($policy:tt)*])?;)*) => {{
-        let mut cursor = 0;
-        #[allow(unused_mut)]
-        let mut missing = false;
-        $(
-            let Some(slot) = $node.slot_at(cursor) else {
-                return PhysicalNodeAudit::Unexpected;
-            };
-            kotlin_audit_fixed_field!(slot, missing, $cardinality, $matcher);
-            cursor += 1;
-        )*
-        if cursor != $node.slot_count() {
-            PhysicalNodeAudit::Unexpected
-        } else if missing {
-            PhysicalNodeAudit::MissingRequired
-        } else {
-            PhysicalNodeAudit::Exact
-        }
-    }};
-    ($node:ident, constructed; $($fields:tt)*) => {
-        kotlin_audit_node!($node, valid; $($fields)*)
-    };
-    ($node:ident, list; $field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)?;) => {{
-        let mut missing = false;
-        for index in 0..$node.slot_count() {
-            let slot = $node.slot_at(index).expect("physical list slot");
-            match slot {
-                jolt_syntax::SyntaxSlot::Empty => missing = true,
-                _ if kotlin_audit_matches!(slot, $matcher) => {}
-                _ => return PhysicalNodeAudit::Unexpected,
-            }
-        }
-        if missing {
-            PhysicalNodeAudit::MissingRequired
-        } else {
-            PhysicalNodeAudit::Exact
-        }
-    }};
-    ($node:ident, list; $field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)? [disambiguate $policy:ident];) => {
-        kotlin_audit_node!($node, list; $field: $cardinality $matcher $(=> $role)?;)
-    };
-    ($node:ident, list; $field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)? [separated $separator:tt, minimum $minimum:literal, trailing $trailing:ident, recovery bogus_owner];) => {{
-        let mut missing = false;
-        for index in 0..$node.slot_count() {
-            let slot = $node.slot_at(index).expect("physical separated-list slot");
-            if matches!(slot, jolt_syntax::SyntaxSlot::Empty) {
-                missing = true;
-            } else if index % 2 == 0 {
-                if !kotlin_audit_matches!(slot, $matcher) {
-                    return PhysicalNodeAudit::Unexpected;
-                }
-            } else if !kotlin_audit_matches!(slot, $separator) {
-                return PhysicalNodeAudit::Unexpected;
-            }
-        }
-        if missing {
-            PhysicalNodeAudit::MissingRequired
-        } else {
-            PhysicalNodeAudit::Exact
-        }
-    }};
-    ($node:ident, malformed; $($fields:tt)*) => {
-        PhysicalNodeAudit::Malformed
-    };
-}
-
-macro_rules! kotlin_required_slot {
-    ($slot:ident, valid; $($field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)? $([$($policy:tt)*])?;)*) => {
-        [$(kotlin_audit_required!($cardinality)),*]
-            .get($slot)
-            .copied()
-            .unwrap_or(false)
-    };
-    ($slot:ident, constructed; $($fields:tt)*) => {
-        kotlin_required_slot!($slot, valid; $($fields)*)
-    };
-    ($slot:ident, list; $($fields:tt)*) => {
-        true
-    };
-    ($slot:ident, malformed; $($fields:tt)*) => {
-        false
-    };
-}
-
 macro_rules! define_kotlin_physical_audit {
     (
         tokens { $($token:ident,)* }
         categories { $($family:ident => $bogus:ident { $($member:ident,)* })* }
-        nodes {
-            $($kind:ident => $wrapper:ident [$module:ident $class:ident] { $($fields:tt)* })*
-        }
+        nodes { $($kind:ident => $wrapper:ident [$module:ident $class:ident] { $($fields:tt)* })* }
     ) => {
         fn audit_category_accepts(category: &str, kind: KotlinSyntaxKind) -> bool {
             match category {
-                $(stringify!($family) => matches!(kind, KotlinSyntaxKind::$bogus $(| KotlinSyntaxKind::$member)*),)*
+                $(stringify!($family) => matches!(
+                    kind,
+                    KotlinSyntaxKind::$bogus $(| KotlinSyntaxKind::$member)*
+                ),)*
                 _ => false,
             }
         }
 
-        fn audit_physical_node(
-            node: jolt_syntax::SyntaxNode<'_, crate::KotlinLanguage>,
-        ) -> PhysicalNodeAudit {
-            match node.kind() {
-                $(KotlinSyntaxKind::$kind => kotlin_audit_node!(node, $class; $($fields)*),)*
-                $(KotlinSyntaxKind::$bogus => PhysicalNodeAudit::Malformed,)*
-                _ => PhysicalNodeAudit::Unexpected,
-            }
-        }
-
-        fn is_required_slot(
-            node: jolt_syntax::SyntaxNode<'_, crate::KotlinLanguage>,
-            slot: usize,
-        ) -> bool {
-            match node.kind() {
-                $(KotlinSyntaxKind::$kind => kotlin_required_slot!(slot, $class; $($fields)*),)*
-                $(KotlinSyntaxKind::$bogus => false,)*
-                _ => false,
-            }
+        jolt_test_support::__define_physical_schema_audit! {
+            kind: KotlinSyntaxKind,
+            language: crate::KotlinLanguage,
+            matches: kotlin_audit_matches,
+            accepts_malformed: |_| false,
+            visibility:,
+            tokens { $($token,)* }
+            categories { $($family => $bogus { $($member,)* })* }
+            nodes { $($kind => $wrapper [$module $class] { $($fields)* })* }
         }
     };
 }
