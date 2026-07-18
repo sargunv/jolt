@@ -244,7 +244,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_annotation_argument_list(&mut self) {
         let marker = self.start();
-        debug_assert!(self.eat(K::LParen));
+        self.eat_asserted(K::LParen);
         self.parse_value_arguments_until(K::RParen, K::ValueArgumentSeparatedList);
         if !self.eat(K::RParen) {
             let diagnostic = self.pending_expected("expected ')' after annotation arguments");

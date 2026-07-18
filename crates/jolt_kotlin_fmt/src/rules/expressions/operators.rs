@@ -332,6 +332,7 @@ struct BinaryChainPart<'source> {
     operand: Doc<'source>,
     spaced: bool,
     break_before_operator: bool,
+    infix_function: bool,
 }
 
 fn binary_chain_part<'source>(
@@ -344,6 +345,7 @@ fn binary_chain_part<'source>(
         operand,
         spaced: !is_range_operator(&operator),
         break_before_operator: can_break_before_operator(&operator),
+        infix_function: operator.kind() == KotlinSyntaxKind::Identifier,
     }
 }
 
@@ -355,11 +357,16 @@ fn binary_chain<'source>(
     if rest.is_empty() {
         return first;
     }
+    let keep_infix_chain_flat = rest.len() > 1 && rest.iter().all(|part| part.infix_function);
     let mut docs = Vec::new();
     for part in rest {
         if !part.break_before_operator {
             let space = doc.space();
-            let line = doc.line();
+            let line = if keep_infix_chain_flat {
+                doc.space()
+            } else {
+                doc.line()
+            };
             let operand = doc.concat([line, part.operand]);
             let operand = doc.indent(operand);
             docs.push(doc.concat([space, part.operator.doc, operand]));

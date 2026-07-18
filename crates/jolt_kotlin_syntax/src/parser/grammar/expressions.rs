@@ -225,7 +225,7 @@ impl Parser<'_> {
 
     fn parse_index_suffix(&mut self, expression: CompletedMarker) -> CompletedMarker {
         let index = self.precede(expression);
-        debug_assert!(self.eat(K::LBracket));
+        self.eat_asserted(K::LBracket);
         self.parse_value_arguments_until(K::RBracket, K::ValueArgumentEntryList);
         if !self.eat(K::RBracket) {
             let diagnostic = self.pending_expected("expected ']'");
@@ -388,14 +388,14 @@ impl Parser<'_> {
 
     fn parse_this_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
-        debug_assert!(self.eat(K::ThisKw));
+        self.eat_asserted(K::ThisKw);
         self.parse_optional_typed_label_reference();
         self.complete(marker, K::ThisExpression)
     }
 
     fn parse_super_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
-        debug_assert!(self.eat(K::SuperKw));
+        self.eat_asserted(K::SuperKw);
         if self.at(K::Lt) {
             self.parse_type_argument_list();
         }
@@ -405,7 +405,7 @@ impl Parser<'_> {
 
     pub(in crate::parser::grammar) fn parse_value_argument_list(&mut self) {
         let marker = self.start();
-        debug_assert!(self.eat(K::LParen));
+        self.eat_asserted(K::LParen);
         self.parse_value_arguments_until(K::RParen, K::ValueArgumentEntryList);
         if !self.eat(K::RParen) {
             let diagnostic = self.pending_expected("expected ')' after arguments");
@@ -468,7 +468,7 @@ impl Parser<'_> {
 
     fn parse_parenthesized_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
-        debug_assert!(self.eat(K::LParen));
+        self.eat_asserted(K::LParen);
         if self.at(K::RParen) {
             let expression = self.start();
             let diagnostic = self.pending_expected("expected parenthesized expression");
@@ -534,7 +534,7 @@ impl Parser<'_> {
 
     fn parse_callable_reference_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
-        debug_assert!(self.eat(K::ColonColon));
+        self.eat_asserted(K::ColonColon);
         if self.at_identifier_like() || matches!(self.current_kind(), K::ClassKw) {
             let target = self.start();
             self.bump();
@@ -682,7 +682,7 @@ impl Parser<'_> {
     fn parse_optional_label_definition(&mut self) {
         if self.at_identifier_like() || matches!(self.current_kind(), K::ThisKw | K::SuperKw) {
             self.bump();
-            debug_assert!(self.eat(K::At));
+            self.eat_asserted(K::At);
         }
     }
 

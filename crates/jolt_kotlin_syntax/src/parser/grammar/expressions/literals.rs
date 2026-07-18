@@ -8,7 +8,7 @@ impl Parser<'_> {
     pub(super) fn parse_lambda_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
         let body = self.start();
-        debug_assert!(self.eat(K::LBrace));
+        self.eat_asserted(K::LBrace);
         if self.lambda_has_parameter_arrow() {
             let params = self.start();
             let parameters = self.start();
@@ -79,7 +79,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_collection_literal_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
-        debug_assert!(self.eat(K::LBracket));
+        self.eat_asserted(K::LBracket);
         self.parse_value_arguments_until(K::RBracket, K::ValueArgumentEntryList);
         if !self.eat(K::RBracket) {
             let diagnostic = self.pending_expected("expected ']' after collection literal");

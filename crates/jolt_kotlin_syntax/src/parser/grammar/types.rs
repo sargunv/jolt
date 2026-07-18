@@ -262,7 +262,7 @@ impl Parser<'_> {
         owner: jolt_syntax::NodeAnchor,
         close_slot: u16,
     ) {
-        debug_assert!(self.eat(K::LParen));
+        self.eat_asserted(K::LParen);
         let entries = self.start();
         let mut expect_parameter = true;
         while !matches!(self.current_kind(), K::RParen | K::Eof) {
@@ -323,7 +323,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_type_argument_list(&mut self) {
         let marker = self.start();
-        debug_assert!(self.eat(K::Lt));
+        self.eat_asserted(K::Lt);
         let entries = self.start();
         let mut expect_argument = true;
         while !matches!(self.current_kind(), K::Gt | K::Eof) {

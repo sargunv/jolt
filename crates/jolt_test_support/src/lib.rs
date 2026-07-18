@@ -209,6 +209,41 @@ pub fn kotlin_fixture_root(manifest_dir: &str) -> PathBuf {
     workspace_root(manifest_dir).join("fixtures/kotlin")
 }
 
+/// Removes one represented token at each of a fixed, bounded set of positions.
+#[must_use]
+pub fn deterministic_token_removal_candidates<'tree, L>(
+    source: &'tree str,
+    tokens: impl IntoIterator<Item = SyntaxToken<'tree, L>>,
+) -> Vec<String>
+where
+    L: Language,
+{
+    let ranges = tokens
+        .into_iter()
+        .map(|token| token.token_text_range())
+        .filter(|range| range.start() != range.end())
+        .collect::<Vec<_>>();
+    let mut previous_range = None;
+    let mut candidates = Vec::new();
+    for numerator in 1..8 {
+        let index = ranges.len().saturating_mul(numerator) / 8;
+        let Some(range) = ranges.get(index.min(ranges.len().saturating_sub(1))) else {
+            break;
+        };
+        if previous_range == Some(*range) {
+            continue;
+        }
+        previous_range = Some(*range);
+        let start = range.start().get();
+        let end = range.end().get();
+        let mut mutated = String::with_capacity(source.len() - (end - start));
+        mutated.push_str(&source[..start]);
+        mutated.push_str(&source[end..]);
+        candidates.push(mutated);
+    }
+    candidates
+}
+
 #[must_use]
 pub fn collect_java_files(root: &Path) -> Vec<PathBuf> {
     assert!(

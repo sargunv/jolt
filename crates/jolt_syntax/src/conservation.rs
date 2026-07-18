@@ -406,7 +406,7 @@ impl<'tree> SyntaxConservationTracker<'tree> {
                 .token_data()
                 .iter()
                 .map(|token| {
-                    if token.raw_kind() == eof {
+                    if token.raw_kind() == eof || token.token_text_range().len().get() == 0 {
                         ClaimState::NotConserved
                     } else {
                         ClaimState::Unclaimed

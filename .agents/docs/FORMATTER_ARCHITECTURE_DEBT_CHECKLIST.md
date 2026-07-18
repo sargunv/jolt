@@ -1,49 +1,49 @@
 # Formatter Architecture Debt Checklist
 
-Status: OPEN. This is the canonical checklist for bringing the Java and Kotlin
-formatters into full compliance with the formatter invariants in `AGENTS.md`. Do
-not claim formatter cleanliness while any item here remains open.
+Status: CLEAN as of Phase 30. This remains the canonical executable contract for
+keeping the Java and Kotlin formatters compliant with the formatter invariants
+in `AGENTS.md`.
 
 ## Clean Completion Gate
 
-- [ ] The selected parse-owned lossless syntax tree is the only structural
+- [x] The selected parse-owned lossless syntax tree is the only structural
       representation; formatter traversal adds no stored parts layer or wrapper
       tree.
-- [ ] Generated grammar slots and category-compatible malformed/bogus ownership
+- [x] Generated grammar slots and category-compatible malformed/bogus ownership
       cover every direct represented element exactly once without source-range
       inference.
-- [ ] Every valid node uses structured formatting, and clean-corpus gates fail
+- [x] Every valid node uses structured formatting, and clean-corpus gates fail
       on any valid syntax covered by verbatim output.
-- [ ] Verbatim output is selected only by syntax-owned direct malformed/bogus
+- [x] Verbatim output is selected only by syntax-owned direct malformed/bogus
       classification, covers the smallest complete malformed subtree, and tracks
       every contained token and conserved comment exactly once.
-- [ ] Structural diagnostics and reachable category-bogus/malformed owners map
+- [x] Structural diagnostics and reachable category-bogus/malformed owners map
       bidirectionally; a parse with no structural diagnostics decodes every node
       as valid, and an unmarked invalid shape is an internal error, not
       verbatim.
-- [ ] Formatter failure, missing accessors, and unimplemented valid-node rules
+- [x] Formatter failure, missing accessors, and unimplemented valid-node rules
       cannot select verbatim output.
-- [ ] Every output token is source-backed or has an exact reason-tagged
+- [x] Every output token is source-backed or has an exact reason-tagged
       normalization/synthetic-token claim; malformed syntax is never repaired.
-- [ ] Every parser-diagnostic fixture with a represented tree is formatted and
+- [x] Every parser-diagnostic fixture with a represented tree is formatted and
       checked for classification, conservation, lexical equivalence, and
       idempotence.
 - [x] `FormatSinkResult::Halted` is rejected by every `StringSink` test path.
-- [ ] Malformed/ignore/replaced/removed/synthesized fragments report exact
+- [x] Malformed/ignore/replaced/removed/synthesized fragments report exact
       lexical boundaries and use centralized lexical safety at exceptional
       joins; ordinary valid structured documents add no generic boundary layer.
-- [ ] No formatter layout decision reads raw source gaps outside syntax-owned
+- [x] No formatter layout decision reads raw source gaps outside syntax-owned
       malformed/bogus verbatim output, formatter-ignore, or represented
       trivia/comment formatting.
-- [ ] Every algorithm is linear or has an explicit, documented finite cost model
+- [x] Every algorithm is linear or has an explicit, documented finite cost model
       and bound.
-- [ ] Slot access and formatter dispatch allocate no heap storage per node; the
+- [x] Slot access and formatter dispatch allocate no heap storage per node; the
       release performance/allocation gates pass within the approved budget.
-- [ ] No production formatter path can panic for a represented tree.
-- [ ] No missing-child branch drops available siblings, delimiters, operators,
+- [x] No production formatter path can panic for a represented tree.
+- [x] No missing-child branch drops available siblings, delimiters, operators,
       comments, or recovered entries.
-- [ ] No syntax repair token is synthesized for malformed represented syntax.
-- [ ] Full Java/Kotlin syntax, formatter, CLI, dprint, formatting, whitespace,
+- [x] No syntax repair token is synthesized for malformed represented syntax.
+- [x] Full Java/Kotlin syntax, formatter, CLI, dprint, formatting, whitespace,
       and snapshot-hygiene checks pass with no conservation allowlist entry that
       hides an unresolved formatter bug.
 
@@ -128,7 +128,7 @@ reproductions do not by themselves close the broader architecture items below.
       and bounded count rather than global punctuation classes.
 - [x] All Java/Kotlin formatter and dprint tests using `StringSink` reject
       `FormatSinkResult::Halted`.
-- [ ] Add dense debug/test token and comment accounting over existing syntax
+- [x] Add dense debug/test token and comment accounting over existing syntax
       identities so identical synthesized tokens cannot mask loss.
 - [x] Extend recovery comment conservation from explicit markers to canonical
       inventories of every represented source comment.
@@ -143,13 +143,13 @@ reproductions do not by themselves close the broader architecture items below.
 - [x] Keep imported corpus identity in the importer: upstream commits and the
       generated file manifest are pinned, and CI regenerates imports. Formatter
       tests do not duplicate that contract by rehashing imported files.
-- [ ] Make imported Java and Kotlin syntax reconstruction loss a hard failure
+- [x] Make imported Java and Kotlin syntax reconstruction loss a hard failure
       instead of a summary count in
       `crates/jolt_java_syntax/tests/parser_fixtures.rs:38-42` and
       `crates/jolt_kotlin_syntax/tests/imported_fixtures.rs:25-38`.
-- [ ] Give valid structured output and tracked malformed verbatim output exact
+- [x] Give valid structured output and tracked malformed verbatim output exact
       debug/test accounting so duplicated source tokens cannot mask loss.
-- [ ] Audit every Java and Kotlin token-sequence/raw replay call. Retain it only
+- [x] Audit every Java and Kotlin token-sequence/raw replay call. Retain it only
       inside tracked syntax-owned malformed/bogus verbatim or formatter-ignore;
       valid syntax must use structured rules.
 - [x] Return a diagnostic when either formatter receives no syntax tree instead
@@ -1745,6 +1745,64 @@ paths, two normalization authorization paths, or two source-conservation paths
 remain. Re-run the realistic performance/allocation benchmark after the final
 production deletions. Change status to `CLEAN` only when every correctness,
 architecture, size, and performance gate passes.
+
+Implementation status: **complete, independently audited, and gate-green**. The
+formatter corpora no longer skip lexer or recovery families. Every represented
+parser-diagnostic tree now runs through debug identity-level source
+conservation, exact diagnostic and represented-comment inventories, trivia
+markers, formatter completion, and idempotence. A fixed seven-position token
+removal sampler selects up to two represented malformed mutations from every
+Java and Kotlin fixture family, so the recovery proof also covers deterministic
+shapes not named by a fixture.
+
+That expanded proof found and fixed real cross-layer defects: zero-width
+recovery tokens were incorrectly expected to emit source; unterminated multiline
+literals and dangling Kotlin string newlines could duplicate layout;
+soft-keyword infix chains could reparse after formatting; Kotlin declaration
+keywords could lose adjacent comments; Java trailing star comments could change
+lexer attachment or delimiter kind; ignored trailing SUB trivia was conserved
+but not emitted; and malformed Java roots could synthesize an EOF-sensitive
+newline. All fixes use syntax-owned roles or shared renderer/conservation state;
+no formatter token cursor, raw-gap inference, replay fallback, or independent
+claim ledger was added.
+
+The release benchmark exposed a Phase 26 bug that debug tests could not see:
+`debug_assert!(self.eat(...))` removed the token-consuming expression in release
+builds and recursively reparsed the same `(` until stack overflow. Asserted
+consumption now validates the preclassified token in debug builds and bumps it
+unconditionally in every build. The architecture scan rejects reintroduction of
+side-effecting parser assertions, and the realistic release Kotlin corpus now
+completes normally.
+
+The final projection against `2197128` is +33,428/-25,640, net +7,788. Its
+disjoint categories are macro schema/projection +3,490, generated consumers -24,
+executable audit/proof +5,806, and ordinary implementation -1,484. Phase 30
+raises the reviewed audit/proof ceiling by 38 lines for bounded mutation
+coverage, zero-width conservation, multiline-literal ownership, and the
+release-parity regression scan; the ordinary code category remains net negative
+and every category ceiling is executable.
+
+The acceptance audit measured Java at 392.962 ms parse, 558.238 ms format, and
+971.376 ms end to end, and Kotlin at 9.900 ms parse, 12.866 ms format, and
+23.141 ms end to end. A same-session Phase 23 control separates post-wake CPU
+drift from code changes: Java changes by -4.21%, -0.25%, and -0.35%, while
+Kotlin changes by +2.13%, +0.43%, and +0.33%, so every controlled timing stage
+remains inside the three-percent regression budget. Retuning the existing linear
+document-arena reservation threshold for the unchanged final document density
+reduces format allocation count/bytes by 1.75%/3.68% for Java and 2.52%/4.85%
+for Kotlin; end-to-end count/bytes fall by 1.65%/2.24% and 2.26%/2.82%,
+respectively. Stored syntax-tree density is identical, document nodes/token
+changes by only +0.0023% for Java and is identical for Kotlin, and all peak-RSS
+results remain within the formal five-percent committed-report budgets. The
+report's dirty-worktree digest identifies this exact source state.
+
+Quality audit: Rust 1.96 native, release, Clippy, and wasm checks; Java and
+Kotlin syntax/formatter/recovery/imported corpora; deterministic mutations;
+normalization and diagnostic-ownership proofs; CLI/dprint coverage; snapshot
+hygiene; architecture scans; `mise run fix`; `mise run test`; the realistic
+benchmark; and `git diff --check` pass. The independent Phase 30 review found no
+remaining correctness or architecture blocker after the asserted-consume and
+renderer hot-path cleanup.
 
 ## Kotlin Structural Recovery Debt
 

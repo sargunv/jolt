@@ -1,9 +1,12 @@
+use std::collections::{BTreeMap, BTreeSet};
+
 use jolt_kotlin_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
 use jolt_kotlin_syntax::parse_kotlin_file;
 use jolt_test_support::{
-    SnapshotBuilder, StringSink, collect_kotlin_files, fixture_snapshot_name, kotlin_fixture_root,
-    read_to_string, render_diagnostics, represented_comment_inventory,
-    represented_token_loss_report, trivia_markers,
+    SnapshotBuilder, StringSink, collect_kotlin_files, deterministic_token_removal_candidates,
+    diagnostic_inventory, fixture_snapshot_name, kotlin_fixture_root, read_to_string,
+    render_diagnostics, represented_comment_inventory, represented_token_loss_report,
+    trivia_markers,
 };
 
 #[test]
@@ -20,21 +23,24 @@ fn kotlin_corpus_formatter_snapshots() {
             .unwrap_or(&path)
             .to_string_lossy()
             .replace('\\', "/");
-        if path.strip_prefix(&root).is_ok_and(|relative| {
-            relative.starts_with("syntax/lexer") || relative.starts_with("syntax/recovery")
-        }) {
-            manifest_entries.push(format!("skip {relative}"));
-            continue;
-        }
-
         let source = read_to_string(&path);
         let parse = parse_kotlin_file(&source);
         if parse.syntax().is_none() {
             manifest_entries.push(format!("skip no syntax {relative}"));
             continue;
         }
-        if !parse.diagnostics().is_empty() {
-            manifest_entries.push(format!("audit diagnostics {relative}"));
+        let dedicated_audit =
+            relative.starts_with("syntax/lexer") || relative.starts_with("syntax/recovery");
+        let audit_only = dedicated_audit || !parse.diagnostics().is_empty();
+        if audit_only {
+            manifest_entries.push(format!(
+                "audit {} {relative}",
+                if dedicated_audit {
+                    "syntax"
+                } else {
+                    "diagnostics"
+                }
+            ));
             if let Some(failure) = audit_diagnostic_source(&source, options, &relative) {
                 conservation_failures.push(failure);
             }
@@ -108,6 +114,63 @@ fn kotlin_corpus_formatter_snapshots() {
     );
 }
 
+#[test]
+fn deterministic_kotlin_recovery_mutations() {
+    let options = FormatOptions::default();
+    let root = kotlin_fixture_root(env!("CARGO_MANIFEST_DIR"));
+    let mut fixture_families = BTreeSet::new();
+    let mut cases = BTreeMap::new();
+
+    for path in collect_kotlin_files(&root) {
+        let family = path
+            .parent()
+            .and_then(|parent| parent.strip_prefix(&root).ok())
+            .expect("fixture should have a family below the Kotlin fixture root")
+            .to_string_lossy()
+            .replace('\\', "/");
+        fixture_families.insert(family.clone());
+        if cases.contains_key(&family) {
+            continue;
+        }
+        let source = read_to_string(&path);
+        let parse = parse_kotlin_file(&source);
+        let Some(syntax) = parse.syntax() else {
+            continue;
+        };
+        let mutations = deterministic_token_removal_candidates(&source, syntax.token_iter())
+            .into_iter()
+            .filter(|mutation| {
+                let parse = parse_kotlin_file(mutation);
+                parse.syntax().is_some() && !parse.diagnostics().is_empty()
+            })
+            .take(2)
+            .collect::<Vec<_>>();
+        if !mutations.is_empty() {
+            cases.insert(family, (path, mutations));
+        }
+    }
+
+    assert_eq!(
+        cases.keys().collect::<Vec<_>>(),
+        fixture_families.iter().collect::<Vec<_>>(),
+        "every Kotlin fixture family should provide a represented malformed mutation"
+    );
+    let mut failures = Vec::new();
+    for (family, (path, mutations)) in cases {
+        for (index, mutation) in mutations.into_iter().enumerate() {
+            let label = format!("{family} mutation {index} ({})", path.display());
+            if let Some(failure) = audit_diagnostic_source(&mutation, options, &label) {
+                failures.push(failure);
+            }
+        }
+    }
+    assert!(
+        failures.is_empty(),
+        "deterministic Kotlin recovery mutations failed:\n{}",
+        failures.join("\n")
+    );
+}
+
 fn audit_diagnostic_source(source: &str, options: FormatOptions, label: &str) -> Option<String> {
     let before_parse = parse_kotlin_file(source);
     let before = before_parse.syntax()?;
@@ -117,7 +180,6 @@ fn audit_diagnostic_source(source: &str, options: FormatOptions, label: &str) ->
     let Some(after) = after else {
         return Some(format!("{label}: formatted output has no represented tree"));
     };
-    let token_loss = represented_token_loss_report(before.token_iter(), after.token_iter(), &[]);
     let comments_changed = represented_comment_inventory(before.token_iter())
         != represented_comment_inventory(after.token_iter());
     let expected_markers = trivia_markers(source);
@@ -125,7 +187,11 @@ fn audit_diagnostic_source(source: &str, options: FormatOptions, label: &str) ->
     let repeated = format_or_panic(&formatted, options, label);
 
     let mut failures = String::new();
-    failures.push_str(&token_loss);
+    if diagnostic_inventory(before_parse.diagnostics())
+        != diagnostic_inventory(after_parse.diagnostics())
+    {
+        failures.push_str("parser diagnostic classification changed\n");
+    }
     if comments_changed {
         failures.push_str("represented comment inventory changed\n");
     }
@@ -137,9 +203,13 @@ fn audit_diagnostic_source(source: &str, options: FormatOptions, label: &str) ->
         .expect("writing to a String cannot fail");
     }
     if repeated != formatted {
-        failures.push_str("formatter output is not idempotent\n");
+        write!(
+            failures,
+            "formatter output is not idempotent\nfirst:\n{formatted}\nsecond:\n{repeated}\n"
+        )
+        .expect("writing to a String cannot fail");
     }
-    (!failures.is_empty()).then(|| format!("{label}:\n{failures}"))
+    (!failures.is_empty()).then(|| format!("{label}:\ninput:\n{source}\n{failures}"))
 }
 
 fn format_or_panic(source: &str, options: FormatOptions, label: &str) -> String {
@@ -150,7 +220,7 @@ fn format_or_panic(source: &str, options: FormatOptions, label: &str) -> String 
             panic!("formatter unexpectedly halted with StringSink in {label}")
         }
         FormatSinkResult::Blocked { diagnostics } => {
-            panic!("formatter diagnostics in {label}: {diagnostics:#?}")
+            panic!("formatter diagnostics in {label}: {diagnostics:#?}\ninput:\n{source}")
         }
     }
 }

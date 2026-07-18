@@ -950,7 +950,12 @@ fn keyword_with_space<'source>(
     >,
 ) -> Doc<'source> {
     format_required_field(field, doc, |token, doc| {
-        let token = keyword_token(doc, token);
+        let token = format_token(
+            doc,
+            &token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        );
         let space = doc.space();
         doc.concat([token, space])
     })

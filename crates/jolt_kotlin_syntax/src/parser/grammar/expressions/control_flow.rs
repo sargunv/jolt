@@ -12,7 +12,7 @@ const MAX_FOR_HEADER_RECOVERY_LOOKAHEAD: usize = 128;
 impl Parser<'_> {
     pub(super) fn parse_if_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
         let marker = self.start();
-        debug_assert!(self.eat(K::IfKw));
+        self.eat_asserted(K::IfKw);
         if self.at(K::LParen) {
             self.parse_parenthesized_expression();
         } else {
@@ -30,7 +30,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_when_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
-        debug_assert!(self.eat(K::WhenKw));
+        self.eat_asserted(K::WhenKw);
         let has_subject = self.at(K::LParen);
         if has_subject {
             self.parse_when_subject();
@@ -187,7 +187,7 @@ impl Parser<'_> {
 
     fn parse_when_subject(&mut self) {
         let subject = self.start();
-        debug_assert!(self.eat(K::LParen));
+        self.eat_asserted(K::LParen);
         if self.at(K::ValKw) || self.at(K::VarKw) {
             self.bump();
             self.parse_name();
@@ -302,7 +302,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_try_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
-        debug_assert!(self.eat(K::TryKw));
+        self.eat_asserted(K::TryKw);
         if self.at(K::LBrace) {
             self.parse_block();
         } else {
@@ -487,10 +487,10 @@ impl Parser<'_> {
 
     pub(super) fn parse_anonymous_function_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
-        debug_assert!(self.eat(K::FunKw));
+        self.eat_asserted(K::FunKw);
         if self.anonymous_function_receiver_type_ahead() {
             self.parse_type_reference_until(&[K::Dot]);
-            debug_assert!(self.eat(K::Dot));
+            self.eat_asserted(K::Dot);
         }
         if self.at(K::LParen) {
             self.parse_value_parameter_list();
@@ -519,7 +519,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_object_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
-        debug_assert!(self.eat(K::ObjectKw));
+        self.eat_asserted(K::ObjectKw);
         if self.at(K::Colon) {
             let delegation = self.start();
             self.bump();

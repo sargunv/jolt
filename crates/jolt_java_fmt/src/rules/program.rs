@@ -7,8 +7,8 @@ use jolt_java_syntax::{
 };
 
 use crate::helpers::comments::{
-    comments_from_tokens, format_comment, format_token_removal, format_token_with_comments,
-    has_removed_comments,
+    comments_from_tokens, format_comment, format_ignored_trivia, format_token_removal,
+    format_token_with_comments, has_removed_comments,
 };
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRun, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
@@ -88,7 +88,7 @@ pub(crate) fn format_compilation_unit<'source>(
     };
     let has_source_contents = unit.token_iter().any(|token| !token.text().is_empty());
     let eof = format_required_field(unit.eof(), doc, |token, doc| {
-        doc.concat_list(|comments| {
+        let comments = doc.concat_list(|comments| {
             let mut emitted_comment = false;
             for comment in token.leading_comments().chain(token.trailing_comments()) {
                 let range = comment.text_range();
@@ -106,9 +106,16 @@ pub(crate) fn format_compilation_unit<'source>(
                 comments.push(comment);
                 emitted_comment = true;
             }
-        })
+        });
+        let line = if unit.is_recovery_free() || token.has_leading_line_break() {
+            doc.hard_line()
+        } else {
+            Doc::nil()
+        };
+        let ignored = format_ignored_trivia(doc, &token);
+        doc.concat([comments, line, ignored])
     });
-    doc_concat!(doc, [contents, eof, doc.hard_line()])
+    doc.concat([contents, eof])
 }
 
 enum ProgramEntry<'source> {

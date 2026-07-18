@@ -220,6 +220,7 @@ enum HorizontalWhitespace {
     None,
     Pending,
     Emitted,
+    LiteralLineEnding,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -490,6 +491,9 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         } else {
             self.add_width(final_width);
         }
+        if matches!(literal.text.as_bytes().last(), Some(b'\n' | b'\r')) {
+            self.horizontal_whitespace = HorizontalWhitespace::LiteralLineEnding;
+        }
     }
 
     fn write_flat_line(&mut self, flat: &FlatLine) {
@@ -505,7 +509,10 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
 
     fn write_newline(&mut self, indent_delta: i16, count: u32) {
         self.pending_indent = None;
+        let literal_ended_line =
+            self.horizontal_whitespace == HorizontalWhitespace::LiteralLineEnding;
         self.horizontal_whitespace = HorizontalWhitespace::None;
+        let count = count - u32::from(literal_ended_line);
         for _ in 0..count {
             self.write_sink_str("\n");
             self.column = TextWidth::ZERO;
@@ -1837,6 +1844,31 @@ mod tests {
         render_to(&arena, doc, options(), &mut sink).expect("document renders");
 
         assert_eq!(sink.0, "first\n\n    second\n\n    third\n");
+    }
+
+    #[test]
+    fn layout_lines_coalesce_with_a_source_literal_line_ending() {
+        for (literal, empty, expected) in [
+            ("raw\n", false, "raw\nnext"),
+            ("raw\r\n", false, "raw\r\nnext"),
+            ("raw\n", true, "raw\n\nnext"),
+        ] {
+            let mut builder = DocBuilder::new();
+            let literal = builder.literal_text(literal);
+            let line = if empty {
+                builder.empty_line()
+            } else {
+                builder.hard_line()
+            };
+            let next = builder.text("next");
+            let doc = builder.concat([literal, line, next]);
+            let arena = builder.into_arena();
+            let mut sink = StringSink::default();
+
+            render_to(&arena, doc, options(), &mut sink).expect("document renders");
+
+            assert_eq!(sink.0, expected);
+        }
     }
 
     #[test]

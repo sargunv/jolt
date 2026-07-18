@@ -230,7 +230,12 @@ pub(crate) fn format_block_statement_item<'source>(
     statement: &BlockStatement<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<BodyItem<'source>> {
-    let starts_after_blank_line = statement.starts_after_blank_line();
+    // Recovery trivia can be repartitioned when an adjacent line comment is
+    // relocated by structured formatting. Only recovery-free statements may
+    // use it to request a blank separator; recovered statements receive the
+    // block's canonical one-line boundary around their smallest verbatim core.
+    let starts_after_blank_line =
+        statement.is_recovery_free() && statement.starts_after_blank_line();
     let item = match resolve_required_field(statement.item(), doc) {
         JavaFormatField::Present(item) => item,
         JavaFormatField::Malformed(malformed) => {

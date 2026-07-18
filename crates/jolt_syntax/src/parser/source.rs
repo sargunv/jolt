@@ -146,6 +146,12 @@ impl<'source, L: Language> Parser<'source, L> {
         }
     }
 
+    /// Consumes a token that the caller has already classified as `kind`.
+    pub fn eat_asserted(&mut self, kind: L::Kind) {
+        debug_assert!(self.at(kind));
+        self.bump();
+    }
+
     pub fn at(&mut self, kind: L::Kind) -> bool {
         self.current_kind() == kind
     }

@@ -39,7 +39,10 @@ const AUDIT_PROOF_PATHS: &[&str] = &[
 ];
 const MAX_MACRO_SCHEMA_NET_DELTA: isize = 3_490;
 const MAX_GENERATED_CONSUMER_NET_DELTA: isize = -24;
-const MAX_AUDIT_PROOF_NET_DELTA: isize = 5_768;
+// Phase 30 adds the final bounded mutation/conservation checks and the shared
+// multiline-literal line-ownership regression. Further proof growth must still
+// update this reviewed ceiling explicitly.
+const MAX_AUDIT_PROOF_NET_DELTA: isize = 5_806;
 
 #[test]
 fn forbidden_architecture_patterns_do_not_regress() {
@@ -167,6 +170,7 @@ fn scan_production_file(workspace: &Path, path: &Path, failures: &mut Vec<String
             "self.expect_named_variable_identifier(",
             "self.consume_qualified_name(",
             "report_non_structural(",
+            "assert!(self.eat",
         ] {
             if source.contains(forbidden) {
                 failures.push(format!(
@@ -178,10 +182,9 @@ fn scan_production_file(workspace: &Path, path: &Path, failures: &mut Vec<String
     }
 }
 
-/// Enforces the roadmap's formal implementation-size projection. The explicit
-/// pathspec includes production, tests, test support, and benchmark/import
-/// tooling while excluding fixtures, snapshots, reports, and documentation by
-/// construction. Untracked implementation files are added to the projection so
+/// Enforces the roadmap's formal implementation-size projection across
+/// production, tests, test support, and tooling, but not fixtures or reports.
+/// Untracked implementation files are added to the projection so
 /// a local `mise run test` cannot evade the gate before staging them.
 #[test]
 fn implementation_projection_has_bounded_architecture_and_negative_ordinary_code() {

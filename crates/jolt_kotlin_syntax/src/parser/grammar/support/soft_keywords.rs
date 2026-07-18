@@ -57,6 +57,11 @@ impl Parser<'_> {
         }
     }
 
+    pub(in crate::parser::grammar) fn eat_soft_keyword_asserted(&mut self, text: &str) {
+        debug_assert!(self.at_soft_keyword(text));
+        self.bump();
+    }
+
     pub(in crate::parser::grammar) fn at_soft_keyword(&mut self, text: &str) -> bool {
         let kind = self.current_kind();
         self.is_soft_kind(kind, text)

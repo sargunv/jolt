@@ -215,9 +215,9 @@ mod tests {
     #[test]
     fn recovered_parse_returns_formatted_bytes() {
         let formatted =
-            format_java("class", FormatOptions::default()).expect("format should complete");
+            format_java("class Foo{", FormatOptions::default()).expect("format should complete");
 
-        assert_eq!(formatted, Some(b"class\n".to_vec()));
+        assert_eq!(formatted, Some(b"class Foo {\n".to_vec()));
     }
 
     #[test]

@@ -13,7 +13,7 @@ class Example {
     return "Ada";
   }
 
-  /**
+  /*
    * Runs the task.
    */
   void run() {

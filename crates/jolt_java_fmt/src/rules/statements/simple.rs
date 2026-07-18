@@ -5,7 +5,7 @@ use super::{
     format_token_before_relocated_trailing_comments, format_token_with_comments,
     format_trailing_comments_before_line_break, trailing_comments_force_line,
 };
-use crate::helpers::comments::{comment_is_star_block, format_comment};
+use crate::helpers::comments::{comment_is_star_block, format_comment, format_trailing_comment};
 use crate::helpers::recovery::{
     JavaFormatField, format_optional_field, format_required_field, resolve_optional_field,
 };
@@ -280,13 +280,15 @@ fn format_terminator_trailing_comments<'source>(
 ) -> Doc<'source> {
     doc.concat_list(|docs| {
         for comment in token.trailing_comments() {
-            let separator = if comment_is_star_block(&comment) {
+            let multiline_star =
+                comment_is_star_block(&comment) && comment.text().contains(['\n', '\r']);
+            let separator = if multiline_star {
                 docs.hard_line()
             } else {
                 docs.space()
             };
             docs.push(separator);
-            let formatted = format_comment(docs, &comment);
+            let formatted = format_trailing_comment(docs, &comment);
             docs.push(formatted);
         }
     })

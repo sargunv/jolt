@@ -154,7 +154,7 @@ impl<'source> DocBuilder<'source> {
         // Allocator size-class rounding dominates these estimates for small
         // files. Let the ordinary arena grow inline there; reserve once only
         // when the source is large enough for the estimate to be meaningful.
-        if source_len < 4 * 1024 {
+        if source_len < 2 * 1024 {
             return Self::new();
         }
         let node_capacity = source_len.saturating_mul(2).div_ceil(5);
@@ -208,6 +208,9 @@ impl<'source> DocBuilder<'source> {
     /// Emits an ordinary structured source token with its conservation claim.
     #[must_use]
     pub fn source_token<L: Language>(&mut self, token: &SyntaxToken<'source, L>) -> Doc<'source> {
+        if token.text().is_empty() {
+            return self.nil();
+        }
         self.source_fragment(
             Cow::Borrowed(token.text()),
             SourceClaim::Identity(SourceIdentity::Token(token.source_id())),

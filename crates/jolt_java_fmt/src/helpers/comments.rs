@@ -146,7 +146,7 @@ pub(crate) fn format_trailing_comments<'source>(
         for comment in token.trailing_comments() {
             let space = docs.space();
             docs.push(space);
-            let comment_doc = format_comment(docs, &comment);
+            let comment_doc = format_trailing_comment(docs, &comment);
             docs.push(comment_doc);
             if comment_forces_line(&comment) {
                 let hard_line = docs.hard_line();
@@ -165,7 +165,7 @@ pub(crate) fn format_trailing_comments_before_line_break<'source>(
         while let Some(comment) = comments.next() {
             let space = docs.space();
             docs.push(space);
-            let comment_doc = format_comment(docs, &comment);
+            let comment_doc = format_trailing_comment(docs, &comment);
             docs.push(comment_doc);
             if comments.peek().is_some() && comment_forces_line(&comment) {
                 let hard_line = docs.hard_line();
@@ -183,7 +183,7 @@ pub(crate) fn format_inline_trailing_comment_list<'source>(
         for comment in comments {
             let space = docs.space();
             docs.push(space);
-            let comment = format_comment(docs, &comment);
+            let comment = format_trailing_comment(docs, &comment);
             docs.push(comment);
         }
     })
@@ -265,6 +265,21 @@ pub(crate) fn format_token_with_comments<'source>(
         LeadingTrivia::Preserve,
         TrailingTrivia::Preserve,
     )
+}
+
+/// Emits lexically ignored but source-significant trivia exactly once.
+pub(crate) fn format_ignored_trivia<'source>(
+    doc: &mut DocBuilder<'source>,
+    token: &JavaSyntaxToken<'source>,
+) -> Doc<'source> {
+    doc.concat_list(|docs| {
+        for piece in token.ignored_trivia() {
+            let range = piece.text_range();
+            let text = &token.source()[range.start().get()..range.end().get()];
+            let exact = docs.source_trivia([piece], |docs| docs.literal_text(text));
+            docs.push(exact);
+        }
+    })
 }
 
 pub(crate) fn format_token_after_relocated_leading_comments<'source>(
@@ -401,11 +416,24 @@ pub(crate) fn format_comment<'source>(
     doc.source_trivia(comment.source_pieces(), |doc| match comment.kind() {
         JavaCommentKind::Line => format_line_comment(doc, comment.text()),
         JavaCommentKind::Block if is_star_block_comment(comment.text()) => {
-            format_star_block_comment(doc, comment.text())
+            format_star_block_comment(doc, comment.text(), "/*")
         }
         JavaCommentKind::Block => format_block_comment(doc, comment.text()),
-        JavaCommentKind::Doc => format_star_block_comment(doc, comment.text()),
+        JavaCommentKind::Doc => format_star_block_comment(doc, comment.text(), "/**"),
     })
+}
+
+pub(crate) fn format_trailing_comment<'source>(
+    doc: &mut DocBuilder<'source>,
+    comment: &JavaComment<'source>,
+) -> Doc<'source> {
+    if comment_is_star_block(comment) && !comment.text().contains(['\n', '\r']) {
+        doc.source_trivia(comment.source_pieces(), |doc| {
+            format_block_comment(doc, comment.text())
+        })
+    } else {
+        format_comment(doc, comment)
+    }
 }
 
 pub(crate) fn comment_forces_line(comment: &JavaComment<'_>) -> bool {
@@ -449,15 +477,23 @@ fn format_block_comment<'source>(
 fn format_star_block_comment<'source>(
     doc: &mut DocBuilder<'source>,
     comment: &'source str,
+    opening_delimiter: &'static str,
 ) -> Doc<'source> {
     let content = strip_block_comment_delimiters(comment);
+    let multiline = content.contains(['\n', '\r']);
     doc.concat_list(|docs| {
-        let open = docs.literal_text("/**");
+        let open = docs.literal_text(opening_delimiter);
         docs.push(open);
 
         let mut has_content = false;
         let mut pending_blank_lines = 0;
-        for line in content.lines().map(normalize_star_block_body_line) {
+        for line in content.lines().map(|line| {
+            if multiline {
+                normalize_star_block_body_line(line)
+            } else {
+                line.trim()
+            }
+        }) {
             if line.is_empty() {
                 if has_content {
                     pending_blank_lines += 1;

@@ -1,6 +1,6 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    LabelReference, LiteralExpression, LongStringTemplateEntry, NameExpression,
+    KotlinSyntaxKind, LabelReference, LiteralExpression, LongStringTemplateEntry, NameExpression,
     StringTemplateContentSyntax, StringTemplateEntry, StringTemplateExpression, StringTemplatePart,
     SuperExpression, ThisExpression,
 };
@@ -139,7 +139,11 @@ fn format_string_template_entry<'source>(
     format_required_field(entry.content(), doc, |content, doc| {
         match content.classify() {
             Ok(StringTemplateContentSyntax::Token(token)) => {
-                format_token(doc, &token, leading, TrailingTrivia::Preserve)
+                if token.kind() == KotlinSyntaxKind::DanglingNewline {
+                    doc.hard_line()
+                } else {
+                    format_token(doc, &token, leading, TrailingTrivia::Preserve)
+                }
             }
             Ok(StringTemplateContentSyntax::Expression(expression)) => {
                 format_expression_with_leading(doc, &expression, leading)

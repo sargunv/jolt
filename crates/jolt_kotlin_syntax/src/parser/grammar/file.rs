@@ -46,7 +46,7 @@ impl Parser<'_> {
         }
         self.complete(items, K::KotlinFileItemList);
 
-        debug_assert!(self.eat(K::Eof));
+        self.eat_asserted(K::Eof);
         self.complete(file, K::KotlinFile);
         self.finish()
     }

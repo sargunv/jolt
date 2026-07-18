@@ -101,125 +101,125 @@ format style/statements/switch-rule-arrow-break.java
 format style/statements/try-catch-finally.java
 format style/statements/try-with-resources.java
 format style/statements/while-empty-body.java
-skip syntax/lexer/accepts-alternate-hexadecimal-minimum-floating-point-literals.java
-skip syntax/lexer/accepts-binary-and-octal-integer-literals-without-semantic-width-checks.java
-skip syntax/lexer/accepts-floating-point-literals-without-semantic-range-checks.java
-skip syntax/lexer/accepts-hexadecimal-floating-point-literals-without-semantic-range-checks.java
-skip syntax/lexer/accepts-integer-literals-without-semantic-range-checks.java
-skip syntax/lexer/accepts-unicode-escapes-with-multiple-u-markers.java
-skip syntax/lexer/attaches-trailing-line-comment-before-newline.java
-skip syntax/lexer/block-comments-close-after-repeated-stars.java
-skip syntax/lexer/block-comments-do-not-nest.java
-skip syntax/lexer/block-comments-ignore-line-comment-markers.java
-skip syntax/lexer/block-comments-may-contain-line-terminators.java
-skip syntax/lexer/comment-markers-inside-character-literals-are-literal-content.java
-skip syntax/lexer/comment-markers-inside-string-literals-are-literal-content.java
-skip syntax/lexer/comment-markers-inside-text-blocks-are-literal-content.java
-skip syntax/lexer/comments-separate-otherwise-adjacent-tokens.java
-skip syntax/lexer/contextual-keyword-spellings-remain-identifiers-without-parser-context.java
-skip syntax/lexer/diagnoses-hex-floats-without-binary-exponent.java
-skip syntax/lexer/diagnoses-invalid-binary-digits.java
-skip syntax/lexer/diagnoses-invalid-hexadecimal-digits.java
-skip syntax/lexer/diagnoses-invalid-octal-digits.java
-skip syntax/lexer/diagnoses-malformed-eligible-unicode-escapes.java
-skip syntax/lexer/diagnoses-malformed-integer-literals.java
-skip syntax/lexer/diagnoses-underscores-next-to-floating-point-parts.java
-skip syntax/lexer/documentation-comments-ignore-line-comment-markers.java
-skip syntax/lexer/does-not-ignore-non-trailing-sub-character.java
-skip syntax/lexer/does-not-ignore-non-trailing-sub-outside-identifier.java
-skip syntax/lexer/escaped-quote-prevents-text-block-closing-delimiter.java
-skip syntax/lexer/fourth-quote-after-text-block-closing-delimiter-is-outside-token.java
-skip syntax/lexer/ignores-trailing-sub-after-unicode-escape-translation.java
-skip syntax/lexer/ignores-trailing-sub-character.java
-skip syntax/lexer/keeps-crlf-as-one-line-terminator-trivia.java
-skip syntax/lexer/keeps-unicode-escape-crlf-as-one-line-terminator-trivia.java
-skip syntax/lexer/line-comments-can-end-at-eof.java
-skip syntax/lexer/line-comments-ignore-block-comment-markers.java
-skip syntax/lexer/non-ascii-characters-are-allowed-inside-comments.java
-skip syntax/lexer/permits-line-continuation-escape-in-text-blocks.java
-skip syntax/lexer/permits-multiple-underscores-between-floating-point-digits.java
-skip syntax/lexer/permits-multiple-underscores-between-integer-digits.java
-skip syntax/lexer/permits-nonzero-floating-point-literals-that-round-to-subnormal.java
-skip syntax/lexer/permits-text-block-opening-cr-line-terminator.java
-skip syntax/lexer/permits-text-block-opening-whitespace-before-line-terminator.java
-skip syntax/lexer/permits-unescaped-double-quotes-inside-text-blocks.java
-skip syntax/lexer/permits-zero-floating-point-literals-with-extreme-exponents.java
-skip syntax/lexer/raw-backslash-without-lowercase-u-is-not-a-unicode-escape.java
-skip syntax/lexer/raw-backslash-without-lowercase-u-remains-input.java
-skip syntax/lexer/recognizes-all-operators.java
-skip syntax/lexer/recognizes-all-reserved-keywords.java
-skip syntax/lexer/recognizes-all-separators.java
-skip syntax/lexer/recognizes-boolean-literals.java
-skip syntax/lexer/recognizes-cr-and-crlf-line-comment-terminators.java
-skip syntax/lexer/recognizes-decimal-floating-point-literal-forms.java
-skip syntax/lexer/recognizes-dollar-and-digits-in-identifiers.java
-skip syntax/lexer/recognizes-empty-string-literals.java
-skip syntax/lexer/recognizes-empty-text-blocks.java
-skip syntax/lexer/recognizes-escape-sequences-in-character-and-string-literals.java
-skip syntax/lexer/recognizes-escape-sequences-in-text-blocks.java
-skip syntax/lexer/recognizes-hexadecimal-floating-point-literal-forms.java
-skip syntax/lexer/recognizes-identifier-part-that-is-not-identifier-start.java
-skip syntax/lexer/recognizes-integer-literal-radices-and-suffixes.java
-skip syntax/lexer/recognizes-java-currency-symbol-identifier-start.java
-skip syntax/lexer/recognizes-longest-match-greater-than-operators.java
-skip syntax/lexer/recognizes-lowercase-integer-suffix-for-non-decimal-radices.java
-skip syntax/lexer/recognizes-non-ascii-string-literal-content.java
-skip syntax/lexer/recognizes-non-ascii-text-block-content.java
-skip syntax/lexer/recognizes-non-empty-string-literals.java
-skip syntax/lexer/recognizes-null-literal.java
-skip syntax/lexer/recognizes-raw-double-quote-character-literal.java
-skip syntax/lexer/recognizes-raw-single-quote-string-literal-content.java
-skip syntax/lexer/recognizes-raw-supplementary-identifier-start.java
-skip syntax/lexer/recognizes-single-character-literals.java
-skip syntax/lexer/recognizes-single-utf16-code-unit-character-literals.java
-skip syntax/lexer/recognizes-supplementary-string-literal-content.java
-skip syntax/lexer/recognizes-unicode-escape-surrogate-pair-identifier.java
-skip syntax/lexer/rejects-character-literals-with-multiple-utf16-code-units-01.java
-skip syntax/lexer/rejects-character-literals-with-multiple-utf16-code-units-02.java
-skip syntax/lexer/rejects-empty-and-multi-character-literals.java
-skip syntax/lexer/rejects-identifier-part-as-identifier-start.java
-skip syntax/lexer/rejects-line-continuation-escape-in-character-literals.java
-skip syntax/lexer/rejects-line-continuation-escape-in-string-literals.java
-skip syntax/lexer/rejects-non-ascii-numeric-lookalikes-01.java
-skip syntax/lexer/rejects-non-ascii-numeric-lookalikes-02.java
-skip syntax/lexer/rejects-non-ascii-separator-and-operator-lookalikes.java
-skip syntax/lexer/rejects-non-jls-whitespace-as-token-separator.java
-skip syntax/lexer/rejects-raw-cr-and-crlf-in-character-literals.java
-skip syntax/lexer/rejects-raw-cr-and-crlf-in-string-literals.java
-skip syntax/lexer/rejects-template-escape-outside-processor.java
-skip syntax/lexer/rejects-text-block-opening-non-jls-whitespace.java
-skip syntax/lexer/rejects-text-block-opening-whitespace-without-line-terminator.java
-skip syntax/lexer/rejects-text-block-without-opening-line-terminator.java
-skip syntax/lexer/reports-character-literals-unterminated-at-eof-01.java
-skip syntax/lexer/reports-character-literals-unterminated-at-eof-02.java
-skip syntax/lexer/reports-invalid-escape-sequences-in-string-and-character-literals.java
-skip syntax/lexer/reports-invalid-text-block-escapes.java
-skip syntax/lexer/reports-string-literals-unterminated-at-eof.java
-skip syntax/lexer/reports-unterminated-block-comments.java
-skip syntax/lexer/reports-unterminated-character-literals.java
-skip syntax/lexer/reports-unterminated-string-literals.java
-skip syntax/lexer/reports-unterminated-text-blocks.java
-skip syntax/lexer/respects-unicode-escape-backslash-eligibility.java
-skip syntax/lexer/separates-tokens-with-all-jls-whitespace.java
-skip syntax/lexer/separates-tokens-with-tab-and-form-feed-whitespace.java
-skip syntax/lexer/two-digit-octal-escape-before-non-octal-digit-falls-back-01.java
-skip syntax/lexer/two-digit-octal-escape-before-non-octal-digit-falls-back-02.java
-skip syntax/lexer/two-digit-octal-escape-followed-by-digit-is-extra-character-in-char-literals.java
-skip syntax/lexer/two-digit-octal-escape-followed-by-digit-is-valid-in-string-literals.java
-skip syntax/lexer/unescaped-triple-quote-closes-text-blocks.java
-skip syntax/lexer/unicode-escape-token-text-is-normalized-before-lexing.java
-skip syntax/lexer/unicode-escapes-become-character-literal-delimiters-before-scanning.java
-skip syntax/lexer/unicode-escapes-become-string-literal-delimiters-before-scanning.java
-skip syntax/lexer/unicode-line-escape-is-a-newline-before-character-scanning.java
-skip syntax/lexer/unicode-line-escape-is-a-newline-before-string-scanning.java
-skip syntax/lexer/unicode-line-escape-terminates-line-comments-before-tokenization.java
-skip syntax/lexer/unicode-lookalikes-do-not-match-keywords-or-literals.java
-skip syntax/lexer/unicode-newline-like-characters-are-not-line-terminators-01.java
-skip syntax/lexer/unicode-newline-like-characters-are-not-line-terminators-02.java
-skip syntax/lexer/uses-longest-match-for-adjacent-minus-operators.java
-skip syntax/lexer/uses-longest-match-for-adjacent-separators.java
-skip syntax/lexer/uses-longest-match-for-decimal-floats-before-dots.java
-skip syntax/lexer/uses-longest-match-for-keyword-and-literal-prefixes.java
+audit syntax syntax/lexer/accepts-alternate-hexadecimal-minimum-floating-point-literals.java
+audit syntax syntax/lexer/accepts-binary-and-octal-integer-literals-without-semantic-width-checks.java
+audit syntax syntax/lexer/accepts-floating-point-literals-without-semantic-range-checks.java
+audit syntax syntax/lexer/accepts-hexadecimal-floating-point-literals-without-semantic-range-checks.java
+audit syntax syntax/lexer/accepts-integer-literals-without-semantic-range-checks.java
+audit syntax syntax/lexer/accepts-unicode-escapes-with-multiple-u-markers.java
+audit syntax syntax/lexer/attaches-trailing-line-comment-before-newline.java
+audit syntax syntax/lexer/block-comments-close-after-repeated-stars.java
+audit syntax syntax/lexer/block-comments-do-not-nest.java
+audit syntax syntax/lexer/block-comments-ignore-line-comment-markers.java
+audit syntax syntax/lexer/block-comments-may-contain-line-terminators.java
+audit syntax syntax/lexer/comment-markers-inside-character-literals-are-literal-content.java
+audit syntax syntax/lexer/comment-markers-inside-string-literals-are-literal-content.java
+audit syntax syntax/lexer/comment-markers-inside-text-blocks-are-literal-content.java
+audit syntax syntax/lexer/comments-separate-otherwise-adjacent-tokens.java
+audit syntax syntax/lexer/contextual-keyword-spellings-remain-identifiers-without-parser-context.java
+audit syntax syntax/lexer/diagnoses-hex-floats-without-binary-exponent.java
+audit syntax syntax/lexer/diagnoses-invalid-binary-digits.java
+audit syntax syntax/lexer/diagnoses-invalid-hexadecimal-digits.java
+audit syntax syntax/lexer/diagnoses-invalid-octal-digits.java
+audit syntax syntax/lexer/diagnoses-malformed-eligible-unicode-escapes.java
+audit syntax syntax/lexer/diagnoses-malformed-integer-literals.java
+audit syntax syntax/lexer/diagnoses-underscores-next-to-floating-point-parts.java
+audit syntax syntax/lexer/documentation-comments-ignore-line-comment-markers.java
+audit syntax syntax/lexer/does-not-ignore-non-trailing-sub-character.java
+audit syntax syntax/lexer/does-not-ignore-non-trailing-sub-outside-identifier.java
+audit syntax syntax/lexer/escaped-quote-prevents-text-block-closing-delimiter.java
+audit syntax syntax/lexer/fourth-quote-after-text-block-closing-delimiter-is-outside-token.java
+audit syntax syntax/lexer/ignores-trailing-sub-after-unicode-escape-translation.java
+audit syntax syntax/lexer/ignores-trailing-sub-character.java
+audit syntax syntax/lexer/keeps-crlf-as-one-line-terminator-trivia.java
+audit syntax syntax/lexer/keeps-unicode-escape-crlf-as-one-line-terminator-trivia.java
+audit syntax syntax/lexer/line-comments-can-end-at-eof.java
+audit syntax syntax/lexer/line-comments-ignore-block-comment-markers.java
+audit syntax syntax/lexer/non-ascii-characters-are-allowed-inside-comments.java
+audit syntax syntax/lexer/permits-line-continuation-escape-in-text-blocks.java
+audit syntax syntax/lexer/permits-multiple-underscores-between-floating-point-digits.java
+audit syntax syntax/lexer/permits-multiple-underscores-between-integer-digits.java
+audit syntax syntax/lexer/permits-nonzero-floating-point-literals-that-round-to-subnormal.java
+audit syntax syntax/lexer/permits-text-block-opening-cr-line-terminator.java
+audit syntax syntax/lexer/permits-text-block-opening-whitespace-before-line-terminator.java
+audit syntax syntax/lexer/permits-unescaped-double-quotes-inside-text-blocks.java
+audit syntax syntax/lexer/permits-zero-floating-point-literals-with-extreme-exponents.java
+audit syntax syntax/lexer/raw-backslash-without-lowercase-u-is-not-a-unicode-escape.java
+audit syntax syntax/lexer/raw-backslash-without-lowercase-u-remains-input.java
+audit syntax syntax/lexer/recognizes-all-operators.java
+audit syntax syntax/lexer/recognizes-all-reserved-keywords.java
+audit syntax syntax/lexer/recognizes-all-separators.java
+audit syntax syntax/lexer/recognizes-boolean-literals.java
+audit syntax syntax/lexer/recognizes-cr-and-crlf-line-comment-terminators.java
+audit syntax syntax/lexer/recognizes-decimal-floating-point-literal-forms.java
+audit syntax syntax/lexer/recognizes-dollar-and-digits-in-identifiers.java
+audit syntax syntax/lexer/recognizes-empty-string-literals.java
+audit syntax syntax/lexer/recognizes-empty-text-blocks.java
+audit syntax syntax/lexer/recognizes-escape-sequences-in-character-and-string-literals.java
+audit syntax syntax/lexer/recognizes-escape-sequences-in-text-blocks.java
+audit syntax syntax/lexer/recognizes-hexadecimal-floating-point-literal-forms.java
+audit syntax syntax/lexer/recognizes-identifier-part-that-is-not-identifier-start.java
+audit syntax syntax/lexer/recognizes-integer-literal-radices-and-suffixes.java
+audit syntax syntax/lexer/recognizes-java-currency-symbol-identifier-start.java
+audit syntax syntax/lexer/recognizes-longest-match-greater-than-operators.java
+audit syntax syntax/lexer/recognizes-lowercase-integer-suffix-for-non-decimal-radices.java
+audit syntax syntax/lexer/recognizes-non-ascii-string-literal-content.java
+audit syntax syntax/lexer/recognizes-non-ascii-text-block-content.java
+audit syntax syntax/lexer/recognizes-non-empty-string-literals.java
+audit syntax syntax/lexer/recognizes-null-literal.java
+audit syntax syntax/lexer/recognizes-raw-double-quote-character-literal.java
+audit syntax syntax/lexer/recognizes-raw-single-quote-string-literal-content.java
+audit syntax syntax/lexer/recognizes-raw-supplementary-identifier-start.java
+audit syntax syntax/lexer/recognizes-single-character-literals.java
+audit syntax syntax/lexer/recognizes-single-utf16-code-unit-character-literals.java
+audit syntax syntax/lexer/recognizes-supplementary-string-literal-content.java
+audit syntax syntax/lexer/recognizes-unicode-escape-surrogate-pair-identifier.java
+audit syntax syntax/lexer/rejects-character-literals-with-multiple-utf16-code-units-01.java
+audit syntax syntax/lexer/rejects-character-literals-with-multiple-utf16-code-units-02.java
+audit syntax syntax/lexer/rejects-empty-and-multi-character-literals.java
+audit syntax syntax/lexer/rejects-identifier-part-as-identifier-start.java
+audit syntax syntax/lexer/rejects-line-continuation-escape-in-character-literals.java
+audit syntax syntax/lexer/rejects-line-continuation-escape-in-string-literals.java
+audit syntax syntax/lexer/rejects-non-ascii-numeric-lookalikes-01.java
+audit syntax syntax/lexer/rejects-non-ascii-numeric-lookalikes-02.java
+audit syntax syntax/lexer/rejects-non-ascii-separator-and-operator-lookalikes.java
+audit syntax syntax/lexer/rejects-non-jls-whitespace-as-token-separator.java
+audit syntax syntax/lexer/rejects-raw-cr-and-crlf-in-character-literals.java
+audit syntax syntax/lexer/rejects-raw-cr-and-crlf-in-string-literals.java
+audit syntax syntax/lexer/rejects-template-escape-outside-processor.java
+audit syntax syntax/lexer/rejects-text-block-opening-non-jls-whitespace.java
+audit syntax syntax/lexer/rejects-text-block-opening-whitespace-without-line-terminator.java
+audit syntax syntax/lexer/rejects-text-block-without-opening-line-terminator.java
+audit syntax syntax/lexer/reports-character-literals-unterminated-at-eof-01.java
+audit syntax syntax/lexer/reports-character-literals-unterminated-at-eof-02.java
+audit syntax syntax/lexer/reports-invalid-escape-sequences-in-string-and-character-literals.java
+audit syntax syntax/lexer/reports-invalid-text-block-escapes.java
+audit syntax syntax/lexer/reports-string-literals-unterminated-at-eof.java
+audit syntax syntax/lexer/reports-unterminated-block-comments.java
+audit syntax syntax/lexer/reports-unterminated-character-literals.java
+audit syntax syntax/lexer/reports-unterminated-string-literals.java
+audit syntax syntax/lexer/reports-unterminated-text-blocks.java
+audit syntax syntax/lexer/respects-unicode-escape-backslash-eligibility.java
+audit syntax syntax/lexer/separates-tokens-with-all-jls-whitespace.java
+audit syntax syntax/lexer/separates-tokens-with-tab-and-form-feed-whitespace.java
+audit syntax syntax/lexer/two-digit-octal-escape-before-non-octal-digit-falls-back-01.java
+audit syntax syntax/lexer/two-digit-octal-escape-before-non-octal-digit-falls-back-02.java
+audit syntax syntax/lexer/two-digit-octal-escape-followed-by-digit-is-extra-character-in-char-literals.java
+audit syntax syntax/lexer/two-digit-octal-escape-followed-by-digit-is-valid-in-string-literals.java
+audit syntax syntax/lexer/unescaped-triple-quote-closes-text-blocks.java
+audit syntax syntax/lexer/unicode-escape-token-text-is-normalized-before-lexing.java
+audit syntax syntax/lexer/unicode-escapes-become-character-literal-delimiters-before-scanning.java
+audit syntax syntax/lexer/unicode-escapes-become-string-literal-delimiters-before-scanning.java
+audit syntax syntax/lexer/unicode-line-escape-is-a-newline-before-character-scanning.java
+audit syntax syntax/lexer/unicode-line-escape-is-a-newline-before-string-scanning.java
+audit syntax syntax/lexer/unicode-line-escape-terminates-line-comments-before-tokenization.java
+audit syntax syntax/lexer/unicode-lookalikes-do-not-match-keywords-or-literals.java
+audit syntax syntax/lexer/unicode-newline-like-characters-are-not-line-terminators-01.java
+audit syntax syntax/lexer/unicode-newline-like-characters-are-not-line-terminators-02.java
+audit syntax syntax/lexer/uses-longest-match-for-adjacent-minus-operators.java
+audit syntax syntax/lexer/uses-longest-match-for-adjacent-separators.java
+audit syntax syntax/lexer/uses-longest-match-for-decimal-floats-before-dots.java
+audit syntax syntax/lexer/uses-longest-match-for-keyword-and-literal-prefixes.java
 format syntax/parser/annotation-interface-members-are-annotation-element-declarations.java
 format syntax/parser/array-creation-unsized-trailing-dims-have-per-dimension-nodes.java
 format syntax/parser/array-type-dims-have-per-dimension-nodes.java
@@ -351,49 +351,49 @@ format syntax/parser/try-with-resources-has-resource-specification-boundary.java
 format syntax/parser/type-bounds-and-casts-have-intersection-type-nodes.java
 format syntax/parser/type-on-demand-import-declarations-expose-package-prefix-names.java
 format syntax/parser/void-method-results-and-class-literals-have-void-type-nodes.java
-skip syntax/recovery/argument-list.java
-skip syntax/recovery/array-creation-trailing-dimensions.java
-skip syntax/recovery/binary-expression.java
-skip syntax/recovery/block-statement.java
-skip syntax/recovery/block-with-formatter-ignore.java
-skip syntax/recovery/catch-parameter-modifiers.java
-skip syntax/recovery/compilation-unit-top-level.java
-skip syntax/recovery/constructor-body.java
-skip syntax/recovery/empty-clauses.java
-skip syntax/recovery/empty-statement-comments.java
-skip syntax/recovery/enum-pattern-and-for-lists.java
-skip syntax/recovery/header-clauses.java
-skip syntax/recovery/import-and-module-directives.java
-skip syntax/recovery/import-trailing-tokens.java
-skip syntax/recovery/member-body-unowned-tokens.java
-skip syntax/recovery/member-body-with-formatter-ignore.java
-skip syntax/recovery/method-invocation-without-name.java
-skip syntax/recovery/missing-type-body-token.java
-skip syntax/recovery/module-annotation.java
-skip syntax/recovery/module-body.java
-skip syntax/recovery/module-recovery-barriers.java
-skip syntax/recovery/module-repeated-requires-modifiers.java
-skip syntax/recovery/phase-11-eof-comments.java
-skip syntax/recovery/phase-11-incomplete-module-directive.java
-skip syntax/recovery/phase-11-malformed-import-pieces.java
-skip syntax/recovery/phase-11-program-containers.java
-skip syntax/recovery/phase-12-variable-declarators.java
-skip syntax/recovery/phase-13-declarations.java
-skip syntax/recovery/phase-14-expressions.java
-skip syntax/recovery/phase-15-statements.java
-skip syntax/recovery/phase-21-normalization-module.java
-skip syntax/recovery/phase-21-normalization.java
-skip syntax/recovery/qualifier-dots-without-qualifiers.java
-skip syntax/recovery/raw-unicode-escape-ranges.java
-skip syntax/recovery/recovered-declaration-names-and-modifiers.java
-skip syntax/recovery/resource-and-catch-lists.java
-skip syntax/recovery/switch-and-module-lists.java
-skip syntax/recovery/switch-block-unowned-tokens.java
-skip syntax/recovery/switch-rule-empty-body.java
-skip syntax/recovery/switch-statement-group.java
-skip syntax/recovery/top-level-empty-declaration-comments.java
-skip syntax/recovery/type-annotation-and-parameter-lists.java
-skip syntax/recovery/wildcard-bounds-and-type-argument-annotations.java
+audit syntax syntax/recovery/argument-list.java
+audit syntax syntax/recovery/array-creation-trailing-dimensions.java
+audit syntax syntax/recovery/binary-expression.java
+audit syntax syntax/recovery/block-statement.java
+audit syntax syntax/recovery/block-with-formatter-ignore.java
+audit syntax syntax/recovery/catch-parameter-modifiers.java
+audit syntax syntax/recovery/compilation-unit-top-level.java
+audit syntax syntax/recovery/constructor-body.java
+audit syntax syntax/recovery/empty-clauses.java
+audit syntax syntax/recovery/empty-statement-comments.java
+audit syntax syntax/recovery/enum-pattern-and-for-lists.java
+audit syntax syntax/recovery/header-clauses.java
+audit syntax syntax/recovery/import-and-module-directives.java
+audit syntax syntax/recovery/import-trailing-tokens.java
+audit syntax syntax/recovery/member-body-unowned-tokens.java
+audit syntax syntax/recovery/member-body-with-formatter-ignore.java
+audit syntax syntax/recovery/method-invocation-without-name.java
+audit syntax syntax/recovery/missing-type-body-token.java
+audit syntax syntax/recovery/module-annotation.java
+audit syntax syntax/recovery/module-body.java
+audit syntax syntax/recovery/module-recovery-barriers.java
+audit syntax syntax/recovery/module-repeated-requires-modifiers.java
+audit syntax syntax/recovery/phase-11-eof-comments.java
+audit syntax syntax/recovery/phase-11-incomplete-module-directive.java
+audit syntax syntax/recovery/phase-11-malformed-import-pieces.java
+audit syntax syntax/recovery/phase-11-program-containers.java
+audit syntax syntax/recovery/phase-12-variable-declarators.java
+audit syntax syntax/recovery/phase-13-declarations.java
+audit syntax syntax/recovery/phase-14-expressions.java
+audit syntax syntax/recovery/phase-15-statements.java
+audit syntax syntax/recovery/phase-21-normalization-module.java
+audit syntax syntax/recovery/phase-21-normalization.java
+audit syntax syntax/recovery/qualifier-dots-without-qualifiers.java
+audit syntax syntax/recovery/raw-unicode-escape-ranges.java
+audit syntax syntax/recovery/recovered-declaration-names-and-modifiers.java
+audit syntax syntax/recovery/resource-and-catch-lists.java
+audit syntax syntax/recovery/switch-and-module-lists.java
+audit syntax syntax/recovery/switch-block-unowned-tokens.java
+audit syntax syntax/recovery/switch-rule-empty-body.java
+audit syntax syntax/recovery/switch-statement-group.java
+audit syntax syntax/recovery/top-level-empty-declaration-comments.java
+audit syntax syntax/recovery/type-annotation-and-parameter-lists.java
+audit syntax syntax/recovery/wildcard-bounds-and-type-argument-annotations.java
 format trivia/annotations-and-modifiers-crevices.java
 format trivia/control-keyword-crevices.java
 format trivia/declaration-headers.java

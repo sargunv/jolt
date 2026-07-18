@@ -6,7 +6,7 @@ use super::MAX_DECLARATION_LOOKAHEAD;
 
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn parse_secondary_constructor_tail(&mut self) {
-        debug_assert!(self.eat_soft_keyword("constructor"));
+        self.eat_soft_keyword_asserted("constructor");
         self.parse_value_parameter_list();
         if self.at(K::Colon) || matches!(self.current_kind(), K::ThisKw | K::SuperKw) {
             let delegation = self.start();
@@ -49,7 +49,7 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn parse_function_tail(&mut self) {
-        debug_assert!(self.eat(K::FunKw));
+        self.eat_asserted(K::FunKw);
         if self.at(K::Lt) {
             self.parse_type_parameter_list();
         }
@@ -185,7 +185,7 @@ impl Parser<'_> {
         &mut self,
         declaration: jolt_syntax::NodeAnchor,
     ) {
-        debug_assert!(self.eat(K::TypeAliasKw));
+        self.eat_asserted(K::TypeAliasKw);
         self.parse_name();
         if self.at(K::Lt) {
             self.parse_type_parameter_list();
@@ -207,7 +207,7 @@ impl Parser<'_> {
 
     pub(in crate::parser::grammar) fn parse_type_parameter_list(&mut self) {
         let marker = self.start();
-        debug_assert!(self.eat(K::Lt));
+        self.eat_asserted(K::Lt);
         let entries = self.start();
         let mut expect_parameter = true;
         while !matches!(self.current_kind(), K::Gt | K::Eof) {
@@ -348,8 +348,8 @@ impl Parser<'_> {
 
     pub(in crate::parser::grammar) fn parse_context_parameter_clause(&mut self) {
         let marker = self.start();
-        debug_assert!(self.eat_soft_keyword("context"));
-        debug_assert!(self.eat(K::LParen));
+        self.eat_soft_keyword_asserted("context");
+        self.eat_asserted(K::LParen);
         let entries = self.start();
         let mut expect_parameter = true;
         while !matches!(self.current_kind(), K::RParen | K::Eof) {
@@ -570,7 +570,7 @@ impl Parser<'_> {
             _ => unreachable!("destructuring parser requires an opening delimiter"),
         };
         let marker = self.start();
-        debug_assert!(self.eat(open));
+        self.eat_asserted(open);
         let entries = self.start();
         let mut expect_entry = true;
         while !matches!(self.current_kind(), K::Eof) && !self.at(close) {
@@ -662,7 +662,7 @@ impl Parser<'_> {
         if let Some(separator_position) = self.callable_receiver_separator_position() {
             let marker = self.start();
             self.parse_type_reference_until_position(separator_position);
-            debug_assert!(self.eat(K::Dot));
+            self.eat_asserted(K::Dot);
             self.parse_name();
             self.complete(marker, K::CallableName);
             true

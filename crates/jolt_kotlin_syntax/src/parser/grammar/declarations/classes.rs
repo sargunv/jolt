@@ -26,7 +26,7 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn parse_object_tail(&mut self) {
-        debug_assert!(self.eat(K::ObjectKw));
+        self.eat_asserted(K::ObjectKw);
         if !matches!(self.current_kind(), K::Colon | K::LBrace | K::Eof) {
             self.parse_name();
         }
@@ -43,7 +43,7 @@ impl Parser<'_> {
 
     pub(in crate::parser::grammar) fn parse_class_body(&mut self) {
         let marker = self.start();
-        debug_assert!(self.eat(K::LBrace));
+        self.eat_asserted(K::LBrace);
         let members = self.start();
         while !self.at_block_end() {
             if self.eat_optional_separators() && self.at_block_end() {

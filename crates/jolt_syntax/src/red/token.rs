@@ -2,7 +2,6 @@ use std::{fmt, marker::PhantomData};
 
 use jolt_text::{TextRange, TextSize};
 
-#[cfg(debug_assertions)]
 use crate::TriviaKind;
 use crate::{
     Comments, Language, RawSyntaxKind, SourceRangeClaim, SourceTokenId, SourceTriviaPiece,
@@ -143,6 +142,25 @@ impl<'tree, L: Language> SyntaxToken<'tree, L> {
             SourceTriviaSide::Trailing,
             self.tree.token(self.id).trailing(),
         )
+    }
+
+    /// Returns represented ignored trivia from both sides of this token.
+    ///
+    /// Ignored trivia is lexically inert but source-significant (for example,
+    /// Java's permitted trailing SUB character), so formatters must emit and
+    /// claim it rather than treating it as layout whitespace.
+    pub fn ignored_trivia(&self) -> impl Iterator<Item = SourceTriviaPiece<'tree>> + use<'tree, L> {
+        self.leading_trivia_with_ids()
+            .chain(self.trailing_trivia_with_ids())
+            .filter(|piece| piece.trivia().kind() == TriviaKind::Ignored)
+    }
+
+    /// Returns whether represented leading trivia contains a source line ending.
+    #[must_use]
+    pub fn has_leading_line_break(&self) -> bool {
+        self.leading()
+            .iter()
+            .any(|trivia| trivia.kind() == TriviaKind::Newline)
     }
 
     /// Returns comments attached before this token.
