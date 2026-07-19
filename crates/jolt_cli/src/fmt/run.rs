@@ -154,7 +154,7 @@ fn config_graph_for_root<'graphs>(
 fn run_stdin(cwd: &Path, args: &Args) -> Result<(), CliError> {
     if args.paths.len() != 1 {
         return Err(CliError::new(
-            "'-' cannot be combined with filesystem paths in milestone 10",
+            "'-' cannot be combined with filesystem paths",
         ));
     }
 
