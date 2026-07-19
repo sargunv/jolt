@@ -30,11 +30,6 @@ Java sources (~9,200 files):
   <SpringBenchmarkChart />
 </ClientOnly>
 
-Measured on a Ryzen AI Max+ 395. Lower is better.
-
-In native mode, Jolt formats the full corpus in 0.3 seconds—over 30× faster than
-`google-java-format` in the same run.
-
 Jolt’s formatter builds on the
 [Wadler/Prettier](https://homepages.inf.ed.ac.uk/wadler/papers/prettier/prettier.pdf)
 document-IR tradition; see [how the formatter works](/internals/formatter) for

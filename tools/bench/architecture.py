@@ -12,6 +12,7 @@ import shutil
 import statistics
 import subprocess
 import sys
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -22,11 +23,18 @@ ROOT = Path(__file__).resolve().parents[2]
 WORK = ROOT / "target/bench/architecture"
 REPORTS = ROOT / "tools/bench/reports/machines"
 DRIVER = ROOT / "target/release/jolt_bench_driver"
+JOLT = ROOT / "target/release/jolt"
+DPRINT_PLUGIN = (
+    ROOT / "target/wasm32-unknown-unknown/release/jolt_fmt_dprint.wasm"
+)
 TIMING_DRIVER = WORK / "jolt_bench_driver-timing"
 ALLOCATION_DRIVER = WORK / "jolt_bench_driver-allocations"
-HARNESS_GENERATION = 2
+SITE_REPORT = ROOT / "tools/bench/reports/site.json"
+HARNESS_GENERATION = 3
 CORPUS_KEYS = REALISTIC_CORPUS_KEYS
 MODES = ("parse", "format", "end-to-end")
+CLI_SAMPLES = 5
+CLI_WARMUPS = 1
 
 
 def benchmark() -> int:
@@ -34,6 +42,8 @@ def benchmark() -> int:
     snapshot = measure(machine, samples=20, warmups=2)
     output = report_path(str(machine["id"]))
     write_json(output, snapshot)
+    write_json(SITE_REPORT, site_report(snapshot))
+    run("dprint", "fmt", output, SITE_REPORT)
     print_summary(snapshot)
     print(f"report: {output}")
     return 0
@@ -48,7 +58,7 @@ def measure(
 ) -> dict[str, Any]:
     initial_harness = harness_digest()
     initial_source = source_state()
-    build_drivers()
+    build_artifacts()
     corpora: dict[str, Any] = {}
     for key in CORPUS_KEYS:
         corpus = CORPORA[key]
@@ -65,6 +75,7 @@ def measure(
         corpora[key] = {
             "manifest": manifest,
             "stages": stages,
+            "whole_cli": measure_whole_cli(corpus, CLI_SAMPLES, CLI_WARMUPS),
             "structure": {
                 "syntax": syntax,
                 "document": document,
@@ -103,7 +114,7 @@ def measure(
     }
 
 
-def build_drivers() -> None:
+def build_artifacts() -> None:
     WORK.mkdir(parents=True, exist_ok=True)
     run(
         "cargo",
@@ -124,6 +135,8 @@ def build_drivers() -> None:
         "allocations",
     )
     shutil.copy2(DRIVER, ALLOCATION_DRIVER)
+    run("cargo", "build", "--release", "--package", "jolt_cli")
+    run(ROOT / "tools/wasm/build_optimized.sh")
 
 
 def measure_stage(
@@ -225,6 +238,180 @@ def measure_stage(
     if structure is not None:
         result["structure"] = structure
     return result
+
+
+def measure_whole_cli(
+    corpus: Corpus, samples: int, warmups: int
+) -> dict[str, Any]:
+    tools = ["jolt-native", "jolt-dprint"]
+    if corpus.language == "java":
+        tools.extend(("google-java-format", "prettier-java"))
+    return {
+        "samples": samples,
+        "warmups": warmups,
+        "tools": {
+            tool: measure_cli_tool(corpus, tool, samples, warmups)
+            for tool in tools
+        },
+    }
+
+
+def measure_cli_tool(
+    corpus: Corpus, tool: str, samples: int, warmups: int
+) -> dict[str, Any]:
+    target = WORK / "cli" / corpus.language / tool / "source"
+    command, cwd = cli_command(tool, target)
+    samples_ns: list[int] = []
+    for index in range(warmups + samples):
+        prepare_cli_corpus(corpus, target, tool)
+        phase = (
+            f"warmup {index + 1}/{warmups}"
+            if index < warmups
+            else f"sample {index - warmups + 1}/{samples}"
+        )
+        print(
+            f"+ whole-cli {corpus.language} {tool} {phase}",
+            file=sys.stderr,
+        )
+        start = time.perf_counter_ns()
+        completed = subprocess.run(
+            [str(part) for part in command],
+            cwd=cwd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+        elapsed = time.perf_counter_ns() - start
+        if completed.returncode != 0:
+            raise RuntimeError(
+                f"{tool} exited with {completed.returncode}:\n"
+                f"{completed.stdout}{completed.stderr}"
+            )
+        if index >= warmups:
+            samples_ns.append(elapsed)
+    modified = sum(
+        source.read_bytes()
+        != (target / source.relative_to(corpus.source)).read_bytes()
+        for source in corpus.files()
+    )
+    if modified == 0:
+        raise RuntimeError(f"{tool} did not modify any {corpus.language} files")
+    return {
+        "label": cli_label(tool),
+        "version": cli_version(tool),
+        "command": command_string(command),
+        "cwd": str(cwd),
+        "modified_files": modified,
+        "timing": {
+            "samples_ns": samples_ns,
+            "summary": timing_summary(samples_ns),
+        },
+    }
+
+
+def prepare_cli_corpus(corpus: Corpus, target: Path, tool: str) -> None:
+    shutil.rmtree(target, ignore_errors=True)
+    target.mkdir(parents=True)
+    for source in corpus.files():
+        destination = target / source.relative_to(corpus.source)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, destination)
+    if tool == "jolt-dprint":
+        (target / "dprint.json").write_text(
+            json.dumps(
+                {"lineWidth": 80, "indentWidth": 2, "useTabs": False},
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+    elif tool == "google-java-format":
+        arguments = target.parent / "google-java-format.args"
+        arguments.write_text(
+            "\n".join(str(path) for path in corpus.files(target)) + "\n",
+            encoding="utf-8",
+        )
+    elif tool == "prettier-java":
+        (target.parent / "prettier.ignore").write_text("", encoding="utf-8")
+
+
+def cli_command(tool: str, target: Path) -> tuple[tuple[str | Path, ...], Path]:
+    if tool == "jolt-native":
+        return (JOLT, "fmt", target), ROOT
+    if tool == "jolt-dprint":
+        return (
+            (
+                "dprint",
+                f"--plugins={DPRINT_PLUGIN}",
+                "fmt",
+                "--incremental=false",
+                "--skip-stable-format",
+                ".",
+            ),
+            target,
+        )
+    if tool == "google-java-format":
+        return (
+            (
+                "google-java-format",
+                "--replace",
+                "--skip-removing-unused-imports",
+                f"@{target.parent / 'google-java-format.args'}",
+            ),
+            ROOT,
+        )
+    if tool == "prettier-java":
+        return (
+            (
+                "pnpm",
+                "exec",
+                "prettier",
+                "--write",
+                target / "**/*.java",
+                "--plugin",
+                "prettier-plugin-java",
+                "--print-width",
+                "80",
+                "--tab-width",
+                "2",
+                "--ignore-path",
+                target.parent / "prettier.ignore",
+                "--log-level",
+                "silent",
+            ),
+            ROOT,
+        )
+    raise RuntimeError(f"unknown whole-CLI benchmark tool: {tool}")
+
+
+def cli_label(tool: str) -> str:
+    return {
+        "jolt-native": "jolt (native)",
+        "jolt-dprint": "jolt (dprint)",
+        "google-java-format": "google-java-format",
+        "prettier-java": "prettier-java",
+    }[tool]
+
+
+def cli_version(tool: str) -> str:
+    if tool == "jolt-native":
+        return capture_version(str(JOLT), "--version")
+    if tool == "jolt-dprint":
+        dprint = capture_version("dprint", "--version")
+        commit = capture("git", "rev-parse", "--short", "HEAD").strip()
+        return f"{dprint}; jolt {commit}"
+    if tool == "google-java-format":
+        return capture_version("google-java-format", "--version")
+    if tool == "prettier-java":
+        prettier = capture_version("pnpm", "exec", "prettier", "--version")
+        package = json.loads(
+            (ROOT / "node_modules/prettier-plugin-java/package.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        return f"prettier {prettier}; prettier-plugin-java {package['version']}"
+    raise RuntimeError(f"unknown whole-CLI benchmark tool: {tool}")
 
 
 def timing_summary(samples: list[int]) -> dict[str, float]:
@@ -354,7 +541,7 @@ def source_state() -> dict[str, str | bool | None]:
             "HEAD",
             "--",
             ".",
-            ":(exclude)tools/bench/reports/machines",
+            ":(exclude)tools/bench/reports",
         ],
         cwd=ROOT,
     )
@@ -365,7 +552,7 @@ def source_state() -> dict[str, str | bool | None]:
         "--exclude-standard",
         "--",
         ".",
-        ":(exclude)tools/bench/reports/machines",
+        ":(exclude)tools/bench/reports",
     ).splitlines()
     digest = hashlib.sha256()
     digest.update(diff)
@@ -399,6 +586,31 @@ def timing_median(stage: dict[str, Any]) -> float:
     return float(statistics.median(samples))
 
 
+def site_report(snapshot: dict[str, Any]) -> dict[str, Any]:
+    spring = snapshot["corpora"]["realistic"]
+    tools = spring["whole_cli"]["tools"]
+    return {
+        "schema_version": 1,
+        "recorded_at": snapshot["recorded_at"],
+        "subject": snapshot["subject"],
+        "machine": snapshot["machine"],
+        "corpus": spring["manifest"],
+        "tools": [
+            {
+                "id": key,
+                "label": tool["label"],
+                "version": tool["version"],
+                "median_seconds": timing_median(tool) / 1_000_000_000,
+                "median_absolute_deviation_seconds": tool["timing"]["summary"][
+                    "median_absolute_deviation_ns"
+                ]
+                / 1_000_000_000,
+            }
+            for key, tool in tools.items()
+        ],
+    }
+
+
 def print_summary(snapshot: dict[str, Any]) -> None:
     print(f"subject: {snapshot['subject']['commit']}")
     for corpus in CORPUS_KEYS:
@@ -416,6 +628,12 @@ def print_summary(snapshot: dict[str, Any]) -> None:
             f"{normalized['tree_reserved_bytes_per_node']:.2f} tree bytes/node, "
             f"{normalized['document_nodes_per_token']:.2f} doc nodes/token"
         )
+        for tool in snapshot["corpora"][corpus]["whole_cli"]["tools"].values():
+            median_ms = timing_median(tool) / 1_000_000
+            print(
+                f"{corpus:18} {'whole-cli':10} {tool['label']:20} "
+                f"{median_ms:10.3f} ms"
+            )
 
 
 def report_path(machine: str) -> Path:
@@ -438,6 +656,18 @@ def run(*command: str | Path) -> None:
 
 def capture(*command: str) -> str:
     return subprocess.check_output(command, cwd=ROOT, text=True)
+
+
+def capture_version(*command: str) -> str:
+    completed = subprocess.run(
+        command,
+        cwd=ROOT,
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    return (completed.stdout or completed.stderr).strip()
 
 
 def run_json(program: Path, *arguments: str) -> dict[str, Any]:

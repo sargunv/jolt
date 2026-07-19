@@ -11,19 +11,26 @@ import {
   type ChartOptions,
 } from "chart.js";
 import { useData } from "vitepress";
+import benchmark from "../../../../tools/bench/reports/site.json";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
 const { isDark } = useData();
 
-const labels = [
-  "jolt (native)",
-  "jolt (dprint)",
-  "google-java-format",
-  "prettier-java",
-] as const;
+const labels = benchmark.tools.map((tool) => tool.label);
+const seconds = benchmark.tools.map((tool) => tool.median_seconds);
+const native = benchmark.tools.find((tool) => tool.id === "jolt-native");
+const googleJavaFormat = benchmark.tools.find(
+  (tool) => tool.id === "google-java-format",
+);
+const speedup =
+  native && googleJavaFormat
+    ? googleJavaFormat.median_seconds / native.median_seconds
+    : undefined;
 
-const seconds = [0.30, 0.42, 11, 28];
+function formatSeconds(value: number): string {
+  return value < 1 ? value.toFixed(2) : value.toFixed(1);
+}
 
 function themeColor(cssVar: string, fallback: string): string {
   if (typeof document === "undefined") {
@@ -42,7 +49,7 @@ const chartData = computed<ChartData<"bar">>(() => {
   const other = themeColor("--vp-c-text-3", "#9ca3af");
 
   return {
-    labels: [...labels],
+    labels,
     datasets: [
       {
         data: seconds,
@@ -62,14 +69,14 @@ const chartOptions = computed<ChartOptions<"bar">>(() => ({
     legend: { display: false },
     tooltip: {
       callbacks: {
-        label: (context) => `${context.parsed.x}s`,
+        label: (context) => `${formatSeconds(context.parsed.x)}s`,
       },
     },
   },
   scales: {
     x: {
       min: 0,
-      max: 30,
+      max: Math.ceil(Math.max(...seconds) / 5) * 5,
       title: {
         display: true,
         text: "Seconds",
@@ -99,6 +106,15 @@ const chartOptions = computed<ChartOptions<"bar">>(() => ({
   <div class="spring-benchmark-chart">
     <Bar :data="chartData" :options="chartOptions" />
   </div>
+  <p>
+    Measured on {{ benchmark.machine.processor }}. Median of five whole-CLI
+    runs; lower is better.
+  </p>
+  <p v-if="native && speedup">
+    In native mode, Jolt formats the full corpus in
+    {{ formatSeconds(native.median_seconds) }} seconds—{{ speedup.toFixed(1) }}×
+    faster than <code>google-java-format</code> in the same run.
+  </p>
 </template>
 
 <style scoped>

@@ -1,0 +1,53 @@
+{
+  "corpus": {
+    "files": 9206,
+    "sha256": "d6d96ec262f7e4a0639eb5076c9cec65977877ebe11a0bc8c18f133dbba09b6a",
+    "source_bytes": 52549613
+  },
+  "machine": {
+    "architecture": "arm64",
+    "id": "darwin-arm64-7569cec23bd8",
+    "logical_cpus": 18,
+    "memory_bytes": 68719476736,
+    "processor": "Apple M5 Pro",
+    "release": "25.5.0",
+    "system": "Darwin"
+  },
+  "recorded_at": "2026-07-19T00:42:37.891693+00:00",
+  "schema_version": 1,
+  "subject": {
+    "commit": "6d33f7b65cedece753a535c3922639ed558de0e2",
+    "dirty": true,
+    "worktree_sha256": "3c6ea7f53e3ecb786608ae3b60a6f56ce3fd6b3fd99a5e3c59dafb38e726ed2c"
+  },
+  "tools": [
+    {
+      "id": "jolt-native",
+      "label": "jolt (native)",
+      "median_absolute_deviation_seconds": 0.005760625,
+      "median_seconds": 0.624532833,
+      "version": "jolt 0.20260705.0 (6d33f7b)"
+    },
+    {
+      "id": "jolt-dprint",
+      "label": "jolt (dprint)",
+      "median_absolute_deviation_seconds": 0.025372667,
+      "median_seconds": 0.617708042,
+      "version": "dprint 0.54.0; jolt 6d33f7b"
+    },
+    {
+      "id": "google-java-format",
+      "label": "google-java-format",
+      "median_absolute_deviation_seconds": 0.146112125,
+      "median_seconds": 8.881828167,
+      "version": "google-java-format: Version 1.35.0"
+    },
+    {
+      "id": "prettier-java",
+      "label": "prettier-java",
+      "median_absolute_deviation_seconds": 0.027374833,
+      "median_seconds": 29.742776125,
+      "version": "prettier 3.9.4; prettier-plugin-java 2.10.2"
+    }
+  ]
+}

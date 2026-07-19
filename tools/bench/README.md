@@ -8,17 +8,24 @@ mise run benchmark
 
 The command builds the benchmark drivers, measures the imported Spring Framework
 Java and MapLibre Compose Kotlin corpora, and overwrites
-`tools/bench/reports/machines/<id>.json`. The ID combines a platform prefix with
-a hash of the OS family, architecture, processor, logical CPU count, and
-installed memory. Review that report diff with the code; committing both is
-acceptance. Git retains earlier measurements, so the harness does not implement
-a separate record or acceptance workflow.
+`tools/bench/reports/machines/<id>.json`. It also refreshes the smaller
+`tools/bench/reports/site.json` projection consumed by the documentation's
+Spring benchmark chart. The ID combines a platform prefix with a hash of the OS
+family, architecture, processor, logical CPU count, and installed memory. Review
+both report diffs with the code; committing them is acceptance. Git retains
+earlier measurements, so the harness does not implement a separate record or
+acceptance workflow.
 
 Each report contains parse-only, format-only over an already-parsed tree, and
 end-to-end measurements. It records raw timing samples and dispersion,
 allocation counts and bytes, peak RSS, syntax-tree bytes per token and node,
 parse, format, and end-to-end nanoseconds per token, formatter document nodes
 per token, source identity, toolchain, corpus digests, and the commands used.
+The same run measures fresh-corpus whole-CLI performance for native Jolt and the
+optimized dprint plugin on both languages, plus google-java-format and
+prettier-java on Java. Corpus copying happens outside the timed region.
+Whole-CLI results use one warmup and five recorded samples and include tool
+versions and modified-file counts.
 
 Timing and allocation samples run in separate release binaries so allocation
 accounting cannot affect timing. Peak RSS uses a dedicated one-shot subprocess
