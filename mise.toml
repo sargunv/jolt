@@ -92,7 +92,8 @@ run = "dprint --plugins=\"$PWD/target/wasm32-unknown-unknown/debug/jolt_fmt_dpri
 
 [tasks.benchmark]
 description = "Run formatter benchmarks"
-run = "python -m tools.bench.architecture"
+usage = 'flag "--comparison-tools" help="Also benchmark google-java-format and prettier-java"'
+run = 'python -m tools.bench.architecture $([ "${usage_comparison_tools:-false}" = "true" ] && printf %s --comparison-tools)'
 
 [tasks."release:build"]
 run = '''

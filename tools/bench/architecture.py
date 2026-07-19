@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -29,7 +30,6 @@ DPRINT_PLUGIN = (
 )
 TIMING_DRIVER = WORK / "jolt_bench_driver-timing"
 ALLOCATION_DRIVER = WORK / "jolt_bench_driver-allocations"
-SITE_REPORT = ROOT / "tools/bench/reports/site.json"
 HARNESS_GENERATION = 3
 CORPUS_KEYS = REALISTIC_CORPUS_KEYS
 MODES = ("parse", "format", "end-to-end")
@@ -37,24 +37,36 @@ CLI_SAMPLES = 5
 CLI_WARMUPS = 1
 
 
-def benchmark() -> int:
+def benchmark(*, comparison_tools: bool) -> int:
     machine = machine_metadata()
-    snapshot = measure(machine, samples=20, warmups=2)
+    snapshot = measure(
+        machine, samples=20, warmups=2, comparison_tools=comparison_tools
+    )
     output = report_path(str(machine["id"]))
     write_json(output, snapshot)
-    write_json(SITE_REPORT, site_report(snapshot))
-    run("dprint", "fmt", output, SITE_REPORT)
+    run("dprint", "fmt", output)
     print_summary(snapshot)
     print(f"report: {output}")
     return 0
 
 
 def main() -> int:
-    return benchmark()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--comparison-tools",
+        action="store_true",
+        help="also benchmark google-java-format and prettier-java",
+    )
+    arguments = parser.parse_args()
+    return benchmark(comparison_tools=arguments.comparison_tools)
 
 
 def measure(
-    machine: dict[str, str | int | None], samples: int, warmups: int
+    machine: dict[str, str | int | None],
+    samples: int,
+    warmups: int,
+    *,
+    comparison_tools: bool,
 ) -> dict[str, Any]:
     initial_harness = harness_digest()
     initial_source = source_state()
@@ -75,7 +87,12 @@ def measure(
         corpora[key] = {
             "manifest": manifest,
             "stages": stages,
-            "whole_cli": measure_whole_cli(corpus, CLI_SAMPLES, CLI_WARMUPS),
+            "whole_cli": measure_whole_cli(
+                corpus,
+                CLI_SAMPLES,
+                CLI_WARMUPS,
+                comparison_tools=comparison_tools,
+            ),
             "structure": {
                 "syntax": syntax,
                 "document": document,
@@ -241,10 +258,14 @@ def measure_stage(
 
 
 def measure_whole_cli(
-    corpus: Corpus, samples: int, warmups: int
+    corpus: Corpus,
+    samples: int,
+    warmups: int,
+    *,
+    comparison_tools: bool,
 ) -> dict[str, Any]:
     tools = ["jolt-native", "jolt-dprint"]
-    if corpus.language == "java":
+    if comparison_tools and corpus.language == "java":
         tools.extend(("google-java-format", "prettier-java"))
     return {
         "samples": samples,
@@ -584,31 +605,6 @@ def timing_median(stage: dict[str, Any]) -> float:
     if not isinstance(samples, list) or not samples:
         raise RuntimeError("timing result has no samples_ns")
     return float(statistics.median(samples))
-
-
-def site_report(snapshot: dict[str, Any]) -> dict[str, Any]:
-    spring = snapshot["corpora"]["realistic"]
-    tools = spring["whole_cli"]["tools"]
-    return {
-        "schema_version": 1,
-        "recorded_at": snapshot["recorded_at"],
-        "subject": snapshot["subject"],
-        "machine": snapshot["machine"],
-        "corpus": spring["manifest"],
-        "tools": [
-            {
-                "id": key,
-                "label": tool["label"],
-                "version": tool["version"],
-                "median_seconds": timing_median(tool) / 1_000_000_000,
-                "median_absolute_deviation_seconds": tool["timing"]["summary"][
-                    "median_absolute_deviation_ns"
-                ]
-                / 1_000_000_000,
-            }
-            for key, tool in tools.items()
-        ],
-    }
 
 
 def print_summary(snapshot: dict[str, Any]) -> None:

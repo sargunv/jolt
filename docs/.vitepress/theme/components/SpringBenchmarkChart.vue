@@ -11,21 +11,26 @@ import {
   type ChartOptions,
 } from "chart.js";
 import { useData } from "vitepress";
-import benchmark from "../../../../tools/bench/reports/site.json";
+import benchmark from "../../../../tools/bench/reports/machines/linux-x86-64-2b358ab7aaf1.json";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
 const { isDark } = useData();
+const tools = Object.entries(
+  benchmark.corpora.realistic.whole_cli.tools,
+).map(([id, tool]) => ({
+  id,
+  label: tool.label,
+  medianSeconds: tool.timing.summary.median_ns / 1_000_000_000,
+}));
 
-const labels = benchmark.tools.map((tool) => tool.label);
-const seconds = benchmark.tools.map((tool) => tool.median_seconds);
-const native = benchmark.tools.find((tool) => tool.id === "jolt-native");
-const googleJavaFormat = benchmark.tools.find(
-  (tool) => tool.id === "google-java-format",
-);
+const labels = tools.map((tool) => tool.label);
+const seconds = tools.map((tool) => tool.medianSeconds);
+const native = tools.find((tool) => tool.id === "jolt-native");
+const googleJavaFormat = tools.find((tool) => tool.id === "google-java-format");
 const speedup =
   native && googleJavaFormat
-    ? googleJavaFormat.median_seconds / native.median_seconds
+    ? googleJavaFormat.medianSeconds / native.medianSeconds
     : undefined;
 
 function formatSeconds(value: number): string {
@@ -112,7 +117,7 @@ const chartOptions = computed<ChartOptions<"bar">>(() => ({
   </p>
   <p v-if="native && speedup">
     In native mode, Jolt formats the full corpus in
-    {{ formatSeconds(native.median_seconds) }} seconds—{{ speedup.toFixed(1) }}×
+    {{ formatSeconds(native.medianSeconds) }} seconds—{{ speedup.toFixed(1) }}×
     faster than <code>google-java-format</code> in the same run.
   </p>
 </template>
