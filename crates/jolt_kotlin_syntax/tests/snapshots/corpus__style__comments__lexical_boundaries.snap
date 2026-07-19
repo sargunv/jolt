@@ -1,0 +1,281 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class CommentLexicalBoundaries {
+val field/**/=0
+val names: List/**/<String/**/> = emptyList()
+
+fun operators(left: Int,right: Int): Int {
+val plus=left+/**/+right
+val minus=left-/**/-right
+return/**/plus/**/+/**/minus
+}
+
+fun delimiters() {
+consume/**/(/**/"value"/**/)
+this/**/.field
+}
+
+fun adjacent() {
+/*alpha*//**//*beta*/
+/****/
+/*****/
+/* **/
+/* ***/
+/* outer /* nested /** deeper */ nested */ outer */
+}
+
+fun consume(value: Any?) {}
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "CommentLexicalBoundaries" @ 6..30 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 31..32
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 33..36 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "field" @ 37..42 trailing=[BlockComment "/**/"]
+              PropertyInitializer
+                Assign "=" @ 46..47
+                LiteralExpression
+                  IntegerLiteral "0" @ 47..48
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 49..52 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "names" @ 53..58
+              Colon ":" @ 58..59 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "List" @ 60..64 trailing=[BlockComment "/**/"]
+                      TypeArgumentList
+                        Lt "<" @ 68..69
+                        TypeProjectionSeparatedList
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  Identifier "String" @ 69..75 trailing=[BlockComment "/**/"]
+                        Gt ">" @ 79..80 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 81..82 trailing=[Whitespace " "]
+                CallExpression
+                  NameExpression
+                    Identifier "emptyList" @ 83..92
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 92..93
+                    ValueArgumentEntryList
+                    RParen ")" @ 93..94
+                  LambdaExpressionList
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 96..99 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "operators" @ 100..109
+              ValueParameterList
+                LParen "(" @ 109..110
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierList
+                    Name
+                      Identifier "left" @ 110..114
+                    Colon ":" @ 114..115 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "Int" @ 116..119
+                  Comma "," @ 119..120
+                  ValueParameter
+                    ModifierList
+                    Name
+                      Identifier "right" @ 120..125
+                    Colon ":" @ 125..126 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "Int" @ 127..130
+                RParen ")" @ 130..131
+              Colon ":" @ 131..132 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "Int" @ 133..136 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 137..138
+                  BlockItemList
+                    PropertyDeclaration
+                      ModifierList
+                      ModifierList
+                      ValKw "val" @ 139..142 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      Name
+                        Identifier "plus" @ 143..147
+                      PropertyInitializer
+                        Assign "=" @ 147..148
+                        BinaryExpression
+                          NameExpression
+                            Identifier "left" @ 148..152
+                          Plus "+" @ 152..153 trailing=[BlockComment "/**/"]
+                          UnaryExpression
+                            Plus "+" @ 157..158
+                            NameExpression
+                              Identifier "right" @ 158..163
+                      PropertyBodyMemberList
+                    PropertyDeclaration
+                      ModifierList
+                      ModifierList
+                      ValKw "val" @ 164..167 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      Name
+                        Identifier "minus" @ 168..173
+                      PropertyInitializer
+                        Assign "=" @ 173..174
+                        BinaryExpression
+                          NameExpression
+                            Identifier "left" @ 174..178
+                          Minus "-" @ 178..179 trailing=[BlockComment "/**/"]
+                          UnaryExpression
+                            Minus "-" @ 183..184
+                            NameExpression
+                              Identifier "right" @ 184..189
+                      PropertyBodyMemberList
+                    Statement
+                      ExpressionStatement
+                        JumpExpression
+                          ReturnKw "return" @ 190..196 leading=[Newline "\n"] trailing=[BlockComment "/**/"]
+                          BinaryExpression
+                            NameExpression
+                              Identifier "plus" @ 200..204 trailing=[BlockComment "/**/"]
+                            Plus "+" @ 208..209 trailing=[BlockComment "/**/"]
+                            NameExpression
+                              Identifier "minus" @ 213..218
+                      TerminatorList
+                  RBrace "}" @ 219..220 leading=[Newline "\n"]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 222..225 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "delimiters" @ 226..236
+              ValueParameterList
+                LParen "(" @ 236..237
+                ValueParameterSeparatedList
+                RParen ")" @ 237..238 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 239..240
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "consume" @ 241..248 leading=[Newline "\n"] trailing=[BlockComment "/**/"]
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 252..253 trailing=[BlockComment "/**/"]
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 257..258
+                                    StringTemplateEntry
+                                      RegularStringPart "value" @ 258..263
+                                  ClosingQuote "\"" @ 263..264 trailing=[BlockComment "/**/"]
+                            RParen ")" @ 268..269
+                          LambdaExpressionList
+                      TerminatorList
+                    Statement
+                      ExpressionStatement
+                        NavigationExpression
+                          ThisExpression
+                            ThisKw "this" @ 270..274 leading=[Newline "\n"] trailing=[BlockComment "/**/"]
+                          Dot "." @ 278..279
+                          Identifier "field" @ 279..284
+                      TerminatorList
+                  RBrace "}" @ 285..286 leading=[Newline "\n"]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 288..291 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "adjacent" @ 292..300
+              ValueParameterList
+                LParen "(" @ 300..301
+                ValueParameterSeparatedList
+                RParen ")" @ 301..302 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 303..304
+                  BlockItemList
+                  RBrace "}" @ 409..410 leading=[Newline "\n", BlockComment "/*alpha*/", BlockComment "/**/", BlockComment "/*beta*/", Newline "\n", DocComment "/****/", Newline "\n", DocComment "/*****/", Newline "\n", BlockComment "/* **/", Newline "\n", BlockComment "/* ***/", Newline "\n", BlockComment "/* outer /* nested /** deeper */ nested */ outer */", Newline "\n"]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 412..415 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "consume" @ 416..423
+              ValueParameterList
+                LParen "(" @ 423..424
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierList
+                    Name
+                      Identifier "value" @ 424..429
+                    Colon ":" @ 429..430 trailing=[Whitespace " "]
+                    TypeReference
+                      NullableType
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              Identifier "Any" @ 431..434
+                        Question "?" @ 434..435
+                RParen ")" @ 435..436 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 437..438
+                  BlockItemList
+                  RBrace "}" @ 438..439
+        RBrace "}" @ 440..441 leading=[Newline "\n"]
+  Eof "" @ 441..441
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

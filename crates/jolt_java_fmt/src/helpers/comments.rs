@@ -413,13 +413,19 @@ pub(crate) fn format_comment<'source>(
     doc: &mut DocBuilder<'source>,
     comment: &JavaComment<'source>,
 ) -> Doc<'source> {
-    doc.source_trivia(comment.source_pieces(), |doc| match comment.kind() {
-        JavaCommentKind::Line => format_line_comment(doc, comment.text()),
-        JavaCommentKind::Block if is_star_block_comment(comment.text()) => {
-            format_star_block_comment(doc, comment.text(), "/*")
+    doc.source_trivia(comment.source_pieces(), |doc| {
+        if is_empty_single_line_block_comment(comment.text()) {
+            return format_block_comment(doc, comment.text());
         }
-        JavaCommentKind::Block => format_block_comment(doc, comment.text()),
-        JavaCommentKind::Doc => format_star_block_comment(doc, comment.text(), "/**"),
+
+        match comment.kind() {
+            JavaCommentKind::Line => format_line_comment(doc, comment.text()),
+            JavaCommentKind::Block if is_star_block_comment(comment.text()) => {
+                format_star_block_comment(doc, comment.text(), "/*")
+            }
+            JavaCommentKind::Block => format_block_comment(doc, comment.text()),
+            JavaCommentKind::Doc => format_star_block_comment(doc, comment.text(), "/**"),
+        }
     })
 }
 
@@ -471,7 +477,7 @@ fn format_block_comment<'source>(
     doc: &mut DocBuilder<'source>,
     comment: &'source str,
 ) -> Doc<'source> {
-    format_comment_lines(doc, preserved_comment_lines(comment))
+    format_comment_lines(doc, preserved_block_comment_lines(comment))
 }
 
 fn format_star_block_comment<'source>(
@@ -487,7 +493,7 @@ fn format_star_block_comment<'source>(
 
         let mut has_content = false;
         let mut pending_blank_lines = 0;
-        for line in content.lines().map(|line| {
+        for line in universal_comment_lines(content).map(|line| {
             if multiline {
                 normalize_star_block_body_line(line)
             } else {
@@ -528,35 +534,33 @@ fn preserved_comment_lines(comment: &str) -> impl Iterator<Item = &str> {
     comment.trim().lines().map(str::trim)
 }
 
+fn preserved_block_comment_lines(comment: &str) -> impl Iterator<Item = &str> {
+    universal_comment_lines(comment.trim()).map(str::trim)
+}
+
+fn universal_comment_lines(comment: &str) -> impl Iterator<Item = &str> {
+    comment
+        .split('\n')
+        .flat_map(|line| line.strip_suffix('\r').unwrap_or(line).split('\r'))
+}
+
 fn is_star_block_comment(comment: &str) -> bool {
-    let trimmed = comment.trim_start();
-    if trimmed.starts_with("/**") {
-        return true;
-    }
-
-    let Some(body) = trimmed.strip_prefix("/*") else {
-        return false;
-    };
-
-    body.lines()
-        .find(|line| !line.trim().is_empty())
-        .is_some_and(|line| line.trim_start().starts_with('*'))
+    let content = strip_block_comment_delimiters(comment);
+    let first_content_line = universal_comment_lines(content).find(|line| !line.trim().is_empty());
+    first_content_line.is_some_and(|line| line.trim_start().starts_with('*'))
+        || first_content_line.is_none() && content.contains(['\n', '\r'])
 }
 
 fn strip_block_comment_delimiters(comment: &str) -> &str {
-    comment
-        .trim()
-        .strip_prefix("/**")
-        .or_else(|| comment.trim().strip_prefix("/*"))
-        .unwrap_or(comment.trim())
-        .strip_suffix("*/")
-        .unwrap_or_else(|| {
-            comment
-                .trim()
-                .strip_prefix("/**")
-                .or_else(|| comment.trim().strip_prefix("/*"))
-                .unwrap_or(comment.trim())
-        })
+    let trimmed = comment.trim();
+    let body = trimmed.strip_suffix("*/").unwrap_or(trimmed);
+    body.strip_prefix("/**")
+        .or_else(|| body.strip_prefix("/*"))
+        .unwrap_or(body)
+}
+
+fn is_empty_single_line_block_comment(comment: &str) -> bool {
+    !comment.contains(['\n', '\r']) && strip_block_comment_delimiters(comment).trim().is_empty()
 }
 
 fn normalize_star_block_body_line(line: &str) -> &str {

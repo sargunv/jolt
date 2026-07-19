@@ -1,0 +1,83 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class MixedCommentLineEndings {
+// crlf line comment
+int crlf=1;// cr line commentint cr=2;
+// lf line comment
+int lf=3;
+/* block
+ * crlf * cr
+ * lf
+ */
+int block=4;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "MixedCommentLineEndings" @ 6..29 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 30..31
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 55..58 leading=[Newline "\r\n", LineComment "// crlf line comment", Newline "\r\n"] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "crlf" @ 59..63
+                Assign "=" @ 63..64
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "1" @ 64..65
+            Semicolon ";" @ 65..66
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 86..89 leading=[Newline "\r", LineComment "// cr line comment", Newline "\r"] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "cr" @ 90..92
+                Assign "=" @ 92..93
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "2" @ 93..94
+            Semicolon ";" @ 94..95
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 115..118 leading=[Newline "\n", LineComment "// lf line comment", Newline "\n"] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "lf" @ 119..121
+                Assign "=" @ 121..122
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "3" @ 122..123
+            Semicolon ";" @ 123..124
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 161..164 leading=[Newline "\r\n", BlockComment "/* block\r\n * crlf\r * cr\n * lf\n */", Newline "\r\n"] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "block" @ 165..170
+                Assign "=" @ 170..171
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "4" @ 171..172
+            Semicolon ";" @ 172..173
+        RBrace "}" @ 175..176 leading=[Newline "\r\n"]
+  Eof "" @ 178..178 leading=[Newline "\r\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

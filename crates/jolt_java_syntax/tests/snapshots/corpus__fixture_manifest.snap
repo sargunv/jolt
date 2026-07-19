@@ -5,6 +5,10 @@ expression: "fixture_manifest(&root, &paths)"
 properties/layout-fit-boundaries/expression-statement-assignment.java
 properties/layout-fit-boundaries/field-initializer.java
 properties/layout-fit-boundaries/return-statement-ternary.java
+style/comments/comment-shapes.java
+style/comments/content-shapes.java
+style/comments/lexical-boundaries.java
+style/comments/mixed-comment-line-endings.java
 style/comments/star-blocks.java
 style/compact-compilation-units/mixed-declarations-preserve-order.java
 style/compact-compilation-units/mixed-declarations-second-order.java
@@ -393,6 +397,7 @@ syntax/recovery/switch-rule-empty-body.java
 syntax/recovery/switch-statement-group.java
 syntax/recovery/top-level-empty-declaration-comments.java
 syntax/recovery/type-annotation-and-parameter-lists.java
+syntax/recovery/unterminated-comment.java
 syntax/recovery/wildcard-bounds-and-type-argument-annotations.java
 trivia/annotations-and-modifiers-crevices.java
 trivia/control-keyword-crevices.java

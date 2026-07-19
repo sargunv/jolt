@@ -1,0 +1,158 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class CommentContentShapes {
+// /* block markers */ /** doc markers */ ////
+/* // line marker and /// more */
+/** // line marker and [codeWithMarkers] */
+/* Καλημέρα 世界 café */
+//// repeated slash line
+
+/**
+* First paragraph.
+*
+** Deliberately doubled body star.
+*** Deliberately tripled body star.
+* @param value text with <T>, `//`, and * /.
+* @return value
+*/
+fun documented(value: Int): Int = value
+
+/*
+plain first line
+  unevenly indented second line
+	line beginning with a tab
+
+last line after a blank
+*/
+fun plainMultiline() {}
+
+val markers="/* not a comment */ // /**/"
+val rawMarkers="""/* still not a comment */ // /**/"""
+val unicode="Καλημέρα 世界"
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "CommentContentShapes" @ 6..26 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 27..28
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 376..379 leading=[Newline "\n", LineComment "// /* block markers */ /** doc markers */ ////", Newline "\n", BlockComment "/* // line marker and /// more */", Newline "\n", DocComment "/** // line marker and [codeWithMarkers] */", Newline "\n", BlockComment "/* Καλημέρα 世界 café */", Newline "\n", LineComment "//// repeated slash line", Newline "\n", Newline "\n", DocComment "/**\n* First paragraph.\n*\n** Deliberately doubled body star.\n*** Deliberately tripled body star.\n* @param value text with <T>, `//`, and * /.\n* @return value\n*/", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "documented" @ 380..390
+              ValueParameterList
+                LParen "(" @ 390..391
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierList
+                    Name
+                      Identifier "value" @ 391..396
+                    Colon ":" @ 396..397 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "Int" @ 398..401
+                RParen ")" @ 401..402
+              Colon ":" @ 402..403 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "Int" @ 404..407 trailing=[Whitespace " "]
+              ExpressionBody
+                Assign "=" @ 408..409 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "value" @ 410..415
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 524..527 leading=[Newline "\n", Newline "\n", BlockComment "/*\nplain first line\n  unevenly indented second line\n\tline beginning with a tab\n\nlast line after a blank\n*/", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "plainMultiline" @ 528..542
+              ValueParameterList
+                LParen "(" @ 542..543
+                ValueParameterSeparatedList
+                RParen ")" @ 543..544 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 545..546
+                  BlockItemList
+                  RBrace "}" @ 546..547
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 549..552 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "markers" @ 553..560
+              PropertyInitializer
+                Assign "=" @ 560..561
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 561..562
+                    StringTemplateEntry
+                      RegularStringPart "/* not a comment */ // /**/" @ 562..589
+                  ClosingQuote "\"" @ 589..590
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 591..594 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "rawMarkers" @ 595..605
+              PropertyInitializer
+                Assign "=" @ 605..606
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"\"\"" @ 606..609
+                    StringTemplateEntry
+                      RegularStringPart "/* still not a comment */ // /**/" @ 609..642
+                  ClosingQuote "\"\"\"" @ 642..645
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 646..649 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "unicode" @ 650..657
+              PropertyInitializer
+                Assign "=" @ 657..658
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 658..659
+                    StringTemplateEntry
+                      RegularStringPart "Καλημέρα 世界" @ 659..682
+                  ClosingQuote "\"" @ 682..683
+              PropertyBodyMemberList
+        RBrace "}" @ 684..685 leading=[Newline "\n"]
+  Eof "" @ 685..685
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

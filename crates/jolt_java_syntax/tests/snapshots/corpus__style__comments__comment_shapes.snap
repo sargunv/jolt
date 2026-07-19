@@ -1,0 +1,250 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+/**/
+class CommentShapes {
+/**/
+int field;
+
+void emptyBlocks() {
+/**/
+/***/
+/** */
+/* */
+/*
+*/
+/*
+ *
+ */
+/**
+ */
+/**
+ *
+ */
+}
+
+void adjacentBlocks() {
+/*alpha*//*beta*/
+int/**/first=1;
+int/***/second=2;
+int/* ***/third=3;
+}
+
+void delimiterComments() {
+call(/**/);
+call(/* */);
+}
+
+void lineComments() {
+//
+int value=1;
+}
+
+void singleEmptyBlock() { /**/ }
+
+void singleStarDoc() { /*****/ }
+
+void singleLine() { //
+}
+
+void call(Object... values) {}
+}//
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 5..10 leading=[BlockComment "/**/", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "CommentShapes" @ 11..24 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 25..26
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 32..35 leading=[Newline "\n", BlockComment "/**/", Newline "\n"] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "field" @ 36..41
+            Semicolon ";" @ 41..42
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 44..48 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "emptyBlocks" @ 49..60
+            LParen "(" @ 60..61
+            RParen ")" @ 61..62 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 63..64
+              BlockStatementList
+              RBrace "}" @ 124..125 leading=[Newline "\n", BlockComment "/**/", Newline "\n", DocComment "/***/", Newline "\n", DocComment "/** */", Newline "\n", BlockComment "/* */", Newline "\n", BlockComment "/*\n*/", Newline "\n", BlockComment "/*\n *\n */", Newline "\n", DocComment "/**\n */", Newline "\n", DocComment "/**\n *\n */", Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 127..131 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "adjacentBlocks" @ 132..146
+            LParen "(" @ 146..147
+            RParen ")" @ 147..148 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 149..150
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 169..172 leading=[Newline "\n", BlockComment "/*alpha*/", BlockComment "/*beta*/", Newline "\n"] trailing=[BlockComment "/**/"]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "first" @ 176..181
+                        Assign "=" @ 181..182
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "1" @ 182..183
+                  Semicolon ";" @ 183..184
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 185..188 leading=[Newline "\n"] trailing=[DocComment "/***/"]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "second" @ 193..199
+                        Assign "=" @ 199..200
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "2" @ 200..201
+                  Semicolon ";" @ 201..202
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 203..206 leading=[Newline "\n"] trailing=[BlockComment "/* ***/"]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "third" @ 213..218
+                        Assign "=" @ 218..219
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "3" @ 219..220
+                  Semicolon ";" @ 220..221
+              RBrace "}" @ 222..223 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 225..229 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "delimiterComments" @ 230..247
+            LParen "(" @ 247..248
+            RParen ")" @ 248..249 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 250..251
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "call" @ 252..256 leading=[Newline "\n"]
+                        ArgumentList
+                          LParen "(" @ 256..257 trailing=[BlockComment "/**/"]
+                          ExpressionList
+                          RParen ")" @ 261..262
+                    Semicolon ";" @ 262..263
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "call" @ 264..268 leading=[Newline "\n"]
+                        ArgumentList
+                          LParen "(" @ 268..269 trailing=[BlockComment "/* */"]
+                          ExpressionList
+                          RParen ")" @ 274..275
+                    Semicolon ";" @ 275..276
+              RBrace "}" @ 277..278 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 280..284 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "lineComments" @ 285..297
+            LParen "(" @ 297..298
+            RParen ")" @ 298..299 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 300..301
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 305..308 leading=[Newline "\n", LineComment "//", Newline "\n"] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "value" @ 309..314
+                        Assign "=" @ 314..315
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "1" @ 315..316
+                  Semicolon ";" @ 316..317
+              RBrace "}" @ 318..319 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 321..325 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "singleEmptyBlock" @ 326..342
+            LParen "(" @ 342..343
+            RParen ")" @ 343..344 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 345..346 trailing=[Whitespace " ", BlockComment "/**/", Whitespace " "]
+              BlockStatementList
+              RBrace "}" @ 352..353
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 355..359 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "singleStarDoc" @ 360..373
+            LParen "(" @ 373..374
+            RParen ")" @ 374..375 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 376..377 trailing=[Whitespace " ", DocComment "/*****/", Whitespace " "]
+              BlockStatementList
+              RBrace "}" @ 386..387
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 389..393 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "singleLine" @ 394..404
+            LParen "(" @ 404..405
+            RParen ")" @ 405..406 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 407..408 trailing=[Whitespace " ", LineComment "//"]
+              BlockStatementList
+              RBrace "}" @ 412..413 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 415..419 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "call" @ 420..424
+            LParen "(" @ 424..425
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 425..431
+                AnnotationList
+                Ellipsis "..." @ 431..434 trailing=[Whitespace " "]
+                Identifier "values" @ 435..441
+            RParen ")" @ 441..442 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 443..444
+              BlockStatementList
+              RBrace "}" @ 444..445
+        RBrace "}" @ 446..447 leading=[Newline "\n"] trailing=[LineComment "//"]
+  Eof "" @ 449..449
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

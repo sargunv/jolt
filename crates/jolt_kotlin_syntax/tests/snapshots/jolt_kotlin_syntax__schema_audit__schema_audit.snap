@@ -3,10 +3,10 @@ source: crates/jolt_kotlin_syntax/src/schema_audit.rs
 expression: audit.render()
 ---
 language = kotlin
-fixture_files = 253
-diagnostic_fixture_files = 69
-audited_nodes = 16805
-exact_valid_shapes = 16558
+fixture_files = 258
+diagnostic_fixture_files = 70
+audited_nodes = 17266
+exact_valid_shapes = 17019
 malformed_nodes = 190
 clean_missing_required_shapes = 0
 diagnostic_missing_required_shapes = 57

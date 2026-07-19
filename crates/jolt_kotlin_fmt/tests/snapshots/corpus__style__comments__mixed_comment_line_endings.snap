@@ -1,0 +1,22 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class MixedCommentLineEndings {
+  // crlf line comment
+  val crlf = 1
+
+  // lf line comment
+  val lf = 2
+
+  /* block
+  * crlf
+  * embedded cr
+  * lf
+  */
+  val block = 3
+}
+
+diagnostics:
+(none)

@@ -1,0 +1,325 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+/**/
+class CommentShapes {
+/**/
+val field=0
+
+fun emptyBlocks() {
+/**/
+/***/
+/** */
+/* */
+/*
+*/
+/*
+ *
+ */
+/**
+ */
+/**
+ *
+ */
+}
+
+fun adjacentBlocks() {
+/*alpha*//*beta*/
+val first/**/=1
+val second/***/=2
+val third/* ***/=3
+/* outer /* inner */ outer */
+}
+
+fun delimiterComments() {
+call(/**/)
+call(/* */)
+}
+
+fun lineComments() {
+//
+val value=1
+}
+
+fun singleEmptyBlock() { /**/ }
+
+fun singleStarDoc() { /*****/ }
+
+fun singleNestedBlock() { /* outer /* inner */ outer */ }
+
+fun singleLine() { //
+}
+
+fun call(vararg values: Any?) {}
+}//
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 5..10 leading=[BlockComment "/**/", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "CommentShapes" @ 11..24 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 25..26
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 32..35 leading=[Newline "\n", BlockComment "/**/", Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "field" @ 36..41
+              PropertyInitializer
+                Assign "=" @ 41..42
+                LiteralExpression
+                  IntegerLiteral "0" @ 42..43
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 45..48 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "emptyBlocks" @ 49..60
+              ValueParameterList
+                LParen "(" @ 60..61
+                ValueParameterSeparatedList
+                RParen ")" @ 61..62 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 63..64
+                  BlockItemList
+                  RBrace "}" @ 124..125 leading=[Newline "\n", BlockComment "/**/", Newline "\n", DocComment "/***/", Newline "\n", DocComment "/** */", Newline "\n", BlockComment "/* */", Newline "\n", BlockComment "/*\n*/", Newline "\n", BlockComment "/*\n *\n */", Newline "\n", DocComment "/**\n */", Newline "\n", DocComment "/**\n *\n */", Newline "\n"]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 127..130 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "adjacentBlocks" @ 131..145
+              ValueParameterList
+                LParen "(" @ 145..146
+                ValueParameterSeparatedList
+                RParen ")" @ 146..147 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 148..149
+                  BlockItemList
+                    PropertyDeclaration
+                      ModifierList
+                      ModifierList
+                      ValKw "val" @ 168..171 leading=[Newline "\n", BlockComment "/*alpha*/", BlockComment "/*beta*/", Newline "\n"] trailing=[Whitespace " "]
+                      Name
+                        Identifier "first" @ 172..177 trailing=[BlockComment "/**/"]
+                      PropertyInitializer
+                        Assign "=" @ 181..182
+                        LiteralExpression
+                          IntegerLiteral "1" @ 182..183
+                      PropertyBodyMemberList
+                    PropertyDeclaration
+                      ModifierList
+                      ModifierList
+                      ValKw "val" @ 184..187 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      Name
+                        Identifier "second" @ 188..194 trailing=[DocComment "/***/"]
+                      PropertyInitializer
+                        Assign "=" @ 199..200
+                        LiteralExpression
+                          IntegerLiteral "2" @ 200..201
+                      PropertyBodyMemberList
+                    PropertyDeclaration
+                      ModifierList
+                      ModifierList
+                      ValKw "val" @ 202..205 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      Name
+                        Identifier "third" @ 206..211 trailing=[BlockComment "/* ***/"]
+                      PropertyInitializer
+                        Assign "=" @ 218..219
+                        LiteralExpression
+                          IntegerLiteral "3" @ 219..220
+                      PropertyBodyMemberList
+                  RBrace "}" @ 251..252 leading=[Newline "\n", BlockComment "/* outer /* inner */ outer */", Newline "\n"]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 254..257 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "delimiterComments" @ 258..275
+              ValueParameterList
+                LParen "(" @ 275..276
+                ValueParameterSeparatedList
+                RParen ")" @ 276..277 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 278..279
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "call" @ 280..284 leading=[Newline "\n"]
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 284..285 trailing=[BlockComment "/**/"]
+                            ValueArgumentEntryList
+                            RParen ")" @ 289..290
+                          LambdaExpressionList
+                      TerminatorList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "call" @ 291..295 leading=[Newline "\n"]
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 295..296 trailing=[BlockComment "/* */"]
+                            ValueArgumentEntryList
+                            RParen ")" @ 301..302
+                          LambdaExpressionList
+                      TerminatorList
+                  RBrace "}" @ 303..304 leading=[Newline "\n"]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 306..309 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "lineComments" @ 310..322
+              ValueParameterList
+                LParen "(" @ 322..323
+                ValueParameterSeparatedList
+                RParen ")" @ 323..324 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 325..326
+                  BlockItemList
+                    PropertyDeclaration
+                      ModifierList
+                      ModifierList
+                      ValKw "val" @ 330..333 leading=[Newline "\n", LineComment "//", Newline "\n"] trailing=[Whitespace " "]
+                      Name
+                        Identifier "value" @ 334..339
+                      PropertyInitializer
+                        Assign "=" @ 339..340
+                        LiteralExpression
+                          IntegerLiteral "1" @ 340..341
+                      PropertyBodyMemberList
+                  RBrace "}" @ 342..343 leading=[Newline "\n"]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 345..348 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "singleEmptyBlock" @ 349..365
+              ValueParameterList
+                LParen "(" @ 365..366
+                ValueParameterSeparatedList
+                RParen ")" @ 366..367 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 368..369 trailing=[Whitespace " ", BlockComment "/**/", Whitespace " "]
+                  BlockItemList
+                  RBrace "}" @ 375..376
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 378..381 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "singleStarDoc" @ 382..395
+              ValueParameterList
+                LParen "(" @ 395..396
+                ValueParameterSeparatedList
+                RParen ")" @ 396..397 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 398..399 trailing=[Whitespace " ", DocComment "/*****/", Whitespace " "]
+                  BlockItemList
+                  RBrace "}" @ 408..409
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 411..414 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "singleNestedBlock" @ 415..432
+              ValueParameterList
+                LParen "(" @ 432..433
+                ValueParameterSeparatedList
+                RParen ")" @ 433..434 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 435..436 trailing=[Whitespace " ", BlockComment "/* outer /* inner */ outer */", Whitespace " "]
+                  BlockItemList
+                  RBrace "}" @ 467..468
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 470..473 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "singleLine" @ 474..484
+              ValueParameterList
+                LParen "(" @ 484..485
+                ValueParameterSeparatedList
+                RParen ")" @ 485..486 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 487..488 trailing=[Whitespace " ", LineComment "//"]
+                  BlockItemList
+                  RBrace "}" @ 492..493 leading=[Newline "\n"]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 495..498 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "call" @ 499..503
+              ValueParameterList
+                LParen "(" @ 503..504
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierList
+                      Identifier "vararg" @ 504..510 trailing=[Whitespace " "]
+                    Name
+                      Identifier "values" @ 511..517
+                    Colon ":" @ 517..518 trailing=[Whitespace " "]
+                    TypeReference
+                      NullableType
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              Identifier "Any" @ 519..522
+                        Question "?" @ 522..523
+                RParen ")" @ 523..524 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 525..526
+                  BlockItemList
+                  RBrace "}" @ 526..527
+        RBrace "}" @ 528..529 leading=[Newline "\n"] trailing=[LineComment "//"]
+  Eof "" @ 531..531
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

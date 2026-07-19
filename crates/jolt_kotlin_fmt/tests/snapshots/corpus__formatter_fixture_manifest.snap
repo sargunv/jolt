@@ -5,6 +5,10 @@ expression: "manifest_entries.join(\"\\n\")"
 format properties/layout-fit-boundaries/deep-call-chain.kt
 format properties/layout-fit-boundaries/long-when-result.kt
 format properties/layout-fit-boundaries/property-delegate.kt
+format style/comments/comment-shapes.kt
+format style/comments/content-shapes.kt
+format style/comments/lexical-boundaries.kt
+format style/comments/mixed-comment-line-endings.kt
 format style/declarations/annotations-and-modifiers.kt
 format style/declarations/class-header-clauses.kt
 format style/declarations/delegation.kt
@@ -232,6 +236,7 @@ audit syntax syntax/recovery/trailing-user-type-dot.kt
 audit syntax syntax/recovery/type-argument-list.kt
 audit syntax syntax/recovery/type-constraints.kt
 audit syntax syntax/recovery/type-parameter-list.kt
+audit syntax syntax/recovery/unterminated-nested-comment.kt
 audit syntax syntax/recovery/value-parameter-list.kt
 audit syntax syntax/recovery/when-condition-list.kt
 audit syntax syntax/recovery/when-missing-close.kt

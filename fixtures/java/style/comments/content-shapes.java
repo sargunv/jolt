@@ -1,0 +1,29 @@
+class CommentContentShapes {
+// /* block markers */ /** doc markers */ ////
+/* // line marker and /// more */
+/** // line marker and {@code /* spaced star-slash * /} */
+/* Καλημέρα 世界 café */
+//// repeated slash line
+
+/**
+* First paragraph.
+*
+** Deliberately doubled body star.
+*** Deliberately tripled body star.
+* @param value text with <T>, {@code //}, and * /.
+* @return value
+*/
+int documented(int value) { return value; }
+
+/*
+plain first line
+  unevenly indented second line
+	line beginning with a tab
+
+last line after a blank
+*/
+void plainMultiline() {}
+
+String markers="/* not a comment */ // /**/";
+String unicode="Καλημέρα 世界";
+}

@@ -1,0 +1,239 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class CommentLexicalBoundaries {
+int/**/field=0;
+java.util.List/**/<String/**/> names;
+
+int operators(int left,int right) {
+int plus=left+/**/+right;
+int minus=left-/**/-right;
+return/**/plus/**/+/**/minus;
+}
+
+void delimiters() {
+consume/**/(/**/"value"/**/);
+this/**/.field=1;
+}
+
+void adjacent() {
+/*alpha*//**//*beta*/
+/****/
+/*****/
+/*/*/
+/* **/
+/* ***/
+}
+
+void consume(Object value) {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "CommentLexicalBoundaries" @ 6..30 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 31..32
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 33..36 leading=[Newline "\n"] trailing=[BlockComment "/**/"]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "field" @ 40..45
+                Assign "=" @ 45..46
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "0" @ 46..47
+            Semicolon ";" @ 47..48
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  QualifiedName
+                    QualifiedNameSegmentNode
+                      AnnotationList
+                      Identifier "java" @ 49..53 leading=[Newline "\n"]
+                    Dot "." @ 53..54
+                    NameSegmentDotList
+                      QualifiedNameSegmentNode
+                        AnnotationList
+                        Identifier "util" @ 54..58
+                      Dot "." @ 58..59
+                      QualifiedNameSegmentNode
+                        AnnotationList
+                        Identifier "List" @ 59..63 trailing=[BlockComment "/**/"]
+                  TypeArgumentList
+                    Lt "<" @ 67..68
+                    TypeArgumentSeparatedList
+                      TypeArgument
+                        AnnotationList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 68..74 trailing=[BlockComment "/**/"]
+                    Gt ">" @ 78..79 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "names" @ 80..85
+            Semicolon ";" @ 85..86
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 88..91 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "operators" @ 92..101
+            LParen "(" @ 101..102
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 102..105 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "left" @ 106..110
+              Comma "," @ 110..111
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 111..114 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "right" @ 115..120
+            RParen ")" @ 120..121 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 122..123
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 124..127 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "plus" @ 128..132
+                        Assign "=" @ 132..133
+                        VariableInitializer
+                          BinaryExpression
+                            NameExpression
+                              Identifier "left" @ 133..137
+                            Plus "+" @ 137..138 trailing=[BlockComment "/**/"]
+                            UnaryExpression
+                              Plus "+" @ 142..143
+                              NameExpression
+                                Identifier "right" @ 143..148
+                  Semicolon ";" @ 148..149
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 150..153 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "minus" @ 154..159
+                        Assign "=" @ 159..160
+                        VariableInitializer
+                          BinaryExpression
+                            NameExpression
+                              Identifier "left" @ 160..164
+                            Minus "-" @ 164..165 trailing=[BlockComment "/**/"]
+                            UnaryExpression
+                              Minus "-" @ 169..170
+                              NameExpression
+                                Identifier "right" @ 170..175
+                  Semicolon ";" @ 175..176
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 177..183 leading=[Newline "\n"] trailing=[BlockComment "/**/"]
+                    BinaryExpression
+                      NameExpression
+                        Identifier "plus" @ 187..191 trailing=[BlockComment "/**/"]
+                      Plus "+" @ 195..196 trailing=[BlockComment "/**/"]
+                      NameExpression
+                        Identifier "minus" @ 200..205
+                    Semicolon ";" @ 205..206
+              RBrace "}" @ 207..208 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 210..214 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "delimiters" @ 215..225
+            LParen "(" @ 225..226
+            RParen ")" @ 226..227 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 228..229
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "consume" @ 230..237 leading=[Newline "\n"] trailing=[BlockComment "/**/"]
+                        ArgumentList
+                          LParen "(" @ 241..242 trailing=[BlockComment "/**/"]
+                          ExpressionList
+                            LiteralExpression
+                              StringLiteral "\"value\"" @ 246..253 trailing=[BlockComment "/**/"]
+                          RParen ")" @ 257..258
+                    Semicolon ";" @ 258..259
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      FieldAccessExpression
+                        ThisExpression
+                          ThisKw "this" @ 260..264 leading=[Newline "\n"] trailing=[BlockComment "/**/"]
+                        Dot "." @ 268..269
+                        Identifier "field" @ 269..274
+                      Assign "=" @ 274..275
+                      LiteralExpression
+                        IntegerLiteral "1" @ 275..276
+                    Semicolon ";" @ 276..277
+              RBrace "}" @ 278..279 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 281..285 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "adjacent" @ 286..294
+            LParen "(" @ 294..295
+            RParen ")" @ 295..296 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 297..298
+              BlockStatementList
+              RBrace "}" @ 357..358 leading=[Newline "\n", BlockComment "/*alpha*/", BlockComment "/**/", BlockComment "/*beta*/", Newline "\n", DocComment "/****/", Newline "\n", DocComment "/*****/", Newline "\n", BlockComment "/*/*/", Newline "\n", BlockComment "/* **/", Newline "\n", BlockComment "/* ***/", Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 360..364 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "consume" @ 365..372
+            LParen "(" @ 372..373
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 373..379 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 380..385
+            RParen ")" @ 385..386 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 387..388
+              BlockStatementList
+              RBrace "}" @ 388..389
+        RBrace "}" @ 390..391 leading=[Newline "\n"]
+  Eof "" @ 391..391
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

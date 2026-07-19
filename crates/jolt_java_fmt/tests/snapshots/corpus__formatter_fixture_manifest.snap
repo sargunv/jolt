@@ -5,6 +5,10 @@ expression: "manifest_entries.join(\"\\n\")"
 format properties/layout-fit-boundaries/expression-statement-assignment.java
 format properties/layout-fit-boundaries/field-initializer.java
 format properties/layout-fit-boundaries/return-statement-ternary.java
+format style/comments/comment-shapes.java
+format style/comments/content-shapes.java
+format style/comments/lexical-boundaries.java
+format style/comments/mixed-comment-line-endings.java
 format style/comments/star-blocks.java
 format style/compact-compilation-units/mixed-declarations-preserve-order.java
 format style/compact-compilation-units/mixed-declarations-second-order.java
@@ -393,6 +397,7 @@ audit syntax syntax/recovery/switch-rule-empty-body.java
 audit syntax syntax/recovery/switch-statement-group.java
 audit syntax syntax/recovery/top-level-empty-declaration-comments.java
 audit syntax syntax/recovery/type-annotation-and-parameter-lists.java
+audit syntax syntax/recovery/unterminated-comment.java
 audit syntax syntax/recovery/wildcard-bounds-and-type-argument-annotations.java
 format trivia/annotations-and-modifiers-crevices.java
 format trivia/control-keyword-crevices.java

@@ -1,0 +1,24 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class UnterminatedNestedComment {
+fun complete() { val value=1 }
+}
+/* outer unterminated
+ * before nested /* nested closes */
+ * outer remains open
+
+formatted:
+class UnterminatedNestedComment {
+  fun complete() {
+    val value = 1
+  }
+}
+/* outer unterminated
+* before nested /* nested closes */
+* outer remains open
+
+diagnostics:
+code=kotlin.lex.unterminated_block_comment severity=Error stage=Lexer range=Some(TextRange { start: TextSize(67), end: TextSize(148) }) message=unterminated block comment

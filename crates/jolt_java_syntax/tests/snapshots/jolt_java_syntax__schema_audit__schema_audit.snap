@@ -3,10 +3,10 @@ source: crates/jolt_java_syntax/src/schema_audit.rs
 expression: audit.render()
 ---
 language = java
-fixture_files = 410
-diagnostic_fixture_files = 158
-audited_nodes = 25056
-exact_valid_shapes = 24711
+fixture_files = 415
+diagnostic_fixture_files = 159
+audited_nodes = 25367
+exact_valid_shapes = 25022
 malformed_nodes = 235
 clean_missing_required_shapes = 0
 diagnostic_missing_required_shapes = 110

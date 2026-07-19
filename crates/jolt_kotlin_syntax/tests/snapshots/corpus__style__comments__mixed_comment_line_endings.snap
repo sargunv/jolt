@@ -1,0 +1,75 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class MixedCommentLineEndings {
+// crlf line comment
+val crlf=1
+// lf line comment
+val lf=2
+/* block
+ * crlf * embedded cr
+ * lf
+ */
+val block=3
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "MixedCommentLineEndings" @ 6..29 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 30..31
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 55..58 leading=[Newline "\r\n", LineComment "// crlf line comment\r", Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "crlf" @ 59..63
+              PropertyInitializer
+                Assign "=" @ 63..64
+                LiteralExpression
+                  IntegerLiteral "1" @ 64..65
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 85..88 leading=[Newline "\n", LineComment "// lf line comment", Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "lf" @ 89..91
+              PropertyInitializer
+                Assign "=" @ 91..92
+                LiteralExpression
+                  IntegerLiteral "2" @ 92..93
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 139..142 leading=[Newline "\r\n", BlockComment "/* block\r\n * crlf\r * embedded cr\n * lf\n */", Newline "\r\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "block" @ 143..148
+              PropertyInitializer
+                Assign "=" @ 148..149
+                LiteralExpression
+                  IntegerLiteral "3" @ 149..150
+              PropertyBodyMemberList
+        RBrace "}" @ 152..153 leading=[Newline "\r\n"]
+  Eof "" @ 155..155 leading=[Newline "\r\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -8,7 +8,7 @@ use jolt_java_syntax::{
 
 use crate::helpers::comments::{
     comments_from_tokens, format_comment, format_ignored_trivia, format_token_removal,
-    format_token_with_comments, has_removed_comments,
+    format_token_with_comments, has_removed_comments, trailing_comments_force_line,
 };
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRun, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
@@ -87,6 +87,11 @@ pub(crate) fn format_compilation_unit<'source>(
         )
     };
     let has_source_contents = unit.token_iter().any(|token| !token.text().is_empty());
+    let last_source_token_forces_line = unit
+        .token_iter()
+        .filter(|token| !token.text().is_empty())
+        .last()
+        .is_some_and(|token| trailing_comments_force_line(&token));
     let eof = format_required_field(unit.eof(), doc, |token, doc| {
         let comments = doc.concat_list(|comments| {
             let mut emitted_comment = false;
@@ -107,7 +112,9 @@ pub(crate) fn format_compilation_unit<'source>(
                 emitted_comment = true;
             }
         });
-        let line = if unit.is_recovery_free() || token.has_leading_line_break() {
+        let line = if last_source_token_forces_line {
+            Doc::nil()
+        } else if unit.is_recovery_free() || token.has_leading_line_break() {
             doc.hard_line()
         } else {
             Doc::nil()

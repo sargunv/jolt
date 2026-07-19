@@ -27,7 +27,7 @@ pub(crate) fn format_block<'source>(
 ) -> Doc<'source> {
     let open = resolve_required_delimiter(block.open_brace(), doc);
     let close = resolve_required_delimiter(block.close_brace(), doc);
-    let contents = format_block_contents(doc, block, close.source());
+    let contents = format_block_contents(doc, block, open.source(), close.source());
     format_braced_body(doc, open, close, contents.doc, contents.empty)
 }
 
@@ -39,6 +39,7 @@ struct BlockContents<'source> {
 fn format_block_contents<'source>(
     doc: &mut DocBuilder<'source>,
     block: &Block<'source>,
+    open: Option<&KotlinSyntaxToken<'source>>,
     close: Option<&KotlinSyntaxToken<'source>>,
 ) -> BlockContents<'source> {
     let items = match resolve_required_field(block.items(), doc) {
@@ -62,6 +63,9 @@ fn format_block_contents<'source>(
     } else {
         block_body_parts_with_ignored(doc, block, &parts, &ignored_ranges)
     };
+    if let Some(comments) = format_open_dangling_comments(doc, open) {
+        body_items.insert(0, BodyItem::new(comments, BodyItemSeparator::Line));
+    }
     if let Some(comments) = format_close_dangling_comments(doc, close) {
         body_items.push(BodyItem::new(comments, BodyItemSeparator::Line));
     }
@@ -70,6 +74,14 @@ fn format_block_contents<'source>(
         empty,
         doc: (!body_items.is_empty()).then(|| join_body_items(doc, body_items)),
     }
+}
+
+fn format_open_dangling_comments<'source>(
+    doc: &mut DocBuilder<'source>,
+    open: Option<&KotlinSyntaxToken<'source>>,
+) -> Option<Doc<'source>> {
+    let comments = open?.trailing_comments().collect::<Vec<_>>();
+    (!comments.is_empty()).then(|| format_dangling_comments(doc, comments))
 }
 
 fn format_close_dangling_comments<'source>(
@@ -307,7 +319,12 @@ fn format_braced_body<'source>(
     empty: bool,
 ) -> Doc<'source> {
     let has_close = close.source().is_some();
-    let open = format_delimiter(doc, open, LeadingTrivia::Preserve, TrailingTrivia::Preserve);
+    let open = format_delimiter(
+        doc,
+        open,
+        LeadingTrivia::Preserve,
+        TrailingTrivia::RelocatedToEnclosingContext,
+    );
     if empty {
         let close = format_delimiter(
             doc,

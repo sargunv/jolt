@@ -1,0 +1,22 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class UnterminatedComment {
+void complete() { int value=1; }
+}
+/* unterminated block
+ * with a star body
+
+formatted:
+class UnterminatedComment {
+  void complete() {
+    int value = 1;
+  }
+}
+/* unterminated block
+* with a star body
+
+diagnostics:
+code=java.lex.unterminated_block_comment severity=Error stage=Lexer range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=unterminated block comment

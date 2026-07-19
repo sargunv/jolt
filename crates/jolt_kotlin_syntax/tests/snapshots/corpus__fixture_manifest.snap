@@ -5,6 +5,10 @@ expression: "fixture_manifest(&root, &paths)"
 properties/layout-fit-boundaries/deep-call-chain.kt
 properties/layout-fit-boundaries/long-when-result.kt
 properties/layout-fit-boundaries/property-delegate.kt
+style/comments/comment-shapes.kt
+style/comments/content-shapes.kt
+style/comments/lexical-boundaries.kt
+style/comments/mixed-comment-line-endings.kt
 style/declarations/annotations-and-modifiers.kt
 style/declarations/class-header-clauses.kt
 style/declarations/delegation.kt
@@ -232,6 +236,7 @@ syntax/recovery/trailing-user-type-dot.kt
 syntax/recovery/type-argument-list.kt
 syntax/recovery/type-constraints.kt
 syntax/recovery/type-parameter-list.kt
+syntax/recovery/unterminated-nested-comment.kt
 syntax/recovery/value-parameter-list.kt
 syntax/recovery/when-condition-list.kt
 syntax/recovery/when-missing-close.kt

@@ -1,0 +1,26 @@
+class CommentLexicalBoundaries {
+val field/**/=0
+val names: List/**/<String/**/> = emptyList()
+
+fun operators(left: Int,right: Int): Int {
+val plus=left+/**/+right
+val minus=left-/**/-right
+return/**/plus/**/+/**/minus
+}
+
+fun delimiters() {
+consume/**/(/**/"value"/**/)
+this/**/.field
+}
+
+fun adjacent() {
+/*alpha*//**//*beta*/
+/****/
+/*****/
+/* **/
+/* ***/
+/* outer /* nested /** deeper */ nested */ outer */
+}
+
+fun consume(value: Any?) {}
+}

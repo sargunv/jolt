@@ -320,11 +320,20 @@ pub(crate) fn format_comment<'source>(
     doc: &mut DocBuilder<'source>,
     comment: &KotlinComment<'source>,
 ) -> Doc<'source> {
-    doc.source_trivia(comment.source_pieces(), |doc| match comment.kind() {
-        KotlinCommentKind::Line | KotlinCommentKind::Block => {
-            format_comment_lines(doc, preserved_comment_lines(comment.text()))
+    doc.source_trivia(comment.source_pieces(), |doc| {
+        if is_empty_single_line_block_comment(comment.text()) {
+            return format_comment_lines(doc, preserved_comment_lines(comment.text()));
         }
-        KotlinCommentKind::Doc => format_star_block_comment(doc, comment.text()),
+
+        match comment.kind() {
+            KotlinCommentKind::Line => {
+                format_comment_lines(doc, preserved_comment_lines(comment.text()))
+            }
+            KotlinCommentKind::Block => {
+                format_comment_lines(doc, preserved_block_comment_lines(comment.text()))
+            }
+            KotlinCommentKind::Doc => format_star_block_comment(doc, comment.text()),
+        }
     })
 }
 
@@ -362,14 +371,21 @@ fn format_star_block_comment<'source>(
     doc: &mut DocBuilder<'source>,
     comment: &'source str,
 ) -> Doc<'source> {
-    let content = strip_block_comment_delimiters(doc, comment);
+    let content = strip_block_comment_delimiters(comment);
+    let multiline = content.contains(['\n', '\r']);
     doc.concat_list(|docs| {
         let open = docs.literal_text("/**");
         docs.push(open);
 
         let mut has_content = false;
         let mut pending_blank_lines = 0;
-        for line in content.lines().map(normalize_star_block_body_line) {
+        for line in universal_comment_lines(content).map(|line| {
+            if multiline {
+                normalize_star_block_body_line(line)
+            } else {
+                line.trim()
+            }
+        }) {
             if line.is_empty() {
                 if has_content {
                     pending_blank_lines += 1;
@@ -406,23 +422,26 @@ fn preserved_comment_lines(comment: &str) -> impl Iterator<Item = &str> {
     comment.trim().lines().map(str::trim)
 }
 
-fn strip_block_comment_delimiters<'source>(
-    _doc: &mut DocBuilder<'_>,
-    comment: &'source str,
-) -> &'source str {
+fn preserved_block_comment_lines(comment: &str) -> impl Iterator<Item = &str> {
+    universal_comment_lines(comment.trim()).map(str::trim)
+}
+
+fn universal_comment_lines(comment: &str) -> impl Iterator<Item = &str> {
     comment
-        .trim()
-        .strip_prefix("/**")
-        .or_else(|| comment.trim().strip_prefix("/*"))
-        .unwrap_or(comment.trim())
-        .strip_suffix("*/")
-        .unwrap_or_else(|| {
-            comment
-                .trim()
-                .strip_prefix("/**")
-                .or_else(|| comment.trim().strip_prefix("/*"))
-                .unwrap_or(comment.trim())
-        })
+        .split('\n')
+        .flat_map(|line| line.strip_suffix('\r').unwrap_or(line).split('\r'))
+}
+
+fn strip_block_comment_delimiters(comment: &str) -> &str {
+    let trimmed = comment.trim();
+    let body = trimmed.strip_suffix("*/").unwrap_or(trimmed);
+    body.strip_prefix("/**")
+        .or_else(|| body.strip_prefix("/*"))
+        .unwrap_or(body)
+}
+
+fn is_empty_single_line_block_comment(comment: &str) -> bool {
+    !comment.contains(['\n', '\r']) && strip_block_comment_delimiters(comment).trim().is_empty()
 }
 
 fn normalize_star_block_body_line(line: &str) -> &str {

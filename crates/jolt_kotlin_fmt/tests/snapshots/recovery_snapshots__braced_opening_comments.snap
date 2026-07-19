@@ -11,7 +11,8 @@ class BracedOpeningComments { /* JOLT-TRIVIA:class-open */
 
 formatted:
 class BracedOpeningComments { /* JOLT-TRIVIA:class-open */
-  fun block() { /* JOLT-TRIVIA:block-open */
+  fun block() {
+    /* JOLT-TRIVIA:block-open */
     println("body")
   }
 }

@@ -1,0 +1,53 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class UnterminatedComment {
+void complete() { int value=1; }
+}
+/* unterminated block
+ * with a star body
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "UnterminatedComment" @ 6..25 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 26..27
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 28..32 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "complete" @ 33..41
+            LParen "(" @ 41..42
+            RParen ")" @ 42..43 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 44..45 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 46..49 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "value" @ 50..55
+                        Assign "=" @ 55..56
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "1" @ 56..57
+                  Semicolon ";" @ 57..58 trailing=[Whitespace " "]
+              RBrace "}" @ 59..60
+        RBrace "}" @ 61..62 leading=[Newline "\n"]
+  Eof "" @ 105..105 leading=[Newline "\n", BlockComment "/* unterminated block\n * with a star body\n"]
+
+diagnostics:
+  code=java.lex.unterminated_block_comment severity=Error stage=Lexer range=63..64 message="unterminated block comment"
+
+diagnostics:
+code=java.lex.unterminated_block_comment severity=Error stage=Lexer range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=unterminated block comment

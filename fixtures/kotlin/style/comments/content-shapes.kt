@@ -1,0 +1,30 @@
+class CommentContentShapes {
+// /* block markers */ /** doc markers */ ////
+/* // line marker and /// more */
+/** // line marker and [codeWithMarkers] */
+/* Καλημέρα 世界 café */
+//// repeated slash line
+
+/**
+* First paragraph.
+*
+** Deliberately doubled body star.
+*** Deliberately tripled body star.
+* @param value text with <T>, `//`, and * /.
+* @return value
+*/
+fun documented(value: Int): Int = value
+
+/*
+plain first line
+  unevenly indented second line
+	line beginning with a tab
+
+last line after a blank
+*/
+fun plainMultiline() {}
+
+val markers="/* not a comment */ // /**/"
+val rawMarkers="""/* still not a comment */ // /**/"""
+val unicode="Καλημέρα 世界"
+}

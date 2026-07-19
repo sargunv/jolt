@@ -1,0 +1,118 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class CommentContentShapes {
+// /* block markers */ /** doc markers */ ////
+/* // line marker and /// more */
+/** // line marker and {@code /* spaced star-slash * /} */
+/* Καλημέρα 世界 café */
+//// repeated slash line
+
+/**
+* First paragraph.
+*
+** Deliberately doubled body star.
+*** Deliberately tripled body star.
+* @param value text with <T>, {@code //}, and * /.
+* @return value
+*/
+int documented(int value) { return value; }
+
+/*
+plain first line
+  unevenly indented second line
+	line beginning with a tab
+
+last line after a blank
+*/
+void plainMultiline() {}
+
+String markers="/* not a comment */ // /**/";
+String unicode="Καλημέρα 世界";
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "CommentContentShapes" @ 6..26 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 27..28
+        ClassBodyMemberList
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 397..400 leading=[Newline "\n", LineComment "// /* block markers */ /** doc markers */ ////", Newline "\n", BlockComment "/* // line marker and /// more */", Newline "\n", DocComment "/** // line marker and {@code /* spaced star-slash * /} */", Newline "\n", BlockComment "/* Καλημέρα 世界 café */", Newline "\n", LineComment "//// repeated slash line", Newline "\n", Newline "\n", DocComment "/**\n* First paragraph.\n*\n** Deliberately doubled body star.\n*** Deliberately tripled body star.\n* @param value text with <T>, {@code //}, and * /.\n* @return value\n*/", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "documented" @ 401..411
+            LParen "(" @ 411..412
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 412..415 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 416..421
+            RParen ")" @ 421..422 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 423..424 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 425..431 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "value" @ 432..437
+                    Semicolon ";" @ 437..438 trailing=[Whitespace " "]
+              RBrace "}" @ 439..440
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 549..553 leading=[Newline "\n", Newline "\n", BlockComment "/*\nplain first line\n  unevenly indented second line\n\tline beginning with a tab\n\nlast line after a blank\n*/", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "plainMultiline" @ 554..568
+            LParen "(" @ 568..569
+            RParen ")" @ 569..570 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 571..572
+              BlockStatementList
+              RBrace "}" @ 572..573
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "String" @ 575..581 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "markers" @ 582..589
+                Assign "=" @ 589..590
+                VariableInitializer
+                  LiteralExpression
+                    StringLiteral "\"/* not a comment */ // /**/\"" @ 590..619
+            Semicolon ";" @ 619..620
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "String" @ 621..627 leading=[Newline "\n"] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "unicode" @ 628..635
+                Assign "=" @ 635..636
+                VariableInitializer
+                  LiteralExpression
+                    StringLiteral "\"Καλημέρα 世界\"" @ 636..661
+            Semicolon ";" @ 661..662
+        RBrace "}" @ 663..664 leading=[Newline "\n"]
+  Eof "" @ 664..664
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
