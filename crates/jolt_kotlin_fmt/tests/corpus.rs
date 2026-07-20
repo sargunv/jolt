@@ -21,12 +21,23 @@ fn kotlin_corpus_formatter_snapshots() {
             .replace('\\', "/");
         let source = read_to_string(&path);
         let parse = parse_kotlin_file(&source);
-        if parse.syntax().is_none() {
-            continue;
-        }
+        assert!(
+            parse.syntax().is_some(),
+            "Kotlin formatter corpus fixture produced no represented tree: {}",
+            path.display()
+        );
         let dedicated_audit =
             relative.starts_with("syntax/lexer") || relative.starts_with("syntax/recovery");
-        let audit_only = dedicated_audit || !parse.diagnostics().is_empty();
+        let expected_parser_diagnostics = expects_parser_diagnostics(&relative);
+        if !dedicated_audit {
+            assert_eq!(
+                !parse.diagnostics().is_empty(),
+                expected_parser_diagnostics,
+                "Kotlin formatter corpus route changed for {relative}: diagnostics={:#?}",
+                parse.diagnostics()
+            );
+        }
+        let audit_only = dedicated_audit || expected_parser_diagnostics;
         if audit_only {
             if let Some(failure) = audit_diagnostic_source(&source, options, &relative) {
                 conservation_failures.push(failure);
@@ -97,6 +108,15 @@ fn kotlin_corpus_formatter_snapshots() {
         "formatter lost represented Kotlin source:\n{}",
         conservation_failures.join("\n")
     );
+}
+
+fn expects_parser_diagnostics(relative: &str) -> bool {
+    let Some(name) = relative.strip_prefix("syntax/parser/") else {
+        return false;
+    };
+    name.starts_with("diagnoses-")
+        || name.starts_with("recovers-")
+        || name == "parses-destructuring-square-preview.kt"
 }
 
 fn audit_diagnostic_source(source: &str, options: FormatOptions, label: &str) -> Option<String> {

@@ -42,12 +42,23 @@ fn java_corpus_formatter_snapshots() {
             .replace('\\', "/");
         let source = read_to_string(&path);
         let parse = parse_compilation_unit(&source);
-        if parse.syntax().is_none() {
-            continue;
-        }
+        assert!(
+            parse.syntax().is_some(),
+            "Java formatter corpus fixture produced no represented tree: {}",
+            path.display()
+        );
         let dedicated_audit =
             relative.starts_with("syntax/lexer") || relative.starts_with("syntax/recovery");
-        let audit_only = dedicated_audit || !parse.diagnostics().is_empty();
+        let expected_parser_diagnostics = expects_parser_diagnostics(&relative);
+        if !dedicated_audit {
+            assert_eq!(
+                !parse.diagnostics().is_empty(),
+                expected_parser_diagnostics,
+                "Java formatter corpus route changed for {relative}: diagnostics={:#?}",
+                parse.diagnostics()
+            );
+        }
+        let audit_only = dedicated_audit || expected_parser_diagnostics;
         if audit_only {
             if let Some(failure) = audit_diagnostic_source(&source, options, &relative) {
                 conservation_failures.push(failure);
@@ -118,6 +129,15 @@ fn java_corpus_formatter_snapshots() {
         "formatter lost represented Java source:\n{}",
         conservation_failures.join("\n")
     );
+}
+
+fn expects_parser_diagnostics(relative: &str) -> bool {
+    let Some(name) = relative.strip_prefix("syntax/parser/") else {
+        return false;
+    };
+    name.starts_with("diagnoses-")
+        || name.starts_with("recovers-")
+        || name == "disambiguates-when-in-switch-labels--invalid-guard.java"
 }
 
 fn allowed_clean_removals(relative: &str) -> &'static [RepresentedTokenRemoval] {
