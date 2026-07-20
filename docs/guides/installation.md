@@ -28,8 +28,7 @@ Pick an install method:
 macOS and Linux:
 
 ```sh
-curl --proto '=https' --tlsv1.2 -LsSf \
-  https://github.com/sargunv/jolt/releases/latest/download/jolt_cli-installer.sh | sh
+curl -fsSL https://sargunv.github.io/jolt/install.sh | sh
 ```
 
 Windows:

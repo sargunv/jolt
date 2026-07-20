@@ -36,7 +36,9 @@ configure Jolt through dprint, then use dprint's editor support.
 
 Install the dprint extension and use settings like:
 
-```json
+::: code-group
+
+```json [.vscode/settings.json]
 {
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "dprint.dprint",
@@ -44,12 +46,16 @@ Install the dprint extension and use settings like:
 }
 ```
 
+:::
+
 ### Zed
 
 Zed supports external formatters per language. Configure jolt as the formatter
 for Java and Kotlin in `.zed/settings.json` or your user `settings.json`:
 
-```json
+::: code-group
+
+```json [.zed/settings.json]
 {
   "languages": {
     "Java": {
@@ -73,10 +79,14 @@ for Java and Kotlin in `.zed/settings.json` or your user `settings.json`:
   }
 }
 ```
+
+:::
 
 Or configure both languages with dprint:
 
-```json
+::: code-group
+
+```json [.zed/settings.json]
 {
   "languages": {
     "Java": {
@@ -100,6 +110,8 @@ Or configure both languages with dprint:
   }
 }
 ```
+
+:::
 
 ### IntelliJ IDEA
 
@@ -119,7 +131,9 @@ then:
 
 [hk](https://github.com/jdx/hk) can define separate check and fix commands.
 
-```text
+::: code-group
+
+```text [hk.pkl]
 amends "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Config.pkl"
 
 local lintSteps = new Mapping<String, Step> {
@@ -142,6 +156,8 @@ hooks {
 }
 ```
 
+:::
+
 Install the hook once:
 
 ```sh
@@ -162,7 +178,9 @@ With the [pre-commit](https://pre-commit.com) framework, define a local hook in
 
 Native CLI:
 
-```yaml
+::: code-group
+
+```yaml [.pre-commit-config.yaml]
 repos:
   - repo: local
     hooks:
@@ -172,6 +190,8 @@ repos:
         language: unsupported
         files: \.(java|kt|kts)$
 ```
+
+:::
 
 Install the hook once:
 

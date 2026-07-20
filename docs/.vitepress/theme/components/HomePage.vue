@@ -2,6 +2,7 @@
 import { defineAsyncComponent } from "vue";
 import FitOrBreakHero from "./FitOrBreakHero.vue";
 import BenchStrip from "./BenchStrip.vue";
+import CodeFrame from "./CodeFrame.vue";
 
 const JoltPlayground = defineAsyncComponent(
   () => import("./JoltPlayground.vue"),
@@ -49,9 +50,9 @@ const MANUAL = [
       </p>
       <h1 class="home-title">Jolt<span class="jz-caret" /></h1>
       <p class="home-lede">
-        Jolt is a formatter for Java and Kotlin, shipped as a static native
-        CLI and a dprint plugin. This page runs the same engine as WebAssembly
-        in your browser.
+        Jolt is a formatter for Java and Kotlin, shipped as a static native CLI
+        and a dprint plugin. This page runs the same engine as WebAssembly in
+        your browser.
       </p>
       <p class="home-links">
         <a href="#playground">Playground ↓</a>
@@ -63,11 +64,10 @@ const MANUAL = [
 
     <section id="install" class="home-section">
       <h2 class="home-h2">Install</h2>
-      <div class="term">
-        <pre><span class="term-p">$ </span>curl --proto '=https' --tlsv1.2 -LsSf \
-    https://github.com/sargunv/jolt/releases/latest/download/jolt_cli-installer.sh | sh
+      <CodeFrame variant="terminal" class="home-window term">
+        <pre><span class="term-p">$ </span>curl -fsSL https://sargunv.github.io/jolt/install.sh | sh
 <span class="term-p">$ </span>jolt fmt .</pre>
-      </div>
+      </CodeFrame>
       <p class="home-more">
         <a href="/guides/installation"
           >eget, mise, dprint, Windows, manual download →</a
@@ -77,7 +77,7 @@ const MANUAL = [
 
     <section id="benchmark" class="home-section">
       <h2 class="home-h2">Benchmark</h2>
-      <BenchStrip />
+      <BenchStrip class="home-window" />
       <p class="home-more">
         <a href="/guides/what-is-jolt">More about the approach →</a>
       </p>
@@ -234,16 +234,13 @@ const MANUAL = [
 
 /* Terminal ------------------------------------------------------------ */
 
-.term {
-  border: 1px solid var(--jz-line);
-  background: var(--jz-panel);
-  padding: 16px 20px;
-  margin-bottom: 22px;
-  overflow-x: auto;
+.home-section > .home-window {
+  margin: 0 0 22px;
 }
 
 .term pre {
   margin: 0;
+  padding: 16px 20px;
   font-family: var(--jz-font-mono);
   font-size: 12.5px;
   line-height: 1.8;

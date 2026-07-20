@@ -398,6 +398,252 @@ body {
 /* Inline code and code blocks                                         */
 /* ------------------------------------------------------------------ */
 
+/* Shared window chrome, based on Expressive Code's editor and terminal
+ * frames. The homepage components and Markdown blocks use the same shell. */
+.code-frame {
+  margin: 0;
+  max-width: 100%;
+  color: var(--jz-ink);
+  font-family: var(--jz-font-mono);
+  border-radius: 4px;
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--jz-ink) 7%, transparent);
+}
+
+.code-frame-header {
+  position: relative;
+  display: flex;
+  min-height: 34px;
+  margin: 0;
+  color: var(--jz-ink-2);
+  background: var(--jz-panel-inset);
+  border: 1px solid var(--jz-line-strong);
+  border-bottom-color: var(--jz-line);
+  border-radius: 4px 4px 0 0;
+}
+
+.code-frame-body {
+  position: relative;
+  background: var(--jz-panel);
+  border: 1px solid var(--jz-line-strong);
+  border-top: 0;
+  border-radius: 0 0 4px 4px;
+  overflow: hidden;
+}
+
+.code-frame--code .code-frame-header {
+  align-items: flex-end;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.code-frame--code .code-frame-header::-webkit-scrollbar {
+  display: none;
+}
+
+.code-frame--terminal .code-frame-header {
+  align-items: center;
+  justify-content: center;
+  padding: 0 52px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.code-frame--terminal .code-frame-header::before,
+.vp-doc
+  div[class*="language-"]:is(
+    .language-ansi,
+    .language-bash,
+    .language-bat,
+    .language-cmd,
+    .language-console,
+    .language-powershell,
+    .language-ps1,
+    .language-sh,
+    .language-shell,
+    .language-shellsession,
+    .language-zsh
+  )::before {
+  position: absolute;
+  left: 14px;
+  width: 32px;
+  height: 8px;
+  color: var(--jz-ink-3);
+  background:
+    radial-gradient(circle at 4px 4px, currentcolor 0 3px, transparent 3.25px),
+    radial-gradient(circle at 16px 4px, currentcolor 0 3px, transparent 3.25px),
+    radial-gradient(circle at 28px 4px, currentcolor 0 3px, transparent 3.25px);
+  content: "";
+  opacity: 0.72;
+}
+
+.code-frame--terminal .code-frame-body {
+  overflow-x: auto;
+}
+
+.code-frame-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.code-frame-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Shell-language fences are terminal sessions unless an author explicitly
+ * turns them into a titled code group. */
+.vp-doc
+  div[class*="language-"]:is(
+    .language-ansi,
+    .language-bash,
+    .language-bat,
+    .language-cmd,
+    .language-console,
+    .language-powershell,
+    .language-ps1,
+    .language-sh,
+    .language-shell,
+    .language-shellsession,
+    .language-zsh
+  ) {
+  position: relative;
+  padding-top: 34px;
+  border-color: var(--jz-line-strong);
+  border-radius: 4px;
+  background: linear-gradient(
+    to bottom,
+    var(--jz-panel-inset) 0 33px,
+    var(--jz-line) 33px 34px,
+    var(--jz-panel) 34px
+  );
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--jz-ink) 7%, transparent);
+  overflow: hidden;
+}
+
+.vp-doc
+  div[class*="language-"]:is(
+    .language-ansi,
+    .language-bash,
+    .language-bat,
+    .language-cmd,
+    .language-console,
+    .language-powershell,
+    .language-ps1,
+    .language-sh,
+    .language-shell,
+    .language-shellsession,
+    .language-zsh
+  )::before {
+  top: 13px;
+}
+
+.vp-doc
+  div[class*="language-"]:is(
+    .language-ansi,
+    .language-bash,
+    .language-bat,
+    .language-cmd,
+    .language-console,
+    .language-powershell,
+    .language-ps1,
+    .language-sh,
+    .language-shell,
+    .language-shellsession,
+    .language-zsh
+  )
+  .lang {
+  display: none;
+}
+
+.vp-doc
+  :is(.language-bash, .language-sh, .language-shell, .language-zsh)
+  .line::before {
+  color: var(--jz-amber);
+  font-weight: 600;
+  content: "$ ";
+  user-select: none;
+}
+
+.vp-doc :is(.language-powershell, .language-ps1) .line::before {
+  color: var(--jz-amber);
+  font-weight: 600;
+  content: "PS> ";
+  user-select: none;
+}
+
+/* VitePress code groups provide the file-tab semantics for editor frames. */
+.vp-doc .vp-code-group {
+  margin: 22px 0;
+  border-radius: 4px;
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--jz-ink) 7%, transparent);
+}
+
+.vp-doc .vp-code-group .tabs {
+  align-items: flex-end;
+  min-height: 34px;
+  margin: 0;
+  padding: 0;
+  background: var(--jz-panel-inset);
+  border: 1px solid var(--jz-line-strong);
+  border-bottom-color: var(--jz-line);
+  border-radius: 4px 4px 0 0;
+  box-shadow: none;
+}
+
+.vp-doc .vp-code-group .tabs label {
+  min-height: 33px;
+  padding: 0 14px;
+  border: 0;
+  border-right: 1px solid var(--jz-line);
+  font-family: var(--jz-font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 33px;
+  letter-spacing: 0.03em;
+  color: var(--jz-ink-3);
+}
+
+.vp-doc .vp-code-group .tabs label::after {
+  display: none;
+}
+
+.vp-doc .vp-code-group .tabs label:hover {
+  color: var(--jz-ink);
+}
+
+.vp-doc .vp-code-group .tabs input:checked + label {
+  color: var(--jz-ink);
+  background: var(--jz-panel);
+  box-shadow: inset 0 2px 0 var(--jz-amber);
+}
+
+.vp-doc .vp-code-group .tabs input:focus-visible + label {
+  outline: 2px solid var(--jz-amber);
+  outline-offset: -3px;
+}
+
+.vp-doc .vp-code-group div[class*="language-"] {
+  margin: 0 !important;
+  border-color: var(--jz-line-strong);
+  border-top: 0;
+  border-radius: 0 0 4px 4px !important;
+  box-shadow: none;
+}
+
+.vp-doc .vp-code-group div[class*="language-"] .lang {
+  display: none;
+}
+
 .vp-doc code {
   font-family: var(--jz-font-mono);
   font-size: 0.865em;
@@ -443,13 +689,7 @@ body {
 }
 
 .vp-doc div[class*="language-"] button.copy {
-  border-radius: 0;
-  border: 1px solid var(--jz-line);
-  background: var(--jz-paper);
-}
-
-.vp-doc div[class*="language-"] button.copy:hover {
-  border-color: var(--jz-amber);
+  display: none;
 }
 
 .vp-doc [class*="language-"] .highlighted {

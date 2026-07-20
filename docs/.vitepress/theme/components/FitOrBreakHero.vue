@@ -4,6 +4,7 @@ import { LanguageSupport } from "@codemirror/language";
 import { java } from "@codemirror/lang-java";
 import SourceEditor from "./SourceEditor.vue";
 import ColumnRuler from "./ColumnRuler.vue";
+import CodeFrame from "./CodeFrame.vue";
 import { kotlinLanguage } from "../kotlinLanguage";
 import { useJoltFormatter } from "../composables/useJoltFormatter";
 
@@ -13,13 +14,7 @@ import { useJoltFormatter } from "../composables/useJoltFormatter";
  * column edge.
  */
 
-const WORKSPACE_KT = `package dev.jolt.bench
-
-import dev.jolt.core.project
-import dev.jolt.core.Version
-import dev.jolt.core.Target
-
-data class Artifact(val group: String, val name: String, val version: Version, val targets: Set<Target>)
+const WORKSPACE_KT = `package dev.sargunv.jolt.playground
 
 class Registry<T : Any> {
   private val entries = mutableMapOf<String, T>()
@@ -33,6 +28,8 @@ class Registry<T : Any> {
     return entries[name] as? R ?: fallback
   }
 }
+
+data class Artifact(val group: String, val name: String, val version: Version, val targets: Set<Target>)
 
 fun <K, V> Map<K, V>.invert(): Map<V, K> = entries.associate { (key, value) -> value to key }
 
@@ -50,14 +47,9 @@ val workspace = project(group = "dev.sargunv", name = "jolt") {
 fun describe(a: Artifact) = a.targets.sortedBy { it.ordinal }.joinToString(separator = "|", prefix = "\${a.group}:") { it.name.lowercase() }
 `;
 
-const RESOLVER_JAVA = `import java.util.Optional;
-import java.util.HashMap;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+const RESOLVER_JAVA = `package dev.sargunv.jolt.playground;
+
+import java.util.*;
 
 public final class Resolver {
   private final Map<Coordinates, Artifact> cache = new HashMap<>();
@@ -90,8 +82,18 @@ public final class Resolver {
 const kotlin = new LanguageSupport(kotlinLanguage);
 
 const SAMPLES = [
-  { label: "WORKSPACE.KT", path: "Example.kt", language: kotlin, source: WORKSPACE_KT },
-  { label: "RESOLVER.JAVA", path: "Resolver.java", language: java(), source: RESOLVER_JAVA },
+  {
+    label: "WORKSPACE.KT",
+    path: "Example.kt",
+    language: kotlin,
+    source: WORKSPACE_KT,
+  },
+  {
+    label: "RESOLVER.JAVA",
+    path: "Resolver.java",
+    language: java(),
+    source: RESOLVER_JAVA,
+  },
 ];
 
 const MIN_CH = 24;
@@ -181,6 +183,28 @@ function selectSample(index: number) {
   if (!loading.value && !loadError.value) runFormat();
 }
 
+function onSampleKeydown(event: KeyboardEvent, index: number) {
+  let next = index;
+  if (event.key === "ArrowLeft") {
+    next = (index - 1 + SAMPLES.length) % SAMPLES.length;
+  } else if (event.key === "ArrowRight") {
+    next = (index + 1) % SAMPLES.length;
+  } else if (event.key === "Home") {
+    next = 0;
+  } else if (event.key === "End") {
+    next = SAMPLES.length - 1;
+  } else {
+    return;
+  }
+
+  event.preventDefault();
+  selectSample(next);
+  const tabs = (
+    event.currentTarget as HTMLElement
+  ).parentElement?.querySelectorAll<HTMLElement>('[role="tab"]');
+  requestAnimationFrame(() => tabs?.[next]?.focus());
+}
+
 function onMarkerUpdate(ch: number) {
   userDragged = true;
   widthCh.value = ch;
@@ -217,29 +241,6 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="rootEl" class="instrument">
-    <div class="instrument-head">
-      <div class="instrument-samples" role="group" aria-label="Sample file">
-        <button
-          v-for="(s, i) in SAMPLES"
-          :key="s.path"
-          type="button"
-          class="instrument-sample"
-          :class="{ 'instrument-sample--active': i === activeSample }"
-          :aria-pressed="i === activeSample"
-          @click="selectSample(i)"
-        >
-          {{ s.label }}
-        </button>
-      </div>
-      <span class="instrument-readout">
-        <template v-if="loadError">ENGINE FAILED TO LOAD</template>
-        <template v-else-if="loading">LOADING ENGINE&hellip;</template>
-        <template v-else
-          >LINE-WIDTH&nbsp;=&nbsp;<b>{{ widthCh }}</b></template
-        >
-      </span>
-    </div>
-
     <div class="instrument-scale" :style="{ paddingLeft: `${rulerPad}px` }">
       <ColumnRuler
         :marker="widthCh"
@@ -250,18 +251,45 @@ onBeforeUnmount(() => {
       />
     </div>
 
-    <div class="instrument-pane">
-      <SourceEditor
-        v-if="!loadError"
-        :key="sample.path"
-        :model-value="output"
-        :language="sample.language"
-        :line-width="widthCh"
-        show-ruler
-        readonly
-      />
-      <div v-else class="instrument-error">{{ loadError }}</div>
-    </div>
+    <CodeFrame variant="code" class="instrument-frame">
+      <template #header>
+        <div class="instrument-samples" role="tablist" aria-label="Sample file">
+          <button
+            v-for="(s, i) in SAMPLES"
+            :id="`sample-tab-${i}`"
+            :key="s.path"
+            type="button"
+            role="tab"
+            class="instrument-sample"
+            :class="{ 'instrument-sample--active': i === activeSample }"
+            :aria-selected="i === activeSample"
+            :aria-controls="`sample-panel-${i}`"
+            :tabindex="i === activeSample ? 0 : -1"
+            @click="selectSample(i)"
+            @keydown="onSampleKeydown($event, i)"
+          >
+            {{ s.label }}
+          </button>
+        </div>
+      </template>
+      <div
+        :id="`sample-panel-${activeSample}`"
+        class="instrument-pane"
+        role="tabpanel"
+        :aria-labelledby="`sample-tab-${activeSample}`"
+      >
+        <SourceEditor
+          v-if="!loadError"
+          :key="sample.path"
+          :model-value="output"
+          :language="sample.language"
+          :line-width="widthCh"
+          show-ruler
+          readonly
+        />
+        <div v-else class="instrument-error">{{ loadError }}</div>
+      </div>
+    </CodeFrame>
 
     <span ref="probeEl" class="instrument-probe" aria-hidden="true">{{
       "0".repeat(80)
@@ -276,36 +304,23 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-.instrument-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 16px;
-  font-family: var(--jz-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.09em;
-  padding-bottom: 8px;
-}
-
 .instrument-samples {
   display: flex;
-  gap: 2px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.instrument-samples::-webkit-scrollbar {
-  display: none;
+  flex: none;
+  min-width: min-content;
 }
 
 .instrument-sample {
+  position: relative;
+  min-height: 33px;
   font-family: var(--jz-font-mono);
   font-size: 11px;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.06em;
   color: var(--jz-ink-3);
-  background: none;
-  border: none;
-  padding: 2px 8px;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--jz-line);
+  padding: 2px 14px 0;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -315,25 +330,14 @@ onBeforeUnmount(() => {
 }
 
 .instrument-sample--active {
-  color: var(--jz-amber);
-  box-shadow: inset 0 -1px 0 var(--jz-amber);
-}
-
-.instrument-readout {
-  color: var(--jz-ink-2);
-  white-space: nowrap;
-}
-
-.instrument-readout b {
-  color: var(--jz-amber);
-  font-weight: 600;
+  color: var(--jz-ink);
+  background: var(--jz-panel);
+  box-shadow: inset 0 2px 0 var(--jz-amber);
 }
 
 .instrument-pane {
   position: relative;
   height: 420px;
-  border: 1px solid var(--jz-line);
-  background: var(--jz-panel);
   overflow: hidden;
 }
 

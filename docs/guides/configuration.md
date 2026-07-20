@@ -30,8 +30,10 @@ directories.
 
 ## Example
 
-```text
-#:schema https://github.com/sargunv/jolt/releases/download/<version>/jolt-schema.json
+::: code-group
+
+```toml [jolt.toml]
+# :schema https://github.com/sargunv/jolt/releases/download/<version>/jolt-schema.json
 root = true
 
 [format]
@@ -43,6 +45,8 @@ use-tabs = false
 include = ["**/*.java", "**/*.kt", "**/*.kts"]
 exclude = ["generated/**"]
 ```
+
+:::
 
 For dprint, put formatter options under the `jolt` key in `dprint.jsonc`. dprint
 uses camelCase names such as `lineWidth`, `indentWidth`, and `useTabs`.
