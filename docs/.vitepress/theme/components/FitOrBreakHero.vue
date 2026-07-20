@@ -7,6 +7,11 @@ import ColumnRuler from "./ColumnRuler.vue";
 import CodeFrame from "./CodeFrame.vue";
 import { kotlinLanguage } from "../kotlinLanguage";
 import { useJoltFormatter } from "../composables/useJoltFormatter";
+import {
+  formatErrorSummary,
+  parseFormatError,
+  toLintDiagnostics,
+} from "../parseFormatError";
 
 /**
  * The fit-or-break instrument. Two scrollable sample files, formatted live
@@ -104,6 +109,7 @@ const { loading, loadError, ensureReady, formatSource } = useJoltFormatter();
 const activeSample = ref(0);
 const widthCh = ref(MAX_CH);
 const output = ref(SAMPLES[0].source);
+const formatError = ref<string | null>(null);
 const availableCh = ref(MAX_CH);
 const rulerPad = ref(19);
 const rulerScroll = ref(0);
@@ -118,6 +124,21 @@ let observer: ResizeObserver | undefined;
 let scrollerEl: Element | null = null;
 
 const sample = computed(() => SAMPLES[activeSample.value]);
+const lintDiagnostics = computed(() => {
+  if (!formatError.value) return [];
+
+  const diagnostics = toLintDiagnostics(parseFormatError(formatError.value));
+  if (diagnostics.length > 0) return diagnostics;
+
+  return [
+    {
+      from: 0,
+      to: Math.min(1, output.value.length),
+      severity: "error" as const,
+      message: formatErrorSummary(formatError.value),
+    },
+  ];
+});
 
 function measure() {
   if (probeEl.value) {
@@ -155,6 +176,7 @@ function attachScroller() {
 function runFormat() {
   const gen = ++generation;
   const current = sample.value;
+  formatError.value = null;
   void formatSource(current.path, current.source, {
     lineWidth: widthCh.value,
     indentWidth: 2,
@@ -163,8 +185,11 @@ function runFormat() {
     .then((result) => {
       if (gen === generation) output.value = result;
     })
-    .catch(() => {
-      if (gen === generation) output.value = current.source;
+    .catch((error: unknown) => {
+      if (gen !== generation) return;
+      output.value = current.source;
+      formatError.value =
+        error instanceof Error ? error.message : String(error);
     });
 }
 
@@ -284,6 +309,7 @@ onBeforeUnmount(() => {
           :model-value="output"
           :language="sample.language"
           :line-width="widthCh"
+          :lint-diagnostics="lintDiagnostics"
           show-ruler
           readonly
         />
