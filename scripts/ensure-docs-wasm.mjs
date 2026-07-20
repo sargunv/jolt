@@ -1,9 +1,10 @@
-import { access, copyFile, mkdir } from "node:fs/promises";
+import { access, copyFile, mkdir, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(fileURLToPath(import.meta.url), "..", "..");
-const dest = join(root, "docs/public/jolt-plugin.wasm");
+const dest = join(root, "docs/.vitepress/theme/assets/jolt-plugin.wasm");
+const oldDest = join(root, "docs/public/jolt-plugin.wasm");
 
 const localCandidates = [
   join(root, "target/wasm32-unknown-unknown/release/jolt_fmt_dprint.wasm"),
@@ -25,6 +26,8 @@ async function copyLocal(source) {
   await copyFile(source, dest);
   console.log(`Copied ${source} -> ${dest}`);
 }
+
+await rm(oldDest, { force: true });
 
 for (const candidate of localCandidates) {
   if (await exists(candidate)) {

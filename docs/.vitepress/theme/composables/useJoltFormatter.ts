@@ -1,3 +1,4 @@
+import joltWasmUrl from "../assets/jolt-plugin.wasm?url";
 import {
   createContext,
   type ContextFormatter,
@@ -5,8 +6,6 @@ import {
 } from "@dprint/formatter";
 import { ref, shallowRef } from "vue";
 import type { PlaygroundFormatConfig } from "../playgroundConfig";
-
-const JOLT_WASM_URL = `${import.meta.env.BASE_URL}jolt-plugin.wasm`;
 
 const context = shallowRef<FormatterContext | null>(null);
 const plugin = shallowRef<ContextFormatter | null>(null);
@@ -29,7 +28,7 @@ async function ensureReady(): Promise<ContextFormatter> {
 
   loadPromise = (async () => {
     const ctx = createContext();
-    const formatter = await ctx.addPluginStreaming(fetch(JOLT_WASM_URL));
+    const formatter = await ctx.addPluginStreaming(fetch(joltWasmUrl));
     context.value = ctx;
     plugin.value = formatter;
     return formatter;
