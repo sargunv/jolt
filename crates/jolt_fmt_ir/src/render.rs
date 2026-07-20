@@ -1227,8 +1227,8 @@ mod tests {
         let outcome = render_source_to(&arena, document, options(), &mut sink, &root)
             .expect("structured and malformed source completes");
 
-        assert_eq!(sink.0, "a b");
-        assert_eq!(safety.0, 1);
+        assert_eq!(sink.0, "ab");
+        assert_eq!(safety.0, 0);
         assert!(outcome.used_malformed_verbatim());
     }
 

@@ -54,7 +54,6 @@ CompilationUnit
                             Name
                               Identifier "A" @ 47..48 trailing=[Whitespace " ", BlockComment "/* arg */"]
                         BogusType
-                          AnnotationList
                     Gt ">" @ 58..59 trailing=[Whitespace " "]
             VariableDeclaratorList
               VariableDeclarator

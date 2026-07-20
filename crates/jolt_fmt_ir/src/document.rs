@@ -278,7 +278,7 @@ impl<'source> DocBuilder<'source> {
                 range: core.text_range(),
             },
         );
-        ExceptionalFragment::new(contents, boundary)
+        ExceptionalFragment::exact_source(contents, boundary, core.text_range())
     }
 
     /// Emits malformed source and derives lexical boundaries from syntax.
@@ -372,8 +372,17 @@ impl<'source> DocBuilder<'source> {
         right: Option<&SyntaxToken<'source, L>>,
         safety: &mut impl LexicalSafety<L>,
     ) -> Doc<'source> {
-        let left = left.map(|token| LexicalAtom::new(safety.classify(token), token.text()));
-        let right = right.map(|token| LexicalAtom::new(safety.classify(token), token.text()));
+        let source_range = fragment.source_range();
+        let left = left
+            .filter(|token| {
+                source_range.is_none_or(|range| token.token_text_range().end() != range.start())
+            })
+            .map(|token| LexicalAtom::new(safety.classify(token), token.text()));
+        let right = right
+            .filter(|token| {
+                source_range.is_none_or(|range| range.end() != token.token_text_range().start())
+            })
+            .map(|token| LexicalAtom::new(safety.classify(token), token.text()));
         let separators = exceptional_separators(left, fragment, right, safety);
         let before = self.exceptional_separator(separators.before);
         let after = self.exceptional_separator(separators.after);

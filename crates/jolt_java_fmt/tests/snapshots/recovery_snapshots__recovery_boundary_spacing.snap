@@ -6,6 +6,8 @@ input:
 public class LruCache<.K,V>
 class Fields {
   int .value;
+  private final Map<K,..Node<K,V>> nodes=new HashMap<>();
+  private final Map<K,+Node<K,V>> alternateNodes=new HashMap<>();
 }
 
 formatted:
@@ -13,9 +15,13 @@ public class LruCache<.K, V>
 
 class Fields {
   int .value;
+  private final Map<K, ..Node<K,V>> nodes = new HashMap<>();
+  private final Map<K, +Node<K,V>> alternateNodes = new HashMap<>();
 }
 
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(22), end: TextSize(23) }) message=expected type parameter name
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(28), end: TextSize(33) }) message=expected type body
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(50) }) message=expected variable name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(79), end: TextSize(80) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(137), end: TextSize(138) }) message=expected type

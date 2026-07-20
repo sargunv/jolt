@@ -364,10 +364,11 @@ Before changing formatter layout, audit the parser shapes for every regression:
 
 The parser audit determines the splice boundary completely. A directly malformed
 child is formatted through the existing typed `ExceptionalFragment`, which owns
-its tracked verbatim source claim, first and last lexical atoms, and required
-line-comment termination. The language recovery helper resolves the bounded
-lexical joins and then returns an ordinary `Doc`. Its valid parent remains
-authoritative for spaces, lines, list separators, indentation, and delimiters.
+its tracked verbatim source claim, exact source range, first and last lexical
+atoms, and required line-comment termination. The shared exceptional resolver
+distinguishes source-preserved joins from formatter-created joins before
+returning an ordinary `Doc`. Its valid parent remains authoritative for spaces,
+lines, list separators, indentation, and delimiters.
 
 ```text
 structured parent rule(
@@ -408,13 +409,16 @@ snapshots and idempotence corpora remain the behavioral proof for layout.
 
 ## Lexical Safety
 
-All token emission passes through one lexical-boundary service. It decides
-whether adjacent rendered token texts would retokenize, merge comments, or form
-a different operator, and inserts the minimum safe separation. Formatter rules
-may request layout but may not implement their own raw-text adjacency logic.
+All token emission passes through one lexical-boundary service. Exact
+exceptional source preserves an edge that was already adjacent to its
+represented neighbor; only a join created by formatting is checked for
+retokenization, comment merging, or formation of a different operator. The
+service inserts the minimum safe separation. Formatter rules may request layout
+but may not implement their own raw-text adjacency logic.
 
-The service operates on borrowed token kinds/text and explicit normalization
-permits. It does not parse source gaps or infer grammar structure.
+The service operates on borrowed token kinds/text, represented token ranges, and
+explicit normalization permits. It compares range endpoints but does not inspect
+raw source gaps, retokenize fragment text, or infer grammar structure.
 
 ## Cost Contract
 

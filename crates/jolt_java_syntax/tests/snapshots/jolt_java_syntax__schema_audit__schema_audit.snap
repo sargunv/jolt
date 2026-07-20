@@ -5,9 +5,9 @@ expression: audit.render()
 language = java
 fixture_files = 417
 diagnostic_fixture_files = 161
-audited_nodes = 25379
-exact_valid_shapes = 25043
-malformed_nodes = 236
+audited_nodes = 25484
+exact_valid_shapes = 25146
+malformed_nodes = 238
 clean_missing_required_shapes = 0
 diagnostic_missing_required_shapes = 100
 clean_unexpected_shapes = 0

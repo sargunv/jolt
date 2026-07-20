@@ -125,11 +125,28 @@ pub(crate) fn exceptional_separators<L: Language>(
 pub struct ExceptionalFragment<'source> {
     doc: Doc<'source>,
     boundary: FragmentBoundary<'source>,
+    source_range: Option<TextRange>,
 }
 
 impl<'source> ExceptionalFragment<'source> {
     pub(crate) const fn new(doc: Doc<'source>, boundary: FragmentBoundary<'source>) -> Self {
-        Self { doc, boundary }
+        Self {
+            doc,
+            boundary,
+            source_range: None,
+        }
+    }
+
+    pub(crate) const fn exact_source(
+        doc: Doc<'source>,
+        boundary: FragmentBoundary<'source>,
+        source_range: TextRange,
+    ) -> Self {
+        Self {
+            doc,
+            boundary,
+            source_range: Some(source_range),
+        }
     }
 
     #[must_use]
@@ -140,6 +157,11 @@ impl<'source> ExceptionalFragment<'source> {
     #[must_use]
     pub(crate) const fn boundary(self) -> FragmentBoundary<'source> {
         self.boundary
+    }
+
+    #[must_use]
+    pub(crate) const fn source_range(self) -> Option<TextRange> {
+        self.source_range
     }
 }
 

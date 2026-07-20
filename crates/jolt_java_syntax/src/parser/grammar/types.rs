@@ -228,6 +228,15 @@ impl Parser<'_> {
     pub(super) fn parse_type_argument(&mut self) {
         let argument = self.start();
         self.parse_annotations();
+        if self.at_type_argument_value_start() {
+            self.parse_type_argument_value();
+        } else {
+            self.parse_malformed_type_argument_value();
+        }
+        self.complete(argument, JavaSyntaxKind::TypeArgument);
+    }
+
+    fn parse_type_argument_value(&mut self) {
         if self.at(JavaSyntaxKind::Question) {
             let wildcard = self.start();
             self.bump();
@@ -239,7 +248,46 @@ impl Parser<'_> {
         } else {
             self.parse_type();
         }
-        self.complete(argument, JavaSyntaxKind::TypeArgument);
+    }
+
+    fn parse_malformed_type_argument_value(&mut self) {
+        let ty = self.start();
+        let diagnostic = self.pending_expected("expected type");
+        while !self.at_type_argument_recovery_boundary() && !self.at_type_argument_value_start() {
+            self.bump();
+        }
+        if self.at_type_argument_value_start() {
+            self.parse_type_argument_value();
+        }
+        self.complete_recovery(ty, JavaSyntaxKind::BogusType, [diagnostic]);
+    }
+
+    fn at_type_argument_value_start(&mut self) -> bool {
+        if self.at(JavaSyntaxKind::Question) {
+            return true;
+        }
+        let mut lookahead = self.lookahead();
+        lookahead.skip_annotations();
+        lookahead.at_non_void_type_start()
+    }
+
+    fn at_type_argument_recovery_boundary(&mut self) -> bool {
+        self.at_eof()
+            || self.at_type_argument_close()
+            || matches!(
+                self.current_kind(),
+                JavaSyntaxKind::Comma
+                    | JavaSyntaxKind::Semicolon
+                    | JavaSyntaxKind::Assign
+                    | JavaSyntaxKind::LBrace
+                    | JavaSyntaxKind::RBrace
+                    | JavaSyntaxKind::LParen
+                    | JavaSyntaxKind::RParen
+                    | JavaSyntaxKind::LBracket
+                    | JavaSyntaxKind::RBracket
+                    | JavaSyntaxKind::Colon
+                    | JavaSyntaxKind::Arrow
+            )
     }
 
     pub(super) fn parse_array_dimensions(&mut self) -> bool {
