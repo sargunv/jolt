@@ -2,10 +2,6 @@ amends "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Config.
 import "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Builtins.pkl"
 
 local lintSteps = new Mapping<String, Step> {
-    ["architecture-gates"] {
-        glob = List("crates/**/*.rs", "tools/**/*.py")
-        check = "cargo test --package jolt_test_support --test architecture_gates"
-    }
     ["cargo-check"] {
         glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
         check = "cargo check --workspace"

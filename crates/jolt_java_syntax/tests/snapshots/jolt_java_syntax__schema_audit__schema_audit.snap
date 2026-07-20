@@ -2,20 +2,6 @@
 source: crates/jolt_java_syntax/src/schema_audit.rs
 expression: audit.render()
 ---
-language = java
-fixture_files = 417
-diagnostic_fixture_files = 161
-audited_nodes = 25484
-exact_valid_shapes = 25146
-malformed_nodes = 238
-clean_missing_required_shapes = 0
-diagnostic_missing_required_shapes = 100
-clean_unexpected_shapes = 0
-diagnostic_unexpected_shapes = 0
-
-[clean_missing_required]
-
-[diagnostic_missing_required]
 syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_context: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
 syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_context: FieldDeclaration occurrence 2 (ClassType VariableDeclaratorList)
 syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_context: FieldDeclaration occurrence 3 (ClassType VariableDeclaratorList)
@@ -77,46 +63,42 @@ syntax__parser__recovers_missing_declaration_names: ConstructorDeclaration occur
 syntax__parser__recovers_missing_declaration_names: MethodDeclaration occurrence 1 (VoidType LParen("(") RParen(")") Block)
 syntax__parser__recovers_missing_declaration_names: AnnotationElementDeclaration occurrence 1 (PrimitiveType LParen("(") RParen(")") Semicolon(";"))
 syntax__parser__recovers_missing_declaration_names: EnumConstant occurrence 1 (AnnotationList)
+syntax__recovery__declarations: EnumConstant occurrence 2 (AnnotationList ArgumentList ClassBody)
+syntax__recovery__declarations: EnumConstant occurrence 3 (AnnotationList)
 syntax__recovery__empty_clauses: ExtendsClause occurrence 1 (ExtendsKw("extends"))
 syntax__recovery__empty_clauses: ThrowsClause occurrence 1 (ThrowsKw("throws"))
 syntax__recovery__empty_clauses: ModuleNameList occurrence 1 ()
 syntax__recovery__empty_clauses: ModuleNameList occurrence 2 ()
 syntax__recovery__enum_pattern_and_for_lists: EnumConstant occurrence 2 (AnnotationList)
 syntax__recovery__enum_pattern_and_for_lists: TypePattern occurrence 2 (ParameterModifierList BogusType)
+syntax__recovery__expressions: ParenthesizedExpression occurrence 1 (LParen("(") RParen(")"))
+syntax__recovery__expressions: TypePattern occurrence 4 (ParameterModifierList ClassType)
+syntax__recovery__expressions: TypePattern occurrence 8 (ParameterModifierList ClassType)
 syntax__recovery__header_clauses: NameList occurrence 1 (Name Comma(",") Comma(",") Name)
 syntax__recovery__import_and_module_directives: ImportDeclaration occurrence 1 (ImportKw("import") Semicolon(";"))
 syntax__recovery__import_and_module_directives: RequiresDirective occurrence 1 (Identifier("requires") RequiresModifierList Semicolon(";"))
+syntax__recovery__incomplete_module_directive: RequiresDirective occurrence 1 (Identifier("requires") RequiresModifierList Semicolon(";"))
+syntax__recovery__malformed_import_pieces: ImportDeclaration occurrence 1 (ImportKw("import") Semicolon(";"))
 syntax__recovery__method_invocation_without_name: QualifiedMethodInvocation occurrence 1 (NameExpression Dot(".") ArgumentList)
 syntax__recovery__missing_type_body_token: ClassBody occurrence 1 (ClassBodyMemberList)
 syntax__recovery__module_recovery_barriers: ModuleTargetClause occurrence 1 (ModuleNameList)
 syntax__recovery__module_recovery_barriers: ModuleTargetClause occurrence 3 (ModuleNameList)
 syntax__recovery__module_recovery_barriers: ModuleImplementationClause occurrence 1 (ModuleNameList)
-syntax__recovery__phase_11_incomplete_module_directive: RequiresDirective occurrence 1 (Identifier("requires") RequiresModifierList Semicolon(";"))
-syntax__recovery__phase_11_malformed_import_pieces: ImportDeclaration occurrence 1 (ImportKw("import") Semicolon(";"))
-syntax__recovery__phase_12_variable_declarators: VariableDeclarator occurrence 2 ()
-syntax__recovery__phase_13_declarations: EnumConstant occurrence 2 (AnnotationList ArgumentList ClassBody)
-syntax__recovery__phase_13_declarations: EnumConstant occurrence 3 (AnnotationList)
-syntax__recovery__phase_14_expressions: ParenthesizedExpression occurrence 1 (LParen("(") RParen(")"))
-syntax__recovery__phase_14_expressions: TypePattern occurrence 4 (ParameterModifierList ClassType)
-syntax__recovery__phase_14_expressions: TypePattern occurrence 8 (ParameterModifierList ClassType)
-syntax__recovery__phase_15_statements: Annotation occurrence 1 (At("@"))
-syntax__recovery__phase_15_statements: ConditionalExpression occurrence 1 (BogusExpression Question("?") BogusExpression BogusExpression)
-syntax__recovery__phase_15_statements: IfStatement occurrence 1 (IfKw("if") LParen("(") NameExpression RParen(")"))
-syntax__recovery__phase_15_statements: WhileStatement occurrence 1 (WhileKw("while") LParen("(") NameExpression RParen(")"))
-syntax__recovery__phase_15_statements: DoStatement occurrence 1 (DoKw("do") WhileKw("while") LParen("(") NameExpression RParen(")") Semicolon(";"))
-syntax__recovery__phase_15_statements: BasicForStatement occurrence 1 (ForKw("for") LParen("(") Semicolon(";") Semicolon(";") RParen(")"))
-syntax__recovery__phase_15_statements: EnhancedForStatement occurrence 4 (ForKw("for") LParen("(") EnhancedForVariable Colon(":") NameExpression RParen(")"))
-syntax__recovery__phase_15_statements: SwitchStatement occurrence 2 (SwitchKw("switch") LParen("(") NameExpression RParen(")"))
-syntax__recovery__phase_15_statements: SynchronizedStatement occurrence 1 (SynchronizedKw("synchronized") LParen("(") NameExpression RParen(")"))
-syntax__recovery__phase_15_statements: TryStatement occurrence 2 (TryKw("try") CatchClauseList FinallyClause)
-syntax__recovery__phase_15_statements: CatchClause occurrence 2 (CatchKw("catch") LParen("(") CatchParameter RParen(")"))
-syntax__recovery__phase_15_statements: FinallyClause occurrence 1 (FinallyKw("finally"))
-syntax__recovery__phase_15_statements: TryWithResourcesStatement occurrence 8 (TryKw("try") ResourceSpecification CatchClauseList)
 syntax__recovery__recovery_boundary_spacing: ClassBody occurrence 1 (ClassBodyMemberList)
+syntax__recovery__statements: Annotation occurrence 1 (At("@"))
+syntax__recovery__statements: ConditionalExpression occurrence 1 (BogusExpression Question("?") BogusExpression BogusExpression)
+syntax__recovery__statements: IfStatement occurrence 1 (IfKw("if") LParen("(") NameExpression RParen(")"))
+syntax__recovery__statements: WhileStatement occurrence 1 (WhileKw("while") LParen("(") NameExpression RParen(")"))
+syntax__recovery__statements: DoStatement occurrence 1 (DoKw("do") WhileKw("while") LParen("(") NameExpression RParen(")") Semicolon(";"))
+syntax__recovery__statements: BasicForStatement occurrence 1 (ForKw("for") LParen("(") Semicolon(";") Semicolon(";") RParen(")"))
+syntax__recovery__statements: EnhancedForStatement occurrence 4 (ForKw("for") LParen("(") EnhancedForVariable Colon(":") NameExpression RParen(")"))
+syntax__recovery__statements: SwitchStatement occurrence 2 (SwitchKw("switch") LParen("(") NameExpression RParen(")"))
+syntax__recovery__statements: SynchronizedStatement occurrence 1 (SynchronizedKw("synchronized") LParen("(") NameExpression RParen(")"))
+syntax__recovery__statements: TryStatement occurrence 2 (TryKw("try") CatchClauseList FinallyClause)
+syntax__recovery__statements: CatchClause occurrence 2 (CatchKw("catch") LParen("(") CatchParameter RParen(")"))
+syntax__recovery__statements: FinallyClause occurrence 1 (FinallyKw("finally"))
+syntax__recovery__statements: TryWithResourcesStatement occurrence 8 (TryKw("try") ResourceSpecification CatchClauseList)
 syntax__recovery__switch_and_module_lists: SwitchLabelItemList occurrence 1 (CaseConstant Comma(",") Comma(",") CaseConstant)
 syntax__recovery__switch_and_module_lists: ModuleNameList occurrence 1 (Name Comma(",") Comma(",") Name)
 syntax__recovery__type_annotation_and_parameter_lists: TypeParameter occurrence 2 (AnnotationList)
-
-[clean_unexpected]
-
-[diagnostic_unexpected]
+syntax__recovery__variable_declarators: VariableDeclarator occurrence 2 ()

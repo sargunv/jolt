@@ -10,7 +10,7 @@ enum RecoveredEnum {
     int member;
 }
 
-enum Phase13Enum {
+enum RecoveredSeparatorEnum {
     ONLY /* JOLT-TRIVIA:enum-separator */ ;
     int member;
 }

@@ -1,4 +1,4 @@
-class Phase15Statements {
+class RecoveredStatements {
   void enhancedFor(int[] values) {
     for (int value = /* enhanced-initializer */ 0 : values) {}
     for (int first, /* enhanced-extra */ second : values) {}

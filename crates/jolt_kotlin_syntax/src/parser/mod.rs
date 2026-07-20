@@ -222,7 +222,7 @@ mod tests {
 
     #[test]
     #[rustfmt::skip]
-    fn phase_sixteen_diagnostics_own_the_declared_node_or_slot() {
+    fn file_item_diagnostics_own_the_declared_node_or_slot() {
         check("package\n", "expected name", KotlinSyntaxKind::Name, Some(crate::shape::name::Slot::identifier as u16));
         check("import sample*\n", "expected `.` before import star", KotlinSyntaxKind::ImportOnDemandSuffix, Some(crate::shape::import_on_demand_suffix::Slot::dot as u16));
         check("import sample as\n", "expected name", KotlinSyntaxKind::Name, Some(crate::shape::name::Slot::identifier as u16));
@@ -235,7 +235,7 @@ mod tests {
 
     #[test]
     #[rustfmt::skip]
-    fn phase_seventeen_diagnostics_own_the_declared_node_or_slot() {
+    fn type_and_parameter_diagnostics_own_the_declared_node_or_slot() {
         check("typealias T =\n", "expected type", KotlinSyntaxKind::BogusType, None);
         check("typealias T = A.\n", "expected type segment", KotlinSyntaxKind::BogusUserTypeSegment, None);
         check("typealias T = A..B\n", "expected one '.' between type segments", KotlinSyntaxKind::UserTypeSegmentList, None);
@@ -255,7 +255,7 @@ mod tests {
 
     #[test]
     #[rustfmt::skip]
-    fn phase_eighteen_diagnostics_own_the_declared_node_or_slot() {
+    fn declaration_diagnostics_own_the_declared_node_or_slot() {
         check("fun () {}\n", "expected function name", KotlinSyntaxKind::BogusCallableDeclarationName, None);
         check("fun named {}\n", "expected value parameter list", KotlinSyntaxKind::ValueParameterList, None);
         check("val = 1\n", "expected property binding", KotlinSyntaxKind::BogusPropertyBinding, None);
@@ -287,7 +287,7 @@ mod tests {
 
     #[test]
     #[rustfmt::skip]
-    fn phase_nineteen_diagnostics_own_the_declared_node_or_slot() {
+    fn expression_diagnostics_own_the_declared_node_or_slot() {
         check("fun f() = 1 +\n", "expected expression after operator", KotlinSyntaxKind::BogusExpression, None);
         check("fun f() = 1 +\nval next = 2\n", "expected expression after operator", KotlinSyntaxKind::BogusExpression, None);
         check("fun f() = !\n", "expected expression", KotlinSyntaxKind::BogusExpression, None);
@@ -316,7 +316,7 @@ mod tests {
     }
 
     #[test]
-    fn phase_nineteen_valid_multiline_rhs_stays_expression_owned() {
+    fn valid_multiline_rhs_stays_expression_owned() {
         for source in [
             "fun f() = 1 +\n !value\n",
             "val f =\n fun(value: Int) = value\n",
@@ -339,7 +339,7 @@ mod tests {
 
     #[test]
     #[rustfmt::skip]
-    fn phase_twenty_diagnostics_own_the_declared_node_or_slot() {
+    fn control_flow_diagnostics_own_the_declared_node_or_slot() {
         check("fun f() { if value }\n", "expected condition after 'if'", KotlinSyntaxKind::ParenthesizedExpression, Some(crate::shape::parenthesized_expression::Slot::expression as u16));
         check("fun f() { if (value) }\n", "expected branch after 'if' condition", KotlinSyntaxKind::BogusExpression, None);
         check("fun f() { if (value) else }\n", "expected branch after 'if' condition", KotlinSyntaxKind::BogusExpression, None);
@@ -370,7 +370,7 @@ mod tests {
     }
 
     #[test]
-    fn phase_twenty_valid_control_flow_is_diagnostic_free() {
+    fn valid_control_flow_is_diagnostic_free() {
         for source in [
             "fun f() { ; }\n",
             "fun f() { if (ready); else {} }\n",

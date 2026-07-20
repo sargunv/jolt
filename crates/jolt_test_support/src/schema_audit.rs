@@ -176,11 +176,6 @@ macro_rules! __physical_required_slot {
 /// child stream.
 pub struct SchemaAudit<K> {
     language: &'static str,
-    files: usize,
-    diagnostic_files: usize,
-    nodes: usize,
-    exact: usize,
-    malformed: usize,
     clean_missing: Vec<String>,
     diagnostic_missing: Vec<String>,
     clean_unexpected: Vec<String>,
@@ -193,11 +188,6 @@ impl<K: Copy + Eq + Debug> SchemaAudit<K> {
     pub fn new(language: &'static str) -> Self {
         Self {
             language,
-            files: 0,
-            diagnostic_files: 0,
-            nodes: 0,
-            exact: 0,
-            malformed: 0,
             clean_missing: Vec::new(),
             diagnostic_missing: Vec::new(),
             clean_unexpected: Vec::new(),
@@ -215,8 +205,6 @@ impl<K: Copy + Eq + Debug> SchemaAudit<K> {
     ) where
         L: Language<Kind = K>,
     {
-        self.files += 1;
-        self.diagnostic_files += usize::from(has_diagnostics);
         self.visit_node(label, root, has_diagnostics, &mut Vec::new(), audit_node);
     }
 
@@ -230,7 +218,6 @@ impl<K: Copy + Eq + Debug> SchemaAudit<K> {
     ) where
         L: Language<Kind = K>,
     {
-        self.nodes += 1;
         let occurrence = if let Some((_, count)) = occurrences
             .iter_mut()
             .find(|(kind, _)| *kind == node.kind())
@@ -273,8 +260,7 @@ impl<K: Copy + Eq + Debug> SchemaAudit<K> {
         };
 
         match result {
-            Some(PhysicalNodeAudit::Exact) => self.exact += 1,
-            Some(PhysicalNodeAudit::Malformed) => self.malformed += 1,
+            Some(PhysicalNodeAudit::Exact | PhysicalNodeAudit::Malformed) | None => {}
             Some(PhysicalNodeAudit::MissingRequired) => {
                 missing_for(self, has_diagnostics)
                     .push(format!("{node_label} ({})", render_children(&children)));
@@ -283,7 +269,6 @@ impl<K: Copy + Eq + Debug> SchemaAudit<K> {
                 unexpected_for(self, has_diagnostics)
                     .push(format!("{node_label} ({})", render_children(&children)));
             }
-            None => {}
         }
         for child in node.children() {
             self.visit_node(label, child, has_diagnostics, occurrences, audit_node);
@@ -299,37 +284,16 @@ impl<K: Copy + Eq + Debug> SchemaAudit<K> {
             self.clean_missing.join("\n"),
             self.clean_unexpected.join("\n"),
         );
+        assert!(
+            self.diagnostic_unexpected.is_empty(),
+            "{} diagnostic corpus has unexpected physical shapes:\n{}",
+            self.language,
+            self.diagnostic_unexpected.join("\n"),
+        );
+
         let mut output = String::new();
-        writeln!(output, "language = {}", self.language).unwrap();
-        for (name, count) in [
-            ("fixture_files", self.files),
-            ("diagnostic_fixture_files", self.diagnostic_files),
-            ("audited_nodes", self.nodes),
-            ("exact_valid_shapes", self.exact),
-            ("malformed_nodes", self.malformed),
-            ("clean_missing_required_shapes", self.clean_missing.len()),
-            (
-                "diagnostic_missing_required_shapes",
-                self.diagnostic_missing.len(),
-            ),
-            ("clean_unexpected_shapes", self.clean_unexpected.len()),
-            (
-                "diagnostic_unexpected_shapes",
-                self.diagnostic_unexpected.len(),
-            ),
-        ] {
-            writeln!(output, "{name} = {count}").unwrap();
-        }
-        for (section, items) in [
-            ("clean_missing_required", &self.clean_missing),
-            ("diagnostic_missing_required", &self.diagnostic_missing),
-            ("clean_unexpected", &self.clean_unexpected),
-            ("diagnostic_unexpected", &self.diagnostic_unexpected),
-        ] {
-            writeln!(output, "\n[{section}]").unwrap();
-            for item in items {
-                writeln!(output, "{item}").unwrap();
-            }
+        for item in &self.diagnostic_missing {
+            writeln!(output, "{item}").unwrap();
         }
         output
     }

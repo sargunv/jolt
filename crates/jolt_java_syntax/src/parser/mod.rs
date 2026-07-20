@@ -273,7 +273,7 @@ mod tests {
 
     #[test]
     #[rustfmt::skip] // Keep the owner matrix one case per line.
-    fn phase_twelve_diagnostics_own_the_declared_node_or_slot() {
+    fn declaration_header_diagnostics_own_the_declared_node_or_slot() {
         let expected = JavaParseDiagnosticCode::ExpectedSyntax.id();
         let unexpected = JavaParseDiagnosticCode::UnexpectedSyntax.id();
         macro_rules! slot { ($src:literal, $msg:literal, $kind:ident, $shape:ident, $slot:ident) => {
@@ -302,7 +302,7 @@ mod tests {
 
     #[test]
     #[rustfmt::skip] // Keep the owner matrix one case per line.
-    fn phase_thirteen_diagnostics_own_the_declared_node_or_slot() {
+    fn declaration_body_diagnostics_own_the_declared_node_or_slot() {
         let expected = JavaParseDiagnosticCode::ExpectedSyntax.id();
         let unexpected = JavaParseDiagnosticCode::UnexpectedSyntax.id();
         macro_rules! slot { ($src:literal, $msg:literal, $kind:ident, $shape:ident, $slot:ident) => {
@@ -327,7 +327,7 @@ mod tests {
 
     #[test]
     #[rustfmt::skip] // Keep the owner matrix one case per line.
-    fn phase_fourteen_diagnostics_own_the_declared_node_or_slot() {
+    fn expression_diagnostics_own_the_declared_node_or_slot() {
         let expected = JavaParseDiagnosticCode::ExpectedSyntax.id();
         macro_rules! slot { ($src:literal, $msg:literal, $kind:ident, $shape:ident, $slot:ident) => {
             check($src, expected, $msg, JavaSyntaxKind::$kind, Some(crate::shape::$shape::Slot::$slot as u16));
@@ -365,7 +365,7 @@ mod tests {
 
     #[test]
     #[rustfmt::skip] // Keep the owner matrix one case per line.
-    fn phase_fifteen_diagnostics_own_the_declared_node_or_slot() {
+    fn statement_diagnostics_own_the_declared_node_or_slot() {
         let expected = JavaParseDiagnosticCode::ExpectedSyntax.id();
         macro_rules! slot { ($src:literal, $msg:literal, $kind:ident, $shape:ident, $slot:ident) => {
             check($src, expected, $msg, JavaSyntaxKind::$kind, Some(crate::shape::$shape::Slot::$slot as u16));

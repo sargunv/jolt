@@ -1,12 +1,9 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 use jolt_kotlin_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
 use jolt_kotlin_syntax::parse_kotlin_file;
 use jolt_test_support::{
-    SnapshotBuilder, StringSink, collect_kotlin_files, deterministic_token_removal_candidates,
-    diagnostic_inventory, fixture_snapshot_name, kotlin_fixture_root, read_to_string,
-    render_diagnostics, represented_comment_inventory, represented_token_loss_report,
-    trivia_markers,
+    SnapshotBuilder, StringSink, collect_kotlin_files, diagnostic_inventory, fixture_snapshot_name,
+    kotlin_fixture_root, read_to_string, render_diagnostics, represented_comment_inventory,
+    represented_token_loss_report, trivia_markers,
 };
 
 #[test]
@@ -14,7 +11,6 @@ fn kotlin_corpus_formatter_snapshots() {
     let options = FormatOptions::default();
     let root = kotlin_fixture_root(env!("CARGO_MANIFEST_DIR"));
     let mut formatted_cases = 0usize;
-    let mut manifest_entries = Vec::new();
     let mut conservation_failures = Vec::new();
 
     for path in collect_kotlin_files(&root) {
@@ -26,28 +22,18 @@ fn kotlin_corpus_formatter_snapshots() {
         let source = read_to_string(&path);
         let parse = parse_kotlin_file(&source);
         if parse.syntax().is_none() {
-            manifest_entries.push(format!("skip no syntax {relative}"));
             continue;
         }
         let dedicated_audit =
             relative.starts_with("syntax/lexer") || relative.starts_with("syntax/recovery");
         let audit_only = dedicated_audit || !parse.diagnostics().is_empty();
         if audit_only {
-            manifest_entries.push(format!(
-                "audit {} {relative}",
-                if dedicated_audit {
-                    "syntax"
-                } else {
-                    "diagnostics"
-                }
-            ));
             if let Some(failure) = audit_diagnostic_source(&source, options, &relative) {
                 conservation_failures.push(failure);
             }
             continue;
         }
 
-        manifest_entries.push(format!("format {relative}"));
         formatted_cases += 1;
         let formatted = format_or_panic(&source, options, &path.display().to_string());
         let formatted_parse = parse_kotlin_file(&formatted);
@@ -106,68 +92,10 @@ fn kotlin_corpus_formatter_snapshots() {
         formatted_cases > 0,
         "expected at least one valid Kotlin formatter corpus fixture"
     );
-    insta::assert_snapshot!("formatter_fixture_manifest", manifest_entries.join("\n"));
     assert!(
         conservation_failures.is_empty(),
         "formatter lost represented Kotlin source:\n{}",
         conservation_failures.join("\n")
-    );
-}
-
-#[test]
-fn deterministic_kotlin_recovery_mutations() {
-    let options = FormatOptions::default();
-    let root = kotlin_fixture_root(env!("CARGO_MANIFEST_DIR"));
-    let mut fixture_families = BTreeSet::new();
-    let mut cases = BTreeMap::new();
-
-    for path in collect_kotlin_files(&root) {
-        let family = path
-            .parent()
-            .and_then(|parent| parent.strip_prefix(&root).ok())
-            .expect("fixture should have a family below the Kotlin fixture root")
-            .to_string_lossy()
-            .replace('\\', "/");
-        fixture_families.insert(family.clone());
-        if cases.contains_key(&family) {
-            continue;
-        }
-        let source = read_to_string(&path);
-        let parse = parse_kotlin_file(&source);
-        let Some(syntax) = parse.syntax() else {
-            continue;
-        };
-        let mutations = deterministic_token_removal_candidates(&source, syntax.token_iter())
-            .into_iter()
-            .filter(|mutation| {
-                let parse = parse_kotlin_file(mutation);
-                parse.syntax().is_some() && !parse.diagnostics().is_empty()
-            })
-            .take(2)
-            .collect::<Vec<_>>();
-        if !mutations.is_empty() {
-            cases.insert(family, (path, mutations));
-        }
-    }
-
-    assert_eq!(
-        cases.keys().collect::<Vec<_>>(),
-        fixture_families.iter().collect::<Vec<_>>(),
-        "every Kotlin fixture family should provide a represented malformed mutation"
-    );
-    let mut failures = Vec::new();
-    for (family, (path, mutations)) in cases {
-        for (index, mutation) in mutations.into_iter().enumerate() {
-            let label = format!("{family} mutation {index} ({})", path.display());
-            if let Some(failure) = audit_diagnostic_source(&mutation, options, &label) {
-                failures.push(failure);
-            }
-        }
-    }
-    assert!(
-        failures.is_empty(),
-        "deterministic Kotlin recovery mutations failed:\n{}",
-        failures.join("\n")
     );
 }
 

@@ -1,0 +1,39 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+module recovery.directive {
+  requires /* JOLT-TRIVIA:module-directive */ ;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 0..6 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "recovery" @ 7..15
+        Dot "." @ 15..16
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "directive" @ 16..25 trailing=[Whitespace " "]
+      LBrace "{" @ 26..27
+      ModuleDirectiveList
+        RequiresDirective
+          Identifier "requires" @ 30..38 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:module-directive */", Whitespace " "]
+          RequiresModifierList
+          Semicolon ";" @ 74..75
+      RBrace "}" @ 76..77 leading=[Newline "\n"]
+  Eof "" @ 78..78 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=74..75 message="expected identifier"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(74), end: TextSize(75) }) message=expected identifier

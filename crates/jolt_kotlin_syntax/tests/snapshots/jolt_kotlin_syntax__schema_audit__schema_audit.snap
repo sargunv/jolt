@@ -2,20 +2,6 @@
 source: crates/jolt_kotlin_syntax/src/schema_audit.rs
 expression: audit.render()
 ---
-language = kotlin
-fixture_files = 259
-diagnostic_fixture_files = 71
-audited_nodes = 17288
-exact_valid_shapes = 17038
-malformed_nodes = 192
-clean_missing_required_shapes = 0
-diagnostic_missing_required_shapes = 58
-clean_unexpected_shapes = 0
-diagnostic_unexpected_shapes = 0
-
-[clean_missing_required]
-
-[diagnostic_missing_required]
 syntax__lexer__recognizes_all_hard_keywords: Name occurrence 1 ()
 syntax__lexer__reports_unterminated_line_string_at_newline: StringTemplateExpression occurrence 1 (StringTemplateEntryList)
 syntax__lexer__reports_unterminated_raw_string: StringTemplateExpression occurrence 1 (StringTemplateEntryList)
@@ -33,48 +19,44 @@ syntax__recovery__control_flow_missing_children: WhenExpression occurrence 1 (Wh
 syntax__recovery__declaration_tails: ExpressionBody occurrence 1 (Assign("="))
 syntax__recovery__declaration_tails: PropertyInitializer occurrence 1 (Assign("="))
 syntax__recovery__declaration_tails: PropertyInitializer occurrence 2 (Identifier("by"))
+syntax__recovery__declarations: Name occurrence 3 ()
+syntax__recovery__declarations: CallableName occurrence 3 (TypeReference Name)
+syntax__recovery__declarations: ExpressionBody occurrence 2 (Assign("="))
+syntax__recovery__declarations: PropertyInitializer occurrence 4 (NameExpression)
+syntax__recovery__declarations: ExplicitBackingField occurrence 1 (Identifier("field"))
+syntax__recovery__declarations: ExpressionBody occurrence 3 (NameExpression)
+syntax__recovery__declarations: ExpressionBody occurrence 5 (Assign("="))
+syntax__recovery__declarations: TypeAliasDeclaration occurrence 1 (ModifierList ModifierList TypeAliasKw("typealias") Name TypeReference)
+syntax__recovery__declarations: DelegationClause occurrence 1 (DelegationSpecifierSeparatedList)
+syntax__recovery__declarations: ConstructorDelegation occurrence 1 (ConstructorDelegationCall)
+syntax__recovery__declarations: ConstructorDelegationCall occurrence 2 ()
+syntax__recovery__declarations: DelegationByClause occurrence 1 (Identifier("by"))
+syntax__recovery__declarations: ClassBody occurrence 8 (LBrace("{") ClassMemberList)
+syntax__recovery__expressions: CallableReferenceTarget occurrence 1 ()
+syntax__recovery__expressions: LabelReference occurrence 1 (At("@"))
+syntax__recovery__expressions: LabelReference occurrence 2 (At("@"))
+syntax__recovery__expressions: CollectionLiteralExpression occurrence 3 (LBracket("[") ValueArgumentEntryList)
 syntax__recovery__for_partial_header: ForStatement occurrence 1 (ForKw("for") LParen("(") ForVariable InKw("in") NameExpression CallExpression)
 syntax__recovery__lambda_missing_close: Block occurrence 1 (LBrace("{") BlockItemList)
 syntax__recovery__lambda_missing_close: LambdaBody occurrence 1 (LBrace("{") LambdaBodyItemList)
 syntax__recovery__nested_recovered_when_condition: WhenEntry occurrence 1 (WhenConditionSeparatedList WhenEntryBody)
-syntax__recovery__phase_16_program: Name occurrence 7 ()
-syntax__recovery__phase_16_program: Name occurrence 15 ()
-syntax__recovery__phase_16_program: Name occurrence 17 ()
-syntax__recovery__phase_16_program: ImportOnDemandSuffix occurrence 1 (Star("*"))
-syntax__recovery__phase_16_program: Name occurrence 22 ()
-syntax__recovery__phase_17_types_and_parameters: TypeConstraintList occurrence 1 (TypeConstraintSeparatedList)
-syntax__recovery__phase_17_types_and_parameters: TypeConstraint occurrence 2 (Name TypeReference)
-syntax__recovery__phase_18_declarations: Name occurrence 3 ()
-syntax__recovery__phase_18_declarations: CallableName occurrence 3 (TypeReference Name)
-syntax__recovery__phase_18_declarations: ExpressionBody occurrence 2 (Assign("="))
-syntax__recovery__phase_18_declarations: PropertyInitializer occurrence 4 (NameExpression)
-syntax__recovery__phase_18_declarations: ExplicitBackingField occurrence 1 (Identifier("field"))
-syntax__recovery__phase_18_declarations: ExpressionBody occurrence 3 (NameExpression)
-syntax__recovery__phase_18_declarations: ExpressionBody occurrence 5 (Assign("="))
-syntax__recovery__phase_18_declarations: TypeAliasDeclaration occurrence 1 (ModifierList ModifierList TypeAliasKw("typealias") Name TypeReference)
-syntax__recovery__phase_18_declarations: DelegationClause occurrence 1 (DelegationSpecifierSeparatedList)
-syntax__recovery__phase_18_declarations: ConstructorDelegation occurrence 1 (ConstructorDelegationCall)
-syntax__recovery__phase_18_declarations: ConstructorDelegationCall occurrence 2 ()
-syntax__recovery__phase_18_declarations: DelegationByClause occurrence 1 (Identifier("by"))
-syntax__recovery__phase_18_declarations: ClassBody occurrence 8 (LBrace("{") ClassMemberList)
-syntax__recovery__phase_19_expressions: CallableReferenceTarget occurrence 1 ()
-syntax__recovery__phase_19_expressions: LabelReference occurrence 1 (At("@"))
-syntax__recovery__phase_19_expressions: LabelReference occurrence 2 (At("@"))
-syntax__recovery__phase_19_expressions: CollectionLiteralExpression occurrence 3 (LBracket("[") ValueArgumentEntryList)
-syntax__recovery__phase_20_statements_and_control_flow: ParenthesizedExpression occurrence 4 ()
-syntax__recovery__phase_20_statements_and_control_flow: WhenExpression occurrence 2 (WhenKw("when") WhenSubject WhenEntryList)
-syntax__recovery__phase_20_statements_and_control_flow: WhenEntry occurrence 6 (WhenConditionSeparatedList WhenEntryBody)
-syntax__recovery__phase_20_statements_and_control_flow: ParenthesizedExpression occurrence 5 ()
-syntax__recovery__phase_20_statements_and_control_flow: DoWhileStatement occurrence 2 (DoKw("do") Block ParenthesizedExpression)
-syntax__recovery__phase_20_statements_and_control_flow: LabelReference occurrence 2 (At("@"))
-syntax__recovery__phase_20_statements_and_control_flow: Block occurrence 19 (LBrace("{") BlockItemList)
-syntax__recovery__phase_20_statements_and_control_flow: Block occurrence 20 (LBrace("{") BlockItemList)
-syntax__recovery__phase_20_statements_and_control_flow: Block occurrence 21 (LBrace("{") BlockItemList)
+syntax__recovery__program: Name occurrence 7 ()
+syntax__recovery__program: Name occurrence 15 ()
+syntax__recovery__program: Name occurrence 17 ()
+syntax__recovery__program: ImportOnDemandSuffix occurrence 1 (Star("*"))
+syntax__recovery__program: Name occurrence 22 ()
 syntax__recovery__property_body_recovered_gap: PropertyInitializer occurrence 1 (AssignmentExpression)
 syntax__recovery__recovery_boundary_spacing: Name occurrence 2 ()
+syntax__recovery__statements_and_control_flow: ParenthesizedExpression occurrence 4 ()
+syntax__recovery__statements_and_control_flow: WhenExpression occurrence 2 (WhenKw("when") WhenSubject WhenEntryList)
+syntax__recovery__statements_and_control_flow: WhenEntry occurrence 6 (WhenConditionSeparatedList WhenEntryBody)
+syntax__recovery__statements_and_control_flow: ParenthesizedExpression occurrence 5 ()
+syntax__recovery__statements_and_control_flow: DoWhileStatement occurrence 2 (DoKw("do") Block ParenthesizedExpression)
+syntax__recovery__statements_and_control_flow: LabelReference occurrence 2 (At("@"))
+syntax__recovery__statements_and_control_flow: Block occurrence 19 (LBrace("{") BlockItemList)
+syntax__recovery__statements_and_control_flow: Block occurrence 20 (LBrace("{") BlockItemList)
+syntax__recovery__statements_and_control_flow: Block occurrence 21 (LBrace("{") BlockItemList)
+syntax__recovery__types_and_parameters: TypeConstraintList occurrence 1 (TypeConstraintSeparatedList)
+syntax__recovery__types_and_parameters: TypeConstraint occurrence 2 (Name TypeReference)
 syntax__recovery__when_missing_close: Block occurrence 1 (LBrace("{") BlockItemList)
 syntax__recovery__when_missing_close: WhenExpression occurrence 1 (WhenKw("when") WhenSubject LBrace("{") WhenEntryList)
-
-[clean_unexpected]
-
-[diagnostic_unexpected]

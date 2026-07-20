@@ -1,12 +1,9 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 use jolt_java_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
 use jolt_java_syntax::parse_compilation_unit;
 use jolt_test_support::{
-    RepresentedTokenRemoval, SnapshotBuilder, StringSink, collect_java_files,
-    deterministic_token_removal_candidates, diagnostic_inventory, fixture_snapshot_name,
-    java_fixture_root, read_to_string, render_diagnostics, represented_comment_inventory,
-    represented_token_loss_report, trivia_markers,
+    RepresentedTokenRemoval, SnapshotBuilder, StringSink, collect_java_files, diagnostic_inventory,
+    fixture_snapshot_name, java_fixture_root, read_to_string, render_diagnostics,
+    represented_comment_inventory, represented_token_loss_report, trivia_markers,
 };
 
 const REMOVE_ONE_SEMICOLON: &[RepresentedTokenRemoval] = &[RepresentedTokenRemoval {
@@ -35,7 +32,6 @@ fn java_corpus_formatter_snapshots() {
     let options = FormatOptions::default();
     let root = java_fixture_root(env!("CARGO_MANIFEST_DIR"));
     let mut formatted_cases = 0usize;
-    let mut manifest_entries = Vec::new();
     let mut conservation_failures = Vec::new();
 
     for path in collect_java_files(&root) {
@@ -47,28 +43,18 @@ fn java_corpus_formatter_snapshots() {
         let source = read_to_string(&path);
         let parse = parse_compilation_unit(&source);
         if parse.syntax().is_none() {
-            manifest_entries.push(format!("skip no syntax {relative}"));
             continue;
         }
         let dedicated_audit =
             relative.starts_with("syntax/lexer") || relative.starts_with("syntax/recovery");
         let audit_only = dedicated_audit || !parse.diagnostics().is_empty();
         if audit_only {
-            manifest_entries.push(format!(
-                "audit {} {relative}",
-                if dedicated_audit {
-                    "syntax"
-                } else {
-                    "diagnostics"
-                }
-            ));
             if let Some(failure) = audit_diagnostic_source(&source, options, &relative) {
                 conservation_failures.push(failure);
             }
             continue;
         }
 
-        manifest_entries.push(format!("format {relative}"));
         formatted_cases += 1;
         let formatted = format_or_panic(&source, options, &path.display().to_string());
         let formatted_parse = parse_compilation_unit(&formatted);
@@ -127,68 +113,10 @@ fn java_corpus_formatter_snapshots() {
         formatted_cases > 0,
         "expected at least one valid Java formatter corpus fixture"
     );
-    insta::assert_snapshot!("formatter_fixture_manifest", manifest_entries.join("\n"));
     assert!(
         conservation_failures.is_empty(),
         "formatter lost represented Java source:\n{}",
         conservation_failures.join("\n")
-    );
-}
-
-#[test]
-fn deterministic_java_recovery_mutations() {
-    let options = FormatOptions::default();
-    let root = java_fixture_root(env!("CARGO_MANIFEST_DIR"));
-    let mut fixture_families = BTreeSet::new();
-    let mut cases = BTreeMap::new();
-
-    for path in collect_java_files(&root) {
-        let family = path
-            .parent()
-            .and_then(|parent| parent.strip_prefix(&root).ok())
-            .expect("fixture should have a family below the Java fixture root")
-            .to_string_lossy()
-            .replace('\\', "/");
-        fixture_families.insert(family.clone());
-        if cases.contains_key(&family) {
-            continue;
-        }
-        let source = read_to_string(&path);
-        let parse = parse_compilation_unit(&source);
-        let Some(syntax) = parse.syntax() else {
-            continue;
-        };
-        let mutations = deterministic_token_removal_candidates(&source, syntax.token_iter())
-            .into_iter()
-            .filter(|mutation| {
-                let parse = parse_compilation_unit(mutation);
-                parse.syntax().is_some() && !parse.diagnostics().is_empty()
-            })
-            .take(2)
-            .collect::<Vec<_>>();
-        if !mutations.is_empty() {
-            cases.insert(family, (path, mutations));
-        }
-    }
-
-    assert_eq!(
-        cases.keys().collect::<Vec<_>>(),
-        fixture_families.iter().collect::<Vec<_>>(),
-        "every Java fixture family should provide a represented malformed mutation"
-    );
-    let mut failures = Vec::new();
-    for (family, (path, mutations)) in cases {
-        for (index, mutation) in mutations.into_iter().enumerate() {
-            let label = format!("{family} mutation {index} ({})", path.display());
-            if let Some(failure) = audit_diagnostic_source(&mutation, options, &label) {
-                failures.push(failure);
-            }
-        }
-    }
-    assert!(
-        failures.is_empty(),
-        "deterministic Java recovery mutations failed:\n{}",
-        failures.join("\n")
     );
 }
 

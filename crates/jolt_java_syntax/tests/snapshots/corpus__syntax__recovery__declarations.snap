@@ -15,7 +15,7 @@ enum RecoveredEnum {
     int member;
 }
 
-enum Phase13Enum {
+enum RecoveredSeparatorEnum {
     ONLY /* JOLT-TRIVIA:enum-separator */ ;
     int member;
 }
@@ -80,25 +80,25 @@ CompilationUnit
         RBrace "}" @ 254..255 leading=[Newline "\n"]
     EnumDeclaration
       EnumKw "enum" @ 257..261 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      Identifier "Phase13Enum" @ 262..273 trailing=[Whitespace " "]
+      Identifier "RecoveredSeparatorEnum" @ 262..284 trailing=[Whitespace " "]
       EnumBody
-        LBrace "{" @ 274..275
+        LBrace "{" @ 285..286
         EnumConstantList
           EnumConstant
             AnnotationList
-            Identifier "ONLY" @ 280..284 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:enum-separator */", Whitespace " "]
-        Semicolon ";" @ 318..319
+            Identifier "ONLY" @ 291..295 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:enum-separator */", Whitespace " "]
+        Semicolon ";" @ 329..330
         ClassBodyMemberList
           FieldDeclaration
             PrimitiveType
               AnnotationList
-              IntKw "int" @ 324..327 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              IntKw "int" @ 335..338 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             VariableDeclaratorList
               VariableDeclarator
-                Identifier "member" @ 328..334
-            Semicolon ";" @ 334..335
-        RBrace "}" @ 336..337 leading=[Newline "\n"]
-  Eof "" @ 338..338 leading=[Newline "\n"]
+                Identifier "member" @ 339..345
+            Semicolon ";" @ 345..346
+        RBrace "}" @ 347..348 leading=[Newline "\n"]
+  Eof "" @ 349..349 leading=[Newline "\n"]
 
 diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=83..84 message="expected enum constant name"
