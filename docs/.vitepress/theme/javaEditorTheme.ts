@@ -10,30 +10,35 @@ export function joltEditorTheme(isDark: boolean) {
       },
       ".cm-scroller": {
         overflow: "auto",
-        fontFamily: "var(--vp-font-family-mono)",
+        fontFamily: "var(--jz-font-mono)",
         fontSize: "13px",
-        lineHeight: "1.6",
+        lineHeight: "1.75",
       },
       ".cm-gutters": {
-        backgroundColor: "var(--vp-c-bg-soft)",
-        borderRight: "1px solid var(--vp-c-divider)",
-        color: "var(--vp-c-text-3)",
+        backgroundColor: "var(--jz-panel)",
+        borderRight: "1px solid var(--jz-line)",
+        color: "var(--jz-ink-3)",
+        fontFamily: "var(--jz-font-mono)",
       },
       ".cm-activeLineGutter": {
-        backgroundColor: "var(--vp-c-bg-soft)",
+        backgroundColor: "var(--jz-panel-inset)",
+        color: "var(--jz-ink-2)",
       },
       ".cm-content": {
-        caretColor: "var(--vp-c-brand-1)",
-        padding: "12px 0",
+        caretColor: "var(--jz-amber)",
+        padding: "14px 0",
       },
       ".cm-cursor": {
-        borderLeftColor: "var(--vp-c-brand-1)",
+        borderLeftColor: "var(--jz-amber)",
+        borderLeftWidth: "2px",
       },
       "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
-        backgroundColor: "var(--vp-c-brand-soft) !important",
+        backgroundColor: isDark
+          ? "rgba(255, 214, 10, 0.22) !important"
+          : "rgba(255, 207, 63, 0.5) !important",
       },
       ".cm-activeLine": {
-        backgroundColor: isDark ? "#6699ff0b" : "rgba(0,0,0,0.03)",
+        backgroundColor: isDark ? "rgba(255, 178, 36, 0.05)" : "rgba(0,0,0,0.025)",
       },
     },
     { dark: isDark },

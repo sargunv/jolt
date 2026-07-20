@@ -27,7 +27,7 @@ On the [Spring Framework](https://github.com/spring-projects/spring-framework)
 Java sources (~9,200 files):
 
 <ClientOnly>
-  <SpringBenchmarkChart />
+  <BenchStrip />
 </ClientOnly>
 
 Jolt’s formatter builds on the

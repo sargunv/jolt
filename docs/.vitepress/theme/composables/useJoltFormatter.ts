@@ -47,13 +47,14 @@ async function ensureReady(): Promise<ContextFormatter> {
   return loadPromise;
 }
 
-async function formatJava(
+async function formatSource(
+  filePath: string,
   source: string,
   config: PlaygroundFormatConfig,
 ): Promise<string> {
   const formatter = await ensureReady();
   return formatter.formatText({
-    filePath: "Example.java",
+    filePath,
     fileText: source,
     overrideConfig: {
       lineWidth: config.lineWidth,
@@ -64,5 +65,5 @@ async function formatJava(
 }
 
 export function useJoltFormatter() {
-  return { loading, loadError, ensureReady, formatJava };
+  return { loading, loadError, ensureReady, formatSource };
 }

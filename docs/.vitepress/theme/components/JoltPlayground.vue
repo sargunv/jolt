@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Diagnostic as LintDiagnostic } from "@codemirror/lint";
 import { computed, onMounted, ref, watch } from "vue";
-import JavaEditor from "./JavaEditor.vue";
+import SourceEditor from "./SourceEditor.vue";
 import { useJoltFormatter } from "../composables/useJoltFormatter";
 import {
   PLAYGROUND_DEFAULT_CONFIG,
@@ -20,7 +20,7 @@ const formatError = ref<string | null>(null);
 const formatOk = ref(false);
 const config = ref<PlaygroundFormatConfig>({ ...PLAYGROUND_DEFAULT_CONFIG });
 
-const { loading, loadError, ensureReady, formatJava } = useJoltFormatter();
+const { loading, loadError, ensureReady, formatSource } = useJoltFormatter();
 
 const inputLintDiagnostics = computed<LintDiagnostic[]>(() => {
   if (!formatError.value) {
@@ -60,7 +60,7 @@ async function runFormat(source: string, formatConfig: PlaygroundFormatConfig) {
   formatError.value = null;
 
   try {
-    const result = await formatJava(source, formatConfig);
+    const result = await formatSource("Example.java", source, formatConfig);
     if (generation === formatGeneration) {
       output.value = result;
       formatOk.value = true;
@@ -117,7 +117,7 @@ onMounted(async () => {
         </div>
         <div class="jolt-playground-editor">
           <div v-if="loading" class="jolt-playground-loading">Loading…</div>
-          <JavaEditor
+          <SourceEditor
             v-else
             v-model="input"
             :line-width="config.lineWidth"
@@ -166,7 +166,7 @@ onMounted(async () => {
         </div>
         <div class="jolt-playground-editor">
           <div v-if="loading" class="jolt-playground-loading">Loading…</div>
-          <JavaEditor
+          <SourceEditor
             v-else
             :model-value="output"
             :line-width="config.lineWidth"
@@ -188,7 +188,6 @@ onMounted(async () => {
   min-height: 0;
   overflow: hidden;
   width: 100%;
-  padding: 24px var(--jolt-playground-gap) var(--jolt-playground-gap);
 }
 
 .jolt-playground-controls {
@@ -204,11 +203,12 @@ onMounted(async () => {
   align-items: center;
   gap: 6px;
   margin: 0;
-  font-size: 12px;
+  font-family: var(--jz-font-mono);
+  font-size: 11px;
   font-weight: 500;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--vp-c-text-2);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--jz-ink-2);
 }
 
 .jolt-playground-control--checkbox {
@@ -223,14 +223,14 @@ onMounted(async () => {
   width: 3.5rem;
   height: 22px;
   box-sizing: border-box;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 4px;
+  border: 1px solid var(--jz-line);
+  border-radius: 0;
   padding: 0 6px;
   font-size: 11px;
   line-height: 20px;
-  font-family: var(--vp-font-family-mono);
-  color: var(--vp-c-text-1);
-  background: var(--vp-c-bg-soft);
+  font-family: var(--jz-font-mono);
+  color: var(--jz-ink);
+  background: var(--jz-paper);
 }
 
 .jolt-playground-input[type="number"] {
@@ -244,8 +244,8 @@ onMounted(async () => {
 }
 
 .jolt-playground-input:focus {
-  outline: 2px solid color-mix(in srgb, var(--vp-c-brand-1) 35%, transparent);
-  border-color: var(--vp-c-brand-1);
+  outline: 2px solid color-mix(in srgb, var(--jz-amber) 40%, transparent);
+  border-color: var(--jz-amber);
 }
 
 .jolt-playground-input:disabled {
@@ -262,24 +262,22 @@ onMounted(async () => {
 .jolt-playground-load-error {
   margin: 0 0 12px;
   font-size: 14px;
-  color: var(--vp-c-danger-1, #f66f81);
+  color: var(--jz-danger);
 }
 
 .jolt-playground-panels {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: minmax(220px, 1fr);
+  grid-template-rows: 380px;
   gap: var(--jolt-playground-gap);
-  flex: 1;
-  min-height: 280px;
+  min-height: 0;
   overflow: hidden;
 }
 
 @media (max-width: 768px) {
   .jolt-playground-panels {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(220px, 1fr) minmax(220px, 1fr);
-    min-height: 480px;
+    grid-template-rows: 320px 320px;
   }
 }
 
@@ -288,9 +286,8 @@ onMounted(async () => {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 8px;
-  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--jz-line);
+  background: var(--jz-panel);
   overflow: hidden;
 }
 
@@ -301,12 +298,13 @@ onMounted(async () => {
   justify-content: space-between;
   gap: 10px;
   padding: 8px 14px;
-  border-bottom: 1px solid var(--vp-c-divider);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--jz-line);
+  font-family: var(--jz-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--vp-c-text-2);
+  color: var(--jz-ink-2);
   flex-shrink: 0;
 }
 
@@ -319,21 +317,20 @@ onMounted(async () => {
 .jolt-playground-status {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
   flex-shrink: 0;
 }
 
 .jolt-playground-status--idle,
 .jolt-playground-status--loading {
-  background: var(--vp-c-text-3);
+  background: var(--jz-ink-3);
 }
 
 .jolt-playground-status--ok {
-  background: var(--vp-c-brand-1);
+  background: var(--jz-amber);
 }
 
 .jolt-playground-status--error {
-  background: var(--vp-c-danger-1, #f66f81);
+  background: var(--jz-danger);
 }
 
 .jolt-playground-editor {
@@ -348,7 +345,8 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   height: 100%;
-  font-size: 14px;
-  color: var(--vp-c-text-3);
+  font-family: var(--jz-font-mono);
+  font-size: 13px;
+  color: var(--jz-ink-3);
 }
 </style>

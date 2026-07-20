@@ -2,18 +2,23 @@
 import { computed } from "vue";
 import { java } from "@codemirror/lang-java";
 import { linter, type Diagnostic as LintDiagnostic } from "@codemirror/lint";
+import type { LanguageSupport } from "@codemirror/language";
 import CodeMirror from "vue-codemirror6";
 import { useData } from "vitepress";
 import { joltEditorTheme } from "../javaEditorTheme";
-import { javaSyntaxHighlighting } from "../javaHighlightStyle";
+import { joltSyntaxHighlighting } from "../javaHighlightStyle";
 
-const props = defineProps<{
-  modelValue: string;
-  readonly?: boolean;
-  lintDiagnostics?: LintDiagnostic[];
-  lineWidth: number;
-  showRuler?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    modelValue: string;
+    language?: LanguageSupport;
+    readonly?: boolean;
+    lintDiagnostics?: LintDiagnostic[];
+    lineWidth: number;
+    showRuler?: boolean;
+  }>(),
+  { language: () => java(), showRuler: true },
+);
 
 const emit = defineEmits<{
   "update:modelValue": [value: string];
@@ -21,11 +26,8 @@ const emit = defineEmits<{
 
 const { isDark } = useData();
 
-const lang = java();
-const showRuler = computed(() => props.showRuler ?? true);
-
 const editorStyle = computed(() =>
-  showRuler.value
+  props.showRuler
     ? ({ "--jolt-ruler-column": String(props.lineWidth) } as Record<
         string,
         string
@@ -34,9 +36,10 @@ const editorStyle = computed(() =>
 );
 
 const extensions = computed(() => {
-  const highlight = javaSyntaxHighlighting(isDark.value);
-  const extras = [joltEditorTheme(isDark.value)];
-  if (highlight) extras.unshift(highlight);
+  const extras = [
+    joltSyntaxHighlighting(isDark.value),
+    joltEditorTheme(isDark.value),
+  ];
 
   if (props.lintDiagnostics?.length) {
     const diagnostics = props.lintDiagnostics;
@@ -50,49 +53,49 @@ const extensions = computed(() => {
 <template>
   <CodeMirror
     :model-value="modelValue"
-    :lang="lang"
+    :lang="language"
     basic
     :dark="isDark"
     :readonly="readonly"
     :extensions="extensions"
-    class="java-editor"
-    :class="{ 'java-editor--ruler': showRuler }"
+    class="source-editor"
+    :class="{ 'source-editor--ruler': showRuler }"
     :style="editorStyle"
     @update:model-value="emit('update:modelValue', $event)"
   />
 </template>
 
 <style scoped>
-.java-editor {
+.source-editor {
   position: absolute;
   inset: 0;
 }
 
-.java-editor :deep(.vue-codemirror),
-.java-editor :deep(.cm-editor) {
+.source-editor :deep(.vue-codemirror),
+.source-editor :deep(.cm-editor) {
   height: 100%;
   max-height: 100%;
   outline: none;
 }
 
-.java-editor :deep(.cm-editor.cm-focused) {
+.source-editor :deep(.cm-editor.cm-focused) {
   outline: none;
 }
 
-.java-editor--ruler :deep(.cm-content) {
+.source-editor--ruler :deep(.cm-content) {
   background-image: linear-gradient(
     90deg,
     transparent calc(var(--jolt-ruler-column) * 1ch - 1px),
-    color-mix(in srgb, var(--vp-c-divider) 70%, transparent)
+    color-mix(in srgb, var(--jz-amber) 45%, transparent)
       calc(var(--jolt-ruler-column) * 1ch - 1px),
-    color-mix(in srgb, var(--vp-c-divider) 70%, transparent)
+    color-mix(in srgb, var(--jz-amber) 45%, transparent)
       calc(var(--jolt-ruler-column) * 1ch),
     transparent calc(var(--jolt-ruler-column) * 1ch)
   );
   background-attachment: local;
 }
 
-.java-editor :deep(.cm-lintRange-error) {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='3'%3E%3Cpath d='m0 3 3-3 3 3' fill='%23f66f81'/%3E%3C/svg%3E");
+.source-editor :deep(.cm-lintRange-error) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='3'%3E%3Cpath d='m0 3 3-3 3 3' fill='%23b3261e'/%3E%3C/svg%3E");
 }
 </style>
