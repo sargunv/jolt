@@ -347,6 +347,65 @@ syntax-owned permit proves semantics and trivia are preserved.
 Formatter-ignore remains a separate, syntax-delimited verbatim feature and uses
 the same tracking guarantees.
 
+## Recovery Splice Execution Plan
+
+Malformed output is an opaque child, not an opaque remainder of its parent.
+Before changing formatter layout, audit the parser shapes for every regression:
+
+1. keep a recognized declaration, directive, list, or statement structurally
+   valid when only one of its declared slots is malformed;
+2. place unexpected represented source in the narrowest category-compatible
+   bogus child or directly malformed exact child already delimited by the
+   grammar;
+3. keep following valid siblings and enclosing delimiters outside that child;
+   and
+4. aggregate only adjacent source for which the grammar cannot represent a
+   narrower structured owner.
+
+The parser audit determines the splice boundary completely. A directly malformed
+child is formatted through the existing typed `ExceptionalFragment`, which owns
+its tracked verbatim source claim, first and last lexical atoms, and required
+line-comment termination. The language recovery helper resolves the bounded
+lexical joins and then returns an ordinary `Doc`. Its valid parent remains
+authoritative for spaces, lines, list separators, indentation, and delimiters.
+
+```text
+structured parent rule(
+    structured left,
+    exceptional malformed child,
+    structured right,
+)
+```
+
+There is deliberately no recovery-specific layout state. Represented whitespace
+outside the malformed child's exact source claim is ordinary input trivia and
+does not override the valid parent's canonical rule. Where no structured parent
+exists, the parser aggregates adjacent unrecoverable source into one malformed
+owner, so no formatter list separator is inserted inside that source run.
+
+This division keeps valid ancestors on their ordinary rules. A malformed module
+name does not suppress module-directive separation, a malformed type parameter
+does not become a top-level program item, and a malformed statement does not
+change an unrelated catch parameter after comments are relocated. Formatter
+rules do not add recovery-specific separator exceptions.
+
+Implementation order:
+
+1. correct Java and Kotlin parser ownership exposed by the regression fixtures;
+2. aggregate adjacent top-level source only until the next recognized program
+   item;
+3. retain the shared exceptional-fragment lexical-safety path in both language
+   formatters;
+4. delete recovery boundary-spacing metadata, renderer locks, flat-fit recovery
+   state, and boundary normalization workarounds; and
+5. prove the reported examples, comment-relocation idempotence, conservation,
+   recovery mutation corpora, and full project checks.
+
+The existing token/trivia conservation proof remains the source-identity gate.
+This change does not add a general proof over every emitted whitespace
+character. Parser shape snapshots prove narrow malformed ownership; recovery
+snapshots and idempotence corpora remain the behavioral proof for layout.
+
 ## Lexical Safety
 
 All token emission passes through one lexical-boundary service. It decides

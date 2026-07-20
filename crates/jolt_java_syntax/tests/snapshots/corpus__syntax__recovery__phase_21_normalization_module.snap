@@ -43,12 +43,12 @@ CompilationUnit
           Identifier "requires" @ 57..65 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           RequiresModifierList
             Identifier "transitive" @ 66..76 trailing=[Whitespace " "]
-        BogusModuleDirective
-          Plus "+" @ 77..78 trailing=[Whitespace " "]
-          StaticKw "static" @ 79..85 trailing=[Whitespace " "]
-          Identifier "a" @ 86..87
-          Dot "." @ 87..88
-          Identifier "module" @ 88..94
+          BogusName
+            Plus "+" @ 77..78 trailing=[Whitespace " "]
+            StaticKw "static" @ 79..85 trailing=[Whitespace " "]
+            Identifier "a" @ 86..87
+            Dot "." @ 87..88
+            Identifier "module" @ 88..94
           Semicolon ";" @ 94..95
         UsesDirective
           Identifier "uses" @ 100..104 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
@@ -67,10 +67,6 @@ CompilationUnit
 
 diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=77..78 message="expected identifier"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=77..78 message="expected `;` after requires directive"
-  code=java.parse.unexpected_syntax severity=Error stage=Parser range=77..78 message="unexpected token in module declaration"
 
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(77), end: TextSize(78) }) message=expected identifier
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(77), end: TextSize(78) }) message=expected `;` after requires directive
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(77), end: TextSize(78) }) message=unexpected token in module declaration

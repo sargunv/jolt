@@ -302,6 +302,22 @@ impl Parser<'_> {
         let parameter = self.start();
         let owner = parameter.anchor();
         self.parse_annotations();
+        if !self.at_type_identifier()
+            && !self.at_name_segment()
+            && !matches!(self.current_kind(), JavaSyntaxKind::Comma)
+            && !self.at_type_argument_close()
+            && !self.at_eof()
+        {
+            let diagnostic = self.pending_expected("expected type parameter name");
+            while !self.at_eof()
+                && !self.at(JavaSyntaxKind::Comma)
+                && !self.at_type_argument_close()
+            {
+                self.bump();
+            }
+            self.complete_recovery(parameter, JavaSyntaxKind::TypeParameter, [diagnostic]);
+            return;
+        }
         let recovery = self.expect_type_identifier(
             "expected type parameter name",
             owner,
@@ -581,6 +597,35 @@ impl Parser<'_> {
     ) {
         let declarator = self.start();
         let owner = declarator.anchor();
+        let has_name = if allow_unnamed {
+            self.at_variable_identifier()
+        } else {
+            self.at_name_segment()
+        };
+        let at_boundary = self.at_eof()
+            || self.at(JavaSyntaxKind::Comma)
+            || self.at(JavaSyntaxKind::RBrace)
+            || self.at_contextual("when")
+            || stops.contains(&self.current_kind());
+        if !has_name
+            && !at_boundary
+            && !matches!(
+                self.current_kind(),
+                JavaSyntaxKind::Assign | JavaSyntaxKind::LBracket
+            )
+        {
+            let diagnostic = self.pending_expected("expected variable name");
+            while !self.at_eof()
+                && !self.at(JavaSyntaxKind::Comma)
+                && !self.at(JavaSyntaxKind::RBrace)
+                && !self.at_contextual("when")
+                && !stops.contains(&self.current_kind())
+            {
+                self.bump();
+            }
+            self.complete_recovery(declarator, JavaSyntaxKind::VariableDeclarator, [diagnostic]);
+            return;
+        }
         self.parse_variable_declarator_id(
             allow_unnamed,
             owner,

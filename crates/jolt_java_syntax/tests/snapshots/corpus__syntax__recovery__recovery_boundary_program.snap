@@ -1,0 +1,25 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+{
+  asd;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    BogusCompilationUnitItem
+      LBrace "{" @ 0..1
+      Identifier "asd" @ 4..7 leading=[Newline "\n", Whitespace "  "]
+      Semicolon ";" @ 7..8
+      RBrace "}" @ 9..10 leading=[Newline "\n"]
+  Eof "" @ 11..11 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..1 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(1) }) message=unexpected token at top level

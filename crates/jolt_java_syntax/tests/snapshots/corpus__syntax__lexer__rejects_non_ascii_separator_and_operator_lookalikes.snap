@@ -18,24 +18,21 @@ CompilationUnit
               Identifier "a" @ 0..1
       VariableDeclaratorList
         VariableDeclarator
-    BogusCompilationUnitItem
-      Unknown "；" @ 1..4
-      Identifier "b" @ 4..5 trailing=[Whitespace " "]
-      Identifier "a" @ 6..7
-      Unknown "＋" @ 7..10
-      Identifier "b" @ 10..11
+          Unknown "；" @ 1..4
+          Identifier "b" @ 4..5 trailing=[Whitespace " "]
+          Identifier "a" @ 6..7
+          Unknown "＋" @ 7..10
+          Identifier "b" @ 10..11
   Eof "" @ 11..11
 
 diagnostics:
   code=java.lex.unknown_character severity=Error stage=Lexer range=1..4 message="unknown character"
   code=java.lex.unknown_character severity=Error stage=Lexer range=7..10 message="unknown character"
   code=java.parse.expected_syntax severity=Error stage=Parser range=1..4 message="expected variable name"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=1..4 message="expected `;` after field declaration"
-  code=java.parse.unexpected_syntax severity=Error stage=Parser range=1..4 message="unexpected token at top level"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=11..11 message="expected `;` after field declaration"
 
 diagnostics:
 code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(1), end: TextSize(4) }) message=unknown character
 code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(7), end: TextSize(10) }) message=unknown character
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1), end: TextSize(4) }) message=expected variable name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1), end: TextSize(4) }) message=expected `;` after field declaration
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1), end: TextSize(4) }) message=unexpected token at top level
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(11), end: TextSize(11) }) message=expected `;` after field declaration

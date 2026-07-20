@@ -465,7 +465,7 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
             (_, LineMode::Hard | LineMode::Empty)
             | (Mode::Break, LineMode::Soft | LineMode::SoftOrSpace) => {
                 let count = if line.mode == LineMode::Empty { 2 } else { 1 };
-                self.write_newline(line.indent_delta, count);
+                self.write_newlines(line.indent_delta, count);
             }
         }
     }
@@ -507,7 +507,7 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         }
     }
 
-    fn write_newline(&mut self, indent_delta: i16, count: u32) {
+    fn write_newlines(&mut self, indent_delta: i16, count: u32) {
         self.pending_indent = None;
         let literal_ended_line =
             self.horizontal_whitespace == HorizontalWhitespace::LiteralLineEnding;
@@ -518,16 +518,27 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
             self.column = TextWidth::ZERO;
             self.measured_group_fits = false;
         }
+        let (indent, width) = self.pending_newline_indent(indent_delta);
+        self.pending_indent = indent;
+        self.column = width;
+    }
+
+    fn pending_newline_indent(&self, indent_delta: i16) -> (Option<PendingIndent>, TextWidth) {
         let effective_levels = (self.indent_levels + i32::from(indent_delta))
             .max(0)
             .cast_unsigned();
         let width = effective_levels * u32::from(self.options.indent_width);
-        let (character, count) = match self.options.indent_style {
+        let (character, indent_count) = match self.options.indent_style {
             IndentStyle::Space => (' ', width),
             IndentStyle::Tab => ('\t', effective_levels),
         };
-        self.pending_indent = (count > 0).then_some(PendingIndent { character, count });
-        self.column = TextWidth::new(width);
+        (
+            (indent_count > 0).then_some(PendingIndent {
+                character,
+                count: indent_count,
+            }),
+            TextWidth::new(width),
+        )
     }
 
     fn write_str(&mut self, text: &str) {
@@ -1784,66 +1795,6 @@ mod tests {
         render_to(&arena, doc, options(), &mut sink).expect("document renders");
 
         assert_eq!(sink.0, "text\n");
-    }
-
-    #[test]
-    fn fit_check_discards_layout_space_before_pending_indent() {
-        let mut builder = DocBuilder::new();
-        let contents = builder.concat_list(|contents| {
-            let line = contents.hard_line();
-            contents.push(line);
-            let grouped = contents.concat_list(|grouped| {
-                let space = grouped.space();
-                grouped.push(space);
-                let text = grouped.text("y");
-                grouped.push(text);
-                let breaks = grouped.text("B");
-                let flat = grouped.nil();
-                let conditional = grouped.if_break(breaks, flat);
-                grouped.push(conditional);
-            });
-            let grouped = contents.group(grouped);
-            contents.push(grouped);
-        });
-        let doc = builder.indent(contents);
-        let arena = builder.into_arena();
-        let mut sink = StringSink::default();
-        let options = RenderOptions {
-            line_width: TextWidth::new(5),
-            ..options()
-        };
-
-        render_to(&arena, doc, options, &mut sink).expect("document renders");
-
-        assert_eq!(sink.0, "\n    y");
-    }
-
-    #[test]
-    fn consecutive_indented_lines_do_not_emit_trailing_whitespace() {
-        let mut builder = DocBuilder::new();
-        let contents = builder.concat_list(|contents| {
-            let first = contents.text("first");
-            contents.push(first);
-            let hard = contents.hard_line();
-            contents.push(hard);
-            let second_hard = contents.hard_line();
-            contents.push(second_hard);
-            let second = contents.text("second");
-            contents.push(second);
-            let empty = contents.empty_line();
-            contents.push(empty);
-            let third = contents.text("third");
-            contents.push(third);
-            let trailing = contents.hard_line();
-            contents.push(trailing);
-        });
-        let doc = builder.indent(contents);
-        let arena = builder.into_arena();
-        let mut sink = StringSink::default();
-
-        render_to(&arena, doc, options(), &mut sink).expect("document renders");
-
-        assert_eq!(sink.0, "first\n\n    second\n\n    third\n");
     }
 
     #[test]

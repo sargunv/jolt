@@ -17,15 +17,24 @@ pub(crate) fn format_malformed<'source>(
         return Doc::nil();
     };
     let has_tokens = core.tokens().next().is_some();
+    let (leading, trailing, has_leading_comments, has_trailing_comments) =
+        malformed_boundary_comments(&core, doc);
     let (left, right) = if has_tokens {
-        (core.previous_token(), core.next_token())
+        (
+            (!has_leading_comments)
+                .then(|| core.previous_token())
+                .flatten(),
+            (!has_trailing_comments)
+                .then(|| core.next_token())
+                .flatten(),
+        )
     } else {
         (None, None)
     };
     let mut safety = KotlinLexicalSafety;
     let fragment = doc.malformed_verbatim_with_safety(&core, &mut safety);
     let fragment = doc.resolve_exceptional(fragment, left.as_ref(), right.as_ref(), &mut safety);
-    format_malformed_with_boundary_comments(&core, fragment, doc)
+    doc.concat([leading, fragment, trailing])
 }
 
 #[derive(Clone, Copy)]
@@ -182,25 +191,25 @@ pub(crate) fn format_missing<'source>(
     Doc::nil()
 }
 
-fn format_malformed_with_boundary_comments<'source>(
+fn malformed_boundary_comments<'source>(
     core: &jolt_kotlin_syntax::KotlinSyntaxVerbatimCore<'source>,
-    fragment: Doc<'source>,
     doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let leading = format_leading_comment_list(
-        doc,
-        core.first_token()
-            .into_iter()
-            .flat_map(|token| token.leading_comments())
-            .filter(|comment| !core.contains(comment.text_range())),
-    );
+) -> (Doc<'source>, Doc<'source>, bool, bool) {
+    let leading_comments = core
+        .first_token()
+        .into_iter()
+        .flat_map(|token| token.leading_comments())
+        .filter(|comment| !core.contains(comment.text_range()));
+    let has_leading_comments = leading_comments.clone().next().is_some();
+    let leading = format_leading_comment_list(doc, leading_comments);
+    let trailing_comments = core
+        .last_token()
+        .into_iter()
+        .flat_map(|token| token.trailing_comments())
+        .filter(|comment| !core.contains(comment.text_range()));
+    let has_trailing_comments = trailing_comments.clone().next().is_some();
     let trailing = doc.concat_list(|comments| {
-        for comment in core
-            .last_token()
-            .into_iter()
-            .flat_map(|token| token.trailing_comments())
-            .filter(|comment| !core.contains(comment.text_range()))
-        {
+        for comment in trailing_comments {
             let space = comments.space();
             comments.push(space);
             let forces_line = comment_forces_line(&comment);
@@ -212,5 +221,10 @@ fn format_malformed_with_boundary_comments<'source>(
             }
         }
     });
-    doc.concat([leading, fragment, trailing])
+    (
+        leading,
+        trailing,
+        has_leading_comments,
+        has_trailing_comments,
+    )
 }

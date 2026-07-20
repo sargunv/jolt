@@ -34,8 +34,7 @@ CompilationUnit
               IntKw "int" @ 46..49 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             VariableDeclaratorList
               VariableDeclarator
-          BogusClassBodyMember
-            BooleanLiteral "false" @ 50..55
+                BooleanLiteral "false" @ 50..55
             Semicolon ";" @ 55..56
           FieldDeclaration
             PrimitiveType
@@ -43,8 +42,7 @@ CompilationUnit
               IntKw "int" @ 61..64 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             VariableDeclaratorList
               VariableDeclarator
-          BogusClassBodyMember
-            UnderscoreKw "_" @ 65..66
+                UnderscoreKw "_" @ 65..66
             Semicolon ";" @ 66..67
           BogusClassBodyMember
             BooleanLiteral "true" @ 72..76 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
@@ -65,11 +63,7 @@ diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=8..12 message="expected `;` after package declaration"
   code=java.parse.unexpected_syntax severity=Error stage=Parser range=8..12 message="unexpected token at top level"
   code=java.parse.expected_syntax severity=Error stage=Parser range=50..55 message="expected variable name"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=50..55 message="expected `;` after field declaration"
-  code=java.parse.unexpected_syntax severity=Error stage=Parser range=50..55 message="unexpected token in type body"
   code=java.parse.expected_syntax severity=Error stage=Parser range=65..66 message="expected variable name"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=65..66 message="expected `;` after field declaration"
-  code=java.parse.unexpected_syntax severity=Error stage=Parser range=65..66 message="unexpected token in type body"
   code=java.parse.unexpected_syntax severity=Error stage=Parser range=72..76 message="unexpected token in type body"
   code=java.parse.unexpected_syntax severity=Error stage=Parser range=88..92 message="unexpected token in type body"
 
@@ -78,10 +72,6 @@ code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(8), end: TextSize(12) }) message=expected `;` after package declaration
 code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(8), end: TextSize(12) }) message=unexpected token at top level
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(50), end: TextSize(55) }) message=expected variable name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(50), end: TextSize(55) }) message=expected `;` after field declaration
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(50), end: TextSize(55) }) message=unexpected token in type body
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(65), end: TextSize(66) }) message=expected variable name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(65), end: TextSize(66) }) message=expected `;` after field declaration
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(65), end: TextSize(66) }) message=unexpected token in type body
 code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(72), end: TextSize(76) }) message=unexpected token in type body
 code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(88), end: TextSize(92) }) message=unexpected token in type body

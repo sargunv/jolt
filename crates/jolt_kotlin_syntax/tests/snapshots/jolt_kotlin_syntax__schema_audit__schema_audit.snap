@@ -3,13 +3,13 @@ source: crates/jolt_kotlin_syntax/src/schema_audit.rs
 expression: audit.render()
 ---
 language = kotlin
-fixture_files = 258
-diagnostic_fixture_files = 70
-audited_nodes = 17266
-exact_valid_shapes = 17019
-malformed_nodes = 190
+fixture_files = 259
+diagnostic_fixture_files = 71
+audited_nodes = 17288
+exact_valid_shapes = 17038
+malformed_nodes = 192
 clean_missing_required_shapes = 0
-diagnostic_missing_required_shapes = 57
+diagnostic_missing_required_shapes = 58
 clean_unexpected_shapes = 0
 diagnostic_unexpected_shapes = 0
 
@@ -71,6 +71,7 @@ syntax__recovery__phase_20_statements_and_control_flow: Block occurrence 19 (LBr
 syntax__recovery__phase_20_statements_and_control_flow: Block occurrence 20 (LBrace("{") BlockItemList)
 syntax__recovery__phase_20_statements_and_control_flow: Block occurrence 21 (LBrace("{") BlockItemList)
 syntax__recovery__property_body_recovered_gap: PropertyInitializer occurrence 1 (AssignmentExpression)
+syntax__recovery__recovery_boundary_spacing: Name occurrence 2 ()
 syntax__recovery__when_missing_close: Block occurrence 1 (LBrace("{") BlockItemList)
 syntax__recovery__when_missing_close: WhenExpression occurrence 1 (WhenKw("when") WhenSubject LBrace("{") WhenEntryList)
 

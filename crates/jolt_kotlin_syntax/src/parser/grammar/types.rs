@@ -141,8 +141,14 @@ impl Parser<'_> {
             _ => {
                 self.abandon(prefix);
                 let diagnostic = self.pending_expected("expected type");
-                if !self.at_type_stop(stops, stop_position) && !self.at_eof() {
+                let mut consumed = false;
+                while !(self.at_type_stop(stops, stop_position)
+                    || self.at_eof()
+                    || self.at_type_recovery_declaration_boundary()
+                    || consumed && self.newline_before_current())
+                {
                     self.bump();
+                    consumed = true;
                 }
 
                 self.complete_recovery(marker, K::BogusType, [diagnostic])

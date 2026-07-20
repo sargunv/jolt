@@ -1,0 +1,62 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+public class C<.T> {
+  val value: .T
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+        Identifier "public" @ 0..6 trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 7..12 trailing=[Whitespace " "]
+      Name
+        Identifier "C" @ 13..14
+      TypeParameterList
+        Lt "<" @ 14..15
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierList
+            Name
+            TypeReference
+              BogusType
+                Dot "." @ 15..16
+                Identifier "T" @ 16..17
+        Gt ">" @ 17..18 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 19..20
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 23..26 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "value" @ 27..32
+              Colon ":" @ 32..33 trailing=[Whitespace " "]
+              TypeReference
+                BogusType
+                  Dot "." @ 34..35
+                  Identifier "T" @ 35..36
+              PropertyBodyMemberList
+        RBrace "}" @ 37..38 leading=[Newline "\n"]
+  Eof "" @ 39..39 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=15..16 message="expected name"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=15..16 message="expected ':' before type parameter bound"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=15..16 message="expected type"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=34..35 message="expected type"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(15), end: TextSize(16) }) message=expected name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(15), end: TextSize(16) }) message=expected ':' before type parameter bound
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(15), end: TextSize(16) }) message=expected type
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(34), end: TextSize(35) }) message=expected type

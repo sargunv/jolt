@@ -178,9 +178,11 @@ impl Parser<'_> {
                     self.bump();
                 }
                 self.complete(modifiers, JavaSyntaxKind::RequiresModifierList);
-                self.consume_qualified_name_required(
+                self.consume_qualified_name_required_until(
                     owner,
                     crate::shape::requires_directive::Slot::module as u16,
+                    &[JavaSyntaxKind::Semicolon, JavaSyntaxKind::RBrace],
+                    None,
                 );
                 self.expect_required(
                     JavaSyntaxKind::Semicolon,
@@ -192,9 +194,11 @@ impl Parser<'_> {
             }
             Some("exports") => {
                 self.bump();
-                self.consume_qualified_name_required(
+                self.consume_qualified_name_required_until(
                     owner,
                     crate::shape::exports_directive::Slot::package as u16,
+                    &[JavaSyntaxKind::Semicolon, JavaSyntaxKind::RBrace],
+                    Some("to"),
                 );
                 self.parse_optional_module_target_clause();
                 self.expect_required(
@@ -207,9 +211,11 @@ impl Parser<'_> {
             }
             Some("opens") => {
                 self.bump();
-                self.consume_qualified_name_required(
+                self.consume_qualified_name_required_until(
                     owner,
                     crate::shape::opens_directive::Slot::package as u16,
+                    &[JavaSyntaxKind::Semicolon, JavaSyntaxKind::RBrace],
+                    Some("to"),
                 );
                 self.parse_optional_module_target_clause();
                 self.expect_required(
@@ -222,9 +228,11 @@ impl Parser<'_> {
             }
             Some("uses") => {
                 self.bump();
-                self.consume_qualified_name_required(
+                self.consume_qualified_name_required_until(
                     owner,
                     crate::shape::uses_directive::Slot::service as u16,
+                    &[JavaSyntaxKind::Semicolon, JavaSyntaxKind::RBrace],
+                    None,
                 );
                 self.expect_required(
                     JavaSyntaxKind::Semicolon,
@@ -253,9 +261,11 @@ impl Parser<'_> {
 
     fn parse_provides_directive_rest(&mut self, owner: NodeAnchor) {
         self.bump();
-        self.consume_qualified_name_required(
+        self.consume_qualified_name_required_until(
             owner,
             crate::shape::provides_directive::Slot::service as u16,
+            &[JavaSyntaxKind::Semicolon, JavaSyntaxKind::RBrace],
+            Some("with"),
         );
         let implementation = self.start();
         let implementation_owner = implementation.anchor();
@@ -268,14 +278,28 @@ impl Parser<'_> {
         let implementations = self.start();
         let list_owner = implementations.anchor();
         let mut item_slot = 0;
-        if let Some(diagnostic) = self.consume_qualified_name_cause() {
-            self.missing_required_slot(list_owner, item_slot, [diagnostic]);
-        }
+        self.consume_qualified_name_required_until(
+            list_owner,
+            item_slot,
+            &[
+                JavaSyntaxKind::Comma,
+                JavaSyntaxKind::Semicolon,
+                JavaSyntaxKind::RBrace,
+            ],
+            None,
+        );
         while self.eat(JavaSyntaxKind::Comma) {
             item_slot += 2;
-            if let Some(diagnostic) = self.consume_qualified_name_cause() {
-                self.missing_required_slot(list_owner, item_slot, [diagnostic]);
-            }
+            self.consume_qualified_name_required_until(
+                list_owner,
+                item_slot,
+                &[
+                    JavaSyntaxKind::Comma,
+                    JavaSyntaxKind::Semicolon,
+                    JavaSyntaxKind::RBrace,
+                ],
+                None,
+            );
         }
         self.complete(implementations, JavaSyntaxKind::ModuleNameList);
         self.complete(implementation, JavaSyntaxKind::ModuleImplementationClause);
@@ -303,14 +327,28 @@ impl Parser<'_> {
         let modules = self.start();
         let list_owner = modules.anchor();
         let mut item_slot = 0;
-        if let Some(diagnostic) = self.consume_qualified_name_cause() {
-            self.missing_required_slot(list_owner, item_slot, [diagnostic]);
-        }
+        self.consume_qualified_name_required_until(
+            list_owner,
+            item_slot,
+            &[
+                JavaSyntaxKind::Comma,
+                JavaSyntaxKind::Semicolon,
+                JavaSyntaxKind::RBrace,
+            ],
+            None,
+        );
         while self.eat(JavaSyntaxKind::Comma) {
             item_slot += 2;
-            if let Some(diagnostic) = self.consume_qualified_name_cause() {
-                self.missing_required_slot(list_owner, item_slot, [diagnostic]);
-            }
+            self.consume_qualified_name_required_until(
+                list_owner,
+                item_slot,
+                &[
+                    JavaSyntaxKind::Comma,
+                    JavaSyntaxKind::Semicolon,
+                    JavaSyntaxKind::RBrace,
+                ],
+                None,
+            );
         }
         self.complete(modules, JavaSyntaxKind::ModuleNameList);
         self.complete(clause, JavaSyntaxKind::ModuleTargetClause);

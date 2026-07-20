@@ -3,13 +3,13 @@ source: crates/jolt_java_syntax/src/schema_audit.rs
 expression: audit.render()
 ---
 language = java
-fixture_files = 415
-diagnostic_fixture_files = 159
-audited_nodes = 25367
-exact_valid_shapes = 25022
-malformed_nodes = 235
+fixture_files = 417
+diagnostic_fixture_files = 161
+audited_nodes = 25379
+exact_valid_shapes = 25043
+malformed_nodes = 236
 clean_missing_required_shapes = 0
-diagnostic_missing_required_shapes = 110
+diagnostic_missing_required_shapes = 100
 clean_unexpected_shapes = 0
 diagnostic_unexpected_shapes = 0
 
@@ -31,7 +31,6 @@ syntax__lexer__does_not_ignore_non_trailing_sub_outside_identifier: VariableDecl
 syntax__lexer__keeps_crlf_as_one_line_terminator_trivia: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
 syntax__lexer__keeps_unicode_escape_crlf_as_one_line_terminator_trivia: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
 syntax__lexer__raw_backslash_without_lowercase_u_remains_input: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
-syntax__lexer__raw_backslash_without_lowercase_u_remains_input: VariableDeclarator occurrence 1 ()
 syntax__lexer__recognizes_all_reserved_keywords: ClassDeclaration occurrence 1 (ClassKw("class") ClassBody)
 syntax__lexer__recognizes_all_reserved_keywords: ClassBody occurrence 1 (ClassBodyMemberList)
 syntax__lexer__recognizes_all_reserved_keywords: EnumDeclaration occurrence 1 (EnumKw("enum") EnumBody)
@@ -40,8 +39,6 @@ syntax__lexer__recognizes_all_reserved_keywords: ImportDeclaration occurrence 1 
 syntax__lexer__recognizes_all_reserved_keywords: InterfaceDeclaration occurrence 1 (InterfaceKw("interface") InterfaceBody)
 syntax__lexer__recognizes_all_reserved_keywords: InterfaceBody occurrence 1 (InterfaceBodyMemberList)
 syntax__lexer__recognizes_all_reserved_keywords: FieldDeclaration occurrence 1 (PrimitiveType VariableDeclaratorList)
-syntax__lexer__recognizes_all_reserved_keywords: VariableDeclarator occurrence 1 ()
-syntax__lexer__recognizes_all_reserved_keywords: PackageDeclaration occurrence 1 (AnnotationList PackageKw("package"))
 syntax__lexer__recognizes_dollar_and_digits_in_identifiers: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
 syntax__lexer__recognizes_dollar_and_digits_in_identifiers: FieldDeclaration occurrence 2 (ClassType VariableDeclaratorList)
 syntax__lexer__recognizes_dollar_and_digits_in_identifiers: VariableDeclarator occurrence 2 ()
@@ -50,13 +47,11 @@ syntax__lexer__recognizes_identifier_part_that_is_not_identifier_start: Variable
 syntax__lexer__recognizes_java_currency_symbol_identifier_start: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
 syntax__lexer__recognizes_java_currency_symbol_identifier_start: VariableDeclarator occurrence 1 ()
 syntax__lexer__recognizes_longest_match_greater_than_operators: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
-syntax__lexer__recognizes_longest_match_greater_than_operators: VariableDeclarator occurrence 1 ()
 syntax__lexer__recognizes_raw_supplementary_identifier_start: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
 syntax__lexer__recognizes_raw_supplementary_identifier_start: VariableDeclarator occurrence 1 ()
 syntax__lexer__recognizes_unicode_escape_surrogate_pair_identifier: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
 syntax__lexer__recognizes_unicode_escape_surrogate_pair_identifier: VariableDeclarator occurrence 1 ()
 syntax__lexer__rejects_non_ascii_separator_and_operator_lookalikes: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
-syntax__lexer__rejects_non_ascii_separator_and_operator_lookalikes: VariableDeclarator occurrence 1 ()
 syntax__lexer__separates_tokens_with_all_jls_whitespace: ClassDeclaration occurrence 1 (ClassKw("class") ClassBody)
 syntax__lexer__separates_tokens_with_all_jls_whitespace: ClassBody occurrence 1 (ClassBodyMemberList)
 syntax__lexer__separates_tokens_with_all_jls_whitespace: InterfaceDeclaration occurrence 1 (InterfaceKw("interface") InterfaceBody)
@@ -67,7 +62,6 @@ syntax__lexer__unicode_lookalikes_do_not_match_keywords_or_literals: FieldDeclar
 syntax__lexer__unicode_lookalikes_do_not_match_keywords_or_literals: FieldDeclaration occurrence 2 (ClassType VariableDeclaratorList)
 syntax__lexer__unicode_lookalikes_do_not_match_keywords_or_literals: VariableDeclarator occurrence 2 ()
 syntax__lexer__uses_longest_match_for_adjacent_minus_operators: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
-syntax__lexer__uses_longest_match_for_adjacent_minus_operators: VariableDeclarator occurrence 1 ()
 syntax__lexer__uses_longest_match_for_keyword_and_literal_prefixes: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
 syntax__lexer__uses_longest_match_for_keyword_and_literal_prefixes: FieldDeclaration occurrence 2 (ClassType VariableDeclaratorList)
 syntax__parser__diagnoses_invalid_expression_forms: ParenthesizedExpression occurrence 1 (LParen("(") RParen(")"))
@@ -75,10 +69,6 @@ syntax__parser__diagnoses_invalid_expression_forms: ObjectCreationExpression occ
 syntax__parser__diagnoses_invalid_expression_forms: ObjectCreationExpression occurrence 3 (NewKw("new") ClassType ClassBody)
 syntax__parser__diagnoses_invalid_expression_forms: ObjectCreationExpression occurrence 5 (NewKw("new") ClassType)
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: PackageDeclaration occurrence 1 (AnnotationList PackageKw("package"))
-syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: FieldDeclaration occurrence 1 (PrimitiveType VariableDeclaratorList)
-syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: VariableDeclarator occurrence 1 ()
-syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: FieldDeclaration occurrence 2 (PrimitiveType VariableDeclaratorList)
-syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: VariableDeclarator occurrence 2 ()
 syntax__parser__diagnoses_missing_class_body: ClassBody occurrence 1 (ClassBodyMemberList)
 syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: MethodDeclaration occurrence 1 (VoidType Identifier("method") LParen("(") FormalParameterList Block)
 syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: FormalParameter occurrence 1 (ParameterModifierList BogusType AnnotationList)
@@ -122,7 +112,7 @@ syntax__recovery__phase_15_statements: TryStatement occurrence 2 (TryKw("try") C
 syntax__recovery__phase_15_statements: CatchClause occurrence 2 (CatchKw("catch") LParen("(") CatchParameter RParen(")"))
 syntax__recovery__phase_15_statements: FinallyClause occurrence 1 (FinallyKw("finally"))
 syntax__recovery__phase_15_statements: TryWithResourcesStatement occurrence 8 (TryKw("try") ResourceSpecification CatchClauseList)
-syntax__recovery__phase_21_normalization_module: RequiresDirective occurrence 1 (Identifier("requires") RequiresModifierList)
+syntax__recovery__recovery_boundary_spacing: ClassBody occurrence 1 (ClassBodyMemberList)
 syntax__recovery__switch_and_module_lists: SwitchLabelItemList occurrence 1 (CaseConstant Comma(",") Comma(",") CaseConstant)
 syntax__recovery__switch_and_module_lists: ModuleNameList occurrence 1 (Name Comma(",") Comma(",") Name)
 syntax__recovery__type_annotation_and_parameter_lists: TypeParameter occurrence 2 (AnnotationList)

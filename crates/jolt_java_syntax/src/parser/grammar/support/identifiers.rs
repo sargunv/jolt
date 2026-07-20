@@ -85,6 +85,38 @@ impl Parser<'_> {
         }
     }
 
+    pub(in crate::parser::grammar) fn consume_qualified_name_required_until(
+        &mut self,
+        owner: NodeAnchor,
+        slot: u16,
+        stops: &[JavaSyntaxKind],
+        contextual_stop: Option<&str>,
+    ) -> bool {
+        if self.consume_qualified_name_contents() {
+            return true;
+        }
+
+        let at_boundary = self.at_eof()
+            || stops.contains(&self.current_kind())
+            || contextual_stop.is_some_and(|stop| self.at_contextual(stop));
+        if at_boundary {
+            let diagnostic = self.pending_expected("expected identifier");
+            self.missing_required_slot(owner, slot, [diagnostic]);
+            return false;
+        }
+
+        let name = self.start();
+        let diagnostic = self.pending_expected("expected identifier");
+        while !self.at_eof()
+            && !stops.contains(&self.current_kind())
+            && contextual_stop.is_none_or(|stop| !self.at_contextual(stop))
+        {
+            self.bump();
+        }
+        self.complete_recovery(name, JavaSyntaxKind::BogusName, [diagnostic]);
+        true
+    }
+
     pub(in crate::parser::grammar) fn consume_qualified_name_cause(
         &mut self,
     ) -> Option<PendingDiagnostic> {

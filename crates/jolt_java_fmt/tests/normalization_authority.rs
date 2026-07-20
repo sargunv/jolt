@@ -13,7 +13,8 @@ fn malformed_import_and_control_owners_are_local_normalization_barriers() {
 #[test]
 fn malformed_module_directive_is_a_local_reorder_barrier() {
     let source = "module m { uses z.Z; uses y.Y; requires +; uses c.C; uses a.A; }\n";
-    let expected = "module m {\n  uses y.Y;\n  uses z.Z;\n\n  requires\n\n  +;\n\n  uses a.A;\n  uses c.C;\n}\n";
+    let expected =
+        "module m {\n  uses y.Y;\n  uses z.Z;\n\n  requires +;\n\n  uses a.A;\n  uses c.C;\n}\n";
 
     assert_normalizes(source, expected);
 }
@@ -21,7 +22,7 @@ fn malformed_module_directive_is_a_local_reorder_barrier() {
 #[test]
 fn requires_modifiers_ignore_malformed_sibling_fields() {
     let source = "module m { requires transitive static + a.b; }\n";
-    let expected = "module m {\n  requires static transitive\n\n  + a.b;\n}\n";
+    let expected = "module m {\n  requires static transitive + a.b;\n}\n";
 
     assert_normalizes(source, expected);
 }

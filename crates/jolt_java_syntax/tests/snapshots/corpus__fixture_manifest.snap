@@ -390,6 +390,8 @@ syntax/recovery/phase-21-normalization.java
 syntax/recovery/qualifier-dots-without-qualifiers.java
 syntax/recovery/raw-unicode-escape-ranges.java
 syntax/recovery/recovered-declaration-names-and-modifiers.java
+syntax/recovery/recovery-boundary-program.java
+syntax/recovery/recovery-boundary-spacing.java
 syntax/recovery/resource-and-catch-lists.java
 syntax/recovery/switch-and-module-lists.java
 syntax/recovery/switch-block-unowned-tokens.java

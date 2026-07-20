@@ -230,6 +230,7 @@ audit syntax syntax/recovery/phase-20-statements-and-control-flow.kt
 audit syntax syntax/recovery/phase-21-normalization.kt
 audit syntax syntax/recovery/preserves-file-annotation-preamble.kt
 audit syntax syntax/recovery/property-body-recovered-gap.kt
+audit syntax syntax/recovery/recovery-boundary-spacing.kt
 audit syntax syntax/recovery/source-gap-trivia-ownership.kt
 audit syntax syntax/recovery/top-level-orphan-token.kt
 audit syntax syntax/recovery/trailing-user-type-dot.kt

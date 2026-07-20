@@ -57,32 +57,28 @@ CompilationUnit
         LongKw "long" @ 183..187 trailing=[Whitespace " "]
       VariableDeclaratorList
         VariableDeclarator
-    BogusCompilationUnitItem
-      NativeKw "native" @ 188..194 trailing=[Whitespace " "]
-      NewKw "new" @ 195..198 trailing=[Whitespace " "]
-    PackageDeclaration
-      AnnotationList
-      PackageKw "package" @ 199..206 trailing=[Whitespace " "]
-    BogusCompilationUnitItem
-      PrivateKw "private" @ 207..214 trailing=[Whitespace " "]
-      ProtectedKw "protected" @ 215..224 trailing=[Whitespace " "]
-      PublicKw "public" @ 225..231 trailing=[Whitespace " "]
-      ReturnKw "return" @ 232..238 trailing=[Whitespace " "]
-      ShortKw "short" @ 239..244 trailing=[Whitespace " "]
-      StaticKw "static" @ 245..251 trailing=[Whitespace " "]
-      StrictfpKw "strictfp" @ 252..260 trailing=[Whitespace " "]
-      SuperKw "super" @ 261..266 trailing=[Whitespace " "]
-      SwitchKw "switch" @ 267..273 trailing=[Whitespace " "]
-      SynchronizedKw "synchronized" @ 274..286 trailing=[Whitespace " "]
-      ThisKw "this" @ 287..291 trailing=[Whitespace " "]
-      ThrowKw "throw" @ 292..297 trailing=[Whitespace " "]
-      ThrowsKw "throws" @ 298..304 trailing=[Whitespace " "]
-      TransientKw "transient" @ 305..314 trailing=[Whitespace " "]
-      TryKw "try" @ 315..318 trailing=[Whitespace " "]
-      VoidKw "void" @ 319..323 trailing=[Whitespace " "]
-      VolatileKw "volatile" @ 324..332 trailing=[Whitespace " "]
-      WhileKw "while" @ 333..338 trailing=[Whitespace " "]
-      UnderscoreKw "_" @ 339..340
+          NativeKw "native" @ 188..194 trailing=[Whitespace " "]
+          NewKw "new" @ 195..198 trailing=[Whitespace " "]
+          PackageKw "package" @ 199..206 trailing=[Whitespace " "]
+          PrivateKw "private" @ 207..214 trailing=[Whitespace " "]
+          ProtectedKw "protected" @ 215..224 trailing=[Whitespace " "]
+          PublicKw "public" @ 225..231 trailing=[Whitespace " "]
+          ReturnKw "return" @ 232..238 trailing=[Whitespace " "]
+          ShortKw "short" @ 239..244 trailing=[Whitespace " "]
+          StaticKw "static" @ 245..251 trailing=[Whitespace " "]
+          StrictfpKw "strictfp" @ 252..260 trailing=[Whitespace " "]
+          SuperKw "super" @ 261..266 trailing=[Whitespace " "]
+          SwitchKw "switch" @ 267..273 trailing=[Whitespace " "]
+          SynchronizedKw "synchronized" @ 274..286 trailing=[Whitespace " "]
+          ThisKw "this" @ 287..291 trailing=[Whitespace " "]
+          ThrowKw "throw" @ 292..297 trailing=[Whitespace " "]
+          ThrowsKw "throws" @ 298..304 trailing=[Whitespace " "]
+          TransientKw "transient" @ 305..314 trailing=[Whitespace " "]
+          TryKw "try" @ 315..318 trailing=[Whitespace " "]
+          VoidKw "void" @ 319..323 trailing=[Whitespace " "]
+          VolatileKw "volatile" @ 324..332 trailing=[Whitespace " "]
+          WhileKw "while" @ 333..338 trailing=[Whitespace " "]
+          UnderscoreKw "_" @ 339..340
   Eof "" @ 340..340
 
 diagnostics:
@@ -99,11 +95,7 @@ diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=183..187 message="expected type name"
   code=java.parse.expected_syntax severity=Error stage=Parser range=183..187 message="expected type body"
   code=java.parse.expected_syntax severity=Error stage=Parser range=188..194 message="expected variable name"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=188..194 message="expected `;` after field declaration"
-  code=java.parse.unexpected_syntax severity=Error stage=Parser range=188..194 message="unexpected token at top level"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=207..214 message="expected identifier"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=207..214 message="expected `;` after package declaration"
-  code=java.parse.unexpected_syntax severity=Error stage=Parser range=207..214 message="unexpected token at top level"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=340..340 message="expected `;` after field declaration"
 
 diagnostics:
 code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(8) }) message=unexpected token at top level
@@ -119,8 +111,4 @@ code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(183), end: TextSize(187) }) message=expected type name
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(183), end: TextSize(187) }) message=expected type body
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(188), end: TextSize(194) }) message=expected variable name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(188), end: TextSize(194) }) message=expected `;` after field declaration
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(188), end: TextSize(194) }) message=unexpected token at top level
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(207), end: TextSize(214) }) message=expected identifier
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(207), end: TextSize(214) }) message=expected `;` after package declaration
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(207), end: TextSize(214) }) message=unexpected token at top level
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(340), end: TextSize(340) }) message=expected `;` after field declaration

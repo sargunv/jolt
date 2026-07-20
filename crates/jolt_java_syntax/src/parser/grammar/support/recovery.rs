@@ -26,14 +26,9 @@ impl Parser<'_> {
         }
 
         self.bump();
-        while !self.at_eof()
-            && !self.at(JavaSyntaxKind::Semicolon)
-            && !self.at_program_item_recovery_boundary()
-        {
+        while !self.at_eof() && !self.at_program_item_recovery_boundary() {
             self.bump();
         }
-
-        self.eat(JavaSyntaxKind::Semicolon);
     }
 
     pub(in crate::parser::grammar) fn at_program_item_recovery_boundary(&mut self) -> bool {

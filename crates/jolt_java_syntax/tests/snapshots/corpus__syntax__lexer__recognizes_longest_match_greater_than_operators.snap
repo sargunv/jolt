@@ -18,36 +18,33 @@ CompilationUnit
               Identifier "a" @ 0..1 trailing=[Whitespace " "]
       VariableDeclaratorList
         VariableDeclarator
-    BogusCompilationUnitItem
-      Gt ">" @ 2..3
-      Gt ">" @ 3..4
-      Gt ">" @ 4..5
-      Assign "=" @ 5..6 trailing=[Whitespace " "]
-      Identifier "b" @ 7..8 trailing=[Whitespace " "]
-      Gt ">" @ 9..10
-      Gt ">" @ 10..11
-      Gt ">" @ 11..12 trailing=[Whitespace " "]
-      Identifier "c" @ 13..14 trailing=[Whitespace " "]
-      Gt ">" @ 15..16
-      Gt ">" @ 16..17
-      Assign "=" @ 17..18 trailing=[Whitespace " "]
-      Identifier "d" @ 19..20 trailing=[Whitespace " "]
-      Gt ">" @ 21..22
-      Gt ">" @ 22..23 trailing=[Whitespace " "]
-      Identifier "e" @ 24..25 trailing=[Whitespace " "]
-      Gt ">" @ 26..27
-      Assign "=" @ 27..28 trailing=[Whitespace " "]
-      Identifier "f" @ 29..30 trailing=[Whitespace " "]
-      Gt ">" @ 31..32 trailing=[Whitespace " "]
-      Identifier "g" @ 33..34
+          Gt ">" @ 2..3
+          Gt ">" @ 3..4
+          Gt ">" @ 4..5
+          Assign "=" @ 5..6 trailing=[Whitespace " "]
+          Identifier "b" @ 7..8 trailing=[Whitespace " "]
+          Gt ">" @ 9..10
+          Gt ">" @ 10..11
+          Gt ">" @ 11..12 trailing=[Whitespace " "]
+          Identifier "c" @ 13..14 trailing=[Whitespace " "]
+          Gt ">" @ 15..16
+          Gt ">" @ 16..17
+          Assign "=" @ 17..18 trailing=[Whitespace " "]
+          Identifier "d" @ 19..20 trailing=[Whitespace " "]
+          Gt ">" @ 21..22
+          Gt ">" @ 22..23 trailing=[Whitespace " "]
+          Identifier "e" @ 24..25 trailing=[Whitespace " "]
+          Gt ">" @ 26..27
+          Assign "=" @ 27..28 trailing=[Whitespace " "]
+          Identifier "f" @ 29..30 trailing=[Whitespace " "]
+          Gt ">" @ 31..32 trailing=[Whitespace " "]
+          Identifier "g" @ 33..34
   Eof "" @ 34..34
 
 diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=2..3 message="expected variable name"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=2..3 message="expected `;` after field declaration"
-  code=java.parse.unexpected_syntax severity=Error stage=Parser range=2..3 message="unexpected token at top level"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=34..34 message="expected `;` after field declaration"
 
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(2), end: TextSize(3) }) message=expected variable name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(2), end: TextSize(3) }) message=expected `;` after field declaration
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(2), end: TextSize(3) }) message=unexpected token at top level
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(34), end: TextSize(34) }) message=expected `;` after field declaration
