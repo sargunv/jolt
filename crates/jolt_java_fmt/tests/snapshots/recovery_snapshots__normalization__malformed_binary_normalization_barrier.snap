@@ -1,0 +1,20 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class C { boolean f(int a, int b) { return a & b == ; } boolean g(int a, int b) { return a & b == 0; } }
+
+formatted:
+class C {
+  boolean f(int a, int b) {
+    return a & b == ;
+  }
+
+  boolean g(int a, int b) {
+    return a & (b == 0);
+  }
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(52), end: TextSize(53) }) message=expected expression

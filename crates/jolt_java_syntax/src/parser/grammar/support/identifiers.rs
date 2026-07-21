@@ -1,6 +1,6 @@
 // Handles Java identifier roles that depend on parser context.
 use super::{JavaParserExt, JavaSyntaxKind, Parser};
-use jolt_syntax::{NodeAnchor, PendingDiagnostic};
+use jolt_syntax::{CompletedMarker, NodeAnchor, PendingDiagnostic};
 
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn expect_type_identifier(
@@ -76,7 +76,7 @@ impl Parser<'_> {
         owner: NodeAnchor,
         slot: u16,
     ) -> bool {
-        if self.consume_qualified_name_contents() {
+        if self.consume_qualified_name_contents(|_, _| false).is_some() {
             true
         } else {
             let diagnostic = self.pending_expected("expected identifier");
@@ -85,55 +85,81 @@ impl Parser<'_> {
         }
     }
 
-    pub(in crate::parser::grammar) fn consume_qualified_name_required_until(
+    pub(in crate::parser::grammar) fn consume_qualified_name_required_until<F>(
         &mut self,
         owner: NodeAnchor,
         slot: u16,
         stops: &[JavaSyntaxKind],
-        contextual_stop: Option<&str>,
-    ) -> bool {
-        if self.consume_qualified_name_contents() {
-            return true;
-        }
+        contextual_boundary: F,
+        stop_at_name_segment: bool,
+    ) where
+        F: Fn(&mut Self, usize) -> bool + Copy,
+    {
+        let parsed_name = self.consume_qualified_name_contents(contextual_boundary);
+        let at_boundary =
+            self.at_qualified_name_boundary(stops, contextual_boundary, stop_at_name_segment);
 
-        let at_boundary = self.at_eof()
-            || stops.contains(&self.current_kind())
-            || contextual_stop.is_some_and(|stop| self.at_contextual(stop));
-        if at_boundary {
+        if parsed_name.is_some() && at_boundary {
+            return;
+        }
+        if parsed_name.is_none() && at_boundary {
             let diagnostic = self.pending_expected("expected identifier");
             self.missing_required_slot(owner, slot, [diagnostic]);
-            return false;
+            return;
         }
 
-        let name = self.start();
+        let name = match parsed_name {
+            Some(name) => self.precede(name),
+            None => self.start(),
+        };
         let diagnostic = self.pending_expected("expected identifier");
-        while !self.at_eof()
-            && !stops.contains(&self.current_kind())
-            && contextual_stop.is_none_or(|stop| !self.at_contextual(stop))
-        {
+        while !self.at_qualified_name_boundary(stops, contextual_boundary, stop_at_name_segment) {
             self.bump();
         }
         self.complete_recovery(name, JavaSyntaxKind::BogusName, [diagnostic]);
-        true
+    }
+
+    fn at_qualified_name_boundary<F>(
+        &mut self,
+        stops: &[JavaSyntaxKind],
+        contextual_boundary: F,
+        stop_at_name_segment: bool,
+    ) -> bool
+    where
+        F: Fn(&mut Self, usize) -> bool,
+    {
+        self.at_eof()
+            || stops.contains(&self.current_kind())
+            || stop_at_name_segment && self.at_name_segment()
+            || contextual_boundary(self, 0)
     }
 
     pub(in crate::parser::grammar) fn consume_qualified_name_cause(
         &mut self,
     ) -> Option<PendingDiagnostic> {
-        (!self.consume_qualified_name_contents())
+        self.consume_qualified_name_contents(|_, _| false)
+            .is_none()
             .then(|| self.pending_expected("expected identifier"))
     }
 
-    fn consume_qualified_name_contents(&mut self) -> bool {
+    fn consume_qualified_name_contents<F>(
+        &mut self,
+        contextual_boundary: F,
+    ) -> Option<CompletedMarker>
+    where
+        F: Fn(&mut Self, usize) -> bool,
+    {
         if !self.at_name_segment() {
-            return false;
+            return None;
         }
 
         let name = self.start();
-        if self.nth_kind(1) != JavaSyntaxKind::Dot || !self.nth_is_name_segment(2) {
+        if self.nth_kind(1) != JavaSyntaxKind::Dot
+            || !self.nth_is_name_segment(2)
+            || contextual_boundary(self, 2)
+        {
             self.bump();
-            self.complete(name, JavaSyntaxKind::Name);
-            return true;
+            return Some(self.complete(name, JavaSyntaxKind::Name));
         }
 
         let first_segment = self.start();
@@ -148,14 +174,16 @@ impl Parser<'_> {
             self.parse_annotations();
             self.bump();
             self.complete(segment, JavaSyntaxKind::QualifiedNameSegmentNode);
-            if !self.at(JavaSyntaxKind::Dot) || !self.nth_is_name_segment(1) {
+            if !self.at(JavaSyntaxKind::Dot)
+                || !self.nth_is_name_segment(1)
+                || contextual_boundary(self, 1)
+            {
                 break;
             }
             self.bump();
         }
         self.complete(remaining_segments, JavaSyntaxKind::NameSegmentDotList);
-        self.complete(name, JavaSyntaxKind::QualifiedName);
-        true
+        Some(self.complete(name, JavaSyntaxKind::QualifiedName))
     }
 
     pub(in crate::parser::grammar) fn at_variable_identifier(&mut self) -> bool {

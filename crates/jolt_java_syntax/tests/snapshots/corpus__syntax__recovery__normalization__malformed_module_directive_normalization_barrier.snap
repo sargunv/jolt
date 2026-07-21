@@ -1,0 +1,80 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+module m { uses z.Z; uses y.Y; requires +; uses c.C; uses a.A; }
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 0..6 trailing=[Whitespace " "]
+      Name
+        Identifier "m" @ 7..8 trailing=[Whitespace " "]
+      LBrace "{" @ 9..10 trailing=[Whitespace " "]
+      ModuleDirectiveList
+        UsesDirective
+          Identifier "uses" @ 11..15 trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "z" @ 16..17
+            Dot "." @ 17..18
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "Z" @ 18..19
+          Semicolon ";" @ 19..20 trailing=[Whitespace " "]
+        UsesDirective
+          Identifier "uses" @ 21..25 trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "y" @ 26..27
+            Dot "." @ 27..28
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "Y" @ 28..29
+          Semicolon ";" @ 29..30 trailing=[Whitespace " "]
+        RequiresDirective
+          Identifier "requires" @ 31..39 trailing=[Whitespace " "]
+          RequiresModifierList
+          BogusName
+            Plus "+" @ 40..41
+          Semicolon ";" @ 41..42 trailing=[Whitespace " "]
+        UsesDirective
+          Identifier "uses" @ 43..47 trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "c" @ 48..49
+            Dot "." @ 49..50
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "C" @ 50..51
+          Semicolon ";" @ 51..52 trailing=[Whitespace " "]
+        UsesDirective
+          Identifier "uses" @ 53..57 trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "a" @ 58..59
+            Dot "." @ 59..60
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "A" @ 60..61
+          Semicolon ";" @ 61..62 trailing=[Whitespace " "]
+      RBrace "}" @ 63..64
+  Eof "" @ 65..65 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=40..41 message="expected identifier"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(40), end: TextSize(41) }) message=expected identifier

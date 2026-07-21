@@ -83,7 +83,19 @@ fn java_recovery_formatter_snapshots() {
     );
 }
 
+const NORMALIZATION_REMOVALS: &[RepresentedTokenRemoval] = &[RepresentedTokenRemoval {
+    source: ";",
+    count: usize::MAX,
+}];
+
 fn allowed_removed_tokens(path: &std::path::Path) -> &'static [RepresentedTokenRemoval] {
+    if path
+        .parent()
+        .and_then(std::path::Path::file_name)
+        .is_some_and(|name| name == "normalization")
+    {
+        return NORMALIZATION_REMOVALS;
+    }
     match path.file_name().and_then(|name| name.to_str()) {
         Some("empty-statement-comments.java" | "top-level-empty-declaration-comments.java") => {
             &[RepresentedTokenRemoval {

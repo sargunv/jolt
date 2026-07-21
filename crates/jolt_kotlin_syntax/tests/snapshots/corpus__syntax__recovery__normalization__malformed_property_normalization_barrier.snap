@@ -1,0 +1,75 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+var x: Int
+get() = 1;
+);
+set(value) {};
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      VarKw "var" @ 0..3 trailing=[Whitespace " "]
+      Name
+        Identifier "x" @ 4..5
+      Colon ":" @ 5..6 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 7..10
+      PropertyBodyMemberList
+        PropertyAccessor
+          ModifierList
+          Identifier "get" @ 11..14 leading=[Newline "\n"]
+          ValueParameterList
+            LParen "(" @ 14..15
+            ValueParameterSeparatedList
+            RParen ")" @ 15..16 trailing=[Whitespace " "]
+          ExpressionBody
+            Assign "=" @ 17..18 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "1" @ 19..20
+    Semicolon ";" @ 20..21
+    Statement
+      ExpressionStatement
+        BogusExpression
+          RParen ")" @ 22..23 leading=[Newline "\n"]
+      TerminatorList
+        Semicolon ";" @ 23..24
+    Statement
+      ExpressionStatement
+        CallExpression
+          NameExpression
+            Identifier "set" @ 25..28 leading=[Newline "\n"]
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 28..29
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                NameExpression
+                  Identifier "value" @ 29..34
+            RParen ")" @ 34..35 trailing=[Whitespace " "]
+          LambdaExpressionList
+            LambdaExpression
+              LambdaBody
+                LBrace "{" @ 36..37
+                LambdaBodyItemList
+                RBrace "}" @ 37..38
+      TerminatorList
+        Semicolon ";" @ 38..39
+  Eof "" @ 40..40 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=22..23 message="expected expression"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(22), end: TextSize(23) }) message=expected expression

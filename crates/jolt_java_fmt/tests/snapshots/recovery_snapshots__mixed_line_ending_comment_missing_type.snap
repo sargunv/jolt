@@ -1,0 +1,38 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class MixedCommentLineEndings {
+// crlf line comment
+ crlf=1;
+// cr line comment
+int cr=2;
+// lf line comment
+int lf=3;
+/* block
+ * crlf
+ * cr
+ * lf
+ */
+int block=4;
+}
+
+formatted:
+class MixedCommentLineEndings {
+  // crlf line comment
+  crlf = 1;
+  // cr line comment
+  int cr = 2;
+  // lf line comment
+  int lf = 3;
+  /* block
+  * crlf
+  * cr
+  * lf
+  */
+  int block = 4;
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(60), end: TextSize(61) }) message=expected variable name

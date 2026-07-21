@@ -122,9 +122,12 @@ impl Parser<'_> {
             owner,
             crate::shape::module_declaration::Slot::module_keyword as u16,
         );
-        self.consume_qualified_name_required(
+        self.consume_qualified_name_required_until(
             owner,
             crate::shape::module_declaration::Slot::name as u16,
+            &[JavaSyntaxKind::LBrace, JavaSyntaxKind::RBrace],
+            Self::module_directive_boundary_at,
+            false,
         );
 
         let has_open_brace = self.eat(JavaSyntaxKind::LBrace);
@@ -166,30 +169,7 @@ impl Parser<'_> {
         let owner = directive.anchor();
         let (kind, recovery) = match self.current_text() {
             Some("requires") => {
-                self.bump();
-                let modifiers = self.start();
-                while self.at(JavaSyntaxKind::StaticKw)
-                    || (self.at_contextual("transitive")
-                        && !matches!(
-                            self.nth_kind(1),
-                            JavaSyntaxKind::Dot | JavaSyntaxKind::Semicolon
-                        ))
-                {
-                    self.bump();
-                }
-                self.complete(modifiers, JavaSyntaxKind::RequiresModifierList);
-                self.consume_qualified_name_required_until(
-                    owner,
-                    crate::shape::requires_directive::Slot::module as u16,
-                    &[JavaSyntaxKind::Semicolon, JavaSyntaxKind::RBrace],
-                    None,
-                );
-                self.expect_required(
-                    JavaSyntaxKind::Semicolon,
-                    "expected `;` after requires directive",
-                    owner,
-                    crate::shape::requires_directive::Slot::semicolon as u16,
-                );
+                self.parse_requires_directive_rest(owner);
                 (JavaSyntaxKind::RequiresDirective, None)
             }
             Some("exports") => {
@@ -198,9 +178,12 @@ impl Parser<'_> {
                     owner,
                     crate::shape::exports_directive::Slot::package as u16,
                     &[JavaSyntaxKind::Semicolon, JavaSyntaxKind::RBrace],
-                    Some("to"),
+                    Self::module_target_boundary_at,
+                    true,
                 );
-                self.parse_optional_module_target_clause();
+                if !Self::module_directive_boundary_at(self, 0) {
+                    self.parse_optional_module_target_clause();
+                }
                 self.expect_required(
                     JavaSyntaxKind::Semicolon,
                     "expected `;` after exports directive",
@@ -215,9 +198,12 @@ impl Parser<'_> {
                     owner,
                     crate::shape::opens_directive::Slot::package as u16,
                     &[JavaSyntaxKind::Semicolon, JavaSyntaxKind::RBrace],
-                    Some("to"),
+                    Self::module_target_boundary_at,
+                    true,
                 );
-                self.parse_optional_module_target_clause();
+                if !Self::module_directive_boundary_at(self, 0) {
+                    self.parse_optional_module_target_clause();
+                }
                 self.expect_required(
                     JavaSyntaxKind::Semicolon,
                     "expected `;` after opens directive",
@@ -232,7 +218,8 @@ impl Parser<'_> {
                     owner,
                     crate::shape::uses_directive::Slot::service as u16,
                     &[JavaSyntaxKind::Semicolon, JavaSyntaxKind::RBrace],
-                    None,
+                    Self::module_directive_boundary_at,
+                    false,
                 );
                 self.expect_required(
                     JavaSyntaxKind::Semicolon,
@@ -259,14 +246,62 @@ impl Parser<'_> {
         }
     }
 
+    fn parse_requires_directive_rest(&mut self, owner: NodeAnchor) {
+        self.bump();
+        let modifiers = self.start();
+        while self.at(JavaSyntaxKind::StaticKw)
+            || (self.at_contextual("transitive")
+                && !matches!(
+                    self.nth_kind(1),
+                    JavaSyntaxKind::Dot | JavaSyntaxKind::Semicolon
+                ))
+        {
+            self.bump();
+        }
+        self.complete(modifiers, JavaSyntaxKind::RequiresModifierList);
+        self.consume_qualified_name_required_until(
+            owner,
+            crate::shape::requires_directive::Slot::module as u16,
+            &[JavaSyntaxKind::Semicolon, JavaSyntaxKind::RBrace],
+            Self::module_directive_boundary_at,
+            false,
+        );
+        self.expect_required(
+            JavaSyntaxKind::Semicolon,
+            "expected `;` after requires directive",
+            owner,
+            crate::shape::requires_directive::Slot::semicolon as u16,
+        );
+    }
+
     fn parse_provides_directive_rest(&mut self, owner: NodeAnchor) {
         self.bump();
         self.consume_qualified_name_required_until(
             owner,
             crate::shape::provides_directive::Slot::service as u16,
             &[JavaSyntaxKind::Semicolon, JavaSyntaxKind::RBrace],
-            Some("with"),
+            Self::module_implementation_boundary_at,
+            true,
         );
+        if Self::module_directive_boundary_at(self, 0) {
+            let diagnostic = self.pending_expected("expected `with` in provides directive");
+            self.missing_required_slot(
+                owner,
+                crate::shape::provides_directive::Slot::implementation as u16,
+                [diagnostic],
+            );
+        } else {
+            self.parse_module_implementation_clause();
+        }
+        self.expect_required(
+            JavaSyntaxKind::Semicolon,
+            "expected `;` after provides directive",
+            owner,
+            crate::shape::provides_directive::Slot::semicolon as u16,
+        );
+    }
+
+    fn parse_module_implementation_clause(&mut self) {
         let implementation = self.start();
         let implementation_owner = implementation.anchor();
         self.expect_contextual_required(
@@ -278,37 +313,69 @@ impl Parser<'_> {
         let implementations = self.start();
         let list_owner = implementations.anchor();
         let mut item_slot = 0;
+        self.parse_module_name_list_item(list_owner, item_slot);
+        while self.eat(JavaSyntaxKind::Comma) {
+            item_slot += 2;
+            self.parse_module_name_list_item(list_owner, item_slot);
+        }
+        self.complete(implementations, JavaSyntaxKind::ModuleNameList);
+        self.complete(implementation, JavaSyntaxKind::ModuleImplementationClause);
+    }
+
+    fn parse_module_name_list_item(&mut self, owner: NodeAnchor, slot: u16) {
+        if Self::module_directive_boundary_at(self, 0) {
+            let diagnostic = self.pending_expected("expected identifier");
+            self.missing_required_slot(owner, slot, [diagnostic]);
+            return;
+        }
         self.consume_qualified_name_required_until(
-            list_owner,
-            item_slot,
+            owner,
+            slot,
             &[
                 JavaSyntaxKind::Comma,
                 JavaSyntaxKind::Semicolon,
                 JavaSyntaxKind::RBrace,
             ],
-            None,
+            Self::module_directive_boundary_at,
+            false,
         );
-        while self.eat(JavaSyntaxKind::Comma) {
-            item_slot += 2;
-            self.consume_qualified_name_required_until(
-                list_owner,
-                item_slot,
-                &[
-                    JavaSyntaxKind::Comma,
-                    JavaSyntaxKind::Semicolon,
-                    JavaSyntaxKind::RBrace,
-                ],
-                None,
-            );
+    }
+
+    fn module_directive_boundary_at(&mut self, offset: usize) -> bool {
+        let mut lookahead = self.lookahead();
+        for _ in 0..offset {
+            lookahead.bump();
         }
-        self.complete(implementations, JavaSyntaxKind::ModuleNameList);
-        self.complete(implementation, JavaSyntaxKind::ModuleImplementationClause);
-        self.expect_required(
-            JavaSyntaxKind::Semicolon,
-            "expected `;` after provides directive",
-            owner,
-            crate::shape::provides_directive::Slot::semicolon as u16,
-        );
+        if !matches!(
+            lookahead.text(),
+            Some("requires" | "exports" | "opens" | "uses" | "provides")
+        ) {
+            return false;
+        }
+        lookahead.bump();
+        lookahead.at_name_segment() || lookahead.at(JavaSyntaxKind::StaticKw)
+    }
+
+    fn module_target_boundary_at(&mut self, offset: usize) -> bool {
+        if Self::module_directive_boundary_at(self, offset) {
+            return true;
+        }
+        let mut lookahead = self.lookahead();
+        for _ in 0..offset {
+            lookahead.bump();
+        }
+        lookahead.at_contextual("to") && lookahead.nth_kind(1) == JavaSyntaxKind::Identifier
+    }
+
+    fn module_implementation_boundary_at(&mut self, offset: usize) -> bool {
+        if Self::module_directive_boundary_at(self, offset) {
+            return true;
+        }
+        let mut lookahead = self.lookahead();
+        for _ in 0..offset {
+            lookahead.bump();
+        }
+        lookahead.at_contextual("with") && lookahead.nth_kind(1) == JavaSyntaxKind::Identifier
     }
 
     fn parse_optional_module_target_clause(&mut self) {
@@ -327,28 +394,10 @@ impl Parser<'_> {
         let modules = self.start();
         let list_owner = modules.anchor();
         let mut item_slot = 0;
-        self.consume_qualified_name_required_until(
-            list_owner,
-            item_slot,
-            &[
-                JavaSyntaxKind::Comma,
-                JavaSyntaxKind::Semicolon,
-                JavaSyntaxKind::RBrace,
-            ],
-            None,
-        );
+        self.parse_module_name_list_item(list_owner, item_slot);
         while self.eat(JavaSyntaxKind::Comma) {
             item_slot += 2;
-            self.consume_qualified_name_required_until(
-                list_owner,
-                item_slot,
-                &[
-                    JavaSyntaxKind::Comma,
-                    JavaSyntaxKind::Semicolon,
-                    JavaSyntaxKind::RBrace,
-                ],
-                None,
-            );
+            self.parse_module_name_list_item(list_owner, item_slot);
         }
         self.complete(modules, JavaSyntaxKind::ModuleNameList);
         self.complete(clause, JavaSyntaxKind::ModuleTargetClause);

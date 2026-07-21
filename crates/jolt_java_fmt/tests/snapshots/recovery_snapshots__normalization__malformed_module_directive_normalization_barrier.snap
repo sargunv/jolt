@@ -1,0 +1,20 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+module m { uses z.Z; uses y.Y; requires +; uses c.C; uses a.A; }
+
+formatted:
+module m {
+  uses y.Y;
+  uses z.Z;
+
+  requires +;
+
+  uses a.A;
+  uses c.C;
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(40), end: TextSize(41) }) message=expected identifier

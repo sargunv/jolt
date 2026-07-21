@@ -205,6 +205,7 @@ syntax/recovery/call-without-callee.kt
 syntax/recovery/callable-reference-missing-target.kt
 syntax/recovery/class-body-with-formatter-ignore.kt
 syntax/recovery/class-body.kt
+syntax/recovery/class-followed-by-recovered-expression.kt
 syntax/recovery/collection-and-index-lists.kt
 syntax/recovery/context-function-type.kt
 syntax/recovery/control-flow-missing-children.kt
@@ -222,6 +223,10 @@ syntax/recovery/lambda-missing-close.kt
 syntax/recovery/lambda-parameter-list.kt
 syntax/recovery/navigation-without-receiver.kt
 syntax/recovery/nested-recovered-when-condition.kt
+syntax/recovery/normalization/malformed-binary-normalization-barrier.kt
+syntax/recovery/normalization/malformed-file-item-normalization-barrier.kt
+syntax/recovery/normalization/malformed-property-normalization-barrier.kt
+syntax/recovery/normalization/malformed-statement-normalization-barrier.kt
 syntax/recovery/normalization.kt
 syntax/recovery/normalizes-package-import-spacing.kt
 syntax/recovery/object-delegation.kt

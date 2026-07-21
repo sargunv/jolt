@@ -1,5 +1,8 @@
 // Provides a markerless grammar scanner over the same logical tokens as the parser.
-use super::{JavaSyntaxKind, Parser, type_modifier_len};
+use super::{
+    JavaSyntaxKind, MissingConstructorHeaderAction, Parser, is_type_argument_recovery_boundary,
+    is_type_argument_value_start, missing_constructor_header_action, type_modifier_len,
+};
 use crate::parser::source::{TokenBuffer, TokenCursor};
 
 impl<'source> Parser<'source> {
@@ -61,6 +64,10 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         self.cursor.bump(self.buffer);
     }
 
+    pub(in crate::parser::grammar) fn position(&self) -> usize {
+        self.cursor.position()
+    }
+
     pub(in crate::parser::grammar) fn eat(&mut self, kind: JavaSyntaxKind) -> bool {
         if self.at(kind) {
             self.bump();
@@ -99,6 +106,104 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         self.cursor.checkpoint() != start
     }
 
+    fn skip_bounded_annotation(&mut self) -> bool {
+        if !self.at(JavaSyntaxKind::At) || self.nth_kind(1) == JavaSyntaxKind::InterfaceKw {
+            return false;
+        }
+
+        self.bump();
+        if self.at_name_segment() {
+            self.bump();
+            while self.at(JavaSyntaxKind::Dot) && self.nth_kind(1) == JavaSyntaxKind::Identifier {
+                self.bump();
+                self.bump();
+            }
+        }
+
+        if !self.eat(JavaSyntaxKind::LParen) {
+            return true;
+        }
+
+        let mut paren_depth = 1usize;
+        let mut brace_depth = 0usize;
+        let mut bracket_depth = 0usize;
+        while !self.at_eof() {
+            match self.kind() {
+                JavaSyntaxKind::LParen => paren_depth += 1,
+                JavaSyntaxKind::RParen => {
+                    paren_depth -= 1;
+                    self.bump();
+                    if paren_depth == 0 {
+                        return true;
+                    }
+                    continue;
+                }
+                JavaSyntaxKind::LBrace => brace_depth += 1,
+                JavaSyntaxKind::RBrace if brace_depth > 0 => brace_depth -= 1,
+                JavaSyntaxKind::LBracket => bracket_depth += 1,
+                JavaSyntaxKind::RBracket if bracket_depth > 0 => bracket_depth -= 1,
+                JavaSyntaxKind::Semicolon | JavaSyntaxKind::RBrace
+                    if paren_depth == 1 && brace_depth == 0 && bracket_depth == 0 =>
+                {
+                    return false;
+                }
+                _ => {}
+            }
+            self.bump();
+        }
+        false
+    }
+
+    pub(in crate::parser::grammar) fn skip_missing_constructor_throws_clause(&mut self) -> bool {
+        loop {
+            if matches!(
+                self.kind(),
+                JavaSyntaxKind::LBrace
+                    | JavaSyntaxKind::Semicolon
+                    | JavaSyntaxKind::RBrace
+                    | JavaSyntaxKind::Eof
+            ) {
+                return self.at(JavaSyntaxKind::LBrace);
+            }
+            if self.eat(JavaSyntaxKind::Comma) {
+                continue;
+            }
+            if !self.skip_missing_constructor_throws_type() {
+                return false;
+            }
+            if !self.eat(JavaSyntaxKind::Comma) {
+                return self.at(JavaSyntaxKind::LBrace);
+            }
+        }
+    }
+
+    pub(in crate::parser::grammar) fn skip_missing_constructor_throws_type(&mut self) -> bool {
+        while self.at(JavaSyntaxKind::At) {
+            if !self.skip_bounded_annotation() {
+                return false;
+            }
+        }
+
+        if self.at(JavaSyntaxKind::VoidKw) {
+            self.bump();
+            loop {
+                let checkpoint = self.cursor.checkpoint();
+                self.skip_annotations();
+                if self.at(JavaSyntaxKind::LBracket) && self.nth_kind(1) == JavaSyntaxKind::RBracket
+                {
+                    self.bump();
+                    self.bump();
+                } else {
+                    self.cursor.rewind(checkpoint);
+                    break;
+                }
+            }
+            true
+        } else {
+            self.skip_type()
+        }
+    }
+
     pub(in crate::parser::grammar) fn skip_type_modifiers(&mut self) {
         loop {
             if self.skip_annotation() {
@@ -128,6 +233,38 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         }
     }
 
+    pub(in crate::parser::grammar) fn skip_missing_constructor_parameter_header(&mut self) -> bool {
+        let mut paren_depth = 0usize;
+        let mut brace_depth = 0usize;
+        while !self.at_eof() {
+            match missing_constructor_header_action(self.kind(), paren_depth, brace_depth) {
+                MissingConstructorHeaderAction::OpenNested => {
+                    paren_depth += 1;
+                    self.bump();
+                }
+                MissingConstructorHeaderAction::CloseNested => {
+                    paren_depth -= 1;
+                    self.bump();
+                }
+                MissingConstructorHeaderAction::OpenBrace => {
+                    brace_depth += 1;
+                    self.bump();
+                }
+                MissingConstructorHeaderAction::CloseBrace => {
+                    brace_depth -= 1;
+                    self.bump();
+                }
+                MissingConstructorHeaderAction::CloseHeader => {
+                    self.bump();
+                    return true;
+                }
+                MissingConstructorHeaderAction::Boundary => return false,
+                MissingConstructorHeaderAction::Bump => self.bump(),
+            }
+        }
+        false
+    }
+
     pub(in crate::parser::grammar) fn skip_balanced(
         &mut self,
         open: JavaSyntaxKind,
@@ -155,11 +292,13 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         }
 
         loop {
+            let checkpoint = self.cursor.checkpoint();
             self.skip_annotations();
             if self.at(JavaSyntaxKind::LBracket) && self.nth_kind(1) == JavaSyntaxKind::RBracket {
                 self.bump();
                 self.bump();
             } else {
+                self.cursor.rewind(checkpoint);
                 return true;
             }
         }
@@ -226,7 +365,17 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
 
         while !self.at_eof() && !self.at_type_argument_close() {
             if !self.skip_type_argument() {
-                self.bump();
+                while !is_type_argument_recovery_boundary(self.kind()) {
+                    self.skip_annotations();
+                    if is_type_argument_value_start(self.kind()) {
+                        self.skip_type_argument();
+                        break;
+                    }
+                    if is_type_argument_recovery_boundary(self.kind()) {
+                        break;
+                    }
+                    self.bump();
+                }
             }
 
             if !self.eat(JavaSyntaxKind::Comma) {

@@ -22,7 +22,7 @@ pub(crate) fn format_imports<'source>(
     for declaration in imports.iter().copied() {
         let Some(import) = FormattedImport::new(declaration) else {
             flush_sortable(&mut sortable, &mut sections, doc);
-            sections.push(format_import(&declaration, doc));
+            sections.push(format_import_in_place(&declaration, doc));
             continue;
         };
         if !sortable.is_empty()
@@ -96,7 +96,6 @@ impl<'source> FormattedImport<'source> {
     fn new(import: ImportDeclaration<'source>) -> Option<Self> {
         use jolt_java_syntax::JavaSyntaxField::{Malformed, Missing, Present};
 
-        let reorder = import.canonical_reorder_claim()?;
         if !matches!(import.import_keyword(), Ok(Present(_)))
             || !matches!(import.module_keyword(), Ok(Present(_) | Missing(_)))
             || !matches!(import.static_keyword(), Ok(Present(_) | Missing(_)))
@@ -113,6 +112,7 @@ impl<'source> FormattedImport<'source> {
         let on_demand = matches!(import.star(), Ok(Present(_)));
         let key = NameSortKey::new(&name, on_demand)?;
         let is_static = matches!(import.static_keyword(), Ok(Present(_)));
+        let reorder = import.canonical_reorder_claim()?;
         Some(Self {
             import,
             reorder,
@@ -123,64 +123,84 @@ impl<'source> FormattedImport<'source> {
 
     #[allow(clippy::redundant_closure_for_method_calls)]
     fn into_doc(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
-        let formatted = format_import(&self.import, doc);
+        let formatted = self.format_with_relocated_boundary_comments(doc);
         doc.reordered_source(formatted, self.reorder)
     }
-}
 
-/// Formats import boundary comments in one place regardless of whether the
-/// import participates in a sortable run. The body deliberately suppresses
-/// those boundary comments because moving a valid import must move them too.
-#[allow(clippy::redundant_closure_for_method_calls)]
-fn format_import<'source>(
-    import: &ImportDeclaration<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let first = import.first_token();
-    let last = import.last_token();
-    let leading = doc.concat_list(|comments| {
-        for comment in first.iter().flat_map(|token| token.leading_comments()) {
-            if !comments.is_empty() {
-                let line = comments.hard_line();
-                comments.push(line);
+    /// Relocates boundary comments together with an import that has proved it
+    /// is recovery-free and therefore eligible for sorting.
+    fn format_with_relocated_boundary_comments(
+        &self,
+        doc: &mut DocBuilder<'source>,
+    ) -> Doc<'source> {
+        let first = self.import.first_token();
+        let last = self.import.last_token();
+        let leading = doc.concat_list(|comments| {
+            if let Some(token) = first.as_ref() {
+                for comment in token.leading_comments() {
+                    if !comments.is_empty() {
+                        let line = comments.hard_line();
+                        comments.push(line);
+                    }
+                    let formatted = format_comment(comments, &comment);
+                    comments.push(formatted);
+                }
             }
-            let formatted = format_comment(comments, &comment);
-            comments.push(formatted);
+        });
+        let keyword = format_required_field(self.import.import_keyword(), doc, |token, doc| {
+            doc_concat!(
+                doc,
+                [
+                    format_token_after_relocated_leading_comments(
+                        doc,
+                        &token,
+                        TrailingTrivia::Preserve,
+                    ),
+                    doc.space(),
+                ]
+            )
+        });
+        let semicolon = format_required_field(self.import.semicolon(), doc, |token, doc| {
+            format_token_before_relocated_trailing_comments(doc, &token, LeadingTrivia::Preserve)
+        });
+        let body = format_import_fields(&self.import, keyword, semicolon, doc);
+        let trailing = doc.concat_list(|comments| {
+            if let Some(token) = last.as_ref() {
+                for comment in token.trailing_comments() {
+                    let space = comments.space();
+                    comments.push(space);
+                    let formatted = format_comment(comments, &comment);
+                    comments.push(formatted);
+                }
+            }
+        });
+        if first.is_some_and(|token| !token.leading_comments().is_empty()) {
+            doc_concat!(doc, [leading, doc.hard_line(), body, trailing])
+        } else {
+            doc_concat!(doc, [body, trailing])
         }
-    });
-    let body = format_import_body(import, doc);
-    let trailing = doc.concat_list(|comments| {
-        for comment in last.iter().flat_map(|token| token.trailing_comments()) {
-            let space = comments.space();
-            comments.push(space);
-            let formatted = format_comment(comments, &comment);
-            comments.push(formatted);
-        }
-    });
-    if first.is_some_and(|token| !token.leading_comments().is_empty()) {
-        doc_concat!(doc, [leading, doc.hard_line(), body, trailing])
-    } else {
-        doc_concat!(doc, [body, trailing])
     }
 }
 
-fn format_import_body<'source>(
+fn format_import_in_place<'source>(
     import: &ImportDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let keyword = format_required_field(import.import_keyword(), doc, |token, doc| {
-        doc_concat!(
-            doc,
-            [
-                format_token_after_relocated_leading_comments(
-                    doc,
-                    &token,
-                    TrailingTrivia::Preserve,
-                ),
-                doc.space(),
-            ]
-        )
+        doc_concat!(doc, [format_token_with_comments(doc, &token), doc.space()])
     });
+    let semicolon = format_required_field(import.semicolon(), doc, |token, doc| {
+        format_token_with_comments(doc, &token)
+    });
+    format_import_fields(import, keyword, semicolon, doc)
+}
+
+fn format_import_fields<'source>(
+    import: &ImportDeclaration<'source>,
+    keyword: Doc<'source>,
+    semicolon: Doc<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
     let module = format_optional_field(import.module_keyword(), doc, |token, doc| {
         doc_concat!(doc, [format_token_with_comments(doc, &token), doc.space()])
     });
@@ -198,9 +218,6 @@ fn format_import_body<'source>(
     });
     let suffix = format_optional_field(import.suffix(), doc, |suffix, doc| {
         crate::helpers::recovery::format_malformed(&suffix, doc)
-    });
-    let semicolon = format_required_field(import.semicolon(), doc, |token, doc| {
-        format_token_before_relocated_trailing_comments(doc, &token, LeadingTrivia::Preserve)
     });
     doc_concat!(
         doc,

@@ -1,0 +1,109 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import z.Z;
+import broken +;
+import c.C;
+import a.A;
+class C { void f(boolean ok) { if () ; while (ok) ; } }
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ImportDeclaration
+      ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "z" @ 7..8
+        Dot "." @ 8..9
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Z" @ 9..10
+      Semicolon ";" @ 10..11
+    ImportDeclaration
+      ImportKw "import" @ 12..18 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "broken" @ 19..25 trailing=[Whitespace " "]
+      BogusImportSuffix
+        Plus "+" @ 26..27
+      Semicolon ";" @ 27..28
+    ImportDeclaration
+      ImportKw "import" @ 29..35 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "c" @ 36..37
+        Dot "." @ 37..38
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "C" @ 38..39
+      Semicolon ";" @ 39..40
+    ImportDeclaration
+      ImportKw "import" @ 41..47 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "a" @ 48..49
+        Dot "." @ 49..50
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "A" @ 50..51
+      Semicolon ";" @ 51..52
+    ClassDeclaration
+      ClassKw "class" @ 53..58 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "C" @ 59..60 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 61..62 trailing=[Whitespace " "]
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 63..67 trailing=[Whitespace " "]
+            Identifier "f" @ 68..69
+            LParen "(" @ 69..70
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  BooleanKw "boolean" @ 70..77 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "ok" @ 78..80
+            RParen ")" @ 80..81 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 82..83 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  IfStatement
+                    IfKw "if" @ 84..86 trailing=[Whitespace " "]
+                    LParen "(" @ 87..88
+                    BogusExpression
+                    RParen ")" @ 88..89 trailing=[Whitespace " "]
+                    EmptyStatement
+                      Semicolon ";" @ 90..91 trailing=[Whitespace " "]
+                BlockStatement
+                  WhileStatement
+                    WhileKw "while" @ 92..97 trailing=[Whitespace " "]
+                    LParen "(" @ 98..99
+                    NameExpression
+                      Identifier "ok" @ 99..101
+                    RParen ")" @ 101..102 trailing=[Whitespace " "]
+                    EmptyStatement
+                      Semicolon ";" @ 103..104 trailing=[Whitespace " "]
+              RBrace "}" @ 105..106 trailing=[Whitespace " "]
+        RBrace "}" @ 107..108
+  Eof "" @ 109..109 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=26..27 message="unexpected token in import declaration"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=88..89 message="expected expression"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(26), end: TextSize(27) }) message=unexpected token in import declaration
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(88), end: TextSize(89) }) message=expected expression

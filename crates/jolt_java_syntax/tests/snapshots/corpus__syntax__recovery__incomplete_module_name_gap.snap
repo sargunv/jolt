@@ -1,0 +1,69 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+module recovered. {
+  uses z.Service;
+  requires transitive + static a.module;
+  uses a.Service;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 0..6 trailing=[Whitespace " "]
+      BogusName
+        Name
+          Identifier "recovered" @ 7..16
+        Dot "." @ 16..17 trailing=[Whitespace " "]
+      LBrace "{" @ 18..19
+      ModuleDirectiveList
+        UsesDirective
+          Identifier "uses" @ 22..26 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "z" @ 27..28
+            Dot "." @ 28..29
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "Service" @ 29..36
+          Semicolon ";" @ 36..37
+        RequiresDirective
+          Identifier "requires" @ 40..48 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          RequiresModifierList
+            Identifier "transitive" @ 49..59 trailing=[Whitespace " "]
+          BogusName
+            Plus "+" @ 60..61 trailing=[Whitespace " "]
+            StaticKw "static" @ 62..68 trailing=[Whitespace " "]
+            Identifier "a" @ 69..70
+            Dot "." @ 70..71
+            Identifier "module" @ 71..77
+          Semicolon ";" @ 77..78
+        UsesDirective
+          Identifier "uses" @ 81..85 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "a" @ 86..87
+            Dot "." @ 87..88
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "Service" @ 88..95
+          Semicolon ";" @ 95..96
+      RBrace "}" @ 97..98 leading=[Newline "\n"]
+  Eof "" @ 99..99 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=16..17 message="expected identifier"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=60..61 message="expected identifier"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(16), end: TextSize(17) }) message=expected identifier
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(60), end: TextSize(61) }) message=expected identifier

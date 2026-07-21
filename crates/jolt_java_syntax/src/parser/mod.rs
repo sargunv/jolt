@@ -257,7 +257,10 @@ fn invalid_event_stream_diagnostic(error: &jolt_syntax::BuildSyntaxTreeError) ->
 mod tests {
     use jolt_test_support::assert_exact_diagnostic_owner;
 
-    use crate::{JavaSyntaxKind, parse_compilation_unit};
+    use crate::{
+        ConstructorDeclaration, JavaNode, JavaSyntaxField, JavaSyntaxKind, JavaSyntaxView,
+        parse_compilation_unit,
+    };
 
     use super::JavaParseDiagnosticCode;
 
@@ -269,6 +272,278 @@ mod tests {
             *root.syntax(), parse.diagnostics(), parse.structural_diagnostic_owners(),
             code, message, kind, slot,
         );
+    }
+
+    fn count_nodes(source: &str, kind: JavaSyntaxKind) -> usize {
+        let parse = parse_compilation_unit(source);
+        let root = parse.syntax().expect("represented compilation unit");
+        let mut nodes = vec![*root.syntax()];
+        let mut count = 0;
+        while let Some(node) = nodes.pop() {
+            nodes.extend(node.children());
+            count += usize::from(node.kind() == kind);
+        }
+        count
+    }
+
+    fn count_nodes_owned_by(
+        source: &str,
+        owner_kind: JavaSyntaxKind,
+        kind: JavaSyntaxKind,
+    ) -> usize {
+        let parse = parse_compilation_unit(source);
+        let root = parse.syntax().expect("represented compilation unit");
+        let mut nodes = vec![*root.syntax()];
+        let owner = loop {
+            let node = nodes.pop().expect("expected owner node");
+            nodes.extend(node.children());
+            if node.kind() == owner_kind {
+                break node;
+            }
+        };
+        let mut descendants = vec![owner];
+        let mut count = 0;
+        while let Some(node) = descendants.pop() {
+            descendants.extend(node.children());
+            count += usize::from(node.kind() == kind);
+        }
+        count
+    }
+
+    #[test]
+    fn missing_constructor_open_paren_keeps_constructor_shape() {
+        let parse = parse_compilation_unit("class C { C int value) throws Exception {} }");
+        let root = parse.syntax().expect("represented compilation unit");
+        let mut nodes = vec![*root.syntax()];
+        let constructor = loop {
+            let node = nodes.pop().expect("constructor declaration");
+            nodes.extend(node.children());
+            if let Some(constructor) = ConstructorDeclaration::cast(node) {
+                break constructor;
+            }
+        };
+
+        assert!(matches!(
+            constructor.open_paren(),
+            Ok(JavaSyntaxField::Missing(_))
+        ));
+        assert!(matches!(
+            constructor.close_paren(),
+            Ok(JavaSyntaxField::Present(_))
+        ));
+        assert!(matches!(
+            constructor.body(),
+            Ok(JavaSyntaxField::Present(body))
+                if body.syntax_node().is_some_and(|node| node.kind() == JavaSyntaxKind::ConstructorBody)
+        ));
+    }
+
+    #[test]
+    fn missing_constructor_open_paren_probe_matches_consuming_grammar() {
+        for source in [
+            "class C { C int x int y) {} }",
+            "class C { C C... this) {} }",
+            "class C { C @() int x) {} }",
+            "class C { C List<+ String> value) {} }",
+            "class C { C int x) throws List<+ String> {} }",
+            "class C { C) throws {} }",
+            "class C { C int value) throws , @Thrown pkg.Error {} }",
+            "class C { C @A(values = {1, 2}) java.util.Map<@B String, java.util.List<@C Integer[]>>[] value) throws pkg.@D Error<@E String>.Nested {} }",
+            "class Outer { class C { C @A Outer.@B Inner Outer.this) {} } }",
+        ] {
+            let parse = parse_compilation_unit(source);
+            let root = parse.syntax().expect("represented compilation unit");
+            let mut nodes = vec![*root.syntax()];
+            let mut constructors = Vec::new();
+            while let Some(node) = nodes.pop() {
+                nodes.extend(node.children());
+                if let Some(constructor) = ConstructorDeclaration::cast(node) {
+                    constructors.push(constructor);
+                }
+            }
+            assert_eq!(
+                constructors.len(),
+                1,
+                "constructor dispatch diverged for `{source}`",
+            );
+            let constructor = &constructors[0];
+            assert!(
+                matches!(constructor.close_paren(), Ok(JavaSyntaxField::Present(_))),
+                "constructor recovery did not consume `)` for `{source}`",
+            );
+            assert!(
+                matches!(constructor.body(), Ok(JavaSyntaxField::Present(_))),
+                "constructor recovery did not reach its body for `{source}`",
+            );
+        }
+    }
+
+    #[test]
+    fn missing_constructor_open_paren_throws_probe_stops_before_neighboring_members() {
+        let annotation_braces = "class C { C int x) throws @A({E.class}) E; C field; }";
+        assert_eq!(
+            count_nodes(annotation_braces, JavaSyntaxKind::ConstructorDeclaration),
+            0
+        );
+        assert_eq!(
+            count_nodes(annotation_braces, JavaSyntaxKind::FieldDeclaration),
+            1
+        );
+
+        let unterminated_annotation = "class C { C int x) throws @A(E; C field; }";
+        assert_eq!(
+            count_nodes(unterminated_annotation, JavaSyntaxKind::ClassDeclaration),
+            1,
+        );
+        assert_eq!(
+            count_nodes(unterminated_annotation, JavaSyntaxKind::FieldDeclaration),
+            1,
+        );
+
+        let qualified_suffix = (0..256)
+            .map(|index| format!("p{index}"))
+            .collect::<Vec<_>>()
+            .join(".");
+        let long_rejected_fragment =
+            format!("class C {{ C int x) throws E {qualified_suffix} +; C field; }}");
+        assert_eq!(
+            count_nodes(&long_rejected_fragment, JavaSyntaxKind::FieldDeclaration),
+            1,
+        );
+
+        let annotations = (0..256)
+            .map(|index| format!("@A{index}"))
+            .collect::<Vec<_>>()
+            .join(" ");
+        let long_type_argument_recovery =
+            format!("class C {{ java.util.List<+ {annotations} String> field; }}");
+        assert_eq!(
+            count_nodes(
+                &long_type_argument_recovery,
+                JavaSyntaxKind::FieldDeclaration,
+            ),
+            1,
+        );
+
+        let nested_parameter_delimiter = "class C { C foo(bar) int p) throws E C field; }";
+        assert_eq!(
+            count_nodes(nested_parameter_delimiter, JavaSyntaxKind::FieldDeclaration,),
+            1,
+        );
+
+        let nested_parameter_semicolon = "class C { C foo(a; b) int p) throws E C field; }";
+        assert_eq!(
+            count_nodes(nested_parameter_semicolon, JavaSyntaxKind::FieldDeclaration,),
+            1,
+        );
+
+        let type_body_boundary = "class C { C foo } int x) {}";
+        assert_eq!(
+            count_nodes(type_body_boundary, JavaSyntaxKind::ConstructorDeclaration),
+            0,
+        );
+
+        let unmatched_paren_before_type_body_boundary = "class C { C foo(int x } int y)) {}";
+        assert_eq!(
+            count_nodes(
+                unmatched_paren_before_type_body_boundary,
+                JavaSyntaxKind::ConstructorDeclaration,
+            ),
+            0,
+        );
+
+        let following_method = "class C { C int x) throws E void m() {} }";
+        assert_eq!(
+            count_nodes(following_method, JavaSyntaxKind::ConstructorDeclaration),
+            0
+        );
+        assert_eq!(
+            count_nodes(following_method, JavaSyntaxKind::MethodDeclaration),
+            1
+        );
+
+        let following_field = "class C { C int x) throws E C field; }";
+        assert_eq!(
+            count_nodes(following_field, JavaSyntaxKind::ConstructorDeclaration),
+            0
+        );
+        assert_eq!(
+            count_nodes(following_field, JavaSyntaxKind::FieldDeclaration),
+            1
+        );
+
+        let annotated_field = "class C { C int x) throws E @A C field; }";
+        assert_eq!(
+            count_nodes(annotated_field, JavaSyntaxKind::FieldDeclaration),
+            1
+        );
+        assert_eq!(
+            count_nodes_owned_by(
+                annotated_field,
+                JavaSyntaxKind::FieldDeclaration,
+                JavaSyntaxKind::Annotation,
+            ),
+            1,
+        );
+
+        let annotated_method = "class C { C int x) throws E @A void m() {} }";
+        assert_eq!(
+            count_nodes(annotated_method, JavaSyntaxKind::MethodDeclaration),
+            1
+        );
+        assert_eq!(
+            count_nodes_owned_by(
+                annotated_method,
+                JavaSyntaxKind::MethodDeclaration,
+                JavaSyntaxKind::Annotation,
+            ),
+            1,
+        );
+
+        let following_compact_constructor = "record R(int v) { R int x) throws E R {} }";
+        assert_eq!(
+            count_nodes(
+                following_compact_constructor,
+                JavaSyntaxKind::CompactConstructorDeclaration,
+            ),
+            1,
+        );
+        assert_eq!(
+            count_nodes_owned_by(
+                following_compact_constructor,
+                JavaSyntaxKind::CompactConstructorDeclaration,
+                JavaSyntaxKind::ConstructorBody,
+            ),
+            1,
+        );
+    }
+
+    #[test]
+    fn missing_constructor_open_paren_recovery_does_not_steal_neighboring_declarations() {
+        let parse = parse_compilation_unit(
+            "class C { C() {} C field; C method() {} } record R(int value) { R {} }",
+        );
+        let root = parse.syntax().expect("represented compilation unit");
+        let mut nodes = vec![*root.syntax()];
+        let mut fields = 0;
+        let mut methods = 0;
+        let mut constructors = 0;
+        let mut compact_constructors = 0;
+        while let Some(node) = nodes.pop() {
+            nodes.extend(node.children());
+            match node.kind() {
+                JavaSyntaxKind::FieldDeclaration => fields += 1,
+                JavaSyntaxKind::MethodDeclaration => methods += 1,
+                JavaSyntaxKind::ConstructorDeclaration => constructors += 1,
+                JavaSyntaxKind::CompactConstructorDeclaration => compact_constructors += 1,
+                _ => {}
+            }
+        }
+
+        assert_eq!(fields, 1);
+        assert_eq!(methods, 1);
+        assert_eq!(constructors, 1);
+        assert_eq!(compact_constructors, 1);
     }
 
     #[test]

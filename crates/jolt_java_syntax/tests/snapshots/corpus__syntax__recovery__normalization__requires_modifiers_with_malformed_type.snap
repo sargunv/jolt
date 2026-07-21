@@ -1,0 +1,37 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+module m { requires transitive static + a.b; }
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 0..6 trailing=[Whitespace " "]
+      Name
+        Identifier "m" @ 7..8 trailing=[Whitespace " "]
+      LBrace "{" @ 9..10 trailing=[Whitespace " "]
+      ModuleDirectiveList
+        RequiresDirective
+          Identifier "requires" @ 11..19 trailing=[Whitespace " "]
+          RequiresModifierList
+            Identifier "transitive" @ 20..30 trailing=[Whitespace " "]
+            StaticKw "static" @ 31..37 trailing=[Whitespace " "]
+          BogusName
+            Plus "+" @ 38..39 trailing=[Whitespace " "]
+            Identifier "a" @ 40..41
+            Dot "." @ 41..42
+            Identifier "b" @ 42..43
+          Semicolon ";" @ 43..44 trailing=[Whitespace " "]
+      RBrace "}" @ 45..46
+  Eof "" @ 47..47 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=38..39 message="expected identifier"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(38), end: TextSize(39) }) message=expected identifier

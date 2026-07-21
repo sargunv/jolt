@@ -1,0 +1,57 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun f() {
+first;
+);
+second;
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "f" @ 4..5
+      ValueParameterList
+        LParen "(" @ 5..6
+        ValueParameterSeparatedList
+        RParen ")" @ 6..7 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 8..9
+          BlockItemList
+            Statement
+              ExpressionStatement
+                NameExpression
+                  Identifier "first" @ 10..15 leading=[Newline "\n"]
+              TerminatorList
+                Semicolon ";" @ 15..16
+            Statement
+              ExpressionStatement
+                BogusExpression
+                  RParen ")" @ 17..18 leading=[Newline "\n"]
+              TerminatorList
+                Semicolon ";" @ 18..19
+            Statement
+              ExpressionStatement
+                NameExpression
+                  Identifier "second" @ 20..26 leading=[Newline "\n"]
+              TerminatorList
+                Semicolon ";" @ 26..27
+          RBrace "}" @ 28..29 leading=[Newline "\n"]
+  Eof "" @ 30..30 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=17..18 message="expected expression"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(17), end: TextSize(18) }) message=expected expression

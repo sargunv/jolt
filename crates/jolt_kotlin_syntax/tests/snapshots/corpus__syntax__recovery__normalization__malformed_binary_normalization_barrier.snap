@@ -1,0 +1,57 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val broken = a custom b +
+val clean = a custom b + c
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      Name
+        Identifier "broken" @ 4..10 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 11..12 trailing=[Whitespace " "]
+        BinaryExpression
+          NameExpression
+            Identifier "a" @ 13..14 trailing=[Whitespace " "]
+          Identifier "custom" @ 15..21 trailing=[Whitespace " "]
+          BinaryExpression
+            NameExpression
+              Identifier "b" @ 22..23 trailing=[Whitespace " "]
+            Plus "+" @ 24..25
+            BogusExpression
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 26..29 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "clean" @ 30..35 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 36..37 trailing=[Whitespace " "]
+        BinaryExpression
+          NameExpression
+            Identifier "a" @ 38..39 trailing=[Whitespace " "]
+          Identifier "custom" @ 40..46 trailing=[Whitespace " "]
+          BinaryExpression
+            NameExpression
+              Identifier "b" @ 47..48 trailing=[Whitespace " "]
+            Plus "+" @ 49..50 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "c" @ 51..52
+      PropertyBodyMemberList
+  Eof "" @ 53..53 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=26..29 message="expected expression after operator"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(26), end: TextSize(29) }) message=expected expression after operator

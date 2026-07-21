@@ -1,0 +1,106 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class C { boolean f(int a, int b) { return a & b == ; } boolean g(int a, int b) { return a & b == 0; } }
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "C" @ 6..7 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 8..9 trailing=[Whitespace " "]
+        ClassBodyMemberList
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              BooleanKw "boolean" @ 10..17 trailing=[Whitespace " "]
+            Identifier "f" @ 18..19
+            LParen "(" @ 19..20
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 20..23 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "a" @ 24..25
+              Comma "," @ 25..26 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 27..30 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "b" @ 31..32
+            RParen ")" @ 32..33 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 34..35 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 36..42 trailing=[Whitespace " "]
+                    BinaryExpression
+                      NameExpression
+                        Identifier "a" @ 43..44 trailing=[Whitespace " "]
+                      Amp "&" @ 45..46 trailing=[Whitespace " "]
+                      BinaryExpression
+                        NameExpression
+                          Identifier "b" @ 47..48 trailing=[Whitespace " "]
+                        EqEq "==" @ 49..51 trailing=[Whitespace " "]
+                        BogusExpression
+                    Semicolon ";" @ 52..53 trailing=[Whitespace " "]
+              RBrace "}" @ 54..55 trailing=[Whitespace " "]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              BooleanKw "boolean" @ 56..63 trailing=[Whitespace " "]
+            Identifier "g" @ 64..65
+            LParen "(" @ 65..66
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 66..69 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "a" @ 70..71
+              Comma "," @ 71..72 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 73..76 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "b" @ 77..78
+            RParen ")" @ 78..79 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 80..81 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 82..88 trailing=[Whitespace " "]
+                    BinaryExpression
+                      NameExpression
+                        Identifier "a" @ 89..90 trailing=[Whitespace " "]
+                      Amp "&" @ 91..92 trailing=[Whitespace " "]
+                      BinaryExpression
+                        NameExpression
+                          Identifier "b" @ 93..94 trailing=[Whitespace " "]
+                        EqEq "==" @ 95..97 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "0" @ 98..99
+                    Semicolon ";" @ 99..100 trailing=[Whitespace " "]
+              RBrace "}" @ 101..102 trailing=[Whitespace " "]
+        RBrace "}" @ 103..104
+  Eof "" @ 105..105 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=52..53 message="expected expression"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(52), end: TextSize(53) }) message=expected expression

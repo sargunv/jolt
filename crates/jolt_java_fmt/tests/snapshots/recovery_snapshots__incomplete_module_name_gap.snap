@@ -1,0 +1,23 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+module recovered. {
+  uses z.Service;
+  requires transitive + static a.module;
+  uses a.Service;
+}
+
+formatted:
+module recovered. {
+  uses z.Service;
+
+  requires transitive + static a.module;
+
+  uses a.Service;
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(16), end: TextSize(17) }) message=expected identifier
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(60), end: TextSize(61) }) message=expected identifier

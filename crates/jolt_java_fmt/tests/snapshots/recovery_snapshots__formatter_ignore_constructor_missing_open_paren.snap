@@ -1,0 +1,32 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class Example {
+Example) {
+  // @formatter:off
+  this( 1,2 );
+  int raw=1+2;
+  // @formatter:on
+int after=3;
+}
+Example(int a,int b){}
+}
+
+formatted:
+class Example {
+  Example) {
+    // @formatter:off
+    this( 1,2 );
+    int raw=1+2;
+    // @formatter:on
+    int after = 3;
+  }
+
+  Example(int a, int b) {
+  }
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(23), end: TextSize(24) }) message=expected `(`

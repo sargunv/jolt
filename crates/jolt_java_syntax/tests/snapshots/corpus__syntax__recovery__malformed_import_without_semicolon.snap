@@ -1,0 +1,22 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import /* JOLT-TRIVIA:import-pieces */
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ImportDeclaration
+      ImportKw "import" @ 0..6 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:import-pieces */"]
+  Eof "" @ 39..39 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=39..39 message="expected identifier"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=39..39 message="expected `;` after import declaration"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(39), end: TextSize(39) }) message=expected identifier
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(39), end: TextSize(39) }) message=expected `;` after import declaration

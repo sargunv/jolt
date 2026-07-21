@@ -376,6 +376,28 @@ fn comment_inventory_key(kind: CommentKind, text: &str) -> String {
     format!("{kind:?}:{}", canonical_comment_text(text))
 }
 
+fn universal_lines(mut text: &str) -> impl Iterator<Item = &str> {
+    std::iter::from_fn(move || {
+        if text.is_empty() {
+            return None;
+        }
+
+        let Some(boundary) = text.bytes().position(|byte| matches!(byte, b'\r' | b'\n')) else {
+            return Some(std::mem::take(&mut text));
+        };
+        let line = &text[..boundary];
+        let boundary_len = if text.as_bytes()[boundary] == b'\r'
+            && text.as_bytes().get(boundary + 1) == Some(&b'\n')
+        {
+            2
+        } else {
+            1
+        };
+        text = &text[boundary + boundary_len..];
+        Some(line)
+    })
+}
+
 fn canonical_comment_text(text: &str) -> String {
     let body = text
         .strip_prefix("//")
@@ -388,8 +410,9 @@ fn canonical_comment_text(text: &str) -> String {
                 .and_then(|text| text.strip_suffix("*/"))
         })
         .unwrap_or(text);
-    let multiline = body.contains('\n');
-    body.lines()
+    let multiline = body.contains(['\r', '\n']);
+    let mut canonical = String::new();
+    for word in universal_lines(body)
         .flat_map(|line| {
             let line = line.trim();
             let line = if multiline {
@@ -401,8 +424,13 @@ fn canonical_comment_text(text: &str) -> String {
             line.split_whitespace()
         })
         .filter(|word| !word.is_empty())
-        .collect::<Vec<_>>()
-        .join(" ")
+    {
+        if !canonical.is_empty() {
+            canonical.push(' ');
+        }
+        canonical.push_str(word);
+    }
+    canonical
 }
 
 #[cfg(test)]
@@ -427,6 +455,36 @@ mod tests {
         assert_eq!(
             comment_inventory_key(CommentKind::Doc, "/**\n * hello   world\n */"),
             comment_inventory_key(CommentKind::Doc, "/** hello world */")
+        );
+    }
+
+    #[test]
+    fn canonical_comment_inventory_uses_universal_logical_lines() {
+        let normalized = comment_inventory_key(
+            CommentKind::Doc,
+            "/**\n * hello\n *\n * universal world\n */",
+        );
+        assert_eq!(
+            comment_inventory_key(
+                CommentKind::Doc,
+                "/**\r\n * hello\r *\r\n * universal world\n */",
+            ),
+            normalized
+        );
+        assert_eq!(
+            comment_inventory_key(
+                CommentKind::Doc,
+                "/**\r * hello\r *\r * universal world\r */",
+            ),
+            normalized
+        );
+    }
+
+    #[test]
+    fn canonical_comment_inventory_preserves_doubled_stars_after_decoration() {
+        assert_ne!(
+            comment_inventory_key(CommentKind::Doc, "/**\r\n ** meaningful\r\n */"),
+            comment_inventory_key(CommentKind::Doc, "/**\n * meaningful\n */")
         );
     }
 }

@@ -1,0 +1,30 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+import z.Z;
+import broken +;
+import c.C;
+import a.A;
+class C { void f(boolean ok) { if () ; while (ok) ; } }
+
+formatted:
+import z.Z;
+
+import broken+;
+
+import a.A;
+import c.C;
+
+class C {
+  void f(boolean ok) {
+    if () ;
+    while (ok) {
+    }
+  }
+}
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(26), end: TextSize(27) }) message=unexpected token in import declaration
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(88), end: TextSize(89) }) message=expected expression

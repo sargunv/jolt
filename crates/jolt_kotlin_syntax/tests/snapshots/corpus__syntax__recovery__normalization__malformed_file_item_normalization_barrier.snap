@@ -1,0 +1,51 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val first = 1;
+);
+val second = 2;
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      Name
+        Identifier "first" @ 4..9 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 10..11 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "1" @ 12..13
+      PropertyBodyMemberList
+    Semicolon ";" @ 13..14
+    Statement
+      ExpressionStatement
+        BogusExpression
+          RParen ")" @ 15..16 leading=[Newline "\n"]
+      TerminatorList
+        Semicolon ";" @ 16..17
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 18..21 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "second" @ 22..28 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 29..30 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "2" @ 31..32
+      PropertyBodyMemberList
+    Semicolon ";" @ 32..33
+  Eof "" @ 34..34 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=15..16 message="expected expression"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(15), end: TextSize(16) }) message=expected expression

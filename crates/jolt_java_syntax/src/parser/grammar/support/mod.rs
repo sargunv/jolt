@@ -13,6 +13,73 @@ mod type_arguments;
 
 pub(in crate::parser::grammar) use lookahead::JavaLookahead;
 
+#[derive(Clone, Copy)]
+pub(super) enum MissingConstructorHeaderAction {
+    OpenNested,
+    CloseNested,
+    OpenBrace,
+    CloseBrace,
+    CloseHeader,
+    Boundary,
+    Bump,
+}
+
+pub(super) fn missing_constructor_header_action(
+    kind: JavaSyntaxKind,
+    paren_depth: usize,
+    brace_depth: usize,
+) -> MissingConstructorHeaderAction {
+    match kind {
+        JavaSyntaxKind::LParen => MissingConstructorHeaderAction::OpenNested,
+        JavaSyntaxKind::RParen if paren_depth == 0 => MissingConstructorHeaderAction::CloseHeader,
+        JavaSyntaxKind::RParen => MissingConstructorHeaderAction::CloseNested,
+        JavaSyntaxKind::LBrace if paren_depth > 0 || brace_depth > 0 => {
+            MissingConstructorHeaderAction::OpenBrace
+        }
+        JavaSyntaxKind::RBrace if brace_depth > 0 => MissingConstructorHeaderAction::CloseBrace,
+        JavaSyntaxKind::LBrace | JavaSyntaxKind::RBrace => MissingConstructorHeaderAction::Boundary,
+        JavaSyntaxKind::Semicolon if paren_depth == 0 && brace_depth == 0 => {
+            MissingConstructorHeaderAction::Boundary
+        }
+        _ => MissingConstructorHeaderAction::Bump,
+    }
+}
+
+pub(super) const fn is_type_argument_value_start(kind: JavaSyntaxKind) -> bool {
+    matches!(
+        kind,
+        JavaSyntaxKind::Question
+            | JavaSyntaxKind::Identifier
+            | JavaSyntaxKind::BooleanKw
+            | JavaSyntaxKind::ByteKw
+            | JavaSyntaxKind::CharKw
+            | JavaSyntaxKind::DoubleKw
+            | JavaSyntaxKind::FloatKw
+            | JavaSyntaxKind::IntKw
+            | JavaSyntaxKind::LongKw
+            | JavaSyntaxKind::ShortKw
+    )
+}
+
+pub(super) const fn is_type_argument_recovery_boundary(kind: JavaSyntaxKind) -> bool {
+    matches!(
+        kind,
+        JavaSyntaxKind::Eof
+            | JavaSyntaxKind::Gt
+            | JavaSyntaxKind::Comma
+            | JavaSyntaxKind::Semicolon
+            | JavaSyntaxKind::Assign
+            | JavaSyntaxKind::LBrace
+            | JavaSyntaxKind::RBrace
+            | JavaSyntaxKind::LParen
+            | JavaSyntaxKind::RParen
+            | JavaSyntaxKind::LBracket
+            | JavaSyntaxKind::RBracket
+            | JavaSyntaxKind::Colon
+            | JavaSyntaxKind::Arrow
+    )
+}
+
 fn type_modifier_len(
     kind: JavaSyntaxKind,
     text: Option<&str>,

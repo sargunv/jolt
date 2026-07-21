@@ -29,9 +29,46 @@ impl Parser<'_> {
             return true;
         }
 
-        lookahead.nth_kind(1) == JavaSyntaxKind::LParen
-            && (matches!(type_name, Some(name) if lookahead.text() == Some(name))
+        let has_constructor_name =
+            matches!(type_name, Some(name) if lookahead.text() == Some(name));
+        if lookahead.nth_kind(1) == JavaSyntaxKind::LParen
+            && (has_constructor_name
                 || (lookahead.at_name_segment() && member_header_ends_with_block))
+        {
+            return true;
+        }
+
+        has_constructor_name && Self::missing_constructor_open_paren_reaches_body(&mut lookahead)
+    }
+
+    fn missing_constructor_open_paren_reaches_body(lookahead: &mut JavaLookahead<'_, '_>) -> bool {
+        lookahead.bump();
+        if !lookahead.skip_missing_constructor_parameter_header() {
+            return false;
+        }
+        if lookahead.eat(JavaSyntaxKind::ThrowsKw) {
+            return lookahead.skip_missing_constructor_throws_clause();
+        }
+
+        lookahead.at(JavaSyntaxKind::LBrace)
+    }
+
+    pub(in crate::parser::grammar) fn has_rejected_missing_constructor_header(
+        &mut self,
+        type_name: Option<usize>,
+    ) -> bool {
+        let type_name = type_name.and_then(|index| self.text_at(index));
+        let mut lookahead = self.lookahead();
+        lookahead.skip_type_modifiers();
+        if lookahead.at(JavaSyntaxKind::Lt) {
+            lookahead.skip_type_parameters();
+        }
+        if !matches!(type_name, Some(name) if lookahead.text() == Some(name)) {
+            return false;
+        }
+
+        lookahead.bump();
+        lookahead.skip_missing_constructor_parameter_header()
     }
 
     pub(in crate::parser::grammar) fn starts_compact_constructor(
@@ -201,6 +238,12 @@ impl Parser<'_> {
             || (lookahead.at(JavaSyntaxKind::VoidKw)
                 && lookahead.nth_kind(1) == JavaSyntaxKind::Identifier
                 && lookahead.nth_kind(2) == JavaSyntaxKind::LParen)
+    }
+
+    pub(in crate::parser::grammar) fn starts_field_declaration(&mut self) -> bool {
+        let mut lookahead = self.lookahead();
+        lookahead.skip_type_modifiers();
+        lookahead.skip_type() && lookahead.at_variable_identifier()
     }
 
     pub(in crate::parser::grammar) fn member_header_ends_with_block(&mut self) -> bool {

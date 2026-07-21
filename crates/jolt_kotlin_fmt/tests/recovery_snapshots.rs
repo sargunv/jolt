@@ -2,9 +2,9 @@ use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
 use jolt_kotlin_fmt::format_source_to_sink;
 use jolt_kotlin_syntax::parse_kotlin_file;
 use jolt_test_support::{
-    SnapshotBuilder, StringSink, collect_kotlin_files, fixture_snapshot_name, kotlin_fixture_root,
-    read_to_string, render_diagnostics, represented_comment_inventory,
-    represented_token_loss_report, trivia_markers,
+    RepresentedTokenRemoval, SnapshotBuilder, StringSink, collect_kotlin_files,
+    fixture_snapshot_name, kotlin_fixture_root, read_to_string, render_diagnostics,
+    represented_comment_inventory, represented_token_loss_report, trivia_markers,
 };
 
 #[test]
@@ -35,8 +35,11 @@ fn kotlin_recovery_formatter_snapshots() {
                 formatted
             )
         });
-        let token_loss =
-            represented_token_loss_report(syntax.token_iter(), formatted_syntax.token_iter(), &[]);
+        let token_loss = represented_token_loss_report(
+            syntax.token_iter(),
+            formatted_syntax.token_iter(),
+            allowed_removed_tokens(&path),
+        );
         let comment_loss = (represented_comment_inventory(syntax.token_iter())
             != represented_comment_inventory(formatted_syntax.token_iter()))
         .then_some("represented comment inventory changed\n");
@@ -78,6 +81,23 @@ fn kotlin_recovery_formatter_snapshots() {
         "formatter lost represented Kotlin source:\n{}",
         conservation_failures.join("\n")
     );
+}
+
+const NORMALIZATION_REMOVALS: &[RepresentedTokenRemoval] = &[RepresentedTokenRemoval {
+    source: ";",
+    count: usize::MAX,
+}];
+
+fn allowed_removed_tokens(path: &std::path::Path) -> &'static [RepresentedTokenRemoval] {
+    if path
+        .parent()
+        .and_then(std::path::Path::file_name)
+        .is_some_and(|name| name == "normalization")
+    {
+        NORMALIZATION_REMOVALS
+    } else {
+        &[]
+    }
 }
 
 fn format_or_panic(source: &str, options: FormatOptions, label: &str) -> String {
