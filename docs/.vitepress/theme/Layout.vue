@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import { defineAsyncComponent } from "vue";
 import { useData } from "vitepress";
 import DefaultTheme from "vitepress/theme";
-import HomePage from "./components/HomePage.vue";
+
+const HomePage = defineAsyncComponent(
+  () => import("./components/HomePage.vue"),
+);
 
 const { frontmatter } = useData();
 const { Layout } = DefaultTheme;

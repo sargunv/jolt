@@ -120,6 +120,7 @@ onMounted(async () => {
           <SourceEditor
             v-else
             v-model="input"
+            accessible-name="Source input"
             :line-width="config.lineWidth"
             :show-ruler="false"
             :lint-diagnostics="inputLintDiagnostics"
@@ -169,6 +170,7 @@ onMounted(async () => {
           <SourceEditor
             v-else
             :model-value="output"
+            accessible-name="Formatted output"
             :line-width="config.lineWidth"
             show-ruler
             readonly

@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { java } from "@codemirror/lang-java";
 import { linter, type Diagnostic as LintDiagnostic } from "@codemirror/lint";
+import { EditorView } from "@codemirror/view";
 import type { LanguageSupport } from "@codemirror/language";
 import CodeMirror from "vue-codemirror6";
 import { useData } from "vitepress";
@@ -11,6 +12,7 @@ import { joltSyntaxHighlighting } from "../javaHighlightStyle";
 const props = withDefaults(
   defineProps<{
     modelValue: string;
+    accessibleName: string;
     language?: LanguageSupport;
     readonly?: boolean;
     lintDiagnostics?: LintDiagnostic[];
@@ -37,6 +39,7 @@ const editorStyle = computed(() =>
 
 const extensions = computed(() => {
   const extras = [
+    EditorView.contentAttributes.of({ "aria-label": props.accessibleName }),
     joltSyntaxHighlighting(isDark.value),
     joltEditorTheme(isDark.value),
   ];

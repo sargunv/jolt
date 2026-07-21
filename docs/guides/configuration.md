@@ -32,8 +32,9 @@ directories.
 
 ::: code-group
 
+<!-- dprint-ignore -->
 ```toml [jolt.toml]
-# :schema https://github.com/sargunv/jolt/releases/download/<version>/jolt-schema.json
+#:schema https://github.com/sargunv/jolt/releases/download/<version>/jolt-schema.json
 root = true
 
 [format]

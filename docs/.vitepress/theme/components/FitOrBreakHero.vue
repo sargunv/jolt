@@ -307,6 +307,7 @@ onBeforeUnmount(() => {
           v-if="!loadError"
           :key="sample.path"
           :model-value="output"
+          :accessible-name="`Formatted sample: ${sample.label}`"
           :language="sample.language"
           :line-width="widthCh"
           :lint-diagnostics="lintDiagnostics"
