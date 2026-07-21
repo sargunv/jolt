@@ -45,6 +45,7 @@ pub(crate) fn display_width(text: &str) -> TextWidth {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) struct LiteralTextMetrics {
     pub(crate) final_width: TextWidth,
+    pub(crate) first_width: TextWidth,
     pub(crate) line_count: usize,
 }
 
@@ -56,6 +57,7 @@ pub(crate) fn literal_text_metrics(text: &str) -> LiteralTextMetrics {
 
     let mut line_count = 1;
     let mut width = TextWidth::ZERO;
+    let mut first_width = None;
     let mut chars = text.chars().peekable();
     while let Some(ch) = chars.next() {
         match ch {
@@ -63,10 +65,12 @@ pub(crate) fn literal_text_metrics(text: &str) -> LiteralTextMetrics {
                 if chars.peek() == Some(&'\n') {
                     chars.next();
                 }
+                first_width.get_or_insert(width);
                 line_count += 1;
                 width = TextWidth::ZERO;
             }
             '\n' => {
+                first_width.get_or_insert(width);
                 line_count += 1;
                 width = TextWidth::ZERO;
             }
@@ -74,6 +78,7 @@ pub(crate) fn literal_text_metrics(text: &str) -> LiteralTextMetrics {
         }
     }
     LiteralTextMetrics {
+        first_width: first_width.unwrap_or(width),
         final_width: width,
         line_count,
     }
@@ -83,6 +88,7 @@ pub(crate) fn literal_text_metrics(text: &str) -> LiteralTextMetrics {
 fn ascii_literal_text_metrics(text: &[u8]) -> Option<LiteralTextMetrics> {
     let mut line_count = 1;
     let mut width = 0_u32;
+    let mut first_width = None;
     let mut index = 0;
     while index < text.len() {
         match text[index] {
@@ -91,10 +97,12 @@ fn ascii_literal_text_metrics(text: &[u8]) -> Option<LiteralTextMetrics> {
                 if text.get(index + 1) == Some(&b'\n') {
                     index += 1;
                 }
+                first_width.get_or_insert(width);
                 line_count += 1;
                 width = 0;
             }
             b'\n' => {
+                first_width.get_or_insert(width);
                 line_count += 1;
                 width = 0;
             }
@@ -105,6 +113,7 @@ fn ascii_literal_text_metrics(text: &[u8]) -> Option<LiteralTextMetrics> {
     }
     Some(LiteralTextMetrics {
         final_width: TextWidth::new(width),
+        first_width: TextWidth::new(first_width.unwrap_or(width)),
         line_count,
     })
 }
@@ -133,6 +142,7 @@ mod tests {
             literal_text_metrics("\0a\r\nb\u{7f}"),
             LiteralTextMetrics {
                 final_width: TextWidth::new(1),
+                first_width: TextWidth::new(1),
                 line_count: 2,
             }
         );

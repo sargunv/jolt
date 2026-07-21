@@ -181,7 +181,8 @@ impl<'source> DocBuilder<'source> {
         self.push_node(DocNode::Text(DocumentText {
             text,
             final_width,
-            line_count: 1,
+            first_width: final_width,
+            is_multiline: false,
             #[cfg(debug_assertions)]
             claim: None,
         }))
@@ -199,7 +200,8 @@ impl<'source> DocBuilder<'source> {
         self.push_node(DocNode::Text(DocumentText {
             text,
             final_width: metrics.final_width,
-            line_count: metrics.line_count,
+            first_width: metrics.first_width,
+            is_multiline: metrics.line_count > 1,
             #[cfg(debug_assertions)]
             claim: None,
         }))
@@ -569,7 +571,8 @@ impl<'source> DocBuilder<'source> {
             self.push_node(DocNode::Text(DocumentText {
                 text,
                 final_width: metrics.final_width,
-                line_count: metrics.line_count,
+                first_width: metrics.first_width,
+                is_multiline: metrics.line_count > 1,
                 claim: Some(claim),
             }))
         }
@@ -791,7 +794,8 @@ pub(crate) enum DocNode<'source> {
 pub(crate) struct DocumentText<'source> {
     pub(crate) text: Cow<'source, str>,
     final_width: TextWidth,
-    line_count: usize,
+    first_width: TextWidth,
+    is_multiline: bool,
     #[cfg(debug_assertions)]
     pub(crate) claim: Option<SourceClaim<'source>>,
 }
@@ -804,8 +808,12 @@ impl DocumentText<'_> {
         self.final_width
     }
 
+    pub(crate) const fn first_width(&self) -> TextWidth {
+        self.first_width
+    }
+
     pub(crate) const fn is_multiline(&self) -> bool {
-        self.line_count > 1
+        self.is_multiline
     }
 }
 

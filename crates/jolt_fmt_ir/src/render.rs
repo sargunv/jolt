@@ -236,6 +236,7 @@ enum FitCommand<'source> {
     ConcatRange { next: u32, end: u32, mode: Mode },
     EndIndent(i16),
     EndGroup,
+    EndMeasuredGroup,
 }
 
 impl<'source> From<RenderCommand<'source>> for FitCommand<'source> {
@@ -628,6 +629,7 @@ struct FitChecker<'base, 'scratch, 'source> {
     base_group_len: usize,
     group_stack: &'scratch mut Vec<GroupFrame>,
     remaining_commands: usize,
+    measured_group_active: bool,
 }
 
 impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
@@ -646,6 +648,7 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
             base_group_len: renderer.group_stack.len(),
             group_stack,
             remaining_commands: FLAT_FIT_COMMAND_BUDGET,
+            measured_group_active: true,
         }
     }
 
@@ -681,6 +684,11 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
                 self.indent_levels -= i32::from(levels);
                 FitResult::Continue
             }
+            FitCommand::EndMeasuredGroup => {
+                self.group_stack.pop();
+                self.measured_group_active = false;
+                FitResult::Continue
+            }
             FitCommand::EndGroup => {
                 if self.group_stack.pop().is_none() {
                     self.base_group_len = self.base_group_len.saturating_sub(1);
@@ -705,13 +713,17 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
                 }
                 FitResult::Continue
             }
-            Some(DocNode::Text(text)) => {
-                if text.is_multiline() {
+            Some(DocNode::Text(text)) if text.is_multiline() => {
+                if self.measured_group_active {
+                    return FitResult::No;
+                }
+                if self.text_width_result(&text.text, text.first_width()) == FitResult::No {
                     FitResult::No
                 } else {
-                    self.text_width_result(&text.text, text.final_width())
+                    FitResult::Done
                 }
             }
+            Some(DocNode::Text(text)) => self.text_width_result(&text.text, text.final_width()),
             Some(DocNode::InlineConcat { docs, len }) => {
                 for child in docs[..usize::from(*len)].iter().rev() {
                     stack.push(FitCommand::Doc(*child, mode));
@@ -801,7 +813,7 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
     ) -> bool {
         self.group_stack.push(GroupFrame { is_broken: false });
         let mut fit_stack = FitStack::new(stack, overlay);
-        fit_stack.push(FitCommand::EndGroup);
+        fit_stack.push(FitCommand::EndMeasuredGroup);
         fit_stack.push(FitCommand::Doc(contents, Mode::Flat));
         self.fits_stack(&mut fit_stack)
     }
