@@ -56,6 +56,7 @@ const MANUAL = [
       </p>
       <p class="home-links">
         <a href="#playground">Playground ↓</a>
+        <a href="/guides/what-is-jolt">Docs →</a>
         <a href="https://github.com/sargunv/jolt" target="_blank" rel="noopener"
           >GitHub ↗</a
         >
