@@ -1,6 +1,6 @@
 [package]
 name = "jolt_cli"
-version = "0.20260705.0"
+version = "0.20260721.0"
 description = "Fast, opinionated JVM and Kotlin Multiplatform project tooling"
 repository = "https://github.com/sargunv/jolt"
 license = "Apache-2.0"

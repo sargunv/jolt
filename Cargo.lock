@@ -393,7 +393,7 @@ dependencies = [
 
 [[package]]
 name = "jolt_cli"
-version = "0.20260705.0"
+version = "0.20260721.0"
 dependencies = [
  "assert_cmd",
  "clap",
@@ -425,7 +425,7 @@ dependencies = [
 
 [[package]]
 name = "jolt_fmt_dprint"
-version = "0.20260705.0"
+version = "0.20260721.0"
 dependencies = [
  "dprint-core",
  "jolt_diagnostics",
