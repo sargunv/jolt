@@ -9,13 +9,10 @@ use jolt_diagnostics::Diagnostic;
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct FormatOptions {
     /// Preferred maximum rendered line width.
-    #[cfg_attr(feature = "schema", schemars(range(min = 1, max = 65535)))]
     pub line_width: u16,
     /// Number of spaces per indentation level when `use_tabs` is false.
-    #[cfg_attr(feature = "schema", schemars(range(min = 1, max = 255)))]
     pub indent_width: u8,
     /// Whether indentation should use tabs instead of spaces.
     pub use_tabs: bool,

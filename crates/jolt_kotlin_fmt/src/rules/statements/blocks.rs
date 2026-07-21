@@ -12,7 +12,8 @@ use crate::helpers::comments::{
     format_token, token_has_comments,
 };
 use crate::helpers::formatter_ignore::{
-    FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
+    FormatterIgnoreRange, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
+    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     relative_token_range_between,
 };
 use crate::helpers::recovery::{
@@ -243,42 +244,29 @@ fn block_body_parts_with_ignored<'source>(
     }
 
     let mut body_items = Vec::with_capacity(parts.len().saturating_add(ignored_runs.len()));
-    let mut ignored_index = 0;
-    let mut skip_index = 0;
     let mut previous = None;
-    for (part_index, part) in parts.iter().enumerate() {
-        while ignored_index < ignored_runs.len()
-            && ignored_runs[ignored_index].insert_index == part_index
-        {
+    for_each_formatter_ignore_splice(parts.len(), &ignored_runs, |event| match event {
+        FormatterIgnoreSplice::Ignore(run) => {
             body_items.push(BodyItem::new(
-                formatter_ignore_run_doc(&ignored_runs[ignored_index], doc),
+                formatter_ignore_run_doc(run, doc),
                 BodyItemSeparator::Line,
             ));
-            ignored_index += 1;
         }
-        while skip_index < ignored_runs.len() && ignored_runs[skip_index].skip_end <= part_index {
-            skip_index += 1;
+        FormatterIgnoreSplice::Item {
+            index,
+            clear_blank_line_before,
+        } => {
+            let part = &parts[index];
+            let mut item = block_body_part(doc, part, previous);
+            if clear_blank_line_before {
+                item = item.without_blank_line_before();
+            }
+            body_items.push(item);
+            if !matches!(part, BlockPart::Separator { visible: false, .. }) {
+                previous = part.last_token();
+            }
         }
-        if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(part_index) {
-            continue;
-        }
-
-        let mut item = block_body_part(doc, part, previous);
-        if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == part_index {
-            item = item.without_blank_line_before();
-        }
-        body_items.push(item);
-        if !matches!(part, BlockPart::Separator { visible: false, .. }) {
-            previous = part.last_token();
-        }
-    }
-    while ignored_index < ignored_runs.len() {
-        body_items.push(BodyItem::new(
-            formatter_ignore_run_doc(&ignored_runs[ignored_index], doc),
-            BodyItemSeparator::Line,
-        ));
-        ignored_index += 1;
-    }
+    });
     body_items
 }
 

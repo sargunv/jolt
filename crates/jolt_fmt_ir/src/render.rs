@@ -27,6 +27,20 @@ pub struct RenderOptions {
     pub indent_style: IndentStyle,
 }
 
+impl From<crate::FormatOptions> for RenderOptions {
+    fn from(options: crate::FormatOptions) -> Self {
+        Self {
+            line_width: TextWidth::from(options.line_width),
+            indent_width: u16::from(options.indent_width),
+            indent_style: if options.use_tabs {
+                IndentStyle::Tab
+            } else {
+                IndentStyle::Space
+            },
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RenderOutcome {
     pub halted: bool,

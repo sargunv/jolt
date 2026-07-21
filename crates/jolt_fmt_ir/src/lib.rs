@@ -1,5 +1,6 @@
 //! Shared formatter document IR and renderer for Jolt.
 
+mod comment_text;
 mod document;
 pub mod formatter_ignore;
 mod options;
@@ -7,6 +8,11 @@ mod render;
 mod source_fragment;
 mod width;
 
+pub use comment_text::{
+    format_comment_lines, format_star_block_comment, is_empty_single_line_block_comment,
+    is_star_block_comment, normalize_star_block_body_line, preserved_block_comment_lines,
+    preserved_comment_lines, strip_block_comment_delimiters, universal_comment_lines,
+};
 #[cfg(feature = "bench")]
 pub use document::DocArenaMetrics;
 pub use document::{ConcatBuilder, Doc, DocArena, DocBuilder, DocId};

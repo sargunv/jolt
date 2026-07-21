@@ -2,11 +2,11 @@ use super::{
     AnnotationInterfaceDeclaration, ClassDeclaration, CommaListItem, Doc, EnumDeclaration,
     ExtendsClause, ImplementsClause, InterfaceDeclaration, JavaSyntaxToken, LeadingTrivia,
     PermitsClause, RecordDeclaration, TrailingTrivia, comma_list, comment_forces_line,
-    format_annotation_interface_body, format_class_body, format_construct_leading_comments,
-    format_enum_body_contents, format_interface_body, format_leading_comment_list,
-    format_modifier_prefix, format_name, format_record_body, format_record_component, format_token,
-    format_token_with_comments, format_type_parameter_list, format_type_without_leading_comments,
-    parenthesized_list, source_braced_body,
+    delimited_comma_list, format_annotation_interface_body, format_class_body,
+    format_construct_leading_comments, format_enum_body_contents, format_interface_body,
+    format_leading_comment_list, format_modifier_prefix, format_name, format_record_body,
+    format_record_component, format_token, format_token_with_comments, format_type_parameter_list,
+    format_type_without_leading_comments, source_braced_body,
 };
 use crate::helpers::{
     comments::format_token_after_relocated_leading_comments,
@@ -411,10 +411,10 @@ fn format_record_components<'source>(
                     }),
                 }
             }
-            parenthesized_list(doc, open, close, items)
+            delimited_comma_list(doc, open, close, items)
         }
-        JavaFormatField::Present(None) => parenthesized_list(doc, open, close, []),
-        JavaFormatField::Malformed(malformed) => parenthesized_list(
+        JavaFormatField::Present(None) => delimited_comma_list(doc, open, close, []),
+        JavaFormatField::Malformed(malformed) => delimited_comma_list(
             doc,
             open,
             close,

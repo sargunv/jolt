@@ -1,3 +1,10 @@
+//! Field/list recovery resolution for the Kotlin formatter.
+//!
+//! Java has a parallel module with the same resolve/format field shapes.
+//! Keep them duplicated: Kotlin `Invisible` list parts and Java empty-range
+//! malformed boundaries are intentional language-owned recovery policy, not
+//! accidental drift that should collapse behind shared generics.
+
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     KotlinMissingSyntax, KotlinSyntaxField, KotlinSyntaxInvariantError, KotlinSyntaxListPart,

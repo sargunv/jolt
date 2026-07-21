@@ -5,7 +5,7 @@ use jolt_kotlin_syntax::{
 };
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
-use crate::helpers::lists::{CommaListItem, parenthesized_list, physical_comma_list_items};
+use crate::helpers::lists::{CommaListItem, delimited_comma_list, physical_comma_list_items};
 use crate::helpers::recovery::{
     KotlinFormatField, format_optional_field, format_required_field, join_delimited_recovery,
     resolve_required_delimiter, resolve_required_field,
@@ -44,7 +44,7 @@ pub(crate) fn format_value_parameter_list<'source>(
             layout_visible: true,
         }],
     };
-    let list = parenthesized_list(doc, open.source(), close.source(), items);
+    let list = delimited_comma_list(doc, open.source(), close.source(), items);
     join_delimited_recovery(doc, &open, list, &close)
 }
 

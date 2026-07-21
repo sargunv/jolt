@@ -1,6 +1,8 @@
-use std::borrow::Cow;
-
-use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_fmt_ir::{
+    Doc, DocBuilder, format_comment_lines, format_star_block_comment,
+    is_empty_single_line_block_comment, is_star_block_comment, preserved_block_comment_lines,
+    preserved_comment_lines,
+};
 use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxToken, RemovalClaim};
 
 use crate::helpers::formatter_ignore::is_formatter_control_marker;
@@ -450,22 +452,6 @@ pub(crate) fn comment_is_star_block(comment: &JavaComment<'_>) -> bool {
     comment.kind() == JavaCommentKind::Doc || is_star_block_comment(comment.text())
 }
 
-fn format_comment_lines<'source>(
-    doc: &mut DocBuilder<'source>,
-    lines: impl IntoIterator<Item = impl Into<Cow<'source, str>>>,
-) -> Doc<'source> {
-    doc.concat_list(|docs| {
-        for line in lines {
-            if !docs.is_empty() {
-                let hard_line = docs.hard_line();
-                docs.push(hard_line);
-            }
-            let line = docs.text(line);
-            docs.push(line);
-        }
-    })
-}
-
 fn format_line_comment<'source>(
     doc: &mut DocBuilder<'source>,
     comment: &'source str,
@@ -478,93 +464,4 @@ fn format_block_comment<'source>(
     comment: &'source str,
 ) -> Doc<'source> {
     format_comment_lines(doc, preserved_block_comment_lines(comment))
-}
-
-fn format_star_block_comment<'source>(
-    doc: &mut DocBuilder<'source>,
-    comment: &'source str,
-    opening_delimiter: &'static str,
-) -> Doc<'source> {
-    let content = strip_block_comment_delimiters(comment);
-    let multiline = content.contains(['\n', '\r']);
-    doc.concat_list(|docs| {
-        let open = docs.literal_text(opening_delimiter);
-        docs.push(open);
-
-        let mut has_content = false;
-        let mut pending_blank_lines = 0;
-        for line in universal_comment_lines(content).map(|line| {
-            if multiline {
-                normalize_star_block_body_line(line)
-            } else {
-                line.trim()
-            }
-        }) {
-            if line.is_empty() {
-                if has_content {
-                    pending_blank_lines += 1;
-                }
-                continue;
-            }
-
-            has_content = true;
-            for _ in 0..pending_blank_lines {
-                let line = docs.literal_text(" *");
-                let hard_line = docs.hard_line();
-                docs.push(hard_line);
-                docs.push(line);
-            }
-            pending_blank_lines = 0;
-            let prefix = docs.literal_text(" * ");
-            let line = docs.text(line);
-            let line = doc_concat!(docs, [prefix, line]);
-            let hard_line = docs.hard_line();
-            docs.push(hard_line);
-            docs.push(line);
-        }
-
-        let close = docs.literal_text(" */");
-        let hard_line = docs.hard_line();
-        docs.push(hard_line);
-        docs.push(close);
-    })
-}
-
-fn preserved_comment_lines(comment: &str) -> impl Iterator<Item = &str> {
-    comment.trim().lines().map(str::trim)
-}
-
-fn preserved_block_comment_lines(comment: &str) -> impl Iterator<Item = &str> {
-    universal_comment_lines(comment.trim()).map(str::trim)
-}
-
-fn universal_comment_lines(comment: &str) -> impl Iterator<Item = &str> {
-    comment
-        .split('\n')
-        .flat_map(|line| line.strip_suffix('\r').unwrap_or(line).split('\r'))
-}
-
-fn is_star_block_comment(comment: &str) -> bool {
-    let content = strip_block_comment_delimiters(comment);
-    let first_content_line = universal_comment_lines(content).find(|line| !line.trim().is_empty());
-    first_content_line.is_some_and(|line| line.trim_start().starts_with('*'))
-        || first_content_line.is_none() && content.contains(['\n', '\r'])
-}
-
-fn strip_block_comment_delimiters(comment: &str) -> &str {
-    let trimmed = comment.trim();
-    let body = trimmed.strip_suffix("*/").unwrap_or(trimmed);
-    body.strip_prefix("/**")
-        .or_else(|| body.strip_prefix("/*"))
-        .unwrap_or(body)
-}
-
-fn is_empty_single_line_block_comment(comment: &str) -> bool {
-    !comment.contains(['\n', '\r']) && strip_block_comment_delimiters(comment).trim().is_empty()
-}
-
-fn normalize_star_block_body_line(line: &str) -> &str {
-    line.trim_start()
-        .strip_prefix('*')
-        .map_or_else(|| line.trim(), str::trim_start)
 }

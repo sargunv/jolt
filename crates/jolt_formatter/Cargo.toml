@@ -12,7 +12,6 @@ jolt_java_fmt = { path = "../jolt_java_fmt" }
 jolt_kotlin_fmt = { path = "../jolt_kotlin_fmt" }
 
 [features]
-schema = ["jolt_fmt_ir/schema"]
 serde = ["jolt_fmt_ir/serde"]
 
 [lints]

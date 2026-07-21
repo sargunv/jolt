@@ -1,9 +1,9 @@
 use super::leaves::format_leaf_token;
 use super::{
     ArgumentList, CommaListItem, Doc, Expression, FieldAccessExpression, LeadingComments,
-    MethodInvocationExpression, format_expression, format_expression_with_leading_comments,
-    format_member_chain, format_member_dot, format_token_with_comments, format_type_argument_list,
-    is_member_chain_child, parenthesized_list,
+    MethodInvocationExpression, delimited_comma_list, format_expression,
+    format_expression_with_leading_comments, format_member_chain, format_member_dot,
+    format_token_with_comments, format_type_argument_list, is_member_chain_child,
 };
 use crate::helpers::lists::syntax_comma_list_items;
 use crate::helpers::recovery::{
@@ -182,7 +182,7 @@ pub(crate) fn format_argument_list<'source>(
     let open = resolve_required_delimiter(arguments.open_paren(), doc);
     let close = resolve_required_delimiter(arguments.close_paren(), doc);
     let items = argument_list_items(&arguments, doc);
-    parenthesized_list(doc, open, close, items)
+    delimited_comma_list(doc, open, close, items)
 }
 
 fn argument_list_items<'source, 'fmt>(

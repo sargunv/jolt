@@ -81,24 +81,6 @@ pub(crate) fn syntax_comma_list_items<'source, Entry>(
     items
 }
 
-pub(crate) fn parenthesized_list<'source>(
-    doc: &mut DocBuilder<'source>,
-    open: JavaFormatDelimiter<'source>,
-    close: JavaFormatDelimiter<'source>,
-    items: impl IntoIterator<Item = CommaListItem<'source>>,
-) -> Doc<'source> {
-    delimited_comma_list(doc, open, close, items)
-}
-
-pub(crate) fn angle_bracket_list<'source>(
-    doc: &mut DocBuilder<'source>,
-    open: JavaFormatDelimiter<'source>,
-    close: JavaFormatDelimiter<'source>,
-    items: impl IntoIterator<Item = CommaListItem<'source>>,
-) -> Doc<'source> {
-    delimited_comma_list(doc, open, close, items)
-}
-
 pub(crate) fn braced_comma_list_with_trailing_separator<'source>(
     doc: &mut DocBuilder<'source>,
     open: JavaFormatDelimiter<'source>,
@@ -132,7 +114,7 @@ pub(crate) fn braced_comma_list_with_trailing_separator<'source>(
     }
 }
 
-fn delimited_comma_list<'source>(
+pub(crate) fn delimited_comma_list<'source>(
     doc: &mut DocBuilder<'source>,
     open: JavaFormatDelimiter<'source>,
     close: JavaFormatDelimiter<'source>,

@@ -8,7 +8,7 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_token, trailing_comments_force_line,
 };
 use crate::helpers::lists::{
-    CommaListItem, annotation_parenthesized_list, parenthesized_list, push_recovery_item,
+    CommaListItem, annotation_parenthesized_list, delimited_comma_list, push_recovery_item,
 };
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_optional_field, format_required_field,
@@ -118,7 +118,7 @@ fn format_annotation_argument_list<'source>(
     let list = if arguments.is_recovery_free() {
         annotation_parenthesized_list(doc, open.source(), close.source(), items)
     } else {
-        parenthesized_list(doc, open.source(), close.source(), items)
+        delimited_comma_list(doc, open.source(), close.source(), items)
     };
     join_delimited_recovery(doc, &open, list, &close)
 }

@@ -424,7 +424,7 @@ macro_rules! kotlin_syntax_schema {
                     close_angle: required (token Gt);
                 }
                 ClassDeclaration => ClassDeclaration [class_declaration valid] {
-                    leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
+                    leading_modifiers: required (list ModifierList);
                     context: optional (node ContextParameterClause);
                     post_context_modifiers: required (list ModifierList);
                     class_token: required (token ClassKw);
@@ -436,7 +436,7 @@ macro_rules! kotlin_syntax_schema {
                     body: optional (node ClassBody);
                 }
                 InterfaceDeclaration => InterfaceDeclaration [interface_declaration valid] {
-                    leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
+                    leading_modifiers: required (list ModifierList);
                     context: optional (node ContextParameterClause);
                     post_context_modifiers: required (list ModifierList);
                     fun_token: optional (token FunKw);
@@ -448,7 +448,7 @@ macro_rules! kotlin_syntax_schema {
                     body: optional (node ClassBody);
                 }
                 ObjectDeclaration => ObjectDeclaration [object_declaration valid] {
-                    leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
+                    leading_modifiers: required (list ModifierList);
                     context: optional (node ContextParameterClause);
                     post_context_modifiers: required (list ModifierList);
                     object_token: required (token ObjectKw);
@@ -457,7 +457,7 @@ macro_rules! kotlin_syntax_schema {
                     body: optional (node ClassBody);
                 }
                 CompanionObject => CompanionObject [companion_object valid] {
-                    leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
+                    leading_modifiers: required (list ModifierList);
                     context: optional (node ContextParameterClause);
                     post_context_modifiers: required (list ModifierList);
                     companion_token: required (contextual "companion");
@@ -488,7 +488,7 @@ macro_rules! kotlin_syntax_schema {
                     parameters: required (node ValueParameterList);
                 }
                 SecondaryConstructor => SecondaryConstructor [secondary_constructor valid] {
-                    leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
+                    leading_modifiers: required (list ModifierList);
                     context: optional (node ContextParameterClause);
                     post_context_modifiers: required (list ModifierList);
                     constructor_token: required (contextual "constructor");
@@ -508,7 +508,7 @@ macro_rules! kotlin_syntax_schema {
                     block: required (node Block);
                 }
                 FunctionDeclaration => FunctionDeclaration [function_declaration valid] {
-                    leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
+                    leading_modifiers: required (list ModifierList);
                     context: optional (node ContextParameterClause);
                     post_context_modifiers: required (list ModifierList);
                     fun_token: required (token FunKw);
@@ -522,7 +522,7 @@ macro_rules! kotlin_syntax_schema {
                     body: optional (category DeclarationBody);
                 }
                 PropertyDeclaration => PropertyDeclaration [property_declaration valid] {
-                    leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
+                    leading_modifiers: required (list ModifierList);
                     context: optional (node ContextParameterClause);
                     post_context_modifiers: required (list ModifierList);
                     binding_keyword: required (token_set [ValKw, VarKw]);
@@ -559,7 +559,7 @@ macro_rules! kotlin_syntax_schema {
                     expression: required (category Expression);
                 }
                 TypeAliasDeclaration => TypeAliasDeclaration [type_alias_declaration valid] {
-                    leading_modifiers: required (list ModifierList) [disambiguate leftmost_longest];
+                    leading_modifiers: required (list ModifierList);
                     context: optional (node ContextParameterClause);
                     post_context_modifiers: required (list ModifierList);
                     typealias_token: required (token TypeAliasKw);
@@ -750,7 +750,7 @@ macro_rules! kotlin_syntax_schema {
                         ]),
                         (category Expression),
                         (constructed LongStringTemplateEntry)
-                    ]) => StringTemplateContentValue [disambiguate longest_then_first];
+                    ]) => StringTemplateContentValue;
                 }
                 NameExpression => NameExpression [name_expression valid] {
                     name: required (token_set [Identifier, FieldIdentifier]);

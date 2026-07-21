@@ -71,6 +71,55 @@ impl<'source> FormatterIgnoreRun<'source> {
     }
 }
 
+/// One step while splicing formatter-ignore runs into a linear item list.
+#[derive(Clone, Copy, Debug)]
+pub enum FormatterIgnoreSplice<'a, 'source> {
+    /// Emit the ignored source run before the item at `insert_index` (or after
+    /// the last item when trailing).
+    Ignore(&'a FormatterIgnoreRun<'source>),
+    /// Format the represented item at `index`. When `clear_blank_line_before` is
+    /// set, the previous ignore run skipped the prior item and blank-line
+    /// separators should be reset.
+    Item {
+        index: usize,
+        clear_blank_line_before: bool,
+    },
+}
+
+/// Walks `item_count` represented items together with precomputed ignore runs.
+///
+/// Callers own separators and item formatting; this only yields insert/skip
+/// events in source order.
+pub fn for_each_formatter_ignore_splice<'a, 'source>(
+    item_count: usize,
+    runs: &'a [FormatterIgnoreRun<'source>],
+    mut visit: impl FnMut(FormatterIgnoreSplice<'a, 'source>),
+) {
+    let mut ignored_index = 0;
+    let mut skip_index = 0;
+    for index in 0..item_count {
+        while ignored_index < runs.len() && runs[ignored_index].insert_index == index {
+            visit(FormatterIgnoreSplice::Ignore(&runs[ignored_index]));
+            ignored_index += 1;
+        }
+        while skip_index < runs.len() && runs[skip_index].skip_end <= index {
+            skip_index += 1;
+        }
+        if skip_index < runs.len() && runs[skip_index].skips(index) {
+            continue;
+        }
+        let clear_blank_line_before = skip_index > 0 && runs[skip_index - 1].skip_end == index;
+        visit(FormatterIgnoreSplice::Item {
+            index,
+            clear_blank_line_before,
+        });
+    }
+    while ignored_index < runs.len() {
+        visit(FormatterIgnoreSplice::Ignore(&runs[ignored_index]));
+        ignored_index += 1;
+    }
+}
+
 pub fn formatter_ignore_ranges_with_safety<'source, L: Language>(
     source: &'source str,
     base_start: usize,

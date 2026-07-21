@@ -78,11 +78,6 @@ macro_rules! __physical_node_audit {
             $crate::PhysicalNodeAudit::Exact
         }
     }};
-    ($matches:ident, $accepts_malformed:expr, $node:ident, constructed; $($fields:tt)*) => {
-        $crate::__physical_node_audit!(
-            $matches, $accepts_malformed, $node, valid; $($fields)*
-        )
-    };
     ($matches:ident, $accepts_malformed:expr, $node:ident, list;
         $field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)?;) => {{
         let mut missing = false;
@@ -100,13 +95,6 @@ macro_rules! __physical_node_audit {
             $crate::PhysicalNodeAudit::Exact
         }
     }};
-    ($matches:ident, $accepts_malformed:expr, $node:ident, list;
-        $field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)? [disambiguate $policy:ident];) => {
-        $crate::__physical_node_audit!(
-            $matches, $accepts_malformed, $node, list;
-            $field: $cardinality $matcher $(=> $role)?;
-        )
-    };
     ($matches:ident, $accepts_malformed:expr, $node:ident, list;
         $field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)?
         [separated $separator:tt, minimum $minimum:literal, trailing $trailing:ident, recovery bogus_owner];) => {{
@@ -162,9 +150,6 @@ macro_rules! __physical_required_slot {
             .get($slot)
             .copied()
             .unwrap_or(false)
-    };
-    ($slot:ident, constructed; $($fields:tt)*) => {
-        $crate::__physical_required_slot!($slot, valid; $($fields)*)
     };
     ($slot:ident, list; $($fields:tt)*) => { true };
     ($slot:ident, malformed; $($fields:tt)*) => { false };

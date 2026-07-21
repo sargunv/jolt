@@ -1,5 +1,8 @@
 //! Shared formatter facade for Jolt's CLI and dprint plugin.
 
+use std::ffi::OsStr;
+use std::path::Path;
+
 use jolt_fmt_ir::RenderSink;
 
 pub use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
@@ -11,6 +14,24 @@ pub enum Language {
     Java,
     /// Kotlin source, typically `.kt` or `.kts`.
     Kotlin,
+}
+
+impl Language {
+    /// Detects a supported language from a file path's extension.
+    #[must_use]
+    pub fn from_path(path: &Path) -> Option<Self> {
+        Self::from_extension(path.extension())
+    }
+
+    /// Detects a supported language from a file extension.
+    #[must_use]
+    pub fn from_extension(extension: Option<&OsStr>) -> Option<Self> {
+        match extension.and_then(OsStr::to_str) {
+            Some("java") => Some(Self::Java),
+            Some("kt" | "kts") => Some(Self::Kotlin),
+            _ => None,
+        }
+    }
 }
 
 /// Formats source text for `language` into a render sink using `options`.

@@ -18,10 +18,11 @@ use crate::helpers::comments::{
     format_token_with_comments, has_removed_comments,
 };
 use crate::helpers::formatter_ignore::{
-    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
-    is_formatter_control_marker, relative_token_range_between,
+    FormatterIgnoreSplice, for_each_formatter_ignore_splice, formatter_ignore_ranges,
+    formatter_ignore_run_doc, formatter_ignore_runs, is_formatter_control_marker,
+    relative_token_range_between,
 };
-use crate::helpers::lists::{CommaListItem, comma_list, parenthesized_list};
+use crate::helpers::lists::{CommaListItem, comma_list, delimited_comma_list};
 use crate::helpers::member_body::{
     MemberBodyCategory as MemberCategory, MemberBodyItem as FormattedMember,
     join_member_body as join_member_docs,

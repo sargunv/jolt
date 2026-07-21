@@ -18,7 +18,7 @@ use crate::helpers::comments::{
     token_iter_has_comments, trailing_comments_force_line,
 };
 use crate::helpers::lists::{
-    CommaListItem, braced_comma_list_with_trailing_separator, parenthesized_list,
+    CommaListItem, braced_comma_list_with_trailing_separator, delimited_comma_list,
 };
 use crate::helpers::recovery::format_malformed;
 use crate::rules::annotations::format_annotation;

@@ -1,7 +1,6 @@
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
 use jolt_fmt_ir::{
-    DocBuilder, FormatOptions, FormatSinkResult, IndentStyle, RenderOptions, RenderSink, TextWidth,
-    render_source_to,
+    DocBuilder, FormatOptions, FormatSinkResult, RenderOptions, RenderSink, render_source_to,
 };
 use jolt_java_syntax::{CompilationUnit, JavaSyntaxView, parse_compilation_unit};
 
@@ -50,7 +49,7 @@ fn format_syntax_to_sink<S: RenderSink + ?Sized>(
 ) -> (FormatSinkResult, DocBuilderMetrics) {
     let mut builder = DocBuilder::with_source_capacity(syntax.source_text().len());
     let doc = format_compilation_unit(syntax, &mut builder);
-    let render_options = render_options(options);
+    let render_options = RenderOptions::from(options);
     let arena = builder.into_arena();
     #[cfg(feature = "bench")]
     let metrics = arena.benchmark_metrics();
@@ -105,18 +104,6 @@ fn no_syntax_tree_diagnostic() -> Diagnostic {
         stage: DiagnosticStage::Formatter,
         message: "Java formatter received no represented syntax tree".to_owned(),
         range: None,
-    }
-}
-
-fn render_options(options: FormatOptions) -> RenderOptions {
-    RenderOptions {
-        line_width: TextWidth::from(options.line_width),
-        indent_width: u16::from(options.indent_width),
-        indent_style: if options.use_tabs {
-            IndentStyle::Tab
-        } else {
-            IndentStyle::Space
-        },
     }
 }
 

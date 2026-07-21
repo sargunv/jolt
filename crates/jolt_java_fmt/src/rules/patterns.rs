@@ -5,7 +5,7 @@ use jolt_java_syntax::{
 };
 
 use crate::helpers::comments::format_token_with_comments;
-use crate::helpers::lists::{parenthesized_list, syntax_comma_list_items};
+use crate::helpers::lists::{delimited_comma_list, syntax_comma_list_items};
 use crate::helpers::recovery::{
     JavaFormatField, format_malformed, format_optional_field, format_required_field,
     resolve_required_delimiter, resolve_required_field,
@@ -121,7 +121,7 @@ fn format_record_pattern_components<'source>(
             comma: None,
         }],
     };
-    parenthesized_list(doc, open, close, items)
+    delimited_comma_list(doc, open, close, items)
 }
 
 fn format_component_pattern<'source>(

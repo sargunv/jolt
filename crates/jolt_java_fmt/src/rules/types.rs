@@ -11,7 +11,7 @@ use crate::helpers::comments::{
     format_token_after_relocated_leading_comments, format_token_with_comments,
     format_token_with_inline_leading_comments,
 };
-use crate::helpers::lists::{CommaListItem, angle_bracket_list, syntax_comma_list_items};
+use crate::helpers::lists::{CommaListItem, delimited_comma_list, syntax_comma_list_items};
 use crate::helpers::recovery::{
     JavaFormatField, JavaFormatListPart, format_malformed, format_optional_field,
     format_required_field, resolve_list_part, resolve_required_delimiter, resolve_required_field,
@@ -76,7 +76,7 @@ pub(crate) fn format_type_parameter_list<'source>(
             let open = resolve_required_delimiter(parameters.open_angle(), doc);
             let close = resolve_required_delimiter(parameters.close_angle(), doc);
             let items = type_parameter_list_items(&parameters, doc);
-            angle_bracket_list(doc, open, close, items)
+            delimited_comma_list(doc, open, close, items)
         }
         None => Doc::nil(),
     }
@@ -89,7 +89,7 @@ pub(crate) fn format_type_argument_list<'source>(
     let open = resolve_required_delimiter(arguments.open_angle(), doc);
     let close = resolve_required_delimiter(arguments.close_angle(), doc);
     let items = type_argument_list_items(arguments, doc);
-    angle_bracket_list(doc, open, close, items)
+    delimited_comma_list(doc, open, close, items)
 }
 
 fn type_parameter_list_items<'source, 'fmt>(

@@ -12,9 +12,7 @@ use jolt_kotlin_syntax::{
 };
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
-use crate::helpers::lists::{
-    CommaListItem, angle_bracket_list, parenthesized_list, physical_comma_list_items,
-};
+use crate::helpers::lists::{CommaListItem, delimited_comma_list, physical_comma_list_items};
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_malformed, format_optional_field,
     format_required_field, join_delimited_recovery, resolve_list_part, resolve_required_delimiter,
@@ -49,7 +47,7 @@ pub(crate) fn format_type_parameter_list<'source>(
         }
         KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
     };
-    let list = angle_bracket_list(doc, open.source(), close.source(), items);
+    let list = delimited_comma_list(doc, open.source(), close.source(), items);
     join_delimited_recovery(doc, &open, list, &close)
 }
 
@@ -309,7 +307,7 @@ pub(crate) fn format_type_argument_list<'source>(
         }
         KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
     };
-    let list = angle_bracket_list(doc, open.source(), close.source(), items);
+    let list = delimited_comma_list(doc, open.source(), close.source(), items);
     join_delimited_recovery(doc, &open, list, &close)
 }
 
@@ -418,7 +416,7 @@ fn format_parenthesized_type<'source>(
         }
         KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
     };
-    let list = parenthesized_list(doc, open.source(), close.source(), items);
+    let list = delimited_comma_list(doc, open.source(), close.source(), items);
     let list = join_delimited_recovery(doc, &open, list, &close);
     doc.concat([annotations, list])
 }
@@ -561,7 +559,7 @@ fn format_context_function_type<'source>(
         }
         KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
     };
-    let parameters = parenthesized_list(doc, open.source(), close.source(), items);
+    let parameters = delimited_comma_list(doc, open.source(), close.source(), items);
     let parameters = join_delimited_recovery(doc, &open, parameters, &close);
     let function = format_required_field(ty.function_type(), doc, |function, doc| {
         format_function_type(doc, &function)

@@ -1,13 +1,12 @@
 use super::{
     AnnotationElementDeclaration, CommaListItem, Doc, FormalParameterList, JavaSyntaxToken,
     LeadingTrivia, MethodDeclaration, ThrowsClause, TrailingTrivia, comment_forces_line,
-    format_annotation_element_value, format_array_dimensions, format_block,
+    delimited_comma_list, format_annotation_element_value, format_array_dimensions, format_block,
     format_construct_leading_comments, format_constructor_body, format_formal_parameter,
     format_modifier_prefix, format_receiver_parameter, format_separator_with_comments,
     format_statement_semicolon, format_token, format_token_after_construct_leading_comments,
     format_token_with_comments, format_type, format_type_parameter_list,
-    format_type_without_leading_comments, format_typed_modifier_prefix, parenthesized_list,
-    source_braced_body,
+    format_type_without_leading_comments, format_typed_modifier_prefix, source_braced_body,
 };
 use jolt_fmt_ir::DocBuilder;
 
@@ -333,7 +332,7 @@ fn format_parameters<'source>(
             comma: None,
         }],
     };
-    parenthesized_list(doc, open, close, parameters)
+    delimited_comma_list(doc, open, close, parameters)
 }
 
 fn parameter_list_items<'source, 'fmt>(
@@ -383,7 +382,7 @@ fn format_empty_parameters<'source>(
     open: JavaFormatDelimiter<'source>,
     close: JavaFormatDelimiter<'source>,
 ) -> Doc<'source> {
-    parenthesized_list(
+    delimited_comma_list(
         doc,
         open,
         close,

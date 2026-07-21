@@ -131,18 +131,19 @@ impl RenderSink for DprintFormatSink {
 }
 
 fn language_for_path(file_path: &Path) -> Result<Language, FormatError> {
-    match file_path
-        .extension()
-        .and_then(|extension| extension.to_str())
-    {
-        Some("java") => Ok(Language::Java),
-        Some("kt" | "kts") => Ok(Language::Kotlin),
-        Some(extension) => Err(FormatError::from(format!(
-            "Jolt dprint plugin does not support '.{extension}' files"
-        ))),
-        None => Err(FormatError::from(
-            "Jolt dprint plugin requires a supported file extension",
-        )),
+    match Language::from_path(file_path) {
+        Some(language) => Ok(language),
+        None => match file_path
+            .extension()
+            .and_then(|extension| extension.to_str())
+        {
+            Some(extension) => Err(FormatError::from(format!(
+                "Jolt dprint plugin does not support '.{extension}' files"
+            ))),
+            None => Err(FormatError::from(
+                "Jolt dprint plugin requires a supported file extension",
+            )),
+        },
     }
 }
 

@@ -68,8 +68,7 @@ struct JoltConfig {
 /// Jolt formatter options for `jolt.toml`.
 ///
 /// This mirrors `jolt_formatter::FormatOptions`, but uses kebab-case field
-/// names to match the TOML convention used by `jolt.toml`. The range
-/// constraints match the `FormatOptions` `schemars(range(...))` attributes.
+/// names and optional fields to match sparse `jolt.toml` configuration.
 #[derive(Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 struct JoltFormatConfig {

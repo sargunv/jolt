@@ -11,8 +11,7 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_leading_comments, format_token,
 };
 use crate::helpers::lists::{
-    CommaListItem, force_parenthesized_list, parenthesized_list, push_recovery_item,
-    square_bracket_list,
+    CommaListItem, delimited_comma_list, force_parenthesized_list, push_recovery_item,
 };
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_optional_field, format_required_field,
@@ -478,7 +477,7 @@ fn format_square_argument_list<'source>(
             }]
         }
     };
-    let list = square_bracket_list(doc, open.source(), close.source(), items);
+    let list = delimited_comma_list(doc, open.source(), close.source(), items);
     join_delimited_recovery(doc, &open, list, &close)
 }
 const fn is_simple_member_chain_root(expression: &Expression<'_>) -> bool {
@@ -529,7 +528,7 @@ pub(crate) fn format_value_argument_list<'source>(
     let list = if has_comments {
         force_parenthesized_list(doc, open.source(), close.source(), items)
     } else {
-        parenthesized_list(doc, open.source(), close.source(), items)
+        delimited_comma_list(doc, open.source(), close.source(), items)
     };
     join_delimited_recovery(doc, &open, list, &close)
 }

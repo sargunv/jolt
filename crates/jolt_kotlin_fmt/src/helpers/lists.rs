@@ -29,13 +29,13 @@ pub(crate) fn push_recovery_item<'source>(
     });
 }
 
-pub(crate) fn parenthesized_list<'source>(
+pub(crate) fn delimited_comma_list<'source>(
     doc: &mut DocBuilder<'source>,
     open: Option<&KotlinSyntaxToken<'source>>,
     close: Option<&KotlinSyntaxToken<'source>>,
     items: Vec<CommaListItem<'source>>,
 ) -> Doc<'source> {
-    delimited_comma_list(doc, open, close, items, false, TrailingTrivia::Preserve)
+    delimited_comma_list_with(doc, open, close, items, false, TrailingTrivia::Preserve)
 }
 
 pub(crate) fn annotation_parenthesized_list<'source>(
@@ -44,7 +44,7 @@ pub(crate) fn annotation_parenthesized_list<'source>(
     close: Option<&KotlinSyntaxToken<'source>>,
     items: Vec<CommaListItem<'source>>,
 ) -> Doc<'source> {
-    delimited_comma_list(
+    delimited_comma_list_with(
         doc,
         open,
         close,
@@ -60,28 +60,10 @@ pub(crate) fn force_parenthesized_list<'source>(
     close: Option<&KotlinSyntaxToken<'source>>,
     items: Vec<CommaListItem<'source>>,
 ) -> Doc<'source> {
-    delimited_comma_list(doc, open, close, items, true, TrailingTrivia::Preserve)
+    delimited_comma_list_with(doc, open, close, items, true, TrailingTrivia::Preserve)
 }
 
-pub(crate) fn angle_bracket_list<'source>(
-    doc: &mut DocBuilder<'source>,
-    open: Option<&KotlinSyntaxToken<'source>>,
-    close: Option<&KotlinSyntaxToken<'source>>,
-    items: Vec<CommaListItem<'source>>,
-) -> Doc<'source> {
-    delimited_comma_list(doc, open, close, items, false, TrailingTrivia::Preserve)
-}
-
-pub(crate) fn square_bracket_list<'source>(
-    doc: &mut DocBuilder<'source>,
-    open: Option<&KotlinSyntaxToken<'source>>,
-    close: Option<&KotlinSyntaxToken<'source>>,
-    items: Vec<CommaListItem<'source>>,
-) -> Doc<'source> {
-    delimited_comma_list(doc, open, close, items, false, TrailingTrivia::Preserve)
-}
-
-fn delimited_comma_list<'source>(
+fn delimited_comma_list_with<'source>(
     doc: &mut DocBuilder<'source>,
     open: Option<&KotlinSyntaxToken<'source>>,
     close: Option<&KotlinSyntaxToken<'source>>,

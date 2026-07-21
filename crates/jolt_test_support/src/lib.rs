@@ -6,7 +6,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId};
-use jolt_fmt_ir::{RenderControl, RenderSink};
+use jolt_fmt_ir::{FormatOptions, FormatSinkResult, RenderControl, RenderSink};
 use jolt_syntax::{
     CommentKind, Language, SyntaxDiagnosticOwner, SyntaxNode, SyntaxSlot, SyntaxToken,
 };
@@ -15,9 +15,7 @@ use unicode_width::UnicodeWidthStr;
 mod diagnostic_ownership;
 mod schema_audit;
 
-pub use diagnostic_ownership::{
-    assert_exact_structural_ownership, assert_exact_structural_ownership_requiring,
-};
+pub use diagnostic_ownership::assert_exact_structural_ownership_requiring;
 pub use schema_audit::{PhysicalNodeAudit, SchemaAudit};
 
 #[doc(hidden)]
@@ -211,68 +209,44 @@ pub fn kotlin_fixture_root(manifest_dir: &str) -> PathBuf {
 
 #[must_use]
 pub fn collect_java_files(root: &Path) -> Vec<PathBuf> {
-    assert!(
-        root.is_dir(),
-        "required Java fixture directory is missing: {}",
-        root.display()
-    );
-
-    let mut files = Vec::new();
-    collect_java_files_into(root, &mut files);
-    files.sort();
-    assert!(
-        !files.is_empty(),
-        "expected at least one Java fixture under {}",
-        root.display()
-    );
-    files
+    collect_fixture_files(root, &["java"], "Java")
 }
 
 #[must_use]
 pub fn collect_kotlin_files(root: &Path) -> Vec<PathBuf> {
+    collect_fixture_files(root, &["kt", "kts"], "Kotlin")
+}
+
+#[must_use]
+pub fn collect_fixture_files(root: &Path, extensions: &[&str], language: &str) -> Vec<PathBuf> {
     assert!(
         root.is_dir(),
-        "required Kotlin fixture directory is missing: {}",
+        "required {language} fixture directory is missing: {}",
         root.display()
     );
 
     let mut files = Vec::new();
-    collect_kotlin_files_into(root, &mut files);
+    collect_fixture_files_into(root, extensions, &mut files);
     files.sort();
     assert!(
         !files.is_empty(),
-        "expected at least one Kotlin fixture under {}",
+        "expected at least one {language} fixture under {}",
         root.display()
     );
     files
 }
 
-fn collect_java_files_into(root: &Path, files: &mut Vec<PathBuf>) {
+fn collect_fixture_files_into(root: &Path, extensions: &[&str], files: &mut Vec<PathBuf>) {
     for entry in fs::read_dir(root)
         .unwrap_or_else(|error| panic!("failed to read {}: {error}", root.display()))
     {
         let path = entry.expect("valid directory entry").path();
         if path.is_dir() {
-            collect_java_files_into(&path, files);
+            collect_fixture_files_into(&path, extensions, files);
         } else if path
             .extension()
-            .is_some_and(|extension| extension == "java")
-        {
-            files.push(path);
-        }
-    }
-}
-
-fn collect_kotlin_files_into(root: &Path, files: &mut Vec<PathBuf>) {
-    for entry in fs::read_dir(root)
-        .unwrap_or_else(|error| panic!("failed to read {}: {error}", root.display()))
-    {
-        let path = entry.expect("valid directory entry").path();
-        if path.is_dir() {
-            collect_kotlin_files_into(&path, files);
-        } else if path
-            .extension()
-            .is_some_and(|extension| extension == "kt" || extension == "kts")
+            .and_then(|extension| extension.to_str())
+            .is_some_and(|extension| extensions.contains(&extension))
         {
             files.push(path);
         }
@@ -530,6 +504,78 @@ where
         }
     }
     report
+}
+
+/// Formats `source` with `format`, panicking on halt/block like corpus tests.
+pub fn format_source_or_panic(
+    format: impl FnOnce(&str, &FormatOptions, &mut StringSink) -> FormatSinkResult,
+    source: &str,
+    options: &FormatOptions,
+    label: &str,
+) -> String {
+    let mut sink = StringSink::default();
+    match format(source, options, &mut sink) {
+        FormatSinkResult::Complete => sink.into_string(),
+        FormatSinkResult::Halted => {
+            panic!("formatter unexpectedly halted with StringSink for {label}")
+        }
+        FormatSinkResult::Blocked { diagnostics } => {
+            panic!("formatter blocked for {label}: {diagnostics:#?}")
+        }
+    }
+}
+
+/// Builds a conservation failure report for one formatted fixture, or `None`
+/// when tokens, comments, trivia markers, and idempotence all hold.
+#[must_use]
+pub fn formatter_conservation_failure<'before, 'after, L>(
+    path_label: impl Display,
+    source: &str,
+    formatted: &str,
+    repeated: &str,
+    input_tokens: impl IntoIterator<Item = SyntaxToken<'before, L>>,
+    formatted_tokens: impl IntoIterator<Item = SyntaxToken<'after, L>>,
+    allowed_removals: &[RepresentedTokenRemoval],
+) -> Option<String>
+where
+    L: Language,
+{
+    let input_tokens = input_tokens.into_iter().collect::<Vec<_>>();
+    let formatted_tokens = formatted_tokens.into_iter().collect::<Vec<_>>();
+    let token_loss = represented_token_loss_report(
+        input_tokens.iter().copied(),
+        formatted_tokens.iter().copied(),
+        allowed_removals,
+    );
+    let comment_loss = (represented_comment_inventory(input_tokens.iter().copied())
+        != represented_comment_inventory(formatted_tokens.iter().copied()))
+    .then_some("represented comment inventory changed\n");
+    let expected_markers = trivia_markers(source);
+    let actual_markers = trivia_markers(formatted);
+    let marker_loss = (actual_markers != expected_markers).then(|| {
+        format!(
+            "trivia markers changed\nexpected: {expected_markers:#?}\nactual: {actual_markers:#?}\n"
+        )
+    });
+    let mut failure = String::new();
+    if !token_loss.is_empty() || comment_loss.is_some() || marker_loss.is_some() {
+        let _ = write!(
+            failure,
+            "{path_label}:\n{token_loss}{}{}",
+            comment_loss.unwrap_or_default(),
+            marker_loss.unwrap_or_default()
+        );
+    }
+    if repeated != formatted {
+        if !failure.is_empty() {
+            failure.push('\n');
+        }
+        let _ = write!(
+            failure,
+            "{path_label}:\nformatter output is not idempotent\nfirst:\n{formatted}\nsecond:\n{repeated}"
+        );
+    }
+    (!failure.is_empty()).then_some(failure)
 }
 
 fn token_text_inventory<'source, L>(

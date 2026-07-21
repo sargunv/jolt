@@ -445,7 +445,6 @@ dependencies = [
  "jolt_java_syntax",
  "jolt_syntax",
  "jolt_text",
- "schemars",
  "serde",
  "unicode-width",
 ]

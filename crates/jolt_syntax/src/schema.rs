@@ -116,18 +116,6 @@ macro_rules! __syntax_list_node {
         }
     }};
     ($matches:ident, $kind:ident, $input:ident, $sink:ident, $recovery:expr,
-        $cardinality:ident, $matcher:tt [disambiguate $policy:ident]) => {
-        $crate::__syntax_list_node!(
-            $matches,
-            $kind,
-            $input,
-            $sink,
-            $recovery,
-            $cardinality,
-            $matcher
-        )
-    };
-    ($matches:ident, $kind:ident, $input:ident, $sink:ident, $recovery:expr,
         $cardinality:ident, $matcher:tt [
             separated $separator:tt,
             minimum $minimum:literal,
@@ -259,12 +247,6 @@ macro_rules! __syntax_push_trailing_empty {
 macro_rules! __syntax_factory_arm {
     ($matches:ident, $kind:ident, $input:ident, $sink:ident, $recovery:expr,
         valid; $($fields:tt)*) => {
-        $crate::__syntax_fixed_node!(
-            $matches, $kind, $input, $sink, $recovery; $($fields)*
-        )
-    };
-    ($matches:ident, $kind:ident, $input:ident, $sink:ident, $recovery:expr,
-        constructed; $($fields:tt)*) => {
         $crate::__syntax_fixed_node!(
             $matches, $kind, $input, $sink, $recovery; $($fields)*
         )

@@ -667,7 +667,7 @@ macro_rules! java_syntax_schema {
                     body: required (choice [(node Block), (token Semicolon)]) => MethodBody;
                 }
                 ConstructorDeclaration => ConstructorDeclaration [constructor_declaration valid] {
-                    modifiers: optional (list ModifierList) [disambiguate leftmost_longest];
+                    modifiers: optional (list ModifierList);
                     type_parameters: optional (node TypeParameterList);
                     name: required (token Identifier);
                     open_paren: required (token LParen);
@@ -690,7 +690,7 @@ macro_rules! java_syntax_schema {
                     semicolon: required (token Semicolon);
                 }
                 CompactConstructorDeclaration => CompactConstructorDeclaration [compact_constructor_declaration valid] {
-                    modifiers: optional (list ModifierList) [disambiguate leftmost_longest];
+                    modifiers: optional (list ModifierList);
                     name: required (token Identifier);
                     body: required (node ConstructorBody);
                 }
@@ -1110,7 +1110,7 @@ macro_rules! java_syntax_schema {
                         ]),
                         (constructed RightShiftAssignmentOperator),
                         (constructed UnsignedRightShiftAssignmentOperator)
-                    ]) => AssignmentOperatorRole [disambiguate longest_then_first];
+                    ]) => AssignmentOperatorRole;
                     right: required (category Expression);
                 }
                 ConditionalExpression => ConditionalExpression [conditional_expression valid] {
@@ -1135,7 +1135,7 @@ macro_rules! java_syntax_schema {
                         (constructed GreaterThanOrEqualOperator),
                         (constructed RightShiftOperator),
                         (constructed UnsignedRightShiftOperator)
-                    ]) => BinaryOperatorRole [disambiguate longest_then_first];
+                    ]) => BinaryOperatorRole;
                     right: required (category Expression);
                 }
                 UnaryExpression => UnaryExpression [unary_expression valid] {
@@ -1163,7 +1163,7 @@ macro_rules! java_syntax_schema {
                     parameters: many (node LambdaParameter) [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];
                 }
                 LambdaParameter => LambdaParameter [lambda_parameter valid] {
-                    modifiers: required (list LambdaModifierList) [disambiguate leftmost_longest];
+                    modifiers: required (list LambdaModifierList);
                     r#type: optional (category Type);
                     varargs_annotations: required (list AnnotationList);
                     ellipsis: optional (token Ellipsis);
@@ -1335,7 +1335,7 @@ macro_rules! java_syntax_schema {
                     elements: many (category VariableInitializerValue) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];
                 }
                 LambdaModifierList => LambdaModifierList [lambda_modifier_list list] {
-                    elements: many (choice [(node Annotation), (token FinalKw), (contextual "var")]) => LambdaModifier [disambiguate leftmost_longest];
+                    elements: many (choice [(node Annotation), (token FinalKw), (contextual "var")]) => LambdaModifier;
                 }
                 ExpressionList => ExpressionList [expression_list list] {
                     elements: many (category Expression) [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];

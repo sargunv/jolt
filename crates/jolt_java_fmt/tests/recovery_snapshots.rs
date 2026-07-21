@@ -1,10 +1,10 @@
-use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
+use jolt_fmt_ir::FormatOptions;
 use jolt_java_fmt::format_source_to_sink;
 use jolt_java_syntax::parse_compilation_unit;
 use jolt_test_support::{
-    RepresentedTokenRemoval, SnapshotBuilder, StringSink, collect_java_files,
-    fixture_snapshot_name, java_fixture_root, read_to_string, render_diagnostics,
-    represented_comment_inventory, represented_token_loss_report, trivia_markers,
+    RepresentedTokenRemoval, SnapshotBuilder, collect_java_files, fixture_snapshot_name,
+    format_source_or_panic, formatter_conservation_failure, java_fixture_root, read_to_string,
+    render_diagnostics,
 };
 
 #[test]
@@ -26,7 +26,12 @@ fn java_recovery_formatter_snapshots() {
                 path.display()
             )
         });
-        let formatted = format_or_panic(&source, options, &path.display().to_string());
+        let formatted = format_source_or_panic(
+            format_source_to_sink,
+            &source,
+            &options,
+            &path.display().to_string(),
+        );
         let formatted_parse = parse_compilation_unit(&formatted);
         let formatted_syntax = formatted_parse.syntax().unwrap_or_else(|| {
             panic!(
@@ -35,36 +40,22 @@ fn java_recovery_formatter_snapshots() {
                 formatted
             )
         });
-        let token_loss = represented_token_loss_report(
+        let repeated = format_source_or_panic(
+            format_source_to_sink,
+            &formatted,
+            &options,
+            &path.display().to_string(),
+        );
+        if let Some(failure) = formatter_conservation_failure(
+            path.display(),
+            &source,
+            &formatted,
+            &repeated,
             syntax.token_iter(),
             formatted_syntax.token_iter(),
             allowed_removed_tokens(&path),
-        );
-        let comment_loss = (represented_comment_inventory(syntax.token_iter())
-            != represented_comment_inventory(formatted_syntax.token_iter()))
-        .then_some("represented comment inventory changed\n");
-        let expected_markers = trivia_markers(&source);
-        let actual_markers = trivia_markers(&formatted);
-        let marker_loss = (actual_markers != expected_markers).then(|| {
-            format!(
-                "trivia markers changed\nexpected: {expected_markers:#?}\nactual: {actual_markers:#?}\n"
-            )
-        });
-        if !token_loss.is_empty() || comment_loss.is_some() || marker_loss.is_some() {
-            conservation_failures.push(format!(
-                "{}:\n{}{comment_loss}{marker_loss}",
-                path.display(),
-                token_loss,
-                comment_loss = comment_loss.unwrap_or_default(),
-                marker_loss = marker_loss.unwrap_or_default(),
-            ));
-        }
-        let repeated = format_or_panic(&formatted, options, &path.display().to_string());
-        if repeated != formatted {
-            conservation_failures.push(format!(
-                "{}:\nformatter output is not idempotent\nfirst:\n{formatted}\nsecond:\n{repeated}",
-                path.display()
-            ));
+        ) {
+            conservation_failures.push(failure);
         }
 
         let snapshot = SnapshotBuilder::new()
@@ -104,18 +95,5 @@ fn allowed_removed_tokens(path: &std::path::Path) -> &'static [RepresentedTokenR
             }]
         }
         _ => &[],
-    }
-}
-
-fn format_or_panic(source: &str, options: FormatOptions, label: &str) -> String {
-    let mut sink = StringSink::default();
-    match format_source_to_sink(source, &options, &mut sink) {
-        FormatSinkResult::Complete => sink.into_string(),
-        FormatSinkResult::Halted => {
-            panic!("formatter unexpectedly halted with StringSink for {label}")
-        }
-        FormatSinkResult::Blocked { diagnostics } => {
-            panic!("formatter blocked for {label}: {diagnostics:#?}")
-        }
     }
 }

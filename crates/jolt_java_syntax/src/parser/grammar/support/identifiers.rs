@@ -23,20 +23,6 @@ impl Parser<'_> {
         }
     }
 
-    pub(in crate::parser::grammar) fn expect_method_identifier_required(
-        &mut self,
-        message: &str,
-        owner: NodeAnchor,
-        slot: u16,
-    ) {
-        if self.at_name_segment() {
-            self.bump();
-        } else {
-            let diagnostic = self.pending_expected(message);
-            self.missing_required_slot(owner, slot, [diagnostic]);
-        }
-    }
-
     pub(in crate::parser::grammar) fn expect_named_identifier_required(
         &mut self,
         message: &str,

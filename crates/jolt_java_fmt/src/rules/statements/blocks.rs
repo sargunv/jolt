@@ -1,9 +1,9 @@
 use super::{
-    Block, BlockItem, BlockStatement, BodyItem, Doc, FormatterIgnoreRange, JavaSyntaxToken, Range,
-    TrailingTrivia, comments_from_tokens, format_dangling_comments,
-    format_local_variable_declaration, format_statement, format_statement_semicolon,
-    format_type_declaration, formatter_ignore_ranges, formatter_ignore_run_doc,
-    formatter_ignore_runs, join_body_items, relative_token_range_between,
+    Block, BlockItem, BlockStatement, BodyItem, Doc, FormatterIgnoreRange, FormatterIgnoreSplice,
+    JavaSyntaxToken, Range, TrailingTrivia, comments_from_tokens, for_each_formatter_ignore_splice,
+    format_dangling_comments, format_local_variable_declaration, format_statement,
+    format_statement_semicolon, format_type_declaration, formatter_ignore_ranges,
+    formatter_ignore_run_doc, formatter_ignore_runs, join_body_items, relative_token_range_between,
 };
 use crate::helpers::blocks::BodyContent;
 use crate::helpers::comments::{
@@ -114,36 +114,22 @@ fn format_block_statement_items_with_ignored<'source>(
         .collect::<Vec<_>>();
     let runs = formatter_ignore_runs(ignored_ranges, &ranges);
     let mut items = Vec::with_capacity(entries.len().saturating_add(runs.len()));
-    let mut ignored_index = 0;
-    let mut skip_index = 0;
-    for (index, entry) in entries.iter().enumerate() {
-        while ignored_index < runs.len() && runs[ignored_index].insert_index == index {
-            items.push(BodyItem::new(
-                formatter_ignore_run_doc(&runs[ignored_index], doc),
-                false,
-            ));
-            ignored_index += 1;
+    for_each_formatter_ignore_splice(entries.len(), &runs, |event| match event {
+        FormatterIgnoreSplice::Ignore(run) => {
+            items.push(BodyItem::new(formatter_ignore_run_doc(run, doc), false));
         }
-        while skip_index < runs.len() && runs[skip_index].skip_end <= index {
-            skip_index += 1;
-        }
-        if skip_index < runs.len() && runs[skip_index].skips(index) {
-            continue;
-        }
-        if let Some(mut item) = format_block_statement_part(entry, doc) {
-            if skip_index > 0 && runs[skip_index - 1].skip_end == index {
-                item = item.without_blank_line_before();
+        FormatterIgnoreSplice::Item {
+            index,
+            clear_blank_line_before,
+        } => {
+            if let Some(mut item) = format_block_statement_part(&entries[index], doc) {
+                if clear_blank_line_before {
+                    item = item.without_blank_line_before();
+                }
+                items.push(item);
             }
-            items.push(item);
         }
-    }
-    while ignored_index < runs.len() {
-        items.push(BodyItem::new(
-            formatter_ignore_run_doc(&runs[ignored_index], doc),
-            false,
-        ));
-        ignored_index += 1;
-    }
+    });
     items
 }
 

@@ -4,31 +4,8 @@ use std::fmt::{Debug, Display};
 use jolt_diagnostics::Diagnostic;
 use jolt_syntax::{Language, SyntaxDiagnosticOwner, SyntaxNode, SyntaxNodeId, SyntaxSlot};
 
-/// Proves bidirectional ownership between structural diagnostics and invalid
-/// nodes: every owner targets a declared invalid shape, and every directly
-/// malformed or required-incomplete node has an exact, non-duplicate owner.
-pub fn assert_exact_structural_ownership<L>(
-    root: SyntaxNode<'_, L>,
-    diagnostics: &[Diagnostic],
-    owners: &[Option<SyntaxDiagnosticOwner>],
-    is_required_slot: impl Copy + Fn(SyntaxNode<'_, L>, usize) -> bool,
-    context: impl Display,
-) where
-    L: Language,
-    L::Kind: Debug,
-{
-    assert_exact_structural_ownership_requiring(
-        root,
-        diagnostics,
-        owners,
-        is_required_slot,
-        |_| false,
-        context,
-    );
-}
-
-/// Extends [`assert_exact_structural_ownership`] by requiring every diagnostic
-/// selected by `requires_owner` to name an exact structural owner.
+/// Extends structural ownership checks by requiring every diagnostic selected
+/// by `requires_owner` to name an exact structural owner.
 pub fn assert_exact_structural_ownership_requiring<L>(
     root: SyntaxNode<'_, L>,
     diagnostics: &[Diagnostic],

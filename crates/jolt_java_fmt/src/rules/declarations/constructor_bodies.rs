@@ -1,7 +1,8 @@
 use super::{
-    BodyItem, ConstructorInvocation, Doc, JavaSyntaxToken, Range, format_argument_list,
-    format_block_statement_item, format_construct_leading_comments, format_dangling_comments,
-    format_expression, format_name, format_removed_comments, format_statement_semicolon,
+    BodyItem, ConstructorInvocation, Doc, FormatterIgnoreSplice, JavaSyntaxToken, Range,
+    for_each_formatter_ignore_splice, format_argument_list, format_block_statement_item,
+    format_construct_leading_comments, format_dangling_comments, format_expression, format_name,
+    format_removed_comments, format_statement_semicolon,
     format_token_after_construct_leading_comments, format_token_with_comments,
     format_type_argument_list, formatter_ignore_ranges, formatter_ignore_run_doc,
     formatter_ignore_runs, join_body_items, relative_token_range_between,
@@ -56,41 +57,23 @@ pub(super) fn format_constructor_body<'source>(
             .saturating_add(2),
     );
     items.extend(format_constructor_body_open_dangling_comments(doc, open));
-    let mut ignored_index = 0;
-    let mut skip_index = 0;
-
-    for (element_index, element) in elements.iter().enumerate() {
-        while ignored_index < ignored_runs.len()
-            && ignored_runs[ignored_index].insert_index == element_index
-        {
-            let run = &ignored_runs[ignored_index];
+    for_each_formatter_ignore_splice(elements.len(), &ignored_runs, |event| match event {
+        FormatterIgnoreSplice::Ignore(run) => {
             items.push(BodyItem::new(formatter_ignore_run_doc(run, doc), false));
-            ignored_index += 1;
         }
-
-        while skip_index < ignored_runs.len() && ignored_runs[skip_index].skip_end <= element_index
-        {
-            skip_index += 1;
+        FormatterIgnoreSplice::Item {
+            index,
+            clear_blank_line_before,
+        } => {
+            let Some(mut item) = format_constructor_body_element(&elements[index], doc) else {
+                return;
+            };
+            if clear_blank_line_before {
+                item = item.without_blank_line_before();
+            }
+            items.push(item);
         }
-
-        if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(element_index) {
-            continue;
-        }
-
-        let Some(mut item) = format_constructor_body_element(element, doc) else {
-            continue;
-        };
-        if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == element_index {
-            item = item.without_blank_line_before();
-        }
-        items.push(item);
-    }
-
-    while ignored_index < ignored_runs.len() {
-        let run = &ignored_runs[ignored_index];
-        items.push(BodyItem::new(formatter_ignore_run_doc(run, doc), false));
-        ignored_index += 1;
-    }
+    });
     items.extend(format_constructor_body_close_dangling_comments(doc, close));
 
     (!items.is_empty()).then(|| join_body_items(doc, items))

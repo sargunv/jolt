@@ -1,5 +1,6 @@
 pub(crate) use jolt_fmt_ir::formatter_ignore::{
-    FormatterIgnoreRange, FormatterIgnoreRun, formatter_ignore_run_doc, formatter_ignore_runs,
+    FormatterIgnoreRange, FormatterIgnoreRun, FormatterIgnoreSplice,
+    for_each_formatter_ignore_splice, formatter_ignore_run_doc, formatter_ignore_runs,
     is_formatter_control_marker, relative_token_range_between,
 };
 use jolt_kotlin_syntax::KotlinSyntaxToken;

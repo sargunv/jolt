@@ -6,7 +6,7 @@ use jolt_formatter::{FormatOptions, Language};
 
 use crate::error::CliError;
 
-use super::config::{ConfigGraph, ResolvedConfig};
+use super::config::ConfigGraph;
 
 #[derive(Clone, Debug)]
 pub(crate) struct CandidateFile {
@@ -38,7 +38,7 @@ pub(crate) fn discover_files(
         let parent = path.parent().unwrap_or(root);
         let config = config_graph.resolve_for_dir(parent)?;
 
-        if !matches_selection(&path, &config) {
+        if !config.matches_path(&path) {
             continue;
         }
 
@@ -57,14 +57,6 @@ pub(crate) fn discover_files(
     Ok(candidates)
 }
 
-fn matches_selection(path: &Path, config: &ResolvedConfig) -> bool {
-    config.include.matches(path) && !config.excludes.iter().any(|exclude| exclude.matches(path))
-}
-
 pub(crate) fn detect_language(path: &Path) -> Option<Language> {
-    match path.extension().and_then(|extension| extension.to_str()) {
-        Some("java") => Some(Language::Java),
-        Some("kt" | "kts") => Some(Language::Kotlin),
-        _ => None,
-    }
+    Language::from_path(path)
 }

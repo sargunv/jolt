@@ -512,7 +512,7 @@ impl Parser<'_> {
         } else {
             crate::shape::field_access_expression::Slot::name as u16
         };
-        self.expect_method_identifier_required("expected member name", suffix.anchor(), name_slot);
+        self.expect_named_identifier_required("expected member name", suffix.anchor(), name_slot);
         if self.at(JavaSyntaxKind::Lt) && self.type_arguments_are_followed_by_double_colon() {
             self.parse_optional_type_argument_list();
         }

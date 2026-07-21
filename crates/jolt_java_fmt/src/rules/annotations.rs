@@ -8,7 +8,7 @@ use crate::helpers::comments::{
     TrailingTrivia, format_token_after_relocated_leading_comments, format_token_with_comments,
 };
 use crate::helpers::lists::{
-    CommaListItem, braced_comma_list_with_trailing_separator, parenthesized_list,
+    CommaListItem, braced_comma_list_with_trailing_separator, delimited_comma_list,
     syntax_comma_list_items,
 };
 use crate::helpers::recovery::{
@@ -81,7 +81,7 @@ fn format_annotation_argument_list<'source>(
     let open = resolve_required_delimiter(arguments.open_paren(), doc);
     let close = resolve_required_delimiter(arguments.close_paren(), doc);
     let items = annotation_argument_list_items(arguments, doc);
-    parenthesized_list(doc, open, close, items)
+    delimited_comma_list(doc, open, close, items)
 }
 
 fn annotation_argument_list_items<'source, 'fmt>(
