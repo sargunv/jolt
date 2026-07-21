@@ -14,7 +14,7 @@ use crate::helpers::comments::{
     trailing_comments_force_line,
 };
 use crate::helpers::lists::{
-    CommaListItem, compact_parenthesized_list, physical_comma_list_items, push_recovery_item,
+    CommaListItem, parenthesized_list, physical_comma_list_items, push_recovery_item,
 };
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_malformed, format_optional_field,
@@ -529,7 +529,7 @@ pub(crate) fn format_destructuring_declaration<'source>(
             layout_visible: true,
         }],
     };
-    let list = compact_parenthesized_list(doc, open.source(), close.source(), items);
+    let list = parenthesized_list(doc, open.source(), close.source(), items);
     join_delimited_recovery(doc, &open, list, &close)
 }
 
@@ -692,7 +692,7 @@ fn format_context_parameter_clause<'source>(
             layout_visible: true,
         }],
     };
-    let parameters = compact_parenthesized_list(doc, open.source(), close.source(), items);
+    let parameters = parenthesized_list(doc, open.source(), close.source(), items);
     let parameters = join_delimited_recovery(doc, &open, parameters, &close);
     doc.concat([context, parameters])
 }

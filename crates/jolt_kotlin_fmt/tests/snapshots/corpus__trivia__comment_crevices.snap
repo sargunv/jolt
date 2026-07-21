@@ -28,7 +28,9 @@ class Holder /* JOLT-TRIVIA:class-before-type-params */< /* JOLT-TRIVIA:type-par
 > /* JOLT-TRIVIA:class-before-constructor */ constructor /* JOLT-TRIVIA:constructor-keyword */(
   val payload /* JOLT-TRIVIA:property-param-name */: /* JOLT-TRIVIA:property-param-colon */ T,
 )
-  where /* JOLT-TRIVIA:where-keyword */ T /* JOLT-TRIVIA:where-name */ : /* JOLT-TRIVIA:where-colon */ Comparable<T> {
+  where /* JOLT-TRIVIA:where-keyword */ T /* JOLT-TRIVIA:where-name */ : /* JOLT-TRIVIA:where-colon */ Comparable<
+    T
+  > {
   val boxed /* JOLT-TRIVIA:property-name */: /* JOLT-TRIVIA:property-colon */ List /* JOLT-TRIVIA:type-before-args */< /* JOLT-TRIVIA:type-arg-open */
     T /* JOLT-TRIVIA:type-arg-name */
   > /* JOLT-TRIVIA:type-after-args */ = listOf(payload)
@@ -37,7 +39,9 @@ class Holder /* JOLT-TRIVIA:class-before-type-params */< /* JOLT-TRIVIA:type-par
 }
 
 fun Scope /* JOLT-TRIVIA:receiver-type */. /* JOLT-TRIVIA:receiver-dot */commentCrevices /* JOLT-TRIVIA:function-name */(
-  input /* JOLT-TRIVIA:param-name */: /* JOLT-TRIVIA:param-colon */ List<String>,
+  input /* JOLT-TRIVIA:param-name */: /* JOLT-TRIVIA:param-colon */ List<
+    String
+  >,
   transform /* JOLT-TRIVIA:function-param-name */: /* JOLT-TRIVIA:function-param-colon */ ( /* JOLT-TRIVIA:function-type-open */
     String /* JOLT-TRIVIA:function-type-param */
   ) /* JOLT-TRIVIA:function-type-before-arrow */ -> /* JOLT-TRIVIA:function-type-arrow */ String,
@@ -46,12 +50,16 @@ fun Scope /* JOLT-TRIVIA:receiver-type */. /* JOLT-TRIVIA:receiver-dot */comment
   val holder /* JOLT-TRIVIA:holder-name */ = Holder /* JOLT-TRIVIA:constructor-call */< /* JOLT-TRIVIA:call-type-arg-open */
     String /* JOLT-TRIVIA:call-type-arg */
   > /* JOLT-TRIVIA:call-type-arg-close */( /* JOLT-TRIVIA:constructor-call-open */
-    input[0 /* JOLT-TRIVIA:constructor-index */] /* JOLT-TRIVIA:constructor-call-close */
+    input[
+      0 /* JOLT-TRIVIA:constructor-index */
+    ] /* JOLT-TRIVIA:constructor-call-close */
   )
   val (
     first /* JOLT-TRIVIA:destructure-first */,
     second /* JOLT-TRIVIA:destructure-second */
-  ) = input[0 /* JOLT-TRIVIA:index-zero */] /* JOLT-TRIVIA:to-receiver */ to /* JOLT-TRIVIA:to-name */
+  ) = input[
+    0 /* JOLT-TRIVIA:index-zero */
+  ] /* JOLT-TRIVIA:to-receiver */ to /* JOLT-TRIVIA:to-name */
       input[1 /* JOLT-TRIVIA:index-one */]
   val computed = (transform /* JOLT-TRIVIA:call-callee */( /* JOLT-TRIVIA:call-open */
     first /* JOLT-TRIVIA:call-arg */

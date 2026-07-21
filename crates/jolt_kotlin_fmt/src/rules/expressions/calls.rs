@@ -8,11 +8,11 @@ use jolt_kotlin_syntax::{
 };
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_leading_comments, format_token, token_has_comments,
+    LeadingTrivia, TrailingTrivia, format_leading_comments, format_token,
 };
 use crate::helpers::lists::{
-    CommaListItem, compact_parenthesized_list, compact_square_bracket_list,
-    force_parenthesized_list, parenthesized_list, push_recovery_item, square_bracket_list,
+    CommaListItem, force_parenthesized_list, parenthesized_list, push_recovery_item,
+    square_bracket_list,
 };
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_optional_field, format_required_field,
@@ -478,19 +478,9 @@ fn format_square_argument_list<'source>(
             }]
         }
     };
-    let trailing = items
-        .iter()
-        .rev()
-        .find(|item| item.layout_visible)
-        .is_some_and(|item| item.comma.is_some());
-    let list = if trailing {
-        square_bracket_list(doc, open.source(), close.source(), items)
-    } else {
-        compact_square_bracket_list(doc, open.source(), close.source(), items)
-    };
+    let list = square_bracket_list(doc, open.source(), close.source(), items);
     join_delimited_recovery(doc, &open, list, &close)
 }
-
 const fn is_simple_member_chain_root(expression: &Expression<'_>) -> bool {
     matches!(
         expression,
@@ -536,19 +526,10 @@ pub(crate) fn format_value_argument_list<'source>(
         .iter()
         .any(|item| item.layout_visible && item.doc != Doc::nil())
         && value_argument_list_has_leading_comments(arguments);
-    let trailing = items
-        .iter()
-        .rev()
-        .find(|item| item.layout_visible)
-        .is_some_and(|item| item.comma.is_some());
-    let delimiter_comments = open.source().is_some_and(token_has_comments)
-        || close.source().is_some_and(token_has_comments);
     let list = if has_comments {
         force_parenthesized_list(doc, open.source(), close.source(), items)
-    } else if trailing || delimiter_comments {
-        parenthesized_list(doc, open.source(), close.source(), items)
     } else {
-        compact_parenthesized_list(doc, open.source(), close.source(), items)
+        parenthesized_list(doc, open.source(), close.source(), items)
     };
     join_delimited_recovery(doc, &open, list, &close)
 }

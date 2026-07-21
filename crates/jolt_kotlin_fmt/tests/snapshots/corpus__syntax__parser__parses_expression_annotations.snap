@@ -5,7 +5,9 @@ expression: snapshot
 formatted:
 fun annotatedExpressions(flag: Boolean) {
   val environment =
-    @Suppress("OPT_IN_USAGE_ERROR") // createForProduction uses an internal opt-in
+    @Suppress(
+      "OPT_IN_USAGE_ERROR"
+    ) // createForProduction uses an internal opt-in
     createEnvironment()
 
   val choice =

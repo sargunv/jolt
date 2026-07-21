@@ -1,0 +1,13 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package com.example.boundaries
+
+fun validate(name: String) {
+  require(name.isNotBlank()) { "blank name" }
+}
+
+diagnostics:
+(none)

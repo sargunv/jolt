@@ -13,8 +13,7 @@ use jolt_kotlin_syntax::{
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
 use crate::helpers::lists::{
-    CommaListItem, angle_bracket_list, compact_angle_bracket_list, parenthesized_list,
-    physical_comma_list_items,
+    CommaListItem, angle_bracket_list, parenthesized_list, physical_comma_list_items,
 };
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_malformed, format_optional_field,
@@ -310,16 +309,7 @@ pub(crate) fn format_type_argument_list<'source>(
         }
         KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
     };
-    let expanded = items
-        .iter()
-        .rev()
-        .find(|item| item.layout_visible)
-        .is_some_and(|item| item.comma.is_some());
-    let list = if expanded {
-        angle_bracket_list(doc, open.source(), close.source(), items)
-    } else {
-        compact_angle_bracket_list(doc, open.source(), close.source(), items)
-    };
+    let list = angle_bracket_list(doc, open.source(), close.source(), items);
     join_delimited_recovery(doc, &open, list, &close)
 }
 

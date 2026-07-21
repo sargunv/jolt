@@ -21,6 +21,27 @@ fn layout_fit_boundary_fixtures_stay_within_width() {
     }
 }
 
+#[test]
+fn single_argument_calls_break_at_narrow_width() {
+    let root = workspace_root(env!("CARGO_MANIFEST_DIR")).join("fixtures/kotlin");
+    let source = read_to_string(&root.join("style/layout-fit-boundaries/single-argument-call.kt"));
+    let formatted = format_or_panic(&source, 24);
+
+    assert_eq!(
+        formatted,
+        r#"package com.example.boundaries
+
+fun validate(
+  name: String
+) {
+  require(
+    name.isNotBlank()
+  ) { "blank name" }
+}
+"#
+    );
+}
+
 fn assert_no_line_exceeds_width(path: &Path, line_width: u16) {
     let source = read_to_string(path);
     let formatted = format_or_panic(&source, line_width);

@@ -81,33 +81,6 @@ pub(crate) fn square_bracket_list<'source>(
     delimited_comma_list(doc, open, close, items, false, TrailingTrivia::Preserve)
 }
 
-pub(crate) fn compact_angle_bracket_list<'source>(
-    doc: &mut DocBuilder<'source>,
-    open: Option<&KotlinSyntaxToken<'source>>,
-    close: Option<&KotlinSyntaxToken<'source>>,
-    items: Vec<CommaListItem<'source>>,
-) -> Doc<'source> {
-    angle_bracket_list(doc, open, close, items)
-}
-
-pub(crate) fn compact_parenthesized_list<'source>(
-    doc: &mut DocBuilder<'source>,
-    open: Option<&KotlinSyntaxToken<'source>>,
-    close: Option<&KotlinSyntaxToken<'source>>,
-    items: Vec<CommaListItem<'source>>,
-) -> Doc<'source> {
-    parenthesized_list(doc, open, close, items)
-}
-
-pub(crate) fn compact_square_bracket_list<'source>(
-    doc: &mut DocBuilder<'source>,
-    open: Option<&KotlinSyntaxToken<'source>>,
-    close: Option<&KotlinSyntaxToken<'source>>,
-    items: Vec<CommaListItem<'source>>,
-) -> Doc<'source> {
-    square_bracket_list(doc, open, close, items)
-}
-
 fn delimited_comma_list<'source>(
     doc: &mut DocBuilder<'source>,
     open: Option<&KotlinSyntaxToken<'source>>,
@@ -121,19 +94,6 @@ fn delimited_comma_list<'source>(
         let claims = doc.concat(items.into_iter().map(|item| item.doc));
         let list = empty_delimited_list(doc, open, close, close_trailing);
         return doc.concat([claims, list]);
-    }
-    if visible_count == 1
-        && !force_multiline
-        && items
-            .iter()
-            .find(|item| item.layout_visible)
-            .is_some_and(|item| item.comma.is_none())
-        && !has_delimiter_dangling_comments(open, close)
-    {
-        let open = format_open_delimiter(doc, open);
-        let close = format_close_delimiter(doc, close, close_trailing);
-        let item = doc.concat(items.into_iter().map(|item| item.doc));
-        return doc.concat([open, item, close]);
     }
 
     let has_trailing_comma = items

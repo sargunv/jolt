@@ -94,7 +94,9 @@ val (recoveredInitializer) value
 val recoveredProperty: Int
   field
   get() value
-  set(value) {
+  set(
+    value
+  ) {
         field = value
     } = value
 
