@@ -4,6 +4,57 @@
 //! This macro emits only the category discriminants and physical slot indices
 //! shared by their generated factory and typed accessors.
 
+/// Defines a language's `u16`-tagged syntax-kind enum and its raw conversions
+/// directly from that language's declarative schema.
+///
+/// Every representable token, node, and category-bogus kind becomes one
+/// discriminant, in the schema's declared order, so the tag is stable across the
+/// factory, typed accessors, and physical audit that share the same schema
+/// invocation. Callers supply only the enum name and its doc string.
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __define_syntax_kind {
+    (
+        $kind:ident, $doc:literal;
+        tokens { $($token:ident,)* }
+        categories { $($family:ident => $bogus:ident { $($member:ident,)* })* }
+        nodes { $($node:ident => $wrapper:ident [$module:ident $class:ident] { $($fields:tt)* })* }
+    ) => {
+        #[doc = $doc]
+        #[repr(u16)]
+        #[derive(
+            Clone,
+            Copy,
+            Debug,
+            Eq,
+            Hash,
+            PartialEq,
+            ::num_enum::IntoPrimitive,
+            ::num_enum::TryFromPrimitive,
+        )]
+        #[allow(clippy::enum_variant_names)]
+        pub enum $kind {
+            $($token,)*
+            $($node,)*
+            $($bogus,)*
+        }
+
+        impl $kind {
+            /// Converts this kind into the raw representation used by shared syntax data.
+            #[must_use]
+            pub(crate) fn to_raw(self) -> $crate::RawSyntaxKind {
+                $crate::RawSyntaxKind::new(u16::from(self))
+            }
+
+            /// Converts a raw kind back into this language's syntax kind.
+            #[must_use]
+            pub(crate) fn from_raw(raw: $crate::RawSyntaxKind) -> Option<Self> {
+                Self::try_from(raw.get()).ok()
+            }
+        }
+    };
+}
+
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __lower_syntax_schema {

@@ -1,11 +1,13 @@
 //! Shared lossless syntax tree infrastructure for Jolt.
 
+mod accessors;
 mod comment;
 mod conservation;
 mod event;
 mod kind;
 mod language;
 mod normalization;
+mod parse_debug;
 mod parser;
 mod projection;
 #[doc(hidden)]
@@ -27,6 +29,7 @@ pub use normalization::{
     NormalizationOwner, NormalizedToken, RemovalClaim, RemovalReason, ReorderClaim, ReorderReason,
     ReplacementClaim, SynthesisClaim,
 };
+pub use parse_debug::{fmt_diagnostic, fmt_parse_debug};
 pub use parser::{
     CursorCheckpoint, LanguageLexer, LexedToken, ParseEvents, Parser, PendingDiagnostic,
     TokenBuffer, TokenCursor, UnresolvedDiagnosticOwner,

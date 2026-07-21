@@ -13,6 +13,11 @@ jolt_text = { path = "../jolt_text" }
 num_enum = "0.7.6"
 unicode-general-category = "1.1"
 
+# num_enum is used only through jolt_syntax's shared `__define_syntax_kind!`
+# macro expansion, which emits `::num_enum::` derive paths into this crate.
+[package.metadata.cargo-machete]
+ignored = ["num_enum"]
+
 [features]
 bench = ["jolt_syntax/bench"]
 

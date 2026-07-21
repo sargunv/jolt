@@ -320,231 +320,6 @@ jolt_syntax::define_typed_cst_access! {
     category_bogus: java_kind_is_category_bogus,
 }
 
-macro_rules! java_field_accessor {
-    ($module:ident $field:ident required $matcher:tt => $role:ident) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> JavaSyntaxResult<JavaSyntaxField<'source, $role<'source>>> {
-            required_role_element(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize).map(|slot| {
-                slot.map(|element| $role { element })
-            })
-        }
-    };
-    ($module:ident $field:ident optional $matcher:tt => $role:ident) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> JavaSyntaxResult<JavaSyntaxField<'source, $role<'source>>> {
-            required_role_element(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
-                .map(|slot| slot.map(|element| $role { element }))
-        }
-    };
-    ($module:ident $field:ident required (token $kind:ident)) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> JavaSyntaxResult<JavaSyntaxField<'source, JavaSyntaxToken<'source>>> {
-            required_token(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
-        }
-    };
-    ($module:ident $field:ident required (token_set $kinds:tt)) => {
-        java_field_accessor!($module $field required (token __schema_token_set));
-    };
-    ($module:ident $field:ident required (contextual $text:literal)) => {
-        java_field_accessor!($module $field required (token __schema_contextual));
-    };
-    ($module:ident $field:ident optional (token $kind:ident)) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> JavaSyntaxResult<JavaSyntaxField<'source, JavaSyntaxToken<'source>>> {
-            optional_token(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
-        }
-    };
-    ($module:ident $field:ident optional (token_set $kinds:tt)) => {
-        java_field_accessor!($module $field optional (token __schema_token_set));
-    };
-    ($module:ident $field:ident optional (contextual $text:literal)) => {
-        java_field_accessor!($module $field optional (token __schema_contextual));
-    };
-
-    ($module:ident $field:ident required (node $target:ident)) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> JavaSyntaxResult<JavaSyntaxField<'source, $target<'source>>> {
-            required_node(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
-        }
-    };
-    ($module:ident $field:ident optional (node $target:ident)) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> JavaSyntaxResult<JavaSyntaxField<'source, $target<'source>>> {
-            optional_node(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
-        }
-    };
-    ($module:ident $field:ident required (constructed $target:ident)) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> JavaSyntaxResult<JavaSyntaxField<'source, $target<'source>>> {
-            required_node(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
-        }
-    };
-    ($module:ident $field:ident optional (constructed $target:ident)) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> JavaSyntaxResult<JavaSyntaxField<'source, $target<'source>>> {
-            optional_node(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
-        }
-    };
-    ($module:ident $field:ident required (list $target:ident)) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> JavaSyntaxResult<JavaSyntaxField<'source, $target<'source>>> {
-            required_node(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
-        }
-    };
-    ($module:ident $field:ident optional (list $target:ident)) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> JavaSyntaxResult<JavaSyntaxField<'source, $target<'source>>> {
-            optional_node(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
-        }
-    };
-    ($module:ident $field:ident required (category $target:ident)) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> JavaSyntaxResult<JavaSyntaxField<'source, $target<'source>>> {
-            required_family(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
-        }
-    };
-    ($module:ident $field:ident optional (category $target:ident)) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> JavaSyntaxResult<JavaSyntaxField<'source, $target<'source>>> {
-            optional_family(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
-        }
-    };
-
-    // Heterogeneous roles are wrapped by the semantic adapters below. This
-    // primitive still reads exactly one declared slot and never searches.
-    ($module:ident $field:ident required $matcher:tt) => {
-        #[inline]
-        pub(crate) fn $field(&self) -> JavaSyntaxResult<JavaSyntaxField<'source, JavaRoleElement<'source>>> {
-            required_role_element(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
-        }
-    };
-    ($module:ident $field:ident optional $matcher:tt) => {
-        #[inline]
-        pub(crate) fn $field(&self) -> JavaSyntaxResult<JavaSyntaxField<'source, JavaRoleElement<'source>>> {
-            required_role_element(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
-        }
-    };
-    ($module:ident $field:ident many $matcher:tt $(=> $role:ident)?) => {};
-    ($module:ident $field:ident one_or_more $matcher:tt $(=> $role:ident)?) => {};
-}
-
-macro_rules! define_java_role {
-    ($role:ident) => {
-        #[derive(Clone, Copy, Debug)]
-        pub struct $role<'source> {
-            element: JavaRoleElement<'source>,
-        }
-
-        impl<'source> $role<'source> {
-            #[must_use]
-            pub fn token(self) -> Option<JavaSyntaxToken<'source>> {
-                match self.element {
-                    JavaRoleElement::Token(token) => Some(token),
-                    JavaRoleElement::Node(_) => None,
-                }
-            }
-
-            #[must_use]
-            pub fn first_token(self) -> Option<JavaSyntaxToken<'source>> {
-                match self.element {
-                    JavaRoleElement::Node(node) => node.first_token(),
-                    JavaRoleElement::Token(token) => Some(token),
-                }
-            }
-
-            #[must_use]
-            pub fn last_token(self) -> Option<JavaSyntaxToken<'source>> {
-                match self.element {
-                    JavaRoleElement::Node(node) => node.last_token(),
-                    JavaRoleElement::Token(token) => Some(token),
-                }
-            }
-
-            #[must_use]
-            pub fn cast_node<N: JavaTypedNode<'source>>(self) -> Option<N> {
-                N::cast_element(self.element)
-            }
-
-            #[must_use]
-            pub fn cast_family<F: JavaFamily<'source>>(self) -> Option<F> {
-                match self.element {
-                    JavaRoleElement::Node(node) => F::cast(node),
-                    JavaRoleElement::Token(_) => None,
-                }
-            }
-        }
-
-        impl<'source> JavaListItem<'source> for $role<'source> {
-            const IS_FAMILY: bool = false;
-
-            fn cast_element(element: JavaRoleElement<'source>) -> Option<Self> {
-                Some(Self { element })
-            }
-        }
-    };
-}
-
-macro_rules! java_list_item_type {
-    ($source:lifetime; $matcher:tt => $role:ident) => { $role<$source> };
-    ($source:lifetime; (node $target:ident)) => { $target<$source> };
-    ($source:lifetime; (constructed $target:ident)) => { $target<$source> };
-    ($source:lifetime; (category $target:ident)) => { $target<$source> };
-    ($source:lifetime; $matcher:tt) => { JavaRoleElement<$source> };
-}
-
-macro_rules! java_list_item_type_optional_role {
-    ($source:lifetime; $matcher:tt; $role:ident) => {
-        java_list_item_type!($source; $matcher => $role)
-    };
-    ($source:lifetime; $matcher:tt;) => {
-        java_list_item_type!($source; $matcher)
-    };
-}
-
-macro_rules! java_list_is_separated {
-    ([separated $($policy:tt)*]) => {
-        true
-    };
-    ([$($policy:tt)*]) => {
-        false
-    };
-    () => {
-        false
-    };
-}
-
-macro_rules! java_variable_slot_view {
-    (list; $field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)? $([$($policy:tt)*])?;) => {
-        /// Returns this list's represented elements and separators in source order.
-        pub fn parts(
-            &self,
-        ) -> impl Iterator<
-            Item = JavaSyntaxResult<JavaSyntaxListPart<
-                'source,
-                java_list_item_type_optional_role!('source; $matcher; $($role)?),
-            >>,
-        > + '_ {
-            list_parts::<java_list_item_type_optional_role!('source; $matcher; $($role)?)>(
-                self.syntax,
-                java_list_is_separated!($([$($policy)*])?),
-            )
-        }
-    };
-    ($class:ident; $($fields:tt)*) => {};
-}
-
 macro_rules! define_java_cst_from_schema {
     (
         tokens { $($token:ident,)* }
@@ -594,31 +369,21 @@ macro_rules! define_java_cst_from_schema {
 java_syntax_schema!(define_java_cst_from_schema);
 
 macro_rules! define_java_accessors_from_schema {
-    (
-        tokens { $($token:ident,)* }
-        categories { $($family:ident => $bogus:ident { $($member:ident,)* })* }
-        nodes {
-            $(
-                $kind:ident => $wrapper:ident [$module:ident $class:ident] {
-                    $(
-                        $field:ident: $cardinality:ident $matcher:tt
-                        $(=> $role:ident)?
-                        $([$($policy:tt)*])?;
-                    )*
-                }
-            )*
-        }
-    ) => {
-        $($( $(define_java_role!($role);)? )*)*
-        $(
-            impl<'source> $wrapper<'source> {
-                $(java_field_accessor!($module $field $cardinality $matcher $(=> $role)?);)*
-                java_variable_slot_view!(
-                    $class;
-                    $($field: $cardinality $matcher $(=> $role)? $([$($policy)*])?;)*
-                );
+    ($($schema:tt)*) => {
+        jolt_syntax::define_typed_cst_accessors! {
+            names {
+                syntax_token: JavaSyntaxToken,
+                syntax_result: JavaSyntaxResult,
+                syntax_field: JavaSyntaxField,
+                role_element: JavaRoleElement,
+                list_part: JavaSyntaxListPart,
+                typed_node: JavaTypedNode,
+                family: JavaFamily,
+                list_item: JavaListItem,
+                generic_vis: pub(crate),
             }
-        )*
+            schema { $($schema)* }
+        }
     };
 }
 
