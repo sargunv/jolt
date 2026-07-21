@@ -1,7 +1,7 @@
 use super::{
     BodyItem, ConstructorInvocation, Doc, JavaSyntaxToken, Range, format_argument_list,
-    format_block_statement_item, format_construct_leading_comments, format_expression, format_name,
-    format_removed_comments, format_statement_semicolon,
+    format_block_statement_item, format_construct_leading_comments, format_dangling_comments,
+    format_expression, format_name, format_removed_comments, format_statement_semicolon,
     format_token_after_construct_leading_comments, format_token_with_comments,
     format_type_argument_list, formatter_ignore_ranges, formatter_ignore_run_doc,
     formatter_ignore_runs, join_body_items, relative_token_range_between,
@@ -108,8 +108,8 @@ fn format_constructor_body_close_dangling_comments<'source>(
     doc: &mut jolt_fmt_ir::DocBuilder<'source>,
     close: Option<JavaSyntaxToken<'source>>,
 ) -> Option<BodyItem<'source>> {
-    format_removed_comments(doc, close?.leading_comments())
-        .map(|comments| BodyItem::new(comments, false))
+    let comments = close?.leading_comments().collect::<Vec<_>>();
+    (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(doc, comments), false))
 }
 
 #[derive(Clone, Copy)]

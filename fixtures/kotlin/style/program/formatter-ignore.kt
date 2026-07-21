@@ -33,3 +33,17 @@ fun block() {
   // @formatter:on
   println(4)
 }
+
+fun terminalBlock() {
+  // @formatter:off
+  val retries  = 3
+  val timeout  = 5000
+  // @formatter:on
+}
+
+class TerminalBody {
+  // @formatter:off
+  val retries  = 3
+  val timeout  = 5000
+  // @formatter:on
+}

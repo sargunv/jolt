@@ -39,6 +39,20 @@ fun block() {
   println(4)
 }
 
+fun terminalBlock() {
+  // @formatter:off
+  val retries  = 3
+  val timeout  = 5000
+  // @formatter:on
+}
+
+class TerminalBody {
+  // @formatter:off
+  val retries  = 3
+  val timeout  = 5000
+  // @formatter:on
+}
+
 syntax:
 syntax:
 KotlinFile
@@ -349,7 +363,79 @@ KotlinFile
                   LambdaExpressionList
               TerminatorList
           RBrace "}" @ 535..536 leading=[Newline "\n"]
-  Eof "" @ 537..537 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 538..541 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "terminalBlock" @ 542..555
+      ValueParameterList
+        LParen "(" @ 555..556
+        ValueParameterSeparatedList
+        RParen ")" @ 556..557 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 558..559
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 582..585 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "retries" @ 586..593 trailing=[Whitespace "  "]
+              PropertyInitializer
+                Assign "=" @ 595..596 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "3" @ 597..598
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 601..604 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "timeout" @ 605..612 trailing=[Whitespace "  "]
+              PropertyInitializer
+                Assign "=" @ 614..615 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "5000" @ 616..620
+              PropertyBodyMemberList
+          RBrace "}" @ 640..641 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 643..648 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "TerminalBody" @ 649..661 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 662..663
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 686..689 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "retries" @ 690..697 trailing=[Whitespace "  "]
+              PropertyInitializer
+                Assign "=" @ 699..700 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "3" @ 701..702
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 705..708 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "timeout" @ 709..716 trailing=[Whitespace "  "]
+              PropertyInitializer
+                Assign "=" @ 718..719 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "5000" @ 720..724
+              PropertyBodyMemberList
+        RBrace "}" @ 744..745 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"]
+  Eof "" @ 746..746 leading=[Newline "\n"]
 
 diagnostics:
   (none)

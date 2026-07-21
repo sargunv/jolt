@@ -5,7 +5,9 @@ use jolt_kotlin_syntax::{
     KotlinSyntaxView, StatementSyntax,
 };
 
-use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
+use crate::helpers::comments::{
+    LeadingTrivia, TrailingTrivia, format_dangling_comments, format_token,
+};
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     relative_token_range_between,
@@ -38,7 +40,7 @@ pub(super) fn format_class_body<'source>(
     );
     let open = resolve_required_delimiter(body.open_brace(), doc);
     let close = resolve_required_delimiter(body.close_brace(), doc);
-    let contents = format_class_body_contents(doc, &body);
+    let contents = format_class_body_contents(doc, &body, close.source());
     let space = doc.space();
     let body = format_class_braced_body(doc, open, close, contents, has_close);
     doc.concat([space, body])
@@ -47,26 +49,33 @@ pub(super) fn format_class_body<'source>(
 fn format_class_body_contents<'source>(
     doc: &mut DocBuilder<'source>,
     body: &ClassBody<'source>,
+    close: Option<&KotlinSyntaxToken<'source>>,
 ) -> Option<Doc<'source>> {
     let members = match resolve_required_field(body.members(), doc) {
         KotlinFormatField::Present(members) => members,
         KotlinFormatField::Malformed(malformed) => return Some(malformed),
     };
     let parts = collect_class_body_parts(doc, &members);
-    if parts.is_empty() {
-        return None;
-    }
-
     let ignored_ranges = formatter_ignore_ranges(
         body.source_text(),
         body.text_range().start().get(),
         body.token_iter(),
     );
-    let sections = if ignored_ranges.is_empty() {
+    let mut sections = if ignored_ranges.is_empty() {
         class_body_sections(doc, &parts)
     } else {
         class_body_sections_with_ignored(doc, body, &parts, &ignored_ranges)
     };
+    if let Some(comments) = close
+        .map(KotlinSyntaxToken::leading_comments)
+        .map(Iterator::collect::<Vec<_>>)
+        .filter(|comments| !comments.is_empty())
+    {
+        sections.push(ClassBodySection {
+            doc: format_dangling_comments(doc, comments),
+            hard_line_after: false,
+        });
+    }
     (!sections.is_empty()).then(|| join_class_body_sections(doc, sections))
 }
 
@@ -235,7 +244,7 @@ fn class_body_sections_with_ignored<'source>(
             let run = &ignored_runs[ignored_index];
             sections.push(ClassBodySection {
                 doc: formatter_ignore_run_doc(run, doc),
-                hard_line_after: !run.include_on_marker,
+                hard_line_after: !run.ends_with_on_marker(),
             });
             ignored_index += 1;
         }
@@ -254,7 +263,7 @@ fn class_body_sections_with_ignored<'source>(
         let run = &ignored_runs[ignored_index];
         sections.push(ClassBodySection {
             doc: formatter_ignore_run_doc(run, doc),
-            hard_line_after: !run.include_on_marker,
+            hard_line_after: !run.ends_with_on_marker(),
         });
         ignored_index += 1;
     }
@@ -399,7 +408,7 @@ fn format_class_braced_body<'source>(
     } else {
         doc.hard_line()
     };
-    let close = format_delimiter(doc, close, LeadingTrivia::Preserve);
+    let close = format_delimiter(doc, close, LeadingTrivia::SuppressAlreadyHandled);
     doc.concat([open, contents, close])
 }
 

@@ -18,9 +18,9 @@ use crate::{
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FormatterIgnoreRange<'source> {
-    pub raw_text: &'source str,
-    pub raw_text_with_on: &'source str,
-    pub interior: Range<usize>,
+    raw_text: &'source str,
+    raw_text_with_on: &'source str,
+    interior: Range<usize>,
     claim_with_on: SourceRangeClaim<'source>,
     claim_without_on: SourceRangeClaim<'source>,
     separators_with_on: ExceptionalSeparators,
@@ -29,17 +29,45 @@ pub struct FormatterIgnoreRange<'source> {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FormatterIgnoreRun<'source> {
-    pub range: FormatterIgnoreRange<'source>,
+    range: FormatterIgnoreRange<'source>,
     pub insert_index: usize,
     pub skip_start: usize,
     pub skip_end: usize,
-    pub include_on_marker: bool,
+    on_marker_owner: OnMarkerOwner,
 }
 
-impl FormatterIgnoreRun<'_> {
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum OnMarkerOwner {
+    Item(usize),
+    Boundary,
+    IgnoreRun,
+}
+
+impl<'source> FormatterIgnoreRun<'source> {
     #[must_use]
     pub fn skips(&self, item_index: usize) -> bool {
         (self.skip_start..self.skip_end).contains(&item_index)
+    }
+
+    #[must_use]
+    pub fn ends_with_on_marker(&self) -> bool {
+        self.on_marker_owner == OnMarkerOwner::IgnoreRun
+    }
+
+    #[must_use]
+    pub fn claimed_on_marker_range(&self, base_start: usize) -> Option<Range<usize>> {
+        self.ends_with_on_marker().then(|| {
+            let start = base_start + self.range.interior.start;
+            start..start + self.range.raw_text_with_on.len()
+        })
+    }
+
+    fn raw_text(&self) -> &'source str {
+        if self.ends_with_on_marker() {
+            self.range.raw_text_with_on
+        } else {
+            self.range.raw_text
+        }
     }
 }
 
@@ -342,14 +370,20 @@ pub fn formatter_ignore_runs<'source>(
                 insert_index,
                 skip_start,
                 skip_end,
-                include_on_marker: item_index == item_ranges.len(),
+                on_marker_owner: if item_index < item_ranges.len() {
+                    OnMarkerOwner::Item(item_index)
+                } else {
+                    OnMarkerOwner::Boundary
+                },
             });
         }
     }
 
     for index in 0..runs.len().saturating_sub(1) {
-        if !runs[index].include_on_marker && runs[index + 1].insert_index == runs[index].skip_end {
-            runs[index].include_on_marker = true;
+        if let OnMarkerOwner::Item(owner) = runs[index].on_marker_owner
+            && runs[index + 1].skips(owner)
+        {
+            runs[index].on_marker_owner = OnMarkerOwner::IgnoreRun;
         }
     }
 
@@ -361,11 +395,7 @@ pub fn formatter_ignore_run_doc<'source>(
     run: &FormatterIgnoreRun<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let raw_text = if run.include_on_marker {
-        &run.range.raw_text_with_on
-    } else {
-        &run.range.raw_text
-    };
+    let raw_text = run.raw_text();
     let stripped = strip_first_line_indent(raw_text);
     let contents = match stripped {
         Cow::Borrowed(text) => {
@@ -395,12 +425,12 @@ pub fn formatter_ignore_run_doc<'source>(
             })
         }
     };
-    let claim = if run.include_on_marker {
+    let claim = if run.ends_with_on_marker() {
         run.range.claim_with_on
     } else {
         run.range.claim_without_on
     };
-    let separators = if run.include_on_marker {
+    let separators = if run.ends_with_on_marker() {
         run.range.separators_with_on
     } else {
         run.range.separators_without_on

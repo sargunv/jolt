@@ -12,6 +12,12 @@ int before=1;
     // @formatter:on
 int after=2;
 }
+void terminal() {
+    // @formatter:off
+    int retries  = 3;
+    int timeout  = 5000;
+    // @formatter:on
+}
 }
 
 syntax:
@@ -99,8 +105,46 @@ CompilationUnit
                             IntegerLiteral "2" @ 136..137
                   Semicolon ";" @ 137..138
               RBrace "}" @ 139..140 leading=[Newline "\n"]
-        RBrace "}" @ 141..142 leading=[Newline "\n"]
-  Eof "" @ 143..143 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 141..145 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "terminal" @ 146..154
+            LParen "(" @ 154..155
+            RParen ")" @ 155..156 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 157..158
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 185..188 leading=[Newline "\n", Whitespace "    ", LineComment "// @formatter:off", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "retries" @ 189..196 trailing=[Whitespace "  "]
+                        Assign "=" @ 198..199 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "3" @ 200..201
+                  Semicolon ";" @ 201..202
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 207..210 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "timeout" @ 211..218 trailing=[Whitespace "  "]
+                        Assign "=" @ 220..221 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "5000" @ 222..226
+                  Semicolon ";" @ 226..227
+              RBrace "}" @ 249..250 leading=[Newline "\n", Whitespace "    ", LineComment "// @formatter:on", Newline "\n"]
+        RBrace "}" @ 251..252 leading=[Newline "\n"]
+  Eof "" @ 253..253 leading=[Newline "\n"]
 
 diagnostics:
   (none)

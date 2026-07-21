@@ -7,4 +7,10 @@ int before=1;
     // @formatter:on
 int after=2;
 }
+void terminal() {
+    // @formatter:off
+    int retries  = 3;
+    int timeout  = 5000;
+    // @formatter:on
+}
 }

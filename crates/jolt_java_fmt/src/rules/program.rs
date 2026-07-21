@@ -75,11 +75,7 @@ pub(crate) fn format_compilation_unit<'source>(
         let base = unit.text_range().start().get();
         let ignored_eof_comments = runs
             .iter()
-            .filter(|run| run.include_on_marker)
-            .map(|run| {
-                let start = base + run.range.interior.start;
-                start..start + run.range.raw_text_with_on.len()
-            })
+            .filter_map(|run| run.claimed_on_marker_range(base))
             .collect();
         (
             format_program_entries_with_ignored(entries, &runs, doc),

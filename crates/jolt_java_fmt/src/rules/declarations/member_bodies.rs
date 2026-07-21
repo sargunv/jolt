@@ -3,15 +3,14 @@ use super::{
     InterfaceBodyMember, JavaSyntaxToken, MemberCategory, Range, RecordBody, comments_from_tokens,
     format_annotation_element_declaration, format_annotation_interface_declaration, format_block,
     format_class_declaration, format_compact_constructor_declaration,
-    format_constructor_declaration, format_enum_declaration, format_field_declaration,
-    format_interface_declaration, format_method_declaration, format_record_declaration,
-    format_removed_comments, format_token_with_comments, formatter_ignore_ranges,
-    formatter_ignore_run_doc, formatter_ignore_runs, has_removed_comments, join_member_docs,
-    relative_token_range_between,
+    format_constructor_declaration, format_dangling_comments, format_enum_declaration,
+    format_field_declaration, format_interface_declaration, format_method_declaration,
+    format_record_declaration, format_removed_comments, format_token_with_comments,
+    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, has_removed_comments,
+    join_member_docs, relative_token_range_between,
 };
 use crate::helpers::blocks::BodyContent;
 use crate::helpers::comments::format_token_removal;
-use crate::helpers::formatter_ignore::is_formatter_control_marker;
 use crate::helpers::recovery::{
     JavaFormatField, format_malformed, resolve_optional_field, resolve_required_field,
 };
@@ -344,13 +343,9 @@ pub(super) fn format_body_close_dangling_comments<'source>(
     close: Option<JavaSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<FormattedMember<'source>> {
-    format_removed_comments(
-        doc,
-        close?
-            .leading_comments()
-            .filter(|comment| !is_formatter_control_marker(comment.text())),
-    )
-    .map(FormattedMember::comment)
+    let comments = close?.leading_comments().collect::<Vec<_>>();
+    (!comments.is_empty())
+        .then(|| FormattedMember::comment(format_dangling_comments(doc, comments)))
 }
 
 pub(super) fn format_empty_enum_constant_list_comments<'source>(
