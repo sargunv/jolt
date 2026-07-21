@@ -88,6 +88,8 @@ syntax__recovery__module_recovery_barriers: ModuleTargetClause occurrence 1 (Mod
 syntax__recovery__module_recovery_barriers: ModuleTargetClause occurrence 3 (ModuleNameList)
 syntax__recovery__module_recovery_barriers: ModuleImplementationClause occurrence 1 (ModuleNameList)
 syntax__recovery__recovery_boundary_spacing: ClassBody occurrence 1 (ClassBodyMemberList)
+syntax__recovery__recovery_boundary_spacing: TypeParameterList occurrence 2 (Lt("<") TypeParameterSeparatedList)
+syntax__recovery__recovery_boundary_spacing: ClassBody occurrence 2 (ClassBodyMemberList)
 syntax__recovery__statements: Annotation occurrence 1 (At("@"))
 syntax__recovery__statements: ConditionalExpression occurrence 1 (BogusExpression Question("?") BogusExpression BogusExpression)
 syntax__recovery__statements: IfStatement occurrence 1 (IfKw("if") LParen("(") NameExpression RParen(")"))

@@ -181,6 +181,12 @@ fn format_program_entries<'source>(
                 ));
                 continue;
             }
+            ProgramEntry::Item(CompilationUnitItem::BogusCompilationUnitItem(bogus)) => {
+                flush_imports(&mut imports, &mut sections, doc);
+                let recovery = format_malformed(&bogus, doc);
+                append_program_recovery(&mut sections, recovery, doc);
+                continue;
+            }
             ProgramEntry::Item(item) => {
                 flush_imports(&mut imports, &mut sections, doc);
                 let visible = program_item_is_visible(&item);
@@ -189,11 +195,15 @@ fn format_program_entries<'source>(
             }
             ProgramEntry::Token(token) => {
                 flush_imports(&mut imports, &mut sections, doc);
-                (format_token_with_comments(doc, &token), true, false)
+                let recovery = format_token_with_comments(doc, &token);
+                append_program_recovery(&mut sections, recovery, doc);
+                continue;
             }
             ProgramEntry::Malformed(malformed) => {
                 flush_imports(&mut imports, &mut sections, doc);
-                (format_malformed(&malformed, doc), true, false)
+                let recovery = format_malformed(&malformed, doc);
+                append_program_recovery(&mut sections, recovery, doc);
+                continue;
             }
             ProgramEntry::Missing(missing) => {
                 flush_imports(&mut imports, &mut sections, doc);
@@ -204,6 +214,20 @@ fn format_program_entries<'source>(
     }
     flush_imports(&mut imports, &mut sections, doc);
     join_program_sections(doc, sections)
+}
+
+fn append_program_recovery<'source>(
+    sections: &mut Vec<(Doc<'source>, bool, bool)>,
+    recovery: Doc<'source>,
+    doc: &mut DocBuilder<'source>,
+) {
+    if let Some((previous, visible, comment_only)) = sections.last_mut() {
+        *previous = doc.concat([*previous, recovery]);
+        *visible = true;
+        *comment_only = false;
+    } else {
+        sections.push((recovery, true, false));
+    }
 }
 
 fn program_item_is_visible(item: &CompilationUnitItem<'_>) -> bool {

@@ -4,6 +4,7 @@ expression: snapshot
 ---
 input:
 public class LruCache<.K,V>
+class Registry<T : Any>
 class Fields {
   int .value;
   private final Map<K,..Node<K,V>> nodes=new HashMap<>();
@@ -12,6 +13,8 @@ class Fields {
 
 formatted:
 public class LruCache<.K, V>
+
+class Registry<T : Any>
 
 class Fields {
   int .value;
@@ -22,6 +25,9 @@ class Fields {
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(22), end: TextSize(23) }) message=expected type parameter name
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(28), end: TextSize(33) }) message=expected type body
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(50) }) message=expected variable name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(79), end: TextSize(80) }) message=expected type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(137), end: TextSize(138) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(46) }) message=expected `>` after type parameters
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(46) }) message=expected type body
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(46) }) message=unexpected token at top level
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(73), end: TextSize(74) }) message=expected variable name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(103), end: TextSize(104) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(161), end: TextSize(162) }) message=expected type

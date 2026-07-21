@@ -4,6 +4,7 @@ expression: snapshot
 ---
 input:
 public class LruCache<.K,V>
+class Registry<T : Any>
 class Fields {
   int .value;
   private final Map<K,..Node<K,V>> nodes=new HashMap<>();
@@ -35,31 +36,46 @@ CompilationUnit
         ClassBodyMemberList
     ClassDeclaration
       ClassKw "class" @ 28..33 leading=[Newline "\n"] trailing=[Whitespace " "]
-      Identifier "Fields" @ 34..40 trailing=[Whitespace " "]
+      Identifier "Registry" @ 34..42
+      TypeParameterList
+        Lt "<" @ 42..43
+        TypeParameterSeparatedList
+          TypeParameter
+            AnnotationList
+            Identifier "T" @ 43..44 trailing=[Whitespace " "]
       ClassBody
-        LBrace "{" @ 41..42
+        ClassBodyMemberList
+    BogusCompilationUnitItem
+      Colon ":" @ 45..46 trailing=[Whitespace " "]
+      Identifier "Any" @ 47..50
+      Gt ">" @ 50..51
+    ClassDeclaration
+      ClassKw "class" @ 52..57 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Fields" @ 58..64 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 65..66
         ClassBodyMemberList
           FieldDeclaration
             PrimitiveType
               AnnotationList
-              IntKw "int" @ 45..48 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              IntKw "int" @ 69..72 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
             VariableDeclaratorList
               VariableDeclarator
-                Dot "." @ 49..50
-                Identifier "value" @ 50..55
-            Semicolon ";" @ 55..56
+                Dot "." @ 73..74
+                Identifier "value" @ 74..79
+            Semicolon ";" @ 79..80
           FieldDeclaration
             ModifierList
-              PrivateKw "private" @ 59..66 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              FinalKw "final" @ 67..72 trailing=[Whitespace " "]
+              PrivateKw "private" @ 83..90 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              FinalKw "final" @ 91..96 trailing=[Whitespace " "]
             ClassType
               ClassTypeSegmentList
                 ClassTypeSegmentNode
                   AnnotationList
                   Name
-                    Identifier "Map" @ 73..76
+                    Identifier "Map" @ 97..100
                   TypeArgumentList
-                    Lt "<" @ 76..77
+                    Lt "<" @ 100..101
                     TypeArgumentSeparatedList
                       TypeArgument
                         AnnotationList
@@ -68,21 +84,21 @@ CompilationUnit
                             ClassTypeSegmentNode
                               AnnotationList
                               Name
-                                Identifier "K" @ 77..78
-                      Comma "," @ 78..79
+                                Identifier "K" @ 101..102
+                      Comma "," @ 102..103
                       TypeArgument
                         AnnotationList
                         BogusType
-                          Dot "." @ 79..80
-                          Dot "." @ 80..81
+                          Dot "." @ 103..104
+                          Dot "." @ 104..105
                           ClassType
                             ClassTypeSegmentList
                               ClassTypeSegmentNode
                                 AnnotationList
                                 Name
-                                  Identifier "Node" @ 81..85
+                                  Identifier "Node" @ 105..109
                                 TypeArgumentList
-                                  Lt "<" @ 85..86
+                                  Lt "<" @ 109..110
                                   TypeArgumentSeparatedList
                                     TypeArgument
                                       AnnotationList
@@ -91,8 +107,8 @@ CompilationUnit
                                           ClassTypeSegmentNode
                                             AnnotationList
                                             Name
-                                              Identifier "K" @ 86..87
-                                    Comma "," @ 87..88
+                                              Identifier "K" @ 110..111
+                                    Comma "," @ 111..112
                                     TypeArgument
                                       AnnotationList
                                       ClassType
@@ -100,43 +116,43 @@ CompilationUnit
                                           ClassTypeSegmentNode
                                             AnnotationList
                                             Name
-                                              Identifier "V" @ 88..89
-                                  Gt ">" @ 89..90
-                    Gt ">" @ 90..91 trailing=[Whitespace " "]
+                                              Identifier "V" @ 112..113
+                                  Gt ">" @ 113..114
+                    Gt ">" @ 114..115 trailing=[Whitespace " "]
             VariableDeclaratorList
               VariableDeclarator
-                Identifier "nodes" @ 92..97
-                Assign "=" @ 97..98
+                Identifier "nodes" @ 116..121
+                Assign "=" @ 121..122
                 VariableInitializer
                   ObjectCreationExpression
-                    NewKw "new" @ 98..101 trailing=[Whitespace " "]
+                    NewKw "new" @ 122..125 trailing=[Whitespace " "]
                     ClassType
                       ClassTypeSegmentList
                         ClassTypeSegmentNode
                           AnnotationList
                           Name
-                            Identifier "HashMap" @ 102..109
+                            Identifier "HashMap" @ 126..133
                           TypeArgumentList
-                            Lt "<" @ 109..110
+                            Lt "<" @ 133..134
                             TypeArgumentSeparatedList
-                            Gt ">" @ 110..111
+                            Gt ">" @ 134..135
                     ArgumentList
-                      LParen "(" @ 111..112
+                      LParen "(" @ 135..136
                       ExpressionList
-                      RParen ")" @ 112..113
-            Semicolon ";" @ 113..114
+                      RParen ")" @ 136..137
+            Semicolon ";" @ 137..138
           FieldDeclaration
             ModifierList
-              PrivateKw "private" @ 117..124 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              FinalKw "final" @ 125..130 trailing=[Whitespace " "]
+              PrivateKw "private" @ 141..148 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              FinalKw "final" @ 149..154 trailing=[Whitespace " "]
             ClassType
               ClassTypeSegmentList
                 ClassTypeSegmentNode
                   AnnotationList
                   Name
-                    Identifier "Map" @ 131..134
+                    Identifier "Map" @ 155..158
                   TypeArgumentList
-                    Lt "<" @ 134..135
+                    Lt "<" @ 158..159
                     TypeArgumentSeparatedList
                       TypeArgument
                         AnnotationList
@@ -145,20 +161,20 @@ CompilationUnit
                             ClassTypeSegmentNode
                               AnnotationList
                               Name
-                                Identifier "K" @ 135..136
-                      Comma "," @ 136..137
+                                Identifier "K" @ 159..160
+                      Comma "," @ 160..161
                       TypeArgument
                         AnnotationList
                         BogusType
-                          Plus "+" @ 137..138
+                          Plus "+" @ 161..162
                           ClassType
                             ClassTypeSegmentList
                               ClassTypeSegmentNode
                                 AnnotationList
                                 Name
-                                  Identifier "Node" @ 138..142
+                                  Identifier "Node" @ 162..166
                                 TypeArgumentList
-                                  Lt "<" @ 142..143
+                                  Lt "<" @ 166..167
                                   TypeArgumentSeparatedList
                                     TypeArgument
                                       AnnotationList
@@ -167,8 +183,8 @@ CompilationUnit
                                           ClassTypeSegmentNode
                                             AnnotationList
                                             Name
-                                              Identifier "K" @ 143..144
-                                    Comma "," @ 144..145
+                                              Identifier "K" @ 167..168
+                                    Comma "," @ 168..169
                                     TypeArgument
                                       AnnotationList
                                       ClassType
@@ -176,44 +192,50 @@ CompilationUnit
                                           ClassTypeSegmentNode
                                             AnnotationList
                                             Name
-                                              Identifier "V" @ 145..146
-                                  Gt ">" @ 146..147
-                    Gt ">" @ 147..148 trailing=[Whitespace " "]
+                                              Identifier "V" @ 169..170
+                                  Gt ">" @ 170..171
+                    Gt ">" @ 171..172 trailing=[Whitespace " "]
             VariableDeclaratorList
               VariableDeclarator
-                Identifier "alternateNodes" @ 149..163
-                Assign "=" @ 163..164
+                Identifier "alternateNodes" @ 173..187
+                Assign "=" @ 187..188
                 VariableInitializer
                   ObjectCreationExpression
-                    NewKw "new" @ 164..167 trailing=[Whitespace " "]
+                    NewKw "new" @ 188..191 trailing=[Whitespace " "]
                     ClassType
                       ClassTypeSegmentList
                         ClassTypeSegmentNode
                           AnnotationList
                           Name
-                            Identifier "HashMap" @ 168..175
+                            Identifier "HashMap" @ 192..199
                           TypeArgumentList
-                            Lt "<" @ 175..176
+                            Lt "<" @ 199..200
                             TypeArgumentSeparatedList
-                            Gt ">" @ 176..177
+                            Gt ">" @ 200..201
                     ArgumentList
-                      LParen "(" @ 177..178
+                      LParen "(" @ 201..202
                       ExpressionList
-                      RParen ")" @ 178..179
-            Semicolon ";" @ 179..180
-        RBrace "}" @ 181..182 leading=[Newline "\n"]
-  Eof "" @ 183..183 leading=[Newline "\n"]
+                      RParen ")" @ 202..203
+            Semicolon ";" @ 203..204
+        RBrace "}" @ 205..206 leading=[Newline "\n"]
+  Eof "" @ 207..207 leading=[Newline "\n"]
 
 diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=22..23 message="expected type parameter name"
   code=java.parse.expected_syntax severity=Error stage=Parser range=28..33 message="expected type body"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=49..50 message="expected variable name"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=79..80 message="expected type"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=137..138 message="expected type"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=45..46 message="expected `>` after type parameters"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=45..46 message="expected type body"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=45..46 message="unexpected token at top level"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=73..74 message="expected variable name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=103..104 message="expected type"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=161..162 message="expected type"
 
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(22), end: TextSize(23) }) message=expected type parameter name
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(28), end: TextSize(33) }) message=expected type body
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(50) }) message=expected variable name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(79), end: TextSize(80) }) message=expected type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(137), end: TextSize(138) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(46) }) message=expected `>` after type parameters
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(46) }) message=expected type body
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(46) }) message=unexpected token at top level
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(73), end: TextSize(74) }) message=expected variable name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(103), end: TextSize(104) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(161), end: TextSize(162) }) message=expected type
