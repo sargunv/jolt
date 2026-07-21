@@ -35,6 +35,7 @@ style/imports/basic-sorting.kt
 style/imports/comment-barrier.kt
 style/layout-fit-boundaries/call-chain-single-argument.kt
 style/layout-fit-boundaries/property-initializer.kt
+style/layout-fit-boundaries/single-argument-call.kt
 style/layout-fit-boundaries/when-branch-expression.kt
 style/program/comment-only-file.kt
 style/program/formatter-ignore.kt

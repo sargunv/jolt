@@ -1,0 +1,103 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.boundaries
+
+fun validate(name: String) {
+  require(name.isNotBlank()) { "blank name" }
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PackageHeader
+      PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "com" @ 8..11
+          Dot "." @ 11..12
+          Name
+            Identifier "example" @ 12..19
+          Dot "." @ 19..20
+          Name
+            Identifier "boundaries" @ 20..30
+      TerminatorList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "validate" @ 36..44
+      ValueParameterList
+        LParen "(" @ 44..45
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "name" @ 45..49
+            Colon ":" @ 49..50 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "String" @ 51..57
+        RParen ")" @ 57..58 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 59..60
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "require" @ 63..70 leading=[Newline "\n", Whitespace "  "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 70..71
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        CallExpression
+                          NavigationExpression
+                            NameExpression
+                              Identifier "name" @ 71..75
+                            Dot "." @ 75..76
+                            Identifier "isNotBlank" @ 76..86
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 86..87
+                            ValueArgumentEntryList
+                            RParen ")" @ 87..88
+                          LambdaExpressionList
+                    RParen ")" @ 88..89 trailing=[Whitespace " "]
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 90..91 trailing=[Whitespace " "]
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              StringTemplateExpression
+                                StringTemplateEntryList
+                                  StringTemplateEntry
+                                    OpenQuote "\"" @ 92..93
+                                  StringTemplateEntry
+                                    RegularStringPart "blank name" @ 93..103
+                                ClosingQuote "\"" @ 103..104 trailing=[Whitespace " "]
+                            TerminatorList
+                        RBrace "}" @ 105..106
+              TerminatorList
+          RBrace "}" @ 107..108 leading=[Newline "\n"]
+  Eof "" @ 109..109 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
