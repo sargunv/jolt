@@ -659,9 +659,10 @@ impl Parser<'_> {
     }
 
     fn at_split_safe_access(&mut self) -> bool {
+        let position = self.position();
         self.current_kind() == K::Question
             && self.nth_kind(1) == K::Dot
-            && self.tokens_are_adjacent(self.position(), 2)
+            && self.tokens_are_adjacent(position, 2)
     }
 
     fn at_label_start(&mut self, kind: K) -> bool {

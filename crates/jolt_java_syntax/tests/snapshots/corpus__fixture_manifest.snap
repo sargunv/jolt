@@ -324,7 +324,6 @@ syntax/parser/parses-record-type-and-match-all-patterns.java
 syntax/parser/parses-sealed-non-sealed-and-permits-contextual-keywords.java
 syntax/parser/parses-selector-relational-expressions.java
 syntax/parser/parses-single-module-import-declaration.java
-syntax/parser/parses-string-template-expressions.java
 syntax/parser/parses-super-field-access-forms.java
 syntax/parser/parses-switch-block-statement-group.java
 syntax/parser/parses-switch-rule-with-throw-statement.java

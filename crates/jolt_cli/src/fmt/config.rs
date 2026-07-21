@@ -7,12 +7,11 @@ use std::{
 
 use globset::{GlobBuilder, GlobSet, GlobSetBuilder};
 use jolt_formatter::FormatOptions;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use toml_edit::DocumentMut;
 
 use crate::error::CliError;
-
-use super::CliFormatOptions;
 
 const DEFAULT_INCLUDE: &[&str] = &["**/*.java", "**/*.kt", "**/*.kts"];
 const VCS_MARKERS: &[&str] = &[".git", ".hg", ".jj", ".svn"];
@@ -105,13 +104,47 @@ impl ResolvedConfig {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+/// Sparse formatter options shared by `jolt.toml`'s `[format]` table, CLI
+/// overrides, and the rendered effective configuration.
+///
+/// All fields are optional so a value can be left unset, letting it fall
+/// through to a less specific config layer, a CLI flag, or the built-in
+/// default.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+pub(crate) struct FormatOptionsPatch {
+    /// Preferred maximum rendered line width.
+    #[schemars(range(min = 1, max = 65535))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) line_width: Option<u16>,
+    /// Number of spaces per indentation level when `use-tabs` is false.
+    #[schemars(range(min = 1, max = 255))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) indent_width: Option<u8>,
+    /// Whether indentation should use tabs instead of spaces.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) use_tabs: Option<bool>,
+}
+
+/// Sparse file-selection overlay shared by `jolt.toml`'s `[files]` table, CLI
+/// overrides, and the rendered effective configuration.
+#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+pub(crate) struct FileSelectionPatch {
+    /// Source file globs to include.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) include: Option<Vec<String>>,
+    /// Source file globs to exclude.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) exclude: Option<Vec<String>>,
+}
+
+#[derive(Clone, Debug)]
 struct SparseConfig {
-    line_width: Option<SourceValue<u16>>,
-    indent_width: Option<SourceValue<u8>>,
-    use_tabs: Option<SourceValue<bool>>,
-    include: Option<SourceValue<PatternList>>,
-    exclude: Vec<SourceValue<PatternList>>,
+    source: ValueSource,
+    format: FormatOptionsPatch,
+    include: Option<PatternList>,
+    exclude: Option<PatternList>,
 }
 
 #[derive(Clone, Debug)]
@@ -143,11 +176,64 @@ impl ValueSource {
     }
 }
 
+/// Provenance for each field of a resolved [`FormatOptions`], tracking which
+/// config layer, CLI flag, or built-in default contributed the final value.
 #[derive(Clone, Debug)]
-struct ResolvedConfigSources {
+struct FormatOptionsSources {
     line_width: ValueSource,
     indent_width: ValueSource,
     use_tabs: ValueSource,
+}
+
+/// A [`FormatOptions`] under construction, tracking the source of each field
+/// as [`FormatOptionsPatch`] overlays are applied in priority order.
+#[derive(Clone, Debug)]
+struct SourcedFormatOptions {
+    line_width: SourceValue<u16>,
+    indent_width: SourceValue<u8>,
+    use_tabs: SourceValue<bool>,
+}
+
+impl SourcedFormatOptions {
+    fn new(options: FormatOptions, source: ValueSource) -> Self {
+        Self {
+            line_width: SourceValue::new(options.line_width, source.clone()),
+            indent_width: SourceValue::new(options.indent_width, source.clone()),
+            use_tabs: SourceValue::new(options.use_tabs, source),
+        }
+    }
+
+    fn apply_patch(&mut self, patch: FormatOptionsPatch, source: &ValueSource) {
+        if let Some(line_width) = patch.line_width {
+            self.line_width = SourceValue::new(line_width, source.clone());
+        }
+        if let Some(indent_width) = patch.indent_width {
+            self.indent_width = SourceValue::new(indent_width, source.clone());
+        }
+        if let Some(use_tabs) = patch.use_tabs {
+            self.use_tabs = SourceValue::new(use_tabs, source.clone());
+        }
+    }
+
+    fn into_parts(self) -> (FormatOptions, FormatOptionsSources) {
+        (
+            FormatOptions {
+                line_width: self.line_width.value,
+                indent_width: self.indent_width.value,
+                use_tabs: self.use_tabs.value,
+            },
+            FormatOptionsSources {
+                line_width: self.line_width.source,
+                indent_width: self.indent_width.source,
+                use_tabs: self.use_tabs.source,
+            },
+        )
+    }
+}
+
+#[derive(Clone, Debug)]
+struct ResolvedConfigSources {
+    format: FormatOptionsSources,
     include: ValueSource,
     excludes: Vec<ValueSource>,
 }
@@ -155,7 +241,7 @@ struct ResolvedConfigSources {
 #[derive(Clone, Debug)]
 pub(crate) struct ConfigGraph {
     invocation_root: PathBuf,
-    cli_options: CliFormatOptions,
+    cli_options: FormatOptionsPatch,
     cli_include: Option<PatternList>,
     cli_exclude: Option<PatternList>,
     explicit_config: Option<SparseConfig>,
@@ -173,7 +259,7 @@ impl ConfigGraph {
     pub(crate) fn new(
         cwd: &Path,
         invocation_root: PathBuf,
-        cli_options: CliFormatOptions,
+        cli_options: FormatOptionsPatch,
         cli_include_patterns: &[String],
         cli_exclude_patterns: &[String],
         explicit_config: Option<&Path>,
@@ -368,23 +454,17 @@ impl ConfigGraph {
 
 #[derive(Clone, Debug)]
 struct ConfigDefaults {
-    line_width: SourceValue<u16>,
-    indent_width: SourceValue<u8>,
-    use_tabs: SourceValue<bool>,
+    format: SourcedFormatOptions,
     include: SourceValue<PatternList>,
 }
 
 impl ConfigDefaults {
     fn new(invocation_root: &Path) -> Result<Self, CliError> {
         let default = default_config();
+        let source = ValueSource::Default;
         Ok(Self {
-            line_width: SourceValue::new(default.options.line_width, ValueSource::Default),
-            indent_width: SourceValue::new(default.options.indent_width, ValueSource::Default),
-            use_tabs: SourceValue::new(default.options.use_tabs, ValueSource::Default),
-            include: SourceValue::new(
-                PatternList::new(invocation_root, &default.include)?,
-                ValueSource::Default,
-            ),
+            format: SourcedFormatOptions::new(default.options, source.clone()),
+            include: SourceValue::new(PatternList::new(invocation_root, &default.include)?, source),
         })
     }
 }
@@ -396,9 +476,7 @@ struct DirectoryConfig {
 
 #[derive(Clone, Debug)]
 struct ConfigBuilder {
-    line_width: SourceValue<u16>,
-    indent_width: SourceValue<u8>,
-    use_tabs: SourceValue<bool>,
+    format: SourcedFormatOptions,
     include: SourceValue<PatternList>,
     excludes: Vec<SourceValue<PatternList>>,
 }
@@ -406,113 +484,76 @@ struct ConfigBuilder {
 impl ConfigBuilder {
     fn new(defaults: &ConfigDefaults) -> Self {
         Self {
-            line_width: defaults.line_width.clone(),
-            indent_width: defaults.indent_width.clone(),
-            use_tabs: defaults.use_tabs.clone(),
+            format: defaults.format.clone(),
             include: defaults.include.clone(),
             excludes: Vec::new(),
         }
     }
 
     fn apply_sparse(&mut self, sparse: &SparseConfig) {
-        if let Some(line_width) = &sparse.line_width {
-            self.line_width = line_width.clone();
-        }
-        if let Some(indent_width) = &sparse.indent_width {
-            self.indent_width = indent_width.clone();
-        }
-        if let Some(use_tabs) = &sparse.use_tabs {
-            self.use_tabs = use_tabs.clone();
-        }
+        self.format.apply_patch(sparse.format, &sparse.source);
         if let Some(include) = &sparse.include {
-            self.include = include.clone();
+            self.include = SourceValue::new(include.clone(), sparse.source.clone());
         }
-        self.excludes.extend(sparse.exclude.clone());
+        if let Some(exclude) = &sparse.exclude {
+            self.excludes
+                .push(SourceValue::new(exclude.clone(), sparse.source.clone()));
+        }
     }
 
-    fn apply_cli_options(&mut self, options: CliFormatOptions) {
-        if let Some(line_width) = options.line_width {
-            self.line_width = SourceValue::new(line_width, ValueSource::Cli);
-        }
-        if let Some(indent_width) = options.indent_width {
-            self.indent_width = SourceValue::new(indent_width, ValueSource::Cli);
-        }
-        if let Some(use_tabs) = options.use_tabs {
-            self.use_tabs = SourceValue::new(use_tabs, ValueSource::Cli);
-        }
+    fn apply_cli_options(&mut self, patch: FormatOptionsPatch) {
+        self.format.apply_patch(patch, &ValueSource::Cli);
     }
 
     fn finish(self) -> ResolvedConfig {
+        let (options, format_sources) = self.format.into_parts();
         let SourceValue {
             value: include,
             source: include_source,
         } = self.include;
-        let options = FormatOptions {
-            line_width: self.line_width.value,
-            indent_width: self.indent_width.value,
-            use_tabs: self.use_tabs.value,
-        };
-        let excludes = self
+        let (excludes, exclude_sources) = self
             .excludes
-            .iter()
-            .map(|exclude| exclude.value.clone())
-            .collect();
-        let sources = ResolvedConfigSources {
-            line_width: self.line_width.source,
-            indent_width: self.indent_width.source,
-            use_tabs: self.use_tabs.source,
-            include: include_source,
-            excludes: self
-                .excludes
-                .into_iter()
-                .map(|exclude| exclude.source)
-                .collect(),
-        };
+            .into_iter()
+            .map(|exclude| (exclude.value, exclude.source))
+            .unzip();
 
         ResolvedConfig {
             options,
             include,
             excludes,
-            sources,
+            sources: ResolvedConfigSources {
+                format: format_sources,
+                include: include_source,
+                excludes: exclude_sources,
+            },
         }
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+/// The `jolt.toml` (or `.config/jolt.toml`, `.config/jolt/config.toml`) file
+/// format: sparse formatting and file-selection overlays that merge across
+/// discovered config layers, CLI overrides, and built-in defaults. This same
+/// shape is used to load config files, to render the effective resolved
+/// config, and to generate the `jolt.toml` JSON schema.
+#[derive(Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
+#[schemars(title = "Jolt configuration")]
 pub(crate) struct FileConfig {
+    /// Marks this config as the project root when set to true.
     #[serde(skip_serializing_if = "Option::is_none")]
     root: Option<bool>,
+    /// Formatting options.
     #[serde(skip_serializing_if = "Option::is_none")]
-    format: Option<FileFormatConfig>,
+    format: Option<FormatOptionsPatch>,
+    /// File discovery options.
     #[serde(skip_serializing_if = "Option::is_none")]
-    files: Option<FileSelectionConfig>,
+    files: Option<FileSelectionPatch>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 struct ProjectRootConfig {
     root: Option<bool>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case", deny_unknown_fields)]
-struct FileFormatConfig {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    line_width: Option<u16>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    indent_width: Option<u8>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    use_tabs: Option<bool>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case", deny_unknown_fields)]
-struct FileSelectionConfig {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    include: Option<Vec<String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    exclude: Option<Vec<String>>,
 }
 
 fn load_explicit_config(cwd: &Path, path: &Path) -> Result<SparseConfig, CliError> {
@@ -551,12 +592,12 @@ impl FileConfig {
     fn from_default_config(default: DefaultConfig) -> Self {
         Self {
             root: Some(true),
-            format: Some(FileFormatConfig {
+            format: Some(FormatOptionsPatch {
                 line_width: Some(default.options.line_width),
                 indent_width: Some(default.options.indent_width),
                 use_tabs: Some(default.options.use_tabs),
             }),
-            files: Some(FileSelectionConfig {
+            files: Some(FileSelectionPatch {
                 include: Some(default.include),
                 exclude: None,
             }),
@@ -567,52 +608,31 @@ impl FileConfig {
         let FileConfig { format, files, .. } = self;
         let source = ValueSource::Config(path.to_path_buf());
 
-        let sparse_options = CliFormatOptions {
-            line_width: format.as_ref().and_then(|format| format.line_width),
-            indent_width: format.as_ref().and_then(|format| format.indent_width),
-            use_tabs: format.as_ref().and_then(|format| format.use_tabs),
-        };
-        validate_options(sparse_options, &path.display().to_string())?;
+        let format = format.unwrap_or_default();
+        validate_options(format, &path.display().to_string())?;
 
+        let files = files.unwrap_or_default();
         let include = files
-            .as_ref()
-            .and_then(|files| files.include.as_ref())
-            .cloned()
-            .map(|patterns| {
-                PatternList::new(base_dir, &patterns)
-                    .map(|list| SourceValue::new(list, source.clone()))
-            })
+            .include
+            .map(|patterns| PatternList::new(base_dir, &patterns))
             .transpose()
             .map_err(|error| error.with_source(path))?;
         let exclude = files
-            .as_ref()
-            .and_then(|files| files.exclude.as_ref())
-            .cloned()
-            .map(|patterns| {
-                PatternList::new(base_dir, &patterns)
-                    .map(|list| vec![SourceValue::new(list, source.clone())])
-            })
+            .exclude
+            .map(|patterns| PatternList::new(base_dir, &patterns))
             .transpose()
-            .map_err(|error| error.with_source(path))?
-            .unwrap_or_default();
+            .map_err(|error| error.with_source(path))?;
 
         Ok(SparseConfig {
-            line_width: sparse_options
-                .line_width
-                .map(|value| SourceValue::new(value, source.clone())),
-            indent_width: sparse_options
-                .indent_width
-                .map(|value| SourceValue::new(value, source.clone())),
-            use_tabs: sparse_options
-                .use_tabs
-                .map(|value| SourceValue::new(value, source.clone())),
+            source,
+            format,
             include,
             exclude,
         })
     }
 }
 
-fn validate_options(options: CliFormatOptions, source: &str) -> Result<(), CliError> {
+fn validate_options(options: FormatOptionsPatch, source: &str) -> Result<(), CliError> {
     if options.line_width == Some(0) {
         return Err(CliError::new(format!(
             "{source}: line-width must be greater than zero"
@@ -644,7 +664,7 @@ pub(crate) fn discovered_config_paths_for_dir(
     let mut graph = ConfigGraph::new(
         invocation_root,
         invocation_root.to_path_buf(),
-        CliFormatOptions::default(),
+        FormatOptionsPatch::default(),
         &[],
         &[],
         None,
@@ -657,20 +677,23 @@ pub(crate) fn render_resolved_config(
     config: &ResolvedConfig,
     target_file: Option<&Path>,
 ) -> Result<String, CliError> {
-    let render_config = RenderFileConfig {
-        format: RenderFormatConfig {
-            line_width: config.options.line_width,
-            indent_width: config.options.indent_width,
-            use_tabs: config.options.use_tabs,
-        },
-        files: RenderFileSelectionConfig {
-            include: config.include.patterns().to_vec(),
-            exclude: config
-                .excludes
-                .iter()
-                .flat_map(|exclude| exclude.patterns().iter().cloned())
-                .collect(),
-        },
+    let exclude_patterns = config
+        .excludes
+        .iter()
+        .flat_map(|exclude| exclude.patterns().iter().cloned())
+        .collect::<Vec<_>>();
+
+    let render_config = FileConfig {
+        root: None,
+        format: Some(FormatOptionsPatch {
+            line_width: Some(config.options.line_width),
+            indent_width: Some(config.options.indent_width),
+            use_tabs: Some(config.options.use_tabs),
+        }),
+        files: Some(FileSelectionPatch {
+            include: Some(config.include.patterns().to_vec()),
+            exclude: (!exclude_patterns.is_empty()).then_some(exclude_patterns),
+        }),
     };
     let toml = toml_edit::ser::to_string_pretty(&render_config)
         .map_err(|error| CliError::new(format!("failed to serialize resolved config: {error}")))?;
@@ -679,9 +702,13 @@ pub(crate) fn render_resolved_config(
         .map_err(|error| CliError::new(format!("failed to parse resolved config: {error}")))?;
 
     if let Some(format) = document["format"].as_table_mut() {
-        set_key_source_comment(format, "line-width", &[&config.sources.line_width]);
-        set_key_source_comment(format, "indent-width", &[&config.sources.indent_width]);
-        set_key_source_comment(format, "use-tabs", &[&config.sources.use_tabs]);
+        set_key_source_comment(format, "line-width", &[&config.sources.format.line_width]);
+        set_key_source_comment(
+            format,
+            "indent-width",
+            &[&config.sources.format.indent_width],
+        );
+        set_key_source_comment(format, "use-tabs", &[&config.sources.format.use_tabs]);
     }
     if let Some(files) = document["files"].as_table_mut() {
         set_key_source_comment(files, "include", &[&config.sources.include]);
@@ -705,29 +732,6 @@ pub(crate) fn render_resolved_config(
     }
 
     Ok(document.to_string())
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "kebab-case")]
-struct RenderFileConfig {
-    format: RenderFormatConfig,
-    files: RenderFileSelectionConfig,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "kebab-case")]
-struct RenderFormatConfig {
-    line_width: u16,
-    indent_width: u8,
-    use_tabs: bool,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "kebab-case")]
-struct RenderFileSelectionConfig {
-    include: Vec<String>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    exclude: Vec<String>,
 }
 
 fn set_key_source_comment(table: &mut toml_edit::Table, key: &str, sources: &[&ValueSource]) {

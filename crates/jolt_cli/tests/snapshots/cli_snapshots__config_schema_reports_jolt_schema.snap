@@ -1,5 +1,6 @@
 ---
 source: crates/jolt_cli/tests/cli_snapshots.rs
+assertion_line: 105
 expression: "snapshot(&output, &[])"
 ---
 status: 0
@@ -7,14 +8,14 @@ stdout:
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Jolt configuration",
-  "description": "Schema shape for `jolt.toml`.",
+  "description": "The `jolt.toml` (or `.config/jolt.toml`, `.config/jolt/config.toml`) file format: sparse formatting and file-selection overlays that merge across discovered config layers, CLI overrides, and built-in defaults. This same shape is used to load config files, to render the effective resolved config, and to generate the `jolt.toml` JSON schema.",
   "type": "object",
   "properties": {
     "files": {
       "description": "File discovery options.",
       "anyOf": [
         {
-          "$ref": "#/definitions/JoltFilesConfig"
+          "$ref": "#/definitions/FileSelectionPatch"
         },
         {
           "type": "null"
@@ -25,7 +26,7 @@ stdout:
       "description": "Formatting options.",
       "anyOf": [
         {
-          "$ref": "#/definitions/JoltFormatConfig"
+          "$ref": "#/definitions/FormatOptionsPatch"
         },
         {
           "type": "null"
@@ -42,8 +43,8 @@ stdout:
   },
   "additionalProperties": false,
   "definitions": {
-    "JoltFilesConfig": {
-      "description": "Jolt file discovery options.",
+    "FileSelectionPatch": {
+      "description": "Sparse file-selection overlay shared by `jolt.toml`'s `[files]` table, CLI overrides, and the rendered effective configuration.",
       "type": "object",
       "properties": {
         "exclude": {
@@ -69,8 +70,8 @@ stdout:
       },
       "additionalProperties": false
     },
-    "JoltFormatConfig": {
-      "description": "Jolt formatter options for `jolt.toml`.\n\nThis mirrors `jolt_formatter::FormatOptions`, but uses kebab-case field names and optional fields to match sparse `jolt.toml` configuration.",
+    "FormatOptionsPatch": {
+      "description": "Sparse formatter options shared by `jolt.toml`'s `[format]` table, CLI overrides, and the rendered effective configuration.\n\nAll fields are optional so a value can be left unset, letting it fall through to a less specific config layer, a CLI flag, or the built-in default.",
       "type": "object",
       "properties": {
         "indent-width": {

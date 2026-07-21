@@ -1,5 +1,6 @@
 ---
 source: crates/jolt_cli/tests/cli_snapshots.rs
+assertion_line: 114
 expression: "snapshot(&output, &[])"
 ---
 status: 0
@@ -7,7 +8,7 @@ stdout:
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "dprint jolt plugin configuration",
-  "description": "Outer schema shape for dprint's `dprint.jsonc`: plugin options nested under the `jolt` config key, with all other dprint global keys permitted.",
+  "description": "Outer schema shape for dprint's `dprint.jsonc`: plugin options nested under the `jolt` config key, with all other dprint global keys permitted.\n\nThis mirrors `crate::fmt::config::FormatOptionsPatch`, but uses camelCase field names to match dprint's plugin config convention rather than the kebab-case `jolt.toml` convention.",
   "type": "object",
   "properties": {
     "jolt": {

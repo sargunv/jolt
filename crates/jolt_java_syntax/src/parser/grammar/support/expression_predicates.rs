@@ -157,8 +157,9 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn starts_typed_lambda_parameter(&mut self) -> bool {
-        if self.text_at(self.position()) == Some("var") && self.nth_kind(1) != JavaSyntaxKind::Dot {
-            return self.is_variable_identifier_at_offset(self.position() + 1);
+        let position = self.position();
+        if self.text_at(position) == Some("var") && self.nth_kind(1) != JavaSyntaxKind::Dot {
+            return self.is_variable_identifier_at_offset(position + 1);
         }
 
         let mut lookahead = self.lookahead();

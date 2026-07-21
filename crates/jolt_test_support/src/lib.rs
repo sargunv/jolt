@@ -485,9 +485,20 @@ pub fn represented_token_loss_report<'before, 'after, L>(
 where
     L: Language,
 {
-    let mut before = token_text_inventory(before);
-    let mut after = token_text_inventory(after);
+    represented_token_loss_report_from_inventories(
+        token_text_inventory(before),
+        token_text_inventory(after),
+        removals,
+    )
+}
 
+/// Inventory-based token-loss report used by the shared corpus harness.
+#[must_use]
+pub fn represented_token_loss_report_from_inventories(
+    mut before: BTreeMap<String, usize>,
+    mut after: BTreeMap<String, usize>,
+    removals: &[RepresentedTokenRemoval],
+) -> String {
     let exact_tokens = before.keys().cloned().collect::<Vec<_>>();
     for token in exact_tokens {
         cancel_inventory_counts(&mut before, &mut after, &token, &token, usize::MAX);
@@ -658,6 +669,326 @@ pub fn assert_trivia_markers_conserved(
             path.display()
         );
     }
+}
+
+/// Owned parse facts for the shared formatter corpus harness.
+///
+/// Built inside each language's parse scope so the harness never holds borrowed
+/// tokens across a second parse of formatted output.
+#[derive(Clone, Debug)]
+pub struct CorpusParseFacts {
+    pub has_tree: bool,
+    pub diagnostics: Vec<Diagnostic>,
+    pub token_inventory: BTreeMap<String, usize>,
+    pub comment_inventory: BTreeMap<String, usize>,
+}
+
+/// Builds owned corpus facts from a language parse while its buffers are live.
+#[must_use]
+pub fn corpus_parse_facts<'source, L>(
+    has_tree: bool,
+    diagnostics: &[Diagnostic],
+    tokens: impl IntoIterator<Item = SyntaxToken<'source, L>>,
+) -> CorpusParseFacts
+where
+    L: Language,
+{
+    let tokens = tokens.into_iter().collect::<Vec<_>>();
+    CorpusParseFacts {
+        has_tree,
+        diagnostics: diagnostics.to_vec(),
+        token_inventory: token_text_inventory(tokens.iter().copied()),
+        comment_inventory: represented_comment_inventory(tokens.iter().copied()),
+    }
+}
+
+/// Language bindings for the shared formatter corpus / recovery harness.
+///
+/// The harness owns the fixture walk, audit-vs-format routing, conservation
+/// checks, and snapshot orchestration. Implementors supply owned parse facts,
+/// the format function, and language-specific classification policy.
+pub trait CorpusLanguage {
+    /// Human-readable language name used in harness assertion messages.
+    fn language_name(&self) -> &'static str;
+
+    /// Parses one fixture source into owned conservation facts.
+    fn parse_facts(&self, source: &str) -> CorpusParseFacts;
+
+    /// Formats `source`, panicking on halt/block like the corpus tests expect.
+    fn format(&self, source: &str, label: &str) -> String;
+
+    /// True when a fixture at `relative` is expected to carry parser
+    /// diagnostics, routing it through the audit path instead of the format
+    /// snapshot path.
+    fn expects_parser_diagnostics(&self, relative: &str) -> bool;
+
+    /// Bounded source-token removals permitted for a clean format fixture.
+    fn allowed_clean_removals(&self, relative: &str) -> &'static [RepresentedTokenRemoval];
+}
+
+/// Drives the shared formatter corpus loop over `files`.
+///
+/// Fixtures under `syntax/lexer` or `syntax/recovery`, and any fixture the
+/// language expects to carry parser diagnostics, take the audit path (which
+/// checks conservation without producing a corpus snapshot). Every other
+/// fixture is formatted, reparsed, conservation-checked, and snapshotted via
+/// `snapshot` (kept at the call site so insta snapshot names are preserved).
+pub fn run_formatter_corpus<L: CorpusLanguage>(
+    lang: &L,
+    root: &Path,
+    files: &[PathBuf],
+    mut snapshot: impl FnMut(&str, &str),
+) {
+    let mut formatted_cases = 0usize;
+    let mut conservation_failures = Vec::new();
+
+    for path in files {
+        let relative = path
+            .strip_prefix(root)
+            .unwrap_or(path)
+            .to_string_lossy()
+            .replace('\\', "/");
+        let source = read_to_string(path);
+        let input = lang.parse_facts(&source);
+        assert!(
+            input.has_tree,
+            "{} formatter corpus fixture produced no represented tree: {}",
+            lang.language_name(),
+            path.display()
+        );
+
+        let dedicated_audit =
+            relative.starts_with("syntax/lexer") || relative.starts_with("syntax/recovery");
+        let expected_parser_diagnostics = lang.expects_parser_diagnostics(&relative);
+        if !dedicated_audit {
+            assert_eq!(
+                !input.diagnostics.is_empty(),
+                expected_parser_diagnostics,
+                "{} formatter corpus route changed for {relative}: diagnostics={:#?}",
+                lang.language_name(),
+                input.diagnostics
+            );
+        }
+
+        if dedicated_audit || expected_parser_diagnostics {
+            if let Some(failure) = audit_diagnostic_source(lang, &source, &relative, &input) {
+                conservation_failures.push(failure);
+            }
+            continue;
+        }
+
+        formatted_cases += 1;
+        let label = path.display().to_string();
+        let formatted = lang.format(&source, &label);
+        let formatted_facts = lang.parse_facts(&formatted);
+        assert!(
+            formatted_facts.diagnostics.is_empty(),
+            "formatted output did not parse cleanly for {}: {:#?}\n{}",
+            path.display(),
+            formatted_facts.diagnostics,
+            formatted
+        );
+        assert!(
+            formatted_facts.has_tree,
+            "formatted output produced no syntax tree for {}",
+            path.display()
+        );
+        let token_loss = represented_token_loss_report_from_inventories(
+            input.token_inventory.clone(),
+            formatted_facts.token_inventory,
+            lang.allowed_clean_removals(&relative),
+        );
+        let expected_markers = trivia_markers(&source);
+        let actual_markers = trivia_markers(&formatted);
+        if !token_loss.is_empty() || actual_markers != expected_markers {
+            conservation_failures.push(format!(
+                "{relative}:\n{token_loss}{}",
+                if actual_markers == expected_markers {
+                    String::new()
+                } else {
+                    format!(
+                        "trivia markers changed\nexpected: {expected_markers:#?}\nactual: {actual_markers:#?}\n"
+                    )
+                }
+            ));
+        }
+
+        let repeated = lang.format(&formatted, &label);
+        assert_eq!(
+            repeated,
+            formatted,
+            "formatter output was not idempotent for {}",
+            path.display()
+        );
+
+        let snapshot_body = SnapshotBuilder::new()
+            .section("formatted", &formatted)
+            .section("diagnostics", render_diagnostics(&[]))
+            .finish();
+        snapshot(&fixture_snapshot_name(root, path), &snapshot_body);
+    }
+
+    assert!(
+        formatted_cases > 0,
+        "expected at least one valid {} formatter corpus fixture",
+        lang.language_name()
+    );
+    assert!(
+        conservation_failures.is_empty(),
+        "formatter lost represented {} source:\n{}",
+        lang.language_name(),
+        conservation_failures.join("\n")
+    );
+}
+
+/// Drives the shared recovery snapshot loop over `files`.
+///
+/// Each recovery fixture is formatted, reparsed, conservation-checked, and
+/// snapshotted (input, formatted, and parser diagnostics).
+/// `allowed_removed_tokens` supplies per-fixture normalization removals.
+pub fn run_recovery_corpus<L: CorpusLanguage>(
+    lang: &L,
+    recovery_root: &Path,
+    files: &[PathBuf],
+    allowed_removed_tokens: impl Fn(&Path) -> &'static [RepresentedTokenRemoval],
+    mut snapshot: impl FnMut(&str, &str),
+) {
+    assert!(!files.is_empty(), "expected at least one recovery fixture");
+    let mut conservation_failures = Vec::new();
+
+    for path in files {
+        let source = read_to_string(path);
+        let input = lang.parse_facts(&source);
+        assert!(
+            input.has_tree,
+            "recovery fixture did not produce a represented tree for {}",
+            path.display()
+        );
+        let label = path.display().to_string();
+        let formatted = lang.format(&source, &label);
+        let formatted_facts = lang.parse_facts(&formatted);
+        assert!(
+            formatted_facts.has_tree,
+            "formatted recovery output did not produce a represented tree for {}:\n{}",
+            path.display(),
+            formatted
+        );
+        let repeated = lang.format(&formatted, &label);
+        if let Some(failure) = formatter_conservation_failure_from_facts(
+            path.display(),
+            &source,
+            &formatted,
+            &repeated,
+            &input,
+            &formatted_facts,
+            allowed_removed_tokens(path),
+        ) {
+            conservation_failures.push(failure);
+        }
+
+        let snapshot_body = SnapshotBuilder::new()
+            .section("input", &source)
+            .section("formatted", &formatted)
+            .section("diagnostics", render_diagnostics(&input.diagnostics))
+            .finish();
+        snapshot(&fixture_snapshot_name(recovery_root, path), &snapshot_body);
+    }
+
+    assert!(
+        conservation_failures.is_empty(),
+        "formatter lost represented {} source:\n{}",
+        lang.language_name(),
+        conservation_failures.join("\n")
+    );
+}
+
+/// Shared audit path: checks that reformatting a diagnostic-carrying fixture
+/// preserves diagnostic classification, comment inventory, trivia markers, and
+/// idempotence.
+fn audit_diagnostic_source<L: CorpusLanguage>(
+    lang: &L,
+    source: &str,
+    label: &str,
+    before: &CorpusParseFacts,
+) -> Option<String> {
+    let formatted = lang.format(source, label);
+    let after = lang.parse_facts(&formatted);
+    if !after.has_tree {
+        return Some(format!("{label}: formatted output has no represented tree"));
+    }
+    let comments_changed = before.comment_inventory != after.comment_inventory;
+    let expected_markers = trivia_markers(source);
+    let actual_markers = trivia_markers(&formatted);
+    let repeated = lang.format(&formatted, label);
+
+    let mut failures = String::new();
+    if diagnostic_inventory(&before.diagnostics) != diagnostic_inventory(&after.diagnostics) {
+        failures.push_str("parser diagnostic classification changed\n");
+    }
+    if comments_changed {
+        failures.push_str("represented comment inventory changed\n");
+    }
+    if actual_markers != expected_markers {
+        write!(
+            failures,
+            "trivia markers changed\nexpected: {expected_markers:#?}\nactual: {actual_markers:#?}\n"
+        )
+        .expect("writing to a String cannot fail");
+    }
+    if repeated != formatted {
+        write!(
+            failures,
+            "formatter output is not idempotent\nfirst:\n{formatted}\nsecond:\n{repeated}\n"
+        )
+        .expect("writing to a String cannot fail");
+    }
+    (!failures.is_empty()).then(|| format!("{label}:\ninput:\n{source}\n{failures}"))
+}
+
+/// Conservation failure report built from owned parse facts.
+#[must_use]
+pub fn formatter_conservation_failure_from_facts(
+    path_label: impl Display,
+    source: &str,
+    formatted: &str,
+    repeated: &str,
+    input: &CorpusParseFacts,
+    formatted_facts: &CorpusParseFacts,
+    allowed_removals: &[RepresentedTokenRemoval],
+) -> Option<String> {
+    let token_loss = represented_token_loss_report_from_inventories(
+        input.token_inventory.clone(),
+        formatted_facts.token_inventory.clone(),
+        allowed_removals,
+    );
+    let comment_loss = (input.comment_inventory != formatted_facts.comment_inventory)
+        .then_some("represented comment inventory changed\n");
+    let expected_markers = trivia_markers(source);
+    let actual_markers = trivia_markers(formatted);
+    let marker_loss = (actual_markers != expected_markers).then(|| {
+        format!(
+            "trivia markers changed\nexpected: {expected_markers:#?}\nactual: {actual_markers:#?}\n"
+        )
+    });
+    let mut failure = String::new();
+    if !token_loss.is_empty() || comment_loss.is_some() || marker_loss.is_some() {
+        let _ = write!(
+            failure,
+            "{path_label}:\n{token_loss}{}{}",
+            comment_loss.unwrap_or_default(),
+            marker_loss.unwrap_or_default()
+        );
+    }
+    if repeated != formatted {
+        if !failure.is_empty() {
+            failure.push('\n');
+        }
+        let _ = write!(
+            failure,
+            "{path_label}:\nformatter output is not idempotent\nfirst:\n{formatted}\nsecond:\n{repeated}"
+        );
+    }
+    (!failure.is_empty()).then_some(failure)
 }
 
 /// Asserts that no rendered line of `formatted` exceeds `line_width` using the

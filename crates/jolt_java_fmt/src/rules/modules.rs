@@ -16,7 +16,8 @@ use crate::helpers::comments::{
     token_has_comments,
 };
 use crate::helpers::formatter_ignore::{
-    FormatterIgnoreRun, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
+    FormatterIgnoreRun, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
+    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     relative_token_range_between,
 };
 use crate::helpers::recovery::{
@@ -162,39 +163,25 @@ fn format_directive_entries_with_ignored<'source>(
     let entry_count = entries.len();
     let mut sections = Vec::with_capacity(entry_count.saturating_add(runs.len()));
     let mut retained = Vec::with_capacity(entry_count);
-    let mut run_index = 0;
-    let mut skip_index = 0;
-    for (index, entry) in entries.into_iter().enumerate() {
-        while runs
-            .get(run_index)
-            .is_some_and(|run| run.insert_index == index)
-        {
+    let mut entries = entries.into_iter().map(Some).collect::<Vec<_>>();
+    for_each_formatter_ignore_splice(entries.len(), runs, |event| match event {
+        FormatterIgnoreSplice::Ignore(run) => {
             if !retained.is_empty() {
                 sections.push((
                     format_directive_entries(std::mem::take(&mut retained), doc),
                     false,
                 ));
             }
-            sections.push((formatter_ignore_run_doc(&runs[run_index], doc), true));
-            run_index += 1;
+            sections.push((formatter_ignore_run_doc(run, doc), true));
         }
-        while runs
-            .get(skip_index)
-            .is_some_and(|run| run.skip_end <= index)
-        {
-            skip_index += 1;
+        FormatterIgnoreSplice::Item { index, .. } => {
+            if let Some(entry) = entries[index].take() {
+                retained.push(entry);
+            }
         }
-        if runs.get(skip_index).is_some_and(|run| run.skips(index)) {
-            continue;
-        }
-        retained.push(entry);
-    }
+    });
     if !retained.is_empty() {
         sections.push((format_directive_entries(retained, doc), false));
-    }
-    while let Some(run) = runs.get(run_index) {
-        sections.push((formatter_ignore_run_doc(run, doc), true));
-        run_index += 1;
     }
     doc.concat_list(|joined| {
         let mut previous_was_ignored = false;

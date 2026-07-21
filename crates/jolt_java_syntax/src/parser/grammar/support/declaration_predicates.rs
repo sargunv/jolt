@@ -213,9 +213,11 @@ impl Parser<'_> {
     pub(in crate::parser::grammar) fn starts_misspelled_non_sealed_type_declaration(
         &mut self,
     ) -> bool {
-        self.current_text() == Some("non")
-            && self.nth_kind(1) == JavaSyntaxKind::Minus
-            && matches!(self.text_at(self.position() + 2), Some(text) if text.starts_with("sealed"))
+        if self.current_text() != Some("non") || self.nth_kind(1) != JavaSyntaxKind::Minus {
+            return false;
+        }
+        let index = self.position() + 2;
+        matches!(self.text_at(index), Some(text) if text.starts_with("sealed"))
             && self.nth_is_name_segment(3)
     }
 

@@ -22,22 +22,6 @@ impl<'source> Parser<'source> {
         self.0.finish()
     }
 
-    pub(super) const fn position(&self) -> usize {
-        self.0.position()
-    }
-
-    pub(super) fn kind_at(&mut self, index: usize) -> JavaSyntaxKind {
-        self.0.kind_at(index)
-    }
-
-    pub(super) fn text_at(&mut self, index: usize) -> Option<&'source str> {
-        self.0.text_at(index)
-    }
-
-    pub(super) fn tokens_are_adjacent(&mut self, index: usize, count: usize) -> bool {
-        self.0.tokens_are_adjacent(index, count)
-    }
-
     pub(super) fn expect_required(
         &mut self,
         kind: JavaSyntaxKind,

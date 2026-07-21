@@ -1,26 +1,13 @@
 use jolt_fmt_ir::{
     Doc, DocBuilder, format_comment_lines, format_star_block_comment,
-    is_empty_single_line_block_comment, is_star_block_comment, preserved_block_comment_lines,
-    preserved_comment_lines,
+    format_token_doc as assemble_token_doc, is_empty_single_line_block_comment,
+    is_star_block_comment, preserved_block_comment_lines, preserved_comment_lines,
 };
 use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxToken, RemovalClaim};
 
 use crate::helpers::formatter_ignore::is_formatter_control_marker;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum LeadingTrivia {
-    Preserve,
-    SuppressAlreadyHandled,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum TrailingTrivia {
-    Preserve,
-    BeforeLineBreak,
-    BeforeSoftLine,
-    BeforeSpaceIfComments,
-    RelocatedToEnclosingContext,
-}
+pub(crate) use jolt_fmt_ir::{LeadingTrivia, TrailingTrivia};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum InlineLeadingTrivia {
@@ -322,50 +309,16 @@ pub(crate) fn format_token_doc<'source>(
     leading: LeadingTrivia,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
-    doc_concat!(
+    assemble_token_doc(
         doc,
-        [
-            match leading {
-                LeadingTrivia::Preserve => format_leading_comments(doc, token),
-                LeadingTrivia::SuppressAlreadyHandled => Doc::nil(),
-            },
-            token_doc,
-            match trailing {
-                TrailingTrivia::Preserve => format_trailing_comments(doc, token),
-                TrailingTrivia::BeforeLineBreak => {
-                    format_trailing_comments_before_line_break(doc, token)
-                }
-                TrailingTrivia::BeforeSoftLine => doc_concat!(
-                    doc,
-                    [
-                        format_trailing_comments_before_line_break(doc, token),
-                        if trailing_comments_force_line(token) {
-                            doc.hard_line()
-                        } else {
-                            doc.soft_line()
-                        },
-                    ]
-                ),
-                TrailingTrivia::BeforeSpaceIfComments => {
-                    if token.trailing_comments().is_empty() {
-                        Doc::nil()
-                    } else {
-                        doc_concat!(
-                            doc,
-                            [
-                                format_trailing_comments_before_line_break(doc, token),
-                                if trailing_comments_force_line(token) {
-                                    doc.hard_line()
-                                } else {
-                                    doc.space()
-                                },
-                            ]
-                        )
-                    }
-                }
-                TrailingTrivia::RelocatedToEnclosingContext => Doc::nil(),
-            },
-        ]
+        token_doc,
+        leading,
+        trailing,
+        |doc| format_leading_comments(doc, token),
+        |doc| format_trailing_comments(doc, token),
+        |doc| format_trailing_comments_before_line_break(doc, token),
+        trailing_comments_force_line(token),
+        !token.trailing_comments().is_empty(),
     )
 }
 

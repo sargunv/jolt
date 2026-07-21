@@ -494,17 +494,6 @@ impl Parser<'_> {
             return self.complete(suffix, JavaSyntaxKind::SuperExpression);
         }
 
-        // Java string templates were preview syntax in JDK 21/22 and withdrawn
-        // for JDK 23. Keep this parser shape for legacy preview sources only.
-        if matches!(
-            self.current_kind(),
-            JavaSyntaxKind::StringLiteral | JavaSyntaxKind::TextBlockLiteral
-        ) {
-            self.parse_literal_expression(false);
-            let suffix = self.precede(expression);
-            return self.complete(suffix, JavaSyntaxKind::TemplateExpression);
-        }
-
         let suffix = self.precede(expression);
         self.parse_optional_type_argument_list();
         let name_slot = if self.at(JavaSyntaxKind::LParen) {
@@ -682,7 +671,6 @@ impl Parser<'_> {
             JavaSyntaxKind::from_raw(receiver.kind()),
             Some(
                 JavaSyntaxKind::LiteralExpression
-                    | JavaSyntaxKind::TemplateExpression
                     | JavaSyntaxKind::NameExpression
                     | JavaSyntaxKind::ThisExpression
                     | JavaSyntaxKind::SuperExpression

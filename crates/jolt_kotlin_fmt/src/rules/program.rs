@@ -14,8 +14,8 @@ use crate::helpers::comments::{
     format_terminator_list, format_token, token_has_comments,
 };
 use crate::helpers::formatter_ignore::{
-    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
-    relative_token_range_between,
+    FormatterIgnoreSplice, for_each_formatter_ignore_splice, formatter_ignore_ranges,
+    formatter_ignore_run_doc, formatter_ignore_runs, relative_token_range_between,
 };
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_malformed, format_missing,
@@ -204,33 +204,19 @@ fn format_entries_with_ignored<'source>(
 
     let mut sections = Vec::new();
     let mut segment = Vec::new();
-    let mut run_index = 0;
-    let mut skip_index = 0;
-    for (index, entry) in entries.into_iter().enumerate() {
-        while run_index < runs.len() && runs[run_index].insert_index == index {
+    let mut entries = entries.into_iter().map(Some).collect::<Vec<_>>();
+    for_each_formatter_ignore_splice(entries.len(), &runs, |event| match event {
+        FormatterIgnoreSplice::Ignore(run) => {
             push_entry_segment(doc, &mut sections, &mut segment);
-            sections.push(FileSection::ignored(formatter_ignore_run_doc(
-                &runs[run_index],
-                doc,
-            )));
-            run_index += 1;
+            sections.push(FileSection::ignored(formatter_ignore_run_doc(run, doc)));
         }
-        while skip_index < runs.len() && runs[skip_index].skip_end <= index {
-            skip_index += 1;
+        FormatterIgnoreSplice::Item { index, .. } => {
+            if let Some(entry) = entries[index].take() {
+                segment.push(entry);
+            }
         }
-        if skip_index < runs.len() && runs[skip_index].skips(index) {
-            continue;
-        }
-        segment.push(entry);
-    }
+    });
     push_entry_segment(doc, &mut sections, &mut segment);
-    while run_index < runs.len() {
-        sections.push(FileSection::ignored(formatter_ignore_run_doc(
-            &runs[run_index],
-            doc,
-        )));
-        run_index += 1;
-    }
     (
         (!sections.is_empty()).then(|| join_sections(doc, sections)),
         ignored_eof_comments,

@@ -9,7 +9,8 @@ impl<'source> Parser<'source> {
     pub(in crate::parser::grammar) fn type_argument_list_issue_ahead(
         &mut self,
     ) -> Option<&'static str> {
-        if self.position() == 0 || !type_argument_receiver_kind(self.kind_at(self.position() - 1)) {
+        let position = self.position();
+        if position == 0 || !type_argument_receiver_kind(self.kind_at(position - 1)) {
             return None;
         }
 
@@ -18,7 +19,8 @@ impl<'source> Parser<'source> {
     }
 
     pub(in crate::parser::grammar) fn type_argument_list_is_call_suffix_ahead(&mut self) -> bool {
-        if self.position() == 0 || !type_argument_receiver_kind(self.kind_at(self.position() - 1)) {
+        let position = self.position();
+        if position == 0 || !type_argument_receiver_kind(self.kind_at(position - 1)) {
             return false;
         }
 

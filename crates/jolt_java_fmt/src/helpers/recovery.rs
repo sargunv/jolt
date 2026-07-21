@@ -1,11 +1,12 @@
 //! Field/list recovery resolution for the Java formatter.
 //!
-//! Kotlin has a parallel module with the same resolve/format field shapes.
-//! Keep them duplicated: Java empty-range malformed boundaries and Kotlin
-//! `Invisible` list parts are intentional language-owned recovery policy, not
-//! accidental drift that should collapse behind shared generics.
+//! Shared present/malformed field results and malformed fragment assembly live
+//! in `jolt_fmt_ir::recovery`. This module owns Java field/list resolve against
+//! typed CST enums and Java's empty-range malformed boundary policy.
 
-use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_fmt_ir::{
+    Doc, DocBuilder, FormatField, MalformedBoundaryPolicy, assemble_malformed_fragment,
+};
 use jolt_java_syntax::{
     JavaMissingSyntax, JavaSyntaxField, JavaSyntaxInvariantError, JavaSyntaxListPart,
     JavaSyntaxToken, JavaSyntaxView,
@@ -13,6 +14,8 @@ use jolt_java_syntax::{
 
 use super::comments::{comment_forces_line, format_comment, format_leading_comment_list};
 use super::lexical_safety::JavaLexicalSafety;
+
+pub(crate) type JavaFormatField<'source, T> = FormatField<'source, T>;
 
 /// Formats one syntax-owned malformed boundary and claims its exact source.
 pub(crate) fn format_malformed<'source>(
@@ -23,32 +26,19 @@ pub(crate) fn format_malformed<'source>(
         doc.block_on_invariant("malformed Java syntax did not own a verbatim core");
         return Doc::nil();
     };
-    let range = core.text_range();
-    let has_tokens = core.tokens().next().is_some();
     let (leading, trailing, has_leading_comments, has_trailing_comments) =
         malformed_boundary_comments(&core, doc);
-    let (left, right) = if range.start() == range.end() || !has_tokens {
-        (None, None)
-    } else {
-        (
-            (!has_leading_comments)
-                .then(|| core.previous_token())
-                .flatten(),
-            (!has_trailing_comments)
-                .then(|| core.next_token())
-                .flatten(),
-        )
-    };
     let mut safety = JavaLexicalSafety;
-    let fragment = doc.malformed_verbatim_with_safety(&core, &mut safety);
-    let fragment = doc.resolve_exceptional(fragment, left.as_ref(), right.as_ref(), &mut safety);
-    doc.concat([leading, fragment, trailing])
-}
-
-#[derive(Clone, Copy)]
-pub(crate) enum JavaFormatField<'source, T> {
-    Present(T),
-    Malformed(Doc<'source>),
+    assemble_malformed_fragment(
+        doc,
+        &core,
+        MalformedBoundaryPolicy::RequireNonEmptyRange,
+        &mut safety,
+        leading,
+        trailing,
+        has_leading_comments,
+        has_trailing_comments,
+    )
 }
 
 pub(crate) enum JavaFormatListPart<'source, T> {
@@ -80,8 +70,8 @@ pub(crate) fn resolve_required_delimiter<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> JavaFormatDelimiter<'source> {
     match resolve_required_field(field, doc) {
-        JavaFormatField::Present(token) => JavaFormatDelimiter::Source(token),
-        JavaFormatField::Malformed(recovery) => JavaFormatDelimiter::Recovery(recovery),
+        FormatField::Present(token) => JavaFormatDelimiter::Source(token),
+        FormatField::Malformed(recovery) => JavaFormatDelimiter::Recovery(recovery),
     }
 }
 
@@ -112,16 +102,16 @@ pub(crate) fn resolve_required_field<'source, T>(
     doc: &mut DocBuilder<'source>,
 ) -> JavaFormatField<'source, T> {
     match field {
-        Ok(JavaSyntaxField::Present(value)) => JavaFormatField::Present(value),
+        Ok(JavaSyntaxField::Present(value)) => FormatField::Present(value),
         Ok(JavaSyntaxField::Malformed(malformed)) => {
-            JavaFormatField::Malformed(format_malformed(&malformed, doc))
+            FormatField::Malformed(format_malformed(&malformed, doc))
         }
         Ok(JavaSyntaxField::Missing(missing)) => {
-            JavaFormatField::Malformed(format_missing(&missing, doc))
+            FormatField::Malformed(format_missing(&missing, doc))
         }
         Err(error) => {
             doc.block_on_invariant(error.to_string());
-            JavaFormatField::Malformed(Doc::nil())
+            FormatField::Malformed(Doc::nil())
         }
     }
 }
@@ -132,14 +122,14 @@ pub(crate) fn resolve_optional_field<'source, T>(
     doc: &mut DocBuilder<'source>,
 ) -> JavaFormatField<'source, Option<T>> {
     match field {
-        Ok(JavaSyntaxField::Present(value)) => JavaFormatField::Present(Some(value)),
-        Ok(JavaSyntaxField::Missing(_)) => JavaFormatField::Present(None),
+        Ok(JavaSyntaxField::Present(value)) => FormatField::Present(Some(value)),
+        Ok(JavaSyntaxField::Missing(_)) => FormatField::Present(None),
         Ok(JavaSyntaxField::Malformed(malformed)) => {
-            JavaFormatField::Malformed(format_malformed(&malformed, doc))
+            FormatField::Malformed(format_malformed(&malformed, doc))
         }
         Err(error) => {
             doc.block_on_invariant(error.to_string());
-            JavaFormatField::Malformed(Doc::nil())
+            FormatField::Malformed(Doc::nil())
         }
     }
 }
@@ -149,10 +139,7 @@ pub(crate) fn format_required_field<'source, T>(
     doc: &mut DocBuilder<'source>,
     structured: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> Doc<'source> {
-    match resolve_required_field(field, doc) {
-        JavaFormatField::Present(value) => structured(value, doc),
-        JavaFormatField::Malformed(malformed) => malformed,
-    }
+    jolt_fmt_ir::format_required_field(resolve_required_field(field, doc), doc, structured)
 }
 
 pub(crate) fn format_optional_field<'source, T>(
@@ -160,11 +147,7 @@ pub(crate) fn format_optional_field<'source, T>(
     doc: &mut DocBuilder<'source>,
     structured: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> Doc<'source> {
-    match resolve_optional_field(field, doc) {
-        JavaFormatField::Present(Some(value)) => structured(value, doc),
-        JavaFormatField::Present(None) => Doc::nil(),
-        JavaFormatField::Malformed(malformed) => malformed,
-    }
+    jolt_fmt_ir::format_optional_field(resolve_optional_field(field, doc), doc, structured)
 }
 
 pub(crate) fn format_missing<'source>(

@@ -11,7 +11,7 @@ use crate::{
     config_schema::{self, SchemaKind},
     error::CliError,
     fmt::{
-        self, CliFormatOptions,
+        self,
         config::{self as fmt_config, default_file_config},
         detect_language,
     },
@@ -125,7 +125,7 @@ fn config_resolve(args: &ConfigTargetArgs) -> Result<(), CliError> {
     let mut config_graph = fmt_config::ConfigGraph::new(
         &cwd,
         target.dir.clone(),
-        CliFormatOptions::default(),
+        fmt_config::FormatOptionsPatch::default(),
         &[],
         &[],
         None,

@@ -185,7 +185,8 @@ impl Parser<'_> {
             return false;
         }
 
-        self.tokens_are_adjacent(self.position() - 1, 2)
+        let index = self.position() - 1;
+        self.tokens_are_adjacent(index, 2)
     }
 
     fn parse_user_type_tail(

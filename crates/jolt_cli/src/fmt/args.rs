@@ -2,6 +2,8 @@ use std::{num::NonZeroUsize, path::PathBuf};
 
 use clap::Args as ClapArgs;
 
+use super::config::FormatOptionsPatch;
+
 #[derive(Debug, ClapArgs)]
 #[allow(clippy::struct_excessive_bools)]
 pub(crate) struct Args {
@@ -49,16 +51,9 @@ pub(crate) struct Args {
     pub(crate) paths: Vec<PathBuf>,
 }
 
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-pub(crate) struct CliFormatOptions {
-    pub(crate) line_width: Option<u16>,
-    pub(crate) indent_width: Option<u8>,
-    pub(crate) use_tabs: Option<bool>,
-}
-
 impl Args {
-    pub(crate) fn format_options(&self) -> CliFormatOptions {
-        CliFormatOptions {
+    pub(crate) fn format_options(&self) -> FormatOptionsPatch {
+        FormatOptionsPatch {
             line_width: self.line_width,
             indent_width: self.indent_width,
             use_tabs: self.use_tabs,

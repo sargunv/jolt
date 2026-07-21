@@ -72,10 +72,9 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn starts_yield_statement(&mut self) -> bool {
+        let position = self.position();
         self.at_contextual("yield")
-            && self
-                .assignment_operator_len_at(self.position() + 1)
-                .is_none()
+            && self.assignment_operator_len_at(position + 1).is_none()
             && !matches!(
                 self.nth_kind(1),
                 JavaSyntaxKind::LBracket
@@ -95,7 +94,7 @@ impl Parser<'_> {
                     | JavaSyntaxKind::Semicolon
             )
             && !(self.nth_kind(1) == JavaSyntaxKind::LParen
-                && self.tokens_are_adjacent(self.position(), 2))
+                && self.tokens_are_adjacent(position, 2))
     }
 
     pub(in crate::parser::grammar) fn for_header_has_top_level_colon(&mut self) -> bool {

@@ -13,9 +13,6 @@ return """
           beta
         """;
 }
-String template(String name) {
-return STR."Hello \{name}";
-}
 int numeric() {
 return 1_000 + 0x0f;
 }
@@ -76,63 +73,28 @@ CompilationUnit
                     Semicolon ";" @ 130..131
               RBrace "}" @ 132..133 leading=[Newline "\n"]
           MethodDeclaration
-            ClassType
-              ClassTypeSegmentList
-                ClassTypeSegmentNode
-                  AnnotationList
-                  Name
-                    Identifier "String" @ 134..140 leading=[Newline "\n"] trailing=[Whitespace " "]
-            Identifier "template" @ 141..149
-            LParen "(" @ 149..150
-            FormalParameterList
-              FormalParameter
-                ParameterModifierList
-                ClassType
-                  ClassTypeSegmentList
-                    ClassTypeSegmentNode
-                      AnnotationList
-                      Name
-                        Identifier "String" @ 150..156 trailing=[Whitespace " "]
-                AnnotationList
-                Identifier "name" @ 157..161
-            RParen ")" @ 161..162 trailing=[Whitespace " "]
-            Block
-              LBrace "{" @ 163..164
-              BlockStatementList
-                BlockStatement
-                  ReturnStatement
-                    ReturnKw "return" @ 165..171 leading=[Newline "\n"] trailing=[Whitespace " "]
-                    TemplateExpression
-                      NameExpression
-                        Identifier "STR" @ 172..175
-                      Dot "." @ 175..176
-                      LiteralExpression
-                        StringLiteral "\"Hello \\{name}\"" @ 176..191
-                    Semicolon ";" @ 191..192
-              RBrace "}" @ 193..194 leading=[Newline "\n"]
-          MethodDeclaration
             PrimitiveType
               AnnotationList
-              IntKw "int" @ 195..198 leading=[Newline "\n"] trailing=[Whitespace " "]
-            Identifier "numeric" @ 199..206
-            LParen "(" @ 206..207
-            RParen ")" @ 207..208 trailing=[Whitespace " "]
+              IntKw "int" @ 134..137 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "numeric" @ 138..145
+            LParen "(" @ 145..146
+            RParen ")" @ 146..147 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 209..210
+              LBrace "{" @ 148..149
               BlockStatementList
                 BlockStatement
                   ReturnStatement
-                    ReturnKw "return" @ 211..217 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    ReturnKw "return" @ 150..156 leading=[Newline "\n"] trailing=[Whitespace " "]
                     BinaryExpression
                       LiteralExpression
-                        IntegerLiteral "1_000" @ 218..223 trailing=[Whitespace " "]
-                      Plus "+" @ 224..225 trailing=[Whitespace " "]
+                        IntegerLiteral "1_000" @ 157..162 trailing=[Whitespace " "]
+                      Plus "+" @ 163..164 trailing=[Whitespace " "]
                       LiteralExpression
-                        IntegerLiteral "0x0f" @ 226..230
-                    Semicolon ";" @ 230..231
-              RBrace "}" @ 232..233 leading=[Newline "\n"]
-        RBrace "}" @ 234..235 leading=[Newline "\n"]
-  Eof "" @ 236..236 leading=[Newline "\n"]
+                        IntegerLiteral "0x0f" @ 165..169
+                    Semicolon ";" @ 169..170
+              RBrace "}" @ 171..172 leading=[Newline "\n"]
+        RBrace "}" @ 173..174 leading=[Newline "\n"]
+  Eof "" @ 175..175 leading=[Newline "\n"]
 
 diagnostics:
   (none)

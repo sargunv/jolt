@@ -11,8 +11,8 @@ use crate::helpers::comments::{
     format_token_with_comments, has_removed_comments, trailing_comments_force_line,
 };
 use crate::helpers::formatter_ignore::{
-    FormatterIgnoreRun, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
-    token_range_between,
+    FormatterIgnoreRun, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
+    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, token_range_between,
 };
 use crate::helpers::recovery::{
     JavaFormatField, JavaFormatListPart, format_malformed, format_missing, format_required_field,
@@ -290,13 +290,9 @@ fn format_program_entries_with_ignored<'source>(
 ) -> Doc<'source> {
     let mut sections: Vec<(Doc<'source>, bool, bool)> = Vec::new();
     let mut retained = Vec::new();
-    let mut run_index = 0;
-    let mut skip_index = 0;
-    for (index, entry) in entries.into_iter().enumerate() {
-        while runs
-            .get(run_index)
-            .is_some_and(|run| run.insert_index == index)
-        {
+    let mut entries = entries.into_iter().map(Some).collect::<Vec<_>>();
+    for_each_formatter_ignore_splice(entries.len(), runs, |event| match event {
+        FormatterIgnoreSplice::Ignore(run) => {
             if !retained.is_empty() {
                 let visible = program_entries_are_visible(&retained);
                 sections.push((
@@ -305,27 +301,17 @@ fn format_program_entries_with_ignored<'source>(
                     false,
                 ));
             }
-            sections.push((formatter_ignore_run_doc(&runs[run_index], doc), true, true));
-            run_index += 1;
+            sections.push((formatter_ignore_run_doc(run, doc), true, true));
         }
-        while runs
-            .get(skip_index)
-            .is_some_and(|run| run.skip_end <= index)
-        {
-            skip_index += 1;
+        FormatterIgnoreSplice::Item { index, .. } => {
+            if let Some(entry) = entries[index].take() {
+                retained.push(entry);
+            }
         }
-        if runs.get(skip_index).is_some_and(|run| run.skips(index)) {
-            continue;
-        }
-        retained.push(entry);
-    }
+    });
     if !retained.is_empty() {
         let visible = program_entries_are_visible(&retained);
         sections.push((format_program_entries(retained, doc), visible, false));
-    }
-    while let Some(run) = runs.get(run_index) {
-        sections.push((formatter_ignore_run_doc(run, doc), true, true));
-        run_index += 1;
     }
     let mut saw_visible = false;
     let mut previous_was_ignored = false;

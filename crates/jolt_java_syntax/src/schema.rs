@@ -173,7 +173,6 @@ macro_rules! java_syntax_schema {
                 }
                 Expression => BogusExpression {
                     LiteralExpression,
-                    TemplateExpression,
                     NameExpression,
                     ThisExpression,
                     SuperExpression,
@@ -213,7 +212,6 @@ macro_rules! java_syntax_schema {
                 }
                 MethodReferenceReceiverSyntax => BogusMethodReferenceReceiver {
                     LiteralExpression,
-                    TemplateExpression,
                     NameExpression,
                     ThisExpression,
                     SuperExpression,
@@ -230,7 +228,6 @@ macro_rules! java_syntax_schema {
                 }
                 LambdaBodySyntax => BogusLambdaBody {
                     LiteralExpression,
-                    TemplateExpression,
                     NameExpression,
                     ThisExpression,
                     SuperExpression,
@@ -368,7 +365,6 @@ macro_rules! java_syntax_schema {
                 VariableInitializerValue => BogusVariableInitializer {
                     BogusExpression,
                     LiteralExpression,
-                    TemplateExpression,
                     NameExpression,
                     ThisExpression,
                     SuperExpression,
@@ -1021,11 +1017,6 @@ macro_rules! java_syntax_schema {
                 }
                 LiteralExpression => LiteralExpression [literal_expression valid] {
                     literal: required (token_set [IntegerLiteral, FloatingPointLiteral, BooleanLiteral, CharacterLiteral, StringLiteral, TextBlockLiteral, NullLiteral]);
-                }
-                TemplateExpression => TemplateExpression [template_expression valid] {
-                    processor: required (category Expression);
-                    dot: required (token Dot);
-                    template: required (node LiteralExpression);
                 }
                 NameExpression => NameExpression [name_expression valid] {
                     annotations: optional (list AnnotationList);

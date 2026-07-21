@@ -9,7 +9,8 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_dangling_comments, format_token,
 };
 use crate::helpers::formatter_ignore::{
-    FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
+    FormatterIgnoreRange, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
+    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     relative_token_range_between,
 };
 use crate::helpers::recovery::{
@@ -234,39 +235,34 @@ fn class_body_sections_with_ignored<'source>(
     }
 
     let mut sections = Vec::with_capacity(parts.len().saturating_add(ignored_runs.len()));
-    let mut ignored_index = 0;
-    let mut skip_index = 0;
     let mut previous_had_comments = false;
-    for (part_index, part) in parts.iter().enumerate() {
-        while ignored_index < ignored_runs.len()
-            && ignored_runs[ignored_index].insert_index == part_index
-        {
-            let run = &ignored_runs[ignored_index];
+    for_each_formatter_ignore_splice(parts.len(), &ignored_runs, |event| match event {
+        FormatterIgnoreSplice::Ignore(run) => {
             sections.push(ClassBodySection {
                 doc: formatter_ignore_run_doc(run, doc),
                 hard_line_after: !run.ends_with_on_marker(),
             });
-            ignored_index += 1;
         }
-        while skip_index < ignored_runs.len() && ignored_runs[skip_index].skip_end <= part_index {
-            skip_index += 1;
+        FormatterIgnoreSplice::Item {
+            index,
+            clear_blank_line_before,
+        } => {
+            // Skipped parts still advance the trailing-comment state that the
+            // next physical part reads. When this item immediately follows an
+            // ignore run, recover that state from the last skipped part.
+            if clear_blank_line_before {
+                previous_had_comments = parts[index - 1]
+                    .last_token()
+                    .is_some_and(|token| !token.trailing_comments().is_empty());
+            }
+            push_class_body_part(
+                doc,
+                &mut sections,
+                &parts[index],
+                &mut previous_had_comments,
+            );
         }
-        if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(part_index) {
-            previous_had_comments = part
-                .last_token()
-                .is_some_and(|token| !token.trailing_comments().is_empty());
-            continue;
-        }
-        push_class_body_part(doc, &mut sections, part, &mut previous_had_comments);
-    }
-    while ignored_index < ignored_runs.len() {
-        let run = &ignored_runs[ignored_index];
-        sections.push(ClassBodySection {
-            doc: formatter_ignore_run_doc(run, doc),
-            hard_line_after: !run.ends_with_on_marker(),
-        });
-        ignored_index += 1;
-    }
+    });
     sections
 }
 

@@ -89,39 +89,13 @@ impl KotlinParse<'_> {
 
 impl fmt::Debug for KotlinParse<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "syntax:")?;
-        if let Some(syntax) = self.syntax() {
-            writeln!(f, "{syntax:?}")?;
-        } else {
-            writeln!(f, "  (none)")?;
-        }
-
-        writeln!(f)?;
-        writeln!(f, "diagnostics:")?;
-        if self.diagnostics.is_empty() {
-            writeln!(f, "  (none)")?;
-        } else {
-            for diagnostic in &self.diagnostics {
-                fmt_diagnostic(f, diagnostic)?;
-            }
-        }
-
-        Ok(())
+        let syntax = self.syntax();
+        jolt_syntax::fmt_parse_debug(
+            f,
+            syntax.as_ref().map(|syntax| syntax as &dyn fmt::Debug),
+            &self.diagnostics,
+        )
     }
-}
-
-fn fmt_diagnostic(f: &mut fmt::Formatter<'_>, diagnostic: &Diagnostic) -> fmt::Result {
-    write!(
-        f,
-        "  code={} severity={:?} stage={:?}",
-        diagnostic.code, diagnostic.severity, diagnostic.stage
-    )?;
-    if let Some(range) = diagnostic.range {
-        write!(f, " range={range}")?;
-    } else {
-        write!(f, " range=<none>")?;
-    }
-    writeln!(f, " message={:?}", diagnostic.message)
 }
 
 /// Parses a Kotlin file.

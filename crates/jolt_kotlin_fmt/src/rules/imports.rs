@@ -11,7 +11,8 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_terminator_list, format_token,
 };
 use crate::helpers::formatter_ignore::{
-    FormatterIgnoreRun, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
+    FormatterIgnoreRun, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
+    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     relative_token_range_between,
 };
 use crate::helpers::recovery::{
@@ -90,36 +91,22 @@ fn format_import_entries_with_ignored<'source>(
 ) -> Doc<'source> {
     let mut sections = Vec::new();
     let mut retained = Vec::new();
-    let mut run_index = 0;
-    let mut skip_index = 0;
-    for (index, entry) in entries.into_iter().enumerate() {
-        while runs
-            .get(run_index)
-            .is_some_and(|run| run.insert_index == index)
-        {
+    let mut entries = entries.into_iter().map(Some).collect::<Vec<_>>();
+    for_each_formatter_ignore_splice(entries.len(), runs, |event| match event {
+        FormatterIgnoreSplice::Ignore(run) => {
             if !retained.is_empty() {
                 sections.push(format_import_entries(doc, std::mem::take(&mut retained)));
             }
-            sections.push(formatter_ignore_run_doc(&runs[run_index], doc));
-            run_index += 1;
+            sections.push(formatter_ignore_run_doc(run, doc));
         }
-        while runs
-            .get(skip_index)
-            .is_some_and(|run| run.skip_end <= index)
-        {
-            skip_index += 1;
+        FormatterIgnoreSplice::Item { index, .. } => {
+            if let Some(entry) = entries[index].take() {
+                retained.push(entry);
+            }
         }
-        if runs.get(skip_index).is_some_and(|run| run.skips(index)) {
-            continue;
-        }
-        retained.push(entry);
-    }
+    });
     if !retained.is_empty() {
         sections.push(format_import_entries(doc, retained));
-    }
-    while let Some(run) = runs.get(run_index) {
-        sections.push(formatter_ignore_run_doc(run, doc));
-        run_index += 1;
     }
     doc.concat_list(|docs| {
         for section in sections {

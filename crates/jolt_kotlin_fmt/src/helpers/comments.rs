@@ -1,6 +1,7 @@
 use jolt_fmt_ir::{
     Doc, DocBuilder, format_comment_lines, format_star_block_comment,
-    is_empty_single_line_block_comment, preserved_block_comment_lines, preserved_comment_lines,
+    format_token_doc as assemble_token_doc, is_empty_single_line_block_comment,
+    preserved_block_comment_lines, preserved_comment_lines,
 };
 use jolt_kotlin_syntax::{
     KotlinComment, KotlinCommentKind, KotlinRoleElement, KotlinSyntaxToken, TerminatorList,
@@ -10,20 +11,7 @@ use jolt_syntax::RemovalClaim;
 use crate::helpers::formatter_ignore::is_formatter_control_marker;
 use crate::helpers::recovery::{KotlinFormatListPart, resolve_list_part};
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum LeadingTrivia {
-    Preserve,
-    SuppressAlreadyHandled,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum TrailingTrivia {
-    Preserve,
-    BeforeLineBreak,
-    BeforeSoftLine,
-    BeforeSpaceIfComments,
-    RelocatedToEnclosingContext,
-}
+pub(crate) use jolt_fmt_ir::{LeadingTrivia, TrailingTrivia};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum InlineLeadingTrivia {
@@ -257,38 +245,17 @@ pub(crate) fn format_token_doc<'source>(
     leading: LeadingTrivia,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
-    let leading = match leading {
-        LeadingTrivia::Preserve => format_leading_comments(doc, token),
-        LeadingTrivia::SuppressAlreadyHandled => doc.nil(),
-    };
-    let trailing = match trailing {
-        TrailingTrivia::Preserve => format_trailing_comments(doc, token),
-        TrailingTrivia::BeforeLineBreak => format_trailing_comments_before_line_break(doc, token),
-        TrailingTrivia::BeforeSoftLine => {
-            let comments = format_trailing_comments_before_line_break(doc, token);
-            let line = if trailing_comments_force_line(token) {
-                doc.hard_line()
-            } else {
-                doc.soft_line()
-            };
-            doc.concat([comments, line])
-        }
-        TrailingTrivia::BeforeSpaceIfComments => {
-            if token.trailing_comments().is_empty() {
-                doc.nil()
-            } else {
-                let comments = format_trailing_comments_before_line_break(doc, token);
-                let line = if trailing_comments_force_line(token) {
-                    doc.hard_line()
-                } else {
-                    doc.space()
-                };
-                doc.concat([comments, line])
-            }
-        }
-        TrailingTrivia::RelocatedToEnclosingContext => doc.nil(),
-    };
-    doc.concat([leading, token_doc, trailing])
+    assemble_token_doc(
+        doc,
+        token_doc,
+        leading,
+        trailing,
+        |doc| format_leading_comments(doc, token),
+        |doc| format_trailing_comments(doc, token),
+        |doc| format_trailing_comments_before_line_break(doc, token),
+        trailing_comments_force_line(token),
+        !token.trailing_comments().is_empty(),
+    )
 }
 
 pub(crate) fn format_token_with_inline_leading_comments<'source>(

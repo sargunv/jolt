@@ -7,6 +7,8 @@ use schemars::{
 };
 use serde::Serialize;
 
+use crate::fmt::config::FileConfig;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum SchemaKind {
     Jolt,
@@ -27,6 +29,9 @@ pub(crate) fn write_schema(kind: SchemaKind, writer: &mut impl io::Write) -> io:
 /// Outer schema shape for dprint's `dprint.jsonc`: plugin options nested under
 /// the `jolt` config key, with all other dprint global keys permitted.
 ///
+/// This mirrors `crate::fmt::config::FormatOptionsPatch`, but uses camelCase
+/// field names to match dprint's plugin config convention rather than the
+/// kebab-case `jolt.toml` convention.
 #[derive(Serialize, JsonSchema)]
 #[schemars(title = "dprint jolt plugin configuration")]
 struct DprintJoltConfig {
@@ -52,46 +57,6 @@ struct DprintFormatConfig {
     use_tabs: Option<bool>,
 }
 
-/// Schema shape for `jolt.toml`.
-#[derive(Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-#[schemars(title = "Jolt configuration")]
-struct JoltConfig {
-    /// Marks this config as the project root when set to true.
-    root: Option<bool>,
-    /// Formatting options.
-    format: Option<JoltFormatConfig>,
-    /// File discovery options.
-    files: Option<JoltFilesConfig>,
-}
-
-/// Jolt formatter options for `jolt.toml`.
-///
-/// This mirrors `jolt_formatter::FormatOptions`, but uses kebab-case field
-/// names and optional fields to match sparse `jolt.toml` configuration.
-#[derive(Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-struct JoltFormatConfig {
-    /// Preferred maximum rendered line width.
-    #[schemars(range(min = 1, max = 65535))]
-    line_width: Option<u16>,
-    /// Number of spaces per indentation level when `use-tabs` is false.
-    #[schemars(range(min = 1, max = 255))]
-    indent_width: Option<u8>,
-    /// Whether indentation should use tabs instead of spaces.
-    use_tabs: Option<bool>,
-}
-
-/// Jolt file discovery options.
-#[derive(Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-struct JoltFilesConfig {
-    /// Source file globs to include.
-    include: Option<Vec<String>>,
-    /// Source file globs to exclude.
-    exclude: Option<Vec<String>>,
-}
-
 fn dprint_schema() -> RootSchema {
     let mut schema = schema_for!(DprintJoltConfig);
     clear_required(&mut schema.schema);
@@ -106,7 +71,7 @@ fn dprint_schema() -> RootSchema {
 }
 
 fn jolt_schema() -> RootSchema {
-    let mut schema = schema_for!(JoltConfig);
+    let mut schema = schema_for!(FileConfig);
     clear_required(&mut schema.schema);
     deny_additional_properties(&mut schema.schema);
     for def in schema.definitions.values_mut() {

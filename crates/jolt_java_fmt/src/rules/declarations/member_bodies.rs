@@ -1,6 +1,7 @@
 use super::{
-    AnnotationInterfaceBodyMember, ClassBody, ClassBodyMember, Doc, FormattedMember, InterfaceBody,
-    InterfaceBodyMember, JavaSyntaxToken, MemberCategory, Range, RecordBody, comments_from_tokens,
+    AnnotationInterfaceBodyMember, ClassBody, ClassBodyMember, Doc, FormattedMember,
+    FormatterIgnoreSplice, InterfaceBody, InterfaceBodyMember, JavaSyntaxToken, MemberCategory,
+    Range, RecordBody, comments_from_tokens, for_each_formatter_ignore_splice,
     format_annotation_element_declaration, format_annotation_interface_declaration, format_block,
     format_class_declaration, format_compact_constructor_declaration,
     format_constructor_declaration, format_dangling_comments, format_enum_declaration,
@@ -214,11 +215,8 @@ fn format_member_parts<'source, T: Copy>(
     let mut formatted =
         Vec::with_capacity(members.len().saturating_add(runs.len()).saturating_add(2));
     formatted.extend(open_dangling_comments);
-    let mut ignored_index = 0;
-    let mut skip_index = 0;
-    for (index, member) in members.iter().enumerate() {
-        while ignored_index < runs.len() && runs[ignored_index].insert_index == index {
-            let run = &runs[ignored_index];
+    for_each_formatter_ignore_splice(members.len(), &runs, |event| match event {
+        FormatterIgnoreSplice::Ignore(run) => {
             let category = members
                 .get(run.skip_start)
                 .map_or(MemberCategory::Type, |part| {
@@ -228,29 +226,19 @@ fn format_member_parts<'source, T: Copy>(
                 formatter_ignore_run_doc(run, doc),
                 category,
             ));
-            ignored_index += 1;
         }
-        while skip_index < runs.len() && runs[skip_index].skip_end <= index {
-            skip_index += 1;
-        }
-        if skip_index < runs.len() && runs[skip_index].skips(index) {
-            continue;
-        }
-        if let Some(mut member) = format_part(member, &mut format_item, doc) {
-            if skip_index > 0 && runs[skip_index - 1].skip_end == index {
-                member = member.without_blank_line_before();
+        FormatterIgnoreSplice::Item {
+            index,
+            clear_blank_line_before,
+        } => {
+            if let Some(mut member) = format_part(&members[index], &mut format_item, doc) {
+                if clear_blank_line_before {
+                    member = member.without_blank_line_before();
+                }
+                formatted.push(member);
             }
-            formatted.push(member);
         }
-    }
-    while ignored_index < runs.len() {
-        let run = &runs[ignored_index];
-        formatted.push(FormattedMember::ignored(
-            formatter_ignore_run_doc(run, doc),
-            MemberCategory::Type,
-        ));
-        ignored_index += 1;
-    }
+    });
     formatted.extend(close_dangling_comments);
     let present = !formatted.is_empty();
     let visible = formatted.iter().any(|member| member.visible);

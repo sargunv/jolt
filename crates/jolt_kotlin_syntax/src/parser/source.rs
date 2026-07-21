@@ -21,22 +21,6 @@ impl<'source> Parser<'source> {
         self.0.finish()
     }
 
-    pub(super) const fn position(&self) -> usize {
-        self.0.position()
-    }
-
-    pub(super) fn current_text(&mut self) -> Option<&'source str> {
-        self.0.current_text()
-    }
-
-    pub(super) fn kind_at(&mut self, index: usize) -> K {
-        self.0.kind_at(index)
-    }
-
-    pub(super) fn tokens_are_adjacent(&mut self, index: usize, count: usize) -> bool {
-        self.0.tokens_are_adjacent(index, count)
-    }
-
     pub(super) fn newline_before_current(&mut self) -> bool {
         self.0.buffer.newline_before(self.0.position())
     }

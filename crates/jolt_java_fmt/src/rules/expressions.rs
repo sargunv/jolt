@@ -6,8 +6,7 @@ use jolt_java_syntax::{
     InstanceofExpression, JavaSyntaxToken, LambdaExpression, LambdaParameter, LiteralExpression,
     MethodInvocationExpression, MethodReferenceExpression, NameExpression,
     ObjectCreationExpression, ParenthesizedExpression, PostfixExpression, SuperExpression,
-    SwitchExpression, TemplateExpression, ThisExpression, UnaryExpression,
-    VariableInitializerValue,
+    SwitchExpression, ThisExpression, UnaryExpression, VariableInitializerValue,
 };
 
 use crate::helpers::comments::{
@@ -53,7 +52,7 @@ use casts_patterns::{format_cast_expression, format_instanceof_expression};
 use lambdas::format_lambda_expression;
 use leaves::{
     format_class_literal_expression, format_literal_expression, format_name_expression,
-    format_super_expression, format_template_expression, format_this_expression,
+    format_super_expression, format_this_expression,
 };
 use member_chains::{format_member_chain, format_member_dot, is_member_chain_child};
 use method_references::format_method_reference_expression;
@@ -93,7 +92,6 @@ fn format_expression_with_leading_comments<'source>(
         Expression::LiteralExpression(expression) => {
             format_literal_expression(expression, leading_comments, doc)
         }
-        Expression::TemplateExpression(expression) => format_template_expression(expression, doc),
         Expression::NameExpression(expression) => {
             format_name_expression(expression, leading_comments, doc)
         }

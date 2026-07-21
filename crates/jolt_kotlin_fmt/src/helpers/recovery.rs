@@ -1,11 +1,13 @@
 //! Field/list recovery resolution for the Kotlin formatter.
 //!
-//! Java has a parallel module with the same resolve/format field shapes.
-//! Keep them duplicated: Kotlin `Invisible` list parts and Java empty-range
-//! malformed boundaries are intentional language-owned recovery policy, not
-//! accidental drift that should collapse behind shared generics.
+//! Shared present/malformed field results and malformed fragment assembly live
+//! in `jolt_fmt_ir::recovery`. This module owns Kotlin field/list resolve,
+//! including invisible list parts, and Kotlin's tokens-only malformed boundary
+//! policy.
 
-use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_fmt_ir::{
+    Doc, DocBuilder, FormatField, MalformedBoundaryPolicy, assemble_malformed_fragment,
+};
 use jolt_kotlin_syntax::{
     KotlinMissingSyntax, KotlinSyntaxField, KotlinSyntaxInvariantError, KotlinSyntaxListPart,
     KotlinSyntaxToken, KotlinSyntaxView,
@@ -13,6 +15,8 @@ use jolt_kotlin_syntax::{
 
 use super::comments::{comment_forces_line, format_comment, format_leading_comment_list};
 use super::lexical_safety::KotlinLexicalSafety;
+
+pub(crate) type KotlinFormatField<'source, T> = FormatField<'source, T>;
 
 /// Formats one syntax-owned malformed boundary and claims its exact source.
 pub(crate) fn format_malformed<'source>(
@@ -23,31 +27,19 @@ pub(crate) fn format_malformed<'source>(
         doc.block_on_invariant("malformed Kotlin syntax did not own a verbatim core");
         return Doc::nil();
     };
-    let has_tokens = core.tokens().next().is_some();
     let (leading, trailing, has_leading_comments, has_trailing_comments) =
         malformed_boundary_comments(&core, doc);
-    let (left, right) = if has_tokens {
-        (
-            (!has_leading_comments)
-                .then(|| core.previous_token())
-                .flatten(),
-            (!has_trailing_comments)
-                .then(|| core.next_token())
-                .flatten(),
-        )
-    } else {
-        (None, None)
-    };
     let mut safety = KotlinLexicalSafety;
-    let fragment = doc.malformed_verbatim_with_safety(&core, &mut safety);
-    let fragment = doc.resolve_exceptional(fragment, left.as_ref(), right.as_ref(), &mut safety);
-    doc.concat([leading, fragment, trailing])
-}
-
-#[derive(Clone, Copy)]
-pub(crate) enum KotlinFormatField<'source, T> {
-    Present(T),
-    Malformed(Doc<'source>),
+    assemble_malformed_fragment(
+        doc,
+        &core,
+        MalformedBoundaryPolicy::TokensOnly,
+        &mut safety,
+        leading,
+        trailing,
+        has_leading_comments,
+        has_trailing_comments,
+    )
 }
 
 pub(crate) enum KotlinFormatListPart<'source, T> {
@@ -97,8 +89,8 @@ pub(crate) fn resolve_required_delimiter<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> KotlinFormatDelimiter<'source> {
     match resolve_required_field(field, doc) {
-        KotlinFormatField::Present(token) => KotlinFormatDelimiter::Source(token),
-        KotlinFormatField::Malformed(recovery) => KotlinFormatDelimiter::Recovery(recovery),
+        FormatField::Present(token) => KotlinFormatDelimiter::Source(token),
+        FormatField::Malformed(recovery) => KotlinFormatDelimiter::Recovery(recovery),
     }
 }
 
@@ -134,16 +126,16 @@ pub(crate) fn resolve_required_field<'source, T>(
     doc: &mut DocBuilder<'source>,
 ) -> KotlinFormatField<'source, T> {
     match field {
-        Ok(KotlinSyntaxField::Present(value)) => KotlinFormatField::Present(value),
+        Ok(KotlinSyntaxField::Present(value)) => FormatField::Present(value),
         Ok(KotlinSyntaxField::Malformed(malformed)) => {
-            KotlinFormatField::Malformed(format_malformed(&malformed, doc))
+            FormatField::Malformed(format_malformed(&malformed, doc))
         }
         Ok(KotlinSyntaxField::Missing(missing)) => {
-            KotlinFormatField::Malformed(format_missing(&missing, doc))
+            FormatField::Malformed(format_missing(&missing, doc))
         }
         Err(error) => {
             doc.block_on_invariant(error.to_string());
-            KotlinFormatField::Malformed(Doc::nil())
+            FormatField::Malformed(Doc::nil())
         }
     }
 }
@@ -153,14 +145,14 @@ pub(crate) fn resolve_optional_field<'source, T>(
     doc: &mut DocBuilder<'source>,
 ) -> KotlinFormatField<'source, Option<T>> {
     match field {
-        Ok(KotlinSyntaxField::Present(value)) => KotlinFormatField::Present(Some(value)),
-        Ok(KotlinSyntaxField::Missing(_)) => KotlinFormatField::Present(None),
+        Ok(KotlinSyntaxField::Present(value)) => FormatField::Present(Some(value)),
+        Ok(KotlinSyntaxField::Missing(_)) => FormatField::Present(None),
         Ok(KotlinSyntaxField::Malformed(malformed)) => {
-            KotlinFormatField::Malformed(format_malformed(&malformed, doc))
+            FormatField::Malformed(format_malformed(&malformed, doc))
         }
         Err(error) => {
             doc.block_on_invariant(error.to_string());
-            KotlinFormatField::Malformed(Doc::nil())
+            FormatField::Malformed(Doc::nil())
         }
     }
 }
@@ -170,10 +162,7 @@ pub(crate) fn format_required_field<'source, T>(
     doc: &mut DocBuilder<'source>,
     structured: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> Doc<'source> {
-    match resolve_required_field(field, doc) {
-        KotlinFormatField::Present(value) => structured(value, doc),
-        KotlinFormatField::Malformed(malformed) => malformed,
-    }
+    jolt_fmt_ir::format_required_field(resolve_required_field(field, doc), doc, structured)
 }
 
 pub(crate) fn format_optional_field<'source, T>(
@@ -181,11 +170,7 @@ pub(crate) fn format_optional_field<'source, T>(
     doc: &mut DocBuilder<'source>,
     structured: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> Doc<'source> {
-    match resolve_optional_field(field, doc) {
-        KotlinFormatField::Present(Some(value)) => structured(value, doc),
-        KotlinFormatField::Present(None) => Doc::nil(),
-        KotlinFormatField::Malformed(malformed) => malformed,
-    }
+    jolt_fmt_ir::format_optional_field(resolve_optional_field(field, doc), doc, structured)
 }
 
 pub(crate) fn format_missing<'source>(
