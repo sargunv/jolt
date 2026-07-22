@@ -100,7 +100,8 @@ pub(crate) fn braced_comma_list_with_trailing_separator<'source>(
         [
             format_open_delimiter(doc, open),
             doc_indent!(doc, doc_concat!(doc, [open_spacing, items_doc])),
-            format_braced_close_with_spacing(doc, close),
+            doc.line(),
+            format_close_delimiter(doc, close),
         ]
     );
 
@@ -327,13 +328,6 @@ fn format_braced_open_spacing<'source>(
             doc.hard_line(),
         ]
     )
-}
-
-fn format_braced_close_with_spacing<'source>(
-    doc: &mut DocBuilder<'source>,
-    close: JavaFormatDelimiter<'source>,
-) -> Doc<'source> {
-    doc_concat!(doc, [doc.line(), format_close_delimiter(doc, close)])
 }
 
 fn format_close_with_spacing<'source>(

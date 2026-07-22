@@ -1,7 +1,7 @@
 use super::{
     Doc, LambdaExpression, LambdaParameter, LeadingTrivia, TrailingTrivia, comment_forces_line,
     format_annotation, format_block, format_expression, format_separator_with_comments,
-    format_token, format_token_with_comments, format_type, token_iter_has_comments,
+    format_token, format_token_with_comments, format_type,
 };
 use crate::helpers::comments::token_has_comments;
 use crate::helpers::lists::{CommaListItem, comma_list, syntax_comma_list_items};
@@ -86,7 +86,10 @@ fn format_lambda_parameters<'source>(
         && optional_delimiter_is_comment_free(expression.close_paren())
     {
         let parameter = removal.parameter;
-        let parameter = if token_iter_has_comments(parameter.token_iter()) {
+        let parameter = if parameter
+            .token_iter()
+            .any(|token| token_has_comments(&token))
+        {
             format_lambda_parameter(&parameter, doc)
         } else {
             format_required_field(parameter.name(), doc, |name, doc| {
