@@ -62,7 +62,7 @@ pub(super) fn format_object_creation_expression<'source>(
         ObjectCreationTypeSyntax::BogusObjectCreationType(ty) => format_malformed(&ty, doc),
     });
     let arguments = format_required_field(expression.arguments(), doc, |arguments, doc| {
-        format_argument_list(Some(arguments), doc)
+        format_argument_list(arguments, doc)
     });
     let body = format_optional_field(expression.body(), doc, |body, doc| {
         doc_concat!(doc, [doc.space(), format_anonymous_class_body(&body, doc)])

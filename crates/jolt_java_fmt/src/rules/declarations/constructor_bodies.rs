@@ -107,7 +107,7 @@ fn format_constructor_body_close_dangling_comments<'source>(
     doc: &mut jolt_fmt_ir::DocBuilder<'source>,
     close: Option<JavaSyntaxToken<'source>>,
 ) -> Option<BodyItem<'source>> {
-    let comments = close?.leading_comments().collect::<Vec<_>>();
+    let comments = close?.leading_comments();
     (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(doc, comments), false))
 }
 
@@ -215,7 +215,7 @@ fn format_constructor_invocation<'source>(
         )
     });
     let arguments = format_required_field(invocation.arguments(), doc, |arguments, doc| {
-        format_argument_list(Some(arguments), doc)
+        format_argument_list(arguments, doc)
     });
     let semicolon = invocation.semicolon();
     let invocation_first_token = invocation.first_token();

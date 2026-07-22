@@ -453,7 +453,7 @@ fn format_enum_constant<'source>(
         format_token_with_comments(doc, &name)
     });
     let arguments = format_optional_field(constant.arguments(), doc, |arguments, doc| {
-        format_argument_list(Some(arguments), doc)
+        format_argument_list(arguments, doc)
     });
     let body = format_optional_field(constant.body(), doc, |body, doc| {
         let open = resolve_required_delimiter(body.open_brace(), doc);

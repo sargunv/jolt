@@ -32,7 +32,7 @@ pub(super) fn format_class_declaration<'source>(
     });
     let name_separator = structured_separator(name_is_structured, doc);
     let parameters = optional_doc(class.type_parameters(), doc, |parameters, doc| {
-        format_type_parameter_list(Some(parameters), doc)
+        format_type_parameter_list(parameters, doc)
     });
     let extends = optional_doc(class.extends(), doc, |extends, doc| {
         format_extends(&extends, doc)
@@ -91,7 +91,7 @@ pub(super) fn format_interface_declaration<'source>(
         });
     let name_separator = structured_separator(name_is_structured, doc);
     let parameters = optional_doc(interface.type_parameters(), doc, |parameters, doc| {
-        format_type_parameter_list(Some(parameters), doc)
+        format_type_parameter_list(parameters, doc)
     });
     let extends = optional_doc(interface.extends(), doc, |extends, doc| {
         format_extends(&extends, doc)
@@ -139,7 +139,7 @@ pub(super) fn format_record_declaration<'source>(
     });
     let name_separator = structured_separator(name_is_structured, doc);
     let parameters = optional_doc(record.type_parameters(), doc, |parameters, doc| {
-        format_type_parameter_list(Some(parameters), doc)
+        format_type_parameter_list(parameters, doc)
     });
     let component_open = resolve_required_delimiter(record.open_paren(), doc);
     let components = resolve_optional_field(record.components(), doc);

@@ -68,18 +68,13 @@ enum LeadingComments {
 }
 
 pub(crate) fn format_type_parameter_list<'source>(
-    parameters: Option<TypeParameterList<'source>>,
+    parameters: TypeParameterList<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    match parameters {
-        Some(parameters) => {
-            let open = resolve_required_delimiter(parameters.open_angle(), doc);
-            let close = resolve_required_delimiter(parameters.close_angle(), doc);
-            let items = type_parameter_list_items(&parameters, doc);
-            delimited_comma_list(doc, open, close, items)
-        }
-        None => Doc::nil(),
-    }
+    let open = resolve_required_delimiter(parameters.open_angle(), doc);
+    let close = resolve_required_delimiter(parameters.close_angle(), doc);
+    let items = type_parameter_list_items(&parameters, doc);
+    delimited_comma_list(doc, open, close, items)
 }
 
 pub(crate) fn format_type_argument_list<'source>(

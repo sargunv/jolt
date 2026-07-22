@@ -85,7 +85,7 @@ pub(super) fn format_this_expression<'source>(
             format_expression(&qualifier, doc)
         }),
         format_optional_field(expression.dot(), doc, |dot, doc| {
-            format_member_dot(Some(&dot), doc)
+            format_member_dot(&dot, doc)
         }),
         format_required_field(expression.this_keyword(), doc, |token, doc| {
             format_leaf_token(&token, leading_comments, doc)
@@ -104,7 +104,7 @@ pub(super) fn format_super_expression<'source>(
             format_expression(&qualifier, doc)
         }),
         format_optional_field(expression.dot(), doc, |dot, doc| {
-            format_member_dot(Some(&dot), doc)
+            format_member_dot(&dot, doc)
         }),
         format_required_field(expression.super_keyword(), doc, |token, doc| {
             format_leaf_token(&token, leading_comments, doc)

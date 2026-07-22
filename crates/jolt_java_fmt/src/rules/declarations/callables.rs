@@ -33,7 +33,7 @@ fn format_optional_type_parameters<'source>(
 ) -> (Doc<'source>, bool) {
     match parameters {
         JavaFormatField::Present(Some(parameters)) => {
-            (format_type_parameter_list(Some(parameters), doc), true)
+            (format_type_parameter_list(parameters, doc), true)
         }
         JavaFormatField::Present(None) => (Doc::nil(), false),
         JavaFormatField::Malformed(malformed) => (malformed, true),
