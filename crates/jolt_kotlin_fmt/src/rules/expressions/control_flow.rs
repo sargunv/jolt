@@ -2,11 +2,11 @@ use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     CatchClause, DoWhileBodySyntax, DoWhileStatement, EmptyStatement, Expression, FinallyClause,
     ForBodySyntax, ForStatement, ForVariableSyntax, IfElseBranchSyntax, IfExpression,
-    IfThenBranchSyntax, JumpExpression, KotlinSyntaxToken, NameExpression, ParenthesizedExpression,
-    ThrowExpression, TryClause, TryExpression, WhenCondition, WhenConditionSyntax,
-    WhenConditionValueSyntax, WhenEntry, WhenEntryBodySyntax, WhenEntryListElement,
-    WhenEntryListElementSyntax, WhenExpression, WhenGuard, WhenSubject, WhileBodySyntax,
-    WhileStatement,
+    IfThenBranchSyntax, JumpExpression, KotlinSyntaxField, KotlinSyntaxToken, KotlinSyntaxView,
+    NameExpression, ParenthesizedExpression, ThrowExpression, TryClause, TryExpression,
+    WhenCondition, WhenConditionSyntax, WhenConditionValueSyntax, WhenEntry, WhenEntryBodySyntax,
+    WhenEntryListElement, WhenEntryListElementSyntax, WhenExpression, WhenGuard, WhenSubject,
+    WhileBodySyntax, WhileStatement,
 };
 
 use crate::helpers::blocks::join_hard_lines;
@@ -31,13 +31,8 @@ pub(super) fn format_if_expression<'source>(
     expression: &IfExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let has_condition = matches!(
-        expression.condition(),
-        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref condition)
-            if condition.first_token().is_some()
-    );
     let keyword = format_required_token(expression.if_token(), doc, leading);
-    let condition = format_required_field(expression.condition(), doc, |condition, doc| {
+    let condition = format_spaced_required_field(doc, expression.condition(), |condition, doc| {
         format_control_flow_condition(doc, &condition)
     });
     let then_branch = resolve_required_field(expression.then_branch(), doc);
@@ -71,18 +66,7 @@ pub(super) fn format_if_expression<'source>(
         KotlinFormatField::Malformed(recovery) => recovery,
     };
     let else_branch = format_else_branch(doc, expression, then_branch_is_nested_if);
-    let before_condition = if has_condition {
-        doc.space()
-    } else {
-        Doc::nil()
-    };
-    doc.concat([
-        keyword,
-        before_condition,
-        condition,
-        then_branch,
-        else_branch,
-    ])
+    doc.concat([keyword, condition, then_branch, else_branch])
 }
 
 pub(super) fn format_when_expression<'source>(
@@ -154,13 +138,8 @@ pub(super) fn format_try_expression<'source>(
     expression: &TryExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let has_block = matches!(
-        expression.block(),
-        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref block)
-            if block.first_token().is_some()
-    );
     let keyword = format_required_token(expression.try_token(), doc, leading);
-    let block = format_required_field(expression.block(), doc, |block, doc| {
+    let block = format_spaced_required_field(doc, expression.block(), |block, doc| {
         crate::rules::statements::format_block(doc, &block)
     });
     let clauses = match resolve_required_field(expression.clauses(), doc) {
@@ -200,8 +179,7 @@ pub(super) fn format_try_expression<'source>(
         }),
         KotlinFormatField::Malformed(recovery) => recovery,
     };
-    let before_block = if has_block { doc.space() } else { Doc::nil() };
-    doc.concat([keyword, before_block, block, clauses])
+    doc.concat([keyword, block, clauses])
 }
 
 pub(super) fn format_labeled_expression<'source>(
@@ -304,20 +282,15 @@ pub(super) fn format_while_statement<'source>(
     statement: &WhileStatement<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let has_condition = matches!(
-        statement.condition(),
-        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref condition)
-            if condition.first_token().is_some()
-    );
+    let keyword = format_required_token(statement.while_token(), doc, leading);
+    let condition = format_spaced_required_field(doc, statement.condition(), |condition, doc| {
+        format_control_flow_condition(doc, &condition)
+    });
     let has_body = matches!(
         statement.body(),
         jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
             if body.first_token().is_some()
     );
-    let keyword = format_required_token(statement.while_token(), doc, leading);
-    let condition = format_required_field(statement.condition(), doc, |condition, doc| {
-        format_control_flow_condition(doc, &condition)
-    });
     let body = format_required_field(statement.body(), doc, |body, doc| {
         format_while_body(doc, body)
     });
@@ -326,14 +299,12 @@ pub(super) fn format_while_statement<'source>(
         jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
             if matches!(body.classify(), Ok(WhileBodySyntax::EmptyStatement(_)))
     );
-    let space = doc.space();
-    let before_condition = if has_condition { space } else { Doc::nil() };
     let before_body = if has_body && !body_is_empty {
-        space
+        doc.space()
     } else {
         Doc::nil()
     };
-    doc.concat([keyword, before_condition, condition, before_body, body])
+    doc.concat([keyword, condition, before_body, body])
 }
 
 pub(super) fn format_do_while_statement<'source>(
@@ -350,11 +321,6 @@ pub(super) fn format_do_while_statement<'source>(
         statement.while_token(),
         jolt_kotlin_syntax::KotlinSyntaxField::Present(_)
     );
-    let has_condition = matches!(
-        statement.condition(),
-        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref condition)
-            if condition.first_token().is_some()
-    );
     let do_token = format_required_token(statement.do_token(), doc, leading);
     let body = format_required_field(statement.body(), doc, |body, doc| {
         format_do_while_body(doc, body)
@@ -365,7 +331,7 @@ pub(super) fn format_do_while_statement<'source>(
             if matches!(body.classify(), Ok(DoWhileBodySyntax::EmptyStatement(_)))
     );
     let while_token = format_required_token(statement.while_token(), doc, LeadingTrivia::Preserve);
-    let condition = format_required_field(statement.condition(), doc, |condition, doc| {
+    let condition = format_spaced_required_field(doc, statement.condition(), |condition, doc| {
         format_control_flow_condition(doc, &condition)
     });
     let after_do = if has_body && !body_is_empty {
@@ -374,18 +340,12 @@ pub(super) fn format_do_while_statement<'source>(
         Doc::nil()
     };
     let before_while = if has_while { doc.space() } else { Doc::nil() };
-    let before_condition = if has_condition {
-        doc.space()
-    } else {
-        Doc::nil()
-    };
     doc.concat([
         do_token,
         after_do,
         body,
         before_while,
         while_token,
-        before_condition,
         condition,
     ])
 }
@@ -446,6 +406,29 @@ fn format_control_flow_condition<'source>(
     let trailing = doc.soft_line();
     let contents = doc.concat([open, inner, trailing, close]);
     doc.group(contents)
+}
+
+fn format_spaced_required_field<'source, T>(
+    doc: &mut DocBuilder<'source>,
+    field: KotlinSyntaxField<'source, T>,
+    format: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
+) -> Doc<'source>
+where
+    T: KotlinSyntaxView<'source>,
+{
+    match resolve_required_field(field, doc) {
+        KotlinFormatField::Present(value) => {
+            let has_token = value.first_token().is_some();
+            let value = format(value, doc);
+            if has_token {
+                let space = doc.space();
+                doc.concat([space, value])
+            } else {
+                value
+            }
+        }
+        KotlinFormatField::Malformed(recovery) => recovery,
+    }
 }
 
 fn format_else_branch<'source>(
@@ -659,30 +642,14 @@ fn format_catch_clause<'source>(
     doc: &mut DocBuilder<'source>,
     clause: &CatchClause<'source>,
 ) -> Doc<'source> {
-    let has_parameter = matches!(
-        clause.parameter(),
-        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref parameter)
-            if parameter.first_token().is_some()
-    );
-    let has_block = matches!(
-        clause.block(),
-        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref block)
-            if block.first_token().is_some()
-    );
     let keyword = format_required_token(clause.catch_token(), doc, LeadingTrivia::Preserve);
-    let parameter = format_required_field(clause.parameter(), doc, |parameter, doc| {
+    let parameter = format_spaced_required_field(doc, clause.parameter(), |parameter, doc| {
         format_catch_parameter(doc, &parameter)
     });
-    let block = format_required_field(clause.block(), doc, |block, doc| {
+    let block = format_spaced_required_field(doc, clause.block(), |block, doc| {
         crate::rules::statements::format_block(doc, &block)
     });
-    let before_parameter = if has_parameter {
-        doc.space()
-    } else {
-        Doc::nil()
-    };
-    let before_block = if has_block { doc.space() } else { Doc::nil() };
-    doc.concat([keyword, before_parameter, parameter, before_block, block])
+    doc.concat([keyword, parameter, block])
 }
 
 fn format_catch_parameter<'source>(
@@ -706,17 +673,11 @@ fn format_finally_clause<'source>(
     doc: &mut DocBuilder<'source>,
     clause: &FinallyClause<'source>,
 ) -> Doc<'source> {
-    let has_block = matches!(
-        clause.block(),
-        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref block)
-            if block.first_token().is_some()
-    );
     let keyword = format_required_token(clause.finally_token(), doc, LeadingTrivia::Preserve);
-    let block = format_required_field(clause.block(), doc, |block, doc| {
+    let block = format_spaced_required_field(doc, clause.block(), |block, doc| {
         crate::rules::statements::format_block(doc, &block)
     });
-    let before_block = if has_block { doc.space() } else { Doc::nil() };
-    doc.concat([keyword, before_block, block])
+    doc.concat([keyword, block])
 }
 
 fn format_if_then_branch<'source>(
