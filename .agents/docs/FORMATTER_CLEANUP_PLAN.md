@@ -151,10 +151,11 @@ language-container call sites.
 
 Generated CST accessors return `Result<_, SyntaxInvariantError>` even for trees
 constructed by the matching generated factory. Formatters consequently contain
-roughly 108 `block_on_invariant` calls, 153 malformed-field branches, and 84
-malformed or invisible list branches. Shape validation belongs at construction
-or typed-root conversion; downstream access should express field cardinality,
-not factory implementation uncertainty.
+roughly 108 `block_on_invariant` calls, although some of those guard custom
+semantic projections rather than generated physical fields. There are also 153
+malformed-field branches and 84 malformed or invisible list branches. Shape
+validation belongs at construction or typed-root conversion; downstream access
+should express field cardinality, not factory implementation uncertainty.
 
 Primary location: `crates/jolt_syntax/src/projection.rs`, generated syntax
 factories/accessors, and both language formatters.
@@ -202,22 +203,23 @@ audit facts and architecture docs should explain actual ownership boundaries.
 
 ## Target Boundaries
 
-Names are provisional until extraction proves useful:
+Names are provisional until module boundaries prove useful:
 
 ```text
-jolt_doc
-  Pure document algebra, width model, fit engine, and output sinks.
+pure document modules
+  Document algebra, width model, bounded fit engine, and output sinks.
 
 jolt_syntax + jolt_{java,kotlin}_syntax
   Validated lossless CST, source identities, recovery classification,
   cardinality-aware accessors, and language-owned normalization authority.
 
-jolt_fmt_core
-  Formatting context, source audit, recovery fragments, shared trivia,
-  lexical boundaries, and one root formatter-ignore plan.
+root formatting coordination
+  One root ignore plan and source audit, plus narrow trivia, recovery, and
+  lexical-boundary capabilities passed only where needed.
 
 jolt_{java,kotlin}_fmt
-  Language CST to structured layout only.
+  Language CST to structured layout. Leaf rules normally need only a
+  `DocBuilder` and their typed node.
 
 jolt_formatter
   Thin dispatch facade used by the CLI and dprint plugin.
@@ -229,94 +231,93 @@ direction is stable and the extraction removes coupling or compile surface.
 Keeping one well-partitioned crate is preferable to several crates with cyclic
 conceptual ownership.
 
-A likely context shape is:
+Do not pass a general `FormatContext` through the rule graph. A root coordinator
+may own the builder, ignore plan, and audit, but leaf rules receive only the
+narrow capabilities they use. Visibility and lexical boundaries may use small
+domain values when those values delete ambiguous branches; rules must never
+infer either property from opaque document handles.
 
-```rust
-struct FormatContext<'source, L> {
-    docs: DocBuilder<'source>,
-    audit: SourceAudit<'source>,
-    ignores: FormatterIgnorePlan<'source>,
-    style: L::FormatStyle,
-}
-
-struct Formatted<'source> {
-    doc: Doc<'source>,
-    visibility: Visibility,
-    boundaries: Boundaries<'source>,
-}
-```
-
-These types are design sketches, not mandates. Introduce only the fields that
-replace current plumbing. Rules must not infer visibility or lexical boundaries
-from opaque document handles.
+The generated factory and accessors remain one declarative authority. Do not add
+a second runtime schema interpreter or check in generated CST output unless a
+measured prototype proves that it deletes more authority and machinery than it
+adds. Prior failed dual-model/generated-shape experiments are a warning, not a
+starting point.
 
 ## Stack
 
-Every pull request is a draft until the entire dependent slice has passed its
-gates. Branches are stacked in this order:
+Every pull request is a draft until its dependent slice has passed its gates.
+Branches are stacked in this order:
 
 ```text
 main
   └─ cleanup/00-plan-and-gates
       └─ cleanup/01-doc-semantics
           └─ cleanup/02-formatter-ignore-plan
-              └─ cleanup/03-validated-cst-fields
-                  └─ cleanup/04-format-context
-                      └─ cleanup/05-pure-doc-core
-                          └─ cleanup/06-renderer
-                              └─ cleanup/07-language-rules
-                                  └─ cleanup/08-syntax-tooling
-                                      └─ cleanup/09-tests-docs-api
+              └─ cleanup/03-infallible-generated-fields
+                  └─ cleanup/04-syntax-recovery-visibility
+                      └─ cleanup/05-root-coordination
+                          └─ cleanup/06-source-audit-reporting
+                              └─ cleanup/07-core-module-boundaries
+                                  └─ cleanup/08a-renderer-boundaries
+                                      └─ cleanup/08b-renderer-audit-pass
+                                          └─ cleanup/09-kotlin-rules
+                                              └─ cleanup/10-java-rules
+                                                  └─ cleanup/11-lexer-substrate
+                                                      └─ cleanup/12-java-lookahead
+                                                          └─ cleanup/13-final-reconciliation
 ```
 
 The plan is deliberately ambitious, but the stack is not immutable. Merge
 adjacent entries when one cannot deliver an independently coherent deletion.
 Split an entry when review would require holding too many invariants in mind.
-Update both the graph and ledger before changing stack shape.
+Update both the graph and ledger before changing stack shape. Every PR must
+compile, test, and be independently revertible; no temporary dual API may
+survive a PR boundary.
 
 ### PR 00 — Plan and gates
 
 Scope:
 
 - commit this plan and status ledger;
-- make debug/release output parity reproducible without committing duplicate
-  fixture output;
-- add or document bounded deep-nesting and complexity checks needed by later
-  structural changes;
-- capture stable baseline measurement commands.
+- record debug/release output parity and complexity gates for later PRs;
+- capture stable baseline measurements and environment limitations.
 
-Expected simplification: none in production code. This PR creates only the
-minimum safety harness needed to delete production machinery confidently. If the
-harness becomes a framework, reduce it.
+Expected simplification: none in production code. Do not build a generic test
+framework here; put regression tests beside the invariant changed by the owning
+implementation PR.
 
 Gates:
 
 - current focused formatter suites pass;
 - all committed fixtures have debug/release output parity;
-- complexity guard fails loudly when its fixture/tooling is missing;
-- baseline commands and prerequisites are reproducible.
+- baseline commands, prerequisites, and known failures are recorded.
 
 ### PR 01 — Profile-independent document semantics
 
 Scope:
 
 - make every `Doc` operation produce the same topology in debug and release;
-- remove semantic `Doc == nil` and equivalent emptiness inference;
-- introduce explicit visibility metadata only at call sites that need it;
-- keep debug normalization/source claims observational rather than structural.
+- remove all semantic `Doc == nil` comparisons;
+- use existing CST/list classification or a narrow `(Doc, visible)` result only
+  where separator/layout visibility is genuinely needed;
+- keep debug normalization/source claims observational rather than structural;
+- audit semantic-looking `ConcatBuilder::is_empty` calls and either replace them
+  with syntax/counter state or name structural queries explicitly.
 
-Expected deletions: profile-conditioned document construction, opaque handle
-comparisons, Kotlin `Invisible(Doc)`/`layout_visible` special cases where an
-explicit result makes them redundant.
+Expected deletions: profile-conditioned source-fragment construction, opaque
+handle comparisons, and duplicated visibility branches. Do not introduce a
+general `Formatted` wrapper solely for this migration.
 
-Risks: normalization audit coverage, group-fit decisions, comment-only nodes.
+Risks: normalization audit coverage, group-fit decisions, comment-only nodes,
+and increased release document density from zero-width claim nodes.
 
 Gates:
 
-- IR topology test is identical across debug and release;
-- all fixture output remains byte-identical;
+- an all-profile test proves empty claims are non-nil and topology is stable;
+- all fixture output remains byte-identical in debug and release;
 - normalization/source-conservation failures remain actionable in debug;
-- document-node density does not regress materially.
+- same-machine document density, allocation, memory, and elapsed measurements
+  are compared with both the immediate parent and stack baseline.
 
 ### PR 02 — One formatter-ignore plan
 
@@ -326,216 +327,292 @@ Scope:
 - associate source ranges with syntax-owned malformed/verbatim fragments;
 - consume the plan monotonically while formatting ordered children;
 - consolidate duplicate sequence-splicing paths;
-- delete nested subtree token/source scans.
+- delete every nested subtree token/source scan API in the same PR.
 
 Expected deletions: eleven overlapping discovery paths, subtree token collection
-used only to rediscover source ranges, duplicated Java/Kotlin splice logic.
+used only to rediscover source ranges, and duplicate Java/Kotlin splice logic.
 
-Risks: nested containers, directives in malformed syntax, boundary comments,
-disabled regions at the beginning/end of a file.
+Risks: nested containers, directives in malformed syntax, boundary comments, and
+disabled regions at file boundaries.
 
 Gates:
 
-- prove the planning pass and consumption are each linear in source/tokens;
-- stress deeply nested ignored regions with an explicit time/work bound;
+- a counted-work test proves planning and consumption are linear in source and
+  tokens; wall-clock timing alone is insufficient;
 - source conservation and trivia tests pass;
-- existing ignore snapshots remain byte-identical.
+- ignore snapshots and formatter-output hash remain byte-identical.
 
-### PR 03 — Validated, cardinality-aware CST fields
+### PR 03 — Infallible generated physical fields
 
 Scope:
 
-- validate generated factory shape once at construction or typed-root entry;
-- model required, optional, and repeated fields explicitly;
-- keep recovery pieces representable and syntax-owned;
-- migrate formatters away from `SyntaxInvariantError` plumbing;
-- delete `block_on_invariant` and impossible malformed-field branches as their
-  callers migrate.
+- validate factory shape once at generated construction or typed-root entry;
+- make only generated physical required/optional/list field accessors
+  cardinality-aware and infallible;
+- migrate representative Java and Kotlin vertical slices, then the generator;
+- delete `SyntaxInvariantError` plumbing that guarded impossible slot mismatch;
+- retain fallibility for custom semantic projections with genuine failure.
 
-Do this as vertical slices through representative Java and Kotlin nodes before
-changing the generator globally. The API is successful only if call sites get
-smaller and retain full malformed-tree behavior.
+Expected deletions: generated-slot invariant unwraps and impossible shape
+branches. Do not promise removal of all current `block_on_invariant` calls.
 
-Expected deletions: most of the 108 invariant unwraps, 153 malformed-field
-branches, and 84 malformed/invisible list branches; redundant recovery policy
-selection that becomes a CST property.
-
-Risks: confusing parser recovery with invalid factory shape, hiding genuinely
-optional tokens, generated-code churn, degraded diagnostics.
+Risks: hiding truly optional tokens, conflating parser recovery with invalid
+factory shape, generated churn, and weaker diagnostics.
 
 Gates:
 
-- factories reject or classify invalid shapes at the chosen boundary;
-- all representable malformed trees remain formattable and lossless;
-- accessor code and formatter call sites shrink in representative slices;
-- compile time and generated code size do not regress materially.
+- an exhaustive schema audit checks factory/accessor agreement;
+- generated code and representative formatter call sites shrink;
+- compile time, generated code size, and malformed-tree behavior do not regress;
+- there is still one declarative schema authority and no runtime second model.
 
-### PR 04 — A small formatting context
+### PR 04 — Syntax-owned recovery and list visibility
 
 Scope:
 
-- introduce a context that owns only currently shared formatting state;
-- consolidate Java/Kotlin entrypoints and common root mechanics;
-- centralize source-audit, ignore-plan, trivia, recovery-fragment, and lexical
-  boundary services behind narrow methods;
-- delete parameter threading and duplicate helpers as each service moves;
-- make recovery policy a syntax contract, not a language-rule choice.
+- classify recovery fragments and list visibility at the syntax boundary;
+- remove Java `RequireNonEmptyRange` versus Kotlin `TokensOnly` policy from
+  language rules;
+- remove Kotlin `Invisible(Doc)`, `layout_visible`, and equivalent formatter
+  special cases once syntax classification replaces them;
+- preserve all represented malformed pieces and their trivia.
 
-Expected deletions: duplicate root setup/teardown, per-rule audit plumbing,
-Java/Kotlin comment and recovery mechanics, placement-mode choices that can be
-derived from token ownership.
+Expected deletions: malformed/invisible list branches, formatter-selected empty
+core policy, and recovery probes that rediscover syntax state.
 
-Risks: a god context, hidden mutable state, lifetime complexity, making pure
-rules harder to test.
+Risks: dropping invisible-but-conserved recovery docs, treating malformed as
+absent, or making language-specific formatting policy look like syntax.
 
 Gates:
 
-- the context has a short field list with one owner per field;
-- leaf rules remain pure-looking and locally testable;
-- moved helpers are deleted, not wrapped indefinitely;
-- no new source/token/node cloning or unbounded search;
-- formatter rule LOC and call-site argument count decrease.
+- malformed, empty, and comment-only lists have explicit syntax-owned cases;
+- every represented token/comment remains claimed exactly once;
+- Java and Kotlin recovery fixture output remains byte-identical;
+- formatter rule call sites shrink rather than wrap old policy.
 
-### PR 05 — Purify the document core
+### PR 05 — Narrow root coordination
 
 Scope:
 
-- establish module boundaries between pure documents/rendering and syntax-aware
-  formatting mechanics;
-- reverse any dependency from document code into syntax or language concerns;
-- extract `jolt_doc` and/or rename the residual core only if the internal
-  boundary already proves the dependency win;
-- preserve the `jolt_fmt_ir` surface temporarily only when a current client
-  requires it, then remove the facade in the same stack.
+- consolidate Java/Kotlin entrypoint and root setup/teardown mechanics;
+- let a small root coordinator own only builder, ignore plan, and source audit;
+- pass narrow trivia, recovery, or lexical-boundary capabilities only to rules
+  that require them;
+- delete duplicate root helpers and parameter plumbing as each path moves.
 
-Expected deletions: cross-layer re-exports, syntax-aware document helpers,
-options/results mixed with algebra, obsolete facade modules.
+Expected deletions: duplicate root orchestration and per-rule global plumbing.
+This PR does not introduce a context threaded through every formatting rule.
 
-Risks: crate churn without conceptual simplification, public API expansion,
+Risks: hidden mutable state, lifetime complexity, and a root object expanding
+into a service locator.
+
+Gates:
+
+- ordinary leaf rules still accept the builder and typed syntax they use;
+- the coordinator has a short field list and no language-layout methods;
+- moved helpers and old entrypoints are deleted in the same PR;
+- formatter rule LOC and common call-site argument count decline.
+
+### PR 06 — Structured source-audit reporting
+
+Scope:
+
+- replace filename/count normalization allowlists with structured audit facts;
+- make failures identify the responsible syntax identity and source range;
+- distinguish authorized normalization from loss or duplicate claims;
+- delete test knowledge that belongs in syntax-owned normalization authority.
+
+Expected deletions: filename-specific removals, count allowlists, and opaque
+debug-only failure paths.
+
+Risks: weakening exact test expectations or moving formatter policy into the
+audit layer.
+
+Gates:
+
+- every previous exception is represented by a syntax-owned authorization;
+- deleting a required authorization produces a focused deterministic failure;
+- output remains byte-identical and audit allocation cost remains bounded.
+
+### PR 07 — Internal core module boundaries
+
+Scope:
+
+- establish internal boundaries between pure documents/rendering and
+  syntax-aware formatting mechanics;
+- reverse dependencies from document algebra into syntax/language concerns;
+- reduce cross-layer re-exports and options/results mixed with algebra;
+- extract a crate only if already-clean module edges make the extraction a net
+  deletion of coupling, concepts, and compile surface.
+
+Expected deletions: cross-layer re-exports, syntax-aware document helpers, and
+obsolete facade modules. Crate extraction is a decision gate, not a deliverable.
+
+Risks: file or crate churn without simplification, public API expansion, and
 longer compile times.
 
 Gates:
 
-- the pure layer has no syntax-crate dependency;
-- dependency direction is visible from Cargo manifests and module imports;
-- total concepts and re-exports decrease;
-- if extraction adds more scaffolding than it removes, retain modules in one
-  crate and document that decision.
+- module imports make dependency direction obvious;
+- concepts and re-exports decrease;
+- if extraction adds scaffolding, keep one partitioned crate and record why;
+- release native and WASM builds, compile time, and WASM size are compared.
 
-### PR 06 — One auditable renderer
+### PR 08a — Renderer boundaries without behavior change
 
 Scope:
 
-- split document traversal, fit decisions, sinks, and verification into small
-  modules with explicit contracts;
-- share structural interpretation where it removes real duplication;
-- avoid a full discard render before the real render when source verification
-  can observe the actual pass safely;
-- retain bounded fit budgets and streaming output.
+- isolate rendering, fit decisions, sinks, and audit observation behind small
+  internal modules with explicit contracts;
+- keep hot loops concrete and local;
+- share node dispatch only where the result is smaller and more readable;
+- preserve bounded fit budgets and streaming output.
 
-Expected deletions: duplicated node-dispatch code, debug discard sink and second
-full traversal where redundant, renderer state aliases and special cases exposed
-by the split.
+Expected deletions: renderer state aliases and genuinely duplicate dispatch.
+Moving lines between files is not itself a success.
 
-Risks: hot-loop abstraction overhead, altered group decisions, source-audit
-state coupled to sink errors.
+Risks: abstraction overhead, altered group decisions, and churn disguised as
+architecture.
 
 Gates:
 
-- byte-identical output for structural changes;
+- output hash and snapshots have zero delta;
 - fit work remains explicitly bounded;
-- realistic throughput and memory do not regress materially;
-- debug source verification observes exactly the bytes/nodes used by the real
-  render;
-- renderer modules can be understood independently from syntax recovery.
+- throughput, allocation bytes/count, peak RSS, and document memory are compared
+  with both parent and baseline;
+- renderer modules can be reasoned about without syntax recovery details.
 
-### PR 07 — Simplify language layout rules
-
-Scope:
-
-- tackle the largest rule hotspots after core seams are stable;
-- replace booleans, tuples, and Java-only document macros with small domain
-  values only when they remove branching at call sites;
-- consolidate identical Java/Kotlin mechanics without merging language syntax;
-- remove remaining duplicate ignored/recovery paths and dead compatibility
-  helpers;
-- flatten rules so syntax shape and layout choices are visible together.
-
-Initial hotspots:
-
-- Kotlin declarations (approximately 1,042 lines);
-- Kotlin control flow (approximately 856 lines);
-- Java modules (approximately 770 lines);
-- Kotlin calls (approximately 701 lines);
-- Java member bodies (approximately 641 lines).
-
-Expected deletions: opaque option tuples, macro indirection, repeated separator
-and body layouts, unreachable defensive branches made impossible by validated
-CST access.
-
-Risks: accidental style changes hidden in structural cleanup, over-sharing
-different Java/Kotlin rules, proliferation of tiny types.
-
-Gates:
-
-- each hotspot change is separately reviewable and output-preserving unless
-  labeled as a formatting change;
-- local cyclomatic/branch complexity and file size decline;
-- new domain values eliminate more states than they introduce concepts;
-- fixture and idempotence suites pass after each language slice.
-
-### PR 08 — Syntax and lexer mechanics
+### PR 08b — Optional single-pass renderer audit
 
 Scope:
 
-- extract only language-neutral UTF-8 cursor and trivia collection mechanics
-  shared by both lexers;
-- retain language-owned token classification and lexical rules;
-- memoize, bound, shrink, or replace Java's parallel lookahead grammar using
-  validated CST/parser mechanisms;
-- evaluate checked-in generated CST code only if it makes accessors easier to
-  inspect and removes generator/macro complexity.
+- attempt to remove the debug discard render only if source verification can
+  observe the actual render without weakening sink semantics;
+- specify partial-output, sink-halt, late-error, and error-atomicity behavior;
+- abandon this PR if the replacement adds more state or obscures the hot path.
 
-Expected deletions: duplicated byte/cursor/trivia movement, repeated lookahead
-work, parallel grammar productions, generator indirection that has no net
-reasoning benefit.
+Expected deletion: one complete debug traversal and its discard sink. If that
+cannot be deleted cleanly, close this optional PR with the rationale recorded.
 
-Risks: lexer performance regressions, subtle Unicode boundary bugs, coupling
-unrelated language grammars, enormous generated diffs.
+Risks: writing partial output before a late conservation failure, coupling audit
+state to sink errors, and slowing release rendering.
 
 Gates:
 
-- lexer throughput and allocations do not regress materially;
-- Unicode, trivia, and malformed-input fixtures pass;
-- lookahead has a documented finite work bound;
-- generated-code policy is chosen on measured local-reasoning and diff-size
-  evidence, not aesthetics.
+- explicit tests cover sink failure, halted sinks, partial writes, and late
+  conservation errors;
+- debug verification observes exactly the real rendered bytes and claims;
+- release performance and code paths do not regress;
+- the implementation is smaller than the two-pass contract it replaces.
 
-### PR 09 — Tests, architecture docs, and API polish
+### PR 09 — Kotlin rule purification
 
 Scope:
 
-- replace filename/count normalization allowlists with structured audit output
-  where safe;
-- document recovery, conservation, normalization, ignore ownership, and fit
-  costs in `docs/internals/formatter.md`;
-- update public CLI/dprint/facade APIs after internal seams settle;
-- delete transition harnesses and temporary re-exports;
-- record final metrics and unresolved follow-ups.
+- simplify Kotlin declarations, control flow, calls, and list layout after core
+  seams are stable;
+- replace booleans/tuples with domain values only when call-site branching and
+  impossible states decrease;
+- flatten rules so syntax shape and layout choices are visible together;
+- delete remaining compatibility/recovery helpers.
 
-Expected deletions: filename-specific test knowledge, temporary adapters,
-obsolete snapshots/harness paths, facade APIs with no current behavior.
+Expected deletions: opaque option tuples, repeated list/body layout, and
+unreachable branches made impossible by validated CST access.
 
-Risks: making tests less specific, exposing internal concepts publicly, turning
-final polish into a miscellaneous dumping ground.
+Risks: accidental style changes and proliferation of tiny types.
 
 Gates:
 
-- audit failures identify the responsible syntax/range without filename
-  exceptions;
-- docs match code ownership and complexity guarantees;
-- CLI and dprint integrations remain thin;
-- final stack metrics and remaining debts are recorded below.
+- each hotspot slice is output-preserving unless explicitly isolated;
+- local branches and file size decline;
+- every new value eliminates more states/concepts than it introduces;
+- Kotlin fixtures, recovery, trivia, and idempotence pass after each slice.
+
+### PR 10 — Java rule purification
+
+Scope:
+
+- simplify Java modules, annotations, member bodies, and remaining hotspots;
+- remove Java-only document macros and repeated separator/body layouts;
+- consolidate with Kotlin only after identical mechanics are demonstrated;
+- keep Java syntax and style decisions language-owned.
+
+Expected deletions: macro indirection, duplicated annotation/module loops,
+unreachable defensive branches, and stale ignore/recovery helpers.
+
+Risks: style changes hidden in cleanup and over-sharing with Kotlin.
+
+Gates:
+
+- each hotspot slice is output-preserving unless explicitly isolated;
+- local branches, macro surface, and file size decline;
+- Java fixtures, recovery, trivia, and idempotence pass after each slice.
+
+### PR 11 — Shared lexer cursor substrate
+
+Scope:
+
+- extract only language-neutral UTF-8 movement and trivia cursor mechanics
+  demonstrated to be identical in both lexers;
+- retain language-owned token classification and lexical semantics;
+- delete the two old mechanical implementations as each operation moves.
+
+Expected deletions: duplicate byte/cursor/trivia movement.
+
+Risks: Unicode boundary bugs, lexer performance loss, and false sharing between
+different language rules.
+
+Gates:
+
+- Unicode, trivia, and malformed-input fixtures pass for both languages;
+- lexer throughput, allocations, and peak memory do not regress;
+- shared APIs contain no Java/Kotlin token semantics;
+- new substrate code is materially smaller than the duplicates removed.
+
+### PR 12 — Bounded Java lookahead
+
+Scope:
+
+- measure adversarial work in the Java lookahead parallel grammar;
+- memoize, explicitly bound, shrink, or replace productions using existing
+  parser mechanisms;
+- delete parallel productions as soon as the owning parse decision migrates.
+
+Expected deletions: repeated lookahead work and parallel grammar code.
+
+Risks: changed ambiguity decisions, cache memory growth, or moving the same
+grammar complexity behind a generic API.
+
+Gates:
+
+- adversarial tests assert counted finite work, not wall-clock alone;
+- Java parser fixtures and recovery snapshots remain stable;
+- realistic and adversarial parser time/allocation improve or remain neutral;
+- the resulting grammar is shorter and locally traceable.
+
+### PR 13 — Final reconciliation, docs, and API deletions
+
+Scope:
+
+- document actual recovery, conservation, normalization, ignore, and fit-cost
+  ownership in `docs/internals/formatter.md`;
+- delete all transition harnesses and temporary re-exports;
+- polish CLI/dprint/facade APIs only where the completed stack leaves a concrete
+  obsolete seam;
+- record final metrics, concept/LOC ledger, and unresolved follow-ups.
+
+Expected deletions: temporary adapters and obsolete facade APIs. This is not a
+miscellaneous cleanup bucket; behavior changes require their own PR.
+
+Risks: docs describing the intended rather than actual design and speculative
+public API work.
+
+Gates:
+
+- docs match code ownership and finite-cost guarantees;
+- CLI/dprint integrations remain thin and release WASM behavior/size is stable;
+- final metrics compare main, immediate parent, and completed stack;
+- every ledger row has verification evidence and no temporary dual API remains.
 
 ## Pull Request Contract
 
@@ -551,6 +628,13 @@ Every pull request description records:
 - test and benchmark results;
 - rollback boundary and known follow-ups.
 
+Before starting the next PR, pause for explicit design review if production LOC
+grew by more than 200 lines or five percent of the touched subsystem, whichever
+is smaller, unless the PR deleted an older cross-cutting concept or has measured
+correctness/performance evidence that requires the growth. Any new cross-cutting
+concept without a deleted predecessor triggers the same pause regardless of LOC.
+This is a reassessment threshold, not a mandate to compress readable code.
+
 Subagents may research, implement a bounded non-overlapping slice, or review a
 branch. The stack owner integrates changes, controls branches and commits,
 rebases descendants, runs final verification, and publishes PR updates. A
@@ -562,18 +646,19 @@ first updating this plan through the stack owner.
 Run the narrowest relevant checks during implementation and the full available
 matrix before publishing each draft update.
 
-| Concern           | Required evidence                                                                    |
-| ----------------- | ------------------------------------------------------------------------------------ |
-| Build profiles    | debug/release IR and output parity                                                   |
-| Java formatting   | unit, corpus snapshots, recovery, layout, idempotence                                |
-| Kotlin formatting | unit, corpus snapshots, recovery, layout, idempotence                                |
-| Losslessness      | source-conservation and trivia ownership checks                                      |
-| Ignore handling   | beginning/end, nested containers, malformed ranges, stress bound                     |
-| Syntax            | parser/lexer fixture snapshots and malformed input                                   |
-| Integrations      | `jolt_formatter`, CLI, and dprint handler tests                                      |
-| Static analysis   | formatting and strict Clippy, with pre-existing debt identified                      |
-| Complexity        | deep nesting and adversarial lookahead/ignore inputs                                 |
-| Performance       | fixed Java/Kotlin realistic corpus: time, document nodes/token, reserved bytes/token |
+| Concern           | Required evidence                                                                                     |
+| ----------------- | ----------------------------------------------------------------------------------------------------- |
+| Build profiles    | debug/release IR and output parity                                                                    |
+| Java formatting   | unit, corpus snapshots, recovery, layout, idempotence                                                 |
+| Kotlin formatting | unit, corpus snapshots, recovery, layout, idempotence                                                 |
+| Losslessness      | source-conservation and trivia ownership checks                                                       |
+| Ignore handling   | beginning/end, nested containers, malformed ranges, counted stress bound                              |
+| Syntax            | parser/lexer fixture snapshots and malformed input                                                    |
+| Integrations      | `jolt_formatter`, CLI, dprint handler, native release, and release WASM size                          |
+| Sink semantics    | halted/erroring sinks, partial output, and late conservation errors where rendering changes           |
+| Static analysis   | formatting and strict Clippy, with pre-existing debt identified                                       |
+| Complexity        | counted deep-nesting and adversarial lookahead/ignore work, not timing alone                          |
+| Performance       | same-machine parent/baseline time, allocation count/bytes, peak RSS, doc nodes/token, reserved memory |
 
 Prefer the repository's Ona `test` automation. If environment automation cannot
 run, use repository `mise` tasks. Use direct Cargo commands only when those
@@ -587,18 +672,23 @@ This table is the source of truth after a context compaction. Update it whenever
 a branch is created, a PR is opened, scope changes, a gate fails, or a PR is
 ready for review.
 
-| PR | Branch                             | Status      | Parent | Draft PR | Verification            | Notes                                                  |
-| -- | ---------------------------------- | ----------- | ------ | -------- | ----------------------- | ------------------------------------------------------ |
-| 00 | `cleanup/00-plan-and-gates`        | in progress | `main` | —        | baseline audit complete | Write plan, then add only necessary gates.             |
-| 01 | `cleanup/01-doc-semantics`         | planned     | PR 00  | —        | —                       | Profile-independent topology and explicit visibility.  |
-| 02 | `cleanup/02-formatter-ignore-plan` | planned     | PR 01  | —        | —                       | One linear root plan.                                  |
-| 03 | `cleanup/03-validated-cst-fields`  | planned     | PR 02  | —        | —                       | Begin with vertical slices.                            |
-| 04 | `cleanup/04-format-context`        | planned     | PR 03  | —        | —                       | Prevent a god context.                                 |
-| 05 | `cleanup/05-pure-doc-core`         | planned     | PR 04  | —        | —                       | Extraction is conditional on proven module boundaries. |
-| 06 | `cleanup/06-renderer`              | planned     | PR 05  | —        | —                       | One bounded, auditable traversal model.                |
-| 07 | `cleanup/07-language-rules`        | planned     | PR 06  | —        | —                       | May split by independent hotspot.                      |
-| 08 | `cleanup/08-syntax-tooling`        | planned     | PR 07  | —        | —                       | Share mechanics, not language semantics.               |
-| 09 | `cleanup/09-tests-docs-api`        | planned     | PR 08  | —        | —                       | Finalize only after core seams settle.                 |
+| PR  | Branch                                   | Status     | Parent | Draft PR                                     | Verification            | Notes                                         |
+| --- | ---------------------------------------- | ---------- | ------ | -------------------------------------------- | ----------------------- | --------------------------------------------- |
+| 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2) | baseline audit complete | Durable plan and gates only.                  |
+| 01  | `cleanup/01-doc-semantics`               | planned    | PR 00  | —                                            | —                       | Profile-independent topology/presence.        |
+| 02  | `cleanup/02-formatter-ignore-plan`       | planned    | PR 01  | —                                            | —                       | One linear root plan.                         |
+| 03  | `cleanup/03-infallible-generated-fields` | planned    | PR 02  | —                                            | —                       | Generated physical slots only.                |
+| 04  | `cleanup/04-syntax-recovery-visibility`  | planned    | PR 03  | —                                            | —                       | Syntax-owned recovery/list classification.    |
+| 05  | `cleanup/05-root-coordination`           | planned    | PR 04  | —                                            | —                       | Narrow root ownership, no god context.        |
+| 06  | `cleanup/06-source-audit-reporting`      | planned    | PR 05  | —                                            | —                       | Structured normalization facts.               |
+| 07  | `cleanup/07-core-module-boundaries`      | planned    | PR 06  | —                                            | —                       | Conditional crate extraction gate.            |
+| 08a | `cleanup/08a-renderer-boundaries`        | planned    | PR 07  | —                                            | —                       | Separate contracts without output changes.    |
+| 08b | `cleanup/08b-renderer-audit-pass`        | optional   | PR 08a | —                                            | —                       | Proceed only if two-pass semantics shrink.    |
+| 09  | `cleanup/09-kotlin-rules`                | planned    | PR 08b | —                                            | —                       | Kotlin hotspot purification.                  |
+| 10  | `cleanup/10-java-rules`                  | planned    | PR 09  | —                                            | —                       | Java hotspot purification.                    |
+| 11  | `cleanup/11-lexer-substrate`             | planned    | PR 10  | —                                            | —                       | Share cursor mechanics only.                  |
+| 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                            | —                       | Counted bounded lookahead work.               |
+| 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                            | —                       | Actual docs, metrics, and API deletions only. |
 
 ## Decision Log
 
@@ -608,6 +698,8 @@ ready for review.
 | 2026-07-22 | Centralize branches, commits, rebases, and publication.      | Subagents share a filesystem; central integration avoids hidden branch state and conflicting commits. |
 | 2026-07-22 | Make crate extraction conditional.                           | Purity is about dependency direction, not maximizing crate count.                                     |
 | 2026-07-22 | Treat growth without deleted complexity as a stop condition. | The cleanup exists to reduce reasoning load, not install a new framework.                             |
+| 2026-07-22 | Keep leaf rules free of a general formatting context.        | Narrow dependencies prevent a service locator and preserve local reasoning.                           |
+| 2026-07-22 | Split CST, recovery, renderer, language, and lexer risks.    | Each now has an independent correctness model, benchmark gate, and rollback boundary.                 |
 
 ## Resume Protocol
 
