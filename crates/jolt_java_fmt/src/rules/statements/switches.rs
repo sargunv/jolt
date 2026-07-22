@@ -13,7 +13,8 @@ use crate::helpers::blocks::BodyItem;
 use crate::helpers::comments::token_has_comments;
 use crate::helpers::recovery::{
     JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_malformed, resolve_list_part,
-    resolve_optional_field, resolve_required_delimiter, resolve_required_field,
+    resolve_list_part_with_visibility, resolve_optional_field, resolve_required_delimiter,
+    resolve_required_field,
 };
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{
@@ -53,16 +54,24 @@ pub(crate) fn format_switch_block<'source>(
     block: &SwitchBlock<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let entries = match resolve_required_field(block.entries(), doc) {
+    let entries = block.entries();
+    let malformed_is_visible = matches!(
+        &entries,
+        Ok(jolt_java_syntax::JavaSyntaxField::Malformed(malformed))
+            if malformed.first_token().is_some()
+    );
+    let entries = match resolve_required_field(entries, doc) {
         JavaFormatField::Present(entries) => entries,
         JavaFormatField::Malformed(malformed) => {
-            return braced_switch_block(block, Some(malformed), doc);
+            return braced_switch_block(block, malformed, malformed_is_visible, doc);
         }
     };
     let mut has_body = false;
     let body = doc.concat_list(|docs| {
         for part in entries.parts() {
-            let entry = match resolve_list_part(part, docs) {
+            let (part, visible) =
+                resolve_list_part_with_visibility(part, docs, |item| item.first_token().is_some());
+            let entry = match part {
                 JavaFormatListPart::Item(entry) => match entry {
                     SwitchEntrySyntax::SwitchBlockStatementGroup(group) => {
                         format_switch_statement_group(&group, docs)
@@ -76,32 +85,32 @@ pub(crate) fn format_switch_block<'source>(
                     format_token_with_comments(docs, &separator)
                 }
             };
-            if !docs.is_empty() {
+            if visible && has_body {
                 let hard_line = docs.hard_line();
                 docs.push(hard_line);
             }
             docs.push(entry);
+            has_body |= visible;
         }
-        has_body = !docs.is_empty();
     });
-    braced_switch_block(block, has_body.then_some(body), doc)
+    braced_switch_block(block, body, has_body, doc)
 }
 
 fn braced_switch_block<'source>(
     block: &SwitchBlock<'source>,
-    body: Option<Doc<'source>>,
+    body: Doc<'source>,
+    body_is_visible: bool,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let open = match resolve_required_field(block.open_brace(), doc) {
         JavaFormatField::Present(token) => format_token_with_comments(doc, &token),
         JavaFormatField::Malformed(malformed) => malformed,
     };
-    let body = match body {
-        Some(body) => {
-            let body = doc_concat!(doc, [doc.hard_line(), body]);
-            doc_concat!(doc, [doc_indent!(doc, body), doc.hard_line()])
-        }
-        None => doc.hard_line(),
+    let body = if body_is_visible {
+        let body = doc_concat!(doc, [doc.hard_line(), body]);
+        doc_concat!(doc, [doc_indent!(doc, body), doc.hard_line()])
+    } else {
+        doc_concat!(doc, [body, doc.hard_line()])
     };
     let close = match resolve_required_field(block.close_brace(), doc) {
         JavaFormatField::Present(token) => format_token_with_comments(doc, &token),
@@ -183,43 +192,54 @@ fn format_switch_group_labels<'source>(
 ) -> (Doc<'source>, usize, Option<Doc<'source>>) {
     let mut label_count = 0;
     let mut single_label = None;
+    let mut has_visible_output = false;
     let labels_doc = doc.concat_list(|docs| {
-        let mut pending: Option<Doc<'source>> = None;
+        let mut pending: Option<(Doc<'source>, bool)> = None;
         for part in parts {
-            match resolve_list_part(part, docs) {
+            let (part, part_is_visible) =
+                resolve_list_part_with_visibility(part, docs, |item| item.first_token().is_some());
+            match part {
                 JavaFormatListPart::Item(label) => {
-                    if let Some(previous) = pending.take() {
-                        if !docs.is_empty() {
+                    if let Some((previous, previous_is_visible)) = pending.take() {
+                        if previous_is_visible && has_visible_output {
                             let line = docs.hard_line();
                             docs.push(line);
                         }
                         docs.push(previous);
+                        has_visible_output |= previous_is_visible;
                     }
                     let formatted = format_switch_label(&label, docs);
-                    label_count += 1;
-                    single_label = Some(formatted);
-                    pending = Some(formatted);
+                    if part_is_visible {
+                        label_count += 1;
+                        single_label = Some(formatted);
+                    }
+                    pending = Some((formatted, part_is_visible));
                 }
                 JavaFormatListPart::Separator(colon) => {
-                    let label = pending.take().unwrap_or_else(Doc::nil);
+                    let (label, label_is_visible) = pending.take().unwrap_or((Doc::nil(), false));
                     let formatted =
                         doc_concat!(docs, [label, format_token_with_comments(docs, &colon)]);
-                    single_label = Some(formatted);
-                    if !docs.is_empty() {
+                    if label_is_visible {
+                        single_label = Some(formatted);
+                    }
+                    if has_visible_output {
                         let line = docs.hard_line();
                         docs.push(line);
                     }
                     docs.push(formatted);
+                    has_visible_output = true;
                 }
                 JavaFormatListPart::Malformed(malformed) => {
-                    if let Some(previous) = pending.take() {
+                    if let Some((previous, previous_is_visible)) = pending.take() {
                         docs.push(previous);
+                        has_visible_output |= previous_is_visible;
                     }
                     docs.push(malformed);
+                    has_visible_output |= part_is_visible;
                 }
             }
         }
-        if let Some(pending) = pending {
+        if let Some((pending, _)) = pending {
             docs.push(pending);
         }
     });

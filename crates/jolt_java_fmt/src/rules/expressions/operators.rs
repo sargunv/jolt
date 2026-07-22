@@ -158,9 +158,9 @@ fn flatten_binary_expression<'source>(
         return unflattened_binary_expression(expression, doc, &operator);
     }
 
+    let has_rest = !operators.is_empty();
     let mut operands = operands.into_iter();
     let first = operands.next().unwrap_or(root);
-    let mut has_rest = false;
     let rest = doc.concat_list(|rest| {
         for parentheses in removed_parentheses {
             let removals = expression.redundant_parenthesis_removal_claims(&parentheses);
@@ -179,7 +179,6 @@ fn flatten_binary_expression<'source>(
             let item = binary_chain_item(operator, operand, rest);
             rest.push(item);
         }
-        has_rest = !rest.is_empty();
     });
 
     (first, rest, has_rest)

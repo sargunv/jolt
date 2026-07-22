@@ -2,8 +2,8 @@ use std::ops::Range;
 
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
-    ExportsDirective, JavaMalformedSyntax, JavaMissingSyntax, JavaSyntaxToken, JavaSyntaxView,
-    ModuleDeclaration, ModuleDirective, ModuleImplementationClause, ModuleNameList,
+    ExportsDirective, JavaMalformedSyntax, JavaMissingSyntax, JavaSyntaxField, JavaSyntaxToken,
+    JavaSyntaxView, ModuleDeclaration, ModuleDirective, ModuleImplementationClause, ModuleNameList,
     ModuleTargetClause, NameSyntax, OpensDirective, ProvidesDirective, ReorderClaim,
     RequiresDirective, UsesDirective,
 };
@@ -24,7 +24,7 @@ use crate::helpers::recovery::{
     JavaFormatListPart, format_malformed, format_optional_field, format_required_field,
     resolve_list_part,
 };
-use crate::rules::annotations::format_annotation;
+use crate::rules::annotations::format_required_annotation_lines;
 use crate::rules::names::{NameSortKey, format_name};
 
 pub(crate) fn format_module_declaration<'source>(
@@ -32,27 +32,8 @@ pub(crate) fn format_module_declaration<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     {
-        let annotations = format_required_field(module.annotations(), doc, |list, doc| {
-            doc.concat_list(|docs| {
-                for part in list.parts() {
-                    match resolve_list_part(part, docs) {
-                        JavaFormatListPart::Item(annotation) => {
-                            if !docs.is_empty() {
-                                let line = docs.hard_line();
-                                docs.push(line);
-                            }
-                            let annotation = format_annotation(&annotation, docs);
-                            docs.push(annotation);
-                        }
-                        JavaFormatListPart::Separator(separator) => {
-                            let separator = format_token_with_comments(docs, &separator);
-                            docs.push(separator);
-                        }
-                        JavaFormatListPart::Malformed(malformed) => docs.push(malformed),
-                    }
-                }
-            })
-        });
+        let (annotations, annotations_visible) =
+            format_required_annotation_lines(module.annotations(), doc);
         let open = format_optional_field(module.open_keyword(), doc, |token, doc| {
             doc_concat!(doc, [format_token_with_comments(doc, &token), doc.space()])
         });
@@ -63,23 +44,35 @@ pub(crate) fn format_module_declaration<'source>(
         let open_brace = format_required_field(module.open_brace(), doc, |token, doc| {
             doc_concat!(doc, [doc.space(), format_token_with_comments(doc, &token)])
         });
-        let directives = format_required_field(module.directives(), doc, |list, doc| {
-            format_module_directives(module, &list, doc)
-        });
+        let (directives, directives_visible) = match module.directives() {
+            Ok(JavaSyntaxField::Present(list)) => format_module_directives(module, &list, doc),
+            Ok(JavaSyntaxField::Malformed(malformed)) => {
+                let visible = malformed.first_token().is_some();
+                (format_malformed(&malformed, doc), visible)
+            }
+            Ok(JavaSyntaxField::Missing(missing)) => (
+                crate::helpers::recovery::format_missing(&missing, doc),
+                false,
+            ),
+            Err(error) => {
+                doc.block_on_invariant(error.to_string());
+                (Doc::nil(), false)
+            }
+        };
         let close_brace = format_required_field(module.close_brace(), doc, |token, doc| {
             format_token_with_comments(doc, &token)
         });
         let head = doc_concat!(doc, [open, keyword, name, open_brace]);
-        let body = if directives == Doc::nil() {
-            Doc::nil()
-        } else {
+        let body = if directives_visible {
             doc_indent!(doc, doc_concat!(doc, [doc.hard_line(), directives]))
+        } else {
+            directives
         };
         let declaration = doc_concat!(doc, [head, body, doc.hard_line(), close_brace]);
-        if annotations == Doc::nil() {
-            declaration
-        } else {
+        if annotations_visible {
             doc_concat!(doc, [annotations, doc.hard_line(), declaration])
+        } else {
+            doc_concat!(doc, [annotations, declaration])
         }
     }
 }
@@ -88,7 +81,7 @@ fn format_module_directives<'source>(
     module: &ModuleDeclaration<'source>,
     list: &jolt_java_syntax::ModuleDirectiveList<'source>,
     doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
+) -> (Doc<'source>, bool) {
     {
         let parts = list.parts();
         let mut entries = Vec::with_capacity(parts.size_hint().0);
@@ -114,15 +107,19 @@ fn format_module_directives<'source>(
             module.text_range().start().get(),
             module.token_iter(),
         );
+        let visible = entries.iter().any(DirectiveEntry::is_visible);
         if ignored.is_empty() {
-            return format_directive_entries(entries, doc);
+            return (format_directive_entries(entries, doc), visible);
         }
         let ranges = entries
             .iter()
             .map(|entry| entry.range(module.text_range().start().get()))
             .collect::<Vec<_>>();
         let runs = formatter_ignore_runs(&ignored, &ranges);
-        format_directive_entries_with_ignored(entries, &runs, doc)
+        (
+            format_directive_entries_with_ignored(entries, &runs, doc),
+            visible || !runs.is_empty(),
+        )
     }
 }
 
@@ -134,6 +131,15 @@ enum DirectiveEntry<'source> {
 }
 
 impl DirectiveEntry<'_> {
+    fn is_visible(&self) -> bool {
+        match self {
+            Self::Node(node) => node.first_token().is_some(),
+            Self::Token(_) => true,
+            Self::Malformed(malformed) => malformed.first_token().is_some(),
+            Self::Missing(_) => false,
+        }
+    }
+
     fn range(&self, module_start: usize) -> Option<Range<usize>> {
         match self {
             Self::Node(node) => Some(relative_token_range_between(
@@ -167,12 +173,14 @@ fn format_directive_entries_with_ignored<'source>(
     for_each_formatter_ignore_splice(entries.len(), runs, |event| match event {
         FormatterIgnoreSplice::Ignore(run) => {
             if !retained.is_empty() {
+                let visible = retained.iter().any(DirectiveEntry::is_visible);
                 sections.push((
                     format_directive_entries(std::mem::take(&mut retained), doc),
                     false,
+                    visible,
                 ));
             }
-            sections.push((formatter_ignore_run_doc(run, doc), true));
+            sections.push((formatter_ignore_run_doc(run, doc), true, true));
         }
         FormatterIgnoreSplice::Item { index, .. } => {
             if let Some(entry) = entries[index].take() {
@@ -181,12 +189,14 @@ fn format_directive_entries_with_ignored<'source>(
         }
     });
     if !retained.is_empty() {
-        sections.push((format_directive_entries(retained, doc), false));
+        let visible = retained.iter().any(DirectiveEntry::is_visible);
+        sections.push((format_directive_entries(retained, doc), false, visible));
     }
     doc.concat_list(|joined| {
+        let mut has_visible_section = false;
         let mut previous_was_ignored = false;
-        for (section, ignored) in sections {
-            if !joined.is_empty() {
+        for (section, ignored, visible) in sections {
+            if visible && has_visible_section {
                 let separator = if previous_was_ignored {
                     joined.hard_line()
                 } else {
@@ -195,7 +205,10 @@ fn format_directive_entries_with_ignored<'source>(
                 joined.push(separator);
             }
             joined.push(section);
-            previous_was_ignored = ignored;
+            has_visible_section |= visible;
+            if visible {
+                previous_was_ignored = ignored;
+            }
         }
     })
 }
@@ -274,7 +287,7 @@ fn format_sorted_directives<'source>(
     let mut previous = None;
     doc.concat_list(|docs| {
         for directive in directives {
-            if !docs.is_empty() {
+            if previous.is_some() {
                 let separator = if previous == Some(directive.kind) {
                     docs.hard_line()
                 } else {

@@ -521,9 +521,7 @@ pub(crate) fn format_value_argument_list<'source>(
             }]
         }
     };
-    let has_comments = items
-        .iter()
-        .any(|item| item.layout_visible && item.doc != Doc::nil())
+    let has_comments = items.iter().any(|item| item.layout_visible)
         && value_argument_list_has_leading_comments(arguments);
     let list = if has_comments {
         force_parenthesized_list(doc, open.source(), close.source(), items)

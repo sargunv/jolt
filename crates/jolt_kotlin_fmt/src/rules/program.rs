@@ -18,8 +18,8 @@ use crate::helpers::formatter_ignore::{
     formatter_ignore_run_doc, formatter_ignore_runs, relative_token_range_between,
 };
 use crate::helpers::recovery::{
-    KotlinFormatField, KotlinFormatListPart, format_malformed, format_missing,
-    format_optional_field, format_required_field, resolve_list_part, resolve_required_field,
+    KotlinFormatListPart, format_malformed, format_missing, format_optional_field,
+    format_required_field, resolve_list_part,
 };
 use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::format_file_item;
@@ -346,9 +346,17 @@ fn format_file_annotations<'source>(
     doc: &mut DocBuilder<'source>,
     file: &KotlinFile<'source>,
 ) -> (Doc<'source>, bool) {
-    let annotations = match resolve_required_field(file.annotations(), doc) {
-        KotlinFormatField::Present(annotations) => annotations,
-        KotlinFormatField::Malformed(recovery) => return (recovery, recovery != Doc::nil()),
+    let annotations = match file.annotations() {
+        Ok(KotlinSyntaxField::Present(annotations)) => annotations,
+        Ok(KotlinSyntaxField::Malformed(malformed)) => {
+            let visible = malformed.first_token().is_some();
+            return (format_malformed(&malformed, doc), visible);
+        }
+        Ok(KotlinSyntaxField::Missing(missing)) => return (format_missing(&missing, doc), false),
+        Err(error) => {
+            doc.block_on_invariant(error.to_string());
+            return (Doc::nil(), false);
+        }
     };
     let mut formatted = Vec::new();
     let mut invisible = Vec::new();
@@ -364,10 +372,7 @@ fn format_file_annotations<'source>(
                 TrailingTrivia::Preserve,
             )),
             KotlinFormatListPart::Malformed(recovery) => formatted.push(recovery),
-            KotlinFormatListPart::Invisible(recovery) if recovery != Doc::nil() => {
-                invisible.push(recovery);
-            }
-            KotlinFormatListPart::Invisible(_) => {}
+            KotlinFormatListPart::Invisible(recovery) => invisible.push(recovery),
         }
     }
     let invisible = doc.concat(invisible);

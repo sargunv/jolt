@@ -6,11 +6,13 @@ use super::{
     format_token_with_inline_leading_comments, format_type, format_void_type,
 };
 use crate::helpers::recovery::{
-    JavaFormatField, JavaFormatListPart, format_malformed, format_optional_field,
-    format_required_field, resolve_list_part, resolve_optional_field,
+    JavaFormatListPart, format_malformed, format_optional_field, format_required_field,
+    resolve_list_part_with_visibility,
 };
 use jolt_fmt_ir::DocBuilder;
-use jolt_java_syntax::{ClassLiteralTargetSyntax, JavaSyntaxListPart};
+use jolt_java_syntax::{
+    ClassLiteralTargetSyntax, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxView,
+};
 
 pub(super) fn format_literal_expression<'source>(
     expression: &LiteralExpression<'source>,
@@ -27,21 +29,28 @@ pub(super) fn format_name_expression<'source>(
     leading_comments: LeadingComments,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let annotations = match resolve_optional_field(expression.annotations(), doc) {
-        JavaFormatField::Present(Some(annotations)) => {
+    let (annotations, annotations_visible) = match expression.annotations() {
+        Ok(JavaSyntaxField::Present(annotations)) => {
             format_annotation_parts(annotations.parts(), doc)
         }
-        JavaFormatField::Present(None) => None,
-        JavaFormatField::Malformed(recovery) => Some(recovery),
+        Ok(JavaSyntaxField::Missing(_)) => (Doc::nil(), false),
+        Ok(JavaSyntaxField::Malformed(malformed)) => {
+            let visible = malformed.first_token().is_some();
+            (format_malformed(&malformed, doc), visible)
+        }
+        Err(error) => {
+            doc.block_on_invariant(error.to_string());
+            (Doc::nil(), false)
+        }
     };
     let name = format_required_field(expression.identifier(), doc, |name, doc| {
         format_leaf_token(&name, leading_comments, doc)
     });
 
-    if let Some(annotations) = annotations {
+    if annotations_visible {
         doc_concat!(doc, [annotations, doc.space(), name])
     } else {
-        name
+        doc_concat!(doc, [annotations, name])
     }
 }
 
@@ -53,26 +62,28 @@ fn format_annotation_parts<'source>(
         >,
     >,
     doc: &mut DocBuilder<'source>,
-) -> Option<Doc<'source>> {
+) -> (Doc<'source>, bool) {
     let mut has_parts = false;
     let result = doc.concat_list(|docs| {
         for part in parts {
-            has_parts = true;
-            if !docs.is_empty() {
-                let space = docs.space();
-                docs.push(space);
-            }
-            let part = match resolve_list_part(part, docs) {
+            let (part, visible) =
+                resolve_list_part_with_visibility(part, docs, |item| item.first_token().is_some());
+            let part = match part {
                 JavaFormatListPart::Item(annotation) => format_annotation(&annotation, docs),
                 JavaFormatListPart::Separator(separator) => {
                     crate::helpers::comments::format_token_with_comments(docs, &separator)
                 }
-                JavaFormatListPart::Malformed(recovery) => recovery,
+                JavaFormatListPart::Malformed(malformed) => malformed,
             };
+            if visible && has_parts {
+                let space = docs.space();
+                docs.push(space);
+            }
             docs.push(part);
+            has_parts |= visible;
         }
     });
-    has_parts.then_some(result)
+    (result, has_parts)
 }
 
 pub(super) fn format_this_expression<'source>(

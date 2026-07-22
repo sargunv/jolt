@@ -14,7 +14,8 @@ use crate::helpers::recovery::{
 use crate::rules::types::format_array_dimensions;
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{
-    JavaSyntaxListPart, PartitionedModifierItem, ResourceValueSyntax, VariableAccessSyntax,
+    JavaSyntaxListPart, JavaSyntaxView, PartitionedModifierItem, ResourceValueSyntax,
+    VariableAccessSyntax,
 };
 
 pub(super) fn format_try_statement<'source>(
@@ -402,48 +403,53 @@ fn format_parameter_modifiers<'source>(
     modifiers: &jolt_java_syntax::ParameterModifierList<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut has_items = false;
+    let mut has_visible_item = false;
     let modifiers = doc.concat_list(|docs| {
         for item in modifiers.partitioned_items() {
-            let item = match item {
+            let (item, visible) = match item {
                 Ok(
                     PartitionedModifierItem::DeclarationAnnotation(annotation)
                     | PartitionedModifierItem::TypeUseAnnotation(annotation),
-                ) => format_annotation(&annotation, docs),
+                ) => (format_annotation(&annotation, docs), true),
                 Ok(
                     PartitionedModifierItem::Token(token) | PartitionedModifierItem::Sealed(token),
-                ) => format_token_with_comments(docs, &token),
+                ) => (format_token_with_comments(docs, &token), true),
                 Ok(PartitionedModifierItem::NonSealed(modifier)) => {
                     docs.block_on_invariant(format!(
                         "unexpected non-sealed catch modifier at {:?}",
                         modifier.text_range()
                     ));
-                    Doc::nil()
+                    (Doc::nil(), false)
                 }
-                Ok(PartitionedModifierItem::Bogus(bogus)) => format_malformed(&bogus, docs),
-                Ok(PartitionedModifierItem::Missing(missing)) => {
-                    crate::helpers::recovery::format_missing(&missing, docs)
+                Ok(PartitionedModifierItem::Bogus(bogus)) => {
+                    let visible = bogus.first_token().is_some();
+                    (format_malformed(&bogus, docs), visible)
                 }
+                Ok(PartitionedModifierItem::Missing(missing)) => (
+                    crate::helpers::recovery::format_missing(&missing, docs),
+                    false,
+                ),
                 Ok(PartitionedModifierItem::Malformed(malformed)) => {
-                    format_malformed(&malformed, docs)
+                    let visible = malformed.first_token().is_some();
+                    (format_malformed(&malformed, docs), visible)
                 }
                 Err(error) => {
                     docs.block_on_invariant(error.to_string());
-                    Doc::nil()
+                    (Doc::nil(), false)
                 }
             };
-            if !docs.is_empty() {
+            if visible && has_visible_item {
                 let space = docs.space();
                 docs.push(space);
             }
             docs.push(item);
-            has_items = true;
+            has_visible_item |= visible;
         }
     });
-    if has_items {
+    if has_visible_item {
         doc_concat!(doc, [modifiers, doc.space()])
     } else {
-        Doc::nil()
+        modifiers
     }
 }
 

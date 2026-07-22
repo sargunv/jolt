@@ -565,26 +565,17 @@ impl<'source> DocBuilder<'source> {
         text: Cow<'source, str>,
         claim: SourceClaim<'source>,
     ) -> Doc<'source> {
-        #[cfg(debug_assertions)]
-        {
-            let metrics = literal_text_metrics(&text);
-            self.push_node(DocNode::Text(DocumentText {
-                text,
-                final_width: metrics.final_width,
-                first_width: metrics.first_width,
-                is_multiline: metrics.line_count > 1,
-                claim: Some(claim),
-            }))
-        }
         #[cfg(not(debug_assertions))]
-        {
-            let _ = claim;
-            if text.is_empty() {
-                self.nil()
-            } else {
-                self.literal_text(text)
-            }
-        }
+        let _ = claim;
+        let metrics = literal_text_metrics(&text);
+        self.push_node(DocNode::Text(DocumentText {
+            text,
+            final_width: metrics.final_width,
+            first_width: metrics.first_width,
+            is_multiline: metrics.line_count > 1,
+            #[cfg(debug_assertions)]
+            claim: Some(claim),
+        }))
     }
 
     fn exceptional_separator(&mut self, separator: ExceptionalSeparator) -> Doc<'source> {

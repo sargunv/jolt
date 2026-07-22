@@ -15,10 +15,10 @@ use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, token_range_between,
 };
 use crate::helpers::recovery::{
-    JavaFormatField, JavaFormatListPart, format_malformed, format_missing, format_required_field,
-    resolve_list_part, resolve_required_field,
+    JavaFormatField, format_malformed, format_missing, format_required_field,
+    resolve_required_field,
 };
-use crate::rules::annotations::format_annotation;
+use crate::rules::annotations::format_required_annotation_lines;
 use crate::rules::declarations::{format_method_declaration, format_type_declaration};
 use crate::rules::imports::format_imports;
 use crate::rules::modules::format_module_declaration;
@@ -388,27 +388,8 @@ fn format_package_declaration<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     {
-        let annotations = format_required_field(package.annotations(), doc, |list, doc| {
-            doc.concat_list(|docs| {
-                for part in list.parts() {
-                    match resolve_list_part(part, docs) {
-                        JavaFormatListPart::Item(annotation) => {
-                            if !docs.is_empty() {
-                                let line = docs.hard_line();
-                                docs.push(line);
-                            }
-                            let annotation = format_annotation(&annotation, docs);
-                            docs.push(annotation);
-                        }
-                        JavaFormatListPart::Separator(separator) => {
-                            let separator = format_token_with_comments(docs, &separator);
-                            docs.push(separator);
-                        }
-                        JavaFormatListPart::Malformed(malformed) => docs.push(malformed),
-                    }
-                }
-            })
-        });
+        let (annotations, annotations_visible) =
+            format_required_annotation_lines(package.annotations(), doc);
         let keyword = format_required_field(package.package_keyword(), doc, |token, doc| {
             doc_concat!(doc, [format_token_with_comments(doc, &token), doc.space()])
         });
@@ -417,10 +398,10 @@ fn format_package_declaration<'source>(
             format_token_with_comments(doc, &token)
         });
         let declaration = doc_concat!(doc, [keyword, name, semicolon]);
-        if annotations == Doc::nil() {
-            declaration
-        } else {
+        if annotations_visible {
             doc_concat!(doc, [annotations, doc.hard_line(), declaration])
+        } else {
+            doc_concat!(doc, [annotations, declaration])
         }
     }
 }
