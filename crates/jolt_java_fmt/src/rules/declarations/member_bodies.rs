@@ -43,7 +43,7 @@ macro_rules! standard_member_body {
                 close_comments,
                 family_ignore_range,
                 $category,
-                |member, doc| Some($format(member, doc)),
+                $format,
                 doc,
             )
         }
@@ -103,7 +103,7 @@ pub(super) fn format_annotation_interface_body<'source>(
         close_comments,
         family_ignore_range,
         annotation_member_category,
-        |member, doc| Some(FormattedMember::from_annotation_member(member, doc)),
+        FormattedMember::from_annotation_member,
         doc,
     )
 }
@@ -149,7 +149,7 @@ pub(super) fn format_class_member_body<'source>(
         close_dangling_comments,
         family_ignore_range,
         member_category,
-        |member, doc| Some(FormattedMember::from_member(member, doc)),
+        FormattedMember::from_member,
         doc,
     )
 }
@@ -162,7 +162,7 @@ fn format_member_parts<'source, T: Copy>(
     close_dangling_comments: Option<FormattedMember<'source>>,
     item_range: impl Fn(&T) -> Option<FormatterIgnoreItemRange>,
     item_category: impl Fn(&T) -> MemberCategory,
-    mut format_item: impl FnMut(&T, &mut DocBuilder<'source>) -> Option<FormattedMember<'source>>,
+    mut format_item: impl FnMut(&T, &mut DocBuilder<'source>) -> FormattedMember<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> BodyContent<'source> {
     let members = members.into_iter();
@@ -171,9 +171,7 @@ fn format_member_parts<'source, T: Copy>(
         let mut formatted = Vec::with_capacity(lower.saturating_add(2));
         formatted.extend(open_dangling_comments);
         for member in members {
-            if let Some(member) = format_part(&member, &mut format_item, doc) {
-                formatted.push(member);
-            }
+            formatted.push(format_part(&member, &mut format_item, doc));
         }
         formatted.extend(close_dangling_comments);
         let present = !formatted.is_empty();
@@ -212,12 +210,11 @@ fn format_member_parts<'source, T: Copy>(
             index,
             clear_blank_line_before,
         } => {
-            if let Some(mut member) = format_part(&members[index], &mut format_item, doc) {
-                if clear_blank_line_before {
-                    member = member.without_blank_line_before();
-                }
-                formatted.push(member);
+            let mut member = format_part(&members[index], &mut format_item, doc);
+            if clear_blank_line_before {
+                member = member.without_blank_line_before();
             }
+            formatted.push(member);
         }
     });
     formatted.extend(close_dangling_comments);
@@ -233,22 +230,20 @@ fn format_member_parts<'source, T: Copy>(
 
 fn format_part<'source, T>(
     part: &JavaSyntaxListPart<'source, T>,
-    format_item: &mut impl FnMut(&T, &mut DocBuilder<'source>) -> Option<FormattedMember<'source>>,
+    format_item: &mut impl FnMut(&T, &mut DocBuilder<'source>) -> FormattedMember<'source>,
     doc: &mut DocBuilder<'source>,
-) -> Option<FormattedMember<'source>> {
+) -> FormattedMember<'source> {
     match part {
         JavaSyntaxListPart::Item(item) => format_item(item, doc),
         JavaSyntaxListPart::Malformed(malformed) => {
-            Some(FormattedMember::comment(format_malformed(malformed, doc)))
+            FormattedMember::comment(format_malformed(malformed, doc))
         }
-        JavaSyntaxListPart::Missing(missing) => Some(FormattedMember::comment(
-            crate::helpers::recovery::format_missing(missing, doc),
-        )),
+        JavaSyntaxListPart::Missing(missing) => {
+            FormattedMember::comment(crate::helpers::recovery::format_missing(missing, doc))
+        }
         JavaSyntaxListPart::Separator(token) => {
             doc.block_on_invariant("unseparated Java member list contained a separator");
-            Some(FormattedMember::comment(format_token_with_comments(
-                doc, token,
-            )))
+            FormattedMember::comment(format_token_with_comments(doc, token))
         }
     }
 }
@@ -304,7 +299,7 @@ pub(super) fn format_body_close_dangling_comments<'source>(
     close: Option<JavaSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<FormattedMember<'source>> {
-    let comments = close?.leading_comments().collect::<Vec<_>>();
+    let comments = close?.leading_comments();
     (!comments.is_empty())
         .then(|| FormattedMember::comment(format_dangling_comments(doc, comments)))
 }
