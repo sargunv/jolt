@@ -676,23 +676,23 @@ This table is the source of truth after a context compaction. Update it whenever
 a branch is created, a PR is opened, scope changes, a gate fails, or a PR is
 ready for review.
 
-| PR  | Branch                                   | Status      | Parent | Draft PR                                     | Verification              | Notes                                         |
-| --- | ---------------------------------------- | ----------- | ------ | -------------------------------------------- | ------------------------- | --------------------------------------------- |
-| 00  | `cleanup/00-plan-and-gates`              | draft open  | `main` | [#2](https://github.com/sargunv/jolt/pull/2) | baseline audit complete   | Durable plan and gates only.                  |
-| 01  | `cleanup/01-doc-semantics`               | draft open  | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3) | debug/release + benchmark | Profile-independent topology/presence.        |
-| 02  | `cleanup/02-formatter-ignore-plan`       | in progress | PR 01  | —                                            | debug/release + benchmark | Publication remains.                          |
-| 03  | `cleanup/03-infallible-generated-fields` | planned     | PR 02  | —                                            | —                         | Generated physical slots only.                |
-| 04  | `cleanup/04-syntax-recovery-visibility`  | planned     | PR 03  | —                                            | —                         | Syntax-owned recovery/list classification.    |
-| 05  | `cleanup/05-root-coordination`           | planned     | PR 04  | —                                            | —                         | Narrow root ownership, no god context.        |
-| 06  | `cleanup/06-source-audit-reporting`      | planned     | PR 05  | —                                            | —                         | Structured normalization facts.               |
-| 07  | `cleanup/07-core-module-boundaries`      | planned     | PR 06  | —                                            | —                         | Conditional crate extraction gate.            |
-| 08a | `cleanup/08a-renderer-boundaries`        | planned     | PR 07  | —                                            | —                         | Separate contracts without output changes.    |
-| 08b | `cleanup/08b-renderer-audit-pass`        | optional    | PR 08a | —                                            | —                         | Proceed only if two-pass semantics shrink.    |
-| 09  | `cleanup/09-kotlin-rules`                | planned     | PR 08b | —                                            | —                         | Kotlin hotspot purification.                  |
-| 10  | `cleanup/10-java-rules`                  | planned     | PR 09  | —                                            | —                         | Java hotspot purification.                    |
-| 11  | `cleanup/11-lexer-substrate`             | planned     | PR 10  | —                                            | —                         | Share cursor mechanics only.                  |
-| 12  | `cleanup/12-java-lookahead`              | planned     | PR 11  | —                                            | —                         | Counted bounded lookahead work.               |
-| 13  | `cleanup/13-final-reconciliation`        | planned     | PR 12  | —                                            | —                         | Actual docs, metrics, and API deletions only. |
+| PR  | Branch                                   | Status     | Parent | Draft PR                                     | Verification              | Notes                                         |
+| --- | ---------------------------------------- | ---------- | ------ | -------------------------------------------- | ------------------------- | --------------------------------------------- |
+| 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2) | baseline audit complete   | Durable plan and gates only.                  |
+| 01  | `cleanup/01-doc-semantics`               | draft open | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3) | debug/release + benchmark | Profile-independent topology/presence.        |
+| 02  | `cleanup/02-formatter-ignore-plan`       | draft open | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4) | debug/release + benchmark | Root plan with bounded immutable queries.     |
+| 03  | `cleanup/03-infallible-generated-fields` | planned    | PR 02  | —                                            | —                         | Generated physical slots only.                |
+| 04  | `cleanup/04-syntax-recovery-visibility`  | planned    | PR 03  | —                                            | —                         | Syntax-owned recovery/list classification.    |
+| 05  | `cleanup/05-root-coordination`           | planned    | PR 04  | —                                            | —                         | Narrow root ownership, no god context.        |
+| 06  | `cleanup/06-source-audit-reporting`      | planned    | PR 05  | —                                            | —                         | Structured normalization facts.               |
+| 07  | `cleanup/07-core-module-boundaries`      | planned    | PR 06  | —                                            | —                         | Conditional crate extraction gate.            |
+| 08a | `cleanup/08a-renderer-boundaries`        | planned    | PR 07  | —                                            | —                         | Separate contracts without output changes.    |
+| 08b | `cleanup/08b-renderer-audit-pass`        | optional   | PR 08a | —                                            | —                         | Proceed only if two-pass semantics shrink.    |
+| 09  | `cleanup/09-kotlin-rules`                | planned    | PR 08b | —                                            | —                         | Kotlin hotspot purification.                  |
+| 10  | `cleanup/10-java-rules`                  | planned    | PR 09  | —                                            | —                         | Java hotspot purification.                    |
+| 11  | `cleanup/11-lexer-substrate`             | planned    | PR 10  | —                                            | —                         | Share cursor mechanics only.                  |
+| 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                            | —                         | Counted bounded lookahead work.               |
+| 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                            | —                         | Actual docs, metrics, and API deletions only. |
 
 ### PR 01 evidence
 
