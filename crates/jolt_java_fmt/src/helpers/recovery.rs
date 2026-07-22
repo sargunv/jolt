@@ -1,12 +1,10 @@
 //! Field/list recovery resolution for the Java formatter.
 //!
 //! Shared present/malformed field results and malformed fragment assembly live
-//! in `jolt_fmt_ir::recovery`. This module owns Java field/list resolve against
-//! typed CST enums and Java's empty-range malformed boundary policy.
+//! in `jolt_fmt_ir::recovery`. This module owns Java field/list resolution
+//! against typed CST enums.
 
-use jolt_fmt_ir::{
-    Doc, DocBuilder, FormatField, MalformedBoundaryPolicy, assemble_malformed_fragment,
-};
+use jolt_fmt_ir::{Doc, DocBuilder, FormatField, assemble_malformed_fragment};
 use jolt_java_syntax::{
     JavaMissingSyntax, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxToken, JavaSyntaxView,
 };
@@ -31,7 +29,6 @@ pub(crate) fn format_malformed<'source>(
     assemble_malformed_fragment(
         doc,
         &core,
-        MalformedBoundaryPolicy::RequireNonEmptyRange,
         &mut safety,
         leading,
         trailing,
