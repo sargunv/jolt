@@ -571,70 +571,55 @@ Gates:
 - local branches, macro surface, and file size decline;
 - Java fixtures, recovery, trivia, and idempotence pass after each slice.
 
-### PR 11 — Shared lexer cursor substrate
+### PR 11 — Lexer-local state and bounded scanning
 
-Scope:
+Accepted scope:
 
-- extract only language-neutral UTF-8 movement and trivia cursor mechanics
-  demonstrated to be identical in both lexers;
-- retain language-owned token classification and lexical semantics;
-- delete the two old mechanical implementations as each operation moves.
+- delete the redundant `previous_end` field and helpers independently in both
+  scanners; the value was always exactly the current byte offset;
+- delete Java's one-use current-character/range pair helper;
+- make Kotlin multi-dollar prefix classification end-to-end linear while
+  preserving its existing token boundaries and diagnostics;
+- retain language-owned UTF-8 movement, token classification, trivia,
+  diagnostics, and Unicode semantics.
 
-Expected deletions: duplicate byte/cursor/trivia movement.
+Expected deletions: duplicated position state and its hot-loop stores. The
+bounded Kotlin scan may add one narrow cached boundary, but must not add generic
+cursor policy or change malformed-token ownership.
 
-Risks: Unicode boundary bugs, lexer performance loss, and false sharing between
-different language rules.
+Risks: Unicode/EOF range changes, hiding repeated scans behind a locally linear
+helper, and adding state whose invalidation is hard to reason about.
 
 Gates:
 
-- Unicode, trivia, and malformed-input fixtures pass for both languages;
-- lexer throughput, allocations, and peak memory do not regress;
-- shared APIs contain no Java/Kotlin token semantics;
-- new substrate code is materially smaller than the duplicates removed.
+- Unicode, trivia, malformed-input, and full syntax fixtures pass for both
+  languages with no snapshot delta;
+- generated long valid and invalid dollar runs demonstrate linear end-to-end
+  Kotlin scanning without a giant committed fixture;
+- parse throughput, allocations, peak memory, native size, and WASM size do not
+  regress;
+- both scanners remain locally understandable and expose no new shared/public
+  API.
 
-Audited working scope (2026-07-22):
+Rejected shared-cursor prototype (2026-07-22): explicit composition produced a
++298/-298 Java diff, a +316/-260 Kotlin diff, and 107 lines of shared/export
+surface: +163 production lines overall. Qualified cursor access replaced the
+deleted mechanics with wrapping and noise at every token rule. Short field
+names, implicit `Deref`, implementation macros, or a trait of callback-like
+accessors could manufacture a smaller source diff but would make movement less
+local and less explicit. The prototype compiled, preserved all Java corpus
+snapshots, and passed the complete Kotlin syntax suite, so this is a design
+rejection rather than a correctness failure.
 
-- add one forward-only, two-field `LexerCursor<'source>` beside `LanguageLexer`
-  in `jolt_syntax`; it owns only borrowed source text and the current UTF-8 byte
-  offset;
-- expose only source/position access, current and explicitly linear nth
-  character access, current range, bump, and end-of-source checks; do not add
-  checkpoints, rewinding, callbacks, generics, token kinds, diagnostics, or
-  language policy;
-- embed that cursor in both scanners and delete both copies of the movement code
-  plus the redundant `previous_end` field, whose value is always exactly the
-  current offset;
-- make Kotlin's multi-dollar string-prefix probe linear; the audited
-  `chars().nth(count)` loop is quadratic and a valid prefix is currently
-  rescanned;
-- do not share trivia orchestration or trivia-piece scanning. Kotlin has
-  string-mode gating, shebangs, nested block comments, and LF-only line-comment
-  termination, while Java has Unicode pretranslation, final-SUB handling,
-  non-nested block comments, and CR-or-LF line-comment termination;
-- keep Java Unicode normalization/remapping, both token classifiers, comment end
-  probes, and the local one/two/three token helpers language-owned.
+Keep the duplicated two-field source cursors until Rust can express composition
+without expanding their clients or a later design deletes more surrounding
+scanner machinery.
 
-The cursor-only production estimate is roughly 100 removed lines against 58–72
-shared/replacement lines. Gate the Kotlin boundedness fix with generated
-long-prefix stress in addition to the existing multi-dollar fixtures; do not
-commit a giant fixture or test-only counter solely to restate the source loop.
-
-Prototype result (2026-07-22): reject the shared cursor extraction. Explicit
-composition produced a +298/-298 Java diff, a +316/-260 Kotlin diff, and 107
-lines of shared/export surface: +163 production lines overall. Qualified cursor
-access replaced the deleted mechanics with wrapping and noise at every token
-rule. Short field names, implicit `Deref`, implementation macros, or a trait of
-callback-like accessors could manufacture a smaller source diff but would make
-movement less local and less explicit. The prototype compiled, preserved all
-Java corpus snapshots, and passed the complete Kotlin syntax suite, so this is a
-design rejection rather than a correctness failure.
-
-The accepted PR 11 implementation is now local purification only: delete the
-redundant `previous_end` field/helpers independently in both scanners, delete
-Java's one-use current-character/range pair helper, and make Kotlin's
-multi-dollar prefix scan a single linear byte pass. Keep the duplicated
-two-field source cursors until Rust can express composition without expanding
-their clients or a later design deletes more surrounding scanner machinery.
+Trivia sharing was also rejected. Kotlin has string-mode gating, shebangs,
+nested block comments, and LF-only line-comment termination; Java has Unicode
+pretranslation, final-SUB handling, non-nested block comments, and CR-or-LF
+line-comment termination. A common trivia loop therefore needs semantic hooks or
+policy flags and weakens the language boundary.
 
 ### PR 12 — Bounded Java lookahead
 
