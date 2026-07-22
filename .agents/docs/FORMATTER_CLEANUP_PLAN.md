@@ -259,12 +259,11 @@ main
                           └─ cleanup/06-source-audit-reporting
                               └─ cleanup/07-core-module-boundaries
                                   └─ cleanup/08a-renderer-boundaries
-                                      └─ cleanup/08b-renderer-audit-pass
-                                          └─ cleanup/09-kotlin-rules
-                                              └─ cleanup/10-java-rules
-                                                  └─ cleanup/11-lexer-substrate
-                                                      └─ cleanup/12-java-lookahead
-                                                          └─ cleanup/13-final-reconciliation
+                                      └─ cleanup/09-kotlin-rules
+                                          └─ cleanup/10-java-rules
+                                              └─ cleanup/11-lexer-substrate
+                                                  └─ cleanup/12-java-lookahead
+                                                      └─ cleanup/13-final-reconciliation
 ```
 
 The plan is deliberately ambitious, but the stack is not immutable. Merge
@@ -707,8 +706,8 @@ ready for review.
 | 06  | `cleanup/06-source-audit-reporting`      | draft open | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8)   | full + release + benchmark | Syntax claims replace filename/count policy.     |
 | 07  | `cleanup/07-core-module-boundaries`      | draft open | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9)   | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.     |
 | 08a | `cleanup/08a-renderer-boundaries`        | draft open | PR 07  | [#10](https://github.com/sargunv/jolt/pull/10) | full + release + benchmark | Kept hot loop concrete; deleted duplicate state. |
-| 08b | `cleanup/08b-renderer-audit-pass`        | optional   | PR 08a | —                                              | —                          | Proceed only if two-pass semantics shrink.       |
-| 09  | `cleanup/09-kotlin-rules`                | planned    | PR 08b | —                                              | —                          | Kotlin hotspot purification.                     |
+| 08b | `cleanup/08b-renderer-audit-pass`        | rejected   | PR 08a | —                                              | design audit complete      | Exact single pass requires an output trace.      |
+| 09  | `cleanup/09-kotlin-rules`                | planned    | PR 08a | —                                              | —                          | Kotlin hotspot purification.                     |
 | 10  | `cleanup/10-java-rules`                  | planned    | PR 09  | —                                              | —                          | Java hotspot purification.                       |
 | 11  | `cleanup/11-lexer-substrate`             | planned    | PR 10  | —                                              | —                          | Share cursor mechanics only.                     |
 | 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                              | —                          | Counted bounded lookahead work.                  |
@@ -1061,6 +1060,33 @@ ready for review.
   Peak RSS remains unavailable because this environment lacks the benchmark's
   required `/usr/bin/time`; no test or other measurement was skipped.
 
+### PR 08b rejection
+
+- Debug formatting currently checks arena invariants, renders the complete
+  selected layout into a zero-sized discard sink while consuming claims,
+  finishes conservation, and checks malformed dispatch before the real sink
+  receives its first callback. A late audit error therefore produces no partial
+  output, and an early sink halt cannot hide an invalid tail claim.
+- Three independent audits established the lower bound for preserving that
+  contract: either replay the deterministic producer after validation, as the
+  current implementation does, or retain the exact sink-callback trace until
+  validation succeeds. Callback boundaries are observable because a sink may
+  halt on any chunk.
+- The smallest exact single-traversal prototype needs a `String` plus every
+  chunk-end offset. It adds a type, two allocation streams, roughly 25-40 lines,
+  `O(output bytes + callbacks)` live memory, and duplicate output buffering for
+  CLI, dprint, and tests. It deletes only the zero-sized discard sink and a few
+  call-site lines.
+- A coalesced string changes halt/chunk behavior; borrowed chunk vectors add
+  lifetime machinery; group-decision logs retain two traversals and add
+  per-occurrence state; transactional sinks cannot roll back arbitrary side
+  effects and expand the public contract; direct proof-to-sink permits partial
+  output and lets halt hide later failures.
+- PR 08b is therefore intentionally not opened. The current debug-only second
+  traversal is allocation-free, explicitly bounded by the same finite fit
+  budgets, and smaller than every behavior-equivalent replacement. PR 09 stacks
+  directly on PR 08a.
+
 ## Decision Log
 
 | Date       | Decision                                                       | Reason                                                                                                                                                                                                     |
@@ -1091,6 +1117,7 @@ ready for review.
 | 2026-07-22 | Keep render, fit, and output state in one concrete hot loop.   | Fit consumes the active command continuation and output-position state; extracting it adds a back-edge or shared context while deleting no interpreter dispatch.                                           |
 | 2026-07-22 | Treat flat mode as the successful-fit proof.                   | Rendering starts broken and enters flat mode only after a complete accepted probe; a second mutable flag duplicated that state and could not diverge on a reachable flat path.                             |
 | 2026-07-22 | Carry exactly one diagnostic when formatting is blocked.       | All five producers create one fatal diagnostic; a vector added an allocation and forced consumers to handle impossible empty/multiple cases.                                                               |
+| 2026-07-22 | Reject single-pass debug rendering without an output trace.    | Atomic late failures plus observable sink chunk/halt behavior require either deterministic replay or retaining every callback; replay is zero-allocation and smaller.                                      |
 
 ## Resume Protocol
 
