@@ -24,11 +24,8 @@ use super::{
 
 pub(super) fn format_class_body<'source>(
     doc: &mut DocBuilder<'source>,
-    body: Option<ClassBody<'source>>,
+    body: ClassBody<'source>,
 ) -> Doc<'source> {
-    let Some(body) = body else {
-        return doc.nil();
-    };
     let has_close = matches!(
         body.close_brace(),
         jolt_kotlin_syntax::KotlinSyntaxField::Present(_)

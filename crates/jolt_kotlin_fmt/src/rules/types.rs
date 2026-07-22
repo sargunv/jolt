@@ -22,11 +22,8 @@ use crate::rules::names::format_name;
 
 pub(crate) fn format_type_parameter_list<'source>(
     doc: &mut DocBuilder<'source>,
-    parameters: Option<TypeParameterList<'source>>,
+    parameters: TypeParameterList<'source>,
 ) -> Doc<'source> {
-    let Some(parameters) = parameters else {
-        return doc.nil();
-    };
     let open = resolve_required_delimiter(parameters.open_angle(), doc);
     let close = resolve_required_delimiter(parameters.close_angle(), doc);
     let items = match resolve_required_field(parameters.entries(), doc) {
@@ -52,11 +49,8 @@ pub(crate) fn format_type_parameter_list<'source>(
 
 pub(crate) fn format_type_constraint_list<'source>(
     doc: &mut DocBuilder<'source>,
-    constraints: Option<TypeConstraintList<'source>>,
+    constraints: TypeConstraintList<'source>,
 ) -> Doc<'source> {
-    let Some(constraints) = constraints else {
-        return doc.nil();
-    };
     let has_where = matches!(constraints.where_token(), KotlinSyntaxField::Present(_));
     let where_token = format_required_field(constraints.where_token(), doc, |token, doc| {
         format_token(
