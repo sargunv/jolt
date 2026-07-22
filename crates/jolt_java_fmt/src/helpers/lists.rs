@@ -257,13 +257,11 @@ fn comma_list_with_trailing_separator<'source>(
                 docs.push(line);
             } else {
                 let trailing_comma = trailing_comma.take().map_or_else(Doc::nil, |claim| {
-                    doc_if_break!(
-                        docs,
-                        // Intentional synthesized token: trailing comma policy adds a
-                        // comma only when the list breaks across lines.
-                        docs.synthesized_source(claim),
-                        Doc::nil(),
-                    )
+                    // Intentional synthesized token: trailing comma policy adds a
+                    // comma only when the list breaks across lines.
+                    let breaks = docs.synthesized_source(claim);
+                    let flat = Doc::nil();
+                    docs.if_break(breaks, flat)
                 });
                 docs.push(trailing_comma);
             }
