@@ -1,8 +1,7 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     ClassBody, ClassMember, ClassMemberDeclaration, ClassMemberList, Declaration,
-    KotlinRoleElement, KotlinSyntaxInvariantError, KotlinSyntaxListPart, KotlinSyntaxToken,
-    KotlinSyntaxView, StatementSyntax,
+    KotlinRoleElement, KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView, StatementSyntax,
 };
 
 use crate::helpers::comments::{
@@ -32,10 +31,10 @@ pub(super) fn format_class_body<'source>(
     };
     let has_close = matches!(
         body.close_brace(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(_))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(_)
     ) || matches!(
         body.close_brace(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Malformed(ref malformed))
+        jolt_kotlin_syntax::KotlinSyntaxField::Malformed(ref malformed)
             if malformed.first_token().is_some()
     );
     let open = resolve_required_delimiter(body.open_brace(), doc);
@@ -114,14 +113,14 @@ fn collect_class_body_parts<'source>(
     members
         .parts()
         .map(|part| match part {
-            Ok(KotlinSyntaxListPart::Item(element)) => class_body_element(doc, element),
-            Ok(KotlinSyntaxListPart::Separator(token)) => ClassBodyPart::Token(token),
-            Ok(KotlinSyntaxListPart::Missing(missing)) => ClassBodyPart::Recovery {
+            KotlinSyntaxListPart::Item(element) => class_body_element(doc, element),
+            KotlinSyntaxListPart::Separator(token) => ClassBodyPart::Token(token),
+            KotlinSyntaxListPart::Missing(missing) => ClassBodyPart::Recovery {
                 doc: format_missing(&missing, doc),
                 first: None,
                 last: None,
             },
-            Ok(KotlinSyntaxListPart::Malformed(malformed)) => {
+            KotlinSyntaxListPart::Malformed(malformed) => {
                 let first = malformed.first_token();
                 let last = malformed
                     .syntax_node()
@@ -132,7 +131,6 @@ fn collect_class_body_parts<'source>(
                     last,
                 }
             }
-            Err(error) => invariant_class_body_part(doc, error),
         })
         .collect()
 }
@@ -152,18 +150,6 @@ fn class_body_element<'source>(
             first: None,
             last: None,
         }
-    }
-}
-
-fn invariant_class_body_part<'source>(
-    doc: &mut DocBuilder<'source>,
-    error: KotlinSyntaxInvariantError,
-) -> ClassBodyPart<'source> {
-    doc.block_on_invariant(error.to_string());
-    ClassBodyPart::Recovery {
-        doc: Doc::nil(),
-        first: None,
-        last: None,
     }
 }
 
@@ -213,7 +199,7 @@ fn enum_entry_continues(member: &ClassMember<'_>) -> bool {
     };
     matches!(
         entry.comma(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(_))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(_)
     )
 }
 

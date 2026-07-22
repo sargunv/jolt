@@ -10,10 +10,9 @@ use crate::helpers::recovery::{
     JavaFormatField, format_optional_field, format_required_field, resolve_optional_field,
 };
 use jolt_fmt_ir::DocBuilder;
-use jolt_java_syntax::{Expression, JavaSyntaxField, JavaSyntaxInvariantError};
+use jolt_java_syntax::{Expression, JavaSyntaxField};
 
-type TokenField<'source> =
-    Result<JavaSyntaxField<'source, JavaSyntaxToken<'source>>, JavaSyntaxInvariantError>;
+type TokenField<'source> = JavaSyntaxField<'source, JavaSyntaxToken<'source>>;
 
 pub(super) fn format_labeled_statement<'source>(
     statement: &LabeledStatement<'source>,
@@ -120,12 +119,12 @@ pub(super) fn format_yield_statement<'source>(
 
 fn format_keyword_expression_statement<'source>(
     keyword: TokenField<'source>,
-    expression: Result<JavaSyntaxField<'source, Expression<'source>>, JavaSyntaxInvariantError>,
+    expression: JavaSyntaxField<'source, Expression<'source>>,
     semicolon: TokenField<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let keyword_token = match keyword {
-        Ok(JavaSyntaxField::Present(token)) => Some(token),
+        JavaSyntaxField::Present(token) => Some(token),
         _ => None,
     };
     let head = format_statement_keyword_head(keyword, doc);
@@ -169,12 +168,12 @@ fn format_keyword_expression_statement<'source>(
 
 fn format_required_keyword_expression_statement<'source>(
     keyword: TokenField<'source>,
-    expression: Result<JavaSyntaxField<'source, Expression<'source>>, JavaSyntaxInvariantError>,
+    expression: JavaSyntaxField<'source, Expression<'source>>,
     semicolon: TokenField<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let keyword_token = match keyword {
-        Ok(JavaSyntaxField::Present(token)) => Some(token),
+        JavaSyntaxField::Present(token) => Some(token),
         _ => None,
     };
     let head = format_statement_keyword_head(keyword, doc);

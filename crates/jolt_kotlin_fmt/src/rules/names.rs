@@ -81,20 +81,18 @@ fn format_qualified_name_parts<'source>(
 }
 
 fn qualified_name_has_line_comments(name: &QualifiedName<'_>) -> bool {
-    let Ok(KotlinSyntaxField::Present(segments)) = name.segments() else {
+    let KotlinSyntaxField::Present(segments) = name.segments() else {
         return false;
     };
     segments.parts().any(|part| match part {
-        Ok(KotlinSyntaxListPart::Item(QualifiedNameSegment::Name(name))) => {
+        KotlinSyntaxListPart::Item(QualifiedNameSegment::Name(name)) => {
             name.first_token()
                 .is_some_and(|token| token_has_line_comments(&token))
                 || name
                     .last_token()
                     .is_some_and(|token| token_has_line_comments(&token))
         }
-        Ok(KotlinSyntaxListPart::Item(QualifiedNameSegment::BogusQualifiedNameSegment(
-            malformed,
-        ))) => {
+        KotlinSyntaxListPart::Item(QualifiedNameSegment::BogusQualifiedNameSegment(malformed)) => {
             malformed
                 .first_token()
                 .is_some_and(|token| token_has_line_comments(&token))
@@ -102,8 +100,8 @@ fn qualified_name_has_line_comments(name: &QualifiedName<'_>) -> bool {
                     .last_token()
                     .is_some_and(|token| token_has_line_comments(&token))
         }
-        Ok(KotlinSyntaxListPart::Separator(token)) => token_has_line_comments(&token),
-        Ok(KotlinSyntaxListPart::Missing(_) | KotlinSyntaxListPart::Malformed(_)) | Err(_) => false,
+        KotlinSyntaxListPart::Separator(token) => token_has_line_comments(&token),
+        KotlinSyntaxListPart::Missing(_) | KotlinSyntaxListPart::Malformed(_) => false,
     })
 }
 
@@ -126,13 +124,13 @@ impl<'source> NameSortKey<'source> {
             return None;
         }
         let mut identifiers = Vec::new();
-        let KotlinSyntaxField::Present(segments) = name.segments().ok()? else {
+        let KotlinSyntaxField::Present(segments) = name.segments() else {
             return None;
         };
         for part in segments.parts() {
-            match part.ok()? {
+            match part {
                 KotlinSyntaxListPart::Item(QualifiedNameSegment::Name(name)) => {
-                    let KotlinSyntaxField::Present(identifier) = name.identifier().ok()? else {
+                    let KotlinSyntaxField::Present(identifier) = name.identifier() else {
                         return None;
                     };
                     identifiers.push(identifier.text());

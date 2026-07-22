@@ -138,10 +138,8 @@ pub(super) fn format_function_declaration<'source>(
         declaration.post_context_modifiers(),
     );
     let keyword = keyword_with_space(doc, declaration.fun_token());
-    let has_type_parameters = matches!(
-        declaration.type_parameters(),
-        Ok(KotlinSyntaxField::Present(_))
-    );
+    let has_type_parameters =
+        matches!(declaration.type_parameters(), KotlinSyntaxField::Present(_));
     let type_parameters =
         format_optional_field(declaration.type_parameters(), doc, |parameters, doc| {
             format_type_parameter_list(doc, Some(parameters))
@@ -200,7 +198,7 @@ pub(super) fn format_secondary_constructor<'source>(
         format_value_parameter_list(doc, &parameters)
     });
     let delegation = format_optional_field(constructor.delegation(), doc, |delegation, doc| {
-        let has_colon = matches!(delegation.colon(), Ok(KotlinSyntaxField::Present(_)));
+        let has_colon = matches!(delegation.colon(), KotlinSyntaxField::Present(_));
         let has_call = syntax_field_has_token(delegation.call());
         let before = if has_colon || has_call {
             doc.space()
@@ -307,7 +305,7 @@ fn format_property_initializer<'source>(
     leading_space: bool,
 ) -> Doc<'source> {
     let operator_token = match initializer.operator() {
-        Ok(KotlinSyntaxField::Present(operator)) => operator.token(),
+        KotlinSyntaxField::Present(operator) => operator.token(),
         _ => None,
     };
     let has_expression = syntax_field_has_token(initializer.expression());
@@ -348,9 +346,7 @@ fn format_property_initializer<'source>(
     }
     if matches!(
         initializer.expression(),
-        Ok(KotlinSyntaxField::Present(
-            jolt_kotlin_syntax::Expression::AnnotatedExpression(_)
-        ))
+        KotlinSyntaxField::Present(jolt_kotlin_syntax::Expression::AnnotatedExpression(_))
     ) {
         let line = doc.hard_line();
         let expression = doc.concat([line, expression]);
@@ -368,10 +364,7 @@ fn format_property_initializer<'source>(
 
 fn format_optional_property_initializer<'source>(
     doc: &mut DocBuilder<'source>,
-    initializer: Result<
-        KotlinSyntaxField<'source, PropertyInitializer<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
+    initializer: KotlinSyntaxField<'source, PropertyInitializer<'source>>,
     leading_space: bool,
 ) -> Doc<'source> {
     match resolve_optional_field(initializer, doc) {
@@ -543,7 +536,7 @@ fn format_destructuring_entry<'source>(
         doc.concat([modifier, space])
     });
     let name = format_required_field(entry.name(), doc, |name, doc| format_name(doc, &name));
-    let has_assign = matches!(entry.assign(), Ok(KotlinSyntaxField::Present(_)));
+    let has_assign = matches!(entry.assign(), KotlinSyntaxField::Present(_));
     let assign = format_optional_field(entry.assign(), doc, |assign, doc| {
         let before = doc.space();
         let assign = keyword_token(doc, assign);
@@ -579,7 +572,7 @@ fn format_callable_name<'source>(
     doc: &mut DocBuilder<'source>,
     name: &CallableName<'source>,
 ) -> Doc<'source> {
-    let has_dot = matches!(name.dot(), Ok(KotlinSyntaxField::Present(_)));
+    let has_dot = matches!(name.dot(), KotlinSyntaxField::Present(_));
     let receiver = format_required_field(name.receiver(), doc, |receiver, doc| {
         format_type_reference(doc, &receiver)
     });
@@ -639,18 +632,9 @@ pub(super) fn format_type_alias_declaration<'source>(
 
 pub(super) fn format_declaration_prefix<'source>(
     doc: &mut DocBuilder<'source>,
-    leading: Result<
-        KotlinSyntaxField<'source, ModifierList<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
-    context: Result<
-        KotlinSyntaxField<'source, ContextParameterClause<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
-    trailing: Result<
-        KotlinSyntaxField<'source, ModifierList<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
+    leading: KotlinSyntaxField<'source, ModifierList<'source>>,
+    context: KotlinSyntaxField<'source, ContextParameterClause<'source>>,
+    trailing: KotlinSyntaxField<'source, ModifierList<'source>>,
 ) -> Doc<'source> {
     let leading = format_modifier_prefix(doc, leading);
     let context = format_optional_field(context, doc, |context, doc| {
@@ -701,13 +685,13 @@ fn format_context_parameter<'source>(
     doc: &mut DocBuilder<'source>,
     parameter: &ContextParameter<'source>,
 ) -> Doc<'source> {
-    let has_name = matches!(parameter.name(), Ok(KotlinSyntaxField::Present(_)));
-    let has_colon = matches!(parameter.colon(), Ok(KotlinSyntaxField::Present(_)));
+    let has_name = matches!(parameter.name(), KotlinSyntaxField::Present(_));
+    let has_colon = matches!(parameter.colon(), KotlinSyntaxField::Present(_));
     let has_type = matches!(
         parameter.r#type(),
-        Ok(KotlinSyntaxField::Present(ty)) if ty.first_token().is_some()
+        KotlinSyntaxField::Present(ty) if ty.first_token().is_some()
     );
-    let has_assign = matches!(parameter.assign(), Ok(KotlinSyntaxField::Present(_)));
+    let has_assign = matches!(parameter.assign(), KotlinSyntaxField::Present(_));
     let name = format_optional_field(parameter.name(), doc, |name, doc| format_name(doc, &name));
     let colon = format_optional_field(parameter.colon(), doc, |colon, doc| {
         keyword_token(doc, colon)
@@ -740,30 +724,21 @@ fn format_context_parameter<'source>(
 
 pub(super) fn format_modifier_prefix<'source>(
     doc: &mut DocBuilder<'source>,
-    lists: Result<
-        KotlinSyntaxField<'source, ModifierList<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
+    lists: KotlinSyntaxField<'source, ModifierList<'source>>,
 ) -> Doc<'source> {
     format_modifier_prefix_with_annotation_break(doc, lists, true)
 }
 
 pub(super) fn format_inline_modifier_prefix<'source>(
     doc: &mut DocBuilder<'source>,
-    lists: Result<
-        KotlinSyntaxField<'source, ModifierList<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
+    lists: KotlinSyntaxField<'source, ModifierList<'source>>,
 ) -> Doc<'source> {
     format_modifier_prefix_with_annotation_break(doc, lists, false)
 }
 
 fn format_modifier_prefix_with_annotation_break<'source>(
     doc: &mut DocBuilder<'source>,
-    lists: Result<
-        KotlinSyntaxField<'source, ModifierList<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
+    lists: KotlinSyntaxField<'source, ModifierList<'source>>,
     annotations_break: bool,
 ) -> Doc<'source> {
     match resolve_required_field(lists, doc) {
@@ -835,14 +810,8 @@ pub(crate) fn format_modifier_list_with_leading<'source>(
 
 pub(crate) fn format_type_annotation<'source>(
     doc: &mut DocBuilder<'source>,
-    colon: Result<
-        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
-    ty: Result<
-        KotlinSyntaxField<'source, TypeReference<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
+    colon: KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
+    ty: KotlinSyntaxField<'source, TypeReference<'source>>,
 ) -> Doc<'source> {
     let colon = format_optional_field(colon, doc, |colon, doc| {
         format_token(
@@ -878,10 +847,7 @@ pub(crate) fn format_declaration_body<'source>(
 
 pub(crate) fn format_optional_declaration_body<'source>(
     doc: &mut DocBuilder<'source>,
-    body: Result<
-        KotlinSyntaxField<'source, DeclarationBody<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
+    body: KotlinSyntaxField<'source, DeclarationBody<'source>>,
 ) -> Doc<'source> {
     match crate::helpers::recovery::resolve_optional_field(body, doc) {
         KotlinFormatField::Present(Some(body)) => format_declaration_body(doc, &body),
@@ -899,7 +865,7 @@ fn format_expression_body<'source>(
 ) -> Doc<'source> {
     let has_expression = syntax_field_has_token(body.expression());
     let assign_token = match body.assign() {
-        Ok(KotlinSyntaxField::Present(assign)) => Some(assign),
+        KotlinSyntaxField::Present(assign) => Some(assign),
         _ => None,
     };
     let before = doc.space();
@@ -924,9 +890,7 @@ fn format_expression_body<'source>(
     }
     if matches!(
         body.expression(),
-        Ok(KotlinSyntaxField::Present(
-            jolt_kotlin_syntax::Expression::AnnotatedExpression(_)
-        ))
+        KotlinSyntaxField::Present(jolt_kotlin_syntax::Expression::AnnotatedExpression(_))
     ) {
         let line = doc.hard_line();
         let expression = doc.concat([line, expression]);
@@ -944,10 +908,7 @@ fn format_expression_body<'source>(
 
 fn keyword_with_space<'source>(
     doc: &mut DocBuilder<'source>,
-    field: Result<
-        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
+    field: KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
 ) -> Doc<'source> {
     format_required_field(field, doc, |token, doc| {
         let token = format_token(
@@ -973,40 +934,28 @@ fn keyword_token<'source>(
     )
 }
 
-fn syntax_field_has_token<'source, T>(
-    field: Result<KotlinSyntaxField<'source, T>, jolt_kotlin_syntax::KotlinSyntaxInvariantError>,
-) -> bool
+fn syntax_field_has_token<'source, T>(field: KotlinSyntaxField<'source, T>) -> bool
 where
     T: KotlinSyntaxView<'source>,
 {
     match field {
-        Ok(KotlinSyntaxField::Present(value)) => value.first_token().is_some(),
-        Ok(KotlinSyntaxField::Malformed(malformed)) => malformed.first_token().is_some(),
-        Ok(KotlinSyntaxField::Missing(_)) | Err(_) => false,
+        KotlinSyntaxField::Present(value) => value.first_token().is_some(),
+        KotlinSyntaxField::Malformed(malformed) => malformed.first_token().is_some(),
+        KotlinSyntaxField::Missing(_) => false,
     }
 }
 
-fn token_field_has_token(
-    field: Result<
-        KotlinSyntaxField<'_, KotlinSyntaxToken<'_>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
-) -> bool {
+fn token_field_has_token(field: KotlinSyntaxField<'_, KotlinSyntaxToken<'_>>) -> bool {
     match field {
-        Ok(KotlinSyntaxField::Present(_)) => true,
-        Ok(KotlinSyntaxField::Malformed(malformed)) => malformed.first_token().is_some(),
-        Ok(KotlinSyntaxField::Missing(_)) | Err(_) => false,
+        KotlinSyntaxField::Present(_) => true,
+        KotlinSyntaxField::Malformed(malformed) => malformed.first_token().is_some(),
+        KotlinSyntaxField::Missing(_) => false,
     }
 }
 
 fn syntax_comma_items<'source, T>(
     doc: &mut DocBuilder<'source>,
-    parts: impl Iterator<
-        Item = Result<
-            KotlinSyntaxListPart<'source, T>,
-            jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-        >,
-    >,
+    parts: impl Iterator<Item = KotlinSyntaxListPart<'source, T>>,
     mut format_item: impl FnMut(T, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> Vec<CommaListItem<'source>> {
     let mut items = Vec::new();

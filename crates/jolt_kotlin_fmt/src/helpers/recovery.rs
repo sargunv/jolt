@@ -9,8 +9,8 @@ use jolt_fmt_ir::{
     Doc, DocBuilder, FormatField, MalformedBoundaryPolicy, assemble_malformed_fragment,
 };
 use jolt_kotlin_syntax::{
-    KotlinMissingSyntax, KotlinSyntaxField, KotlinSyntaxInvariantError, KotlinSyntaxListPart,
-    KotlinSyntaxToken, KotlinSyntaxView,
+    KotlinMissingSyntax, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken,
+    KotlinSyntaxView,
 };
 
 use super::comments::{comment_forces_line, format_comment, format_leading_comment_list};
@@ -82,10 +82,7 @@ pub(crate) fn join_delimited_recovery<'source>(
 }
 
 pub(crate) fn resolve_required_delimiter<'source>(
-    field: Result<
-        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
-        KotlinSyntaxInvariantError,
-    >,
+    field: KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> KotlinFormatDelimiter<'source> {
     match resolve_required_field(field, doc) {
@@ -95,18 +92,16 @@ pub(crate) fn resolve_required_delimiter<'source>(
 }
 
 pub(crate) fn resolve_list_part<'source, T>(
-    part: Result<KotlinSyntaxListPart<'source, T>, KotlinSyntaxInvariantError>,
+    part: KotlinSyntaxListPart<'source, T>,
     doc: &mut DocBuilder<'source>,
 ) -> KotlinFormatListPart<'source, T> {
     match part {
-        Ok(KotlinSyntaxListPart::Item(item)) => KotlinFormatListPart::Item(item),
-        Ok(KotlinSyntaxListPart::Separator(separator)) => {
-            KotlinFormatListPart::Separator(separator)
-        }
-        Ok(KotlinSyntaxListPart::Missing(missing)) => {
+        KotlinSyntaxListPart::Item(item) => KotlinFormatListPart::Item(item),
+        KotlinSyntaxListPart::Separator(separator) => KotlinFormatListPart::Separator(separator),
+        KotlinSyntaxListPart::Missing(missing) => {
             KotlinFormatListPart::Invisible(format_missing(&missing, doc))
         }
-        Ok(KotlinSyntaxListPart::Malformed(malformed)) => {
+        KotlinSyntaxListPart::Malformed(malformed) => {
             let recovery = format_malformed(&malformed, doc);
             if malformed.first_token().is_some() {
                 KotlinFormatListPart::Malformed(recovery)
@@ -114,51 +109,45 @@ pub(crate) fn resolve_list_part<'source, T>(
                 KotlinFormatListPart::Invisible(recovery)
             }
         }
-        Err(error) => {
-            doc.block_on_invariant(error.to_string());
-            KotlinFormatListPart::Invisible(Doc::nil())
-        }
     }
 }
 
+// On WASM, these generic field resolvers are deliberate codegen boundaries.
+// They run for present as well as malformed syntax; `inline(never)` is not a
+// cold-path hint. Native inlining remains optimizer-controlled. Re-measure
+// formatter throughput and optimized WASM size before changing this policy.
+#[cfg_attr(target_arch = "wasm32", inline(never))]
 pub(crate) fn resolve_required_field<'source, T>(
-    field: Result<KotlinSyntaxField<'source, T>, KotlinSyntaxInvariantError>,
+    field: KotlinSyntaxField<'source, T>,
     doc: &mut DocBuilder<'source>,
 ) -> KotlinFormatField<'source, T> {
     match field {
-        Ok(KotlinSyntaxField::Present(value)) => FormatField::Present(value),
-        Ok(KotlinSyntaxField::Malformed(malformed)) => {
+        KotlinSyntaxField::Present(value) => FormatField::Present(value),
+        KotlinSyntaxField::Malformed(malformed) => {
             FormatField::Malformed(format_malformed(&malformed, doc))
         }
-        Ok(KotlinSyntaxField::Missing(missing)) => {
+        KotlinSyntaxField::Missing(missing) => {
             FormatField::Malformed(format_missing(&missing, doc))
-        }
-        Err(error) => {
-            doc.block_on_invariant(error.to_string());
-            FormatField::Malformed(Doc::nil())
         }
     }
 }
 
+#[cfg_attr(target_arch = "wasm32", inline(never))]
 pub(crate) fn resolve_optional_field<'source, T>(
-    field: Result<KotlinSyntaxField<'source, T>, KotlinSyntaxInvariantError>,
+    field: KotlinSyntaxField<'source, T>,
     doc: &mut DocBuilder<'source>,
 ) -> KotlinFormatField<'source, Option<T>> {
     match field {
-        Ok(KotlinSyntaxField::Present(value)) => FormatField::Present(Some(value)),
-        Ok(KotlinSyntaxField::Missing(_)) => FormatField::Present(None),
-        Ok(KotlinSyntaxField::Malformed(malformed)) => {
+        KotlinSyntaxField::Present(value) => FormatField::Present(Some(value)),
+        KotlinSyntaxField::Missing(_) => FormatField::Present(None),
+        KotlinSyntaxField::Malformed(malformed) => {
             FormatField::Malformed(format_malformed(&malformed, doc))
-        }
-        Err(error) => {
-            doc.block_on_invariant(error.to_string());
-            FormatField::Malformed(Doc::nil())
         }
     }
 }
 
 pub(crate) fn format_required_field<'source, T>(
-    field: Result<KotlinSyntaxField<'source, T>, KotlinSyntaxInvariantError>,
+    field: KotlinSyntaxField<'source, T>,
     doc: &mut DocBuilder<'source>,
     structured: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> Doc<'source> {
@@ -166,7 +155,7 @@ pub(crate) fn format_required_field<'source, T>(
 }
 
 pub(crate) fn format_optional_field<'source, T>(
-    field: Result<KotlinSyntaxField<'source, T>, KotlinSyntaxInvariantError>,
+    field: KotlinSyntaxField<'source, T>,
     doc: &mut DocBuilder<'source>,
     structured: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> Doc<'source> {

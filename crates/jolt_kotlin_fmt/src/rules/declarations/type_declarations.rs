@@ -64,7 +64,7 @@ pub(super) fn format_interface_declaration<'source>(
         declaration.post_context_modifiers(),
     );
     let fun = format_optional_field(declaration.fun_token(), doc, |fun, doc| {
-        format_keyword(doc, Ok(KotlinSyntaxField::Present(fun)), true)
+        format_keyword(doc, KotlinSyntaxField::Present(fun), true)
     });
     let keyword = format_keyword(doc, declaration.interface_token(), true);
     let name = format_required_field(declaration.name(), doc, |name, doc| format_name(doc, &name));
@@ -157,20 +157,11 @@ pub(crate) fn format_object_expression<'source>(
 
 fn format_type_tail<'source>(
     doc: &mut DocBuilder<'source>,
-    delegation: Result<
-        KotlinSyntaxField<'source, DelegationClause<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
+    delegation: KotlinSyntaxField<'source, DelegationClause<'source>>,
     constraints: Option<
-        Result<
-            KotlinSyntaxField<'source, jolt_kotlin_syntax::TypeConstraintList<'source>>,
-            jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-        >,
+        KotlinSyntaxField<'source, jolt_kotlin_syntax::TypeConstraintList<'source>>,
     >,
-    body: Result<
-        KotlinSyntaxField<'source, ClassBody<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
+    body: KotlinSyntaxField<'source, ClassBody<'source>>,
 ) -> Doc<'source> {
     let delegation = format_optional_field(delegation, doc, |delegation, doc| {
         format_delegation_clause(doc, &delegation)
@@ -188,13 +179,13 @@ fn format_delegation_clause<'source>(
     doc: &mut DocBuilder<'source>,
     delegation: &DelegationClause<'source>,
 ) -> Doc<'source> {
-    let has_colon = matches!(delegation.colon(), Ok(KotlinSyntaxField::Present(_)));
+    let has_colon = matches!(delegation.colon(), KotlinSyntaxField::Present(_));
     let has_specifiers = matches!(
         delegation.specifiers(),
-        Ok(KotlinSyntaxField::Present(ref specifiers)) if specifiers.first_token().is_some()
+        KotlinSyntaxField::Present(ref specifiers) if specifiers.first_token().is_some()
     ) || matches!(
         delegation.specifiers(),
-        Ok(KotlinSyntaxField::Malformed(ref malformed)) if malformed.first_token().is_some()
+        KotlinSyntaxField::Malformed(ref malformed) if malformed.first_token().is_some()
     );
     let colon = format_required_field(delegation.colon(), doc, |colon, doc| {
         format_keyword_token(doc, colon)
@@ -221,12 +212,7 @@ fn format_delegation_clause<'source>(
 
 fn physical_delegation_items<'source>(
     doc: &mut DocBuilder<'source>,
-    parts: impl Iterator<
-        Item = Result<
-            KotlinSyntaxListPart<'source, DelegationSpecifierEntry<'source>>,
-            jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-        >,
-    >,
+    parts: impl Iterator<Item = KotlinSyntaxListPart<'source, DelegationSpecifierEntry<'source>>>,
 ) -> Vec<CommaListItem<'source>> {
     let mut items = Vec::new();
     for part in parts {
@@ -285,13 +271,13 @@ fn format_delegation_specifier<'source>(
         format_value_argument_list(doc, &arguments)
     });
     let by = format_optional_field(specifier.by_clause(), doc, |by, doc| {
-        let has_keyword = matches!(by.by_token(), Ok(KotlinSyntaxField::Present(_)));
+        let has_keyword = matches!(by.by_token(), KotlinSyntaxField::Present(_));
         let has_delegate = matches!(
             by.delegate(),
-            Ok(KotlinSyntaxField::Present(ref delegate)) if delegate.first_token().is_some()
+            KotlinSyntaxField::Present(ref delegate) if delegate.first_token().is_some()
         ) || matches!(
             by.delegate(),
-            Ok(KotlinSyntaxField::Malformed(ref malformed)) if malformed.first_token().is_some()
+            KotlinSyntaxField::Malformed(ref malformed) if malformed.first_token().is_some()
         );
         let before = if has_keyword || has_delegate {
             doc.space()
@@ -331,11 +317,12 @@ fn format_primary_constructor<'source>(
     let parameters = format_required_field(constructor.parameters(), doc, |parameters, doc| {
         format_value_parameter_list(doc, &parameters)
     });
-    let has_prefix = constructor.modifiers().ok().is_some_and(|field| {
-        matches!(field, KotlinSyntaxField::Present(modifiers) if modifiers.first_token().is_some())
-    }) || matches!(
+    let has_prefix = matches!(
+        constructor.modifiers(),
+        KotlinSyntaxField::Present(modifiers) if modifiers.first_token().is_some()
+    ) || matches!(
         constructor.constructor_token(),
-        Ok(KotlinSyntaxField::Present(_))
+        KotlinSyntaxField::Present(_)
     );
     if has_prefix {
         let space = doc.space();
@@ -347,10 +334,7 @@ fn format_primary_constructor<'source>(
 
 fn format_keyword<'source>(
     doc: &mut DocBuilder<'source>,
-    field: Result<
-        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
+    field: KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
     trailing_space: bool,
 ) -> Doc<'source> {
     format_required_field(field, doc, |token, doc| {

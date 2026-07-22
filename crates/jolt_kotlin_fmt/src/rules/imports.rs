@@ -24,14 +24,10 @@ pub(crate) fn format_import_list<'source>(
     let entries = list
         .parts()
         .map(|part| match part {
-            Ok(KotlinSyntaxListPart::Item(import)) => ImportEntry::Directive(import),
-            Ok(KotlinSyntaxListPart::Separator(token)) => ImportEntry::Token(token),
-            Ok(KotlinSyntaxListPart::Malformed(malformed)) => ImportEntry::Malformed(malformed),
-            Ok(KotlinSyntaxListPart::Missing(missing)) => ImportEntry::Missing(missing),
-            Err(error) => {
-                doc.block_on_invariant(error.to_string());
-                ImportEntry::Invariant
-            }
+            KotlinSyntaxListPart::Item(import) => ImportEntry::Directive(import),
+            KotlinSyntaxListPart::Separator(token) => ImportEntry::Token(token),
+            KotlinSyntaxListPart::Malformed(malformed) => ImportEntry::Malformed(malformed),
+            KotlinSyntaxListPart::Missing(missing) => ImportEntry::Missing(missing),
         })
         .collect::<Vec<_>>();
     let container = list.text_range();
@@ -48,7 +44,6 @@ enum ImportEntry<'source> {
     Token(KotlinSyntaxToken<'source>),
     Malformed(KotlinMalformedSyntax<'source>),
     Missing(KotlinMissingSyntax<'source>),
-    Invariant,
 }
 
 impl ImportEntry<'_> {
@@ -66,7 +61,7 @@ impl ImportEntry<'_> {
                     &syntax.last_token()?,
                 ))
             }
-            Self::Missing(_) | Self::Invariant => None,
+            Self::Missing(_) => None,
         }
     }
 }
@@ -163,7 +158,6 @@ fn format_import_entries<'source>(
                     starts_comment_barrier: false,
                 });
             }
-            ImportEntry::Invariant => {}
         }
     }
     flush_sortable(doc, &mut sortable, &mut sections);
@@ -219,18 +213,18 @@ impl<'source> FormattedImport<'source> {
         use KotlinSyntaxField::{Missing, Present};
 
         let reorder = import.canonical_reorder_claim()?;
-        if !matches!(import.import_token(), Ok(Present(_)))
-            || !matches!(import.on_demand(), Ok(Present(_) | Missing(_)))
-            || !matches!(import.alias(), Ok(Present(_) | Missing(_)))
-            || !matches!(import.suffix(), Ok(Missing(_)))
-            || !matches!(import.terminators(), Ok(Present(_)))
+        if !matches!(import.import_token(), Present(_))
+            || !matches!(import.on_demand(), Present(_) | Missing(_))
+            || !matches!(import.alias(), Present(_) | Missing(_))
+            || !matches!(import.suffix(), Missing(_))
+            || !matches!(import.terminators(), Present(_))
         {
             return None;
         }
-        let Present(name) = import.name().ok()? else {
+        let Present(name) = import.name() else {
             return None;
         };
-        let on_demand = matches!(import.on_demand(), Ok(Present(_)));
+        let on_demand = matches!(import.on_demand(), Present(_));
         let path = NameSortKey::new(&name, on_demand)?;
         Some(Self {
             import,

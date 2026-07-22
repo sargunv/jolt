@@ -117,15 +117,12 @@ fn format_lambda_parameters<'source>(
 }
 
 fn optional_delimiter_is_comment_free(
-    field: Result<
-        JavaSyntaxField<'_, jolt_java_syntax::JavaSyntaxToken<'_>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    field: JavaSyntaxField<'_, jolt_java_syntax::JavaSyntaxToken<'_>>,
 ) -> bool {
     match field {
-        Ok(JavaSyntaxField::Missing(_)) => true,
-        Ok(JavaSyntaxField::Present(token)) => !token_has_comments(&token),
-        Ok(JavaSyntaxField::Malformed(_)) | Err(_) => false,
+        JavaSyntaxField::Missing(_) => true,
+        JavaSyntaxField::Present(token) => !token_has_comments(&token),
+        JavaSyntaxField::Malformed(_) => false,
     }
 }
 
@@ -147,10 +144,8 @@ fn lambda_parameter_items<'source, 'fmt>(
 }
 
 #[allow(clippy::needless_pass_by_value)]
-fn optional_is_absent<T>(
-    field: Result<JavaSyntaxField<'_, T>, jolt_java_syntax::JavaSyntaxInvariantError>,
-) -> bool {
-    matches!(field, Ok(JavaSyntaxField::Missing(_)))
+fn optional_is_absent<T>(field: JavaSyntaxField<'_, T>) -> bool {
+    matches!(field, JavaSyntaxField::Missing(_))
 }
 
 fn format_lambda_parameter<'source>(
@@ -189,12 +184,7 @@ fn format_lambda_parameter<'source>(
 }
 
 fn format_lambda_modifiers<'source>(
-    parts: impl IntoIterator<
-        Item = Result<
-            JavaSyntaxListPart<'source, LambdaModifier<'source>>,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
-    >,
+    parts: impl IntoIterator<Item = JavaSyntaxListPart<'source, LambdaModifier<'source>>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let mut has_parts = false;
@@ -234,12 +224,7 @@ fn format_lambda_modifiers<'source>(
 }
 
 fn format_annotation_parts<'source>(
-    parts: impl IntoIterator<
-        Item = Result<
-            JavaSyntaxListPart<'source, jolt_java_syntax::Annotation<'source>>,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
-    >,
+    parts: impl IntoIterator<Item = JavaSyntaxListPart<'source, jolt_java_syntax::Annotation<'source>>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let mut has_parts = false;

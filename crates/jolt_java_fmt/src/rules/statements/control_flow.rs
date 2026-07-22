@@ -97,7 +97,7 @@ fn statement_as_block<'source>(
     normalization: Option<jolt_java_syntax::JavaControlBodyNormalization<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    statement_body_as_block(Ok(JavaSyntaxField::Present(*statement)), normalization, doc)
+    statement_body_as_block(JavaSyntaxField::Present(*statement), normalization, doc)
 }
 
 pub(super) fn format_parenthesized_statement_expression<'source>(
@@ -407,10 +407,7 @@ fn format_inline_close_paren<'source>(
 }
 
 fn format_for_header_semicolon<'source>(
-    field: Result<
-        JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    field: JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     format_required_field(field, doc, |semicolon, doc| {

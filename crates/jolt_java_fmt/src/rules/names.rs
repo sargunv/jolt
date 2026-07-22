@@ -14,12 +14,9 @@ use crate::helpers::recovery::{
 
 fn name_identifier_texts<'source>(name: &NameSyntax<'source>) -> Option<Vec<&'source str>> {
     fn identifier<'source>(
-        field: Result<
-            JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
+        field: JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
     ) -> Option<&'source str> {
-        match field.ok()? {
+        match field {
             JavaSyntaxField::Present(token) => Some(token.text()),
             JavaSyntaxField::Missing(_) | JavaSyntaxField::Malformed(_) => None,
         }
@@ -28,17 +25,17 @@ fn name_identifier_texts<'source>(name: &NameSyntax<'source>) -> Option<Vec<&'so
     match name {
         NameSyntax::Name(name) => Some(vec![identifier(name.identifier())?]),
         NameSyntax::QualifiedName(name) => {
-            let first = match name.first_segment().ok()? {
+            let first = match name.first_segment() {
                 JavaSyntaxField::Present(segment) => identifier(segment.identifier())?,
                 JavaSyntaxField::Missing(_) | JavaSyntaxField::Malformed(_) => return None,
             };
             let mut identifiers = vec![first];
-            let segments = match name.remaining_segments().ok()? {
+            let segments = match name.remaining_segments() {
                 JavaSyntaxField::Present(segments) => segments,
                 JavaSyntaxField::Missing(_) | JavaSyntaxField::Malformed(_) => return None,
             };
             for part in segments.parts() {
-                match part.ok()? {
+                match part {
                     JavaSyntaxListPart::Item(segment) => {
                         identifiers.push(identifier(segment.identifier())?);
                     }
@@ -109,27 +106,21 @@ impl PartialOrd for NameSortKey<'_> {
 }
 
 fn name_has_line_comments(name: &NameSyntax<'_>) -> bool {
-    let field_has_comments = |field| matches!(field, Ok(JavaSyntaxField::Present(token)) if token_has_line_comments(&token));
+    let field_has_comments =
+        |field| matches!(field, JavaSyntaxField::Present(token) if token_has_line_comments(&token));
     match name {
         NameSyntax::Name(name) => field_has_comments(name.identifier()),
         NameSyntax::QualifiedName(name) => {
-            matches!(name.first_segment(), Ok(JavaSyntaxField::Present(segment)) if field_has_comments(segment.identifier()))
+            matches!(name.first_segment(), JavaSyntaxField::Present(segment) if field_has_comments(segment.identifier()))
                 || field_has_comments(name.first_dot())
                 || match name.remaining_segments() {
-                    Ok(JavaSyntaxField::Present(segments)) => {
-                        segments.parts().any(|part| match part {
-                            Ok(JavaSyntaxListPart::Item(segment)) => {
-                                field_has_comments(segment.identifier())
-                            }
-                            Ok(JavaSyntaxListPart::Separator(token)) => {
-                                token_has_line_comments(&token)
-                            }
-                            Ok(
-                                JavaSyntaxListPart::Missing(_) | JavaSyntaxListPart::Malformed(_),
-                            )
-                            | Err(_) => false,
-                        })
-                    }
+                    JavaSyntaxField::Present(segments) => segments.parts().any(|part| match part {
+                        JavaSyntaxListPart::Item(segment) => {
+                            field_has_comments(segment.identifier())
+                        }
+                        JavaSyntaxListPart::Separator(token) => token_has_line_comments(&token),
+                        JavaSyntaxListPart::Missing(_) | JavaSyntaxListPart::Malformed(_) => false,
+                    }),
                     _ => false,
                 }
         }
@@ -154,32 +145,29 @@ fn format_name_parts<'source>(
             push_identifier_doc(name.identifier(), false, multiline, docs);
         }
         NameSyntax::QualifiedName(name) => {
-            let first_has_dot = matches!(name.first_dot(), Ok(JavaSyntaxField::Present(_)));
+            let first_has_dot = matches!(name.first_dot(), JavaSyntaxField::Present(_));
             match name.first_segment() {
-                Ok(JavaSyntaxField::Present(segment)) => {
+                JavaSyntaxField::Present(segment) => {
                     push_identifier_doc(segment.identifier(), first_has_dot, multiline, docs);
                 }
-                Ok(JavaSyntaxField::Missing(missing)) => {
+                JavaSyntaxField::Missing(missing) => {
                     let recovery = format_missing(&missing, docs);
                     docs.push(recovery);
                 }
-                Ok(JavaSyntaxField::Malformed(malformed)) => {
+                JavaSyntaxField::Malformed(malformed) => {
                     let recovery = format_malformed(&malformed, docs);
                     docs.push(recovery);
                 }
-                Err(error) => docs.block_on_invariant(error.to_string()),
             }
             push_dot_doc(name.first_dot(), multiline, docs);
             match name.remaining_segments() {
-                Ok(JavaSyntaxField::Present(segments)) => {
+                JavaSyntaxField::Present(segments) => {
                     let mut parts = segments.parts().peekable();
                     while let Some(part) = parts.next() {
                         match resolve_list_part(part, docs) {
                             JavaFormatListPart::Item(segment) => {
-                                let followed_by_dot = matches!(
-                                    parts.peek(),
-                                    Some(Ok(JavaSyntaxListPart::Separator(_)))
-                                );
+                                let followed_by_dot =
+                                    matches!(parts.peek(), Some(JavaSyntaxListPart::Separator(_)));
                                 push_identifier_doc(
                                     segment.identifier(),
                                     followed_by_dot,
@@ -194,15 +182,14 @@ fn format_name_parts<'source>(
                         }
                     }
                 }
-                Ok(JavaSyntaxField::Missing(missing)) => {
+                JavaSyntaxField::Missing(missing) => {
                     let recovery = format_missing(&missing, docs);
                     docs.push(recovery);
                 }
-                Ok(JavaSyntaxField::Malformed(malformed)) => {
+                JavaSyntaxField::Malformed(malformed) => {
                     let recovery = format_malformed(&malformed, docs);
                     docs.push(recovery);
                 }
-                Err(error) => docs.block_on_invariant(error.to_string()),
             }
         }
         NameSyntax::BogusName(name) => {
@@ -213,50 +200,39 @@ fn format_name_parts<'source>(
 }
 
 fn push_identifier_doc<'source>(
-    field: Result<
-        JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    field: JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
     followed_by_dot: bool,
     multiline: bool,
     docs: &mut jolt_fmt_ir::ConcatBuilder<'_, 'source>,
 ) {
     let formatted = match field {
-        Ok(JavaSyntaxField::Present(identifier)) if multiline => {
+        JavaSyntaxField::Present(identifier) if multiline => {
             format_name_segment_identifier(docs, &identifier)
         }
-        Ok(JavaSyntaxField::Present(identifier)) => {
+        JavaSyntaxField::Present(identifier) => {
             format_inline_name_segment_identifier(docs, &identifier, followed_by_dot)
         }
-        Ok(JavaSyntaxField::Missing(missing)) => format_missing(&missing, docs),
-        Ok(JavaSyntaxField::Malformed(malformed)) => format_malformed(&malformed, docs),
-        Err(error) => {
-            docs.block_on_invariant(error.to_string());
-            Doc::nil()
-        }
+        JavaSyntaxField::Missing(missing) => format_missing(&missing, docs),
+        JavaSyntaxField::Malformed(malformed) => format_malformed(&malformed, docs),
     };
     docs.push(formatted);
 }
 
 fn push_dot_doc<'source>(
-    field: Result<
-        JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    field: JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
     multiline: bool,
     docs: &mut jolt_fmt_ir::ConcatBuilder<'_, 'source>,
 ) {
     match field {
-        Ok(JavaSyntaxField::Present(dot)) => push_dot_token_doc(&dot, multiline, docs),
-        Ok(JavaSyntaxField::Missing(missing)) => {
+        JavaSyntaxField::Present(dot) => push_dot_token_doc(&dot, multiline, docs),
+        JavaSyntaxField::Missing(missing) => {
             let recovery = format_missing(&missing, docs);
             docs.push(recovery);
         }
-        Ok(JavaSyntaxField::Malformed(malformed)) => {
+        JavaSyntaxField::Malformed(malformed) => {
             let recovery = format_malformed(&malformed, docs);
             docs.push(recovery);
         }
-        Err(error) => docs.block_on_invariant(error.to_string()),
     }
 }
 

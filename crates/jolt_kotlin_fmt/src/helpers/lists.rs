@@ -1,5 +1,5 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_kotlin_syntax::{KotlinSyntaxInvariantError, KotlinSyntaxListPart, KotlinSyntaxToken};
+use jolt_kotlin_syntax::{KotlinSyntaxListPart, KotlinSyntaxToken};
 
 use crate::helpers::comments::{
     InlineLeadingTrivia, TrailingTrivia, delimiter_dangling_comments, format_dangling_comments,
@@ -126,9 +126,7 @@ pub(crate) fn comma_list<'source>(
 
 pub(crate) fn physical_comma_list_items<'source, Entry>(
     doc: &mut DocBuilder<'source>,
-    entries: impl IntoIterator<
-        Item = Result<KotlinSyntaxListPart<'source, Entry>, KotlinSyntaxInvariantError>,
-    >,
+    entries: impl IntoIterator<Item = KotlinSyntaxListPart<'source, Entry>>,
     mut format_entry: impl FnMut(&mut DocBuilder<'source>, Entry) -> CommaListItem<'source>,
 ) -> Vec<CommaListItem<'source>> {
     use crate::helpers::recovery::{KotlinFormatListPart, resolve_list_part};

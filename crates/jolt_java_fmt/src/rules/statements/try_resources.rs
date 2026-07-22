@@ -305,12 +305,7 @@ fn format_resource<'source>(
 }
 
 fn format_catch_clauses<'source>(
-    clauses: impl IntoIterator<
-        Item = Result<
-            JavaSyntaxListPart<'source, CatchClause<'source>>,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
-    >,
+    clauses: impl IntoIterator<Item = JavaSyntaxListPart<'source, CatchClause<'source>>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     doc.concat_list(|docs| {

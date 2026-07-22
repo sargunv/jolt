@@ -96,22 +96,22 @@ impl<'source> FormattedImport<'source> {
     fn new(import: ImportDeclaration<'source>) -> Option<Self> {
         use jolt_java_syntax::JavaSyntaxField::{Malformed, Missing, Present};
 
-        if !matches!(import.import_keyword(), Ok(Present(_)))
-            || !matches!(import.module_keyword(), Ok(Present(_) | Missing(_)))
-            || !matches!(import.static_keyword(), Ok(Present(_) | Missing(_)))
-            || !matches!(import.on_demand_dot(), Ok(Present(_) | Missing(_)))
-            || !matches!(import.star(), Ok(Present(_) | Missing(_)))
-            || !matches!(import.semicolon(), Ok(Present(_)))
+        if !matches!(import.import_keyword(), Present(_))
+            || !matches!(import.module_keyword(), Present(_) | Missing(_))
+            || !matches!(import.static_keyword(), Present(_) | Missing(_))
+            || !matches!(import.on_demand_dot(), Present(_) | Missing(_))
+            || !matches!(import.star(), Present(_) | Missing(_))
+            || !matches!(import.semicolon(), Present(_))
         {
             return None;
         }
         let name = match import.name() {
-            Ok(Present(name)) if name.is_recovery_free() => name,
-            Ok(Present(_) | Missing(_) | Malformed(_)) | Err(_) => return None,
+            Present(name) if name.is_recovery_free() => name,
+            Present(_) | Missing(_) | Malformed(_) => return None,
         };
-        let on_demand = matches!(import.star(), Ok(Present(_)));
+        let on_demand = matches!(import.star(), Present(_));
         let key = NameSortKey::new(&name, on_demand)?;
-        let is_static = matches!(import.static_keyword(), Ok(Present(_)));
+        let is_static = matches!(import.static_keyword(), Present(_));
         let reorder = import.canonical_reorder_claim()?;
         Some(Self {
             import,

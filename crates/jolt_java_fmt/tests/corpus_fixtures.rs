@@ -170,18 +170,19 @@ fn syntax_authorized_removals(
         if let Some(body) = EnumBody::cast(node) {
             redundant_semicolons +=
                 usize::from(body.redundant_body_separator_removal_claim().is_some());
-            let trailing_constant_comma_is_redundant = body.constants().is_ok_and(|field| {
+            let trailing_constant_comma_is_redundant = (|| {
+                let field = body.constants();
                 let JavaSyntaxField::Present(constants) = field else {
                     return false;
                 };
                 constants.parts().last().is_some_and(|part| {
-                    let Ok(JavaSyntaxListPart::Separator(comma)) = part else {
+                    let JavaSyntaxListPart::Separator(comma) = part else {
                         return false;
                     };
                     body.redundant_constant_separator_removal_claim(&comma)
                         .is_some()
                 })
-            });
+            })();
             redundant_commas += usize::from(trailing_constant_comma_is_redundant);
         }
         let parentheses = if let Some(guard) = Guard::cast(node) {

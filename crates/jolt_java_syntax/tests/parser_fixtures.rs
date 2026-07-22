@@ -2,9 +2,9 @@ use std::path::PathBuf;
 
 use jolt_diagnostics::{DiagnosticCodeId, DiagnosticStage};
 use jolt_java_syntax::{
-    BogusName, JavaFamily, JavaNode, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxView,
-    ModuleDeclaration, ModuleDirective, ModuleImplementationClause, ModuleTargetClause, NameSyntax,
-    parse_compilation_unit,
+    ArrayCreationExpression, ArrayInitializer, BogusName, JavaFamily, JavaNode, JavaSyntaxField,
+    JavaSyntaxListPart, JavaSyntaxView, ModuleDeclaration, ModuleDirective,
+    ModuleImplementationClause, ModuleTargetClause, NameSyntax, parse_compilation_unit,
 };
 use jolt_test_support::{
     assert_bidirectional_diagnostic_ownership, collect_java_files, read_to_string, workspace_root,
@@ -63,9 +63,7 @@ fn malformed_module_name_stops_before_directives_when_open_brace_is_missing() {
         }
     };
 
-    let JavaSyntaxField::Present(NameSyntax::BogusName(name)) =
-        module.name().expect("module name field")
-    else {
+    let JavaSyntaxField::Present(NameSyntax::BogusName(name)) = module.name() else {
         panic!("module name must be diagnostic-owned bogus syntax");
     };
     assert_eq!(
@@ -74,31 +72,21 @@ fn malformed_module_name_stops_before_directives_when_open_brace_is_missing() {
             .collect::<Vec<_>>(),
         ["recovered", "."]
     );
-    assert!(matches!(
-        module.open_brace().expect("module open brace field"),
-        JavaSyntaxField::Missing(_)
-    ));
-    assert!(matches!(
-        module.close_brace().expect("module close brace field"),
-        JavaSyntaxField::Present(_)
-    ));
+    assert!(matches!(module.open_brace(), JavaSyntaxField::Missing(_)));
+    assert!(matches!(module.close_brace(), JavaSyntaxField::Present(_)));
 
-    let JavaSyntaxField::Present(directives) =
-        module.directives().expect("module directives field")
-    else {
+    let JavaSyntaxField::Present(directives) = module.directives() else {
         panic!("module directives must remain structured");
     };
     let directives = directives
         .parts()
-        .filter_map(
-            |part| match part.expect("structured module directive list") {
-                JavaSyntaxListPart::Item(directive) => Some(directive),
-                JavaSyntaxListPart::Separator(_) => None,
-                JavaSyntaxListPart::Missing(_) | JavaSyntaxListPart::Malformed(_) => {
-                    panic!("module directive list must not recover its entries")
-                }
-            },
-        )
+        .filter_map(|part| match part {
+            JavaSyntaxListPart::Item(directive) => Some(directive),
+            JavaSyntaxListPart::Separator(_) => None,
+            JavaSyntaxListPart::Missing(_) | JavaSyntaxListPart::Malformed(_) => {
+                panic!("module directive list must not recover its entries")
+            }
+        })
         .collect::<Vec<_>>();
     assert!(matches!(
         directives.as_slice(),
@@ -170,6 +158,67 @@ module m. {
         directive_kinds,
         ["exports", "opens", "provides", "requires", "uses"]
     );
+}
+
+#[test]
+fn category_bogus_list_members_remain_typed_items() {
+    let parse = parse_compilation_unit("module m { requires a; + ; exports p; }");
+    let root = parse
+        .syntax()
+        .expect("malformed Java source must retain a typed root")
+        .syntax_node()
+        .expect("typed Java root must have physical syntax");
+    let mut nodes = vec![root];
+    let module = loop {
+        let node = nodes.pop().expect("represented module declaration");
+        nodes.extend(node.children());
+        if let Some(module) = ModuleDeclaration::cast(node) {
+            break module;
+        }
+    };
+    let JavaSyntaxField::Present(directives) = module.directives() else {
+        panic!("module directives must remain structured");
+    };
+    let bogus = directives.parts().find_map(|part| match part {
+        JavaSyntaxListPart::Item(ModuleDirective::BogusModuleDirective(bogus)) => Some(bogus),
+        JavaSyntaxListPart::Item(_)
+        | JavaSyntaxListPart::Separator(_)
+        | JavaSyntaxListPart::Missing(_)
+        | JavaSyntaxListPart::Malformed(_) => None,
+    });
+    let bogus = bogus.expect("category-bogus directive must remain a typed list item");
+    assert!(
+        bogus
+            .syntax_node()
+            .expect("bogus directive must have physical syntax")
+            .is_directly_malformed()
+    );
+}
+
+#[test]
+fn optional_fields_expose_directly_malformed_children() {
+    let parse = parse_compilation_unit("class C { Object x = new int[1] { 2 }; }");
+    let root = parse
+        .syntax()
+        .expect("malformed Java source must retain a typed root")
+        .syntax_node()
+        .expect("typed Java root must have physical syntax");
+    let mut nodes = vec![root];
+    let creation = loop {
+        let node = nodes.pop().expect("represented array creation");
+        nodes.extend(node.children());
+        if let Some(creation) = ArrayCreationExpression::cast(node) {
+            break creation;
+        }
+    };
+    let JavaSyntaxField::Malformed(initializer) = creation.initializer() else {
+        panic!("invalid array initializer must remain represented as malformed");
+    };
+    let raw = initializer
+        .syntax_node()
+        .expect("malformed initializer must have physical syntax");
+    assert!(raw.is_directly_malformed());
+    assert!(ArrayInitializer::cast(raw).is_none());
 }
 
 #[test]

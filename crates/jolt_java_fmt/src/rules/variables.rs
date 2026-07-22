@@ -304,12 +304,7 @@ pub(crate) fn format_receiver_parameter<'source>(
 }
 
 fn format_annotation_parts<'source>(
-    parts: impl IntoIterator<
-        Item = Result<
-            jolt_java_syntax::JavaSyntaxListPart<'source, Annotation<'source>>,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
-    >,
+    parts: impl IntoIterator<Item = jolt_java_syntax::JavaSyntaxListPart<'source, Annotation<'source>>>,
     suppress_first_leading: bool,
     doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
@@ -343,10 +338,7 @@ fn format_annotation_parts<'source>(
 }
 
 fn resolve_annotation_list_docs<'source>(
-    field: Result<
-        jolt_java_syntax::JavaSyntaxField<'source, jolt_java_syntax::AnnotationList<'source>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    field: jolt_java_syntax::JavaSyntaxField<'source, jolt_java_syntax::AnnotationList<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     match resolve_required_field(field, doc) {
@@ -358,10 +350,7 @@ fn resolve_annotation_list_docs<'source>(
 }
 
 fn resolve_optional_doc<'source, T>(
-    field: Result<
-        jolt_java_syntax::JavaSyntaxField<'source, T>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    field: jolt_java_syntax::JavaSyntaxField<'source, T>,
     doc: &mut DocBuilder<'source>,
     format: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> Option<Doc<'source>> {
@@ -425,10 +414,7 @@ fn local_variable_type<'source>(
 }
 
 fn format_required_parameter_modifiers<'source>(
-    field: Result<
-        JavaSyntaxField<'source, ParameterModifierList<'source>>,
-        JavaSyntaxInvariantError,
-    >,
+    field: JavaSyntaxField<'source, ParameterModifierList<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> TypedModifierPrefix<'source> {
     match resolve_required_field(field, doc) {
@@ -469,7 +455,7 @@ fn single_declarator<'source>(
     declarators: &VariableDeclaratorList<'source>,
 ) -> Option<VariableDeclarator<'source>> {
     let mut parts = declarators.parts();
-    let declarator = match parts.next()?.ok()? {
+    let declarator = match parts.next()? {
         jolt_java_syntax::JavaSyntaxListPart::Item(declarator) => declarator,
         jolt_java_syntax::JavaSyntaxListPart::Separator(_)
         | jolt_java_syntax::JavaSyntaxListPart::Missing(_)
@@ -596,13 +582,8 @@ fn format_variable_initializer_split<'source>(
     doc_concat!(doc, [space, operator, value])
 }
 
-fn present_required<T>(
-    field: Result<
-        jolt_java_syntax::JavaSyntaxField<'_, T>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
-) -> Option<T> {
-    match field.ok()? {
+fn present_required<T>(field: jolt_java_syntax::JavaSyntaxField<'_, T>) -> Option<T> {
+    match field {
         jolt_java_syntax::JavaSyntaxField::Present(value) => Some(value),
         jolt_java_syntax::JavaSyntaxField::Missing(_)
         | jolt_java_syntax::JavaSyntaxField::Malformed(_) => None,
@@ -610,11 +591,6 @@ fn present_required<T>(
 }
 
 #[allow(clippy::needless_pass_by_value)]
-fn optional_is_absent<T>(
-    field: Result<
-        jolt_java_syntax::JavaSyntaxField<'_, T>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
-) -> bool {
-    matches!(field, Ok(jolt_java_syntax::JavaSyntaxField::Missing(_)))
+fn optional_is_absent<T>(field: jolt_java_syntax::JavaSyntaxField<'_, T>) -> bool {
+    matches!(field, jolt_java_syntax::JavaSyntaxField::Missing(_))
 }

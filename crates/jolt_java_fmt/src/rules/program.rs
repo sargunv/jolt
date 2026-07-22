@@ -31,32 +31,30 @@ pub(crate) fn format_compilation_unit<'source>(
 ) -> Doc<'source> {
     let mut entries = Vec::new();
     match unit.items() {
-        Ok(jolt_java_syntax::JavaSyntaxField::Present(items)) => {
+        jolt_java_syntax::JavaSyntaxField::Present(items) => {
             let parts = items.parts();
             entries.reserve(parts.size_hint().0);
             for part in parts {
                 match part {
-                    Ok(JavaSyntaxListPart::Item(item)) => entries.push(ProgramEntry::Item(item)),
-                    Ok(JavaSyntaxListPart::Separator(token)) => {
+                    JavaSyntaxListPart::Item(item) => entries.push(ProgramEntry::Item(item)),
+                    JavaSyntaxListPart::Separator(token) => {
                         entries.push(ProgramEntry::Token(token));
                     }
-                    Ok(JavaSyntaxListPart::Malformed(malformed)) => {
+                    JavaSyntaxListPart::Malformed(malformed) => {
                         entries.push(ProgramEntry::Malformed(malformed));
                     }
-                    Ok(JavaSyntaxListPart::Missing(missing)) => {
+                    JavaSyntaxListPart::Missing(missing) => {
                         entries.push(ProgramEntry::Missing(missing));
                     }
-                    Err(error) => doc.block_on_invariant(error.to_string()),
                 }
             }
         }
-        Ok(jolt_java_syntax::JavaSyntaxField::Malformed(malformed)) => {
+        jolt_java_syntax::JavaSyntaxField::Malformed(malformed) => {
             entries.push(ProgramEntry::Malformed(malformed));
         }
-        Ok(jolt_java_syntax::JavaSyntaxField::Missing(missing)) => {
+        jolt_java_syntax::JavaSyntaxField::Missing(missing) => {
             entries.push(ProgramEntry::Missing(missing));
         }
-        Err(error) => doc.block_on_invariant(error.to_string()),
     }
 
     let container = unit.text_range();

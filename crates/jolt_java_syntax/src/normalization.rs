@@ -56,8 +56,8 @@ fn delimiter_synthesis<'source>(
     })
 }
 
-fn present<T>(field: Result<JavaSyntaxField<'_, T>, crate::JavaSyntaxInvariantError>) -> Option<T> {
-    match field.ok()? {
+fn present<T>(field: JavaSyntaxField<'_, T>) -> Option<T> {
+    match field {
         JavaSyntaxField::Present(value) => Some(value),
         JavaSyntaxField::Missing(_) | JavaSyntaxField::Malformed(_) => None,
     }
@@ -340,7 +340,7 @@ impl<'source> ArrayInitializer<'source> {
         if !values.is_recovery_free()
             || !values
                 .parts()
-                .any(|part| matches!(part, Ok(JavaSyntaxListPart::Item(_))))
+                .any(|part| matches!(part, JavaSyntaxListPart::Item(_)))
         {
             return None;
         }
@@ -357,7 +357,7 @@ impl<'source> AnnotationArrayInitializer<'source> {
         if !values.is_recovery_free()
             || !values
                 .parts()
-                .any(|part| matches!(part, Ok(JavaSyntaxListPart::Item(_))))
+                .any(|part| matches!(part, JavaSyntaxListPart::Item(_)))
         {
             return None;
         }
@@ -370,7 +370,7 @@ impl<'source> EnumBody<'source> {
     #[must_use]
     pub fn trailing_comma_claim(&self) -> Option<SynthesisClaim<'source>> {
         present(self.open_brace())?;
-        let constants = match self.constants().ok()? {
+        let constants = match self.constants() {
             JavaSyntaxField::Present(constants) => constants,
             JavaSyntaxField::Missing(_) | JavaSyntaxField::Malformed(_) => return None,
         };
@@ -394,12 +394,8 @@ impl<'source> EnumBody<'source> {
     ) -> Option<ReplacementClaim<'source>> {
         let owner = normalization_owner(self)?;
         let recovery_free_shape = present(self.open_brace()).is_some()
-            && self
-                .constants()
-                .is_ok_and(|field| !matches!(field, JavaSyntaxField::Malformed(_)))
-            && self
-                .body_separator()
-                .is_ok_and(|field| !matches!(field, JavaSyntaxField::Malformed(_)))
+            && !matches!(self.constants(), JavaSyntaxField::Malformed(_))
+            && !matches!(self.body_separator(), JavaSyntaxField::Malformed(_))
             && present(self.members()).is_some_and(|members| members.is_recovery_free())
             && present(self.close_brace()).is_some();
         if !recovery_free_shape
@@ -443,7 +439,7 @@ impl<'source> EnumBody<'source> {
     pub fn redundant_body_separator_removal_claim(&self) -> Option<RemovalClaim<'source>> {
         let owner = normalization_owner(self)?;
         let separator = present(self.body_separator())?;
-        let constants_are_empty = match self.constants().ok()? {
+        let constants_are_empty = match self.constants() {
             JavaSyntaxField::Missing(_) => true,
             JavaSyntaxField::Present(constants) => constants.parts().next().is_none(),
             JavaSyntaxField::Malformed(_) => false,
@@ -452,9 +448,7 @@ impl<'source> EnumBody<'source> {
         let members_are_empty = members.parts().all(|part| {
             matches!(
                 part,
-                Ok(JavaSyntaxListPart::Item(ClassBodyMember::EmptyDeclaration(
-                    _
-                )))
+                JavaSyntaxListPart::Item(ClassBodyMember::EmptyDeclaration(_))
             )
         });
         if !constants_are_empty || !members_are_empty {
@@ -470,17 +464,17 @@ impl<'source> EnumBody<'source> {
     fn owns_separator(&self, source: &JavaSyntaxToken<'_>) -> bool {
         if matches!(
             self.body_separator(),
-            Ok(JavaSyntaxField::Present(token)) if token.source_id() == source.source_id()
+            JavaSyntaxField::Present(token) if token.source_id() == source.source_id()
         ) {
             return true;
         }
-        let Ok(JavaSyntaxField::Present(constants)) = self.constants() else {
+        let JavaSyntaxField::Present(constants) = self.constants() else {
             return false;
         };
         constants.parts().any(|part| {
             matches!(
                 part,
-                Ok(JavaSyntaxListPart::Separator(token))
+                JavaSyntaxListPart::Separator(token)
                     if token.source_id() == source.source_id()
             )
         })
@@ -500,7 +494,7 @@ impl<'source> LambdaExpression<'source> {
         }
         let parameters = present(self.parameters())?;
         let mut parts = parameters.parts();
-        let parameter = match parts.next()?.ok()? {
+        let parameter = match parts.next()? {
             JavaSyntaxListPart::Item(parameter) => parameter,
             JavaSyntaxListPart::Separator(_)
             | JavaSyntaxListPart::Missing(_)
@@ -509,8 +503,8 @@ impl<'source> LambdaExpression<'source> {
         let modifiers = present(parameter.modifiers())?;
         let varargs_annotations = present(parameter.varargs_annotations())?;
         if parts.next().is_some()
-            || !matches!(parameter.r#type(), Ok(JavaSyntaxField::Missing(_)))
-            || !matches!(parameter.ellipsis(), Ok(JavaSyntaxField::Missing(_)))
+            || !matches!(parameter.r#type(), JavaSyntaxField::Missing(_))
+            || !matches!(parameter.ellipsis(), JavaSyntaxField::Missing(_))
             || !modifiers.is_recovery_free()
             || modifiers.first_token().is_some()
             || !varargs_annotations.is_recovery_free()

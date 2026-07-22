@@ -16,12 +16,8 @@ use crate::helpers::recovery::{
     JavaFormatField, format_malformed, resolve_optional_field, resolve_required_field,
 };
 use jolt_fmt_ir::DocBuilder;
-use jolt_java_syntax::{
-    AnnotationInterfaceBodyMemberList, JavaSyntaxInvariantError, JavaSyntaxListPart, JavaSyntaxView,
-};
+use jolt_java_syntax::{AnnotationInterfaceBodyMemberList, JavaSyntaxListPart, JavaSyntaxView};
 use jolt_text::TextRange;
-
-type PartResult<'source, T> = Result<JavaSyntaxListPart<'source, T>, JavaSyntaxInvariantError>;
 
 macro_rules! standard_member_body {
     ($name:ident, $body:ty, $category:path, $format:path) => {
@@ -130,24 +126,18 @@ fn recovered_member_body<'source>(
 }
 
 fn present_token<'source>(
-    field: Result<
-        jolt_java_syntax::JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
-        JavaSyntaxInvariantError,
-    >,
+    field: jolt_java_syntax::JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
 ) -> Option<JavaSyntaxToken<'source>> {
     match field {
-        Ok(jolt_java_syntax::JavaSyntaxField::Present(token)) => Some(token),
-        Ok(
-            jolt_java_syntax::JavaSyntaxField::Missing(_)
-            | jolt_java_syntax::JavaSyntaxField::Malformed(_),
-        )
-        | Err(_) => None,
+        jolt_java_syntax::JavaSyntaxField::Present(token) => Some(token),
+        jolt_java_syntax::JavaSyntaxField::Missing(_)
+        | jolt_java_syntax::JavaSyntaxField::Malformed(_) => None,
     }
 }
 
 pub(super) fn format_class_member_body<'source>(
     container: TextRange,
-    members: impl IntoIterator<Item = PartResult<'source, ClassBodyMember<'source>>>,
+    members: impl IntoIterator<Item = JavaSyntaxListPart<'source, ClassBodyMember<'source>>>,
     open_dangling_comments: Option<FormattedMember<'source>>,
     close_dangling_comments: Option<FormattedMember<'source>>,
     doc: &mut DocBuilder<'source>,
@@ -167,7 +157,7 @@ pub(super) fn format_class_member_body<'source>(
 #[allow(clippy::too_many_arguments)]
 fn format_member_parts<'source, T: Copy>(
     container: TextRange,
-    members: impl IntoIterator<Item = PartResult<'source, T>>,
+    members: impl IntoIterator<Item = JavaSyntaxListPart<'source, T>>,
     open_dangling_comments: Option<FormattedMember<'source>>,
     close_dangling_comments: Option<FormattedMember<'source>>,
     item_range: impl Fn(&T) -> Option<FormatterIgnoreItemRange>,
@@ -242,57 +232,53 @@ fn format_member_parts<'source, T: Copy>(
 }
 
 fn format_part<'source, T>(
-    part: &PartResult<'source, T>,
+    part: &JavaSyntaxListPart<'source, T>,
     format_item: &mut impl FnMut(&T, &mut DocBuilder<'source>) -> Option<FormattedMember<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<FormattedMember<'source>> {
     match part {
-        Ok(JavaSyntaxListPart::Item(item)) => format_item(item, doc),
-        Ok(JavaSyntaxListPart::Malformed(malformed)) => {
+        JavaSyntaxListPart::Item(item) => format_item(item, doc),
+        JavaSyntaxListPart::Malformed(malformed) => {
             Some(FormattedMember::comment(format_malformed(malformed, doc)))
         }
-        Ok(JavaSyntaxListPart::Missing(missing)) => Some(FormattedMember::comment(
+        JavaSyntaxListPart::Missing(missing) => Some(FormattedMember::comment(
             crate::helpers::recovery::format_missing(missing, doc),
         )),
-        Ok(JavaSyntaxListPart::Separator(token)) => {
+        JavaSyntaxListPart::Separator(token) => {
             doc.block_on_invariant("unseparated Java member list contained a separator");
             Some(FormattedMember::comment(format_token_with_comments(
                 doc, token,
             )))
         }
-        Err(error) => {
-            doc.block_on_invariant(error.to_string());
-            None
-        }
     }
 }
 
 fn part_ignore_range<T>(
-    part: &PartResult<'_, T>,
+    part: &JavaSyntaxListPart<'_, T>,
     item_range: &impl Fn(&T) -> Option<FormatterIgnoreItemRange>,
 ) -> Option<FormatterIgnoreItemRange> {
     match part {
-        Ok(JavaSyntaxListPart::Item(item)) => item_range(item),
-        Ok(JavaSyntaxListPart::Separator(token)) => {
+        JavaSyntaxListPart::Item(item) => item_range(item),
+        JavaSyntaxListPart::Separator(token) => {
             Some(FormatterIgnoreItemRange::between(token, token))
         }
-        Ok(JavaSyntaxListPart::Malformed(malformed)) => {
+        JavaSyntaxListPart::Malformed(malformed) => {
             let syntax = malformed.syntax_node()?;
             Some(FormatterIgnoreItemRange::between(
                 &syntax.first_token()?,
                 &syntax.last_token()?,
             ))
         }
-        Ok(JavaSyntaxListPart::Missing(_)) | Err(_) => None,
+        JavaSyntaxListPart::Missing(_) => None,
     }
 }
 
 fn part_category<T>(
-    part: &PartResult<'_, T>,
+    part: &JavaSyntaxListPart<'_, T>,
     item_category: &impl Fn(&T) -> MemberCategory,
 ) -> MemberCategory {
     match part {
-        Ok(JavaSyntaxListPart::Item(item)) => item_category(item),
+        JavaSyntaxListPart::Item(item) => item_category(item),
         _ => MemberCategory::Type,
     }
 }

@@ -127,10 +127,10 @@ fn format_binary_fields<'source>(
 ) -> Doc<'source> {
     let has_right = matches!(
         expression.right(),
-        Ok(KotlinSyntaxField::Present(ref right)) if right.first_token().is_some()
+        KotlinSyntaxField::Present(ref right) if right.first_token().is_some()
     ) || matches!(
         expression.right(),
-        Ok(KotlinSyntaxField::Malformed(ref malformed)) if malformed.first_token().is_some()
+        KotlinSyntaxField::Malformed(ref malformed) if malformed.first_token().is_some()
     );
     let left = format_required_field(expression.left(), doc, |left, doc| {
         format_expression_with_leading(doc, &left, leading)
@@ -198,10 +198,8 @@ fn binary_operator<'source>(
     }
 }
 
-fn present<T>(
-    field: Result<KotlinSyntaxField<'_, T>, jolt_kotlin_syntax::KotlinSyntaxInvariantError>,
-) -> Option<T> {
-    match field.ok()? {
+fn present<T>(field: KotlinSyntaxField<'_, T>) -> Option<T> {
+    match field {
         KotlinSyntaxField::Present(value) => Some(value),
         KotlinSyntaxField::Missing(_) | KotlinSyntaxField::Malformed(_) => None,
     }

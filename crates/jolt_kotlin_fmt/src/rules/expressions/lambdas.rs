@@ -49,7 +49,7 @@ fn format_labeled_lambda_expression<'source>(
         )
     });
     let at_has_comments = match labeled.at() {
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(at)) => token_has_comments(&at),
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(at) => token_has_comments(&at),
         _ => false,
     };
     let at = format_required_field(labeled.at(), doc, |at, doc| {
@@ -72,7 +72,7 @@ fn format_lambda_body<'source>(
     leading: LeadingTrivia,
 ) -> Doc<'source> {
     let close_source = match body.close_brace() {
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(close)) => Some(close),
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(close) => Some(close),
         _ => None,
     };
     let open = format_required_field(body.open_brace(), doc, |open, doc| {
@@ -151,7 +151,7 @@ fn format_lambda_parameter_prefix<'source>(
     let parameters = parameter_list.parameters();
     let malformed_is_visible = matches!(
         &parameters,
-        Ok(KotlinSyntaxField::Malformed(malformed)) if malformed.first_token().is_some()
+        KotlinSyntaxField::Malformed(malformed) if malformed.first_token().is_some()
     );
     let items = match resolve_required_field(parameters, doc) {
         KotlinFormatField::Present(parameters) => {
@@ -258,7 +258,7 @@ pub(super) fn lambda_body_doc<'source>(
     let items = body.items();
     let malformed_is_visible = matches!(
         &items,
-        Ok(KotlinSyntaxField::Malformed(malformed)) if malformed.first_token().is_some()
+        KotlinSyntaxField::Malformed(malformed) if malformed.first_token().is_some()
     );
     let body_doc = match resolve_required_field(items, doc) {
         KotlinFormatField::Present(items) => doc.concat_list(|docs| {

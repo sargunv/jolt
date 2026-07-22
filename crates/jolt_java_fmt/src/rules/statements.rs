@@ -92,10 +92,7 @@ fn format_statement<'source>(
 }
 
 fn statement_body_as_block<'source>(
-    body: Result<
-        jolt_java_syntax::JavaSyntaxField<'source, Statement<'source>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    body: jolt_java_syntax::JavaSyntaxField<'source, Statement<'source>>,
     normalization: Option<jolt_java_syntax::JavaControlBodyNormalization<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
@@ -141,5 +138,5 @@ fn statement_body_trailing_comments_force_line(body: &Statement<'_>) -> bool {
     let Statement::Block(block) = body else {
         return false;
     };
-    matches!(block.close_brace(), Ok(jolt_java_syntax::JavaSyntaxField::Present(close)) if trailing_comments_force_line(&close))
+    matches!(block.close_brace(), jolt_java_syntax::JavaSyntaxField::Present(close) if trailing_comments_force_line(&close))
 }

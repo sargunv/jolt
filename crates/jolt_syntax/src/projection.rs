@@ -123,25 +123,22 @@ macro_rules! define_typed_cst_fields {
         fn required_slot(
             syntax: $fixed_syntax<'_>,
             slot: usize,
-        ) -> $syntax_result<$syntax_field<'_, SyntaxElement<'_, $language>>> {
+        ) -> $syntax_field<'_, SyntaxElement<'_, $language>> {
             match syntax.slot_at(slot) {
                 Some(SyntaxSlot::Node(node)) if node.is_directly_malformed() => {
-                    Ok($syntax_field::Malformed($malformed_syntax { syntax: node }))
+                    $syntax_field::Malformed($malformed_syntax { syntax: node })
                 }
                 Some(SyntaxSlot::Node(node)) => {
-                    Ok($syntax_field::Present(SyntaxElement::Node(node)))
+                    $syntax_field::Present(SyntaxElement::Node(node))
                 }
                 Some(SyntaxSlot::Token(token)) => {
-                    Ok($syntax_field::Present(SyntaxElement::Token(token)))
+                    $syntax_field::Present(SyntaxElement::Token(token))
                 }
-                Some(SyntaxSlot::Empty) => Ok($syntax_field::Missing($missing_syntax {
+                Some(SyntaxSlot::Empty) => $syntax_field::Missing($missing_syntax {
                     owner: syntax.missing_owner(),
                     slot,
-                })),
-                None => Err($invariant_error {
-                    node: syntax.kind(),
-                    slot,
                 }),
+                None => invalid_physical_projection(syntax, slot),
             }
         }
 
@@ -149,8 +146,19 @@ macro_rules! define_typed_cst_fields {
         fn optional_slot(
             syntax: $fixed_syntax<'_>,
             slot: usize,
-        ) -> $syntax_result<$syntax_field<'_, SyntaxElement<'_, $language>>> {
+        ) -> $syntax_field<'_, SyntaxElement<'_, $language>> {
             required_slot(syntax, slot)
+        }
+
+        /// Generated accessors trust nodes produced by the schema-derived syntax factory.
+        /// A mismatch is a lowering bug or a value from a doc-hidden custom factory/tree sink.
+        #[cold]
+        #[track_caller]
+        fn invalid_physical_projection<T>(syntax: $fixed_syntax<'_>, slot: usize) -> T {
+            panic!(
+                "trusted syntax factory produced an invalid physical projection for {:?} slot {slot}",
+                syntax.kind(),
+            )
         }
     };
 }
@@ -293,46 +301,37 @@ macro_rules! define_typed_cst_access {
         fn list_parts<'source, T: $list_item<'source>>(
             syntax: $syntax_node<'source>,
             separated: bool,
-        ) -> impl Iterator<Item = $syntax_result<$list_part<'source, T>>> + use<'source, T> {
+        ) -> impl Iterator<Item = $list_part<'source, T>> + use<'source, T> {
             (0..syntax.slot_count()).map(move |index| {
                 let Some(slot) = syntax.slot_at(index) else {
-                    return Err($invariant_error {
-                        node: syntax.kind(),
-                        slot: index,
-                    });
+                    return invalid_physical_projection($fixed_syntax(syntax), index);
                 };
                 match slot {
                     SyntaxSlot::Token(token) if separated && index % 2 == 1 => {
-                        Ok($list_part::Separator(token))
+                        $list_part::Separator(token)
                     }
-                    SyntaxSlot::Node(node) => {
-                        let item = T::cast_element($role_element::Node(node));
-                        match item {
-                            Some(item)
-                                if !node.is_directly_malformed()
-                                    || (T::IS_FAMILY && $category_bogus(node.kind())) =>
-                            {
-                                Ok($list_part::Item(item))
+                    SyntaxSlot::Node(node) => T::cast_element($role_element::Node(node))
+                        .filter(|_| {
+                            !node.is_directly_malformed()
+                                || (T::IS_FAMILY && $category_bogus(node.kind()))
+                        })
+                        .map($list_part::Item)
+                        .unwrap_or_else(|| {
+                            if node.is_directly_malformed() {
+                                $list_part::Malformed($malformed_syntax { syntax: node })
+                            } else {
+                                invalid_physical_projection($fixed_syntax(syntax), index)
                             }
-                            _ if node.is_directly_malformed() => {
-                                Ok($list_part::Malformed($malformed_syntax { syntax: node }))
-                            }
-                            _ => Err($invariant_error {
-                                node: syntax.kind(),
-                                slot: index,
-                            }),
-                        }
-                    }
+                        }),
                     SyntaxSlot::Token(token) => T::cast_element($role_element::Token(token))
                         .map($list_part::Item)
-                        .ok_or($invariant_error {
-                            node: syntax.kind(),
-                            slot: index,
+                        .unwrap_or_else(|| {
+                            invalid_physical_projection($fixed_syntax(syntax), index)
                         }),
-                    SyntaxSlot::Empty => Ok($list_part::Missing($missing_syntax {
+                    SyntaxSlot::Empty => $list_part::Missing($missing_syntax {
                         owner: syntax,
                         slot: index,
-                    })),
+                    }),
                 }
             })
         }
@@ -341,17 +340,16 @@ macro_rules! define_typed_cst_access {
         fn required_token(
             syntax: $fixed_syntax<'_>,
             slot: usize,
-        ) -> $syntax_result<$syntax_field<'_, $syntax_token<'_>>> {
-            match required_slot(syntax, slot)? {
+        ) -> $syntax_field<'_, $syntax_token<'_>> {
+            match required_slot(syntax, slot) {
                 $syntax_field::Present(SyntaxElement::Token(token)) => {
-                    Ok($syntax_field::Present(token))
+                    $syntax_field::Present(token)
                 }
-                $syntax_field::Missing(missing) => Ok($syntax_field::Missing(missing)),
-                $syntax_field::Malformed(node) => Ok($syntax_field::Malformed(node)),
-                $syntax_field::Present(SyntaxElement::Node(_)) => Err($invariant_error {
-                    node: syntax.kind(),
-                    slot,
-                }),
+                $syntax_field::Missing(missing) => $syntax_field::Missing(missing),
+                $syntax_field::Malformed(node) => $syntax_field::Malformed(node),
+                $syntax_field::Present(SyntaxElement::Node(_)) => {
+                    invalid_physical_projection(syntax, slot)
+                }
             }
         }
 
@@ -359,7 +357,7 @@ macro_rules! define_typed_cst_access {
         fn optional_token(
             syntax: $fixed_syntax<'_>,
             slot: usize,
-        ) -> $syntax_result<$syntax_field<'_, $syntax_token<'_>>> {
+        ) -> $syntax_field<'_, $syntax_token<'_>> {
             required_token(syntax, slot)
         }
 
@@ -367,20 +365,16 @@ macro_rules! define_typed_cst_access {
         fn required_node<'source, N: $node<'source>>(
             syntax: $fixed_syntax<'source>,
             slot: usize,
-        ) -> $syntax_result<$syntax_field<'source, N>> {
-            match required_slot(syntax, slot)? {
+        ) -> $syntax_field<'source, N> {
+            match required_slot(syntax, slot) {
                 $syntax_field::Present(SyntaxElement::Node(node)) => N::cast(node)
                     .map($syntax_field::Present)
-                    .ok_or($invariant_error {
-                        node: syntax.kind(),
-                        slot,
-                    }),
-                $syntax_field::Missing(missing) => Ok($syntax_field::Missing(missing)),
-                $syntax_field::Malformed(node) => Ok($syntax_field::Malformed(node)),
-                $syntax_field::Present(SyntaxElement::Token(_)) => Err($invariant_error {
-                    node: syntax.kind(),
-                    slot,
-                }),
+                    .unwrap_or_else(|| invalid_physical_projection(syntax, slot)),
+                $syntax_field::Missing(missing) => $syntax_field::Missing(missing),
+                $syntax_field::Malformed(node) => $syntax_field::Malformed(node),
+                $syntax_field::Present(SyntaxElement::Token(_)) => {
+                    invalid_physical_projection(syntax, slot)
+                }
             }
         }
 
@@ -388,7 +382,7 @@ macro_rules! define_typed_cst_access {
         fn optional_node<'source, N: $node<'source>>(
             syntax: $fixed_syntax<'source>,
             slot: usize,
-        ) -> $syntax_result<$syntax_field<'source, N>> {
+        ) -> $syntax_field<'source, N> {
             required_node(syntax, slot)
         }
 
@@ -396,16 +390,16 @@ macro_rules! define_typed_cst_access {
         fn required_role_element(
             syntax: $fixed_syntax<'_>,
             slot: usize,
-        ) -> $syntax_result<$syntax_field<'_, $role_element<'_>>> {
-            match required_slot(syntax, slot)? {
+        ) -> $syntax_field<'_, $role_element<'_>> {
+            match required_slot(syntax, slot) {
                 $syntax_field::Present(SyntaxElement::Node(node)) => {
-                    Ok($syntax_field::Present($role_element::Node(node)))
+                    $syntax_field::Present($role_element::Node(node))
                 }
                 $syntax_field::Present(SyntaxElement::Token(token)) => {
-                    Ok($syntax_field::Present($role_element::Token(token)))
+                    $syntax_field::Present($role_element::Token(token))
                 }
-                $syntax_field::Missing(missing) => Ok($syntax_field::Missing(missing)),
-                $syntax_field::Malformed(node) => Ok($syntax_field::Malformed(node)),
+                $syntax_field::Missing(missing) => $syntax_field::Missing(missing),
+                $syntax_field::Malformed(node) => $syntax_field::Malformed(node),
             }
         }
 
@@ -413,31 +407,25 @@ macro_rules! define_typed_cst_access {
         fn required_family<'source, F: $family<'source>>(
             syntax: $fixed_syntax<'source>,
             slot: usize,
-        ) -> $syntax_result<$syntax_field<'source, F>> {
+        ) -> $syntax_field<'source, F> {
             match syntax.slot_at(slot) {
                 Some(SyntaxSlot::Node(node)) => match F::cast(node) {
                     Some(value)
                         if !node.is_directly_malformed() || $category_bogus(node.kind()) =>
                     {
-                        Ok($syntax_field::Present(value))
+                        $syntax_field::Present(value)
                     }
-                    Some(_) => Ok($syntax_field::Malformed($malformed_syntax { syntax: node })),
+                    Some(_) => $syntax_field::Malformed($malformed_syntax { syntax: node }),
                     None if node.is_directly_malformed() => {
-                        Ok($syntax_field::Malformed($malformed_syntax { syntax: node }))
+                        $syntax_field::Malformed($malformed_syntax { syntax: node })
                     }
-                    None => Err($invariant_error {
-                        node: syntax.kind(),
-                        slot,
-                    }),
+                    None => invalid_physical_projection(syntax, slot),
                 },
-                Some(SyntaxSlot::Empty) => Ok($syntax_field::Missing($missing_syntax {
+                Some(SyntaxSlot::Empty) => $syntax_field::Missing($missing_syntax {
                     owner: syntax.missing_owner(),
                     slot,
-                })),
-                Some(SyntaxSlot::Token(_)) | None => Err($invariant_error {
-                    node: syntax.kind(),
-                    slot,
                 }),
+                Some(SyntaxSlot::Token(_)) | None => invalid_physical_projection(syntax, slot),
             }
         }
 
@@ -445,7 +433,7 @@ macro_rules! define_typed_cst_access {
         fn optional_family<'source, F: $family<'source>>(
             syntax: $fixed_syntax<'source>,
             slot: usize,
-        ) -> $syntax_result<$syntax_field<'source, F>> {
+        ) -> $syntax_field<'source, F> {
             required_family(syntax, slot)
         }
     };
@@ -537,7 +525,9 @@ macro_rules! define_typed_cst_projection {
 
             impl<'source> $node_trait<'source> for $node<'source> {
                 fn cast(syntax: $syntax_node<'source>) -> Option<Self> {
-                    matches!(syntax.kind(), $syntax_kind::$kind).then_some(Self { syntax })
+                    (matches!(syntax.kind(), $syntax_kind::$kind)
+                        && $crate::__typed_cst_class_accepts!($class, syntax))
+                    .then_some(Self { syntax })
                 }
             }
 
@@ -659,6 +649,21 @@ macro_rules! define_typed_cst_projection {
                 }
             )+
         )*
+    };
+}
+
+/// Applies the schema node class to typed-wrapper ownership.
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __typed_cst_class_accepts {
+    (valid, $syntax:ident) => {
+        !$syntax.is_directly_malformed()
+    };
+    (list, $syntax:ident) => {
+        !$syntax.is_directly_malformed()
+    };
+    (malformed, $syntax:ident) => {
+        $syntax.is_directly_malformed()
     };
 }
 

@@ -373,7 +373,6 @@ macro_rules! define_java_accessors_from_schema {
         jolt_syntax::define_typed_cst_accessors! {
             names {
                 syntax_token: JavaSyntaxToken,
-                syntax_result: JavaSyntaxResult,
                 syntax_field: JavaSyntaxField,
                 role_element: JavaRoleElement,
                 list_part: JavaSyntaxListPart,
@@ -447,7 +446,7 @@ impl<'source> ModifierList<'source> {
     {
         let mut saw_modifier = false;
         self.parts().map(move |part| match part {
-            Ok(JavaSyntaxListPart::Item(item)) => match item.classify() {
+            JavaSyntaxListPart::Item(item) => match item.classify() {
                 Ok(ModifierItem::Annotation(annotation)) if saw_modifier => {
                     Ok(PartitionedModifierItem::TypeUseAnnotation(annotation))
                 }
@@ -472,17 +471,14 @@ impl<'source> ModifierList<'source> {
                 }
                 Err(error) => Err(error),
             },
-            Ok(JavaSyntaxListPart::Malformed(malformed)) => {
+            JavaSyntaxListPart::Malformed(malformed) => {
                 Ok(PartitionedModifierItem::Malformed(malformed))
             }
-            Ok(JavaSyntaxListPart::Missing(missing)) => {
-                Ok(PartitionedModifierItem::Missing(missing))
-            }
-            Ok(JavaSyntaxListPart::Separator(_)) => Err(JavaSyntaxInvariantError {
+            JavaSyntaxListPart::Missing(missing) => Ok(PartitionedModifierItem::Missing(missing)),
+            JavaSyntaxListPart::Separator(_) => Err(JavaSyntaxInvariantError {
                 node: JavaSyntaxKind::ModifierList,
                 slot: 0,
             }),
-            Err(error) => Err(error),
         })
     }
 }
@@ -497,7 +493,7 @@ impl<'source> ParameterModifierList<'source> {
     {
         let mut saw_modifier = false;
         self.parts().map(move |part| match part {
-            Ok(JavaSyntaxListPart::Item(item)) => {
+            JavaSyntaxListPart::Item(item) => {
                 if let Some(annotation) = item.cast_node::<Annotation<'source>>() {
                     if saw_modifier {
                         Ok(PartitionedModifierItem::TypeUseAnnotation(annotation))
@@ -517,17 +513,14 @@ impl<'source> ParameterModifierList<'source> {
                     })
                 }
             }
-            Ok(JavaSyntaxListPart::Malformed(malformed)) => {
+            JavaSyntaxListPart::Malformed(malformed) => {
                 Ok(PartitionedModifierItem::Malformed(malformed))
             }
-            Ok(JavaSyntaxListPart::Missing(missing)) => {
-                Ok(PartitionedModifierItem::Missing(missing))
-            }
-            Ok(JavaSyntaxListPart::Separator(_)) => Err(JavaSyntaxInvariantError {
+            JavaSyntaxListPart::Missing(missing) => Ok(PartitionedModifierItem::Missing(missing)),
+            JavaSyntaxListPart::Separator(_) => Err(JavaSyntaxInvariantError {
                 node: JavaSyntaxKind::ParameterModifierList,
                 slot: 0,
             }),
-            Err(error) => Err(error),
         })
     }
 }
@@ -702,8 +695,8 @@ fn operator_from_element(
                             node: node.kind(),
                             slot: 0,
                         })?;
-                    components[0] = Some(operator.greater_than()?);
-                    components[1] = Some(operator.assign()?);
+                    components[0] = Some(operator.greater_than());
+                    components[1] = Some(operator.assign());
                     (JavaOperatorKind::GtEq, 2)
                 }
                 JavaSyntaxKind::RightShiftOperator => {
@@ -712,8 +705,8 @@ fn operator_from_element(
                             node: node.kind(),
                             slot: 0,
                         })?;
-                    components[0] = Some(operator.first_greater_than()?);
-                    components[1] = Some(operator.second_greater_than()?);
+                    components[0] = Some(operator.first_greater_than());
+                    components[1] = Some(operator.second_greater_than());
                     (JavaOperatorKind::RShift, 2)
                 }
                 JavaSyntaxKind::UnsignedRightShiftOperator => {
@@ -722,9 +715,9 @@ fn operator_from_element(
                             node: node.kind(),
                             slot: 0,
                         })?;
-                    components[0] = Some(operator.first_greater_than()?);
-                    components[1] = Some(operator.second_greater_than()?);
-                    components[2] = Some(operator.third_greater_than()?);
+                    components[0] = Some(operator.first_greater_than());
+                    components[1] = Some(operator.second_greater_than());
+                    components[2] = Some(operator.third_greater_than());
                     (JavaOperatorKind::UnsignedRShift, 3)
                 }
                 JavaSyntaxKind::RightShiftAssignmentOperator => {
@@ -734,9 +727,9 @@ fn operator_from_element(
                             slot: 0,
                         },
                     )?;
-                    components[0] = Some(operator.first_greater_than()?);
-                    components[1] = Some(operator.second_greater_than()?);
-                    components[2] = Some(operator.assign()?);
+                    components[0] = Some(operator.first_greater_than());
+                    components[1] = Some(operator.second_greater_than());
+                    components[2] = Some(operator.assign());
                     (JavaOperatorKind::RShiftEq, 3)
                 }
                 JavaSyntaxKind::UnsignedRightShiftAssignmentOperator => {
@@ -746,10 +739,10 @@ fn operator_from_element(
                             slot: 0,
                         },
                     )?;
-                    components[0] = Some(operator.first_greater_than()?);
-                    components[1] = Some(operator.second_greater_than()?);
-                    components[2] = Some(operator.third_greater_than()?);
-                    components[3] = Some(operator.assign()?);
+                    components[0] = Some(operator.first_greater_than());
+                    components[1] = Some(operator.second_greater_than());
+                    components[2] = Some(operator.third_greater_than());
+                    components[3] = Some(operator.assign());
                     (JavaOperatorKind::UnsignedRShiftEq, 4)
                 }
                 _ => {

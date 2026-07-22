@@ -134,13 +134,8 @@ pub(super) fn format_member_chain<'source>(
     Some(doc_concat!(doc, [leading_comments, chain]))
 }
 
-fn required_dot_has_leading_comments(
-    dot: Result<
-        JavaSyntaxField<'_, JavaSyntaxToken<'_>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
-) -> bool {
-    matches!(dot, Ok(JavaSyntaxField::Present(dot)) if !dot.leading_comments().is_empty())
+fn required_dot_has_leading_comments(dot: JavaSyntaxField<'_, JavaSyntaxToken<'_>>) -> bool {
+    matches!(dot, JavaSyntaxField::Present(dot) if !dot.leading_comments().is_empty())
 }
 
 fn append_chain_expression<'source>(
@@ -166,10 +161,8 @@ fn append_chain_expression<'source>(
     }
 }
 
-fn present<T>(
-    field: Result<JavaSyntaxField<'_, T>, jolt_java_syntax::JavaSyntaxInvariantError>,
-) -> Option<T> {
-    match field.ok()? {
+fn present<T>(field: JavaSyntaxField<'_, T>) -> Option<T> {
+    match field {
         JavaSyntaxField::Present(value) => Some(value),
         JavaSyntaxField::Missing(_) | JavaSyntaxField::Malformed(_) => None,
     }

@@ -98,7 +98,6 @@ macro_rules! define_kotlin_accessors_from_schema {
         jolt_syntax::define_typed_cst_accessors! {
             names {
                 syntax_token: KotlinSyntaxToken,
-                syntax_result: KotlinSyntaxResult,
                 syntax_field: KotlinSyntaxField,
                 role_element: KotlinRoleElement,
                 list_part: KotlinSyntaxListPart,
@@ -436,11 +435,11 @@ impl Block<'_> {
     /// Returns whether the represented block interior contains only trivia.
     #[must_use]
     pub fn inner_is_whitespace(&self) -> bool {
-        matches!(self.open_brace(), Ok(KotlinSyntaxField::Present(_)))
-            && matches!(self.close_brace(), Ok(KotlinSyntaxField::Present(_)))
+        matches!(self.open_brace(), KotlinSyntaxField::Present(_))
+            && matches!(self.close_brace(), KotlinSyntaxField::Present(_))
             && matches!(
                 self.items(),
-                Ok(KotlinSyntaxField::Present(items)) if items.first_token().is_none()
+                KotlinSyntaxField::Present(items) if items.first_token().is_none()
             )
     }
 }

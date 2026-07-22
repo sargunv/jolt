@@ -57,7 +57,7 @@ pub(crate) fn format_switch_block<'source>(
     let entries = block.entries();
     let malformed_is_visible = matches!(
         &entries,
-        Ok(jolt_java_syntax::JavaSyntaxField::Malformed(malformed))
+        jolt_java_syntax::JavaSyntaxField::Malformed(malformed)
             if malformed.first_token().is_some()
     );
     let entries = match resolve_required_field(entries, doc) {
@@ -135,7 +135,7 @@ fn format_switch_statement_group<'source>(
         }
     };
     let statement_parts = statements.parts().collect::<Vec<_>>();
-    if let [Ok(JavaSyntaxListPart::Item(statement))] = statement_parts.as_slice()
+    if let [JavaSyntaxListPart::Item(statement)] = statement_parts.as_slice()
         && let Some(single) = format_single_block_switch_statement_group(
             label_count,
             single_label,
@@ -149,21 +149,17 @@ fn format_switch_statement_group<'source>(
     let items = statement_parts
         .iter()
         .filter_map(|part| match part {
-            Ok(JavaSyntaxListPart::Item(statement)) => format_block_statement_item(statement, doc),
-            Ok(JavaSyntaxListPart::Malformed(malformed)) => {
+            JavaSyntaxListPart::Item(statement) => format_block_statement_item(statement, doc),
+            JavaSyntaxListPart::Malformed(malformed) => {
                 Some(BodyItem::new(format_malformed(malformed, doc), false))
             }
-            Ok(JavaSyntaxListPart::Missing(missing)) => Some(BodyItem::new(
+            JavaSyntaxListPart::Missing(missing) => Some(BodyItem::new(
                 crate::helpers::recovery::format_missing(missing, doc),
                 false,
             )),
-            Ok(JavaSyntaxListPart::Separator(token)) => {
+            JavaSyntaxListPart::Separator(token) => {
                 doc.block_on_invariant("unseparated switch statement list had a separator");
                 Some(BodyItem::new(format_token_with_comments(doc, token), false))
-            }
-            Err(error) => {
-                doc.block_on_invariant(error.to_string());
-                None
             }
         })
         .collect::<Vec<_>>();
@@ -182,12 +178,7 @@ fn format_switch_statement_group<'source>(
 }
 
 fn format_switch_group_labels<'source>(
-    parts: impl IntoIterator<
-        Item = Result<
-            JavaSyntaxListPart<'source, SwitchLabel<'source>>,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
-    >,
+    parts: impl IntoIterator<Item = JavaSyntaxListPart<'source, SwitchLabel<'source>>>,
     doc: &mut DocBuilder<'source>,
 ) -> (Doc<'source>, usize, Option<Doc<'source>>) {
     let mut label_count = 0;
@@ -255,7 +246,7 @@ fn format_single_block_switch_statement_group<'source>(
     if label_count != 1 || statements.len() != 1 || statements[0].starts_after_blank_line() {
         return None;
     }
-    let jolt_java_syntax::JavaSyntaxField::Present(item) = statements[0].item().ok()? else {
+    let jolt_java_syntax::JavaSyntaxField::Present(item) = statements[0].item() else {
         return None;
     };
     let BlockItem::Block(block) = item else {
@@ -337,17 +328,14 @@ fn format_switch_rule_semicolon<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     crate::helpers::recovery::format_optional_field(rule.semicolon(), doc, |semicolon, doc| {
-        format_statement_semicolon(
-            Ok(jolt_java_syntax::JavaSyntaxField::Present(semicolon)),
-            doc,
-        )
+        format_statement_semicolon(jolt_java_syntax::JavaSyntaxField::Present(semicolon), doc)
     })
 }
 
 fn switch_arrow<'source>(
     rule: &SwitchRule<'source>,
 ) -> Option<jolt_java_syntax::JavaSyntaxToken<'source>> {
-    match rule.arrow().ok()? {
+    match rule.arrow() {
         jolt_java_syntax::JavaSyntaxField::Present(arrow) => Some(arrow),
         _ => None,
     }
@@ -472,10 +460,7 @@ fn format_switch_label<'source>(
 
 fn format_switch_label_items<'source>(
     parts: impl IntoIterator<
-        Item = Result<
-            JavaSyntaxListPart<'source, jolt_java_syntax::SwitchLabelItem<'source>>,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
+        Item = JavaSyntaxListPart<'source, jolt_java_syntax::SwitchLabelItem<'source>>,
     >,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {

@@ -71,7 +71,10 @@ macro_rules! define_kotlin_physical_audit {
             kind: KotlinSyntaxKind,
             language: crate::KotlinLanguage,
             matches: kotlin_audit_matches,
-            accepts_malformed: |_| false,
+            accepts_malformed: |slot| matches!(
+                slot,
+                jolt_syntax::SyntaxSlot::Node(child) if child.is_directly_malformed()
+            ),
             visibility:,
             tokens { $($token,)* }
             categories { $($family => $bogus { $($member,)* })* }
