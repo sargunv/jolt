@@ -619,6 +619,23 @@ shared/replacement lines. Gate the Kotlin boundedness fix with generated
 long-prefix stress in addition to the existing multi-dollar fixtures; do not
 commit a giant fixture or test-only counter solely to restate the source loop.
 
+Prototype result (2026-07-22): reject the shared cursor extraction. Explicit
+composition produced a +298/-298 Java diff, a +316/-260 Kotlin diff, and 107
+lines of shared/export surface: +163 production lines overall. Qualified cursor
+access replaced the deleted mechanics with wrapping and noise at every token
+rule. Short field names, implicit `Deref`, implementation macros, or a trait of
+callback-like accessors could manufacture a smaller source diff but would make
+movement less local and less explicit. The prototype compiled, preserved all
+Java corpus snapshots, and passed the complete Kotlin syntax suite, so this is a
+design rejection rather than a correctness failure.
+
+The accepted PR 11 implementation is now local purification only: delete the
+redundant `previous_end` field/helpers independently in both scanners, delete
+Java's one-use current-character/range pair helper, and make Kotlin's
+multi-dollar prefix scan a single linear byte pass. Keep the duplicated
+two-field source cursors until Rust can express composition without expanding
+their clients or a later design deletes more surrounding scanner machinery.
+
 ### PR 12 — Bounded Java lookahead
 
 Scope:
@@ -736,7 +753,7 @@ ready for review.
 | 08b | `cleanup/08b-renderer-audit-pass`        | rejected    | PR 08a | —                                              | design audit complete      | Exact single pass requires an output trace.      |
 | 09  | `cleanup/09-kotlin-rules`                | draft open  | PR 08a | [#11](https://github.com/sargunv/jolt/pull/11) | full + release + benchmark | Rule state and helper indirection deleted.       |
 | 10  | `cleanup/10-java-rules`                  | draft open  | PR 09  | [#12](https://github.com/sargunv/jolt/pull/12) | full + release + benchmark | Total rules and native module parts.             |
-| 11  | `cleanup/11-lexer-substrate`             | in progress | PR 10  | —                                              | —                          | Auditing byte-identical cursor mechanics only.   |
+| 11  | `cleanup/11-lexer-substrate`             | in progress | PR 10  | —                                              | prototype + focused suites | Shared cursor rejected; purify local mechanics.  |
 | 12  | `cleanup/12-java-lookahead`              | planned     | PR 11  | —                                              | —                          | Counted bounded lookahead work.                  |
 | 13  | `cleanup/13-final-reconciliation`        | planned     | PR 12  | —                                              | —                          | Actual docs, metrics, and API deletions only.    |
 
