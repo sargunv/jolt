@@ -13,9 +13,9 @@ use crate::helpers::blocks::join_hard_lines;
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
 use crate::helpers::lists::{CommaListItem, physical_comma_list_items};
 use crate::helpers::recovery::{
-    KotlinFormatDelimiter, KotlinFormatField, KotlinFormatListPart, format_optional_field,
-    format_required_field, resolve_list_part, resolve_optional_field, resolve_required_delimiter,
-    resolve_required_field,
+    KotlinFormatField, KotlinFormatListPart, format_delimiter_with_preserved_trailing,
+    format_optional_field, format_required_field, resolve_list_part, resolve_optional_field,
+    resolve_required_delimiter, resolve_required_field,
 };
 use crate::rules::declarations::{
     format_destructuring_declaration, format_inline_modifier_prefix, format_modifier_prefix,
@@ -128,8 +128,8 @@ pub(super) fn format_when_expression<'source>(
     } else {
         Doc::nil()
     };
-    let open = format_delimiter(doc, open, LeadingTrivia::Preserve);
-    let close = format_delimiter(doc, close, LeadingTrivia::Preserve);
+    let open = format_delimiter_with_preserved_trailing(doc, open, LeadingTrivia::Preserve);
+    let close = format_delimiter_with_preserved_trailing(doc, close, LeadingTrivia::Preserve);
     doc.concat([keyword, subject, space, open, entries, close])
 }
 
@@ -235,8 +235,8 @@ pub(super) fn format_for_statement<'source>(
     let iterable = format_required_field(statement.iterable(), doc, |iterable, doc| {
         format_expression(doc, &iterable)
     });
-    let open = format_delimiter(doc, open, LeadingTrivia::Preserve);
-    let close = format_delimiter(doc, close, LeadingTrivia::Preserve);
+    let open = format_delimiter_with_preserved_trailing(doc, open, LeadingTrivia::Preserve);
+    let close = format_delimiter_with_preserved_trailing(doc, close, LeadingTrivia::Preserve);
     let space = doc.space();
     let header = doc.concat([open, variable, space, in_token, space, iterable, close]);
     let body = format_required_field(statement.body(), doc, |body, doc| {
@@ -398,8 +398,8 @@ fn format_control_flow_condition<'source>(
     let expression = format_required_field(condition.expression(), doc, |expression, doc| {
         format_expression(doc, &expression)
     });
-    let open = format_delimiter(doc, open, LeadingTrivia::Preserve);
-    let close = format_delimiter(doc, close, LeadingTrivia::Preserve);
+    let open = format_delimiter_with_preserved_trailing(doc, open, LeadingTrivia::Preserve);
+    let close = format_delimiter_with_preserved_trailing(doc, close, LeadingTrivia::Preserve);
     let soft_line = doc.soft_line();
     let inner = doc.concat([soft_line, expression]);
     let inner = doc.indent(inner);
@@ -486,8 +486,8 @@ fn format_when_subject<'source>(
     let expression = format_required_field(subject.expression(), doc, |expression, doc| {
         format_expression(doc, &expression)
     });
-    let open = format_delimiter(doc, open, LeadingTrivia::Preserve);
-    let close = format_delimiter(doc, close, LeadingTrivia::Preserve);
+    let open = format_delimiter_with_preserved_trailing(doc, open, LeadingTrivia::Preserve);
+    let close = format_delimiter_with_preserved_trailing(doc, close, LeadingTrivia::Preserve);
     doc.concat([open, val_token, name, assign, expression, close])
 }
 
@@ -804,17 +804,4 @@ fn format_plain_token<'source>(
         LeadingTrivia::Preserve,
         TrailingTrivia::Preserve,
     )
-}
-
-fn format_delimiter<'source>(
-    doc: &mut DocBuilder<'source>,
-    delimiter: KotlinFormatDelimiter<'source>,
-    leading: LeadingTrivia,
-) -> Doc<'source> {
-    match delimiter {
-        KotlinFormatDelimiter::Source(token) => {
-            format_token(doc, &token, leading, TrailingTrivia::Preserve)
-        }
-        KotlinFormatDelimiter::Recovery(recovery) => recovery,
-    }
 }

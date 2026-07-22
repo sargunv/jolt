@@ -8,8 +8,9 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_dangling_comments, format_token,
 };
 use crate::helpers::recovery::{
-    KotlinFormatDelimiter, KotlinFormatField, format_malformed, format_missing,
-    format_optional_field, resolve_required_delimiter, resolve_required_field,
+    KotlinFormatDelimiter, KotlinFormatField, format_delimiter_with_preserved_trailing,
+    format_malformed, format_missing, format_optional_field, resolve_required_delimiter,
+    resolve_required_field,
 };
 use jolt_fmt_ir::formatter_ignore::{
     FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
@@ -352,7 +353,7 @@ fn format_class_braced_body<'source>(
     body: Option<Doc<'source>>,
     has_close: bool,
 ) -> Doc<'source> {
-    let open = format_delimiter(doc, open, LeadingTrivia::Preserve);
+    let open = format_delimiter_with_preserved_trailing(doc, open, LeadingTrivia::Preserve);
     let contents = if let Some(body) = body {
         let line = doc.hard_line();
         let body = doc.concat([line, body]);
@@ -366,21 +367,9 @@ fn format_class_braced_body<'source>(
     } else {
         doc.hard_line()
     };
-    let close = format_delimiter(doc, close, LeadingTrivia::SuppressAlreadyHandled);
+    let close =
+        format_delimiter_with_preserved_trailing(doc, close, LeadingTrivia::SuppressAlreadyHandled);
     doc.concat([open, contents, close])
-}
-
-fn format_delimiter<'source>(
-    doc: &mut DocBuilder<'source>,
-    delimiter: KotlinFormatDelimiter<'source>,
-    leading: LeadingTrivia,
-) -> Doc<'source> {
-    match delimiter {
-        KotlinFormatDelimiter::Source(token) => {
-            format_token(doc, &token, leading, TrailingTrivia::Preserve)
-        }
-        KotlinFormatDelimiter::Recovery(recovery) => recovery,
-    }
 }
 
 fn join_class_body_sections<'source>(
