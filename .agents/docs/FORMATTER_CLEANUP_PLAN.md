@@ -350,23 +350,37 @@ Gates:
 
 Scope:
 
-- validate factory shape once at generated construction or typed-root entry;
-- make only generated physical required/optional/list field accessors
-  cardinality-aware and infallible;
-- migrate representative Java and Kotlin vertical slices, then the generator;
-- delete `SyntaxInvariantError` plumbing that guarded impossible slot mismatch;
+- make generated valid/list casts exclude syntax-owned directly malformed nodes,
+  while schema-declared malformed wrappers retain that ownership;
+- rely only on the existing production factory proof: fixed slots and accessors
+  are generated from the same schema invocation;
+- remove the outer `SyntaxInvariantError` result from generated physical
+  required/optional fields and list parts;
+- delete formatter error plumbing that guarded impossible production-factory
+  slot mismatch;
 - retain fallibility for custom semantic projections with genuine failure.
 
 Expected deletions: generated-slot invariant unwraps and impossible shape
 branches. Do not promise removal of all current `block_on_invariant` calls.
+
+This slice does not redesign optional or recovery values. `Present`, `Missing`,
+`Malformed`, separators, recovery visibility, and fallible verbatim-core access
+remain represented until PR 04. The doc-hidden low-level custom factory surface
+is trusted internal construction and does not define the typed language API's
+production-factory guarantee. Do not add runtime validation, provenance flags,
+proof graphs, dual accessors, or a second schema model to support adversarial
+custom factories.
 
 Risks: hiding truly optional tokens, conflating parser recovery with invalid
 factory shape, generated churn, and weaker diagnostics.
 
 Gates:
 
-- an exhaustive schema audit checks factory/accessor agreement;
-- generated code and representative formatter call sites shrink;
+- the schema-derived physical audit checks every represented non-direct node,
+  and focused tests prove cast ownership and malformed-source roots;
+- exactly the generated physical field/list invariant branches disappear while
+  genuinely fallible semantic projections remain;
+- generated code and representative Java/Kotlin formatter call sites shrink;
 - compile time, generated code size, and malformed-tree behavior do not regress;
 - there is still one declarative schema authority and no runtime second model.
 
@@ -676,23 +690,23 @@ This table is the source of truth after a context compaction. Update it whenever
 a branch is created, a PR is opened, scope changes, a gate fails, or a PR is
 ready for review.
 
-| PR  | Branch                                   | Status     | Parent | Draft PR                                     | Verification              | Notes                                         |
-| --- | ---------------------------------------- | ---------- | ------ | -------------------------------------------- | ------------------------- | --------------------------------------------- |
-| 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2) | baseline audit complete   | Durable plan and gates only.                  |
-| 01  | `cleanup/01-doc-semantics`               | draft open | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3) | debug/release + benchmark | Profile-independent topology/presence.        |
-| 02  | `cleanup/02-formatter-ignore-plan`       | draft open | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4) | debug/release + benchmark | Root plan with bounded immutable queries.     |
-| 03  | `cleanup/03-infallible-generated-fields` | planned    | PR 02  | —                                            | —                         | Generated physical slots only.                |
-| 04  | `cleanup/04-syntax-recovery-visibility`  | planned    | PR 03  | —                                            | —                         | Syntax-owned recovery/list classification.    |
-| 05  | `cleanup/05-root-coordination`           | planned    | PR 04  | —                                            | —                         | Narrow root ownership, no god context.        |
-| 06  | `cleanup/06-source-audit-reporting`      | planned    | PR 05  | —                                            | —                         | Structured normalization facts.               |
-| 07  | `cleanup/07-core-module-boundaries`      | planned    | PR 06  | —                                            | —                         | Conditional crate extraction gate.            |
-| 08a | `cleanup/08a-renderer-boundaries`        | planned    | PR 07  | —                                            | —                         | Separate contracts without output changes.    |
-| 08b | `cleanup/08b-renderer-audit-pass`        | optional   | PR 08a | —                                            | —                         | Proceed only if two-pass semantics shrink.    |
-| 09  | `cleanup/09-kotlin-rules`                | planned    | PR 08b | —                                            | —                         | Kotlin hotspot purification.                  |
-| 10  | `cleanup/10-java-rules`                  | planned    | PR 09  | —                                            | —                         | Java hotspot purification.                    |
-| 11  | `cleanup/11-lexer-substrate`             | planned    | PR 10  | —                                            | —                         | Share cursor mechanics only.                  |
-| 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                            | —                         | Counted bounded lookahead work.               |
-| 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                            | —                         | Actual docs, metrics, and API deletions only. |
+| PR  | Branch                                   | Status      | Parent | Draft PR                                     | Verification              | Notes                                         |
+| --- | ---------------------------------------- | ----------- | ------ | -------------------------------------------- | ------------------------- | --------------------------------------------- |
+| 00  | `cleanup/00-plan-and-gates`              | draft open  | `main` | [#2](https://github.com/sargunv/jolt/pull/2) | baseline audit complete   | Durable plan and gates only.                  |
+| 01  | `cleanup/01-doc-semantics`               | draft open  | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3) | debug/release + benchmark | Profile-independent topology/presence.        |
+| 02  | `cleanup/02-formatter-ignore-plan`       | draft open  | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4) | debug/release + benchmark | Root plan with bounded immutable queries.     |
+| 03  | `cleanup/03-infallible-generated-fields` | in progress | PR 02  | —                                            | audit in progress         | Generated physical slots only.                |
+| 04  | `cleanup/04-syntax-recovery-visibility`  | planned     | PR 03  | —                                            | —                         | Syntax-owned recovery/list classification.    |
+| 05  | `cleanup/05-root-coordination`           | planned     | PR 04  | —                                            | —                         | Narrow root ownership, no god context.        |
+| 06  | `cleanup/06-source-audit-reporting`      | planned     | PR 05  | —                                            | —                         | Structured normalization facts.               |
+| 07  | `cleanup/07-core-module-boundaries`      | planned     | PR 06  | —                                            | —                         | Conditional crate extraction gate.            |
+| 08a | `cleanup/08a-renderer-boundaries`        | planned     | PR 07  | —                                            | —                         | Separate contracts without output changes.    |
+| 08b | `cleanup/08b-renderer-audit-pass`        | optional    | PR 08a | —                                            | —                         | Proceed only if two-pass semantics shrink.    |
+| 09  | `cleanup/09-kotlin-rules`                | planned     | PR 08b | —                                            | —                         | Kotlin hotspot purification.                  |
+| 10  | `cleanup/10-java-rules`                  | planned     | PR 09  | —                                            | —                         | Java hotspot purification.                    |
+| 11  | `cleanup/11-lexer-substrate`             | planned     | PR 10  | —                                            | —                         | Share cursor mechanics only.                  |
+| 12  | `cleanup/12-java-lookahead`              | planned     | PR 11  | —                                            | —                         | Counted bounded lookahead work.               |
+| 13  | `cleanup/13-final-reconciliation`        | planned     | PR 12  | —                                            | —                         | Actual docs, metrics, and API deletions only. |
 
 ### PR 01 evidence
 
@@ -783,6 +797,7 @@ ready for review.
 | 2026-07-22 | Use immutable bounded ignore-plan queries.                   | Independent nested rules stay order-independent; counted binary search replaces hidden mutable cursors. |
 | 2026-07-22 | Reject partial and cross-partition ignore ranges.            | Structured syntax ownership must never overlap a raw source claim; rejected markers remain structured.  |
 | 2026-07-22 | Temporarily transport the ignore plan on `DocBuilder`.       | The field is private, immutable, install-once, and absent from `DocArena`; PR 05 must revisit it.       |
+| 2026-07-22 | Scope PR 03 to production-factory physical projections.      | Runtime validation or a second proof model would add more architecture than deleting outer results.     |
 
 ## Resume Protocol
 
