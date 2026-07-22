@@ -199,7 +199,7 @@ fn format_member_parts<'source, T: Copy>(
     for_each_formatter_ignore_splice(members.len(), &runs, |event| match event {
         FormatterIgnoreSplice::Ignore(run) => {
             let category = members
-                .get(run.skip_start)
+                .get(run.first_skipped_index())
                 .map_or(MemberCategory::Type, |part| {
                     part_category(part, &item_category)
                 });

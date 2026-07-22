@@ -6,7 +6,7 @@
 use unicode_width::UnicodeWidthChar;
 
 #[derive(Clone, Copy, Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
-pub struct TextWidth(u32);
+pub(crate) struct TextWidth(u32);
 
 impl TextWidth {
     pub(crate) const ZERO: Self = Self(0);

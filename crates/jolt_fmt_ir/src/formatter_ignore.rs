@@ -12,11 +12,10 @@ use std::ops::Range;
 use jolt_syntax::{Comment, Language, SourceRangeClaim, SyntaxToken};
 use jolt_text::{TextRange, TextSize};
 
-use crate::source_fragment::{ExceptionalSeparators, exceptional_separators};
-use crate::{
-    Doc, DocBuilder, ExceptionalFragment, FragmentBoundary, LexicalAtom, LexicalAtomKind,
-    LexicalSafety,
+use crate::source_fragment::{
+    ExceptionalFragment, ExceptionalSeparators, FragmentBoundary, exceptional_separators,
 };
+use crate::{Doc, DocBuilder, LexicalAtom, LexicalAtomKind, LexicalSafety};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct FormatterIgnoreRange<'source> {
@@ -32,9 +31,9 @@ struct FormatterIgnoreRange<'source> {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FormatterIgnoreRun<'source> {
     range: FormatterIgnoreRange<'source>,
-    pub insert_index: usize,
-    pub skip_start: usize,
-    pub skip_end: usize,
+    insert_index: usize,
+    skip_start: usize,
+    skip_end: usize,
     on_marker_owner: OnMarkerOwner,
 }
 
@@ -47,8 +46,13 @@ enum OnMarkerOwner {
 
 impl<'source> FormatterIgnoreRun<'source> {
     #[must_use]
-    pub fn skips(&self, item_index: usize) -> bool {
+    fn skips(&self, item_index: usize) -> bool {
         (self.skip_start..self.skip_end).contains(&item_index)
+    }
+
+    #[must_use]
+    pub const fn first_skipped_index(&self) -> usize {
+        self.skip_start
     }
 
     #[must_use]
@@ -776,7 +780,7 @@ fn is_formatter_off_marker(comment: &str) -> bool {
 }
 
 #[must_use]
-pub fn is_formatter_on_marker(comment: &str) -> bool {
+fn is_formatter_on_marker(comment: &str) -> bool {
     formatter_marker_body(comment) == Some("@formatter:on")
 }
 

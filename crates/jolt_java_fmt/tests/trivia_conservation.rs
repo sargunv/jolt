@@ -1,4 +1,5 @@
-use jolt_java_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
+use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
+use jolt_java_fmt::format_source_to_sink;
 use jolt_java_syntax::parse_compilation_unit;
 use jolt_test_support::{
     StringSink, assert_trivia_markers_conserved, collect_java_files, java_fixture_root,

@@ -9,7 +9,7 @@ use std::borrow::Cow;
 use crate::{ConcatBuilder, Doc, DocBuilder};
 
 /// Splits comment text on `\n` and bare `\r`, preserving empty lines.
-pub fn universal_comment_lines(comment: &str) -> impl Iterator<Item = &str> {
+fn universal_comment_lines(comment: &str) -> impl Iterator<Item = &str> {
     comment
         .split('\n')
         .flat_map(|line| line.strip_suffix('\r').unwrap_or(line).split('\r'))
@@ -27,7 +27,7 @@ pub fn preserved_block_comment_lines(comment: &str) -> impl Iterator<Item = &str
 
 /// Strips a leading `/**` or `/*` and a trailing `*/` from a block comment.
 #[must_use]
-pub fn strip_block_comment_delimiters(comment: &str) -> &str {
+fn strip_block_comment_delimiters(comment: &str) -> &str {
     let trimmed = comment.trim();
     let body = trimmed.strip_suffix("*/").unwrap_or(trimmed);
     body.strip_prefix("/**")
@@ -43,7 +43,7 @@ pub fn is_empty_single_line_block_comment(comment: &str) -> bool {
 
 /// Strips a leading `*` from a star-block body line after left-trim.
 #[must_use]
-pub fn normalize_star_block_body_line(line: &str) -> &str {
+fn normalize_star_block_body_line(line: &str) -> &str {
     line.trim_start()
         .strip_prefix('*')
         .map_or_else(|| line.trim(), str::trim_start)

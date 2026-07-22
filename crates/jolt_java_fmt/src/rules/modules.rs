@@ -13,16 +13,16 @@ use crate::helpers::comments::{
     format_token_before_relocated_trailing_comments, format_token_with_comments,
     token_has_comments,
 };
-use crate::helpers::formatter_ignore::{
-    FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
-    for_each_formatter_ignore_splice, formatter_ignore_content_range, formatter_ignore_run_doc,
-};
 use crate::helpers::recovery::{
     JavaFormatListPart, format_malformed, format_optional_field, format_required_field,
     resolve_list_part,
 };
 use crate::rules::annotations::format_required_annotation_lines;
 use crate::rules::names::{NameSortKey, format_name};
+use jolt_fmt_ir::formatter_ignore::{
+    FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
+    for_each_formatter_ignore_splice, formatter_ignore_content_range, formatter_ignore_run_doc,
+};
 
 pub(crate) fn format_module_declaration<'source>(
     module: &ModuleDeclaration<'source>,

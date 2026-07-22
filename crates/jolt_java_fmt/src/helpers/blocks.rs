@@ -1,5 +1,5 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_java_syntax::JavaDelimiterSynthesis;
+use jolt_java_syntax::{JavaDelimiterSynthesis, SynthesisClaim};
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_token_after_relocated_leading_comments,
@@ -133,7 +133,7 @@ pub(crate) fn source_braced_body<'source>(
 fn inserted_braced_body_tail<'source>(
     doc: &mut DocBuilder<'source>,
     body: Option<Doc<'source>>,
-    close: jolt_fmt_ir::SynthesisClaim<'source>,
+    close: SynthesisClaim<'source>,
 ) -> Doc<'source> {
     let body = match body {
         Some(body) => {

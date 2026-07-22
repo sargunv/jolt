@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
-use jolt_kotlin_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
+use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
+use jolt_kotlin_fmt::format_source_to_sink;
 use jolt_kotlin_syntax::parse_kotlin_file;
 use jolt_test_support::{StringSink, collect_kotlin_files, read_to_string, workspace_root};
 

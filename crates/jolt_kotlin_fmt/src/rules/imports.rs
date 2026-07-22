@@ -8,14 +8,14 @@ use jolt_kotlin_syntax::{
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_terminator_list, format_token,
 };
-use crate::helpers::formatter_ignore::{
-    FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
-    for_each_formatter_ignore_splice, formatter_ignore_run_doc,
-};
 use crate::helpers::recovery::{
     format_malformed, format_missing, format_optional_field, format_required_field,
 };
 use crate::rules::names::{NameSortKey, format_name, format_qualified_name};
+use jolt_fmt_ir::formatter_ignore::{
+    FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
+    for_each_formatter_ignore_splice, formatter_ignore_run_doc,
+};
 
 pub(crate) fn format_import_list<'source>(
     doc: &mut DocBuilder<'source>,

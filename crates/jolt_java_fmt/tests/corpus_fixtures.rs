@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
-use jolt_java_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
+use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
+use jolt_java_fmt::format_source_to_sink;
 use jolt_java_syntax::parse_compilation_unit;
 use jolt_test_support::{
     StringSink, collect_java_files, diagnostic_inventory, read_to_string,

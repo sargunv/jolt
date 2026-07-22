@@ -59,8 +59,6 @@ pub enum NormalizedToken {
     TrailingComma,
     EnumComma,
     EnumSemicolon,
-    ImportKeyword,
-    ImportAliasKeyword,
 }
 
 impl NormalizedToken {
@@ -73,8 +71,6 @@ impl NormalizedToken {
             Self::ClosePrecedenceParenthesis => ")",
             Self::TrailingComma | Self::EnumComma => ",",
             Self::EnumSemicolon => ";",
-            Self::ImportKeyword => "import",
-            Self::ImportAliasKeyword => "as",
         }
     }
 }

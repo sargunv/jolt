@@ -12,8 +12,9 @@ use std::{
 
 use humanize_duration::{Truncate, prelude::DurationExt as _};
 use jolt_diagnostics::Diagnostic;
-use jolt_fmt_ir::{RenderControl, RenderSink};
-use jolt_formatter::{FormatOptions, FormatSinkResult, Language, format_source_to_sink};
+use jolt_formatter::{
+    FormatOptions, FormatSinkResult, Language, RenderControl, RenderSink, format_source_to_sink,
+};
 use jolt_text::{LineIndex, TextSize};
 use rayon::prelude::*;
 

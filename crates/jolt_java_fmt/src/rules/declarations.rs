@@ -15,10 +15,6 @@ use crate::helpers::comments::{
     format_separator_with_comments, format_token, format_token_after_construct_leading_comments,
     format_token_with_comments, has_removed_comments,
 };
-use crate::helpers::formatter_ignore::{
-    FormatterIgnoreItemRange, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
-    formatter_ignore_content_range, formatter_ignore_run_doc, is_formatter_control_marker,
-};
 use crate::helpers::lists::{CommaListItem, comma_list, delimited_comma_list};
 use crate::helpers::member_body::{
     MemberBodyCategory as MemberCategory, MemberBodyItem as FormattedMember,
@@ -39,6 +35,10 @@ use crate::rules::types::{
 use crate::rules::variables::{
     format_field_declaration, format_formal_parameter, format_receiver_parameter,
     format_record_component,
+};
+use jolt_fmt_ir::formatter_ignore::{
+    FormatterIgnoreItemRange, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
+    formatter_ignore_content_range, formatter_ignore_run_doc, is_formatter_control_marker,
 };
 
 mod callables;

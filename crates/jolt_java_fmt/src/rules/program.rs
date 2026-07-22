@@ -10,10 +10,6 @@ use crate::helpers::comments::{
     comments_from_tokens, format_comment, format_ignored_trivia, format_token_removal,
     format_token_with_comments, has_removed_comments, trailing_comments_force_line,
 };
-use crate::helpers::formatter_ignore::{
-    FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
-    for_each_formatter_ignore_splice, formatter_ignore_run_doc,
-};
 use crate::helpers::recovery::{
     JavaFormatField, format_malformed, format_missing, format_required_field,
     resolve_required_field,
@@ -24,6 +20,10 @@ use crate::rules::imports::format_imports;
 use crate::rules::modules::format_module_declaration;
 use crate::rules::names::format_name;
 use crate::rules::variables::format_field_declaration;
+use jolt_fmt_ir::formatter_ignore::{
+    FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
+    for_each_formatter_ignore_splice, formatter_ignore_run_doc,
+};
 
 pub(crate) fn format_compilation_unit<'source>(
     unit: &CompilationUnit<'source>,

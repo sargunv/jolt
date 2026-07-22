@@ -17,7 +17,8 @@ use crate::helpers::recovery::{
     resolve_list_part, resolve_optional_field, resolve_required_delimiter, resolve_required_field,
 };
 use crate::helpers::syntax_tokens::{format_token_with_normalized_text, inserted_syntax_token};
-use jolt_fmt_ir::{ConcatBuilder, DocBuilder, NormalizedToken};
+use jolt_fmt_ir::{ConcatBuilder, DocBuilder};
+use jolt_java_syntax::NormalizedToken;
 
 struct FormattedEnumConstant<'source> {
     doc: Doc<'source>,

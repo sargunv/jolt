@@ -15,16 +15,16 @@ use jolt_syntax::{ConservationError, Language, SyntaxNode};
 const FLAT_FIT_COMMAND_BUDGET: usize = 4096;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum IndentStyle {
+enum IndentStyle {
     Space,
     Tab,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct RenderOptions {
-    pub line_width: TextWidth,
-    pub indent_width: u16,
-    pub indent_style: IndentStyle,
+pub(crate) struct RenderOptions {
+    line_width: TextWidth,
+    indent_width: u16,
+    indent_style: IndentStyle,
 }
 
 impl From<crate::FormatOptions> for RenderOptions {
@@ -39,11 +39,6 @@ impl From<crate::FormatOptions> for RenderOptions {
             },
         }
     }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct RenderOutcome {
-    pub halted: bool,
 }
 
 /// A completed source-aware render.
@@ -144,12 +139,13 @@ impl Error for RenderError {}
 /// # Errors
 ///
 /// Returns [`RenderError`] when the document is structurally invalid.
-pub fn render_to<S: RenderSink>(
+#[cfg(test)]
+fn render_to<S: RenderSink>(
     arena: &DocArena<'_>,
     doc: Doc<'_>,
     options: RenderOptions,
     sink: S,
-) -> Result<RenderOutcome, RenderError> {
+) -> Result<bool, RenderError> {
     if let Some(error) = arena.invariant_error() {
         return Err(RenderError::syntax_invariant(error));
     }
@@ -193,8 +189,7 @@ pub(crate) fn render_source_to<'source, L: Language, S: RenderSink>(
     let _ = root;
     let mut renderer = Renderer::new(arena, options, sink, None, true);
     renderer.render_doc(doc, Mode::Break)?;
-    let render = renderer.finish();
-    if render.halted {
+    if renderer.finish() {
         return Ok(SourceRenderOutcome {
             halted: true,
             #[cfg(test)]
@@ -319,10 +314,8 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         }
     }
 
-    fn finish(self) -> RenderOutcome {
-        RenderOutcome {
-            halted: self.halted,
-        }
+    fn finish(self) -> bool {
+        self.halted
     }
 
     fn render_doc(&mut self, doc: Doc<'source>, mode: Mode) -> Result<(), RenderError> {
@@ -955,22 +948,22 @@ mod tests {
     use jolt_syntax::NormalizationOperation;
     use jolt_syntax::{
         BuildSyntaxTreeError, ConservationError, Event, FactoryNode, Language, LanguageLexer,
-        LexedToken, ParsedChildren, RawSyntaxKind, ReorderClaim, ReorderReason, SourceIdentity,
-        SourceTokenId, SourceTriviaSide, SyntaxFactory, SyntaxNode, SyntaxTokenData,
-        SyntaxTreeSink, SyntaxTrivia, TriviaKind, build_syntax_tree_with_factory,
+        LexedToken, NormalizedToken, ParsedChildren, RawSyntaxKind, RemovalClaim, RemovalReason,
+        ReorderClaim, ReorderReason, ReplacementClaim, SourceIdentity, SourceTokenId,
+        SourceTriviaSide, SyntaxFactory, SyntaxNode, SyntaxTokenData, SyntaxTreeSink, SyntaxTrivia,
+        SynthesisClaim, TriviaKind, build_syntax_tree_with_factory,
     };
     use jolt_text::{TextRange, TextSize};
 
     #[cfg(debug_assertions)]
     use crate::document::DocNode;
     use crate::formatter_ignore::formatter_ignore_plan_with_safety;
-    #[cfg(debug_assertions)]
-    use crate::source_fragment::SourceClaim;
     use crate::source_fragment::{ExceptionalSeparators, exceptional_separators};
+    #[cfg(debug_assertions)]
+    use crate::source_fragment::{FragmentBoundary, SourceClaim};
     use crate::{
-        Doc, DocBuilder, ExceptionalSeparator, FragmentBoundary, LexicalAtom, LexicalAtomKind,
-        LexicalSafety, NormalizedToken, RemovalClaim, RemovalReason, RenderControl, RenderSink,
-        ReplacementClaim, SynthesisClaim,
+        Doc, DocBuilder, ExceptionalSeparator, LexicalAtom, LexicalAtomKind, LexicalSafety,
+        RenderControl, RenderSink,
     };
 
     use super::{IndentStyle, RenderOptions, TextWidth, render_source_to, render_to};
@@ -1356,10 +1349,8 @@ mod tests {
         let replacement = builder.replaced_source(replacement_claim(
             &root,
             token.source_id(),
-            NormalizedToken::ImportKeyword,
+            NormalizedToken::EnumComma,
         ));
-        let mut safety = CountingSafety::default();
-        let replacement = builder.resolve_exceptional(replacement, Some(&token), None, &mut safety);
         let document = builder.concat([source_doc, replacement]);
         let arena = builder.into_arena();
         let mut sink = StringSink::default();
@@ -1370,7 +1361,7 @@ mod tests {
         assert_eq!(
             conservation_error(error),
             ConservationError::Normalization {
-                operation: NormalizationOperation::Replacement(NormalizedToken::ImportKeyword),
+                operation: NormalizationOperation::Replacement(NormalizedToken::EnumComma),
                 error: Box::new(ConservationError::DuplicateToken {
                     token: 0,
                     range: TextRange::new(TextSize::new(0), TextSize::new(1)),
@@ -1485,19 +1476,13 @@ mod tests {
         let first = tokens.next().expect("first token").source_id();
         let second = tokens.next().expect("second token").source_id();
         let mut builder = DocBuilder::new();
-        let breaks = builder.replaced_source(replacement_claim(
-            &root,
-            first,
-            NormalizedToken::ImportKeyword,
-        ));
+        let breaks =
+            builder.replaced_source(replacement_claim(&root, first, NormalizedToken::EnumComma));
         let flat = builder.replaced_source(replacement_claim(
             &root,
             second,
-            NormalizedToken::ImportAliasKeyword,
+            NormalizedToken::EnumSemicolon,
         ));
-        let mut safety = CountingSafety::default();
-        let breaks = builder.resolve_exceptional(breaks, None, None, &mut safety);
-        let flat = builder.resolve_exceptional(flat, None, None, &mut safety);
         let conditional = builder.if_break(breaks, flat);
         let conditional = builder.group(conditional);
         let removed = builder.removed_source(removal_claim(
@@ -1511,7 +1496,7 @@ mod tests {
         let outcome = render_source_to(&arena, document, options(), &mut sink, &root)
             .expect("selected branch renders without a duplicate claim");
 
-        assert_eq!(sink.0, "as");
+        assert_eq!(sink.0, ";");
         assert!(!outcome.used_malformed_verbatim());
     }
 
@@ -1521,7 +1506,6 @@ mod tests {
         let source = "x";
         let tree = syntax_tree(source);
         let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
-        let local = root.first_token().expect("local token");
         let other_tree = syntax_tree("y");
         let other_root = SyntaxNode::<ClaimLanguage>::new_root("y", &other_tree);
         let foreign = other_root.first_token().expect("foreign token").source_id();
@@ -1531,11 +1515,9 @@ mod tests {
             foreign,
             NormalizedToken::EnumSemicolon,
         ));
-        let mut safety = CountingSafety::default();
-        let document = builder.resolve_exceptional(synthesized, Some(&local), None, &mut safety);
         let arena = builder.into_arena();
         let mut sink = StringSink::default();
-        let Err(error) = render_source_to(&arena, document, options(), &mut sink, &root) else {
+        let Err(error) = render_source_to(&arena, synthesized, options(), &mut sink, &root) else {
             panic!("foreign synthesis anchor must be rejected");
         };
 
@@ -1700,37 +1682,6 @@ mod tests {
         );
     }
 
-    #[test]
-    fn adjacent_exceptional_fragments_share_one_safe_join() {
-        let source = "ab";
-        let tree = syntax_tree(source);
-        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
-        let mut tokens = root.tokens();
-        let first = tokens.next().expect("first token").source_id();
-        let second = tokens.next().expect("second token").source_id();
-        let mut builder = DocBuilder::new();
-        let import = builder.replaced_source(replacement_claim(
-            &root,
-            first,
-            NormalizedToken::ImportKeyword,
-        ));
-        let alias = builder.replaced_source(replacement_claim(
-            &root,
-            second,
-            NormalizedToken::ImportAliasKeyword,
-        ));
-        let mut safety = CountingSafety::default();
-        let joined = builder.join_exceptional(import, alias, &mut safety);
-        let document = builder.resolve_exceptional(joined, None, None, &mut safety);
-        let arena = builder.into_arena();
-        let mut sink = StringSink::default();
-        render_source_to(&arena, document, options(), &mut sink, &root)
-            .expect("joined exceptional fragments render");
-
-        assert_eq!(sink.0, "import as");
-        assert_eq!(safety.0, 1);
-    }
-
     #[cfg(debug_assertions)]
     #[test]
     fn reorder_reason_is_carried_by_the_selected_document() {
@@ -1846,13 +1797,10 @@ mod tests {
             token.source_id(),
             NormalizedToken::EnumSemicolon,
         ));
-        let synthesized_doc = synthesized.doc();
         let source_doc = builder.source_token(&token);
-        let mut safety = CountingSafety::default();
-        let synthesized = builder.resolve_exceptional(synthesized, Some(&token), None, &mut safety);
         let document = builder.concat([source_doc, synthesized]);
         let arena = builder.into_arena();
-        let Some(DocNode::Text(text)) = arena.node(synthesized_doc) else {
+        let Some(DocNode::Text(text)) = arena.node(synthesized) else {
             panic!("synthesis must be a source-aware text node");
         };
         assert!(matches!(
@@ -1865,7 +1813,7 @@ mod tests {
         let mut sink = StringSink::default();
         render_source_to(&arena, document, options(), &mut sink, &root)
             .expect("reason-tagged synthesis completes");
-        assert_eq!(sink.0, "x ;");
+        assert_eq!(sink.0, "x;");
     }
 
     #[test]
@@ -1886,7 +1834,7 @@ mod tests {
         ));
 
         assert_ne!(reordered, Doc::nil());
-        assert_ne!(synthesized.doc(), Doc::nil());
+        assert_ne!(synthesized, Doc::nil());
     }
 
     #[test]

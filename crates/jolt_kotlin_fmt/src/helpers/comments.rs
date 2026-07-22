@@ -8,8 +8,8 @@ use jolt_kotlin_syntax::{
 };
 use jolt_syntax::RemovalClaim;
 
-use crate::helpers::formatter_ignore::is_formatter_control_marker;
 use crate::helpers::recovery::{KotlinFormatListPart, resolve_list_part};
+use jolt_fmt_ir::formatter_ignore::is_formatter_control_marker;
 
 pub(crate) use jolt_fmt_ir::{LeadingTrivia, TrailingTrivia};
 

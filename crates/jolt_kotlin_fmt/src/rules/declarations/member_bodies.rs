@@ -7,13 +7,13 @@ use jolt_kotlin_syntax::{
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_dangling_comments, format_token,
 };
-use crate::helpers::formatter_ignore::{
-    FormatterIgnoreItemRange, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
-    formatter_ignore_content_range, formatter_ignore_run_doc,
-};
 use crate::helpers::recovery::{
     KotlinFormatDelimiter, KotlinFormatField, format_malformed, format_missing,
     resolve_optional_field, resolve_required_delimiter, resolve_required_field,
+};
+use jolt_fmt_ir::formatter_ignore::{
+    FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
+    for_each_formatter_ignore_splice, formatter_ignore_content_range, formatter_ignore_run_doc,
 };
 
 use super::{
@@ -206,7 +206,7 @@ fn enum_entry_continues(member: &ClassMember<'_>) -> bool {
 fn class_body_sections_with_ignored<'source>(
     doc: &mut DocBuilder<'source>,
     parts: &[ClassBodyPart<'source>],
-    ignored_runs: &[crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>],
+    ignored_runs: &[FormatterIgnoreRun<'source>],
 ) -> Vec<ClassBodySection<'source>> {
     if ignored_runs.is_empty() {
         return class_body_sections(doc, parts);

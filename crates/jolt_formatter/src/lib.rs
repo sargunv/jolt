@@ -3,9 +3,7 @@
 use std::ffi::OsStr;
 use std::path::Path;
 
-use jolt_fmt_ir::RenderSink;
-
-pub use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
+pub use jolt_fmt_ir::{FormatOptions, FormatSinkResult, RenderControl, RenderSink};
 
 /// Source language to format.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]

@@ -22,15 +22,6 @@ pub enum LexicalAtomKind {
     Comment,
 }
 
-pub(crate) const fn normalized_lexical_kind(token: NormalizedToken) -> LexicalAtomKind {
-    match token {
-        NormalizedToken::ImportKeyword | NormalizedToken::ImportAliasKeyword => {
-            LexicalAtomKind::Identifier
-        }
-        _ => LexicalAtomKind::Punctuation,
-    }
-}
-
 /// A borrowed lexical atom at an exceptional fragment boundary.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct LexicalAtom<'source> {
@@ -58,7 +49,7 @@ impl<'source> LexicalAtom<'source> {
 /// Boundary facts needed when joining an exceptional fragment to structured
 /// output.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct FragmentBoundary<'source> {
+pub(crate) struct FragmentBoundary<'source> {
     pub(crate) first: Option<LexicalAtom<'source>>,
     pub(crate) last: Option<LexicalAtom<'source>>,
     pub(crate) ends_with_line_comment: bool,
@@ -124,7 +115,7 @@ pub(crate) fn exceptional_separators<L: Language>(
 /// The boundary is deliberately outside the document arena: ordinary docs and
 /// renderer nodes do not pay for metadata used only at exceptional joins.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ExceptionalFragment<'source> {
+pub(crate) struct ExceptionalFragment<'source> {
     doc: Doc<'source>,
     boundary: FragmentBoundary<'source>,
     source_range: Option<TextRange>,

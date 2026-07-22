@@ -405,7 +405,6 @@ dependencies = [
  "ignore",
  "insta",
  "jolt_diagnostics",
- "jolt_fmt_ir",
  "jolt_formatter",
  "jolt_text",
  "rayon",
@@ -429,7 +428,6 @@ version = "0.20260721.0"
 dependencies = [
  "dprint-core",
  "jolt_diagnostics",
- "jolt_fmt_ir",
  "jolt_formatter",
  "jolt_test_support",
  "jolt_text",
