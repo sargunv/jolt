@@ -144,6 +144,8 @@ impl StringMode {
 struct Scanner<'source> {
     source: &'source str,
     pos: usize,
+    /// End of the last dollar run proven not to precede a quote.
+    failed_dollar_run_end: usize,
     diagnostics: Vec<LexerDiagnostic>,
     modes: Vec<Mode>,
 }
@@ -163,6 +165,7 @@ impl<'source> Scanner<'source> {
         Self {
             source,
             pos: 0,
+            failed_dollar_run_end: 0,
             diagnostics: Vec::new(),
             modes: Vec::new(),
         }
@@ -194,9 +197,12 @@ impl<'source> Scanner<'source> {
     fn default_token(&mut self) -> KotlinSyntaxKind {
         match self.current_char().expect("token called at EOF") {
             '\'' => self.character_literal(),
-            '$' if self.string_prefix_dollars().is_some() => self.interpolation_prefix(),
+            '$' => match self.string_prefix_dollars() {
+                Some(dollars) => self.interpolation_prefix(dollars),
+                None if self.peek_identifier_start_after(1) => self.field_identifier(),
+                None => self.operator_or_punctuation(),
+            },
             '"' => self.open_quote_without_prefix(),
-            '$' if self.peek_identifier_start_after(1) => self.field_identifier(),
             '`' => self.backtick_identifier(),
             '.' if self.peek_char(1).is_some_and(|ch| ch.is_ascii_digit()) => self.number_literal(),
             ch if ch.is_ascii_digit() => self.number_literal(),
@@ -430,10 +436,7 @@ impl<'source> Scanner<'source> {
         SyntaxTrivia::new(kind, TextRange::new(start, TextSize::new(self.pos)).len())
     }
 
-    fn interpolation_prefix(&mut self) -> KotlinSyntaxKind {
-        let dollars = self
-            .string_prefix_dollars()
-            .expect("interpolation prefix starts at current position");
+    fn interpolation_prefix(&mut self, dollars: usize) -> KotlinSyntaxKind {
         let start = self
             .current_range()
             .expect("interpolation prefix starts before EOF")
@@ -1026,10 +1029,19 @@ impl<'source> Scanner<'source> {
         }
     }
 
-    fn string_prefix_dollars(&self) -> Option<usize> {
+    fn string_prefix_dollars(&mut self) -> Option<usize> {
+        if self.pos < self.failed_dollar_run_end {
+            return None;
+        }
+
         let bytes = &self.source.as_bytes()[self.pos..];
         let count = bytes.iter().take_while(|byte| **byte == b'$').count();
-        (count > 0 && bytes.get(count) == Some(&b'"')).then_some(count)
+        if count > 0 && bytes.get(count) == Some(&b'"') {
+            Some(count)
+        } else {
+            self.failed_dollar_run_end = self.pos + count;
+            None
+        }
     }
 
     fn peek_identifier_start_after(&self, chars: usize) -> bool {
@@ -1210,19 +1222,27 @@ fn is_kotlin_identifier_part(ch: char) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use crate::KotlinSyntaxKind;
+
     use super::Scanner;
 
     #[test]
-    fn long_string_prefix_scan_remains_bounded() {
+    fn long_string_prefix_tokenization_remains_bounded() {
         const DOLLAR_COUNT: usize = 65_536;
 
         let valid = format!("{}\"", "$".repeat(DOLLAR_COUNT));
+        let mut valid_scanner = Scanner::new(&valid);
         assert_eq!(
-            Scanner::new(&valid).string_prefix_dollars(),
-            Some(DOLLAR_COUNT)
+            valid_scanner.token().0,
+            KotlinSyntaxKind::InterpolationPrefix
         );
+        assert_eq!(valid_scanner.pos, DOLLAR_COUNT);
+        assert_eq!(valid_scanner.token().0, KotlinSyntaxKind::OpenQuote);
 
         let invalid = "$".repeat(DOLLAR_COUNT);
-        assert_eq!(Scanner::new(&invalid).string_prefix_dollars(), None);
+        let mut invalid_scanner = Scanner::new(&invalid);
+        invalid_scanner.drain();
+        assert_eq!(invalid_scanner.pos, invalid.len());
+        assert_eq!(invalid_scanner.diagnostics.len(), DOLLAR_COUNT);
     }
 }
