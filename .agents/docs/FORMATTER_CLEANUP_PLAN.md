@@ -706,7 +706,7 @@ ready for review.
 | 05  | `cleanup/05-root-coordination`           | draft open  | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7) | full + release + benchmark | Narrow root ownership, no god context.        |
 | 06  | `cleanup/06-source-audit-reporting`      | draft open  | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8) | full + release + benchmark | Syntax claims replace filename/count policy.  |
 | 07  | `cleanup/07-core-module-boundaries`      | draft open  | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9) | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.  |
-| 08a | `cleanup/08a-renderer-boundaries`        | in progress | PR 07  | —                                            | audit underway             | Extraction must simplify concrete hot paths.  |
+| 08a | `cleanup/08a-renderer-boundaries`        | in progress | PR 07  | —                                            | full + release + benchmark | Kept hot loop concrete; publish pending.      |
 | 08b | `cleanup/08b-renderer-audit-pass`        | optional    | PR 08a | —                                            | —                          | Proceed only if two-pass semantics shrink.    |
 | 09  | `cleanup/09-kotlin-rules`                | planned     | PR 08b | —                                            | —                          | Kotlin hotspot purification.                  |
 | 10  | `cleanup/10-java-rules`                  | planned     | PR 09  | —                                            | —                          | Java hotspot purification.                    |
@@ -1006,6 +1006,58 @@ ready for review.
 - The non-PGO native CLI shrank from 5,950,968 to 5,948,344 bytes (-0.04%). The
   optimized WASM plugin shrank from 1,767,697 to 1,766,057 bytes (-0.09%), with
   SHA-256 `12f75107b0b83dc0527a154448258cd32ddc4959d4340b14fea6cabc973e8230`.
+  Peak RSS remains unavailable because this environment lacks the benchmark's
+  required `/usr/bin/time`; no test or other measurement was skipped.
+
+### PR 08a evidence
+
+- Three independent audits rejected renderer, fit, sink, error, and source-audit
+  file extraction. Fit consumes the active render continuation, group modes,
+  column, pending indentation, and horizontal-whitespace state. Moving it
+  creates a back-edge into `Renderer` or a shared context while deleting no
+  interpreter dispatch. Output delegation has the same problem because fit must
+  inspect most of the proposed emitter state. The concrete hot loop therefore
+  remains in one module.
+- The retained renderer is smaller instead. `RenderOptions` and `IndentStyle`
+  duplicated `FormatOptions`; `GroupFrame` duplicated `Mode`; and
+  `measured_group_fits` duplicated the proof already carried by flat mode.
+  Rendering begins broken and can enter flat mode only after a complete accepted
+  probe, whose measured group rejects hard/empty lines, multiline text, forced
+  groups, and budget exhaustion.
+- The single-use render command scratch vector and its forwarding loop are
+  deleted. Pending indentation is one count whose character derives from
+  immutable options. Fit no longer tracks indentation depth it never reads, but
+  its unit end-indent command preserves the exact 4,096-command budget. Fit
+  scratch vectors, lazy concat cursors, continuation overlay, and measured-group
+  boundary remain concrete and unchanged.
+- The private unaudited renderer route, caller-asserted `source_verified` flag,
+  missing-proof error, and hypothetical test are deleted. Production still has
+  exactly the debug discard audit followed by trusted emission, while release
+  remains single-pass. Debug errors are still output-atomic, late audit errors
+  still precede sink halt, and sink callback/chunk behavior is unchanged.
+- Malformed source claims now retain only their consumed `SourceRangeClaim`;
+  unread kind/range copies are deleted. `FormatSinkResult::Blocked` carries the
+  one fatal diagnostic produced by every caller instead of a vector, deleting an
+  error-path allocation and dprint's impossible empty/multiple formatting cases.
+- Rust source is +149/-296 lines (-147 net), including integration-test API
+  migration. No new trait, context, visitor, module, callback, state object, or
+  compatibility path was introduced.
+- Repository-defined Ona automation passed all 183 workspace tests with no
+  skips. One hypothetical private-renderer test was deleted with its impossible
+  state. Debug IR passed 43 tests; release IR now passes its 31 applicable tests
+  instead of compiling audit-only assertions into a profile without audit
+  claims. `mise run fix`, `mise run check`, dependency machete, strict Clippy,
+  WASM checks, all-features checks, both complete release formatter suites, the
+  9,899-file PGO build, and optimized dprint build passed with zero snapshot or
+  output delta.
+- Parent and child syntax/document topology and all allocation counts, total
+  bytes, and maximum-live bytes are identical on the 9,206-file Java and
+  485-file Kotlin corpora. Alternating format-only medians moved +1.39% for Java
+  and -3.12% for Kotlin; treat both as noise-level non-regression evidence.
+  Clean workspace check time moved from 19.962 to 19.693 seconds (-1.35%).
+- The non-PGO native CLI shrank from 5,948,344 to 5,943,952 bytes (-0.07%). The
+  optimized WASM plugin shrank from 1,766,057 to 1,763,515 bytes (-0.14%), with
+  SHA-256 `90f16905c8f2dff3ee97b58ef02f5fe5daf7acbb483489f7ee49d3da55db8b08`.
   Peak RSS remains unavailable because this environment lacks the benchmark's
   required `/usr/bin/time`; no test or other measurement was skipped.
 
