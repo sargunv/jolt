@@ -291,7 +291,7 @@ pub(super) fn format_annotation_element_declaration<'source>(
                         ty,
                         doc.space(),
                         name,
-                        format_empty_parameters(doc, open, close),
+                        delimited_comma_list(doc, open, close, []),
                         dimensions,
                         default,
                     ]
@@ -372,19 +372,6 @@ fn parameter_list_items<'source, 'fmt>(
         }
     }
     items
-}
-
-fn format_empty_parameters<'source>(
-    doc: &mut jolt_fmt_ir::DocBuilder<'source>,
-    open: JavaFormatDelimiter<'source>,
-    close: JavaFormatDelimiter<'source>,
-) -> Doc<'source> {
-    delimited_comma_list(
-        doc,
-        open,
-        close,
-        std::iter::empty::<CommaListItem<'source>>(),
-    )
 }
 
 fn callable_declaration_with_body_doc<'source>(

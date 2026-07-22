@@ -319,25 +319,6 @@ fn optional_doc_with_presence<'source, T>(
     }
 }
 
-fn keyword_with_space<'source>(
-    keyword: Option<JavaSyntaxToken<'source>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    keyword.map_or_else(Doc::nil, |keyword| {
-        doc_concat!(
-            doc,
-            [
-                format_token_after_relocated_leading_comments(
-                    doc,
-                    &keyword,
-                    TrailingTrivia::Preserve
-                ),
-                doc.space()
-            ]
-        )
-    })
-}
-
 fn keyword_without_space<'source>(
     keyword: JavaSyntaxToken<'source>,
     doc: &mut DocBuilder<'source>,
@@ -464,13 +445,9 @@ fn format_type_clause_fields<'source>(
         (JavaFormatField::Present(keyword), JavaFormatField::Present(types)) => {
             format_type_clause(Some(&keyword), types.parts(), doc)
         }
-        (keyword, JavaFormatField::Present(types)) => doc_concat!(
-            doc,
-            [
-                field_token_with_space(keyword, doc),
-                format_type_clause(None, types.parts(), doc)
-            ]
-        ),
+        (JavaFormatField::Malformed(keyword), JavaFormatField::Present(types)) => {
+            doc_concat!(doc, [keyword, format_type_clause(None, types.parts(), doc)])
+        }
         (keyword, JavaFormatField::Malformed(types)) => {
             format_missing_clause_target(keyword, types, doc)
         }
@@ -492,16 +469,6 @@ fn format_missing_clause_target<'source>(
         JavaFormatField::Malformed(malformed) => malformed,
     };
     doc_indent!(doc, doc_concat!(doc, [doc.line(), keyword, missing]))
-}
-
-fn field_token_with_space<'source>(
-    field: JavaFormatField<'source, JavaSyntaxToken<'source>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    match field {
-        JavaFormatField::Present(token) => keyword_with_space(Some(token), doc),
-        JavaFormatField::Malformed(malformed) => malformed,
-    }
 }
 
 fn format_type_clause<'source>(
