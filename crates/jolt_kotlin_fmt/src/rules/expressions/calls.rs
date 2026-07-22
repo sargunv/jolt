@@ -100,7 +100,7 @@ struct MemberChainBuilder<'source> {
     root: Option<Expression<'source>>,
     first_suffix: Option<Doc<'source>>,
     first_suffix_forces_break: bool,
-    suffix_count: u32,
+    has_rest_suffixes: bool,
     force_multiline: bool,
     field_run: Option<Doc<'source>>,
 }
@@ -113,19 +113,18 @@ impl<'source> MemberChainBuilder<'source> {
         rest_suffixes: Doc<'source>,
     ) -> Option<Doc<'source>> {
         let root = self.root?;
+        let first_suffix = self.first_suffix?;
         let keep_first_suffix_with_root = is_simple_member_chain_root(&root)
-            && (self.suffix_count == 0
-                || !self.first_suffix_forces_break
-                || matches!(root, Expression::CallExpression(_)));
+            && (!self.first_suffix_forces_break || matches!(root, Expression::CallExpression(_)));
         let leading_comments = format_expression_leading_comments(doc, &root, leading);
         let root_doc =
             format_expression_with_leading(doc, &root, LeadingTrivia::SuppressAlreadyHandled);
         let chain = member_chain(
             doc,
             root_doc,
-            self.first_suffix,
+            first_suffix,
             rest_suffixes,
-            self.suffix_count,
+            self.has_rest_suffixes,
             self.force_multiline,
             keep_first_suffix_with_root,
         );
@@ -171,15 +170,15 @@ impl<'source> MemberChainBuilder<'source> {
         forces_break: bool,
     ) {
         self.force_multiline |= forces_break;
-        if self.suffix_count == 0 {
+        if self.first_suffix.is_none() {
             self.first_suffix = Some(suffix);
             self.first_suffix_forces_break = forces_break;
         } else {
+            self.has_rest_suffixes = true;
             let line = rest.soft_line();
             rest.push(line);
             rest.push(suffix);
         }
-        self.suffix_count += 1;
     }
 }
 
@@ -192,7 +191,7 @@ fn format_member_chain<'source>(
         root: None,
         first_suffix: None,
         first_suffix_forces_break: false,
-        suffix_count: 0,
+        has_rest_suffixes: false,
         force_multiline: false,
         field_run: None,
     };
@@ -203,7 +202,10 @@ fn format_member_chain<'source>(
             builder.flush_field_run(rest);
         }
     });
-    valid.then(|| builder.finish(doc, leading, rest)).flatten()
+    if !valid {
+        return None;
+    }
+    builder.finish(doc, leading, rest)
 }
 
 fn append_chain_expression<'source>(
@@ -256,20 +258,14 @@ fn append_chain_receiver<'source>(
 fn member_chain<'source>(
     doc: &mut DocBuilder<'source>,
     root: Doc<'source>,
-    first_suffix: Option<Doc<'source>>,
+    first_suffix: Doc<'source>,
     rest: Doc<'source>,
-    suffix_count: u32,
+    has_rest_suffixes: bool,
     force_multiline: bool,
     keep_first: bool,
 ) -> Doc<'source> {
-    if suffix_count == 0 {
-        return root;
-    }
-    let Some(first) = first_suffix else {
-        return doc.concat([root, rest]);
-    };
     let head = if keep_first {
-        doc.concat([root, first])
+        doc.concat([root, first_suffix])
     } else {
         root
     };
@@ -277,9 +273,9 @@ fn member_chain<'source>(
         rest
     } else {
         let line = doc.soft_line();
-        doc.concat([line, first, rest])
+        doc.concat([line, first_suffix, rest])
     };
-    if keep_first && suffix_count == 1 {
+    if keep_first && !has_rest_suffixes {
         return doc.group(head);
     }
     let rest = doc.indent(rest);
