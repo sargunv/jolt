@@ -437,7 +437,7 @@ fn format_package_header<'source>(
         format_malformed(&suffix, doc)
     });
     let terminators = format_required_field(package.terminators(), doc, |terminators, doc| {
-        format_terminator_list(doc, &terminators, true)
+        format_terminator_list(doc, &terminators)
     });
     doc.concat([keyword, name, suffix, terminators])
 }

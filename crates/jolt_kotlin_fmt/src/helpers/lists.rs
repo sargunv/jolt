@@ -2,10 +2,9 @@ use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{KotlinSyntaxListPart, KotlinSyntaxToken};
 
 use crate::helpers::comments::{
-    InlineLeadingTrivia, TrailingTrivia, delimiter_dangling_comments, format_dangling_comments,
-    format_leading_comments, format_separator_with_comments,
-    format_token_after_relocated_leading_comments, format_token_with_inline_leading_comments,
-    has_delimiter_dangling_comments,
+    TrailingTrivia, delimiter_dangling_comments, format_dangling_comments, format_leading_comments,
+    format_separator_with_comments, format_token_after_relocated_leading_comments,
+    format_token_with_inline_leading_comments, has_delimiter_dangling_comments,
 };
 
 pub(crate) struct CommaListItem<'source> {
@@ -195,12 +194,7 @@ fn format_open_delimiter_before_items<'source>(
     token: Option<&KotlinSyntaxToken<'source>>,
 ) -> Doc<'source> {
     if let Some(token) = token {
-        format_token_with_inline_leading_comments(
-            doc,
-            token,
-            InlineLeadingTrivia::BeforeToken,
-            TrailingTrivia::BeforeSoftLine,
-        )
+        format_token_with_inline_leading_comments(doc, token, TrailingTrivia::BeforeSoftLine)
     } else {
         doc.nil()
     }
@@ -212,12 +206,7 @@ fn format_open_delimiter_with_trailing<'source>(
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
     if let Some(token) = token {
-        format_token_with_inline_leading_comments(
-            doc,
-            token,
-            InlineLeadingTrivia::BeforeToken,
-            trailing,
-        )
+        format_token_with_inline_leading_comments(doc, token, trailing)
     } else {
         doc.nil()
     }

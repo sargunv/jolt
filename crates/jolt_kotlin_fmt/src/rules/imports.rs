@@ -273,7 +273,7 @@ fn format_import<'source>(
         format_malformed(&suffix, doc)
     });
     let terminators = format_required_field(import.terminators(), doc, |terminators, doc| {
-        format_terminator_list(doc, &terminators, true)
+        format_terminator_list(doc, &terminators)
     });
     doc.concat([keyword, name, on_demand, alias, suffix, terminators])
 }

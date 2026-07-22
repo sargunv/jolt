@@ -13,11 +13,6 @@ use jolt_fmt_ir::formatter_ignore::is_formatter_control_marker;
 
 pub(crate) use jolt_fmt_ir::{LeadingTrivia, TrailingTrivia};
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum InlineLeadingTrivia {
-    BeforeToken,
-}
-
 pub(crate) fn format_leading_comments<'source>(
     doc: &mut DocBuilder<'source>,
     token: &KotlinSyntaxToken<'source>,
@@ -92,14 +87,6 @@ pub(crate) fn format_dangling_comments<'source>(
     })
 }
 
-pub(crate) fn comments_from_tokens<'source>(
-    tokens: impl IntoIterator<Item = KotlinSyntaxToken<'source>>,
-) -> impl Iterator<Item = KotlinComment<'source>> {
-    tokens
-        .into_iter()
-        .flat_map(|token| token.leading_comments().chain(token.trailing_comments()))
-}
-
 pub(crate) fn format_removed_comments<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = KotlinComment<'source>>,
@@ -142,7 +129,10 @@ pub(crate) fn format_removed_separator<'source>(
         );
     };
     let removed = doc.removed_source(claim);
-    let comments = format_removed_comments(doc, comments_from_tokens([*token]));
+    let comments = format_removed_comments(
+        doc,
+        token.leading_comments().chain(token.trailing_comments()),
+    );
     match comments {
         Some(comments) if space_before_comments => {
             let space = doc.space();
@@ -156,7 +146,6 @@ pub(crate) fn format_removed_separator<'source>(
 pub(crate) fn format_terminator_list<'source>(
     doc: &mut DocBuilder<'source>,
     terminators: &TerminatorList<'source>,
-    space_before_comments: bool,
 ) -> Doc<'source> {
     doc.concat_list(|docs| {
         for part in terminators.parts() {
@@ -174,7 +163,7 @@ pub(crate) fn format_terminator_list<'source>(
                 }
             };
             let claim = terminators.separator_removal_claim(token);
-            let removed = format_removed_separator(docs, &token, claim, space_before_comments);
+            let removed = format_removed_separator(docs, &token, claim, true);
             docs.push(removed);
         }
     })
@@ -235,16 +224,6 @@ pub(crate) fn format_token<'source>(
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
     let token_doc = doc.source_token(token);
-    format_token_doc(doc, token, token_doc, leading, trailing)
-}
-
-pub(crate) fn format_token_doc<'source>(
-    doc: &mut DocBuilder<'source>,
-    token: &KotlinSyntaxToken<'source>,
-    token_doc: Doc<'source>,
-    leading: LeadingTrivia,
-    trailing: TrailingTrivia,
-) -> Doc<'source> {
     assemble_token_doc(
         doc,
         token_doc,
@@ -261,7 +240,6 @@ pub(crate) fn format_token_doc<'source>(
 pub(crate) fn format_token_with_inline_leading_comments<'source>(
     doc: &mut DocBuilder<'source>,
     token: &KotlinSyntaxToken<'source>,
-    placement: InlineLeadingTrivia,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
     let leading = token.leading_comments();
@@ -273,12 +251,8 @@ pub(crate) fn format_token_with_inline_leading_comments<'source>(
             .collect::<Vec<_>>();
         let space = doc.space();
         let comments = doc.join(space, comments);
-        match placement {
-            InlineLeadingTrivia::BeforeToken => {
-                let space = doc.space();
-                doc.concat([comments, space])
-            }
-        }
+        let space = doc.space();
+        doc.concat([comments, space])
     };
     let token = format_token_after_relocated_leading_comments(doc, token, trailing);
     doc.concat([leading, token])
