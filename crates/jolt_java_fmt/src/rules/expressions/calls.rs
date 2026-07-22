@@ -172,15 +172,7 @@ pub(crate) fn format_argument_list<'source>(
 ) -> Doc<'source> {
     let open = resolve_required_delimiter(arguments.open_paren(), doc);
     let close = resolve_required_delimiter(arguments.close_paren(), doc);
-    let items = argument_list_items(&arguments, doc);
-    delimited_comma_list(doc, open, close, items)
-}
-
-fn argument_list_items<'source, 'fmt>(
-    arguments: &'fmt ArgumentList<'source>,
-    doc: &'fmt mut DocBuilder<'source>,
-) -> Vec<CommaListItem<'source>> {
-    match resolve_required_field(arguments.arguments(), doc) {
+    let items = match resolve_required_field(arguments.arguments(), doc) {
         JavaFormatField::Present(arguments) => {
             syntax_comma_list_items(doc, arguments.parts(), |argument, doc| {
                 format_expression(&argument, doc)
@@ -190,5 +182,6 @@ fn argument_list_items<'source, 'fmt>(
             doc: recovery,
             comma: None,
         }],
-    }
+    };
+    delimited_comma_list(doc, open, close, items)
 }
