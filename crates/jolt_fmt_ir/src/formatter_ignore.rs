@@ -5,6 +5,8 @@
 //! spanned by those ranges back into the rendered document.
 
 use std::borrow::Cow;
+#[cfg(test)]
+use std::cell::Cell;
 use std::ops::Range;
 
 use jolt_syntax::{Comment, Language, SourceRangeClaim, SyntaxToken};
@@ -17,10 +19,10 @@ use crate::{
 };
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct FormatterIgnoreRange<'source> {
+struct FormatterIgnoreRange<'source> {
     raw_text: &'source str,
     raw_text_with_on: &'source str,
-    interior: Range<usize>,
+    interior: TextRange,
     claim_with_on: SourceRangeClaim<'source>,
     claim_without_on: SourceRangeClaim<'source>,
     separators_with_on: ExceptionalSeparators,
@@ -55,9 +57,9 @@ impl<'source> FormatterIgnoreRun<'source> {
     }
 
     #[must_use]
-    pub fn claimed_on_marker_range(&self, base_start: usize) -> Option<Range<usize>> {
+    pub fn claimed_on_marker_range(&self) -> Option<Range<usize>> {
         self.ends_with_on_marker().then(|| {
-            let start = base_start + self.range.interior.start;
+            let start = self.range.interior.start().get();
             start..start + self.range.raw_text_with_on.len()
         })
     }
@@ -68,6 +70,66 @@ impl<'source> FormatterIgnoreRun<'source> {
         } else {
             self.range.raw_text
         }
+    }
+}
+
+/// One formatting run's root-discovered formatter-ignore ranges.
+///
+/// Ignore-aware syntax lists query these ordered absolute ranges using their
+/// own absolute interval and direct item ranges. The plan is immutable and can
+/// be shared by every nested formatter rule in one run.
+#[derive(Default)]
+pub struct FormatterIgnorePlan<'source> {
+    ranges: Vec<FormatterIgnoreRange<'source>>,
+    #[cfg(test)]
+    discovery_tokens: usize,
+    #[cfg(test)]
+    query_comparisons: Cell<usize>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct FormatterIgnoreItemRange {
+    owned: TextRange,
+}
+
+impl FormatterIgnoreItemRange {
+    #[must_use]
+    pub fn between<L: Language>(first: &SyntaxToken<'_, L>, last: &SyntaxToken<'_, L>) -> Self {
+        Self {
+            owned: TextRange::new(
+                first.token_text_range().start(),
+                last.token_text_range().end(),
+            ),
+        }
+    }
+}
+
+impl FormatterIgnorePlan<'_> {
+    #[cfg(test)]
+    pub(crate) fn test_counts(&self) -> (usize, usize) {
+        (self.ranges.len(), self.discovery_tokens)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn test_query_comparisons(&self) -> usize {
+        self.query_comparisons.get()
+    }
+}
+
+/// Returns the syntax-owned interval between optional source delimiters.
+/// Missing/recovered delimiters retain the corresponding fallback boundary.
+#[must_use]
+pub fn formatter_ignore_content_range<L: Language>(
+    fallback: TextRange,
+    open: Option<SyntaxToken<'_, L>>,
+    close: Option<SyntaxToken<'_, L>>,
+) -> TextRange {
+    let start = open.map_or(fallback.start(), |token| token.token_text_range().end());
+    let end = close.map_or(fallback.end(), |token| token.token_text_range().start());
+    if start <= end {
+        TextRange::new(start, end)
+    } else {
+        fallback
     }
 }
 
@@ -120,22 +182,137 @@ pub fn for_each_formatter_ignore_splice<'a, 'source>(
     }
 }
 
-pub fn formatter_ignore_ranges_with_safety<'source, L: Language>(
+/// Derives exact ignored runs for one source-ordered syntax item list.
+/// Work is `O(items * log(ranges + 1) + items + runs)`; plan construction is
+/// linear in root tokens and comments.
+#[must_use]
+pub(crate) fn formatter_ignore_runs<'source>(
+    plan: &FormatterIgnorePlan<'source>,
+    container: TextRange,
+    item_ranges: &[Option<FormatterIgnoreItemRange>],
+) -> Vec<FormatterIgnoreRun<'source>> {
+    if plan.ranges.is_empty() || item_ranges.is_empty() {
+        return Vec::new();
+    }
+
+    let mut runs = Vec::new();
+    let mut index = 0;
+    let mut pending_owner = None;
+    while index < item_ranges.len() {
+        let owner = pending_owner.take().or_else(|| {
+            item_ranges[index]
+                .and_then(|item| range_containing_start(plan, container, item.owned.start()))
+        });
+        let Some(range_index) = owner else {
+            index += 1;
+            continue;
+        };
+
+        let skip_start = index;
+        let mut last_skipped = index;
+        index += 1;
+        while index < item_ranges.len() {
+            let owner = item_ranges[index]
+                .and_then(|item| range_containing_start(plan, container, item.owned.start()));
+            match owner {
+                Some(owner) if owner == range_index => last_skipped = index,
+                Some(owner) => {
+                    pending_owner = Some(owner);
+                    break;
+                }
+                None => {}
+            }
+            index += 1;
+        }
+        let skip_end = last_skipped + 1;
+        let raw = plan.ranges[range_index].interior;
+        let skipped_are_owned = item_ranges[skip_start..skip_end]
+            .iter()
+            .flatten()
+            .all(|item| raw.start() <= item.owned.start() && item.owned.end() <= raw.end());
+        let overlaps_previous = item_ranges[..skip_start]
+            .iter()
+            .rev()
+            .flatten()
+            .next()
+            .is_some_and(|item| raw.start() < item.owned.end() && item.owned.start() < raw.end());
+        let next_physical = item_ranges[skip_end..]
+            .iter()
+            .position(Option::is_some)
+            .map(|offset| skip_end + offset);
+        let overlaps_next = next_physical
+            .and_then(|next| item_ranges[next])
+            .is_some_and(|item| raw.start() < item.owned.end() && item.owned.start() < raw.end());
+        if !skipped_are_owned || overlaps_previous || overlaps_next {
+            continue;
+        }
+        runs.push(FormatterIgnoreRun {
+            range: plan.ranges[range_index].clone(),
+            insert_index: skip_start,
+            skip_start,
+            skip_end,
+            on_marker_owner: next_physical.map_or(OnMarkerOwner::Boundary, OnMarkerOwner::Item),
+        });
+    }
+
+    for index in 0..runs.len().saturating_sub(1) {
+        if let OnMarkerOwner::Item(owner) = runs[index].on_marker_owner
+            && runs[index + 1].skips(owner)
+            && runs[index].range.interior.start()
+                + TextSize::new(runs[index].range.raw_text_with_on.len())
+                <= runs[index + 1].range.interior.start()
+        {
+            runs[index].on_marker_owner = OnMarkerOwner::IgnoreRun;
+        }
+    }
+    runs
+}
+
+pub(crate) fn formatter_ignore_may_apply(
+    plan: &FormatterIgnorePlan<'_>,
+    container: TextRange,
+) -> bool {
+    let index = plan
+        .ranges
+        .partition_point(|range| range.interior.start() < container.start());
+    plan.ranges.get(index).is_some_and(|range| {
+        container.start() <= range.interior.start() && range.interior.end() <= container.end()
+    })
+}
+
+fn range_containing_start(
+    plan: &FormatterIgnorePlan<'_>,
+    container: TextRange,
+    item_start: TextSize,
+) -> Option<usize> {
+    let index = plan.ranges.partition_point(|range| {
+        #[cfg(test)]
+        plan.query_comparisons
+            .set(plan.query_comparisons.get().saturating_add(1));
+        range.interior.end() <= item_start
+    });
+    let range = plan.ranges.get(index)?;
+    (container.start() <= range.interior.start()
+        && range.interior.end() <= container.end()
+        && range.interior.start() <= item_start
+        && item_start < range.interior.end())
+    .then_some(index)
+}
+
+pub fn formatter_ignore_plan_with_safety<'source, L: Language>(
     source: &'source str,
-    base_start: usize,
     tokens: impl IntoIterator<Item = SyntaxToken<'source, L>>,
     safety: &mut impl LexicalSafety<L>,
-) -> Vec<FormatterIgnoreRange<'source>> {
-    // Formatter control markers are rare. Avoid walking every token and both
-    // trivia lists for every file, block, and member body when the source
-    // slice cannot contain one.
+) -> FormatterIgnorePlan<'source> {
+    // Formatter control markers are rare. Avoid walking token trivia when the
+    // root source cannot contain one.
     if !source.contains("@formatter:") {
-        return Vec::new();
+        return FormatterIgnorePlan::default();
     }
 
     let tokens: Vec<_> = tokens.into_iter().collect();
     let Some(claim_anchor) = tokens.first() else {
-        return Vec::new();
+        return FormatterIgnorePlan::default();
     };
 
     let mut off_comment_start = None;
@@ -145,12 +322,14 @@ pub fn formatter_ignore_ranges_with_safety<'source, L: Language>(
     let mut visit_comment =
         |comment: Comment<'source>, leading_comment_start: &mut Option<usize>| {
             let range = comment.text_range();
-            let start_offset = range.start().get() - base_start;
-            let end_offset = range.end().get() - base_start;
+            let start_offset = range.start().get();
+            let end_offset = range.end().get();
             let line = lines.comment_line(start_offset);
             let end_line = lines.comment_line(end_offset.saturating_sub(1).max(start_offset));
             let comment_text = comment.text();
-            if is_formatter_off_marker(comment_text) {
+            // A complete pair is first-off-wins: nested/repeated off markers
+            // remain ordinary raw contents until the matching on marker.
+            if is_formatter_off_marker(comment_text) && off_comment_start.is_none() {
                 off_comment_start = Some(leading_comment_start.take().unwrap_or(line.start));
             } else if is_formatter_on_marker(comment_text)
                 && let Some(start) = off_comment_start.take()
@@ -162,13 +341,12 @@ pub fn formatter_ignore_ranges_with_safety<'source, L: Language>(
                         raw_text_with_on: strip_trailing_line_ending(
                             &source[start..end_line.raw_end],
                         ),
-                        interior: start..end,
+                        interior: TextRange::new(TextSize::new(start), TextSize::new(end)),
                         claim_with_on: claim_anchor.source_range_claim(
                             TextRange::new(
-                                TextSize::new(base_start + start),
+                                TextSize::new(start),
                                 TextSize::new(
-                                    base_start
-                                        + start
+                                    start
                                         + strip_trailing_line_ending(
                                             &source[start..end_line.raw_end],
                                         )
@@ -179,11 +357,9 @@ pub fn formatter_ignore_ranges_with_safety<'source, L: Language>(
                         ),
                         claim_without_on: claim_anchor.source_range_claim(
                             TextRange::new(
-                                TextSize::new(base_start + start),
+                                TextSize::new(start),
                                 TextSize::new(
-                                    base_start
-                                        + start
-                                        + strip_trailing_line_ending(&source[start..end]).len(),
+                                    start + strip_trailing_line_ending(&source[start..end]).len(),
                                 ),
                             ),
                             false,
@@ -218,9 +394,14 @@ pub fn formatter_ignore_ranges_with_safety<'source, L: Language>(
         }
     }
 
-    populate_separators(&mut ranges, base_start, &tokens, safety);
-
-    ranges
+    populate_separators(&mut ranges, &tokens, safety);
+    FormatterIgnorePlan {
+        ranges,
+        #[cfg(test)]
+        discovery_tokens: tokens.len(),
+        #[cfg(test)]
+        query_comparisons: Cell::new(0),
+    }
 }
 
 #[derive(Clone, Copy, Default)]
@@ -237,7 +418,6 @@ struct RangeBoundaries<'source> {
 
 fn populate_separators<L: Language>(
     ranges: &mut [FormatterIgnoreRange<'_>],
-    base_start: usize,
     tokens: &[SyntaxToken<'_, L>],
     safety: &mut impl LexicalSafety<L>,
 ) {
@@ -248,7 +428,6 @@ fn populate_separators<L: Language>(
         for comment in token.leading_comments() {
             record_boundary_atom(
                 ranges,
-                base_start,
                 &mut boundaries,
                 &mut range_index,
                 comment.text_range(),
@@ -258,7 +437,6 @@ fn populate_separators<L: Language>(
         if !token.text().is_empty() {
             record_boundary_atom(
                 ranges,
-                base_start,
                 &mut boundaries,
                 &mut range_index,
                 token_range,
@@ -268,7 +446,6 @@ fn populate_separators<L: Language>(
         for comment in token.trailing_comments() {
             record_boundary_atom(
                 ranges,
-                base_start,
                 &mut boundaries,
                 &mut range_index,
                 comment.text_range(),
@@ -282,7 +459,7 @@ fn populate_separators<L: Language>(
     let mut next_with_cursor = 0;
     let mut previous = None;
     for (index, range) in ranges.iter_mut().enumerate() {
-        let start = TextSize::new(base_start + range.interior.start);
+        let start = range.interior.start();
         while let Some(token) = tokens.get(previous_cursor) {
             if token.token_text_range().end() > start {
                 break;
@@ -305,14 +482,13 @@ fn populate_separators<L: Language>(
 
 fn record_boundary_atom<'source>(
     ranges: &[FormatterIgnoreRange<'source>],
-    base_start: usize,
     boundaries: &mut [RangeBoundaries<'source>],
     range_index: &mut usize,
     atom_range: TextRange,
     atom: LexicalAtom<'source>,
 ) {
     while let Some(range) = ranges.get(*range_index) {
-        let start = TextSize::new(base_start + range.interior.start);
+        let start = range.interior.start();
         let with_end = TextSize::new(start.get() + range.raw_text_with_on.len());
         if atom_range.start() < with_end {
             break;
@@ -322,7 +498,7 @@ fn record_boundary_atom<'source>(
     let Some(range) = ranges.get(*range_index) else {
         return;
     };
-    let start = TextSize::new(base_start + range.interior.start);
+    let start = range.interior.start();
     let with_end = TextSize::new(start.get() + range.raw_text_with_on.len());
     if start <= atom_range.start() && atom_range.end() <= with_end {
         boundaries[*range_index].with_on.record(atom);
@@ -380,66 +556,6 @@ fn separators<'source, L: Language>(
 }
 
 #[must_use]
-pub fn formatter_ignore_runs<'source>(
-    ranges: &[FormatterIgnoreRange<'source>],
-    item_ranges: &[Option<Range<usize>>],
-) -> Vec<FormatterIgnoreRun<'source>> {
-    let mut runs = Vec::with_capacity(ranges.len());
-    let mut item_index = 0;
-
-    // Both inputs are in source order. Keep a single cursor through the items
-    // instead of rescanning the entire list for every ignored range.
-    for range in ranges {
-        while item_ranges.get(item_index).is_some_and(|item_range| {
-            item_range
-                .as_ref()
-                .is_none_or(|item_range| item_range.start < range.interior.start)
-        }) {
-            item_index += 1;
-        }
-
-        let insert_index = item_index;
-        let skip_start = item_index;
-        let mut last_skipped = None;
-        while item_ranges.get(item_index).is_some_and(|item_range| {
-            item_range
-                .as_ref()
-                .is_none_or(|item_range| item_range.start < range.interior.end)
-        }) {
-            if item_ranges[item_index].is_some() {
-                last_skipped = Some(item_index);
-            }
-            item_index += 1;
-        }
-        let skip_end = last_skipped.map_or(skip_start, |last| last + 1);
-
-        if skip_start < skip_end {
-            runs.push(FormatterIgnoreRun {
-                range: range.clone(),
-                insert_index,
-                skip_start,
-                skip_end,
-                on_marker_owner: if item_index < item_ranges.len() {
-                    OnMarkerOwner::Item(item_index)
-                } else {
-                    OnMarkerOwner::Boundary
-                },
-            });
-        }
-    }
-
-    for index in 0..runs.len().saturating_sub(1) {
-        if let OnMarkerOwner::Item(owner) = runs[index].on_marker_owner
-            && runs[index + 1].skips(owner)
-        {
-            runs[index].on_marker_owner = OnMarkerOwner::IgnoreRun;
-        }
-    }
-
-    runs
-}
-
-#[must_use]
 pub fn formatter_ignore_run_doc<'source>(
     run: &FormatterIgnoreRun<'source>,
     doc: &mut DocBuilder<'source>,
@@ -485,24 +601,6 @@ pub fn formatter_ignore_run_doc<'source>(
         run.range.separators_without_on
     };
     doc.formatter_ignore_source(contents, claim, separators)
-}
-
-#[must_use]
-pub fn token_range_between<L: Language>(
-    first: &SyntaxToken<'_, L>,
-    last: &SyntaxToken<'_, L>,
-) -> Range<usize> {
-    first.token_text_range().start().get()..last.token_text_range().end().get()
-}
-
-#[must_use]
-pub fn relative_token_range_between<L: Language>(
-    first: &SyntaxToken<'_, L>,
-    last: &SyntaxToken<'_, L>,
-    base_start: usize,
-) -> Range<usize> {
-    let range = token_range_between(first, last);
-    range.start - base_start..range.end - base_start
 }
 
 fn strip_first_line_indent(text: &str) -> Cow<'_, str> {
@@ -700,7 +798,49 @@ pub fn is_formatter_control_marker(comment: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{CommentLine, SourceLineCursor, is_formatter_on_marker};
+    use jolt_java_syntax::{JavaLanguage, JavaSyntaxView, parse_compilation_unit};
+    use jolt_syntax::{SyntaxNode, SyntaxToken};
+    use jolt_text::TextRange;
+
+    use crate::{ExceptionalSeparator, LexicalAtom, LexicalAtomKind, LexicalSafety};
+
+    use super::{
+        CommentLine, FormatterIgnoreItemRange, FormatterIgnoreSplice, SourceLineCursor,
+        for_each_formatter_ignore_splice, formatter_ignore_content_range,
+        formatter_ignore_plan_with_safety, formatter_ignore_runs, is_formatter_on_marker,
+    };
+
+    #[derive(Default)]
+    struct TestSafety;
+
+    impl LexicalSafety<JavaLanguage> for TestSafety {
+        fn classify(&mut self, _token: &SyntaxToken<'_, JavaLanguage>) -> LexicalAtomKind {
+            LexicalAtomKind::Identifier
+        }
+
+        fn separator(
+            &mut self,
+            _left: LexicalAtom<'_>,
+            _right: LexicalAtom<'_>,
+        ) -> ExceptionalSeparator {
+            ExceptionalSeparator::Space
+        }
+    }
+
+    fn token_range(root: &SyntaxNode<'_, JavaLanguage>, text: &str) -> TextRange {
+        root.tokens()
+            .find(|token| token.text() == text)
+            .unwrap_or_else(|| panic!("missing token {text:?}"))
+            .token_text_range()
+    }
+
+    fn item_range(root: &SyntaxNode<'_, JavaLanguage>, text: &str) -> FormatterIgnoreItemRange {
+        let token = root
+            .tokens()
+            .find(|token| token.text() == text)
+            .unwrap_or_else(|| panic!("missing token {text:?}"));
+        FormatterIgnoreItemRange::between(&token, &token)
+    }
 
     #[test]
     fn formatter_on_marker_requires_the_complete_comment_body() {
@@ -710,6 +850,64 @@ mod tests {
         assert!(!is_formatter_on_marker("// @formatter:on later"));
         assert!(!is_formatter_on_marker("/* prefix @formatter:on */"));
         assert!(!is_formatter_on_marker("@formatter:on"));
+    }
+
+    #[test]
+    fn only_complete_pairs_form_ranges_and_first_off_wins() {
+        let repeated = "class C {\n// @formatter:off\nint first;\n// @formatter:off\nint second;\n// @formatter:on\n}";
+        let parse = parse_compilation_unit(repeated);
+        let syntax = parse.syntax().expect("test source has syntax");
+        let root = syntax.syntax_node().expect("test source has a root");
+        let plan = formatter_ignore_plan_with_safety(repeated, root.tokens(), &mut TestSafety);
+        assert_eq!(plan.ranges.len(), 1);
+        assert_eq!(
+            plan.ranges[0].interior.start().get(),
+            repeated.find("// @formatter:off").unwrap()
+        );
+        assert!(plan.ranges[0].raw_text.contains("int first"));
+        assert!(
+            plan.ranges[0]
+                .raw_text
+                .contains("// @formatter:off\nint second")
+        );
+
+        for unmatched in [
+            "class C {\n// @formatter:off\nint value;\n}",
+            "class C {\n// @formatter:on\nint value;\n}",
+        ] {
+            let parse = parse_compilation_unit(unmatched);
+            let syntax = parse.syntax().expect("test source has syntax");
+            let root = syntax.syntax_node().expect("test source has a root");
+            let plan = formatter_ignore_plan_with_safety(unmatched, root.tokens(), &mut TestSafety);
+            assert!(plan.ranges.is_empty());
+        }
+    }
+
+    #[test]
+    fn same_line_on_off_transition_has_disjoint_exact_output() {
+        let source = "class C {\n// @formatter:off\nint first;\n/* @formatter:on */ /* @formatter:off */\nint second;\n// @formatter:on\nint after;\n}";
+        let parse = parse_compilation_unit(source);
+        let syntax = parse.syntax().expect("test source has syntax");
+        let root = syntax.syntax_node().expect("test source has a root");
+        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
+        let runs = formatter_ignore_runs(
+            &plan,
+            root.text_range(),
+            &[
+                Some(item_range(&root, "first")),
+                Some(item_range(&root, "second")),
+                Some(item_range(&root, "after")),
+            ],
+        );
+        assert_eq!(runs.len(), 2);
+        assert!(!runs[0].ends_with_on_marker());
+        assert_eq!(runs[0].raw_text(), "// @formatter:off\nint first;");
+        assert_eq!(
+            runs[1].raw_text(),
+            "/* @formatter:on */ /* @formatter:off */\nint second;"
+        );
+        let first_end = runs[0].range.interior.start().get() + runs[0].raw_text().len();
+        assert!(first_end <= runs[1].range.interior.start().get());
     }
 
     #[test]
@@ -740,5 +938,258 @@ mod tests {
                 .comment_line(source.find("/* fourth */").unwrap())
                 .comment_starts_own_line
         );
+    }
+
+    #[test]
+    fn partial_sibling_range_is_rejected_before_overlapping_a_retained_item() {
+        let source = "class Outer { void first() {\n// @formatter:off\nint raw=1;\n} void second() {}\n// @formatter:on\nvoid after() {} }";
+        let parse = parse_compilation_unit(source);
+        let syntax = parse.syntax().expect("test source has syntax");
+        let root = syntax.syntax_node().expect("test source has a root");
+        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
+        let retained_first = TextRange::new(
+            token_range(&root, "void").start(),
+            jolt_text::TextSize::new(
+                source
+                    .find("} void second")
+                    .expect("first method close exists")
+                    + 1,
+            ),
+        );
+        let raw = plan.ranges[0].interior;
+        assert!(
+            raw.start() < retained_first.end() && retained_first.start() < raw.end(),
+            "characterization requires an overlapping partial sibling",
+        );
+        let parent_items = [
+            Some(FormatterIgnoreItemRange {
+                owned: retained_first,
+            }),
+            Some(item_range(&root, "second")),
+            Some(item_range(&root, "after")),
+        ];
+        assert!(formatter_ignore_runs(&plan, root.text_range(), &parent_items).is_empty());
+
+        let child_end = token_range(&root, "raw").end();
+        let child = TextRange::new(token_range(&root, "first").start(), child_end);
+        let child_runs = formatter_ignore_runs(&plan, child, &[Some(item_range(&root, "raw"))]);
+        assert!(child_runs.is_empty());
+    }
+
+    #[test]
+    fn child_owns_a_range_nested_inside_its_parent_item() {
+        let source = "class Outer { void method() {\n// @formatter:off\nint raw=1;\n// @formatter:on\nint after=2;\n} }";
+        let parse = parse_compilation_unit(source);
+        let syntax = parse.syntax().expect("test source has syntax");
+        let root = syntax.syntax_node().expect("test source has a root");
+        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
+        let parent = formatter_ignore_runs(
+            &plan,
+            root.text_range(),
+            &[Some(item_range(&root, "class"))],
+        );
+        assert!(parent.is_empty());
+
+        let child = TextRange::new(
+            token_range(&root, "method").start(),
+            token_range(&root, "after").end(),
+        );
+        let child_runs = formatter_ignore_runs(
+            &plan,
+            child,
+            &[
+                Some(item_range(&root, "raw")),
+                Some(item_range(&root, "after")),
+            ],
+        );
+        assert_eq!(child_runs.len(), 1);
+        assert_eq!(child_runs[0].skip_start..child_runs[0].skip_end, 0..1);
+        assert_eq!(
+            child_runs,
+            formatter_ignore_runs(
+                &plan,
+                child,
+                &[
+                    Some(item_range(&root, "raw")),
+                    Some(item_range(&root, "after")),
+                ],
+            )
+        );
+    }
+
+    #[test]
+    fn content_boundaries_reject_header_claims_with_present_or_missing_open() {
+        let source = "class C { /* @formatter:off */\nint raw;\n// @formatter:on\n}";
+        let parse = parse_compilation_unit(source);
+        let syntax = parse.syntax().expect("test source has syntax");
+        let root = syntax.syntax_node().expect("test source has a root");
+        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
+        let open = root.tokens().find(|token| token.text() == "{").unwrap();
+        let close = root.tokens().find(|token| token.text() == "}").unwrap();
+        let raw = item_range(&root, "raw");
+        let fallback = raw.owned;
+
+        for container in [
+            formatter_ignore_content_range(fallback, Some(open), Some(close)),
+            formatter_ignore_content_range(fallback, None, Some(close)),
+        ] {
+            assert!(formatter_ignore_runs(&plan, container, &[Some(raw)]).is_empty());
+        }
+    }
+
+    #[test]
+    fn leading_layout_and_non_control_comment_stay_in_one_supported_raw_run() {
+        let source = "class C {\n// ordinary\n// @formatter:off\nint raw=1;\n// @formatter:on\nint after=2;\n}";
+        let parse = parse_compilation_unit(source);
+        let syntax = parse.syntax().expect("test source has syntax");
+        let root = syntax.syntax_node().expect("test source has a root");
+        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
+        let runs = formatter_ignore_runs(
+            &plan,
+            root.text_range(),
+            &[
+                Some(item_range(&root, "raw")),
+                Some(item_range(&root, "after")),
+            ],
+        );
+        assert_eq!(runs.len(), 1);
+        assert!(
+            runs[0]
+                .raw_text()
+                .starts_with("// ordinary\n// @formatter:off")
+        );
+        assert!(!runs[0].ends_with_on_marker());
+    }
+
+    #[test]
+    fn enum_constant_member_crossing_is_rejected_by_the_member_interval() {
+        let source =
+            "enum E { A,\n// @formatter:off\nB;\nint member;\n// @formatter:on\nint after;\n}";
+        let parse = parse_compilation_unit(source);
+        let syntax = parse.syntax().expect("test source has syntax");
+        let root = syntax.syntax_node().expect("test source has a root");
+        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
+        let member_items = [
+            Some(item_range(&root, "member")),
+            Some(item_range(&root, "after")),
+        ];
+
+        let member_container = TextRange::new(
+            token_range(&root, "member").start(),
+            token_range(&root, "after").end(),
+        );
+        assert!(plan.ranges[0].interior.start() < member_container.start());
+        assert!(formatter_ignore_runs(&plan, member_container, &member_items).is_empty());
+    }
+
+    #[test]
+    fn adjacent_runs_own_the_intervening_on_marker_once() {
+        let source = "class C { void m() {\n// @formatter:off\nint first=1;\n// @formatter:on\n// @formatter:off\nint second=2;\n// @formatter:on\nint after=3;\n} }";
+        let parse = parse_compilation_unit(source);
+        let syntax = parse.syntax().expect("test source has syntax");
+        let root = syntax.syntax_node().expect("test source has a root");
+        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
+        let runs = formatter_ignore_runs(
+            &plan,
+            root.text_range(),
+            &[
+                Some(item_range(&root, "first")),
+                Some(item_range(&root, "second")),
+                Some(item_range(&root, "after")),
+            ],
+        );
+        assert_eq!(runs.len(), 2);
+        assert!(runs[0].ends_with_on_marker());
+        assert!(!runs[1].ends_with_on_marker());
+        assert!(runs[0].claimed_on_marker_range().is_some());
+    }
+
+    #[test]
+    fn terminal_run_leaves_the_on_marker_to_the_eof_boundary() {
+        let source = "class C {\n// @formatter:off\nint raw=1;\n// @formatter:on\n}";
+        let parse = parse_compilation_unit(source);
+        let syntax = parse.syntax().expect("test source has syntax");
+        let root = syntax.syntax_node().expect("test source has a root");
+        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
+        let runs =
+            formatter_ignore_runs(&plan, root.text_range(), &[Some(item_range(&root, "raw"))]);
+        assert_eq!(runs.len(), 1);
+        assert!(!runs[0].ends_with_on_marker());
+        assert!(runs[0].claimed_on_marker_range().is_none());
+    }
+
+    #[test]
+    fn represented_malformed_item_can_be_fully_contained() {
+        let source = "class C {\n// @formatter:off\n+ ;\n// @formatter:on\nint after;\n}";
+        let parse = parse_compilation_unit(source);
+        let syntax = parse.syntax().expect("test source has syntax");
+        let root = syntax.syntax_node().expect("test source has a root");
+        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
+        let runs = formatter_ignore_runs(
+            &plan,
+            root.text_range(),
+            &[
+                Some(item_range(&root, "+")),
+                Some(item_range(&root, "after")),
+            ],
+        );
+        assert_eq!(runs.len(), 1);
+        assert_eq!(runs[0].skip_start..runs[0].skip_end, 0..1);
+    }
+
+    #[test]
+    fn missing_parts_between_physical_items_stay_inside_the_skip_span() {
+        let source =
+            "class C {\n// @formatter:off\nint first; int second;\n// @formatter:on\nint after; }";
+        let parse = parse_compilation_unit(source);
+        let syntax = parse.syntax().expect("test source has syntax");
+        let root = syntax.syntax_node().expect("test source has a root");
+        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
+        let item_ranges = [
+            Some(item_range(&root, "first")),
+            None,
+            Some(item_range(&root, "second")),
+            Some(item_range(&root, "after")),
+        ];
+        let runs = formatter_ignore_runs(&plan, root.text_range(), &item_ranges);
+        assert_eq!(runs.len(), 1);
+        assert_eq!(runs[0].skip_start..runs[0].skip_end, 0..3);
+
+        let mut visited = Vec::new();
+        for_each_formatter_ignore_splice(item_ranges.len(), &runs, |event| match event {
+            FormatterIgnoreSplice::Ignore(_) => visited.push("ignore"),
+            FormatterIgnoreSplice::Item { index, .. } => {
+                visited.push(if index == 3 { "after" } else { "unexpected" });
+            }
+        });
+        assert_eq!(visited, ["ignore", "after"]);
+    }
+
+    #[test]
+    fn query_comparisons_are_bounded_by_items_and_range_depth() {
+        let mut source = String::from("class C { void m() {\n");
+        for index in 0..64 {
+            source.push_str("// @formatter:off\n");
+            source.push_str(&format!("int value{index}=0;\n"));
+            source.push_str("// @formatter:on\n");
+        }
+        source.push_str("} }");
+        let parse = parse_compilation_unit(&source);
+        let syntax = parse.syntax().expect("test source has syntax");
+        let root = syntax.syntax_node().expect("test source has a root");
+        let token_count = root.tokens().count();
+        let plan = formatter_ignore_plan_with_safety(&source, root.tokens(), &mut TestSafety);
+        let items = (0..64)
+            .map(|index| Some(item_range(&root, &format!("value{index}"))))
+            .collect::<Vec<_>>();
+        let runs = formatter_ignore_runs(&plan, root.text_range(), &items);
+        let (range_count, discovery_tokens) = plan.test_counts();
+        assert_eq!(runs.len(), 64);
+        assert_eq!(range_count, 64);
+        assert_eq!(discovery_tokens, token_count);
+        let comparisons = plan.test_query_comparisons();
+        let max_probes = usize::BITS - range_count.leading_zeros();
+        assert!(comparisons > 0);
+        assert!(comparisons <= items.len() * usize::try_from(max_probes).unwrap());
     }
 }

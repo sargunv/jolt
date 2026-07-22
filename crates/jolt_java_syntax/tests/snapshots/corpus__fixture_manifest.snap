@@ -27,6 +27,7 @@ style/declarations/enum-empty-constants-with-members.java
 style/declarations/field-modifiers-and-member-spacing.java
 style/declarations/formatter-ignore-annotation-interface-members.java
 style/declarations/formatter-ignore-constructor-body.java
+style/declarations/formatter-ignore-enum-member-boundaries.java
 style/declarations/formatter-ignore-interface-members.java
 style/declarations/formatter-ignore-members.java
 style/declarations/formatter-ignore-nested-member-body.java

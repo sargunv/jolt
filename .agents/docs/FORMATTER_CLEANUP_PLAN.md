@@ -323,9 +323,11 @@ Gates:
 
 Scope:
 
-- discover and validate ignore directives once at the formatted root;
-- associate source ranges with syntax-owned malformed/verbatim fragments;
-- consume the plan monotonically while formatting ordered children;
+- discover complete ignore-directive pairs once at the formatted root;
+- query one immutable plan from syntax-owned content intervals and direct item
+  ranges;
+- reject a range when it would partially overlap a structured item or cross
+  independently formatted syntax partitions;
 - consolidate duplicate sequence-splicing paths;
 - delete every nested subtree token/source scan API in the same PR.
 
@@ -337,10 +339,12 @@ disabled regions at file boundaries.
 
 Gates:
 
-- a counted-work test proves planning and consumption are linear in source and
-  tokens; wall-clock timing alone is insufficient;
+- counted-work tests prove linear root discovery and bound query work to
+  `O(items * log(ranges + 1) + items + runs)`; wall-clock timing alone is
+  insufficient;
 - source conservation and trivia tests pass;
-- ignore snapshots and formatter-output hash remain byte-identical.
+- all unrelated formatter snapshots remain byte-identical; any directive-policy
+  correction is isolated and snapshotted.
 
 ### PR 03 — Infallible generated physical fields
 
@@ -672,23 +676,23 @@ This table is the source of truth after a context compaction. Update it whenever
 a branch is created, a PR is opened, scope changes, a gate fails, or a PR is
 ready for review.
 
-| PR  | Branch                                   | Status     | Parent | Draft PR                                     | Verification              | Notes                                         |
-| --- | ---------------------------------------- | ---------- | ------ | -------------------------------------------- | ------------------------- | --------------------------------------------- |
-| 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2) | baseline audit complete   | Durable plan and gates only.                  |
-| 01  | `cleanup/01-doc-semantics`               | draft open | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3) | debug/release + benchmark | Profile-independent topology/presence.        |
-| 02  | `cleanup/02-formatter-ignore-plan`       | planned    | PR 01  | —                                            | —                         | One linear root plan.                         |
-| 03  | `cleanup/03-infallible-generated-fields` | planned    | PR 02  | —                                            | —                         | Generated physical slots only.                |
-| 04  | `cleanup/04-syntax-recovery-visibility`  | planned    | PR 03  | —                                            | —                         | Syntax-owned recovery/list classification.    |
-| 05  | `cleanup/05-root-coordination`           | planned    | PR 04  | —                                            | —                         | Narrow root ownership, no god context.        |
-| 06  | `cleanup/06-source-audit-reporting`      | planned    | PR 05  | —                                            | —                         | Structured normalization facts.               |
-| 07  | `cleanup/07-core-module-boundaries`      | planned    | PR 06  | —                                            | —                         | Conditional crate extraction gate.            |
-| 08a | `cleanup/08a-renderer-boundaries`        | planned    | PR 07  | —                                            | —                         | Separate contracts without output changes.    |
-| 08b | `cleanup/08b-renderer-audit-pass`        | optional   | PR 08a | —                                            | —                         | Proceed only if two-pass semantics shrink.    |
-| 09  | `cleanup/09-kotlin-rules`                | planned    | PR 08b | —                                            | —                         | Kotlin hotspot purification.                  |
-| 10  | `cleanup/10-java-rules`                  | planned    | PR 09  | —                                            | —                         | Java hotspot purification.                    |
-| 11  | `cleanup/11-lexer-substrate`             | planned    | PR 10  | —                                            | —                         | Share cursor mechanics only.                  |
-| 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                            | —                         | Counted bounded lookahead work.               |
-| 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                            | —                         | Actual docs, metrics, and API deletions only. |
+| PR  | Branch                                   | Status      | Parent | Draft PR                                     | Verification              | Notes                                         |
+| --- | ---------------------------------------- | ----------- | ------ | -------------------------------------------- | ------------------------- | --------------------------------------------- |
+| 00  | `cleanup/00-plan-and-gates`              | draft open  | `main` | [#2](https://github.com/sargunv/jolt/pull/2) | baseline audit complete   | Durable plan and gates only.                  |
+| 01  | `cleanup/01-doc-semantics`               | draft open  | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3) | debug/release + benchmark | Profile-independent topology/presence.        |
+| 02  | `cleanup/02-formatter-ignore-plan`       | in progress | PR 01  | —                                            | debug/release + benchmark | Publication remains.                          |
+| 03  | `cleanup/03-infallible-generated-fields` | planned     | PR 02  | —                                            | —                         | Generated physical slots only.                |
+| 04  | `cleanup/04-syntax-recovery-visibility`  | planned     | PR 03  | —                                            | —                         | Syntax-owned recovery/list classification.    |
+| 05  | `cleanup/05-root-coordination`           | planned     | PR 04  | —                                            | —                         | Narrow root ownership, no god context.        |
+| 06  | `cleanup/06-source-audit-reporting`      | planned     | PR 05  | —                                            | —                         | Structured normalization facts.               |
+| 07  | `cleanup/07-core-module-boundaries`      | planned     | PR 06  | —                                            | —                         | Conditional crate extraction gate.            |
+| 08a | `cleanup/08a-renderer-boundaries`        | planned     | PR 07  | —                                            | —                         | Separate contracts without output changes.    |
+| 08b | `cleanup/08b-renderer-audit-pass`        | optional    | PR 08a | —                                            | —                         | Proceed only if two-pass semantics shrink.    |
+| 09  | `cleanup/09-kotlin-rules`                | planned     | PR 08b | —                                            | —                         | Kotlin hotspot purification.                  |
+| 10  | `cleanup/10-java-rules`                  | planned     | PR 09  | —                                            | —                         | Java hotspot purification.                    |
+| 11  | `cleanup/11-lexer-substrate`             | planned     | PR 10  | —                                            | —                         | Share cursor mechanics only.                  |
+| 12  | `cleanup/12-java-lookahead`              | planned     | PR 11  | —                                            | —                         | Counted bounded lookahead work.               |
+| 13  | `cleanup/13-final-reconciliation`        | planned     | PR 12  | —                                            | —                         | Actual docs, metrics, and API deletions only. |
 
 ### PR 01 evidence
 
@@ -719,17 +723,66 @@ ready for review.
   this last syntax-contract leak when recovery/list visibility becomes
   syntax-owned; PR 01 does not add a second or temporary API for it.
 
+### PR 02 evidence
+
+- Java and Kotlin discover complete formatter-ignore pairs once from the root
+  token/trivia buffers. All eleven nested discovery paths, relative-base
+  plumbing, and subtree token collections used for rediscovery are deleted.
+- The plan contains absolute borrowed ranges and is immutable and
+  order-independent. Empty plans do not evaluate item-range iterators or
+  allocate per-container vectors; the Java member-body common path remains
+  streaming.
+- Containers query only the syntax-owned interval between their represented
+  delimiters, with list-owned recovery fallbacks. A range is rejected when it
+  partially overlaps a sibling or crosses independently formatted enum
+  constant/member partitions; its control comments then remain structured.
+- Complete pairs are first-off-wins. Adjacent same-line `on`/`off` transitions
+  use disjoint ownership. The existing adjacent-range integration fixture and a
+  focused enum-boundary fixture isolate and snapshot these policies.
+- Root discovery is linear in source/tokens. Counted binary-search comparisons
+  enforce the per-query bound `O(items * log(ranges + 1) + items + runs)`.
+- Missing and duplicate plan installation use the renderer's existing invariant
+  diagnostic path rather than debug-only panics.
+- The private, install-once plan currently travels on `DocBuilder`, never
+  `DocArena`. PR 05 must revisit this temporary transport when root coordination
+  is consolidated; PR 07 must not preserve it merely to justify a new crate.
+- Production Rust before test modules is +83 lines: `jolt_fmt_ir` +122 and the
+  language formatters -39. Test-module Rust is +422 lines. This is below the
+  reassessment threshold and centralizes ownership checks while shrinking the
+  language rules; the next slices must not treat the core growth as precedent
+  for a general context.
+- Repository-defined Ona automation passed all 179 workspace tests with no
+  skips. Focused strict Clippy, formatting, Java/Kotlin corpora, recovery,
+  trivia, layout, idempotence, and syntax tests passed. Java/Kotlin formatter
+  suites and the 17 profile-valid formatter-ignore/builder tests passed in
+  release. Nine unrelated `jolt_fmt_ir` conservation tests are intentionally
+  debug-only and fail if run as release assertions. Workspace native/WASM
+  checks, the native release build, and the optimized dprint plugin build also
+  passed.
+- Clean same-machine PR 01/PR 02 measurements found identical Java/Kotlin
+  document nodes, children, logical/reserved bytes, and nodes/token. Java
+  allocation count/bytes declined 0.008%/0.069%, maximum-live allocation count
+  declined 0.43%, and maximum-live bytes were unchanged. Every Kotlin allocation
+  and maximum-live metric was identical.
+- Median format timing moved -5.74% for Java and -13.92% for Kotlin, but the
+  Java child had a large outlier and the Kotlin parent was bimodal; treat these
+  as reassuring non-regression evidence, not causal speedup claims. Peak RSS
+  remains unavailable because `/usr/bin/time` is absent.
+
 ## Decision Log
 
-| Date       | Decision                                                     | Reason                                                                                                |
-| ---------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| 2026-07-22 | Use a stack of small draft PRs rather than a rewrite.        | Preserves review and rollback boundaries while allowing ambitious end-state changes.                  |
-| 2026-07-22 | Centralize branches, commits, rebases, and publication.      | Subagents share a filesystem; central integration avoids hidden branch state and conflicting commits. |
-| 2026-07-22 | Make crate extraction conditional.                           | Purity is about dependency direction, not maximizing crate count.                                     |
-| 2026-07-22 | Treat growth without deleted complexity as a stop condition. | The cleanup exists to reduce reasoning load, not install a new framework.                             |
-| 2026-07-22 | Keep leaf rules free of a general formatting context.        | Narrow dependencies prevent a service locator and preserve local reasoning.                           |
-| 2026-07-22 | Split CST, recovery, renderer, language, and lexer risks.    | Each now has an independent correctness model, benchmark gate, and rollback boundary.                 |
-| 2026-07-22 | Accept PR 01's bounded release document-node cost.           | Stable topology costs 1.5–2.2% more nodes but keeps allocations/max-live memory effectively flat.     |
+| Date       | Decision                                                     | Reason                                                                                                  |
+| ---------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| 2026-07-22 | Use a stack of small draft PRs rather than a rewrite.        | Preserves review and rollback boundaries while allowing ambitious end-state changes.                    |
+| 2026-07-22 | Centralize branches, commits, rebases, and publication.      | Subagents share a filesystem; central integration avoids hidden branch state and conflicting commits.   |
+| 2026-07-22 | Make crate extraction conditional.                           | Purity is about dependency direction, not maximizing crate count.                                       |
+| 2026-07-22 | Treat growth without deleted complexity as a stop condition. | The cleanup exists to reduce reasoning load, not install a new framework.                               |
+| 2026-07-22 | Keep leaf rules free of a general formatting context.        | Narrow dependencies prevent a service locator and preserve local reasoning.                             |
+| 2026-07-22 | Split CST, recovery, renderer, language, and lexer risks.    | Each now has an independent correctness model, benchmark gate, and rollback boundary.                   |
+| 2026-07-22 | Accept PR 01's bounded release document-node cost.           | Stable topology costs 1.5–2.2% more nodes but keeps allocations/max-live memory effectively flat.       |
+| 2026-07-22 | Use immutable bounded ignore-plan queries.                   | Independent nested rules stay order-independent; counted binary search replaces hidden mutable cursors. |
+| 2026-07-22 | Reject partial and cross-partition ignore ranges.            | Structured syntax ownership must never overlap a raw source claim; rejected markers remain structured.  |
+| 2026-07-22 | Temporarily transport the ignore plan on `DocBuilder`.       | The field is private, immutable, install-once, and absent from `DocArena`; PR 05 must revisit it.       |
 
 ## Resume Protocol
 

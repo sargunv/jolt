@@ -11,8 +11,8 @@ use crate::helpers::comments::{
     format_token_with_comments, has_removed_comments, trailing_comments_force_line,
 };
 use crate::helpers::formatter_ignore::{
-    FormatterIgnoreRun, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
-    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, token_range_between,
+    FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
+    for_each_formatter_ignore_splice, formatter_ignore_run_doc,
 };
 use crate::helpers::recovery::{
     JavaFormatField, format_malformed, format_missing, format_required_field,
@@ -59,23 +59,14 @@ pub(crate) fn format_compilation_unit<'source>(
         Err(error) => doc.block_on_invariant(error.to_string()),
     }
 
-    let ignored_ranges = formatter_ignore_ranges(
-        unit.source_text(),
-        unit.text_range().start().get(),
-        unit.token_iter(),
-    );
-    let (contents, ignored_eof_comments) = if ignored_ranges.is_empty() {
+    let container = unit.text_range();
+    let runs = doc.formatter_ignore_runs(container, entries.iter().map(ProgramEntry::ignore_range));
+    let (contents, ignored_eof_comments) = if runs.is_empty() {
         (format_program_entries(entries, doc), Vec::new())
     } else {
-        let item_ranges = entries
-            .iter()
-            .map(ProgramEntry::token_range)
-            .collect::<Vec<_>>();
-        let runs = formatter_ignore_runs(&ignored_ranges, &item_ranges);
-        let base = unit.text_range().start().get();
         let ignored_eof_comments = runs
             .iter()
-            .filter_map(|run| run.claimed_on_marker_range(base))
+            .filter_map(FormatterIgnoreRun::claimed_on_marker_range)
             .collect();
         (
             format_program_entries_with_ignored(entries, &runs, doc),
@@ -129,23 +120,23 @@ enum ProgramEntry<'source> {
 }
 
 impl ProgramEntry<'_> {
-    fn token_range(&self) -> Option<Range<usize>> {
+    fn ignore_range(&self) -> Option<FormatterIgnoreItemRange> {
         match self {
             Self::Item(item) => {
                 let first = item.first_token()?;
                 let last = item.last_token()?;
-                Some(token_range_between(&first, &last))
+                Some(FormatterIgnoreItemRange::between(&first, &last))
             }
-            Self::Token(token) => Some(token_range_between(token, token)),
-            Self::Malformed(item) => token_range(item),
+            Self::Token(token) => Some(FormatterIgnoreItemRange::between(token, token)),
+            Self::Malformed(item) => ignore_range(item),
             Self::Missing(_) => None,
         }
     }
 }
 
-fn token_range<'source>(view: &impl JavaSyntaxView<'source>) -> Option<Range<usize>> {
+fn ignore_range<'source>(view: &impl JavaSyntaxView<'source>) -> Option<FormatterIgnoreItemRange> {
     let syntax = view.syntax_node()?;
-    Some(token_range_between(
+    Some(FormatterIgnoreItemRange::between(
         &syntax.first_token()?,
         &syntax.last_token()?,
     ))

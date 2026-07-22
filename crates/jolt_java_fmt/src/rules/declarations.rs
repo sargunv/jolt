@@ -1,5 +1,3 @@
-use std::ops::Range;
-
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
     AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
@@ -18,9 +16,8 @@ use crate::helpers::comments::{
     format_token_with_comments, has_removed_comments,
 };
 use crate::helpers::formatter_ignore::{
-    FormatterIgnoreSplice, for_each_formatter_ignore_splice, formatter_ignore_ranges,
-    formatter_ignore_run_doc, formatter_ignore_runs, is_formatter_control_marker,
-    relative_token_range_between,
+    FormatterIgnoreItemRange, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
+    formatter_ignore_content_range, formatter_ignore_run_doc, is_formatter_control_marker,
 };
 use crate::helpers::lists::{CommaListItem, comma_list, delimited_comma_list};
 use crate::helpers::member_body::{

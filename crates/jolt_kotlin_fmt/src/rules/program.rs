@@ -14,8 +14,8 @@ use crate::helpers::comments::{
     format_terminator_list, format_token, token_has_comments,
 };
 use crate::helpers::formatter_ignore::{
-    FormatterIgnoreSplice, for_each_formatter_ignore_splice, formatter_ignore_ranges,
-    formatter_ignore_run_doc, formatter_ignore_runs, relative_token_range_between,
+    FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
+    for_each_formatter_ignore_splice, formatter_ignore_run_doc,
 };
 use crate::helpers::recovery::{
     KotlinFormatListPart, format_malformed, format_missing, format_optional_field,
@@ -124,7 +124,7 @@ fn collect_items<'source>(
                 );
                 entries.push(FileEntry::Separator(
                     separator,
-                    Some(token_range(&token, file.text_range().start().get())),
+                    FormatterIgnoreItemRange::between(&token, &token),
                     token_has_comments(&token),
                 ));
             }
@@ -148,27 +148,26 @@ enum FileEntry<'source> {
     Item(KotlinFileItem<'source>),
     Malformed(KotlinMalformedSyntax<'source>),
     Missing(KotlinMissingSyntax<'source>),
-    Separator(Doc<'source>, Option<Range<usize>>, bool),
+    Separator(Doc<'source>, FormatterIgnoreItemRange, bool),
 }
 
 impl FileEntry<'_> {
-    fn token_range(&self, base: usize) -> Option<Range<usize>> {
+    fn ignore_range(&self) -> Option<FormatterIgnoreItemRange> {
         match self {
             Self::Item(item) => {
                 let first = item.first_token()?;
                 let last = item.last_token()?;
-                Some(relative_token_range_between(&first, &last, base))
+                Some(FormatterIgnoreItemRange::between(&first, &last))
             }
             Self::Malformed(malformed) => {
                 let syntax = malformed.syntax_node()?;
-                Some(relative_token_range_between(
+                Some(FormatterIgnoreItemRange::between(
                     &syntax.first_token()?,
                     &syntax.last_token()?,
-                    base,
                 ))
             }
             Self::Missing(_) => None,
-            Self::Separator(_, range, _) => range.clone(),
+            Self::Separator(_, range, _) => Some(*range),
         }
     }
 }
@@ -178,19 +177,8 @@ fn format_entries_with_ignored<'source>(
     doc: &mut DocBuilder<'source>,
     entries: Vec<FileEntry<'source>>,
 ) -> (Option<Doc<'source>>, Vec<Range<usize>>) {
-    let base = file.text_range().start().get();
-    let ignored = formatter_ignore_ranges(file.source_text(), base, file.token_iter());
-    if ignored.is_empty() {
-        return (
-            format_entry_segment(doc, entries).map(|section| section.doc),
-            Vec::new(),
-        );
-    }
-    let ranges = entries
-        .iter()
-        .map(|entry| entry.token_range(base))
-        .collect::<Vec<_>>();
-    let runs = formatter_ignore_runs(&ignored, &ranges);
+    let container = file.text_range();
+    let runs = doc.formatter_ignore_runs(container, entries.iter().map(FileEntry::ignore_range));
     if runs.is_empty() {
         return (
             format_entry_segment(doc, entries).map(|section| section.doc),
@@ -199,7 +187,7 @@ fn format_entries_with_ignored<'source>(
     }
     let ignored_eof_comments = runs
         .iter()
-        .filter_map(|run| run.claimed_on_marker_range(base))
+        .filter_map(FormatterIgnoreRun::claimed_on_marker_range)
         .collect();
 
     let mut sections = Vec::new();
@@ -473,8 +461,4 @@ fn format_package_header<'source>(
         format_terminator_list(doc, &terminators, true)
     });
     doc.concat([keyword, name, suffix, terminators])
-}
-
-fn token_range(token: &jolt_kotlin_syntax::KotlinSyntaxToken<'_>, base: usize) -> Range<usize> {
-    relative_token_range_between(token, token, base)
 }

@@ -952,7 +952,7 @@ mod tests {
 
     #[cfg(debug_assertions)]
     use crate::document::DocNode;
-    use crate::formatter_ignore::formatter_ignore_ranges_with_safety;
+    use crate::formatter_ignore::formatter_ignore_plan_with_safety;
     #[cfg(debug_assertions)]
     use crate::source_fragment::SourceClaim;
     use crate::source_fragment::{ExceptionalSeparators, exceptional_separators};
@@ -1542,9 +1542,9 @@ mod tests {
         let token_count = root.tokens().count();
         let mut safety = CountingJavaSafety::default();
 
-        let ranges = formatter_ignore_ranges_with_safety(source, 0, root.tokens(), &mut safety);
+        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut safety);
 
-        assert_eq!(ranges.len(), 2);
+        assert_eq!(plan.test_counts().0, 2);
         assert!(
             safety.0 <= token_count * 4,
             "{} classifications for {token_count} tokens",

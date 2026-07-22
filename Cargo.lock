@@ -467,6 +467,7 @@ dependencies = [
  "jolt_fmt_ir",
  "jolt_java_syntax",
  "jolt_test_support",
+ "jolt_text",
 ]
 
 [[package]]

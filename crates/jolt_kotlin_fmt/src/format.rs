@@ -4,6 +4,7 @@ use jolt_fmt_ir::{
 };
 use jolt_kotlin_syntax::{KotlinFile, KotlinSyntaxView, parse_kotlin_file};
 
+use crate::helpers::formatter_ignore::formatter_ignore_plan;
 use crate::rules::program::format_file;
 
 /// Stable Kotlin formatter diagnostic codes.
@@ -47,12 +48,6 @@ fn format_syntax_to_sink<S: RenderSink + ?Sized>(
     options: FormatOptions,
     sink: &mut S,
 ) -> (FormatSinkResult, DocBuilderMetrics) {
-    let mut builder = DocBuilder::with_source_capacity(syntax.source_text().len());
-    let doc = format_file(syntax, &mut builder);
-    let render_options = RenderOptions::from(options);
-    let arena = builder.into_arena();
-    #[cfg(feature = "bench")]
-    let metrics = arena.benchmark_metrics();
     let Some(root) = syntax.syntax_node() else {
         return (
             FormatSinkResult::Blocked {
@@ -61,6 +56,14 @@ fn format_syntax_to_sink<S: RenderSink + ?Sized>(
             DocBuilderMetrics::default(),
         );
     };
+    let ignores = formatter_ignore_plan(syntax.source_text(), root.tokens());
+    let mut builder = DocBuilder::with_source_capacity(syntax.source_text().len());
+    builder.set_formatter_ignore_plan(ignores);
+    let doc = format_file(syntax, &mut builder);
+    let render_options = RenderOptions::from(options);
+    let arena = builder.into_arena();
+    #[cfg(feature = "bench")]
+    let metrics = arena.benchmark_metrics();
     let result = match render_source_to(&arena, doc, render_options, sink, &root) {
         Ok(outcome) if outcome.halted() => FormatSinkResult::Halted,
         Ok(outcome) => {
