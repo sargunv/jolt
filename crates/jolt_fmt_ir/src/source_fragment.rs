@@ -1,8 +1,8 @@
 #[cfg(debug_assertions)]
 use jolt_syntax::NormalizationOperation;
 use jolt_syntax::{
-    ConservationError, Language, NormalizedToken, RawSyntaxKind, RemovalReason, ReorderReason,
-    SourceIdentity, SourceRangeClaim, SourceTokenId, SyntaxConservationTracker, SyntaxToken,
+    ConservationError, Language, NormalizedToken, RemovalReason, ReorderReason, SourceIdentity,
+    SourceRangeClaim, SourceTokenId, SyntaxConservationTracker, SyntaxToken,
 };
 use jolt_text::TextRange;
 
@@ -162,11 +162,7 @@ impl<'source> ExceptionalFragment<'source> {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum SourceClaim<'tree> {
     Identity(SourceIdentity<'tree>),
-    MalformedVerbatim {
-        claim: SourceRangeClaim<'tree>,
-        kind: RawSyntaxKind,
-        range: TextRange,
-    },
+    MalformedVerbatim(SourceRangeClaim<'tree>),
     Replaced {
         source: SourceTokenId<'tree>,
         token: NormalizedToken,
@@ -211,12 +207,9 @@ impl<'tree> RenderProof<'tree> {
     pub(crate) fn consume(&mut self, claim: SourceClaim<'tree>) -> Result<(), ConservationError> {
         match claim {
             SourceClaim::Identity(identity) => self.conservation.claim(identity)?,
-            SourceClaim::MalformedVerbatim { claim, .. } => {
+            SourceClaim::MalformedVerbatim(claim) => {
                 self.conservation.claim_source_range(claim)?;
-                #[cfg(debug_assertions)]
-                {
-                    self.malformed_verbatim_count += 1;
-                }
+                self.malformed_verbatim_count += 1;
             }
             SourceClaim::Replaced { source, token } => self
                 .conservation

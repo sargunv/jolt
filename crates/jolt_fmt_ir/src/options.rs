@@ -35,6 +35,6 @@ pub enum FormatSinkResult {
     Complete,
     /// The sink asked the renderer to halt early.
     Halted,
-    /// Formatting was blocked by an error, carrying the diagnostics.
-    Blocked { diagnostics: Vec<Diagnostic> },
+    /// Formatting was blocked by an error, carrying its diagnostic.
+    Blocked { diagnostic: Diagnostic },
 }

@@ -476,8 +476,8 @@ pub fn format_source_or_panic(
         FormatSinkResult::Halted => {
             panic!("formatter unexpectedly halted with StringSink for {label}")
         }
-        FormatSinkResult::Blocked { diagnostics } => {
-            panic!("formatter blocked for {label}: {diagnostics:#?}")
+        FormatSinkResult::Blocked { diagnostic } => {
+            panic!("formatter blocked for {label}: {diagnostic:#?}")
         }
     }
 }

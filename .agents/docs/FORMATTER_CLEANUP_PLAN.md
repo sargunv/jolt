@@ -696,23 +696,23 @@ This table is the source of truth after a context compaction. Update it whenever
 a branch is created, a PR is opened, scope changes, a gate fails, or a PR is
 ready for review.
 
-| PR  | Branch                                   | Status     | Parent | Draft PR                                     | Verification               | Notes                                         |
-| --- | ---------------------------------------- | ---------- | ------ | -------------------------------------------- | -------------------------- | --------------------------------------------- |
-| 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2) | baseline audit complete    | Durable plan and gates only.                  |
-| 01  | `cleanup/01-doc-semantics`               | draft open | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3) | debug/release + benchmark  | Profile-independent topology/presence.        |
-| 02  | `cleanup/02-formatter-ignore-plan`       | draft open | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4) | debug/release + benchmark  | Root plan with bounded immutable queries.     |
-| 03  | `cleanup/03-infallible-generated-fields` | draft open | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5) | debug/release + benchmark  | Generated physical slots only.                |
-| 04  | `cleanup/04-syntax-recovery-visibility`  | draft open | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6) | full + release + benchmark | Syntax-owned malformed lexical boundaries.    |
-| 05  | `cleanup/05-root-coordination`           | draft open | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7) | full + release + benchmark | Narrow root ownership, no god context.        |
-| 06  | `cleanup/06-source-audit-reporting`      | draft open | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8) | full + release + benchmark | Syntax claims replace filename/count policy.  |
-| 07  | `cleanup/07-core-module-boundaries`      | draft open | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9) | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.  |
-| 08a | `cleanup/08a-renderer-boundaries`        | planned    | PR 07  | —                                            | —                          | Separate contracts without output changes.    |
-| 08b | `cleanup/08b-renderer-audit-pass`        | optional   | PR 08a | —                                            | —                          | Proceed only if two-pass semantics shrink.    |
-| 09  | `cleanup/09-kotlin-rules`                | planned    | PR 08b | —                                            | —                          | Kotlin hotspot purification.                  |
-| 10  | `cleanup/10-java-rules`                  | planned    | PR 09  | —                                            | —                          | Java hotspot purification.                    |
-| 11  | `cleanup/11-lexer-substrate`             | planned    | PR 10  | —                                            | —                          | Share cursor mechanics only.                  |
-| 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                            | —                          | Counted bounded lookahead work.               |
-| 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                            | —                          | Actual docs, metrics, and API deletions only. |
+| PR  | Branch                                   | Status      | Parent | Draft PR                                     | Verification               | Notes                                         |
+| --- | ---------------------------------------- | ----------- | ------ | -------------------------------------------- | -------------------------- | --------------------------------------------- |
+| 00  | `cleanup/00-plan-and-gates`              | draft open  | `main` | [#2](https://github.com/sargunv/jolt/pull/2) | baseline audit complete    | Durable plan and gates only.                  |
+| 01  | `cleanup/01-doc-semantics`               | draft open  | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3) | debug/release + benchmark  | Profile-independent topology/presence.        |
+| 02  | `cleanup/02-formatter-ignore-plan`       | draft open  | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4) | debug/release + benchmark  | Root plan with bounded immutable queries.     |
+| 03  | `cleanup/03-infallible-generated-fields` | draft open  | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5) | debug/release + benchmark  | Generated physical slots only.                |
+| 04  | `cleanup/04-syntax-recovery-visibility`  | draft open  | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6) | full + release + benchmark | Syntax-owned malformed lexical boundaries.    |
+| 05  | `cleanup/05-root-coordination`           | draft open  | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7) | full + release + benchmark | Narrow root ownership, no god context.        |
+| 06  | `cleanup/06-source-audit-reporting`      | draft open  | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8) | full + release + benchmark | Syntax claims replace filename/count policy.  |
+| 07  | `cleanup/07-core-module-boundaries`      | draft open  | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9) | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.  |
+| 08a | `cleanup/08a-renderer-boundaries`        | in progress | PR 07  | —                                            | audit underway             | Extraction must simplify concrete hot paths.  |
+| 08b | `cleanup/08b-renderer-audit-pass`        | optional    | PR 08a | —                                            | —                          | Proceed only if two-pass semantics shrink.    |
+| 09  | `cleanup/09-kotlin-rules`                | planned     | PR 08b | —                                            | —                          | Kotlin hotspot purification.                  |
+| 10  | `cleanup/10-java-rules`                  | planned     | PR 09  | —                                            | —                          | Java hotspot purification.                    |
+| 11  | `cleanup/11-lexer-substrate`             | planned     | PR 10  | —                                            | —                          | Share cursor mechanics only.                  |
+| 12  | `cleanup/12-java-lookahead`              | planned     | PR 11  | —                                            | —                          | Counted bounded lookahead work.               |
+| 13  | `cleanup/13-final-reconciliation`        | planned     | PR 12  | —                                            | —                          | Actual docs, metrics, and API deletions only. |
 
 ### PR 01 evidence
 
@@ -1036,6 +1036,9 @@ ready for review.
 | 2026-07-22 | Keep dense source auditing debug-only.                         | Debug owns exact identity proof and actionable ranges; release suites own output parity, snapshots, idempotence, integration behavior, and performance without a second audit path.                        |
 | 2026-07-22 | Keep the document, ignore, and render lifecycle in one crate.  | Their real source-claim, root-plan, and proof-observation cycle cannot be extracted without adding a context, side table, callback, or generic audit abstraction.                                          |
 | 2026-07-22 | Make `jolt_formatter` the integration-facing facade.           | Its public sink function requires the sink/control contracts; CLI and dprint should not depend directly on the lower document IR, while language formatter crates remain implementation details.           |
+| 2026-07-22 | Keep render, fit, and output state in one concrete hot loop.   | Fit consumes the active command continuation and output-position state; extracting it adds a back-edge or shared context while deleting no interpreter dispatch.                                           |
+| 2026-07-22 | Treat flat mode as the successful-fit proof.                   | Rendering starts broken and enters flat mode only after a complete accepted probe; a second mutable flag duplicated that state and could not diverge on a reachable flat path.                             |
+| 2026-07-22 | Carry exactly one diagnostic when formatting is blocked.       | All five producers create one fatal diagnostic; a vector added an allocation and forced consumers to handle impossible empty/multiple cases.                                                               |
 
 ## Resume Protocol
 

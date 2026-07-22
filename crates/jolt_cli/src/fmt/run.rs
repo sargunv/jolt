@@ -570,7 +570,7 @@ fn diagnostics_text(label: &str, source: &str, diagnostics: &[Diagnostic]) -> St
 
 fn result_diagnostics(result: &FormatSinkResult) -> &[Diagnostic] {
     match result {
-        FormatSinkResult::Blocked { diagnostics } => diagnostics,
+        FormatSinkResult::Blocked { diagnostic } => std::slice::from_ref(diagnostic),
         FormatSinkResult::Complete | FormatSinkResult::Halted => &[],
     }
 }

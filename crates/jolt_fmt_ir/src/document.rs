@@ -324,11 +324,7 @@ impl<'source> DocBuilder<'source> {
     ) -> ExceptionalFragment<'source> {
         let contents = self.source_fragment(
             Cow::Borrowed(core.text()),
-            SourceClaim::MalformedVerbatim {
-                claim: core.source_claim(),
-                kind: core.raw_kind(),
-                range: core.text_range(),
-            },
+            SourceClaim::MalformedVerbatim(core.source_claim()),
         );
         ExceptionalFragment::exact_source(contents, boundary, core.text_range())
     }

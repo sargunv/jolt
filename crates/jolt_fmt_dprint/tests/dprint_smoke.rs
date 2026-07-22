@@ -181,8 +181,8 @@ fn direct_java_format(source: &str) -> String {
     match format_source_to_sink(source, Language::Java, &FormatOptions::default(), &mut sink) {
         FormatSinkResult::Complete => sink.into_string(),
         FormatSinkResult::Halted => panic!("direct Java formatting unexpectedly halted"),
-        FormatSinkResult::Blocked { diagnostics } => {
-            panic!("direct Java formatting blocked: {diagnostics:?}")
+        FormatSinkResult::Blocked { diagnostic } => {
+            panic!("direct Java formatting blocked: {diagnostic:?}")
         }
     }
 }
@@ -197,8 +197,8 @@ fn direct_kotlin_format(source: &str) -> String {
     ) {
         FormatSinkResult::Complete => sink.into_string(),
         FormatSinkResult::Halted => panic!("direct Kotlin formatting unexpectedly halted"),
-        FormatSinkResult::Blocked { diagnostics } => {
-            panic!("direct Kotlin formatting blocked: {diagnostics:?}")
+        FormatSinkResult::Blocked { diagnostic } => {
+            panic!("direct Kotlin formatting blocked: {diagnostic:?}")
         }
     }
 }
