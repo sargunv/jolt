@@ -308,7 +308,6 @@ fn format_property_initializer<'source>(
         KotlinSyntaxField::Present(operator) => operator.token(),
         _ => None,
     };
-    let has_expression = syntax_field_has_token(initializer.expression());
     let before = if leading_space {
         doc.space()
     } else {
@@ -335,7 +334,28 @@ fn format_property_initializer<'source>(
             )
         }
     });
-    let expression = format_required_field(initializer.expression(), doc, |expression, doc| {
+    format_assignment_rhs(
+        doc,
+        before,
+        operator,
+        operator_token,
+        initializer.expression(),
+    )
+}
+
+fn format_assignment_rhs<'source>(
+    doc: &mut DocBuilder<'source>,
+    before: Doc<'source>,
+    operator: Doc<'source>,
+    operator_token: Option<KotlinSyntaxToken<'source>>,
+    expression: KotlinSyntaxField<'source, jolt_kotlin_syntax::Expression<'source>>,
+) -> Doc<'source> {
+    let has_expression = syntax_field_has_token(expression);
+    let is_annotated = matches!(
+        expression,
+        KotlinSyntaxField::Present(jolt_kotlin_syntax::Expression::AnnotatedExpression(_))
+    );
+    let expression = format_required_field(expression, doc, |expression, doc| {
         format_expression(doc, &expression)
     });
     if has_expression
@@ -344,10 +364,7 @@ fn format_property_initializer<'source>(
         let line = doc.hard_line();
         return doc.concat([before, operator, line, expression]);
     }
-    if matches!(
-        initializer.expression(),
-        KotlinSyntaxField::Present(jolt_kotlin_syntax::Expression::AnnotatedExpression(_))
-    ) {
+    if is_annotated {
         let line = doc.hard_line();
         let expression = doc.concat([line, expression]);
         let expression = doc.indent(expression);
@@ -863,7 +880,6 @@ fn format_expression_body<'source>(
     doc: &mut DocBuilder<'source>,
     body: &ExpressionBody<'source>,
 ) -> Doc<'source> {
-    let has_expression = syntax_field_has_token(body.expression());
     let assign_token = match body.assign() {
         KotlinSyntaxField::Present(assign) => Some(assign),
         _ => None,
@@ -881,29 +897,7 @@ fn format_expression_body<'source>(
             keyword_token(doc, assign)
         }
     });
-    let expression = format_required_field(body.expression(), doc, |expression, doc| {
-        format_expression(doc, &expression)
-    });
-    if has_expression && assign_token.is_some_and(|assign| trailing_comments_force_line(&assign)) {
-        let line = doc.hard_line();
-        return doc.concat([before, assign, line, expression]);
-    }
-    if matches!(
-        body.expression(),
-        KotlinSyntaxField::Present(jolt_kotlin_syntax::Expression::AnnotatedExpression(_))
-    ) {
-        let line = doc.hard_line();
-        let expression = doc.concat([line, expression]);
-        let expression = doc.indent(expression);
-        return doc.concat([before, assign, expression]);
-    }
-    let after = if assign_token.is_some() && has_expression {
-        doc.space()
-    } else {
-        Doc::nil()
-    };
-    let contents = doc.concat([before, assign, after, expression]);
-    doc.group(contents)
+    format_assignment_rhs(doc, before, assign, assign_token, body.expression())
 }
 
 fn keyword_with_space<'source>(
