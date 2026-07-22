@@ -83,7 +83,7 @@ fn format_block_statements_body<'source>(
         items.extend(
             entries
                 .iter()
-                .filter_map(|entry| format_block_statement_part(entry, doc)),
+                .map(|entry| format_block_statement_part(entry, doc)),
         );
     } else {
         items.extend(format_block_statement_items_with_ignored(
@@ -124,12 +124,11 @@ fn format_block_statement_items_with_ignored<'source>(
             index,
             clear_blank_line_before,
         } => {
-            if let Some(mut item) = format_block_statement_part(&entries[index], doc) {
-                if clear_blank_line_before {
-                    item = item.without_blank_line_before();
-                }
-                items.push(item);
+            let mut item = format_block_statement_part(&entries[index], doc);
+            if clear_blank_line_before {
+                item = item.without_blank_line_before();
             }
+            items.push(item);
         }
     });
     items
@@ -138,22 +137,22 @@ fn format_block_statement_items_with_ignored<'source>(
 fn format_block_statement_part<'source>(
     entry: &JavaSyntaxListPart<'source, BlockStatement<'source>>,
     doc: &mut DocBuilder<'source>,
-) -> Option<BodyItem<'source>> {
+) -> BodyItem<'source> {
     match entry {
         JavaSyntaxListPart::Item(statement) => format_block_statement_item(statement, doc),
         JavaSyntaxListPart::Malformed(malformed) => {
-            Some(BodyItem::new(format_malformed(malformed, doc), false))
+            BodyItem::new(format_malformed(malformed, doc), false)
         }
-        JavaSyntaxListPart::Missing(missing) => Some(BodyItem::new(
+        JavaSyntaxListPart::Missing(missing) => BodyItem::new(
             crate::helpers::recovery::format_missing(missing, doc),
             false,
-        )),
+        ),
         JavaSyntaxListPart::Separator(token) => {
             doc.block_on_invariant("unseparated block statement list contained a separator");
-            Some(BodyItem::new(
+            BodyItem::new(
                 crate::helpers::comments::format_token_with_comments(doc, token),
                 false,
-            ))
+            )
         }
     }
 }
@@ -199,11 +198,11 @@ fn block_statement_part_ignore_range(
     }
 }
 
-#[allow(clippy::map_unwrap_or, clippy::unnecessary_wraps)]
+#[allow(clippy::map_unwrap_or)]
 pub(crate) fn format_block_statement_item<'source>(
     statement: &BlockStatement<'source>,
     doc: &mut DocBuilder<'source>,
-) -> Option<BodyItem<'source>> {
+) -> BodyItem<'source> {
     // Recovery trivia can be repartitioned when an adjacent line comment is
     // relocated by structured formatting. Only recovery-free statements may
     // use it to request a blank separator; recovered statements receive the
@@ -213,17 +212,17 @@ pub(crate) fn format_block_statement_item<'source>(
     let item = match resolve_required_field(statement.item(), doc) {
         JavaFormatField::Present(item) => item,
         JavaFormatField::Malformed(malformed) => {
-            return Some(BodyItem::new(malformed, starts_after_blank_line));
+            return BodyItem::new(malformed, starts_after_blank_line);
         }
     };
     let formatted = match item {
         BlockItem::EmptyStatement(empty) => {
             let (removed, visible) = format_removed_empty_statement(&empty, doc);
-            return Some(if visible {
+            return if visible {
                 BodyItem::new(removed, starts_after_blank_line)
             } else {
                 BodyItem::invisible(removed)
-            });
+            };
         }
         BlockItem::LocalVariableDeclaration(declaration) => doc_concat!(
             doc,
@@ -281,7 +280,7 @@ pub(crate) fn format_block_statement_item<'source>(
         BlockItem::TryStatement(statement) => format_statement(&statement.into(), doc),
         BlockItem::TryWithResourcesStatement(statement) => format_statement(&statement.into(), doc),
     };
-    Some(BodyItem::new(formatted, starts_after_blank_line))
+    BodyItem::new(formatted, starts_after_blank_line)
 }
 
 fn format_removed_empty_statement<'source>(
