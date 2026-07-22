@@ -8,7 +8,6 @@ use jolt_kotlin_syntax::{
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, comment_forces_line, format_token};
 use crate::helpers::recovery::format_required_field;
-use crate::helpers::syntax_tokens::inserted_syntax_token;
 use crate::rules::types::format_type_reference;
 
 use super::{format_expression, format_expression_with_leading};
@@ -239,12 +238,12 @@ fn format_binary_operand_doc<'source>(
     let Some(claims) = owner.precedence_parenthesis_claims(expression) else {
         return formatted;
     };
-    let open = inserted_syntax_token(doc, claims.open);
+    let open = doc.synthesized_source(claims.open);
     let line = doc.soft_line();
     let formatted = doc.concat([line, formatted]);
     let formatted = doc.indent(formatted);
     let trailing = doc.soft_line();
-    let close = inserted_syntax_token(doc, claims.close);
+    let close = doc.synthesized_source(claims.close);
     let contents = doc.concat([open, formatted, trailing, close]);
     doc.group(contents)
 }
