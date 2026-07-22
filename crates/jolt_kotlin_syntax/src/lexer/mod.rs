@@ -144,7 +144,6 @@ impl StringMode {
 struct Scanner<'source> {
     source: &'source str,
     pos: usize,
-    previous_end: TextSize,
     diagnostics: Vec<LexerDiagnostic>,
     modes: Vec<Mode>,
 }
@@ -164,7 +163,6 @@ impl<'source> Scanner<'source> {
         Self {
             source,
             pos: 0,
-            previous_end: TextSize::new(0),
             diagnostics: Vec::new(),
             modes: Vec::new(),
         }
@@ -189,7 +187,7 @@ impl<'source> Scanner<'source> {
             Some(Mode::LongTemplateEntry { .. }) => self.long_template_or_default_token(),
             None => self.default_token(),
         };
-        let end = self.previous_end();
+        let end = TextSize::new(self.pos);
         (kind, TextRange::new(start, end))
     }
 
@@ -352,7 +350,7 @@ impl<'source> Scanner<'source> {
         }
         SyntaxTrivia::new(
             SyntaxTriviaKind::Whitespace,
-            TextRange::new(start, self.previous_end()).len(),
+            TextRange::new(start, TextSize::new(self.pos)).len(),
         )
     }
 
@@ -366,7 +364,7 @@ impl<'source> Scanner<'source> {
         }
         SyntaxTrivia::new(
             SyntaxTriviaKind::Newline,
-            TextRange::new(start, self.previous_end()).len(),
+            TextRange::new(start, TextSize::new(self.pos)).len(),
         )
     }
 
@@ -384,7 +382,7 @@ impl<'source> Scanner<'source> {
         while self.current_char().is_some_and(|ch| ch != '\n') {
             self.bump();
         }
-        SyntaxTrivia::new(kind, TextRange::new(start, self.previous_end()).len())
+        SyntaxTrivia::new(kind, TextRange::new(start, TextSize::new(self.pos)).len())
     }
 
     fn block_comment(&mut self) -> SyntaxTrivia {
@@ -413,7 +411,7 @@ impl<'source> Scanner<'source> {
                     self.bump();
                     return SyntaxTrivia::new(
                         kind,
-                        TextRange::new(start, self.previous_end()).len(),
+                        TextRange::new(start, TextSize::new(self.pos)).len(),
                     );
                 }
                 (Some('*'), Some('/')) => {
@@ -427,9 +425,9 @@ impl<'source> Scanner<'source> {
 
         self.diagnostics.push(lexer_diagnostic(
             KotlinLexDiagnosticCode::UnterminatedBlockComment,
-            TextRange::new(start, self.previous_end_or_source_end()),
+            TextRange::new(start, TextSize::new(self.pos)),
         ));
-        SyntaxTrivia::new(kind, TextRange::new(start, self.previous_end()).len())
+        SyntaxTrivia::new(kind, TextRange::new(start, TextSize::new(self.pos)).len())
     }
 
     fn interpolation_prefix(&mut self) -> KotlinSyntaxKind {
@@ -742,7 +740,7 @@ impl<'source> Scanner<'source> {
             self.bump();
             self.diagnostics.push(lexer_diagnostic(
                 KotlinLexDiagnosticCode::UnterminatedBacktickIdentifier,
-                TextRange::new(start, self.previous_end()),
+                TextRange::new(start, TextSize::new(self.pos)),
             ));
             return KotlinSyntaxKind::Unknown;
         }
@@ -786,7 +784,7 @@ impl<'source> Scanner<'source> {
 
         self.diagnostics.push(lexer_diagnostic(
             KotlinLexDiagnosticCode::UnterminatedCharacterLiteral,
-            TextRange::new(start, self.previous_end_or_source_end()),
+            TextRange::new(start, TextSize::new(self.pos)),
         ));
         KotlinSyntaxKind::CharacterLiteral
     }
@@ -986,7 +984,7 @@ impl<'source> Scanner<'source> {
                 self.bump();
                 self.diagnostics.push(lexer_diagnostic(
                     KotlinLexDiagnosticCode::UnknownCharacter,
-                    TextRange::new(start, self.previous_end()),
+                    TextRange::new(start, TextSize::new(self.pos)),
                 ));
                 KotlinSyntaxKind::Unknown
             }
@@ -1029,15 +1027,9 @@ impl<'source> Scanner<'source> {
     }
 
     fn string_prefix_dollars(&self) -> Option<usize> {
-        let mut count = 0usize;
-        while self.nth_char(count) == Some('$') {
-            count += 1;
-        }
-        if count > 0 && self.nth_char(count) == Some('"') {
-            Some(count)
-        } else {
-            None
-        }
+        let bytes = &self.source.as_bytes()[self.pos..];
+        let count = bytes.iter().take_while(|byte| **byte == b'$').count();
+        (count > 0 && bytes.get(count) == Some(&b'"')).then_some(count)
     }
 
     fn peek_identifier_start_after(&self, chars: usize) -> bool {
@@ -1119,7 +1111,6 @@ impl<'source> Scanner<'source> {
 
     fn bump(&mut self) {
         self.pos += utf8_char_width(self.source.as_bytes()[self.pos]);
-        self.previous_end = TextSize::new(self.pos);
     }
 
     fn current_char(&self) -> Option<char> {
@@ -1152,18 +1143,6 @@ impl<'source> Scanner<'source> {
         let start = TextSize::new(self.pos);
         let end = start + TextSize::new(utf8_char_width(*self.source.as_bytes().get(self.pos)?));
         Some(TextRange::new(start, end))
-    }
-
-    const fn previous_end(&self) -> TextSize {
-        self.previous_end
-    }
-
-    fn previous_end_or_source_end(&self) -> TextSize {
-        if self.pos == self.source.len() {
-            TextSize::new(self.source.len())
-        } else {
-            self.previous_end
-        }
     }
 
     fn at_end(&self) -> bool {
@@ -1227,4 +1206,23 @@ fn is_kotlin_identifier_start(ch: char) -> bool {
 
 fn is_kotlin_identifier_part(ch: char) -> bool {
     is_kotlin_identifier_start(ch) || get_general_category(ch) == GeneralCategory::DecimalNumber
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Scanner;
+
+    #[test]
+    fn long_string_prefix_scan_remains_bounded() {
+        const DOLLAR_COUNT: usize = 65_536;
+
+        let valid = format!("{}\"", "$".repeat(DOLLAR_COUNT));
+        assert_eq!(
+            Scanner::new(&valid).string_prefix_dollars(),
+            Some(DOLLAR_COUNT)
+        );
+
+        let invalid = "$".repeat(DOLLAR_COUNT);
+        assert_eq!(Scanner::new(&invalid).string_prefix_dollars(), None);
+    }
 }
