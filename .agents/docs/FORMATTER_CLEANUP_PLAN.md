@@ -592,6 +592,33 @@ Gates:
 - shared APIs contain no Java/Kotlin token semantics;
 - new substrate code is materially smaller than the duplicates removed.
 
+Audited working scope (2026-07-22):
+
+- add one forward-only, two-field `LexerCursor<'source>` beside `LanguageLexer`
+  in `jolt_syntax`; it owns only borrowed source text and the current UTF-8 byte
+  offset;
+- expose only source/position access, current and explicitly linear nth
+  character access, current range, bump, and end-of-source checks; do not add
+  checkpoints, rewinding, callbacks, generics, token kinds, diagnostics, or
+  language policy;
+- embed that cursor in both scanners and delete both copies of the movement code
+  plus the redundant `previous_end` field, whose value is always exactly the
+  current offset;
+- make Kotlin's multi-dollar string-prefix probe linear; the audited
+  `chars().nth(count)` loop is quadratic and a valid prefix is currently
+  rescanned;
+- do not share trivia orchestration or trivia-piece scanning. Kotlin has
+  string-mode gating, shebangs, nested block comments, and LF-only line-comment
+  termination, while Java has Unicode pretranslation, final-SUB handling,
+  non-nested block comments, and CR-or-LF line-comment termination;
+- keep Java Unicode normalization/remapping, both token classifiers, comment end
+  probes, and the local one/two/three token helpers language-owned.
+
+The cursor-only production estimate is roughly 100 removed lines against 58–72
+shared/replacement lines. Gate the Kotlin boundedness fix with generated
+long-prefix stress in addition to the existing multi-dollar fixtures; do not
+commit a giant fixture or test-only counter solely to restate the source loop.
+
 ### PR 12 — Bounded Java lookahead
 
 Scope:
