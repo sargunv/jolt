@@ -9,7 +9,7 @@ use crate::helpers::comments::{
 };
 use crate::helpers::recovery::{
     KotlinFormatDelimiter, KotlinFormatField, format_malformed, format_missing,
-    resolve_optional_field, resolve_required_delimiter, resolve_required_field,
+    format_optional_field, resolve_required_delimiter, resolve_required_field,
 };
 use jolt_fmt_ir::formatter_ignore::{
     FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
@@ -26,14 +26,13 @@ pub(super) fn format_class_body<'source>(
     doc: &mut DocBuilder<'source>,
     body: ClassBody<'source>,
 ) -> Doc<'source> {
-    let has_close = matches!(
-        body.close_brace(),
-        jolt_kotlin_syntax::KotlinSyntaxField::Present(_)
-    ) || matches!(
-        body.close_brace(),
-        jolt_kotlin_syntax::KotlinSyntaxField::Malformed(ref malformed)
-            if malformed.first_token().is_some()
-    );
+    let has_close = match body.close_brace() {
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(_) => true,
+        jolt_kotlin_syntax::KotlinSyntaxField::Malformed(malformed) => {
+            malformed.first_token().is_some()
+        }
+        jolt_kotlin_syntax::KotlinSyntaxField::Missing(_) => false,
+    };
     let open = resolve_required_delimiter(body.open_brace(), doc);
     let close = resolve_required_delimiter(body.close_brace(), doc);
     let contents = format_class_body_contents(doc, &body, open.source(), close.source());
@@ -62,13 +61,11 @@ fn format_class_body_contents<'source>(
     } else {
         class_body_sections_with_ignored(doc, &parts, &ignored_runs)
     };
-    if let Some(comments) = close
-        .map(KotlinSyntaxToken::leading_comments)
-        .map(Iterator::collect::<Vec<_>>)
-        .filter(|comments| !comments.is_empty())
+    if let Some(close) = close
+        && !close.leading_comments().is_empty()
     {
         sections.push(ClassBodySection {
-            doc: format_dangling_comments(doc, comments),
+            doc: format_dangling_comments(doc, close.leading_comments()),
             hard_line_after: false,
         });
     }
@@ -205,10 +202,6 @@ fn class_body_sections_with_ignored<'source>(
     parts: &[ClassBodyPart<'source>],
     ignored_runs: &[FormatterIgnoreRun<'source>],
 ) -> Vec<ClassBodySection<'source>> {
-    if ignored_runs.is_empty() {
-        return class_body_sections(doc, parts);
-    }
-
     let mut sections = Vec::with_capacity(parts.len().saturating_add(ignored_runs.len()));
     let mut previous_had_comments = false;
     for_each_formatter_ignore_splice(parts.len(), ignored_runs, |event| match event {
@@ -310,16 +303,14 @@ fn format_class_member_declaration<'source>(
         KotlinFormatField::Present(element) => format_class_member_element(doc, element),
         KotlinFormatField::Malformed(recovery) => recovery,
     };
-    let comma = match resolve_optional_field(member.comma(), doc) {
-        KotlinFormatField::Present(Some(comma)) => format_token(
+    let comma = format_optional_field(member.comma(), doc, |comma, doc| {
+        format_token(
             doc,
             &comma,
             LeadingTrivia::Preserve,
             TrailingTrivia::Preserve,
-        ),
-        KotlinFormatField::Present(None) => Doc::nil(),
-        KotlinFormatField::Malformed(recovery) => recovery,
-    };
+        )
+    });
     doc.concat([contents, comma])
 }
 
