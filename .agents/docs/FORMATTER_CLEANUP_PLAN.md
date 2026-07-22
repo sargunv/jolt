@@ -704,7 +704,7 @@ ready for review.
 | 03  | `cleanup/03-infallible-generated-fields` | draft open | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5) | debug/release + benchmark  | Generated physical slots only.                |
 | 04  | `cleanup/04-syntax-recovery-visibility`  | draft open | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6) | full + release + benchmark | Syntax-owned malformed lexical boundaries.    |
 | 05  | `cleanup/05-root-coordination`           | draft open | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7) | full + release + benchmark | Narrow root ownership, no god context.        |
-| 06  | `cleanup/06-source-audit-reporting`      | verified   | PR 05  | —                                            | full + release + benchmark | Syntax claims replace filename/count policy.  |
+| 06  | `cleanup/06-source-audit-reporting`      | draft open | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8) | full + release + benchmark | Syntax claims replace filename/count policy.  |
 | 07  | `cleanup/07-core-module-boundaries`      | planned    | PR 06  | —                                            | —                          | Conditional crate extraction gate.            |
 | 08a | `cleanup/08a-renderer-boundaries`        | planned    | PR 07  | —                                            | —                          | Separate contracts without output changes.    |
 | 08b | `cleanup/08b-renderer-audit-pass`        | optional   | PR 08a | —                                            | —                          | Proceed only if two-pass semantics shrink.    |
