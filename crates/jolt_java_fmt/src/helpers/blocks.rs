@@ -8,29 +8,6 @@ use crate::helpers::comments::{
 use crate::helpers::recovery::JavaFormatDelimiter;
 
 #[derive(Clone, Copy)]
-pub(crate) enum BodyItemSeparator {
-    Line,
-    EmptyLine,
-}
-
-impl BodyItemSeparator {
-    pub(crate) const fn from_blank_line(starts_after_blank_line: bool) -> Self {
-        if starts_after_blank_line {
-            Self::EmptyLine
-        } else {
-            Self::Line
-        }
-    }
-
-    fn doc<'source>(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
-        match self {
-            Self::Line => doc.hard_line(),
-            Self::EmptyLine => doc.empty_line(),
-        }
-    }
-}
-
-#[derive(Clone, Copy)]
 pub(crate) struct BodyContent<'source> {
     pub(crate) doc: Doc<'source>,
     pub(crate) present: bool,
@@ -58,7 +35,7 @@ impl<'source> From<Option<Doc<'source>>> for BodyContent<'source> {
 
 pub(crate) struct BodyItem<'source> {
     doc: Doc<'source>,
-    separator: BodyItemSeparator,
+    starts_after_blank_line: bool,
     pub(crate) visible: bool,
 }
 
@@ -66,7 +43,7 @@ impl<'source> BodyItem<'source> {
     pub(crate) fn new(doc: Doc<'source>, starts_after_blank_line: bool) -> Self {
         Self {
             doc,
-            separator: BodyItemSeparator::from_blank_line(starts_after_blank_line),
+            starts_after_blank_line,
             visible: true,
         }
     }
@@ -74,14 +51,14 @@ impl<'source> BodyItem<'source> {
     pub(crate) fn invisible(doc: Doc<'source>) -> Self {
         Self {
             doc,
-            separator: BodyItemSeparator::Line,
+            starts_after_blank_line: false,
             visible: false,
         }
     }
 
     pub(crate) fn without_blank_line_before(self) -> Self {
         Self {
-            separator: BodyItemSeparator::Line,
+            starts_after_blank_line: false,
             ..self
         }
     }
@@ -181,7 +158,11 @@ pub(crate) fn join_body_items<'source>(
         let mut saw_visible = false;
         for item in items {
             if item.visible && saw_visible {
-                let separator = item.separator.doc(joined);
+                let separator = if item.starts_after_blank_line {
+                    joined.empty_line()
+                } else {
+                    joined.hard_line()
+                };
                 joined.push(separator);
             }
             joined.push(item.doc);
