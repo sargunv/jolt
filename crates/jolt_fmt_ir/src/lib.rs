@@ -6,6 +6,7 @@ pub mod formatter_ignore;
 mod options;
 mod recovery;
 mod render;
+mod root;
 mod source_fragment;
 mod token_trivia;
 mod width;
@@ -26,9 +27,10 @@ pub use recovery::{
     FormatField, assemble_malformed_fragment, format_optional_field, format_required_field,
 };
 pub use render::{
-    IndentStyle, RenderControl, RenderError, RenderOptions, RenderOutcome, RenderSink,
-    SourceRenderOutcome, render_source_to, render_to,
+    IndentStyle, RenderControl, RenderError, RenderOptions, RenderOutcome, RenderSink, render_to,
 };
+#[doc(hidden)]
+pub use root::{FormatRootMetrics, format_root_to_sink};
 pub use source_fragment::{
     ExceptionalFragment, ExceptionalSeparator, FragmentBoundary, LexicalAtom, LexicalAtomKind,
     LexicalSafety,

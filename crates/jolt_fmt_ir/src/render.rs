@@ -48,19 +48,21 @@ pub struct RenderOutcome {
 
 /// A completed source-aware render.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct SourceRenderOutcome {
+pub(crate) struct SourceRenderOutcome {
     halted: bool,
+    #[cfg(test)]
     used_malformed_verbatim: bool,
 }
 
 impl SourceRenderOutcome {
     #[must_use]
-    pub const fn halted(&self) -> bool {
+    pub(crate) const fn halted(self) -> bool {
         self.halted
     }
 
+    #[cfg(test)]
     #[must_use]
-    pub const fn used_malformed_verbatim(&self) -> bool {
+    pub(crate) const fn used_malformed_verbatim(self) -> bool {
         self.used_malformed_verbatim
     }
 }
@@ -163,7 +165,7 @@ pub fn render_to<S: RenderSink>(
 ///
 /// Returns [`RenderError`] when the document is structurally invalid or a
 /// rendered fragment makes a duplicate or foreign source claim.
-pub fn render_source_to<'source, L: Language, S: RenderSink>(
+pub(crate) fn render_source_to<'source, L: Language, S: RenderSink>(
     arena: &DocArena<'source>,
     doc: Doc<'source>,
     options: RenderOptions,
@@ -182,6 +184,11 @@ pub fn render_source_to<'source, L: Language, S: RenderSink>(
             kind: RenderErrorKind::Conservation(error),
         })?
     };
+    #[cfg(debug_assertions)]
+    assert!(
+        !root.is_recovery_free() || !used_malformed_verbatim,
+        "recovery-free syntax rendered a malformed-verbatim fragment"
+    );
     #[cfg(not(debug_assertions))]
     let _ = root;
     let mut renderer = Renderer::new(arena, options, sink, None, true);
@@ -190,13 +197,15 @@ pub fn render_source_to<'source, L: Language, S: RenderSink>(
     if render.halted {
         return Ok(SourceRenderOutcome {
             halted: true,
+            #[cfg(test)]
             used_malformed_verbatim: false,
         });
     }
-    #[cfg(not(debug_assertions))]
+    #[cfg(all(test, not(debug_assertions)))]
     let used_malformed_verbatim = false;
     Ok(SourceRenderOutcome {
         halted: false,
+        #[cfg(test)]
         used_malformed_verbatim,
     })
 }
