@@ -9,7 +9,6 @@ use crate::helpers::comments::{
     has_delimiter_dangling_comments, trailing_comments_force_line,
 };
 use crate::helpers::recovery::{JavaFormatDelimiter, JavaFormatListPart, resolve_list_part};
-use crate::helpers::syntax_tokens::inserted_syntax_token;
 
 pub(crate) struct CommaListItem<'source> {
     pub(crate) doc: Doc<'source>,
@@ -262,7 +261,7 @@ fn comma_list_with_trailing_separator<'source>(
                         docs,
                         // Intentional synthesized token: trailing comma policy adds a
                         // comma only when the list breaks across lines.
-                        inserted_syntax_token(docs, claim),
+                        docs.synthesized_source(claim),
                         Doc::nil(),
                     )
                 });

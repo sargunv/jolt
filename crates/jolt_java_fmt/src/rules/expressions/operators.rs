@@ -4,7 +4,6 @@ use super::{
 };
 use crate::helpers::comments::token_has_comments;
 use crate::helpers::recovery::format_required_field;
-use crate::helpers::syntax_tokens::inserted_syntax_token;
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{
     AssignmentTargetSyntax, ExpressionParentRole, JavaOperator, JavaOperatorKind, JavaSyntaxField,
@@ -195,11 +194,11 @@ fn format_binary_operand<'source>(
         let Some(claims) = owner.precedence_parenthesis_claims(expression) else {
             return formatted;
         };
-        let open = inserted_syntax_token(doc, claims.open);
+        let open = doc.synthesized_source(claims.open);
         let line = doc.soft_line();
         let indented = doc_indent!(doc, doc_concat!(doc, [line, formatted]));
         let line = doc.soft_line();
-        let close = inserted_syntax_token(doc, claims.close);
+        let close = doc.synthesized_source(claims.close);
         doc_group!(
             doc,
             doc_concat!(

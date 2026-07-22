@@ -10,13 +10,12 @@ use super::{
     formatter_ignore_content_range, is_formatter_control_marker, source_braced_body,
 };
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_leading_comments, format_token,
+    LeadingTrivia, TrailingTrivia, format_leading_comments, format_token, format_token_doc,
 };
 use crate::helpers::recovery::{
     JavaFormatField, JavaFormatListPart, format_optional_field, format_required_field,
     resolve_list_part, resolve_optional_field, resolve_required_delimiter, resolve_required_field,
 };
-use crate::helpers::syntax_tokens::{format_token_with_normalized_text, inserted_syntax_token};
 use jolt_fmt_ir::{ConcatBuilder, DocBuilder};
 use jolt_java_syntax::NormalizedToken;
 
@@ -346,7 +345,7 @@ fn format_enum_constant_separator<'source>(
             // Intentional synthesized token: multiline enum constants use a
             // doc-owned trailing comma even when the source omitted one.
             body.trailing_comma_claim()
-                .map_or_else(Doc::nil, |claim| inserted_syntax_token(doc, claim))
+                .map_or_else(Doc::nil, |claim| doc.synthesized_source(claim))
         } else {
             Doc::nil()
         };
@@ -370,13 +369,16 @@ fn format_enum_constant_separator<'source>(
                     NormalizedToken::EnumSemicolon
                 };
                 match body.separator_replacement_claim(separator_token, normalized) {
-                    Some(claim) => format_token_with_normalized_text(
-                        doc,
-                        separator_token,
-                        claim,
-                        LeadingTrivia::SuppressAlreadyHandled,
-                        TrailingTrivia::RelocatedToEnclosingContext,
-                    ),
+                    Some(claim) => {
+                        let token_doc = doc.replaced_source(claim);
+                        format_token_doc(
+                            doc,
+                            separator_token,
+                            token_doc,
+                            LeadingTrivia::SuppressAlreadyHandled,
+                            TrailingTrivia::RelocatedToEnclosingContext,
+                        )
+                    }
                     None => format_token(
                         doc,
                         separator_token,

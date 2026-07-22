@@ -6,7 +6,6 @@ use crate::helpers::comments::{
     format_token_before_relocated_trailing_comments,
 };
 use crate::helpers::recovery::JavaFormatDelimiter;
-use crate::helpers::syntax_tokens::inserted_syntax_token;
 
 #[derive(Clone, Copy)]
 pub(crate) enum BodyItemSeparator {
@@ -98,7 +97,7 @@ pub(crate) fn inserted_braced_body<'source>(
         [
             // Intentional synthesized token: normalized braced bodies add braces
             // around source statements that did not have a block.
-            inserted_syntax_token(doc, claims.open),
+            doc.synthesized_source(claims.open),
             inserted_braced_body_tail(doc, body, claims.close),
         ]
     )
@@ -145,7 +144,7 @@ fn inserted_braced_body_tail<'source>(
         }
         None => doc.hard_line(),
     };
-    let close = inserted_syntax_token(doc, close);
+    let close = doc.synthesized_source(close);
     doc_concat!(doc, [body, close])
 }
 
