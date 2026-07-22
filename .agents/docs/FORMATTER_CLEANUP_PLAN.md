@@ -1146,6 +1146,26 @@ ready for review.
   This deterministic 819-byte cost is accepted against the rule-state deletion;
   no runtime or allocation regression accompanied it.
 
+### PR 10 working scope
+
+- Begin with owner-local totality and wrapper deletion: remove stale optional
+  list/node inputs, impossible expression re-casts, total `Option<BodyItem>` and
+  `Option<FormattedMember>` results, duplicated recovery-field wrappers, and the
+  one-client normalized/synthesized-token module.
+- Purify member chains, binary chains, throws clauses, and module directives
+  only where each field is classified once and the replacement deletes states or
+  mirror representations. Preserve formatter-ignore category planning,
+  sortable-run barriers, and every malformed/missing physical list part.
+- Keep `BodyContent`'s absent, present-invisible, and visible states. Keep the
+  standard-member-body macro unless a concrete replacement shrinks its three
+  syntax-specific expansions without a trait, context, or dynamic role cast.
+- Preserve byte-for-byte output. Program-section joining has a policy difference
+  around invisible entries between ignored runs; treat any reconciliation as a
+  separate behavior change, not structural cleanup.
+- Do not generalize Java/Kotlin lists, imports, body pipelines, delimiters, or
+  operator sequences. Their recovery, normalization, comment, and separator
+  policies are materially different.
+
 ## Decision Log
 
 | Date       | Decision                                                       | Reason                                                                                                                                                                                                     |
