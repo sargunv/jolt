@@ -1,14 +1,10 @@
 use std::path::PathBuf;
 
 use jolt_java_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
-use jolt_java_syntax::{
-    BinaryExpression, EmptyDeclaration, EmptyStatement, EnumBody, Guard, JavaNode, JavaSyntaxField,
-    JavaSyntaxListPart, JavaSyntaxView, LambdaExpression, ParenthesizedExpression,
-    ResourceSpecification, parse_compilation_unit,
-};
+use jolt_java_syntax::parse_compilation_unit;
 use jolt_test_support::{
-    RepresentedTokenRemoval, StringSink, collect_java_files, diagnostic_inventory, read_to_string,
-    represented_comment_inventory, represented_token_loss_report, workspace_root,
+    StringSink, collect_java_files, diagnostic_inventory, read_to_string,
+    represented_comment_inventory, workspace_root,
 };
 
 #[test]
@@ -81,24 +77,11 @@ fn imported_fixture_inputs_format_idempotently_and_conserve_represented_syntax()
                 "formatted output did not reconstruct exactly for {}",
                 path.display()
             );
-            let removals = syntax_authorized_removals(syntax);
-            let token_loss = represented_token_loss_report(
-                syntax.token_iter(),
-                formatted_syntax.token_iter(),
-                &removals,
-            );
             let before_comments = represented_comment_inventory(syntax.token_iter());
             let after_comments = represented_comment_inventory(formatted_syntax.token_iter());
-            let failure = (!token_loss.is_empty() || before_comments != after_comments).then(|| {
+            let failure = (before_comments != after_comments).then(|| {
                 format!(
-                    "{token_loss}{}",
-                    if before_comments == after_comments {
-                        String::new()
-                    } else {
-                        format!(
-                            "represented comments changed\nbefore: {before_comments:#?}\nafter: {after_comments:#?}\n"
-                        )
-                    }
+                    "represented comments changed\nbefore: {before_comments:#?}\nafter: {after_comments:#?}\n"
                 )
             });
             if let Some(failure) = failure {
@@ -138,103 +121,6 @@ fn imported_fixture_inputs_format_idempotently_and_conserve_represented_syntax()
         "imported Java conservation failures:\n{}",
         conservation_failures.join("\n")
     );
-}
-
-fn syntax_authorized_removals(
-    syntax: jolt_java_syntax::CompilationUnit<'_>,
-) -> Vec<RepresentedTokenRemoval> {
-    let Some(root) = syntax.syntax_node() else {
-        return Vec::new();
-    };
-    let mut stack = vec![root];
-    let mut redundant_commas = 0usize;
-    let mut redundant_semicolons = 0usize;
-    let mut redundant_open_parentheses = 0usize;
-    let mut redundant_close_parentheses = 0usize;
-    while let Some(node) = stack.pop() {
-        stack.extend(node.children());
-        if EmptyDeclaration::cast(node)
-            .is_some_and(|empty| empty.separator_removal_claim().is_some())
-        {
-            redundant_semicolons += 1;
-        }
-        if EmptyStatement::cast(node).is_some_and(|empty| empty.separator_removal_claim().is_some())
-        {
-            redundant_semicolons += 1;
-        }
-        if ResourceSpecification::cast(node)
-            .is_some_and(|resources| resources.trailing_separator_removal_claim().is_some())
-        {
-            redundant_semicolons += 1;
-        }
-        if let Some(body) = EnumBody::cast(node) {
-            redundant_semicolons +=
-                usize::from(body.redundant_body_separator_removal_claim().is_some());
-            let trailing_constant_comma_is_redundant = (|| {
-                let field = body.constants();
-                let JavaSyntaxField::Present(constants) = field else {
-                    return false;
-                };
-                constants.parts().last().is_some_and(|part| {
-                    let JavaSyntaxListPart::Separator(comma) = part else {
-                        return false;
-                    };
-                    body.redundant_constant_separator_removal_claim(&comma)
-                        .is_some()
-                })
-            })();
-            redundant_commas += usize::from(trailing_constant_comma_is_redundant);
-        }
-        let parentheses = if let Some(guard) = Guard::cast(node) {
-            Some(guard.redundant_parenthesis_removal_claims())
-        } else if let Some(lambda) = LambdaExpression::cast(node) {
-            if lambda.simple_parameter_parenthesis_removal().is_some() {
-                redundant_open_parentheses += 1;
-                redundant_close_parentheses += 1;
-            }
-            None
-        } else {
-            ParenthesizedExpression::cast(node).and_then(binary_parenthesis_removals)
-        };
-        if let Some(parentheses) = parentheses {
-            redundant_open_parentheses += usize::from(parentheses.open.is_some());
-            redundant_close_parentheses += usize::from(parentheses.close.is_some());
-        }
-    }
-    [
-        (redundant_semicolons != 0).then_some(RepresentedTokenRemoval {
-            source: ";",
-            count: redundant_semicolons,
-        }),
-        (redundant_commas != 0).then_some(RepresentedTokenRemoval {
-            source: ",",
-            count: redundant_commas,
-        }),
-        (redundant_open_parentheses != 0).then_some(RepresentedTokenRemoval {
-            source: "(",
-            count: redundant_open_parentheses,
-        }),
-        (redundant_close_parentheses != 0).then_some(RepresentedTokenRemoval {
-            source: ")",
-            count: redundant_close_parentheses,
-        }),
-    ]
-    .into_iter()
-    .flatten()
-    .collect()
-}
-
-fn binary_parenthesis_removals(
-    expression: ParenthesizedExpression<'_>,
-) -> Option<jolt_java_syntax::JavaDelimiterRemoval<'_>> {
-    let mut ancestor = expression.syntax_node().and_then(|node| node.parent());
-    while let Some(node) = ancestor {
-        if let Some(binary) = BinaryExpression::cast(node) {
-            return Some(binary.redundant_parenthesis_removal_claims(&expression));
-        }
-        ancestor = node.parent();
-    }
-    None
 }
 
 fn format_source(

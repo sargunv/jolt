@@ -6,6 +6,8 @@ use crate::{
     Language, SyntaxNode, SyntaxToken, SyntaxTrivia, TriviaKind,
     syntax_tree::{NodeId, SyntaxTree, TokenId},
 };
+#[cfg(debug_assertions)]
+use crate::{NormalizedToken, RemovalReason, ReorderReason};
 
 /// The parse-local identity of a represented syntax node.
 #[derive(Clone, Copy)]
@@ -223,12 +225,33 @@ impl<'tree> Iterator for SourceTriviaPieces<'tree> {
 
 impl ExactSizeIterator for SourceTriviaPieces<'_> {}
 
+/// The closed normalization operation that was being audited.
+#[cfg(debug_assertions)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum NormalizationOperation {
+    Replacement(NormalizedToken),
+    Removal(RemovalReason),
+    Synthesis(NormalizedToken),
+    Reorder(ReorderReason),
+}
+
 /// A deterministic debug/test conservation failure.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ConservationError {
-    ForeignToken,
-    ForeignTrivia,
-    ForeignSourceRange,
+    ForeignToken {
+        token: usize,
+        range: TextRange,
+    },
+    ForeignTrivia {
+        token: usize,
+        side: SourceTriviaSide,
+        ordinal: usize,
+        kind: TriviaKind,
+        range: TextRange,
+    },
+    ForeignSourceRange {
+        range: TextRange,
+    },
     UnownedTrivia {
         trivia: usize,
     },
@@ -238,11 +261,14 @@ pub enum ConservationError {
     },
     DuplicateToken {
         token: usize,
+        range: TextRange,
     },
     DuplicateTrivia {
         token: usize,
         side: SourceTriviaSide,
         ordinal: usize,
+        kind: TriviaKind,
+        range: TextRange,
     },
     UnauthorizedTrivia {
         token: usize,
@@ -262,6 +288,24 @@ pub enum ConservationError {
         kind: TriviaKind,
         range: TextRange,
     },
+    #[cfg(debug_assertions)]
+    Normalization {
+        operation: NormalizationOperation,
+        error: Box<ConservationError>,
+    },
+}
+
+#[cfg(debug_assertions)]
+impl ConservationError {
+    /// Attaches the selected syntax-authorized normalization to a source claim failure.
+    #[doc(hidden)]
+    #[must_use]
+    pub fn normalization(self, operation: NormalizationOperation) -> Self {
+        Self::Normalization {
+            operation,
+            error: Box::new(self),
+        }
+    }
 }
 
 /// A syntax-tree-branded source range used by formatter-ignore output.
@@ -451,7 +495,7 @@ impl<'tree> SyntaxConservationTracker<'tree> {
         #[cfg(debug_assertions)]
         {
             if !identity.belongs_to(self.tree) {
-                return Err(ConservationError::ForeignToken);
+                return Err(foreign_token_error(identity));
             }
             match self.tokens[identity.id.index()] {
                 ClaimState::NotConserved => {
@@ -466,6 +510,7 @@ impl<'tree> SyntaxConservationTracker<'tree> {
                 ClaimState::Claimed => {
                     return Err(ConservationError::DuplicateToken {
                         token: identity.id.index(),
+                        range: self.tree.token(identity.id).token_text_range(),
                     });
                 }
             }
@@ -484,7 +529,7 @@ impl<'tree> SyntaxConservationTracker<'tree> {
         #[cfg(debug_assertions)]
         {
             if !identity.belongs_to(self.tree) {
-                return Err(ConservationError::ForeignToken);
+                return Err(foreign_token_error(identity));
             }
             if self.tokens[identity.id.index()] == ClaimState::NotConserved {
                 return Err(ConservationError::UnauthorizedToken {
@@ -510,7 +555,7 @@ impl<'tree> SyntaxConservationTracker<'tree> {
         #[cfg(debug_assertions)]
         {
             let Some(index) = self.trivia_index(identity) else {
-                return Err(ConservationError::ForeignTrivia);
+                return Err(foreign_trivia_error(identity));
             };
             match self.trivia[index] {
                 ClaimState::NotConserved => {
@@ -527,10 +572,13 @@ impl<'tree> SyntaxConservationTracker<'tree> {
                 }
                 ClaimState::Unclaimed => self.trivia[index] = ClaimState::Claimed,
                 ClaimState::Claimed => {
+                    let piece = source_trivia_piece(identity);
                     return Err(ConservationError::DuplicateTrivia {
                         token: identity.token.id.index(),
                         side: identity.side,
                         ordinal: identity.ordinal,
+                        kind: piece.trivia().kind(),
+                        range: piece.text_range(),
                     });
                 }
             }
@@ -553,7 +601,7 @@ impl<'tree> SyntaxConservationTracker<'tree> {
         #[cfg(debug_assertions)]
         {
             if !std::ptr::eq(claim.tree, self.tree) {
-                return Err(ConservationError::ForeignSourceRange);
+                return Err(ConservationError::ForeignSourceRange { range: claim.range });
             }
             for index in claim.token_start..claim.token_end {
                 let token_id = SourceTokenId {
@@ -675,6 +723,42 @@ impl<'tree> SyntaxConservationTracker<'tree> {
         }
         None
     }
+}
+
+#[cfg(debug_assertions)]
+fn foreign_token_error(token: SourceTokenId<'_>) -> ConservationError {
+    ConservationError::ForeignToken {
+        token: token.id.index(),
+        range: token.tree.token(token.id).token_text_range(),
+    }
+}
+
+#[cfg(debug_assertions)]
+fn foreign_trivia_error(trivia: SourceTriviaId<'_>) -> ConservationError {
+    let piece = source_trivia_piece(trivia);
+    ConservationError::ForeignTrivia {
+        token: trivia.token.id.index(),
+        side: trivia.side,
+        ordinal: trivia.ordinal,
+        kind: piece.trivia().kind(),
+        range: piece.text_range(),
+    }
+}
+
+#[cfg(debug_assertions)]
+fn source_trivia_piece(trivia: SourceTriviaId<'_>) -> SourceTriviaPiece<'_> {
+    let token = trivia.token.tree.token(trivia.token.id);
+    let mut pieces = match trivia.side {
+        SourceTriviaSide::Leading => {
+            source_trivia_pieces(trivia.token, SourceTriviaSide::Leading, token.leading())
+        }
+        SourceTriviaSide::Trailing => {
+            source_trivia_pieces(trivia.token, SourceTriviaSide::Trailing, token.trailing())
+        }
+    };
+    pieces
+        .nth(trivia.ordinal)
+        .expect("represented trivia retains its source identity")
 }
 
 #[cfg(debug_assertions)]
@@ -1119,7 +1203,7 @@ mod tests {
     }
 
     #[test]
-    fn duplicate_missing_and_foreign_fail_deterministically() {
+    fn duplicate_and_missing_fail_deterministically() {
         let (source, tree) = test_tree();
         let root = SyntaxNode::<TestLanguage>::new_root(source, &tree);
         let first = root.first_token().expect("first token");
@@ -1127,7 +1211,10 @@ mod tests {
         tracker.claim_token(first.source_id()).expect("first claim");
         assert_eq!(
             tracker.claim_token(first.source_id()),
-            Err(ConservationError::DuplicateToken { token: 0 })
+            Err(ConservationError::DuplicateToken {
+                token: 0,
+                range: TextRange::new(TextSize::new(0), TextSize::new(1)),
+            })
         );
         let comment = first
             .trailing_trivia_with_ids()
@@ -1142,6 +1229,8 @@ mod tests {
                 token: 0,
                 side: SourceTriviaSide::Trailing,
                 ordinal: 0,
+                kind: TriviaKind::LineComment,
+                range: TextRange::new(TextSize::new(1), TextSize::new(5)),
             })
         );
 
@@ -1152,24 +1241,6 @@ mod tests {
                 token: 0,
                 range: TextRange::new(TextSize::new(0), TextSize::new(1)),
             })
-        );
-
-        let (other_source, other_tree) = test_tree();
-        let other_root = SyntaxNode::<TestLanguage>::new_root(other_source, &other_tree);
-        let mut tracker = root.conservation_tracker();
-        assert_eq!(
-            tracker.claim_token(other_root.first_token().expect("foreign token").source_id()),
-            Err(ConservationError::ForeignToken)
-        );
-        let foreign_comment = other_root
-            .first_token()
-            .expect("foreign token")
-            .trailing_trivia_with_ids()
-            .next()
-            .expect("foreign comment");
-        assert_eq!(
-            tracker.claim_trivia(foreign_comment.id()),
-            Err(ConservationError::ForeignTrivia)
         );
 
         let whitespace = root
@@ -1205,6 +1276,45 @@ mod tests {
             Err(ConservationError::UnauthorizedToken {
                 token: 2,
                 range: TextRange::empty(TextSize::new(9)),
+            })
+        );
+    }
+
+    #[test]
+    fn foreign_claims_report_the_attempted_identity() {
+        let (source, tree) = test_tree();
+        let root = SyntaxNode::<TestLanguage>::new_root(source, &tree);
+        let (other_source, other_tree) = test_tree();
+        let other_root = SyntaxNode::<TestLanguage>::new_root(other_source, &other_tree);
+        let mut tracker = root.conservation_tracker();
+        let foreign_token = other_root.first_token().expect("foreign token");
+        assert_eq!(
+            tracker.claim_token(foreign_token.source_id()),
+            Err(ConservationError::ForeignToken {
+                token: 0,
+                range: TextRange::new(TextSize::new(0), TextSize::new(1)),
+            })
+        );
+        let foreign_comment = foreign_token
+            .trailing_trivia_with_ids()
+            .next()
+            .expect("foreign comment");
+        assert_eq!(
+            tracker.claim_trivia(foreign_comment.id()),
+            Err(ConservationError::ForeignTrivia {
+                token: 0,
+                side: SourceTriviaSide::Trailing,
+                ordinal: 0,
+                kind: TriviaKind::LineComment,
+                range: TextRange::new(TextSize::new(1), TextSize::new(5)),
+            })
+        );
+        assert_eq!(
+            tracker.claim_source_range(
+                foreign_token.source_range_claim(foreign_token.token_text_range(), false)
+            ),
+            Err(ConservationError::ForeignSourceRange {
+                range: TextRange::new(TextSize::new(0), TextSize::new(1)),
             })
         );
     }

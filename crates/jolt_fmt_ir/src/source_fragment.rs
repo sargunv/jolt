@@ -1,3 +1,5 @@
+#[cfg(debug_assertions)]
+use jolt_syntax::NormalizationOperation;
 use jolt_syntax::{
     ConservationError, Language, NormalizedToken, RawSyntaxKind, RemovalReason, ReorderReason,
     SourceIdentity, SourceRangeClaim, SourceTokenId, SyntaxConservationTracker, SyntaxToken,
@@ -225,10 +227,22 @@ impl<'tree> RenderProof<'tree> {
                     self.malformed_verbatim_count += 1;
                 }
             }
-            SourceClaim::Replaced { source, .. } => self.conservation.claim_token(source)?,
-            SourceClaim::Removed { source, .. } => self.conservation.claim(source)?,
-            SourceClaim::Synthesized { anchor, .. } | SourceClaim::Reordered { anchor, .. } => {
-                self.conservation.validate_token(anchor)?;
+            SourceClaim::Replaced { source, token } => self
+                .conservation
+                .claim_token(source)
+                .map_err(|error| error.normalization(NormalizationOperation::Replacement(token)))?,
+            SourceClaim::Removed { source, reason } => self
+                .conservation
+                .claim(source)
+                .map_err(|error| error.normalization(NormalizationOperation::Removal(reason)))?,
+            SourceClaim::Synthesized { anchor, token } => self
+                .conservation
+                .validate_token(anchor)
+                .map_err(|error| error.normalization(NormalizationOperation::Synthesis(token)))?,
+            SourceClaim::Reordered { anchor, reason } => {
+                self.conservation.validate_token(anchor).map_err(|error| {
+                    error.normalization(NormalizationOperation::Reorder(reason))
+                })?;
             }
             SourceClaim::FormatterIgnore { range } => {
                 self.conservation.claim_source_range(range)?;
