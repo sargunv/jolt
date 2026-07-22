@@ -1,0 +1,74 @@
+services:
+  docs:
+    name: Documentation site
+    description: Run the VitePress documentation development server
+    triggeredBy:
+      - manual
+    commands:
+      start: |
+        set -eu
+        export PATH="$HOME/.local/bin:$PATH"
+        until command -v mise >/dev/null 2>&1; do
+          sleep 1
+        done
+        dependencies_ready="$HOME/.cache/jolt/dependencies-ready"
+        container_id="$(cat /etc/hostname)"
+        until [ "$(cat "$dependencies_ready" 2>/dev/null || true)" = "$container_id" ]; do
+          sleep 1
+        done
+        mise run docs:dev -- --host 0.0.0.0 \
+          --allowedHosts .gitpod.dev --allowedHosts .gitpod.dev &
+        server_pid=$!
+        trap 'kill "$server_pid" 2>/dev/null || true' EXIT INT TERM
+        gitpod environment port open 5173 --dont-wait --admission creator_only --name docs --protocol http
+        wait "$server_pid"
+      ready: curl -fsS http://localhost:5173/ >/dev/null
+
+tasks:
+  install-dependencies:
+    name: Install dependencies
+    description: Install pinned tools and fetch Rust and Node dependencies
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+      - prebuild
+    prebuildRequiresSuccess: true
+    command: |
+      set -eu
+      export PATH="$HOME/.local/bin:$PATH"
+      dependencies_dir="$HOME/.cache/jolt"
+      dependencies_ready="$dependencies_dir/dependencies-ready"
+      mkdir -p "$dependencies_dir"
+      rm -f "$dependencies_ready"
+      if ! command -v mise >/dev/null 2>&1; then
+        curl -fsSL https://mise.run | sh
+      fi
+      mise trust "$PWD/mise.toml"
+      mise install
+      mise deps
+      printf '%s\n' "$(cat /etc/hostname)" > "$dependencies_ready.tmp"
+      mv "$dependencies_ready.tmp" "$dependencies_ready"
+
+  build:
+    name: Build
+    description: Build the Jolt CLI and dprint WebAssembly plugin
+    triggeredBy:
+      - manual
+      - prebuild
+    prebuildRequiresSuccess: true
+    dependsOn:
+      - install-dependencies
+    command: |
+      export PATH="$HOME/.local/bin:$PATH"
+      mise run build
+
+  test:
+    name: Test
+    description: Run the workspace test suite
+    triggeredBy:
+      - manual
+    dependsOn:
+      - install-dependencies
+    command: |
+      export PATH="$HOME/.local/bin:$PATH"
+      mise run test

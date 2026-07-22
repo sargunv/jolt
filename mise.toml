@@ -21,6 +21,11 @@ lockfile = true
 [deps.pnpm]
 auto = true
 
+[deps.cargo]
+auto = true
+sources = ["Cargo.lock", "**/Cargo.toml"]
+run = "cargo fetch --locked"
+
 [deps.imports]
 auto = true
 sources = ["tools/import/import.py"]
