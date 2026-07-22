@@ -695,23 +695,23 @@ This table is the source of truth after a context compaction. Update it whenever
 a branch is created, a PR is opened, scope changes, a gate fails, or a PR is
 ready for review.
 
-| PR  | Branch                                   | Status     | Parent | Draft PR                                       | Verification               | Notes                                            |
-| --- | ---------------------------------------- | ---------- | ------ | ---------------------------------------------- | -------------------------- | ------------------------------------------------ |
-| 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2)   | baseline audit complete    | Durable plan and gates only.                     |
-| 01  | `cleanup/01-doc-semantics`               | draft open | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3)   | debug/release + benchmark  | Profile-independent topology/presence.           |
-| 02  | `cleanup/02-formatter-ignore-plan`       | draft open | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4)   | debug/release + benchmark  | Root plan with bounded immutable queries.        |
-| 03  | `cleanup/03-infallible-generated-fields` | draft open | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5)   | debug/release + benchmark  | Generated physical slots only.                   |
-| 04  | `cleanup/04-syntax-recovery-visibility`  | draft open | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6)   | full + release + benchmark | Syntax-owned malformed lexical boundaries.       |
-| 05  | `cleanup/05-root-coordination`           | draft open | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7)   | full + release + benchmark | Narrow root ownership, no god context.           |
-| 06  | `cleanup/06-source-audit-reporting`      | draft open | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8)   | full + release + benchmark | Syntax claims replace filename/count policy.     |
-| 07  | `cleanup/07-core-module-boundaries`      | draft open | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9)   | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.     |
-| 08a | `cleanup/08a-renderer-boundaries`        | draft open | PR 07  | [#10](https://github.com/sargunv/jolt/pull/10) | full + release + benchmark | Kept hot loop concrete; deleted duplicate state. |
-| 08b | `cleanup/08b-renderer-audit-pass`        | rejected   | PR 08a | —                                              | design audit complete      | Exact single pass requires an output trace.      |
-| 09  | `cleanup/09-kotlin-rules`                | planned    | PR 08a | —                                              | —                          | Kotlin hotspot purification.                     |
-| 10  | `cleanup/10-java-rules`                  | planned    | PR 09  | —                                              | —                          | Java hotspot purification.                       |
-| 11  | `cleanup/11-lexer-substrate`             | planned    | PR 10  | —                                              | —                          | Share cursor mechanics only.                     |
-| 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                              | —                          | Counted bounded lookahead work.                  |
-| 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                              | —                          | Actual docs, metrics, and API deletions only.    |
+| PR  | Branch                                   | Status      | Parent | Draft PR                                       | Verification               | Notes                                            |
+| --- | ---------------------------------------- | ----------- | ------ | ---------------------------------------------- | -------------------------- | ------------------------------------------------ |
+| 00  | `cleanup/00-plan-and-gates`              | draft open  | `main` | [#2](https://github.com/sargunv/jolt/pull/2)   | baseline audit complete    | Durable plan and gates only.                     |
+| 01  | `cleanup/01-doc-semantics`               | draft open  | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3)   | debug/release + benchmark  | Profile-independent topology/presence.           |
+| 02  | `cleanup/02-formatter-ignore-plan`       | draft open  | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4)   | debug/release + benchmark  | Root plan with bounded immutable queries.        |
+| 03  | `cleanup/03-infallible-generated-fields` | draft open  | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5)   | debug/release + benchmark  | Generated physical slots only.                   |
+| 04  | `cleanup/04-syntax-recovery-visibility`  | draft open  | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6)   | full + release + benchmark | Syntax-owned malformed lexical boundaries.       |
+| 05  | `cleanup/05-root-coordination`           | draft open  | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7)   | full + release + benchmark | Narrow root ownership, no god context.           |
+| 06  | `cleanup/06-source-audit-reporting`      | draft open  | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8)   | full + release + benchmark | Syntax claims replace filename/count policy.     |
+| 07  | `cleanup/07-core-module-boundaries`      | draft open  | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9)   | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.     |
+| 08a | `cleanup/08a-renderer-boundaries`        | draft open  | PR 07  | [#10](https://github.com/sargunv/jolt/pull/10) | full + release + benchmark | Kept hot loop concrete; deleted duplicate state. |
+| 08b | `cleanup/08b-renderer-audit-pass`        | rejected    | PR 08a | —                                              | design audit complete      | Exact single pass requires an output trace.      |
+| 09  | `cleanup/09-kotlin-rules`                | in progress | PR 08a | —                                              | hotspot audit              | Delete rule-state and layout indirection.        |
+| 10  | `cleanup/10-java-rules`                  | planned     | PR 09  | —                                              | —                          | Java hotspot purification.                       |
+| 11  | `cleanup/11-lexer-substrate`             | planned     | PR 10  | —                                              | —                          | Share cursor mechanics only.                     |
+| 12  | `cleanup/12-java-lookahead`              | planned     | PR 11  | —                                              | —                          | Counted bounded lookahead work.                  |
+| 13  | `cleanup/13-final-reconciliation`        | planned     | PR 12  | —                                              | —                          | Actual docs, metrics, and API deletions only.    |
 
 ### PR 01 evidence
 
@@ -1087,6 +1087,27 @@ ready for review.
   budgets, and smaller than every behavior-equivalent replacement. PR 09 stacks
   directly on PR 08a.
 
+### PR 09 working scope
+
+- Begin with three disjoint local state reductions: remove unreachable member-
+  chain builder states, unify the duplicated declaration assignment-body layout,
+  and replace the impossible block-content option/boolean product with its two
+  reachable states.
+- Follow with Kotlin-local recovery and helper deletions: represent malformed
+  and layout-invisible physical list parts as one recovery case with explicit
+  visibility, then inline one-use or constant-policy helper layers where their
+  owner remains clear.
+- Audit repeated control-flow field resolution, stale optional node parameters,
+  and physical comma assembly only after the local slices pass. Keep a slice
+  only when it reduces branches and concepts without obscuring malformed-token
+  spacing or orphan-comma ownership.
+- Preserve byte-for-byte output throughout PR 09. Potential fixes for zero-
+  width import/program section visibility and when-condition recovery spacing
+  are behavior changes and remain outside this structural PR.
+- Do not introduce a generic list visitor, control-flow macro, shared class-
+  header context, or Java/Kotlin rule abstraction. The apparent duplicates carry
+  different separator, recovery, comment, and formatter-ignore policies.
+
 ## Decision Log
 
 | Date       | Decision                                                       | Reason                                                                                                                                                                                                     |
@@ -1118,6 +1139,8 @@ ready for review.
 | 2026-07-22 | Treat flat mode as the successful-fit proof.                   | Rendering starts broken and enters flat mode only after a complete accepted probe; a second mutable flag duplicated that state and could not diverge on a reachable flat path.                             |
 | 2026-07-22 | Carry exactly one diagnostic when formatting is blocked.       | All five producers create one fatal diagnostic; a vector added an allocation and forced consumers to handle impossible empty/multiple cases.                                                               |
 | 2026-07-22 | Reject single-pass debug rendering without an output trace.    | Atomic late failures plus observable sink chunk/halt behavior require either deterministic replay or retaining every callback; replay is zero-allocation and smaller.                                      |
+| 2026-07-22 | Purify Kotlin rules through bounded owner-local slices.        | Member chains, assignment bodies, blocks, and recovery lists have provably unreachable or duplicated state; broad rule frameworks would obscure distinct recovery and trivia contracts.                    |
+| 2026-07-22 | Keep PR 09 structural and byte-for-byte output preserving.     | Zero-width section visibility and when-condition recovery spacing may be bugs, but mixing style corrections with state deletion would weaken review and rollback boundaries.                               |
 
 ## Resume Protocol
 
