@@ -11,8 +11,9 @@ use super::{
 use crate::helpers::{
     comments::format_token_after_relocated_leading_comments,
     recovery::{
-        JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, resolve_list_part,
-        resolve_optional_field, resolve_required_delimiter, resolve_required_field,
+        JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_optional_field,
+        format_required_field, resolve_list_part, resolve_optional_field,
+        resolve_required_delimiter, resolve_required_field,
     },
 };
 use jolt_fmt_ir::DocBuilder;
@@ -21,26 +22,26 @@ pub(super) fn format_class_declaration<'source>(
     class: &ClassDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let modifiers = optional_doc(class.modifiers(), doc, |modifiers, doc| {
+    let modifiers = format_optional_field(class.modifiers(), doc, |modifiers, doc| {
         format_modifier_prefix(Some(modifiers), doc)
     });
-    let keyword = required_doc(class.class_keyword(), doc, |keyword, doc| {
+    let keyword = format_required_field(class.class_keyword(), doc, |keyword, doc| {
         keyword_without_space(keyword, doc)
     });
     let (name, name_is_structured) = required_doc_with_presence(class.name(), doc, |name, doc| {
         format_token_with_comments(doc, &name)
     });
     let name_separator = structured_separator(name_is_structured, doc);
-    let parameters = optional_doc(class.type_parameters(), doc, |parameters, doc| {
+    let parameters = format_optional_field(class.type_parameters(), doc, |parameters, doc| {
         format_type_parameter_list(parameters, doc)
     });
-    let extends = optional_doc(class.extends(), doc, |extends, doc| {
+    let extends = format_optional_field(class.extends(), doc, |extends, doc| {
         format_extends(&extends, doc)
     });
-    let implements = optional_doc(class.implements(), doc, |implements, doc| {
+    let implements = format_optional_field(class.implements(), doc, |implements, doc| {
         format_implements(&implements, doc)
     });
-    let permits = optional_doc(class.permits(), doc, |permits, doc| {
+    let permits = format_optional_field(class.permits(), doc, |permits, doc| {
         format_permits(&permits, doc)
     });
     let (body, body_is_structured) = required_doc_with_presence(class.body(), doc, |body, doc| {
@@ -79,10 +80,10 @@ pub(super) fn format_interface_declaration<'source>(
     interface: &InterfaceDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let modifiers = optional_doc(interface.modifiers(), doc, |modifiers, doc| {
+    let modifiers = format_optional_field(interface.modifiers(), doc, |modifiers, doc| {
         format_modifier_prefix(Some(modifiers), doc)
     });
-    let keyword = required_doc(interface.interface_keyword(), doc, |keyword, doc| {
+    let keyword = format_required_field(interface.interface_keyword(), doc, |keyword, doc| {
         keyword_without_space(keyword, doc)
     });
     let (name, name_is_structured) =
@@ -90,13 +91,13 @@ pub(super) fn format_interface_declaration<'source>(
             format_token_with_comments(doc, &name)
         });
     let name_separator = structured_separator(name_is_structured, doc);
-    let parameters = optional_doc(interface.type_parameters(), doc, |parameters, doc| {
+    let parameters = format_optional_field(interface.type_parameters(), doc, |parameters, doc| {
         format_type_parameter_list(parameters, doc)
     });
-    let extends = optional_doc(interface.extends(), doc, |extends, doc| {
+    let extends = format_optional_field(interface.extends(), doc, |extends, doc| {
         format_extends(&extends, doc)
     });
-    let permits = optional_doc(interface.permits(), doc, |permits, doc| {
+    let permits = format_optional_field(interface.permits(), doc, |permits, doc| {
         format_permits(&permits, doc)
     });
     let (body, body_is_structured) =
@@ -128,24 +129,24 @@ pub(super) fn format_record_declaration<'source>(
     record: &RecordDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let modifiers = optional_doc(record.modifiers(), doc, |modifiers, doc| {
+    let modifiers = format_optional_field(record.modifiers(), doc, |modifiers, doc| {
         format_modifier_prefix(Some(modifiers), doc)
     });
-    let keyword = required_doc(record.record_keyword(), doc, |keyword, doc| {
+    let keyword = format_required_field(record.record_keyword(), doc, |keyword, doc| {
         keyword_without_space(keyword, doc)
     });
     let (name, name_is_structured) = required_doc_with_presence(record.name(), doc, |name, doc| {
         format_token_with_comments(doc, &name)
     });
     let name_separator = structured_separator(name_is_structured, doc);
-    let parameters = optional_doc(record.type_parameters(), doc, |parameters, doc| {
+    let parameters = format_optional_field(record.type_parameters(), doc, |parameters, doc| {
         format_type_parameter_list(parameters, doc)
     });
     let component_open = resolve_required_delimiter(record.open_paren(), doc);
     let components = resolve_optional_field(record.components(), doc);
     let component_close = resolve_required_delimiter(record.close_paren(), doc);
     let component_doc = format_record_components(component_open, components, component_close, doc);
-    let implements = optional_doc(record.implements(), doc, |implements, doc| {
+    let implements = format_optional_field(record.implements(), doc, |implements, doc| {
         format_implements(&implements, doc)
     });
     let (body, body_is_structured) = required_doc_with_presence(record.body(), doc, |body, doc| {
@@ -186,17 +187,17 @@ pub(super) fn format_enum_declaration<'source>(
     node: &EnumDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let modifiers = optional_doc(node.modifiers(), doc, |modifiers, doc| {
+    let modifiers = format_optional_field(node.modifiers(), doc, |modifiers, doc| {
         format_modifier_prefix(Some(modifiers), doc)
     });
-    let keyword = required_doc(node.enum_keyword(), doc, |keyword, doc| {
+    let keyword = format_required_field(node.enum_keyword(), doc, |keyword, doc| {
         keyword_without_space(keyword, doc)
     });
     let (name, name_is_structured) = required_doc_with_presence(node.name(), doc, |name, doc| {
         format_token_with_comments(doc, &name)
     });
     let name_separator = structured_separator(name_is_structured, doc);
-    let implements = optional_doc(node.implements(), doc, |implements, doc| {
+    let implements = format_optional_field(node.implements(), doc, |implements, doc| {
         format_implements(&implements, doc)
     });
     let (body, body_is_structured) = required_doc_with_presence(node.body(), doc, |body, doc| {
@@ -224,13 +225,13 @@ pub(super) fn format_annotation_interface_declaration<'source>(
     node: &AnnotationInterfaceDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let modifiers = optional_doc(node.modifiers(), doc, |modifiers, doc| {
+    let modifiers = format_optional_field(node.modifiers(), doc, |modifiers, doc| {
         format_modifier_prefix(Some(modifiers), doc)
     });
-    let at = required_doc(node.at(), doc, |at, doc| {
+    let at = format_required_field(node.at(), doc, |at, doc| {
         format_token_after_relocated_leading_comments(doc, &at, TrailingTrivia::Preserve)
     });
-    let interface = required_doc(node.interface_keyword(), doc, |interface, doc| {
+    let interface = format_required_field(node.interface_keyword(), doc, |interface, doc| {
         keyword_without_space(interface, doc)
     });
     let (name, name_is_structured) = required_doc_with_presence(node.name(), doc, |name, doc| {
@@ -304,29 +305,6 @@ fn required_doc_with_presence<'source, T>(
 
 fn structured_separator<'source>(present: bool, doc: &mut DocBuilder<'source>) -> Doc<'source> {
     if present { doc.space() } else { Doc::nil() }
-}
-
-fn required_doc<'source, T>(
-    field: jolt_java_syntax::JavaSyntaxField<'source, T>,
-    doc: &mut DocBuilder<'source>,
-    present: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
-) -> Doc<'source> {
-    match resolve_required_field(field, doc) {
-        JavaFormatField::Present(value) => present(value, doc),
-        JavaFormatField::Malformed(malformed) => malformed,
-    }
-}
-
-fn optional_doc<'source, T>(
-    field: jolt_java_syntax::JavaSyntaxField<'source, T>,
-    doc: &mut DocBuilder<'source>,
-    present: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
-) -> Doc<'source> {
-    match resolve_optional_field(field, doc) {
-        JavaFormatField::Present(Some(value)) => present(value, doc),
-        JavaFormatField::Present(None) => Doc::nil(),
-        JavaFormatField::Malformed(malformed) => malformed,
-    }
 }
 
 fn optional_doc_with_presence<'source, T>(

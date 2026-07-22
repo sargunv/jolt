@@ -401,25 +401,35 @@ fn format_throws_clause<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let entries = match resolve_required_field(throws.exceptions(), doc) {
-        JavaFormatField::Present(exceptions) => exceptions
+        JavaFormatField::Present(exceptions) => Ok(exceptions
             .parts()
             .map(|part| resolve_list_part(part, doc))
-            .collect::<Vec<_>>(),
-        JavaFormatField::Malformed(malformed) => {
-            return doc_indent!(
-                doc,
-                doc_concat!(
-                    doc,
-                    [doc.line(), format_throws_keyword(doc, throws), malformed]
-                )
-            );
+            .collect::<Vec<_>>()),
+        JavaFormatField::Malformed(malformed) => Err(malformed),
+    };
+    let keyword = resolve_required_field(throws.throws_keyword(), doc);
+    let keyword_forces_line = matches!(&keyword, JavaFormatField::Present(keyword) if {
+        keyword
+            .trailing_comments()
+            .any(|comment| comment_forces_line(&comment))
+    });
+    let keyword = match keyword {
+        JavaFormatField::Present(keyword) => format_token(
+            doc,
+            &keyword,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::BeforeLineBreak,
+        ),
+        JavaFormatField::Malformed(malformed) => malformed,
+    };
+    let entries = match entries {
+        Ok(entries) => entries,
+        Err(malformed) => {
+            return doc_indent!(doc, doc_concat!(doc, [doc.line(), keyword, malformed]));
         }
     };
     if entries.is_empty() {
-        return doc_indent!(
-            doc,
-            doc_concat!(doc, [doc.line(), format_throws_keyword(doc, throws)])
-        );
+        return doc_indent!(doc, doc_concat!(doc, [doc.line(), keyword]));
     }
 
     doc_indent!(
@@ -428,42 +438,16 @@ fn format_throws_clause<'source>(
             doc,
             [
                 doc.line(),
-                format_throws_keyword(doc, throws),
-                format_throws_keyword_spacing(doc, throws),
+                keyword,
+                if keyword_forces_line {
+                    doc.hard_line()
+                } else {
+                    doc.space()
+                },
                 format_throws_entries(&entries, doc),
             ]
         )
     )
-}
-
-fn format_throws_keyword<'source>(
-    doc: &mut jolt_fmt_ir::DocBuilder<'source>,
-    throws: &ThrowsClause<'source>,
-) -> Doc<'source> {
-    match resolve_required_field(throws.throws_keyword(), doc) {
-        JavaFormatField::Present(keyword) => format_token(
-            doc,
-            &keyword,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::BeforeLineBreak,
-        ),
-        JavaFormatField::Malformed(malformed) => malformed,
-    }
-}
-
-fn format_throws_keyword_spacing<'source>(
-    doc: &mut jolt_fmt_ir::DocBuilder<'source>,
-    throws: &ThrowsClause<'source>,
-) -> Doc<'source> {
-    if matches!(resolve_required_field(throws.throws_keyword(), doc), JavaFormatField::Present(keyword) if {
-        keyword
-            .trailing_comments()
-            .any(|comment| comment_forces_line(&comment))
-    }) {
-        doc.hard_line()
-    } else {
-        doc.space()
-    }
 }
 
 fn format_throws_entries<'source>(
