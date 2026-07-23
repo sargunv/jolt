@@ -175,6 +175,65 @@ fn deeply_nested_recovery_formats_idempotently_and_keeps_following_syntax() {
 }
 
 #[test]
+fn deep_infix_and_type_formatter_spines_format_idempotently_and_keep_following_syntax() {
+    let depth = 4096;
+    let expression = |suffix: &str| {
+        format!(
+            "fun value() = root{}\nclass Following\n",
+            suffix.repeat(depth)
+        )
+    };
+    let ty = |suffix: &str, tail: &str| {
+        format!(
+            "typealias Deep = Leaf{}{}\nclass Following\n",
+            suffix.repeat(depth),
+            tail
+        )
+    };
+    let sources = [
+        expression(" + value"),
+        expression(" as T"),
+        expression(" + value as T"),
+        ty("?", ""),
+        ty("!!", ""),
+        ty(" & Any", ""),
+        ty(".()", " -> Unit"),
+        ty("?!! & Any.()", " -> Unit"),
+    ];
+
+    for source in sources {
+        let parse = parse_kotlin_file(&source);
+        assert!(
+            parse.diagnostics().is_empty(),
+            "deep formatter spine did not remain structured: {:#?}",
+            parse.diagnostics()
+        );
+        assert_eq!(
+            parse
+                .syntax()
+                .expect("represented deep formatter spine")
+                .source_text(),
+            source
+        );
+
+        let formatted = format_source(&source, FormatOptions::default())
+            .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
+        assert!(formatted.contains("class Following"));
+        let reparsed = parse_kotlin_file(&formatted);
+        assert_eq!(
+            reparsed
+                .syntax()
+                .expect("represented formatted output")
+                .source_text(),
+            formatted
+        );
+        let formatted_again = format_source(&formatted, FormatOptions::default())
+            .unwrap_or_else(|diagnostics| panic!("second format blocked: {diagnostics:#?}"));
+        assert_eq!(formatted_again, formatted);
+    }
+}
+
+#[test]
 fn empty_excessive_body_keeps_claims_without_selecting_body_layout() {
     let source = format!(
         "fun value() = {}fun() {{}}{}\n",

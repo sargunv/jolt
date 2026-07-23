@@ -1,7 +1,7 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     AssignmentExpression, BinaryExpression, BinaryExpressionRightSyntax,
-    BinaryExpressionRightValue, BinaryOperatorSyntax, Expression, KotlinSyntaxField,
+    BinaryExpressionRightValue, BinaryOperatorSyntax, Expression, KotlinFamily, KotlinSyntaxField,
     KotlinSyntaxKind, KotlinSyntaxToken, KotlinSyntaxView, ParenthesizedExpression,
     PostfixExpression, UnaryExpression,
 };
@@ -72,48 +72,124 @@ pub(super) fn format_binary_expression<'source>(
     expression: &BinaryExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let Some(operator) = binary_operator(expression) else {
-        return format_binary_fields(doc, expression, leading);
-    };
-    let Some(left) = present(expression.left()) else {
-        return format_binary_fields(doc, expression, leading);
-    };
-    let Some(right) = present(expression.right()) else {
-        return format_binary_fields(doc, expression, leading);
-    };
+    let outer = expression
+        .syntax_node()
+        .expect("binary expression has a node");
+    let mut current = Expression::from(*expression);
 
-    if is_type_binary_operator(&operator) {
-        let left = format_expression_with_leading(doc, &left, leading);
-        let operator_doc = format_binary_operator(doc, &operator).doc;
-        let right = format_binary_right(doc, &right);
-        let space = doc.space();
-        let line = doc.line();
-        let right = doc.concat([line, right]);
-        let right = doc.indent(right);
-        let contents = doc.concat([left, space, operator_doc, right]);
-        return doc.group(contents);
+    while let Expression::BinaryExpression(binary) = current {
+        let Some(left) = present(binary.left()) else {
+            break;
+        };
+        current = left;
     }
 
-    let Some(right) = binary_right_expression(&right) else {
-        return format_binary_fields(doc, expression, leading);
+    let mut current_node = current.syntax_node().expect("expression has a node");
+    let base = match current {
+        Expression::BinaryExpression(binary) => format_binary_fields(doc, &binary, leading),
+        _ => format_expression_with_leading(doc, &current, leading),
     };
-    let root = Expression::from(*expression);
-    let mut operands = Vec::new();
-    let mut operators = Vec::new();
-    collect_binary_chain(root, &mut operands, &mut operators);
-    if operators.len() + 1 != operands.len() {
-        let left = format_binary_operand_with_leading(doc, expression, &left, &operator, leading);
-        let right = format_binary_operand(doc, expression, &right, &operator);
-        let part = binary_chain_part(doc, operator, right);
-        return binary_chain(doc, left, vec![part]);
+    let mut formatted = base;
+    let mut run = None;
+
+    while current_node != outer {
+        let Some(parent_node) = current_node.parent() else {
+            doc.block_on_invariant("binary left spine ended before its outer expression");
+            break;
+        };
+        let Some(Expression::BinaryExpression(binary)) = Expression::cast(parent_node) else {
+            doc.block_on_invariant("binary left spine crossed a non-binary parent");
+            break;
+        };
+        let operator = binary_operator(&binary);
+        let right = present(binary.right());
+        match (operator, right) {
+            (Some(operator), Some(right)) if is_type_binary_operator(&operator) => {
+                let left = finish_pending_binary_run(doc, formatted, run.take());
+                let operator = format_binary_operator(doc, &operator).doc;
+                let right = format_binary_right(doc, &right);
+                let space = doc.space();
+                let line = doc.line();
+                let right = doc.concat([line, right]);
+                let right = doc.indent(right);
+                let contents = doc.concat([left, space, operator, right]);
+                formatted = doc.group(contents);
+            }
+            (Some(operator), Some(right)) => {
+                let Some(right) = binary_right_expression(&right) else {
+                    let left = finish_pending_binary_run(doc, formatted, run.take());
+                    formatted = format_binary_fields_with_left(doc, &binary, left);
+                    current = Expression::from(binary);
+                    current_node = parent_node;
+                    continue;
+                };
+                if let Some(run) = run
+                    .as_mut()
+                    .filter(|run| should_flatten_binary(&operator, &run.root_operator))
+                {
+                    run.owner = binary;
+                    run.root_operator = operator;
+                    run.operators.push(operator);
+                    run.operands.push(right);
+                } else {
+                    formatted = finish_pending_binary_run(doc, formatted, run.take());
+                    // Preserve the existing binary-chain allocation shape.
+                    let mut operators = Vec::with_capacity(4);
+                    operators.push(operator);
+                    let mut operands = Vec::with_capacity(4);
+                    operands.push(current);
+                    operands.push(right);
+                    run = Some(PendingBinaryRun {
+                        owner: binary,
+                        root_operator: operator,
+                        operators,
+                        operands,
+                    });
+                }
+            }
+            _ => {
+                let left = finish_pending_binary_run(doc, formatted, run.take());
+                formatted = format_binary_fields_with_left(doc, &binary, left);
+            }
+        }
+
+        current = Expression::from(binary);
+        current_node = parent_node;
     }
 
-    let mut operands = operands.into_iter();
-    let first = operands.next().unwrap_or(left);
-    let first = format_binary_operand_with_leading(doc, expression, &first, &operator, leading);
+    finish_pending_binary_run(doc, formatted, run)
+}
+
+struct PendingBinaryRun<'source> {
+    owner: BinaryExpression<'source>,
+    root_operator: KotlinSyntaxToken<'source>,
+    operators: Vec<KotlinSyntaxToken<'source>>,
+    operands: Vec<Expression<'source>>,
+}
+
+fn finish_pending_binary_run<'source>(
+    doc: &mut DocBuilder<'source>,
+    formatted: Doc<'source>,
+    run: Option<PendingBinaryRun<'source>>,
+) -> Doc<'source> {
+    let Some(run) = run else {
+        return formatted;
+    };
+    let mut operands = run.operands.into_iter();
+    let Some(left_expression) = operands.next() else {
+        doc.block_on_invariant("binary run has no left operand");
+        return formatted;
+    };
+    let first = format_binary_operand_doc(
+        doc,
+        formatted,
+        &run.owner,
+        &left_expression,
+        &run.root_operator,
+    );
     let mut rest = Vec::new();
-    for (operator, operand) in operators.into_iter().zip(operands) {
-        let operand = format_binary_operand(doc, expression, &operand, &operator);
+    for (operator, operand) in run.operators.into_iter().zip(operands) {
+        let operand = format_binary_operand(doc, &run.owner, &operand, &operator);
         rest.push(binary_chain_part(doc, operator, operand));
     }
     binary_chain(doc, first, rest)
@@ -124,6 +200,17 @@ fn format_binary_fields<'source>(
     expression: &BinaryExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
+    let left = format_required_field(expression.left(), doc, |left, doc| {
+        format_expression_with_leading(doc, &left, leading)
+    });
+    format_binary_fields_with_left(doc, expression, left)
+}
+
+fn format_binary_fields_with_left<'source>(
+    doc: &mut DocBuilder<'source>,
+    expression: &BinaryExpression<'source>,
+    left: Doc<'source>,
+) -> Doc<'source> {
     let has_right = matches!(
         expression.right(),
         KotlinSyntaxField::Present(ref right) if right.first_token().is_some()
@@ -131,9 +218,6 @@ fn format_binary_fields<'source>(
         expression.right(),
         KotlinSyntaxField::Malformed(ref malformed) if malformed.first_token().is_some()
     );
-    let left = format_required_field(expression.left(), doc, |left, doc| {
-        format_expression_with_leading(doc, &left, leading)
-    });
     let operator = format_required_field(expression.operator(), doc, |operator, doc| {
         let operator = match operator.classify() {
             Ok(
@@ -214,17 +298,6 @@ fn format_binary_operand<'source>(
     format_binary_operand_doc(doc, formatted, owner, expression, parent_operator)
 }
 
-fn format_binary_operand_with_leading<'source>(
-    doc: &mut DocBuilder<'source>,
-    owner: &BinaryExpression<'source>,
-    expression: &Expression<'source>,
-    parent_operator: &KotlinSyntaxToken<'_>,
-    leading: LeadingTrivia,
-) -> Doc<'source> {
-    let formatted = format_expression_with_leading(doc, expression, leading);
-    format_binary_operand_doc(doc, formatted, owner, expression, parent_operator)
-}
-
 fn format_binary_operand_doc<'source>(
     doc: &mut DocBuilder<'source>,
     formatted: Doc<'source>,
@@ -246,59 +319,6 @@ fn format_binary_operand_doc<'source>(
     let close = doc.synthesized_source(claims.close);
     let contents = doc.concat([open, formatted, trailing, close]);
     doc.group(contents)
-}
-
-fn collect_binary_chain<'source>(
-    expression: Expression<'source>,
-    operands: &mut Vec<Expression<'source>>,
-    operators: &mut Vec<KotlinSyntaxToken<'source>>,
-) {
-    let Expression::BinaryExpression(binary) = expression else {
-        operands.push(expression);
-        return;
-    };
-    let Some(operator) = binary_operator(&binary) else {
-        operands.push(expression);
-        return;
-    };
-    if is_type_binary_operator(&operator) {
-        operands.push(expression);
-        return;
-    }
-    let Some(left) = present(binary.left()) else {
-        operands.push(expression);
-        return;
-    };
-    let Some(right) = present(binary.right()).and_then(|right| binary_right_expression(&right))
-    else {
-        operands.push(expression);
-        return;
-    };
-
-    collect_binary_left(left, &operator, operands, operators);
-    operators.push(operator);
-    operands.push(right);
-}
-
-fn collect_binary_left<'source>(
-    expression: Expression<'source>,
-    parent_operator: &KotlinSyntaxToken<'_>,
-    operands: &mut Vec<Expression<'source>>,
-    operators: &mut Vec<KotlinSyntaxToken<'source>>,
-) {
-    let Expression::BinaryExpression(binary) = expression else {
-        operands.push(expression);
-        return;
-    };
-    let Some(operator) = binary_operator(&binary) else {
-        operands.push(expression);
-        return;
-    };
-    if !should_flatten_binary(parent_operator, &operator) {
-        operands.push(expression);
-        return;
-    }
-    collect_binary_chain(Expression::from(binary), operands, operators);
 }
 
 struct BinaryOperatorDoc<'source> {

@@ -3,12 +3,12 @@ use jolt_kotlin_syntax::{
     Annotation, AnnotationList, ArrowFunctionType, BangDefinitelyNonNullableType,
     ContextFunctionType, DefinitelyNonNullableType, DefinitelyNonNullableTypeForm, FunctionType,
     FunctionTypeForm, FunctionTypeParameter, FunctionTypeParameterListEntry,
-    IntersectionDefinitelyNonNullableType, KotlinRoleElement, KotlinSyntaxField, KotlinSyntaxToken,
-    KotlinSyntaxView, ModifierList, NullableType, ParenthesizedType, ReceiverType, StarProjection,
-    SuspendedFunctionType, TypeArgumentList, TypeArgumentListEntry, TypeConstraint,
-    TypeConstraintList, TypeConstraintListEntry, TypeParameter, TypeParameterList,
-    TypeParameterListEntry, TypeProjection, TypeReference, TypeSyntax, UserType, UserTypeSegment,
-    UserTypeSegmentSyntax,
+    IntersectionDefinitelyNonNullableType, KotlinFamily, KotlinNode, KotlinRoleElement,
+    KotlinSyntaxField, KotlinSyntaxNode, KotlinSyntaxToken, KotlinSyntaxView, ModifierList,
+    NullableType, ParenthesizedType, ReceiverType, StarProjection, SuspendedFunctionType,
+    TypeArgumentList, TypeArgumentListEntry, TypeConstraint, TypeConstraintList,
+    TypeConstraintListEntry, TypeParameter, TypeParameterList, TypeParameterListEntry,
+    TypeProjection, TypeReference, TypeSyntax, UserType, UserTypeSegment, UserTypeSegmentSyntax,
 };
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
@@ -187,16 +187,98 @@ pub(crate) fn format_type_reference<'source>(
 }
 
 fn format_type<'source>(doc: &mut DocBuilder<'source>, ty: &TypeSyntax<'source>) -> Doc<'source> {
+    let outer = ty.syntax_node().expect("type has a node");
+    let mut current = *ty;
+
+    loop {
+        let inner = match current {
+            TypeSyntax::NullableType(nullable) => present_type(nullable.inner()),
+            TypeSyntax::ReceiverType(receiver) => present_type(receiver.receiver()),
+            TypeSyntax::DefinitelyNonNullableType(dnn) => match present_type(dnn.form()) {
+                Some(DefinitelyNonNullableTypeForm::IntersectionDefinitelyNonNullableType(
+                    intersection,
+                )) => present_type(intersection.left()),
+                Some(DefinitelyNonNullableTypeForm::BangDefinitelyNonNullableType(bang)) => {
+                    present_type(bang.inner())
+                }
+                Some(DefinitelyNonNullableTypeForm::BogusDefinitelyNonNullableTypeForm(_))
+                | None => None,
+            },
+            _ => None,
+        };
+        let Some(inner) = inner else {
+            break;
+        };
+        current = inner;
+    }
+
+    let mut current_node = current.syntax_node().expect("type has a node");
+    let mut formatted = format_type_base(doc, &current);
+    while current_node != outer {
+        let Some((suffix, parent)) = format_parent_type_suffix(doc, formatted, current_node) else {
+            doc.block_on_invariant("type suffix spine crossed an unexpected parent");
+            break;
+        };
+        formatted = suffix;
+        current_node = parent;
+    }
+    formatted
+}
+
+fn format_type_base<'source>(
+    doc: &mut DocBuilder<'source>,
+    ty: &TypeSyntax<'source>,
+) -> Doc<'source> {
     match ty {
         TypeSyntax::UserType(ty) => format_user_type(doc, ty),
-        TypeSyntax::NullableType(ty) => format_nullable_type(doc, ty),
+        TypeSyntax::NullableType(ty) => format_nullable_type(doc, ty, None),
         TypeSyntax::FunctionType(ty) => format_function_type(doc, ty),
         TypeSyntax::ContextFunctionType(ty) => format_context_function_type(doc, ty),
-        TypeSyntax::ReceiverType(ty) => format_receiver_type(doc, ty),
+        TypeSyntax::ReceiverType(ty) => format_receiver_type(doc, ty, None),
         TypeSyntax::ParenthesizedType(ty) => format_parenthesized_type(doc, ty),
         TypeSyntax::DefinitelyNonNullableType(ty) => format_definitely_non_nullable_type(doc, ty),
         TypeSyntax::BogusType(ty) => crate::helpers::recovery::format_malformed(ty, doc),
     }
+}
+
+fn present_type<T>(field: KotlinSyntaxField<'_, T>) -> Option<T> {
+    match field {
+        KotlinSyntaxField::Present(value) => Some(value),
+        KotlinSyntaxField::Missing(_) | KotlinSyntaxField::Malformed(_) => None,
+    }
+}
+
+fn format_parent_type_suffix<'source>(
+    doc: &mut DocBuilder<'source>,
+    formatted: Doc<'source>,
+    current: KotlinSyntaxNode<'source>,
+) -> Option<(Doc<'source>, KotlinSyntaxNode<'source>)> {
+    let parent_node = current.parent()?;
+    if let Some(parent) = TypeSyntax::cast(parent_node) {
+        let suffix = match parent {
+            TypeSyntax::NullableType(nullable) => {
+                format_nullable_type(doc, &nullable, Some(formatted))
+            }
+            TypeSyntax::ReceiverType(receiver) => {
+                format_receiver_type(doc, &receiver, Some(formatted))
+            }
+            _ => return None,
+        };
+        return Some((suffix, parent_node));
+    }
+
+    let suffix = match DefinitelyNonNullableTypeForm::cast(parent_node)? {
+        DefinitelyNonNullableTypeForm::IntersectionDefinitelyNonNullableType(intersection) => {
+            format_intersection_dnn(doc, &intersection, Some(formatted))
+        }
+        DefinitelyNonNullableTypeForm::BangDefinitelyNonNullableType(bang) => {
+            format_bang_dnn(doc, &bang, Some(formatted))
+        }
+        DefinitelyNonNullableTypeForm::BogusDefinitelyNonNullableTypeForm(_) => return None,
+    };
+    let container_node = parent_node.parent()?;
+    DefinitelyNonNullableType::cast(container_node)?;
+    Some((suffix, container_node))
 }
 
 fn format_user_type<'source>(
@@ -329,8 +411,11 @@ fn format_star_projection<'source>(
 fn format_nullable_type<'source>(
     doc: &mut DocBuilder<'source>,
     ty: &NullableType<'source>,
+    inner: Option<Doc<'source>>,
 ) -> Doc<'source> {
-    let inner = format_required_field(ty.inner(), doc, |inner, doc| format_type(doc, &inner));
+    let inner = inner.unwrap_or_else(|| {
+        format_required_field(ty.inner(), doc, |inner, doc| format_type(doc, &inner))
+    });
     let question = format_required_field(ty.question(), doc, |question, doc| {
         format_token(
             doc,
@@ -408,9 +493,12 @@ fn format_function_type_parameter<'source>(
 fn format_receiver_type<'source>(
     doc: &mut DocBuilder<'source>,
     ty: &ReceiverType<'source>,
+    receiver: Option<Doc<'source>>,
 ) -> Doc<'source> {
-    let receiver = format_required_field(ty.receiver(), doc, |receiver, doc| {
-        format_type(doc, &receiver)
+    let receiver = receiver.unwrap_or_else(|| {
+        format_required_field(ty.receiver(), doc, |receiver, doc| {
+            format_type(doc, &receiver)
+        })
     });
     let dot = format_required_field(ty.dot(), doc, |dot, doc| {
         format_token(doc, &dot, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
@@ -539,10 +627,10 @@ fn format_definitely_non_nullable_type<'source>(
 ) -> Doc<'source> {
     format_required_field(ty.form(), doc, |form, doc| match form {
         DefinitelyNonNullableTypeForm::IntersectionDefinitelyNonNullableType(intersection) => {
-            format_intersection_dnn(doc, &intersection)
+            format_intersection_dnn(doc, &intersection, None)
         }
         DefinitelyNonNullableTypeForm::BangDefinitelyNonNullableType(bang) => {
-            format_bang_dnn(doc, &bang)
+            format_bang_dnn(doc, &bang, None)
         }
         DefinitelyNonNullableTypeForm::BogusDefinitelyNonNullableTypeForm(bogus) => {
             format_malformed(&bogus, doc)
@@ -553,8 +641,11 @@ fn format_definitely_non_nullable_type<'source>(
 fn format_intersection_dnn<'source>(
     doc: &mut DocBuilder<'source>,
     ty: &IntersectionDefinitelyNonNullableType<'source>,
+    left: Option<Doc<'source>>,
 ) -> Doc<'source> {
-    let left = format_required_field(ty.left(), doc, |left, doc| format_type(doc, &left));
+    let left = left.unwrap_or_else(|| {
+        format_required_field(ty.left(), doc, |left, doc| format_type(doc, &left))
+    });
     let amp = format_required_field(ty.amp(), doc, |amp, doc| {
         format_token(
             doc,
@@ -572,8 +663,11 @@ fn format_intersection_dnn<'source>(
 fn format_bang_dnn<'source>(
     doc: &mut DocBuilder<'source>,
     ty: &BangDefinitelyNonNullableType<'source>,
+    inner: Option<Doc<'source>>,
 ) -> Doc<'source> {
-    let inner = format_required_field(ty.inner(), doc, |inner, doc| format_type(doc, &inner));
+    let inner = inner.unwrap_or_else(|| {
+        format_required_field(ty.inner(), doc, |inner, doc| format_type(doc, &inner))
+    });
     let bang = format_required_field(ty.bang_bang(), doc, |bang, doc| {
         format_token(
             doc,
