@@ -2101,12 +2101,12 @@ slices remove Java nodes and allocations or leave topology unchanged.
   owners and recovers at 127. Generic structure remains independently accepted
   through depth 128, while the alternating generic -> annotation -> expression
   -> cast adversary is bounded earlier without resetting either counter.
-- Uncapped actual dprint-WASM formatting on the fixed 1 MiB plugin stack succeeds
-  at 1,036 parentheses and fails at 1,037; unary and assignment chains succeed
-  at 1,125 and fail at 1,126. The effective 64/127 physical edges therefore
-  retain about 16x/8.9x stack headroom. The 128 value is a conservative resource
-  policy, not a claim about source nesting depth, and diagnostics deliberately
-  avoid reporting it as one.
+- Uncapped actual dprint-WASM formatting on the fixed 1 MiB plugin stack
+  succeeds at 1,036 parentheses and fails at 1,037; unary and assignment chains
+  succeed at 1,125 and fail at 1,126. The effective 64/127 physical edges
+  therefore retain about 16x/8.9x stack headroom. The 128 value is a
+  conservative resource policy, not a claim about source nesting depth, and
+  diagnostics deliberately avoid reporting it as one.
 - Production is +182 lines and focused tests are +210 lines. Record-pattern
   recovery was removed from this PR when the combined slice crossed the +190
   production stop; PR 26 owns that self-contained 63-line design with bodies and
@@ -2182,7 +2182,7 @@ slices remove Java nodes and allocations or leave topology unchanged.
 | 2026-07-23 | Consolidate transition recovery visibility in PR 23.             | PR 15's Java carrier duplicated PR 16's final shared state exactly; replacing it deletes 23 Rust lines while language-local joining sections retain their real policy.                                                   |
 | 2026-07-23 | Extend the stack through parser recursion before reconciliation. | Flat annotations still had quadratic suffix scans, and native probes proved reachable Java/Kotlin stack exhaustion; these are correctness and finite-cost debts, not defensible documentation exceptions.                |
 | 2026-07-23 | Extend the lazy lookahead summary for flat annotations.          | Token-disjoint, path-compressed `@` endpoints close the remaining quadratic suffixes with one linear algorithm; measured allocation growth has no throughput or peak-memory consequence.                                 |
-| 2026-07-23 | Share one Java recursion policy across separate counters.        | Generic lookahead must mirror consuming grammar independently, while the syntax-owner counter closes cross-family cycles; one calibrated value removes an arbitrary policy split without conflating their state.        |
+| 2026-07-23 | Share one Java recursion policy across separate counters.        | Generic lookahead must mirror consuming grammar independently, while the syntax-owner counter closes cross-family cycles; one calibrated value removes an arbitrary policy split without conflating their state.         |
 | 2026-07-23 | Split Java value and structural recursion recovery.              | One combined implementation was estimated at 220-290 production lines; the value slice is +183, while record/body/statement recovery has a separate endpoint model and rollback boundary in PR 26.                       |
 
 ## Resume Protocol
