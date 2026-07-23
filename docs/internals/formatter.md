@@ -58,11 +58,12 @@ fall back to source replay.
 
 Formatting starts by parsing the source, so its finite-cost contract has parser
 and CST-layout parts. Parser recursion is charged only at grammar owners that
-can re-enter a recursive cycle. Java allows 64 active generic argument lists
-and, independently, 128 active non-generic syntax owners. Kotlin allows 128
-active syntax owners. Parser loops that build binary, member, call, and
-type-suffix spines do not spend these budgets because they do not grow the
-native or WASM call stack.
+can re-enter a recursive cycle. Java and Kotlin allow 128 active recursive
+owners. Java generic lookahead and consuming grammar retain a counter separate
+from other Java syntax owners because speculative and consuming decisions must
+agree, but both counters use that one policy value. Parser loops that build
+binary, member, call, and type-suffix spines do not spend these budgets because
+they do not grow the native or WASM call stack.
 
 When an owner budget is exhausted, the syntax crate uses a borrowed,
 allocation-free token scan to a documented enclosing recovery boundary. Recovery
@@ -78,13 +79,12 @@ trivia. The formatter receives that ordinary represented recovery structure; it
 does not impose another depth limit or synthesize a repair.
 
 Java's repeated parenthesis and annotation lookahead has a separate work bound.
-Direct scans share a fixed 16,384 token-advance budget. Once exhausted, one
-exact table is built for the remaining token suffix; `(` entries record the
-position after their matching close and `@` entries are lazily path-compressed
-to the end of a maximal annotation run. The table is dormant on the measured
-realistic corpus, uses one `usize` per remaining token when activated, and
-bounds the affected lookahead work by `B + 4N` for fixed budget `B` and suffix
-length `N`.
+The first relevant query builds one exact table for the remaining token suffix.
+`(` entries record the position after their matching close, and queried `@`
+entries are path-compressed to the end of their maximal annotation run. The
+build is linear in the suffix length, each later query is an indexed lookup, and
+storage is one `usize` per remaining token. There is no activation threshold,
+cumulative counter, or direct/table dual algorithm.
 
 Iterative parser loops can still produce valid CST spines much deeper than the
 parser call-stack limits. The language formatters therefore use borrowed,
