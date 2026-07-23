@@ -1039,38 +1039,38 @@ This table is the source of truth after a context compaction. Update it whenever
 a branch is created, a PR is opened, scope changes, a gate fails, or a PR is
 ready for review.
 
-| PR  | Branch                                   | Status      | Parent | Draft PR                                       | Verification               | Notes                                            |
-| --- | ---------------------------------------- | ----------- | ------ | ---------------------------------------------- | -------------------------- | ------------------------------------------------ |
-| 00  | `cleanup/00-plan-and-gates`              | draft open  | `main` | [#2](https://github.com/sargunv/jolt/pull/2)   | baseline audit complete    | Durable plan and gates only.                     |
-| 01  | `cleanup/01-doc-semantics`               | draft open  | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3)   | debug/release + benchmark  | Profile-independent topology/presence.           |
-| 02  | `cleanup/02-formatter-ignore-plan`       | draft open  | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4)   | debug/release + benchmark  | Root plan with bounded immutable queries.        |
-| 03  | `cleanup/03-infallible-generated-fields` | draft open  | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5)   | debug/release + benchmark  | Generated physical slots only.                   |
-| 04  | `cleanup/04-syntax-recovery-visibility`  | draft open  | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6)   | full + release + benchmark | Syntax-owned malformed lexical boundaries.       |
-| 05  | `cleanup/05-root-coordination`           | draft open  | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7)   | full + release + benchmark | Narrow root ownership, no god context.           |
-| 06  | `cleanup/06-source-audit-reporting`      | draft open  | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8)   | full + release + benchmark | Syntax claims replace filename/count policy.     |
-| 07  | `cleanup/07-core-module-boundaries`      | draft open  | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9)   | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.     |
-| 08a | `cleanup/08a-renderer-boundaries`        | draft open  | PR 07  | [#10](https://github.com/sargunv/jolt/pull/10) | full + release + benchmark | Kept hot loop concrete; deleted duplicate state. |
-| 08b | `cleanup/08b-renderer-audit-pass`        | rejected    | PR 08a | —                                              | design audit complete      | Exact single pass requires an output trace.      |
-| 09  | `cleanup/09-kotlin-rules`                | draft open  | PR 08a | [#11](https://github.com/sargunv/jolt/pull/11) | full + release + benchmark | Rule state and helper indirection deleted.       |
-| 10  | `cleanup/10-java-rules`                  | draft open  | PR 09  | [#12](https://github.com/sargunv/jolt/pull/12) | full + release + benchmark | Total rules and native module parts.             |
-| 11  | `cleanup/11-lexer-substrate`             | draft open  | PR 10  | [#13](https://github.com/sargunv/jolt/pull/13) | full + release + benchmark | Shared cursor rejected; local scans are bounded. |
-| 12  | `cleanup/12-java-lookahead`              | draft open  | PR 11  | [#14](https://github.com/sargunv/jolt/pull/14) | full + release + benchmark | Local deletion; cache frameworks rejected.       |
-| 13  | `cleanup/13-java-comment-conservation`   | draft open  | PR 12  | [#15](https://github.com/sargunv/jolt/pull/15) | full + release + benchmark | Localize Java comment and separator ownership.   |
-| 14  | `cleanup/14-final-reconciliation`        | draft open  | PR 13  | [#16](https://github.com/sargunv/jolt/pull/16) | full + static checks       | Actual docs, metrics, and API deletions only.    |
-| 15  | `cleanup/15-modifier-presence`           | draft open  | PR 14  | [#17](https://github.com/sargunv/jolt/pull/17) | full + benchmark           | Syntax-owned modifier layout presence.           |
-| 16  | `cleanup/16-recovery-layout-parts`       | draft open  | PR 15  | [#18](https://github.com/sargunv/jolt/pull/18) | full + benchmark           | Barrier-aware visible/claim-only layout.         |
-| 17  | `cleanup/17-ignore-boundary-ownership`   | draft open  | PR 16  | [#19](https://github.com/sargunv/jolt/pull/19) | full + benchmark           | Delete raw EOF ignore-range projections.         |
-| 18  | `cleanup/18-java-program-joining`        | draft open  | PR 17  | [#20](https://github.com/sargunv/jolt/pull/20) | full + benchmark           | Reconcile root joining and marker ownership.     |
-| 19  | `cleanup/19-kotlin-recovery-layout`      | draft open  | PR 18  | [#21](https://github.com/sargunv/jolt/pull/21) | full + benchmark           | Isolate Kotlin recovery behavior corrections.    |
-| 20  | `cleanup/20-kotlin-marker-recovery`      | draft open  | PR 19  | [#22](https://github.com/sargunv/jolt/pull/22) | full + benchmark           | Own annotated type recovery without rollback.    |
-| 21  | `cleanup/21-java-delimiter-summaries`    | draft open  | PR 20  | [#23](https://github.com/sargunv/jolt/pull/23) | full + benchmark           | Bound lambda and annotation parenthesis scans.   |
-| 22  | `cleanup/22-java-generic-depth`          | draft open  | PR 21  | [#24](https://github.com/sargunv/jolt/pull/24) | full + benchmark           | Bound recursive generic-type parsing.            |
-| 23  | `cleanup/23-layout-doc-consolidation`    | draft open  | PR 22  | [#25](https://github.com/sargunv/jolt/pull/25) | full + benchmark           | Delete duplicate recovery visibility carriers.   |
-| 24  | `cleanup/24-java-annotation-cost`        | draft open  | PR 23  | [#26](https://github.com/sargunv/jolt/pull/26) | full + release + benchmark | Bound flat malformed-annotation lookahead.       |
-| 25  | `cleanup/25-java-value-recursion`        | in progress | PR 24  | —                                              | design audit complete      | Bound recursive Java value families.             |
-| 26  | `cleanup/26-java-structural-recursion`   | planned     | PR 25  | —                                              | —                          | Bound recursive Java bodies and statements.      |
-| 27  | `cleanup/27-kotlin-recursion-budget`     | planned     | PR 26  | —                                              | —                          | Bound recursive Kotlin syntax families.          |
-| 28  | `cleanup/28-residue-reconciliation`      | planned     | PR 27  | —                                              | —                          | Final evidence and debt-ledger closure.          |
+| PR  | Branch                                   | Status     | Parent | Draft PR                                       | Verification               | Notes                                            |
+| --- | ---------------------------------------- | ---------- | ------ | ---------------------------------------------- | -------------------------- | ------------------------------------------------ |
+| 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2)   | baseline audit complete    | Durable plan and gates only.                     |
+| 01  | `cleanup/01-doc-semantics`               | draft open | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3)   | debug/release + benchmark  | Profile-independent topology/presence.           |
+| 02  | `cleanup/02-formatter-ignore-plan`       | draft open | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4)   | debug/release + benchmark  | Root plan with bounded immutable queries.        |
+| 03  | `cleanup/03-infallible-generated-fields` | draft open | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5)   | debug/release + benchmark  | Generated physical slots only.                   |
+| 04  | `cleanup/04-syntax-recovery-visibility`  | draft open | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6)   | full + release + benchmark | Syntax-owned malformed lexical boundaries.       |
+| 05  | `cleanup/05-root-coordination`           | draft open | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7)   | full + release + benchmark | Narrow root ownership, no god context.           |
+| 06  | `cleanup/06-source-audit-reporting`      | draft open | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8)   | full + release + benchmark | Syntax claims replace filename/count policy.     |
+| 07  | `cleanup/07-core-module-boundaries`      | draft open | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9)   | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.     |
+| 08a | `cleanup/08a-renderer-boundaries`        | draft open | PR 07  | [#10](https://github.com/sargunv/jolt/pull/10) | full + release + benchmark | Kept hot loop concrete; deleted duplicate state. |
+| 08b | `cleanup/08b-renderer-audit-pass`        | rejected   | PR 08a | —                                              | design audit complete      | Exact single pass requires an output trace.      |
+| 09  | `cleanup/09-kotlin-rules`                | draft open | PR 08a | [#11](https://github.com/sargunv/jolt/pull/11) | full + release + benchmark | Rule state and helper indirection deleted.       |
+| 10  | `cleanup/10-java-rules`                  | draft open | PR 09  | [#12](https://github.com/sargunv/jolt/pull/12) | full + release + benchmark | Total rules and native module parts.             |
+| 11  | `cleanup/11-lexer-substrate`             | draft open | PR 10  | [#13](https://github.com/sargunv/jolt/pull/13) | full + release + benchmark | Shared cursor rejected; local scans are bounded. |
+| 12  | `cleanup/12-java-lookahead`              | draft open | PR 11  | [#14](https://github.com/sargunv/jolt/pull/14) | full + release + benchmark | Local deletion; cache frameworks rejected.       |
+| 13  | `cleanup/13-java-comment-conservation`   | draft open | PR 12  | [#15](https://github.com/sargunv/jolt/pull/15) | full + release + benchmark | Localize Java comment and separator ownership.   |
+| 14  | `cleanup/14-final-reconciliation`        | draft open | PR 13  | [#16](https://github.com/sargunv/jolt/pull/16) | full + static checks       | Actual docs, metrics, and API deletions only.    |
+| 15  | `cleanup/15-modifier-presence`           | draft open | PR 14  | [#17](https://github.com/sargunv/jolt/pull/17) | full + benchmark           | Syntax-owned modifier layout presence.           |
+| 16  | `cleanup/16-recovery-layout-parts`       | draft open | PR 15  | [#18](https://github.com/sargunv/jolt/pull/18) | full + benchmark           | Barrier-aware visible/claim-only layout.         |
+| 17  | `cleanup/17-ignore-boundary-ownership`   | draft open | PR 16  | [#19](https://github.com/sargunv/jolt/pull/19) | full + benchmark           | Delete raw EOF ignore-range projections.         |
+| 18  | `cleanup/18-java-program-joining`        | draft open | PR 17  | [#20](https://github.com/sargunv/jolt/pull/20) | full + benchmark           | Reconcile root joining and marker ownership.     |
+| 19  | `cleanup/19-kotlin-recovery-layout`      | draft open | PR 18  | [#21](https://github.com/sargunv/jolt/pull/21) | full + benchmark           | Isolate Kotlin recovery behavior corrections.    |
+| 20  | `cleanup/20-kotlin-marker-recovery`      | draft open | PR 19  | [#22](https://github.com/sargunv/jolt/pull/22) | full + benchmark           | Own annotated type recovery without rollback.    |
+| 21  | `cleanup/21-java-delimiter-summaries`    | draft open | PR 20  | [#23](https://github.com/sargunv/jolt/pull/23) | full + benchmark           | Bound lambda and annotation parenthesis scans.   |
+| 22  | `cleanup/22-java-generic-depth`          | draft open | PR 21  | [#24](https://github.com/sargunv/jolt/pull/24) | full + benchmark           | Bound recursive generic-type parsing.            |
+| 23  | `cleanup/23-layout-doc-consolidation`    | draft open | PR 22  | [#25](https://github.com/sargunv/jolt/pull/25) | full + benchmark           | Delete duplicate recovery visibility carriers.   |
+| 24  | `cleanup/24-java-annotation-cost`        | draft open | PR 23  | [#26](https://github.com/sargunv/jolt/pull/26) | full + release + benchmark | Bound flat malformed-annotation lookahead.       |
+| 25  | `cleanup/25-java-value-recursion`        | ready      | PR 24  | —                                              | full + WASM + benchmark    | Bound recursive Java value families.             |
+| 26  | `cleanup/26-java-structural-recursion`   | planned    | PR 25  | —                                              | —                          | Bound recursive Java bodies and statements.      |
+| 27  | `cleanup/27-kotlin-recursion-budget`     | planned    | PR 26  | —                                              | —                          | Bound recursive Kotlin syntax families.          |
+| 28  | `cleanup/28-residue-reconciliation`      | planned    | PR 27  | —                                              | —                          | Final evidence and debt-ledger closure.          |
 
 ### PR 01 evidence
 
@@ -2078,6 +2078,54 @@ slices remove Java nodes and allocations or leave topology unchanged.
   non-update suite passed all 202 tests with zero skips. The exact lazy-table
   benchmark records subject `a8f7589a` with its dirty worktree hash.
 
+### PR 25 evidence
+
+- The parser reuses PR 22's calibrated policy value of 128 with a separate
+  counter for active syntax owners. Generic lookahead and consumption retain
+  their own counter because they must make identical speculative and consuming
+  decisions; parser finish asserts both counters return to zero.
+- Whole assignment and unary owners cut right-associative, conditional, lambda,
+  prefix, cast, parenthesized, call, array-access, and switch-expression cycles.
+  Annotation element values share the same active budget across expression/type
+  detours. Nested array-initializer children use it without charging the public
+  outer initializer.
+- At the first unsupported value, one allocation-free borrowed-token scan emits
+  a diagnostic-owned `BogusExpression` or a structured `ArrayInitializer`
+  containing one `BogusVariableInitializer`. Expression recovery tracks
+  conditional `?`/`:` pairs; annotation recovery keeps its distinct comma and
+  caller-stop policy. Array recovery preserves its braces and immediate sibling
+  values rather than absorbing the parent list.
+- Active-owner semantics are explicit: 63 physical nested parentheses remain
+  fully structured; the 64th retains all parenthesis nodes around one bogus
+  expression. A pure unary or assignment chain remains structured through 126
+  owners and recovers at 127. Generic structure remains independently accepted
+  through depth 128, while the alternating generic -> annotation -> expression
+  -> cast adversary is bounded earlier without resetting either counter.
+- Uncapped actual dprint-WASM formatting on the fixed 1 MiB plugin stack succeeds
+  at 1,036 parentheses and fails at 1,037; unary and assignment chains succeed
+  at 1,125 and fail at 1,126. The effective 64/127 physical edges therefore
+  retain about 16x/8.9x stack headroom. The 128 value is a conservative resource
+  policy, not a claim about source nesting depth, and diagnostics deliberately
+  avoid reporting it as one.
+- Production is +182 lines and focused tests are +210 lines. Record-pattern
+  recovery was removed from this PR when the combined slice crossed the +190
+  production stop; PR 26 owns that self-contained 63-line design with bodies and
+  statements. No schema, heap stack, lookahead state, or second expression
+  parser was added.
+- Tests cover exact depth edges, depth-4,096 unary/assignment/annotation/array
+  inputs, annotation ternaries and named siblings, array comma siblings, exact
+  diagnostic ownership, lossless source, following fields/classes, and formatter
+  completion. Actual dprint-WASM stdin smokes passed independently for all three
+  value families and preserved their following declarations.
+- Every realistic Java/Kotlin allocation sample, syntax topology, and formatter
+  document topology is exactly unchanged. Java parse/format/end-to-end medians
+  moved -0.42%/+3.08%/+0.23%, within roughly 5% run MAD. The untouched Kotlin
+  path remained noisy; its changes are not attributed to this PR. Optimized WASM
+  moved by +3,714 bytes (+0.21%) in the recorded parent/child build.
+- `mise run fix` passed strict formatting, workspace Clippy, dependency, native,
+  and WASM checks. The complete non-update suite passed all 206 tests with zero
+  skips. The benchmark records clean committed subject `e20e97b`.
+
 ## Decision Log
 
 | Date       | Decision                                                         | Reason                                                                                                                                                                                                                   |
@@ -2134,6 +2182,8 @@ slices remove Java nodes and allocations or leave topology unchanged.
 | 2026-07-23 | Consolidate transition recovery visibility in PR 23.             | PR 15's Java carrier duplicated PR 16's final shared state exactly; replacing it deletes 23 Rust lines while language-local joining sections retain their real policy.                                                   |
 | 2026-07-23 | Extend the stack through parser recursion before reconciliation. | Flat annotations still had quadratic suffix scans, and native probes proved reachable Java/Kotlin stack exhaustion; these are correctness and finite-cost debts, not defensible documentation exceptions.                |
 | 2026-07-23 | Extend the lazy lookahead summary for flat annotations.          | Token-disjoint, path-compressed `@` endpoints close the remaining quadratic suffixes with one linear algorithm; measured allocation growth has no throughput or peak-memory consequence.                                 |
+| 2026-07-23 | Share one Java recursion policy across separate counters.        | Generic lookahead must mirror consuming grammar independently, while the syntax-owner counter closes cross-family cycles; one calibrated value removes an arbitrary policy split without conflating their state.        |
+| 2026-07-23 | Split Java value and structural recursion recovery.              | One combined implementation was estimated at 220-290 production lines; the value slice is +183, while record/body/statement recovery has a separate endpoint model and rollback boundary in PR 26.                       |
 
 ## Resume Protocol
 
