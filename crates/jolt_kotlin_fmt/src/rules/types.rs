@@ -3,12 +3,11 @@ use jolt_kotlin_syntax::{
     Annotation, ArrowFunctionType, BangDefinitelyNonNullableType, ContextFunctionType,
     DefinitelyNonNullableType, DefinitelyNonNullableTypeForm, FunctionType, FunctionTypeForm,
     FunctionTypeParameter, FunctionTypeParameterListEntry, IntersectionDefinitelyNonNullableType,
-    KotlinRoleElement, KotlinSyntaxField, KotlinSyntaxInvariantError, KotlinSyntaxToken,
-    KotlinSyntaxView, ModifierList, NullableType, ParenthesizedType, ReceiverType, StarProjection,
-    SuspendedFunctionType, TypeArgumentList, TypeArgumentListEntry, TypeConstraint,
-    TypeConstraintList, TypeConstraintListEntry, TypeParameter, TypeParameterList,
-    TypeParameterListEntry, TypeProjection, TypeReference, TypeSyntax, UserType, UserTypeSegment,
-    UserTypeSegmentSyntax,
+    KotlinRoleElement, KotlinSyntaxField, KotlinSyntaxToken, KotlinSyntaxView, ModifierList,
+    NullableType, ParenthesizedType, ReceiverType, StarProjection, SuspendedFunctionType,
+    TypeArgumentList, TypeArgumentListEntry, TypeConstraint, TypeConstraintList,
+    TypeConstraintListEntry, TypeParameter, TypeParameterList, TypeParameterListEntry,
+    TypeProjection, TypeReference, TypeSyntax, UserType, UserTypeSegment, UserTypeSegmentSyntax,
 };
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
@@ -58,7 +57,7 @@ pub(crate) fn format_type_constraint_list<'source>(
     let Some(constraints) = constraints else {
         return doc.nil();
     };
-    let has_where = matches!(constraints.where_token(), Ok(KotlinSyntaxField::Present(_)));
+    let has_where = matches!(constraints.where_token(), KotlinSyntaxField::Present(_));
     let where_token = format_required_field(constraints.where_token(), doc, |token, doc| {
         format_token(
             doc,
@@ -120,15 +119,12 @@ fn format_type_constraint<'source>(
 
 fn format_optional_type_bound<'source>(
     doc: &mut DocBuilder<'source>,
-    colon: Result<
-        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
-        KotlinSyntaxInvariantError,
-    >,
-    bound: Result<KotlinSyntaxField<'source, TypeReference<'source>>, KotlinSyntaxInvariantError>,
+    colon: KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
+    bound: KotlinSyntaxField<'source, TypeReference<'source>>,
 ) -> Doc<'source> {
     let has_bound = matches!(
         bound,
-        Ok(KotlinSyntaxField::Present(bound)) if bound.first_token().is_some()
+        KotlinSyntaxField::Present(bound) if bound.first_token().is_some()
     );
     match crate::helpers::recovery::resolve_optional_field(colon, doc) {
         KotlinFormatField::Present(None) => format_optional_field(bound, doc, |bound, doc| {
@@ -163,15 +159,12 @@ fn format_optional_type_bound<'source>(
 
 fn format_required_type_bound<'source>(
     doc: &mut DocBuilder<'source>,
-    colon: Result<
-        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
-        KotlinSyntaxInvariantError,
-    >,
-    bound: Result<KotlinSyntaxField<'source, TypeReference<'source>>, KotlinSyntaxInvariantError>,
+    colon: KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
+    bound: KotlinSyntaxField<'source, TypeReference<'source>>,
 ) -> Doc<'source> {
     let has_bound = matches!(
         bound,
-        Ok(KotlinSyntaxField::Present(bound)) if bound.first_token().is_some()
+        KotlinSyntaxField::Present(bound) if bound.first_token().is_some()
     );
     let colon = format_required_field(colon, doc, |colon, doc| {
         let before = doc.space();
@@ -333,7 +326,7 @@ fn format_type_projection<'source>(
 ) -> Doc<'source> {
     let has_type = matches!(
         projection.r#type(),
-        Ok(KotlinSyntaxField::Present(ty)) if ty.first_token().is_some()
+        KotlinSyntaxField::Present(ty) if ty.first_token().is_some()
     );
     let variance = format_required_field(projection.variance(), doc, |role, doc| {
         let variance = format_role_token(doc, role, TrailingTrivia::RelocatedToEnclosingContext);
@@ -441,7 +434,7 @@ fn format_function_type_parameter<'source>(
 ) -> Doc<'source> {
     let has_type = matches!(
         parameter.r#type(),
-        Ok(KotlinSyntaxField::Present(ty)) if ty.first_token().is_some()
+        KotlinSyntaxField::Present(ty) if ty.first_token().is_some()
     );
     let name = format_optional_field(parameter.name(), doc, |name, doc| format_name(doc, &name));
     let colon = format_optional_field(parameter.colon(), doc, |colon, doc| {

@@ -1,10 +1,10 @@
 use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     CallExpression, CollectionLiteralExpression, Expression, IndexExpression, KotlinSyntaxField,
-    KotlinSyntaxInvariantError, KotlinSyntaxListPart, KotlinSyntaxToken, NavigationExpression,
-    NavigationOperatorSyntax, NavigationOperatorValue, NavigationSelectorSyntax,
-    NavigationSelectorValue, ValueArgument, ValueArgumentEntryList, ValueArgumentList,
-    ValueArgumentListEntry, ValueArgumentPrefix, ValueArgumentPrefixSyntax,
+    KotlinSyntaxListPart, KotlinSyntaxToken, NavigationExpression, NavigationOperatorSyntax,
+    NavigationOperatorValue, NavigationSelectorSyntax, NavigationSelectorValue, ValueArgument,
+    ValueArgumentEntryList, ValueArgumentList, ValueArgumentListEntry, ValueArgumentPrefix,
+    ValueArgumentPrefixSyntax,
 };
 
 use crate::helpers::comments::{
@@ -450,18 +450,9 @@ fn format_index_suffix<'source>(
 
 fn format_square_argument_list<'source>(
     doc: &mut DocBuilder<'source>,
-    open: Result<
-        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
-        KotlinSyntaxInvariantError,
-    >,
-    entries: Result<
-        KotlinSyntaxField<'source, ValueArgumentEntryList<'source>>,
-        KotlinSyntaxInvariantError,
-    >,
-    close: Result<
-        KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
-        KotlinSyntaxInvariantError,
-    >,
+    open: KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
+    entries: KotlinSyntaxField<'source, ValueArgumentEntryList<'source>>,
+    close: KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
 ) -> Doc<'source> {
     let open = resolve_required_delimiter(open, doc);
     let close = resolve_required_delimiter(close, doc);
@@ -492,15 +483,15 @@ const fn is_simple_member_chain_root(expression: &Expression<'_>) -> bool {
 
 fn call_has_lambdas(call: &CallExpression<'_>) -> bool {
     match call.lambdas() {
-        Ok(KotlinSyntaxField::Present(lambdas)) => lambdas
+        KotlinSyntaxField::Present(lambdas) => lambdas
             .parts()
-            .any(|part| matches!(part, Ok(KotlinSyntaxListPart::Item(_)))),
-        Ok(KotlinSyntaxField::Missing(_) | KotlinSyntaxField::Malformed(_)) | Err(_) => false,
+            .any(|part| matches!(part, KotlinSyntaxListPart::Item(_))),
+        KotlinSyntaxField::Missing(_) | KotlinSyntaxField::Malformed(_) => false,
     }
 }
 
 fn call_has_parenthesized_arguments(call: &CallExpression<'_>) -> bool {
-    matches!(call.arguments(), Ok(KotlinSyntaxField::Present(_)))
+    matches!(call.arguments(), KotlinSyntaxField::Present(_))
 }
 
 pub(crate) fn format_value_argument_list<'source>(
@@ -533,12 +524,7 @@ pub(crate) fn format_value_argument_list<'source>(
 
 fn value_argument_list_entry_items<'source>(
     doc: &mut DocBuilder<'source>,
-    parts: impl Iterator<
-        Item = Result<
-            KotlinSyntaxListPart<'source, ValueArgumentListEntry<'source>>,
-            KotlinSyntaxInvariantError,
-        >,
-    >,
+    parts: impl Iterator<Item = KotlinSyntaxListPart<'source, ValueArgumentListEntry<'source>>>,
 ) -> Vec<CommaListItem<'source>> {
     let mut items: Vec<CommaListItem<'source>> = Vec::new();
     for part in parts {
@@ -587,7 +573,7 @@ fn value_argument_list_has_leading_comments(arguments: &ValueArgumentList<'_>) -
         return false;
     };
     entries.parts().any(|part| match part {
-        Ok(KotlinSyntaxListPart::Item(argument)) => argument
+        KotlinSyntaxListPart::Item(argument) => argument
             .first_token()
             .is_some_and(|token| !token.leading_comments().is_empty()),
         _ => false,
@@ -600,16 +586,16 @@ pub(crate) fn format_value_argument<'source>(
 ) -> Doc<'source> {
     let has_prefix = matches!(
         argument.prefix(),
-        Ok(KotlinSyntaxField::Present(ref prefix)) if prefix.first_token().is_some()
+        KotlinSyntaxField::Present(ref prefix) if prefix.first_token().is_some()
     );
     let has_name = matches!(
         argument.name(),
-        Ok(KotlinSyntaxField::Present(ref name)) if name.first_token().is_some()
+        KotlinSyntaxField::Present(ref name) if name.first_token().is_some()
     );
-    let has_assign = matches!(argument.assign(), Ok(KotlinSyntaxField::Present(_)));
+    let has_assign = matches!(argument.assign(), KotlinSyntaxField::Present(_));
     let has_expression = matches!(
         argument.expression(),
-        Ok(KotlinSyntaxField::Present(ref expression)) if expression.first_token().is_some()
+        KotlinSyntaxField::Present(ref expression) if expression.first_token().is_some()
     );
     let prefix = format_required_field(argument.prefix(), doc, |prefix, doc| {
         doc.concat_list(|docs| {
@@ -689,10 +675,8 @@ fn format_value_argument_prefix_item<'source>(
     })
 }
 
-fn present_required<T>(
-    field: Result<KotlinSyntaxField<'_, T>, KotlinSyntaxInvariantError>,
-) -> Option<T> {
-    match field.ok()? {
+fn present_required<T>(field: KotlinSyntaxField<'_, T>) -> Option<T> {
+    match field {
         KotlinSyntaxField::Present(value) => Some(value),
         KotlinSyntaxField::Missing(_) | KotlinSyntaxField::Malformed(_) => None,
     }

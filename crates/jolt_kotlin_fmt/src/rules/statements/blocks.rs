@@ -1,8 +1,7 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     Block, BlockItem, BlockItemList, BlockItemListElement, BlockItemListElementSyntax,
-    KotlinCommentKind, KotlinSyntaxInvariantError, KotlinSyntaxListPart, KotlinSyntaxToken,
-    boundary_separator_removal_claim,
+    KotlinCommentKind, KotlinSyntaxListPart, KotlinSyntaxToken, boundary_separator_removal_claim,
 };
 use jolt_syntax::tokens_have_blank_line_between;
 
@@ -124,21 +123,15 @@ fn collect_block_parts<'source>(
     let mut preceding_item = None;
     for part in items.parts() {
         let part = match part {
-            Ok(KotlinSyntaxListPart::Item(element)) => {
+            KotlinSyntaxListPart::Item(element) => {
                 block_element_part(doc, &mut preceding_item, element)
             }
-            Ok(
-                KotlinSyntaxListPart::Separator(_)
-                | KotlinSyntaxListPart::Missing(_)
-                | KotlinSyntaxListPart::Malformed(_),
-            ) => {
+            KotlinSyntaxListPart::Separator(_)
+            | KotlinSyntaxListPart::Missing(_)
+            | KotlinSyntaxListPart::Malformed(_) => {
                 preceding_item = None;
                 doc.block_on_invariant("typed Kotlin block list exposed a non-item part");
                 None
-            }
-            Err(error) => {
-                preceding_item = None;
-                invariant_block_part(doc, error)
             }
         };
         if let Some(part) = part {
@@ -181,14 +174,6 @@ fn separator_part<'source>(
         removed,
         visible: token_has_comments(&token),
     }
-}
-
-fn invariant_block_part<'source>(
-    doc: &mut DocBuilder<'source>,
-    error: KotlinSyntaxInvariantError,
-) -> Option<BlockPart<'source>> {
-    doc.block_on_invariant(error.to_string());
-    None
 }
 
 fn block_body_parts<'source>(

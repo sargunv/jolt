@@ -25,15 +25,15 @@ pub(super) fn format_constructor_body<'source>(
     let start = body.text_range().start();
     let empty_fallback = TextRange::new(start, start);
     let (elements, fallback) = match body.entries() {
-        Ok(JavaSyntaxField::Present(entries)) => (
+        JavaSyntaxField::Present(entries) => (
             constructor_body_elements(&entries, doc),
             entries.text_range(),
         ),
-        Ok(JavaSyntaxField::Malformed(malformed)) => (
+        JavaSyntaxField::Malformed(malformed) => (
             vec![constructor_body_recovery(&malformed, doc)],
             syntax_view_range(&malformed, empty_fallback),
         ),
-        Ok(JavaSyntaxField::Missing(missing)) => (
+        JavaSyntaxField::Missing(missing) => (
             vec![ConstructorBodyElement::Recovery {
                 doc: crate::helpers::recovery::format_missing(&missing, doc),
                 first: None,
@@ -41,10 +41,6 @@ pub(super) fn format_constructor_body<'source>(
             }],
             empty_fallback,
         ),
-        Err(error) => {
-            doc.block_on_invariant(error.to_string());
-            (Vec::new(), empty_fallback)
-        }
     };
     let container = formatter_ignore_content_range(fallback, open, close);
     let ignored_runs = doc.formatter_ignore_runs(
@@ -133,29 +129,25 @@ fn constructor_body_elements<'source>(
     entries
         .parts()
         .filter_map(|part| match part {
-            Ok(JavaSyntaxListPart::Item(ConstructorBodyEntry::ConstructorInvocation(item))) => {
+            JavaSyntaxListPart::Item(ConstructorBodyEntry::ConstructorInvocation(item)) => {
                 Some(ConstructorBodyElement::Invocation(item))
             }
-            Ok(JavaSyntaxListPart::Item(ConstructorBodyEntry::BlockStatement(item))) => {
+            JavaSyntaxListPart::Item(ConstructorBodyEntry::BlockStatement(item)) => {
                 Some(ConstructorBodyElement::Statement(item))
             }
-            Ok(JavaSyntaxListPart::Item(ConstructorBodyEntry::BogusConstructorBodyEntry(item))) => {
+            JavaSyntaxListPart::Item(ConstructorBodyEntry::BogusConstructorBodyEntry(item)) => {
                 Some(constructor_body_recovery(&item, doc))
             }
-            Ok(JavaSyntaxListPart::Malformed(malformed)) => {
+            JavaSyntaxListPart::Malformed(malformed) => {
                 Some(constructor_body_recovery(&malformed, doc))
             }
-            Ok(JavaSyntaxListPart::Missing(missing)) => Some(ConstructorBodyElement::Recovery {
+            JavaSyntaxListPart::Missing(missing) => Some(ConstructorBodyElement::Recovery {
                 doc: crate::helpers::recovery::format_missing(&missing, doc),
                 first: None,
                 last: None,
             }),
-            Ok(JavaSyntaxListPart::Separator(_)) => {
+            JavaSyntaxListPart::Separator(_) => {
                 doc.block_on_invariant("constructor body had an unexpected separator");
-                None
-            }
-            Err(error) => {
-                doc.block_on_invariant(error.to_string());
                 None
             }
         })

@@ -54,20 +54,20 @@ fn format_value_parameter<'source>(
 ) -> Doc<'source> {
     let has_name = matches!(
         parameter.name(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(_))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(_)
     );
     let has_colon = matches!(
         parameter.colon(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(_))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(_)
     );
     let has_type = matches!(
         parameter.r#type(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(ty))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(ty)
             if ty.first_token().is_some()
     );
     let has_assign = matches!(
         parameter.assign(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(_))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(_)
     );
     let modifiers = format_required_field(parameter.modifiers(), doc, |modifiers, doc| {
         format_modifier_sequence(doc, &modifiers)

@@ -79,7 +79,7 @@ fn terminator<'source>(
     list: &TerminatorList<'source>,
 ) -> jolt_kotlin_syntax::KotlinSyntaxToken<'source> {
     list.parts()
-        .find_map(|part| match part.ok()? {
+        .find_map(|part| match part {
             KotlinSyntaxListPart::Item(KotlinRoleElement::Token(token)) => Some(token),
             KotlinSyntaxListPart::Item(KotlinRoleElement::Node(_))
             | KotlinSyntaxListPart::Separator(_)

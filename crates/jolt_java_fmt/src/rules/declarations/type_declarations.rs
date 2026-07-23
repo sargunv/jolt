@@ -292,10 +292,7 @@ fn type_with_body<'source>(
 }
 
 fn required_doc_with_presence<'source, T>(
-    field: Result<
-        jolt_java_syntax::JavaSyntaxField<'source, T>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    field: jolt_java_syntax::JavaSyntaxField<'source, T>,
     doc: &mut DocBuilder<'source>,
     present: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> (Doc<'source>, bool) {
@@ -310,10 +307,7 @@ fn structured_separator<'source>(present: bool, doc: &mut DocBuilder<'source>) -
 }
 
 fn required_doc<'source, T>(
-    field: Result<
-        jolt_java_syntax::JavaSyntaxField<'source, T>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    field: jolt_java_syntax::JavaSyntaxField<'source, T>,
     doc: &mut DocBuilder<'source>,
     present: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> Doc<'source> {
@@ -324,10 +318,7 @@ fn required_doc<'source, T>(
 }
 
 fn optional_doc<'source, T>(
-    field: Result<
-        jolt_java_syntax::JavaSyntaxField<'source, T>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    field: jolt_java_syntax::JavaSyntaxField<'source, T>,
     doc: &mut DocBuilder<'source>,
     present: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> Doc<'source> {
@@ -339,10 +330,7 @@ fn optional_doc<'source, T>(
 }
 
 fn optional_doc_with_presence<'source, T>(
-    field: Result<
-        jolt_java_syntax::JavaSyntaxField<'source, T>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    field: jolt_java_syntax::JavaSyntaxField<'source, T>,
     doc: &mut DocBuilder<'source>,
     present: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> (Doc<'source>, bool) {
@@ -541,10 +529,7 @@ fn field_token_with_space<'source>(
 fn format_type_clause<'source>(
     keyword: Option<&JavaSyntaxToken<'source>>,
     parts: impl IntoIterator<
-        Item = Result<
-            jolt_java_syntax::JavaSyntaxListPart<'source, jolt_java_syntax::Type<'source>>,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
+        Item = jolt_java_syntax::JavaSyntaxListPart<'source, jolt_java_syntax::Type<'source>>,
     >,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {

@@ -80,11 +80,14 @@ macro_rules! define_typed_cst_role {
 /// Generates a single typed field accessor for one declared slot.
 ///
 /// The leading group threads the language names
-/// `(syntax_result syntax_field syntax_token role_element generic_vis)`.
+/// `(syntax_field syntax_token role_element generic_vis)`.
 /// Slot indices resolve through the expansion-site `crate::shape` module.
 ///
 /// `crate::shape` deliberately names the invoking language crate's shape module
 /// rather than `jolt_syntax`, so the `crate_in_macro_def` lint is suppressed.
+/// Native accessors retain the established inline hint for formatter throughput.
+/// WASM leaves them unhinted so the formatter's documented field-resolution
+/// boundary can prevent aggregate projection from duplicating every layout rule.
 #[doc(hidden)]
 #[macro_export]
 #[allow(clippy::crate_in_macro_def)]
@@ -96,24 +99,22 @@ macro_rules! __typed_cst_field_accessor {
         $crate::__typed_cst_field_accessor!(@role $names $module $field $role);
     };
     (
-        @role ($sr:ident $sf:ident $st:ident $re:ident $gv:vis)
+        @role ($sf:ident $st:ident $re:ident $gv:vis)
         $module:ident $field:ident $role:ident
     ) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> $sr<$sf<'source, $role<'source>>> {
+        #[cfg_attr(not(target_arch = "wasm32"), inline)]
+        pub fn $field(&self) -> $sf<'source, $role<'source>> {
             required_role_element(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
-                .map(|slot| slot.map(|element| $role { element }))
+                .map(|element| $role { element })
         }
     };
 
     (
-        ($sr:ident $sf:ident $st:ident $re:ident $gv:vis)
+        ($sf:ident $st:ident $re:ident $gv:vis)
         $module:ident $field:ident required (token $kind:ident)
     ) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> $sr<$sf<'source, $st<'source>>> {
+        #[cfg_attr(not(target_arch = "wasm32"), inline)]
+        pub fn $field(&self) -> $sf<'source, $st<'source>> {
             required_token(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
         }
     };
@@ -124,12 +125,11 @@ macro_rules! __typed_cst_field_accessor {
         $crate::__typed_cst_field_accessor!($names $module $field required (token __schema_contextual));
     };
     (
-        ($sr:ident $sf:ident $st:ident $re:ident $gv:vis)
+        ($sf:ident $st:ident $re:ident $gv:vis)
         $module:ident $field:ident optional (token $kind:ident)
     ) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> $sr<$sf<'source, $st<'source>>> {
+        #[cfg_attr(not(target_arch = "wasm32"), inline)]
+        pub fn $field(&self) -> $sf<'source, $st<'source>> {
             optional_token(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
         }
     };
@@ -159,43 +159,39 @@ macro_rules! __typed_cst_field_accessor {
         $crate::__typed_cst_field_accessor!(@node $names optional $module $field $target);
     };
     (
-        @node ($sr:ident $sf:ident $st:ident $re:ident $gv:vis)
+        @node ($sf:ident $st:ident $re:ident $gv:vis)
         required $module:ident $field:ident $target:ident
     ) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> $sr<$sf<'source, $target<'source>>> {
+        #[cfg_attr(not(target_arch = "wasm32"), inline)]
+        pub fn $field(&self) -> $sf<'source, $target<'source>> {
             required_node(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
         }
     };
     (
-        @node ($sr:ident $sf:ident $st:ident $re:ident $gv:vis)
+        @node ($sf:ident $st:ident $re:ident $gv:vis)
         optional $module:ident $field:ident $target:ident
     ) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> $sr<$sf<'source, $target<'source>>> {
+        #[cfg_attr(not(target_arch = "wasm32"), inline)]
+        pub fn $field(&self) -> $sf<'source, $target<'source>> {
             optional_node(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
         }
     };
 
     (
-        ($sr:ident $sf:ident $st:ident $re:ident $gv:vis)
+        ($sf:ident $st:ident $re:ident $gv:vis)
         $module:ident $field:ident required (category $target:ident)
     ) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> $sr<$sf<'source, $target<'source>>> {
+        #[cfg_attr(not(target_arch = "wasm32"), inline)]
+        pub fn $field(&self) -> $sf<'source, $target<'source>> {
             required_family(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
         }
     };
     (
-        ($sr:ident $sf:ident $st:ident $re:ident $gv:vis)
+        ($sf:ident $st:ident $re:ident $gv:vis)
         $module:ident $field:ident optional (category $target:ident)
     ) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        pub fn $field(&self) -> $sr<$sf<'source, $target<'source>>> {
+        #[cfg_attr(not(target_arch = "wasm32"), inline)]
+        pub fn $field(&self) -> $sf<'source, $target<'source>> {
             optional_family(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
         }
     };
@@ -204,22 +200,20 @@ macro_rules! __typed_cst_field_accessor {
     // crate hand-writes. This primitive still reads exactly one declared slot
     // and never searches.
     (
-        ($sr:ident $sf:ident $st:ident $re:ident $gv:vis)
+        ($sf:ident $st:ident $re:ident $gv:vis)
         $module:ident $field:ident required $matcher:tt
     ) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        $gv fn $field(&self) -> $sr<$sf<'source, $re<'source>>> {
+        #[cfg_attr(not(target_arch = "wasm32"), inline)]
+        $gv fn $field(&self) -> $sf<'source, $re<'source>> {
             required_role_element(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
         }
     };
     (
-        ($sr:ident $sf:ident $st:ident $re:ident $gv:vis)
+        ($sf:ident $st:ident $re:ident $gv:vis)
         $module:ident $field:ident optional $matcher:tt
     ) => {
-        #[inline]
-        #[allow(clippy::missing_errors_doc)]
-        $gv fn $field(&self) -> $sr<$sf<'source, $re<'source>>> {
+        #[cfg_attr(not(target_arch = "wasm32"), inline)]
+        $gv fn $field(&self) -> $sf<'source, $re<'source>> {
             required_role_element(self.fixed_syntax(), crate::shape::$module::Slot::$field as usize)
         }
     };
@@ -271,18 +265,16 @@ macro_rules! __typed_cst_list_is_separated {
 #[macro_export]
 macro_rules! __typed_cst_variable_slot_view {
     (
-        ($sr:ident $lp:ident $re:ident)
+        ($lp:ident $re:ident)
         list;
         $field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)? $([$($policy:tt)*])?;
     ) => {
         /// Returns this list's represented elements and separators in source order.
-        pub fn parts(
-            &self,
-        ) -> impl Iterator<
-            Item = $sr<$lp<
+        pub fn parts(&self) -> impl Iterator<
+            Item = $lp<
                 'source,
                 $crate::__typed_cst_list_item_type_optional_role!($re; 'source; $matcher; $($role)?),
-            >>,
+            >,
         > + '_ {
             list_parts::<$crate::__typed_cst_list_item_type_optional_role!($re; 'source; $matcher; $($role)?)>(
                 self.syntax,
@@ -290,7 +282,7 @@ macro_rules! __typed_cst_variable_slot_view {
             )
         }
     };
-    (($sr:ident $lp:ident $re:ident) $class:ident; $($fields:tt)*) => {};
+    (($lp:ident $re:ident) $class:ident; $($fields:tt)*) => {};
 }
 
 /// Generates every typed field accessor, grammar-role wrapper, and list view
@@ -306,7 +298,6 @@ macro_rules! define_typed_cst_accessors {
     (
         names {
             syntax_token: $syntax_token:ident,
-            syntax_result: $syntax_result:ident,
             syntax_field: $syntax_field:ident,
             role_element: $role_element:ident,
             list_part: $list_part:ident,
@@ -344,12 +335,12 @@ macro_rules! define_typed_cst_accessors {
             impl<'source> $wrapper<'source> {
                 $(
                     $crate::__typed_cst_field_accessor!(
-                        ($syntax_result $syntax_field $syntax_token $role_element $generic_vis)
+                        ($syntax_field $syntax_token $role_element $generic_vis)
                         $module $field $cardinality $matcher $(=> $role)?
                     );
                 )*
                 $crate::__typed_cst_variable_slot_view!(
-                    ($syntax_result $list_part $role_element)
+                    ($list_part $role_element)
                     $class;
                     $($field: $cardinality $matcher $(=> $role)? $([$($policy)*])?;)*
                 );

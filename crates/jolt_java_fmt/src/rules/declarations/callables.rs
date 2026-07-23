@@ -52,10 +52,7 @@ fn format_optional_throws_clause<'source>(
 }
 
 fn format_constructor_body_field<'source>(
-    body: Result<
-        jolt_java_syntax::JavaSyntaxField<'source, jolt_java_syntax::ConstructorBody<'source>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    body: jolt_java_syntax::JavaSyntaxField<'source, jolt_java_syntax::ConstructorBody<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     match resolve_required_field(body, doc) {
@@ -218,7 +215,7 @@ pub(crate) fn format_method_declaration<'source>(
                         prefix,
                         doc_group!(doc, header),
                         format_statement_semicolon(
-                            Ok(jolt_java_syntax::JavaSyntaxField::Present(semicolon)),
+                            jolt_java_syntax::JavaSyntaxField::Present(semicolon),
                             doc,
                         )
                     ]

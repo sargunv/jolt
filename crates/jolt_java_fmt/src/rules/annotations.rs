@@ -2,7 +2,7 @@ use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
     Annotation, AnnotationArgumentList, AnnotationArgumentSyntax, AnnotationArrayInitializer,
     AnnotationElementValue, AnnotationElementValueContentItem, AnnotationElementValuePair,
-    AnnotationList, JavaSyntaxField, JavaSyntaxInvariantError, JavaSyntaxView,
+    AnnotationList, JavaSyntaxField, JavaSyntaxView,
 };
 
 use crate::helpers::comments::{
@@ -40,20 +40,16 @@ pub(crate) fn format_annotation_without_leading_comments<'source>(
 /// Formats package/module annotation lines while keeping layout presence
 /// separate from zero-width source-conservation claims.
 pub(crate) fn format_required_annotation_lines<'source>(
-    field: Result<JavaSyntaxField<'source, AnnotationList<'source>>, JavaSyntaxInvariantError>,
+    field: JavaSyntaxField<'source, AnnotationList<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> (Doc<'source>, bool) {
     let annotations = match field {
-        Ok(JavaSyntaxField::Present(annotations)) => annotations,
-        Ok(JavaSyntaxField::Malformed(malformed)) => {
+        JavaSyntaxField::Present(annotations) => annotations,
+        JavaSyntaxField::Malformed(malformed) => {
             let visible = malformed.first_token().is_some();
             return (format_malformed(&malformed, doc), visible);
         }
-        Ok(JavaSyntaxField::Missing(missing)) => return (format_missing(&missing, doc), false),
-        Err(error) => {
-            doc.block_on_invariant(error.to_string());
-            return (Doc::nil(), false);
-        }
+        JavaSyntaxField::Missing(missing) => return (format_missing(&missing, doc), false),
     };
 
     let mut visible = false;

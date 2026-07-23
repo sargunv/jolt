@@ -59,13 +59,11 @@ pub(super) fn format_enum_body_contents<'source>(
     let resolved_members = resolve_required_field(body.members(), doc);
     let resolved_has_body_declarations = match &resolved_members {
         JavaFormatField::Present(members) => members.parts().any(|part| match part {
-            Ok(jolt_java_syntax::JavaSyntaxListPart::Item(
+            jolt_java_syntax::JavaSyntaxListPart::Item(
                 jolt_java_syntax::ClassBodyMember::EmptyDeclaration(_),
-            )) => false,
-            Ok(
-                jolt_java_syntax::JavaSyntaxListPart::Item(_)
-                | jolt_java_syntax::JavaSyntaxListPart::Malformed(_),
-            ) => true,
+            ) => false,
+            jolt_java_syntax::JavaSyntaxListPart::Item(_)
+            | jolt_java_syntax::JavaSyntaxListPart::Malformed(_) => true,
             _ => false,
         }),
         JavaFormatField::Malformed(_) => false,
@@ -498,17 +496,11 @@ fn format_enum_constant_annotations<'source>(
 }
 
 fn present_token<'source>(
-    field: Result<
-        jolt_java_syntax::JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    field: jolt_java_syntax::JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
 ) -> Option<JavaSyntaxToken<'source>> {
     match field {
-        Ok(jolt_java_syntax::JavaSyntaxField::Present(token)) => Some(token),
-        Ok(
-            jolt_java_syntax::JavaSyntaxField::Missing(_)
-            | jolt_java_syntax::JavaSyntaxField::Malformed(_),
-        )
-        | Err(_) => None,
+        jolt_java_syntax::JavaSyntaxField::Present(token) => Some(token),
+        jolt_java_syntax::JavaSyntaxField::Missing(_)
+        | jolt_java_syntax::JavaSyntaxField::Malformed(_) => None,
     }
 }

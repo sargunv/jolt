@@ -33,7 +33,7 @@ pub(super) fn format_if_expression<'source>(
 ) -> Doc<'source> {
     let has_condition = matches!(
         expression.condition(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(ref condition))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref condition)
             if condition.first_token().is_some()
     );
     let keyword = format_required_token(expression.if_token(), doc, leading);
@@ -156,7 +156,7 @@ pub(super) fn format_try_expression<'source>(
 ) -> Doc<'source> {
     let has_block = matches!(
         expression.block(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(ref block))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref block)
             if block.first_token().is_some()
     );
     let keyword = format_required_token(expression.try_token(), doc, leading);
@@ -244,7 +244,7 @@ pub(super) fn format_for_statement<'source>(
 ) -> Doc<'source> {
     let has_body = matches!(
         statement.body(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
             if body.first_token().is_some()
     );
     let keyword = format_required_token(statement.for_token(), doc, leading);
@@ -266,7 +266,7 @@ pub(super) fn format_for_statement<'source>(
     });
     let body_is_empty = matches!(
         statement.body(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
             if matches!(body.classify(), Ok(ForBodySyntax::EmptyStatement(_)))
     );
     let before_header = doc.space();
@@ -306,12 +306,12 @@ pub(super) fn format_while_statement<'source>(
 ) -> Doc<'source> {
     let has_condition = matches!(
         statement.condition(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(ref condition))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref condition)
             if condition.first_token().is_some()
     );
     let has_body = matches!(
         statement.body(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
             if body.first_token().is_some()
     );
     let keyword = format_required_token(statement.while_token(), doc, leading);
@@ -323,7 +323,7 @@ pub(super) fn format_while_statement<'source>(
     });
     let body_is_empty = matches!(
         statement.body(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
             if matches!(body.classify(), Ok(WhileBodySyntax::EmptyStatement(_)))
     );
     let space = doc.space();
@@ -343,16 +343,16 @@ pub(super) fn format_do_while_statement<'source>(
 ) -> Doc<'source> {
     let has_body = matches!(
         statement.body(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
             if body.first_token().is_some()
     );
     let has_while = matches!(
         statement.while_token(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(_))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(_)
     );
     let has_condition = matches!(
         statement.condition(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(ref condition))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref condition)
             if condition.first_token().is_some()
     );
     let do_token = format_required_token(statement.do_token(), doc, leading);
@@ -361,7 +361,7 @@ pub(super) fn format_do_while_statement<'source>(
     });
     let body_is_empty = matches!(
         statement.body(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
             if matches!(body.classify(), Ok(DoWhileBodySyntax::EmptyStatement(_)))
     );
     let while_token = format_required_token(statement.while_token(), doc, LeadingTrivia::Preserve);
@@ -514,7 +514,7 @@ fn format_when_entry<'source>(
 ) -> Doc<'source> {
     let has_body = matches!(
         entry.body(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
             if body.first_token().is_some()
     );
     let else_token = resolve_optional_field(entry.else_token(), doc);
@@ -661,12 +661,12 @@ fn format_catch_clause<'source>(
 ) -> Doc<'source> {
     let has_parameter = matches!(
         clause.parameter(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(ref parameter))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref parameter)
             if parameter.first_token().is_some()
     );
     let has_block = matches!(
         clause.block(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(ref block))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref block)
             if block.first_token().is_some()
     );
     let keyword = format_required_token(clause.catch_token(), doc, LeadingTrivia::Preserve);
@@ -708,7 +708,7 @@ fn format_finally_clause<'source>(
 ) -> Doc<'source> {
     let has_block = matches!(
         clause.block(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(ref block))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref block)
             if block.first_token().is_some()
     );
     let keyword = format_required_token(clause.finally_token(), doc, LeadingTrivia::Preserve);
@@ -824,10 +824,7 @@ fn format_when_entry_body<'source>(
 }
 
 fn format_required_token<'source>(
-    field: Result<
-        jolt_kotlin_syntax::KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
+    field: jolt_kotlin_syntax::KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {

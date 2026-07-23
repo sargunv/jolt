@@ -8,8 +8,7 @@ use jolt_fmt_ir::{
     Doc, DocBuilder, FormatField, MalformedBoundaryPolicy, assemble_malformed_fragment,
 };
 use jolt_java_syntax::{
-    JavaMissingSyntax, JavaSyntaxField, JavaSyntaxInvariantError, JavaSyntaxListPart,
-    JavaSyntaxToken, JavaSyntaxView,
+    JavaMissingSyntax, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxToken, JavaSyntaxView,
 };
 
 use super::comments::{comment_forces_line, format_comment, format_leading_comment_list};
@@ -66,7 +65,7 @@ impl<'source> JavaFormatDelimiter<'source> {
 }
 
 pub(crate) fn resolve_required_delimiter<'source>(
-    field: Result<JavaSyntaxField<'source, JavaSyntaxToken<'source>>, JavaSyntaxInvariantError>,
+    field: JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> JavaFormatDelimiter<'source> {
     match resolve_required_field(field, doc) {
@@ -76,84 +75,76 @@ pub(crate) fn resolve_required_delimiter<'source>(
 }
 
 pub(crate) fn resolve_list_part<'source, T>(
-    part: Result<JavaSyntaxListPart<'source, T>, JavaSyntaxInvariantError>,
+    part: JavaSyntaxListPart<'source, T>,
     doc: &mut DocBuilder<'source>,
 ) -> JavaFormatListPart<'source, T> {
     resolve_list_part_with_visibility(part, doc, |_| false).0
 }
 
 pub(crate) fn resolve_list_part_with_visibility<'source, T>(
-    part: Result<JavaSyntaxListPart<'source, T>, JavaSyntaxInvariantError>,
+    part: JavaSyntaxListPart<'source, T>,
     doc: &mut DocBuilder<'source>,
     item_is_visible: impl FnOnce(&T) -> bool,
 ) -> (JavaFormatListPart<'source, T>, bool) {
     match part {
-        Ok(JavaSyntaxListPart::Item(item)) => {
+        JavaSyntaxListPart::Item(item) => {
             let visible = item_is_visible(&item);
             (JavaFormatListPart::Item(item), visible)
         }
-        Ok(JavaSyntaxListPart::Separator(separator)) => {
+        JavaSyntaxListPart::Separator(separator) => {
             (JavaFormatListPart::Separator(separator), true)
         }
-        Ok(JavaSyntaxListPart::Missing(missing)) => (
+        JavaSyntaxListPart::Missing(missing) => (
             JavaFormatListPart::Malformed(format_missing(&missing, doc)),
             false,
         ),
-        Ok(JavaSyntaxListPart::Malformed(malformed)) => {
+        JavaSyntaxListPart::Malformed(malformed) => {
             let visible = malformed.first_token().is_some();
             (
                 JavaFormatListPart::Malformed(format_malformed(&malformed, doc)),
                 visible,
             )
         }
-        Err(error) => {
-            doc.block_on_invariant(error.to_string());
-            (JavaFormatListPart::Malformed(Doc::nil()), false)
-        }
     }
 }
 
+// On WASM, these generic field resolvers are deliberate codegen boundaries.
+// They run for present as well as malformed syntax; `inline(never)` is not a
+// cold-path hint. Native inlining remains optimizer-controlled. Re-measure
+// formatter throughput and optimized WASM size before changing this policy.
 /// Resolves one generated field without letting missing or malformed syntax
 /// leak into a structured layout rule.
+#[cfg_attr(target_arch = "wasm32", inline(never))]
 pub(crate) fn resolve_required_field<'source, T>(
-    field: Result<JavaSyntaxField<'source, T>, JavaSyntaxInvariantError>,
+    field: JavaSyntaxField<'source, T>,
     doc: &mut DocBuilder<'source>,
 ) -> JavaFormatField<'source, T> {
     match field {
-        Ok(JavaSyntaxField::Present(value)) => FormatField::Present(value),
-        Ok(JavaSyntaxField::Malformed(malformed)) => {
+        JavaSyntaxField::Present(value) => FormatField::Present(value),
+        JavaSyntaxField::Malformed(malformed) => {
             FormatField::Malformed(format_malformed(&malformed, doc))
         }
-        Ok(JavaSyntaxField::Missing(missing)) => {
-            FormatField::Malformed(format_missing(&missing, doc))
-        }
-        Err(error) => {
-            doc.block_on_invariant(error.to_string());
-            FormatField::Malformed(Doc::nil())
-        }
+        JavaSyntaxField::Missing(missing) => FormatField::Malformed(format_missing(&missing, doc)),
     }
 }
 
 /// Resolves an optional generated field; its empty slot is ordinary absence.
+#[cfg_attr(target_arch = "wasm32", inline(never))]
 pub(crate) fn resolve_optional_field<'source, T>(
-    field: Result<JavaSyntaxField<'source, T>, JavaSyntaxInvariantError>,
+    field: JavaSyntaxField<'source, T>,
     doc: &mut DocBuilder<'source>,
 ) -> JavaFormatField<'source, Option<T>> {
     match field {
-        Ok(JavaSyntaxField::Present(value)) => FormatField::Present(Some(value)),
-        Ok(JavaSyntaxField::Missing(_)) => FormatField::Present(None),
-        Ok(JavaSyntaxField::Malformed(malformed)) => {
+        JavaSyntaxField::Present(value) => FormatField::Present(Some(value)),
+        JavaSyntaxField::Missing(_) => FormatField::Present(None),
+        JavaSyntaxField::Malformed(malformed) => {
             FormatField::Malformed(format_malformed(&malformed, doc))
-        }
-        Err(error) => {
-            doc.block_on_invariant(error.to_string());
-            FormatField::Malformed(Doc::nil())
         }
     }
 }
 
 pub(crate) fn format_required_field<'source, T>(
-    field: Result<JavaSyntaxField<'source, T>, JavaSyntaxInvariantError>,
+    field: JavaSyntaxField<'source, T>,
     doc: &mut DocBuilder<'source>,
     structured: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> Doc<'source> {
@@ -161,7 +152,7 @@ pub(crate) fn format_required_field<'source, T>(
 }
 
 pub(crate) fn format_optional_field<'source, T>(
-    field: Result<JavaSyntaxField<'source, T>, JavaSyntaxInvariantError>,
+    field: JavaSyntaxField<'source, T>,
     doc: &mut DocBuilder<'source>,
     structured: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> Doc<'source> {

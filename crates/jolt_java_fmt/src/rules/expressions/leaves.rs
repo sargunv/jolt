@@ -30,17 +30,11 @@ pub(super) fn format_name_expression<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let (annotations, annotations_visible) = match expression.annotations() {
-        Ok(JavaSyntaxField::Present(annotations)) => {
-            format_annotation_parts(annotations.parts(), doc)
-        }
-        Ok(JavaSyntaxField::Missing(_)) => (Doc::nil(), false),
-        Ok(JavaSyntaxField::Malformed(malformed)) => {
+        JavaSyntaxField::Present(annotations) => format_annotation_parts(annotations.parts(), doc),
+        JavaSyntaxField::Missing(_) => (Doc::nil(), false),
+        JavaSyntaxField::Malformed(malformed) => {
             let visible = malformed.first_token().is_some();
             (format_malformed(&malformed, doc), visible)
-        }
-        Err(error) => {
-            doc.block_on_invariant(error.to_string());
-            (Doc::nil(), false)
         }
     };
     let name = format_required_field(expression.identifier(), doc, |name, doc| {
@@ -55,12 +49,7 @@ pub(super) fn format_name_expression<'source>(
 }
 
 fn format_annotation_parts<'source>(
-    parts: impl IntoIterator<
-        Item = Result<
-            JavaSyntaxListPart<'source, jolt_java_syntax::Annotation<'source>>,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
-    >,
+    parts: impl IntoIterator<Item = JavaSyntaxListPart<'source, jolt_java_syntax::Annotation<'source>>>,
     doc: &mut DocBuilder<'source>,
 ) -> (Doc<'source>, bool) {
     let mut has_parts = false;

@@ -1,5 +1,5 @@
 use jolt_fmt_ir::{Doc, DocBuilder, SynthesisClaim};
-use jolt_java_syntax::{JavaSyntaxInvariantError, JavaSyntaxListPart, JavaSyntaxToken};
+use jolt_java_syntax::{JavaSyntaxListPart, JavaSyntaxToken};
 
 use crate::helpers::comments::{
     InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, delimiter_dangling_comments,
@@ -38,9 +38,7 @@ pub(crate) fn comma_list<'source>(
 
 pub(crate) fn syntax_comma_list_items<'source, Entry>(
     doc: &mut DocBuilder<'source>,
-    entries: impl IntoIterator<
-        Item = Result<JavaSyntaxListPart<'source, Entry>, JavaSyntaxInvariantError>,
-    >,
+    entries: impl IntoIterator<Item = JavaSyntaxListPart<'source, Entry>>,
     mut format_entry: impl FnMut(Entry, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> Vec<CommaListItem<'source>> {
     let entries = entries.into_iter();

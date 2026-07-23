@@ -42,7 +42,7 @@ pub(crate) fn format_annotation_with_leading<'source>(
     });
     let has_arguments = matches!(
         annotation.argument_list(),
-        Ok(jolt_kotlin_syntax::KotlinSyntaxField::Present(_))
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(_)
     );
     let name = format_required_field(annotation.name(), doc, |element, doc| {
         let last_token = match element {

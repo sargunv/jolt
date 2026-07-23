@@ -84,24 +84,20 @@ fn collect_items<'source>(
     entries: &mut Vec<FileEntry<'source>>,
 ) {
     let items = match file.items() {
-        Ok(KotlinSyntaxField::Present(items)) => items,
-        Ok(KotlinSyntaxField::Malformed(malformed)) => {
+        KotlinSyntaxField::Present(items) => items,
+        KotlinSyntaxField::Malformed(malformed) => {
             entries.push(FileEntry::Malformed(malformed));
             return;
         }
-        Ok(KotlinSyntaxField::Missing(missing)) => {
+        KotlinSyntaxField::Missing(missing) => {
             entries.push(FileEntry::Missing(missing));
-            return;
-        }
-        Err(error) => {
-            doc.block_on_invariant(error.to_string());
             return;
         }
     };
     let mut preceding_item = None;
     for part in items.parts() {
         match part {
-            Ok(KotlinSyntaxListPart::Item(KotlinRoleElement::Node(node))) => {
+            KotlinSyntaxListPart::Item(KotlinRoleElement::Node(node)) => {
                 if let Some(item) = KotlinFileItem::cast(node) {
                     preceding_item = Some(item);
                     entries.push(FileEntry::Item(item));
@@ -110,10 +106,8 @@ fn collect_items<'source>(
                     doc.block_on_invariant("invalid Kotlin file item node");
                 }
             }
-            Ok(
-                KotlinSyntaxListPart::Item(KotlinRoleElement::Token(token))
-                | KotlinSyntaxListPart::Separator(token),
-            ) => {
+            KotlinSyntaxListPart::Item(KotlinRoleElement::Token(token))
+            | KotlinSyntaxListPart::Separator(token) => {
                 let separator = format_removed_separator(
                     doc,
                     &token,
@@ -128,17 +122,13 @@ fn collect_items<'source>(
                     token_has_comments(&token),
                 ));
             }
-            Ok(KotlinSyntaxListPart::Malformed(malformed)) => {
+            KotlinSyntaxListPart::Malformed(malformed) => {
                 preceding_item = None;
                 entries.push(FileEntry::Malformed(malformed));
             }
-            Ok(KotlinSyntaxListPart::Missing(missing)) => {
+            KotlinSyntaxListPart::Missing(missing) => {
                 preceding_item = None;
                 entries.push(FileEntry::Missing(missing));
-            }
-            Err(error) => {
-                preceding_item = None;
-                doc.block_on_invariant(error.to_string());
             }
         }
     }
@@ -335,16 +325,12 @@ fn format_file_annotations<'source>(
     file: &KotlinFile<'source>,
 ) -> (Doc<'source>, bool) {
     let annotations = match file.annotations() {
-        Ok(KotlinSyntaxField::Present(annotations)) => annotations,
-        Ok(KotlinSyntaxField::Malformed(malformed)) => {
+        KotlinSyntaxField::Present(annotations) => annotations,
+        KotlinSyntaxField::Malformed(malformed) => {
             let visible = malformed.first_token().is_some();
             return (format_malformed(&malformed, doc), visible);
         }
-        Ok(KotlinSyntaxField::Missing(missing)) => return (format_missing(&missing, doc), false),
-        Err(error) => {
-            doc.block_on_invariant(error.to_string());
-            return (Doc::nil(), false);
-        }
+        KotlinSyntaxField::Missing(missing) => return (format_missing(&missing, doc), false),
     };
     let mut formatted = Vec::new();
     let mut invisible = Vec::new();

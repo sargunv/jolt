@@ -299,15 +299,15 @@ mod tests {
 
         assert!(matches!(
             constructor.open_paren(),
-            Ok(JavaSyntaxField::Missing(_))
+            JavaSyntaxField::Missing(_)
         ));
         assert!(matches!(
             constructor.close_paren(),
-            Ok(JavaSyntaxField::Present(_))
+            JavaSyntaxField::Present(_)
         ));
         assert!(matches!(
             constructor.body(),
-            Ok(JavaSyntaxField::Present(body))
+            JavaSyntaxField::Present(body)
                 if body.syntax_node().is_some_and(|node| node.kind() == JavaSyntaxKind::ConstructorBody)
         ));
     }
@@ -342,11 +342,11 @@ mod tests {
             );
             let constructor = &constructors[0];
             assert!(
-                matches!(constructor.close_paren(), Ok(JavaSyntaxField::Present(_))),
+                matches!(constructor.close_paren(), JavaSyntaxField::Present(_)),
                 "constructor recovery did not consume `)` for `{source}`",
             );
             assert!(
-                matches!(constructor.body(), Ok(JavaSyntaxField::Present(_))),
+                matches!(constructor.body(), JavaSyntaxField::Present(_)),
                 "constructor recovery did not reach its body for `{source}`",
             );
         }

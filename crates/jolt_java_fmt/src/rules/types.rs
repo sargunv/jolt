@@ -395,12 +395,7 @@ fn format_union_entries<'source>(
 }
 
 fn format_type_operator_list<'source>(
-    parts: impl IntoIterator<
-        Item = Result<
-            JavaSyntaxListPart<'source, Type<'source>>,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
-    >,
+    parts: impl IntoIterator<Item = JavaSyntaxListPart<'source, Type<'source>>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let mut indent_next = false;
@@ -432,10 +427,7 @@ fn format_type_operator_list<'source>(
 }
 
 fn format_required_type_operator<'source>(
-    field: Result<
-        jolt_java_syntax::JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    field: jolt_java_syntax::JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> (Doc<'source>, bool) {
     match resolve_required_field(field, doc) {
@@ -531,36 +523,21 @@ fn format_array_dimension_close_bracket<'source>(
 }
 
 fn format_inline_annotation_parts<'source>(
-    parts: impl IntoIterator<
-        Item = Result<
-            JavaSyntaxListPart<'source, Annotation<'source>>,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
-    >,
+    parts: impl IntoIterator<Item = JavaSyntaxListPart<'source, Annotation<'source>>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     format_inline_annotation_parts_impl(parts, false, doc)
 }
 
 fn format_inline_annotation_parts_with_leading<'source>(
-    parts: impl IntoIterator<
-        Item = Result<
-            JavaSyntaxListPart<'source, Annotation<'source>>,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
-    >,
+    parts: impl IntoIterator<Item = JavaSyntaxListPart<'source, Annotation<'source>>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     format_inline_annotation_parts_impl(parts, true, doc)
 }
 
 fn format_inline_annotation_parts_impl<'source>(
-    parts: impl IntoIterator<
-        Item = Result<
-            JavaSyntaxListPart<'source, Annotation<'source>>,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
-    >,
+    parts: impl IntoIterator<Item = JavaSyntaxListPart<'source, Annotation<'source>>>,
     leading_space: bool,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {

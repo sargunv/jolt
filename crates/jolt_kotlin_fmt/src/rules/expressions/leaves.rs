@@ -62,10 +62,7 @@ pub(super) fn format_super_expression<'source>(
 
 fn format_label_suffix<'source>(
     doc: &mut DocBuilder<'source>,
-    label: Result<
-        jolt_kotlin_syntax::KotlinSyntaxField<'source, LabelReference<'source>>,
-        jolt_kotlin_syntax::KotlinSyntaxInvariantError,
-    >,
+    label: jolt_kotlin_syntax::KotlinSyntaxField<'source, LabelReference<'source>>,
 ) -> Doc<'source> {
     format_optional_field(label, doc, |label, doc| {
         let at = format_required_field(label.at(), doc, |at, doc| {

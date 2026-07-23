@@ -350,23 +350,37 @@ Gates:
 
 Scope:
 
-- validate factory shape once at generated construction or typed-root entry;
-- make only generated physical required/optional/list field accessors
-  cardinality-aware and infallible;
-- migrate representative Java and Kotlin vertical slices, then the generator;
-- delete `SyntaxInvariantError` plumbing that guarded impossible slot mismatch;
+- make generated valid/list casts exclude syntax-owned directly malformed nodes,
+  while schema-declared malformed wrappers retain that ownership;
+- rely only on the existing production factory proof: fixed slots and accessors
+  are generated from the same schema invocation;
+- remove the outer `SyntaxInvariantError` result from generated physical
+  required/optional fields and list parts;
+- delete formatter error plumbing that guarded impossible production-factory
+  slot mismatch;
 - retain fallibility for custom semantic projections with genuine failure.
 
 Expected deletions: generated-slot invariant unwraps and impossible shape
 branches. Do not promise removal of all current `block_on_invariant` calls.
+
+This slice does not redesign optional or recovery values. `Present`, `Missing`,
+`Malformed`, separators, recovery visibility, and fallible verbatim-core access
+remain represented until PR 04. The doc-hidden low-level custom factory surface
+is trusted internal construction and does not define the typed language API's
+production-factory guarantee. Do not add runtime validation, provenance flags,
+proof graphs, dual accessors, or a second schema model to support adversarial
+custom factories.
 
 Risks: hiding truly optional tokens, conflating parser recovery with invalid
 factory shape, generated churn, and weaker diagnostics.
 
 Gates:
 
-- an exhaustive schema audit checks factory/accessor agreement;
-- generated code and representative formatter call sites shrink;
+- the schema-derived physical audit checks every represented non-direct node,
+  and focused tests prove cast ownership and malformed-source roots;
+- exactly the generated physical field/list invariant branches disappear while
+  genuinely fallible semantic projections remain;
+- generated code and representative Java/Kotlin formatter call sites shrink;
 - compile time, generated code size, and malformed-tree behavior do not regress;
 - there is still one declarative schema authority and no runtime second model.
 
@@ -681,7 +695,7 @@ ready for review.
 | 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2) | baseline audit complete   | Durable plan and gates only.                  |
 | 01  | `cleanup/01-doc-semantics`               | draft open | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3) | debug/release + benchmark | Profile-independent topology/presence.        |
 | 02  | `cleanup/02-formatter-ignore-plan`       | draft open | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4) | debug/release + benchmark | Root plan with bounded immutable queries.     |
-| 03  | `cleanup/03-infallible-generated-fields` | planned    | PR 02  | —                                            | —                         | Generated physical slots only.                |
+| 03  | `cleanup/03-infallible-generated-fields` | draft open | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5) | debug/release + benchmark | Generated physical slots only.                |
 | 04  | `cleanup/04-syntax-recovery-visibility`  | planned    | PR 03  | —                                            | —                         | Syntax-owned recovery/list classification.    |
 | 05  | `cleanup/05-root-coordination`           | planned    | PR 04  | —                                            | —                         | Narrow root ownership, no god context.        |
 | 06  | `cleanup/06-source-audit-reporting`      | planned    | PR 05  | —                                            | —                         | Structured normalization facts.               |
@@ -769,20 +783,70 @@ ready for review.
   as reassuring non-regression evidence, not causal speedup claims. Peak RSS
   remains unavailable because `/usr/bin/time` is absent.
 
+### PR 03 evidence
+
+- Generated valid/list wrappers now reject directly malformed ownership, while
+  schema-declared malformed wrappers require it. Generated physical fields and
+  list parts return `Present`, `Missing`, `Malformed`, item, or separator states
+  directly; custom semantic projections remain fallible.
+- Exactly 28 generated physical invariant-forwarding branches were deleted. The
+  formatter retains 85 semantic or unrelated invariant sites: Java keeps five
+  `JavaSyntaxInvariantError` references for custom projections and Kotlin keeps
+  no `KotlinSyntaxInvariantError` formatter references.
+- The production factory, fixed slots, accessors, and physical audits still
+  derive from one schema invocation. One private cold contradiction path covers
+  bugs in schema lowering or values built through the doc-hidden custom
+  factory/tree-sink boundary. No validator, provenance flag, proof model,
+  optional-field redesign, or dual API was added.
+- Focused integration tests cover required missing, optional malformed,
+  malformed list items, valid/list cast rejection, malformed-wrapper ownership,
+  Java category-bogus family/list behavior, and malformed-source Java/Kotlin
+  typed roots. Complete corpus schema audits still traverse both languages.
+- Production Rust is +594/-1,025 lines (-431 net); all Rust is +743/-1,060 (-317
+  net). The shared projection/accessor generator is 1,064 lines versus 1,068 in
+  PR 02. The language formatter migration accounts for most deletions.
+- Repository-defined Ona automation passed 183 workspace tests with no skips.
+  `mise run check`, focused strict Clippy, formatting, syntax/formatter corpora,
+  imported fixtures, recovery, trivia, layout, idempotence, release formatter
+  suites, the native release build, and the optimized dprint WASM smoke build
+  passed. Formatter output and snapshots are unchanged.
+- Clean package check was 9.173 seconds versus 9.140 in PR 02; the release
+  package build was 19.515 seconds versus 19.425. Raw WASM declined from
+  2,333,463 to 2,214,345 bytes and optimized WASM from 1,862,892 to 1,767,457
+  bytes. The final optimized hash is
+  `b623cdd3fa903c32928283f39342c0d9c342256d8779a4452724009c7f039364`.
+- Java/Kotlin document topology, allocation count/bytes, and maximum-live
+  allocation metrics are identical to PR 02. Stable Kotlin native timing pairs
+  with the retained native accessor inline policy moved -0.45% and -0.12%; Java
+  runs were noisy and showed no credible regression. The native CLI grew 179,192
+  bytes (+3.11%). This tradeoff preserves native throughput while the optimized
+  WASM shrinks 95,435 bytes (-5.12%).
+- Generated accessors keep their established native inline hint but leave WASM
+  unhinted. Required/optional field resolution is a documented WASM-only codegen
+  boundary because direct aggregate projection otherwise duplicates every layout
+  rule. It is not classified as a cold path.
+- Production parser roots are fixed non-direct-recovery owners and remain
+  castable for malformed sources. Arbitrary doc-hidden custom trees are outside
+  that production guarantee; PR 04 must retain malformed, missing, separator,
+  recovery-visibility, and fallible verbatim-core states while refining their
+  ownership.
+
 ## Decision Log
 
-| Date       | Decision                                                     | Reason                                                                                                  |
-| ---------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| 2026-07-22 | Use a stack of small draft PRs rather than a rewrite.        | Preserves review and rollback boundaries while allowing ambitious end-state changes.                    |
-| 2026-07-22 | Centralize branches, commits, rebases, and publication.      | Subagents share a filesystem; central integration avoids hidden branch state and conflicting commits.   |
-| 2026-07-22 | Make crate extraction conditional.                           | Purity is about dependency direction, not maximizing crate count.                                       |
-| 2026-07-22 | Treat growth without deleted complexity as a stop condition. | The cleanup exists to reduce reasoning load, not install a new framework.                               |
-| 2026-07-22 | Keep leaf rules free of a general formatting context.        | Narrow dependencies prevent a service locator and preserve local reasoning.                             |
-| 2026-07-22 | Split CST, recovery, renderer, language, and lexer risks.    | Each now has an independent correctness model, benchmark gate, and rollback boundary.                   |
-| 2026-07-22 | Accept PR 01's bounded release document-node cost.           | Stable topology costs 1.5–2.2% more nodes but keeps allocations/max-live memory effectively flat.       |
-| 2026-07-22 | Use immutable bounded ignore-plan queries.                   | Independent nested rules stay order-independent; counted binary search replaces hidden mutable cursors. |
-| 2026-07-22 | Reject partial and cross-partition ignore ranges.            | Structured syntax ownership must never overlap a raw source claim; rejected markers remain structured.  |
-| 2026-07-22 | Temporarily transport the ignore plan on `DocBuilder`.       | The field is private, immutable, install-once, and absent from `DocArena`; PR 05 must revisit it.       |
+| Date       | Decision                                                     | Reason                                                                                                                           |
+| ---------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-07-22 | Use a stack of small draft PRs rather than a rewrite.        | Preserves review and rollback boundaries while allowing ambitious end-state changes.                                             |
+| 2026-07-22 | Centralize branches, commits, rebases, and publication.      | Subagents share a filesystem; central integration avoids hidden branch state and conflicting commits.                            |
+| 2026-07-22 | Make crate extraction conditional.                           | Purity is about dependency direction, not maximizing crate count.                                                                |
+| 2026-07-22 | Treat growth without deleted complexity as a stop condition. | The cleanup exists to reduce reasoning load, not install a new framework.                                                        |
+| 2026-07-22 | Keep leaf rules free of a general formatting context.        | Narrow dependencies prevent a service locator and preserve local reasoning.                                                      |
+| 2026-07-22 | Split CST, recovery, renderer, language, and lexer risks.    | Each now has an independent correctness model, benchmark gate, and rollback boundary.                                            |
+| 2026-07-22 | Accept PR 01's bounded release document-node cost.           | Stable topology costs 1.5–2.2% more nodes but keeps allocations/max-live memory effectively flat.                                |
+| 2026-07-22 | Use immutable bounded ignore-plan queries.                   | Independent nested rules stay order-independent; counted binary search replaces hidden mutable cursors.                          |
+| 2026-07-22 | Reject partial and cross-partition ignore ranges.            | Structured syntax ownership must never overlap a raw source claim; rejected markers remain structured.                           |
+| 2026-07-22 | Temporarily transport the ignore plan on `DocBuilder`.       | The field is private, immutable, install-once, and absent from `DocArena`; PR 05 must revisit it.                                |
+| 2026-07-22 | Scope PR 03 to production-factory physical projections.      | Runtime validation or a second proof model would add more architecture than deleting outer results.                              |
+| 2026-07-22 | Split PR 03 codegen policy by native versus WASM.            | Native accessor inlining preserves measured throughput; a narrow WASM field boundary reverses aggregate-return code duplication. |
 
 ## Resume Protocol
 

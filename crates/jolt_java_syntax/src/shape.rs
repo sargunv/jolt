@@ -137,10 +137,7 @@ macro_rules! define_java_physical_audit {
             kind: JavaSyntaxKind,
             language: crate::JavaLanguage,
             matches: java_audit_matches,
-            accepts_malformed: |slot| matches!(
-                slot,
-                jolt_syntax::SyntaxSlot::Node(child) if child.is_directly_malformed()
-            ),
+            accepts_malformed: |_| false,
             visibility: pub(crate),
             $($schema)*
         }

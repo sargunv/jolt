@@ -101,22 +101,16 @@ fn format_block_statements_body<'source>(
 }
 
 fn present_block_token<'source>(
-    field: Result<
-        jolt_java_syntax::JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    field: jolt_java_syntax::JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
 ) -> Option<JavaSyntaxToken<'source>> {
     match field {
-        Ok(jolt_java_syntax::JavaSyntaxField::Present(token)) => Some(token),
+        jolt_java_syntax::JavaSyntaxField::Present(token) => Some(token),
         _ => None,
     }
 }
 
 fn format_block_statement_items_with_ignored<'source>(
-    entries: &[Result<
-        JavaSyntaxListPart<'source, BlockStatement<'source>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >],
+    entries: &[JavaSyntaxListPart<'source, BlockStatement<'source>>],
     runs: &[crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>],
     doc: &mut DocBuilder<'source>,
 ) -> Vec<BodyItem<'source>> {
@@ -141,31 +135,24 @@ fn format_block_statement_items_with_ignored<'source>(
 }
 
 fn format_block_statement_part<'source>(
-    entry: &Result<
-        JavaSyntaxListPart<'source, BlockStatement<'source>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    entry: &JavaSyntaxListPart<'source, BlockStatement<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<BodyItem<'source>> {
     match entry {
-        Ok(JavaSyntaxListPart::Item(statement)) => format_block_statement_item(statement, doc),
-        Ok(JavaSyntaxListPart::Malformed(malformed)) => {
+        JavaSyntaxListPart::Item(statement) => format_block_statement_item(statement, doc),
+        JavaSyntaxListPart::Malformed(malformed) => {
             Some(BodyItem::new(format_malformed(malformed, doc), false))
         }
-        Ok(JavaSyntaxListPart::Missing(missing)) => Some(BodyItem::new(
+        JavaSyntaxListPart::Missing(missing) => Some(BodyItem::new(
             crate::helpers::recovery::format_missing(missing, doc),
             false,
         )),
-        Ok(JavaSyntaxListPart::Separator(token)) => {
+        JavaSyntaxListPart::Separator(token) => {
             doc.block_on_invariant("unseparated block statement list contained a separator");
             Some(BodyItem::new(
                 crate::helpers::comments::format_token_with_comments(doc, token),
                 false,
             ))
-        }
-        Err(error) => {
-            doc.block_on_invariant(error.to_string());
-            None
         }
     }
 }
@@ -174,7 +161,7 @@ fn format_block_open_dangling_comments<'source>(
     block: &Block<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<BodyItem<'source>> {
-    let jolt_java_syntax::JavaSyntaxField::Present(open) = block.open_brace().ok()? else {
+    let jolt_java_syntax::JavaSyntaxField::Present(open) = block.open_brace() else {
         return None;
     };
     let comments = open.trailing_comments();
@@ -185,7 +172,7 @@ fn format_block_close_dangling_comments<'source>(
     block: &Block<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<BodyItem<'source>> {
-    let jolt_java_syntax::JavaSyntaxField::Present(close) = block.close_brace().ok()? else {
+    let jolt_java_syntax::JavaSyntaxField::Present(close) = block.close_brace() else {
         return None;
     };
     let comments = close.leading_comments();
@@ -193,24 +180,21 @@ fn format_block_close_dangling_comments<'source>(
 }
 
 fn block_statement_part_ignore_range(
-    entry: &Result<
-        JavaSyntaxListPart<'_, BlockStatement<'_>>,
-        jolt_java_syntax::JavaSyntaxInvariantError,
-    >,
+    entry: &JavaSyntaxListPart<'_, BlockStatement<'_>>,
 ) -> Option<FormatterIgnoreItemRange> {
     match entry {
-        Ok(JavaSyntaxListPart::Item(statement)) => block_statement_ignore_range(statement),
-        Ok(JavaSyntaxListPart::Separator(token)) => {
+        JavaSyntaxListPart::Item(statement) => block_statement_ignore_range(statement),
+        JavaSyntaxListPart::Separator(token) => {
             Some(FormatterIgnoreItemRange::between(token, token))
         }
-        Ok(JavaSyntaxListPart::Malformed(malformed)) => {
+        JavaSyntaxListPart::Malformed(malformed) => {
             let syntax = malformed.syntax_node()?;
             Some(FormatterIgnoreItemRange::between(
                 &syntax.first_token()?,
                 &syntax.last_token()?,
             ))
         }
-        Ok(JavaSyntaxListPart::Missing(_)) | Err(_) => None,
+        JavaSyntaxListPart::Missing(_) => None,
     }
 }
 
@@ -304,7 +288,7 @@ fn format_removed_empty_statement<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> (Doc<'source>, bool) {
     let has_comments = has_removed_comments(comments_from_tokens(statement.token_iter()));
-    let Ok(jolt_java_syntax::JavaSyntaxField::Present(semicolon)) = statement.semicolon() else {
+    let jolt_java_syntax::JavaSyntaxField::Present(semicolon) = statement.semicolon() else {
         return (format_statement_semicolon(statement.semicolon(), doc), true);
     };
     let (normalized, removed) =

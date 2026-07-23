@@ -183,10 +183,7 @@ fn format_dim_expression<'source>(
 
 fn format_dimension_annotations<'source>(
     parts: impl IntoIterator<
-        Item = Result<
-            jolt_java_syntax::JavaSyntaxListPart<'source, jolt_java_syntax::Annotation<'source>>,
-            jolt_java_syntax::JavaSyntaxInvariantError,
-        >,
+        Item = jolt_java_syntax::JavaSyntaxListPart<'source, jolt_java_syntax::Annotation<'source>>,
     >,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {

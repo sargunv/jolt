@@ -305,12 +305,8 @@ fn binary_for_chain(
     match expression {
         Expression::BinaryExpression(binary) => Some((binary, None)),
         Expression::ParenthesizedExpression(parenthesized)
-            if parenthesized
-                .open_paren()
-                .is_ok_and(|field| matches!(field, JavaSyntaxField::Present(token) if !token_has_comments(&token)))
-                && parenthesized
-                    .close_paren()
-                    .is_ok_and(|field| matches!(field, JavaSyntaxField::Present(token) if !token_has_comments(&token))) =>
+            if matches!(parenthesized.open_paren(), JavaSyntaxField::Present(token) if !token_has_comments(&token))
+                && matches!(parenthesized.close_paren(), JavaSyntaxField::Present(token) if !token_has_comments(&token)) =>
         {
             match present(parenthesized.expression()) {
                 Some(Expression::BinaryExpression(binary)) => Some((binary, Some(parenthesized))),
@@ -321,10 +317,8 @@ fn binary_for_chain(
     }
 }
 
-fn present<T>(
-    field: Result<JavaSyntaxField<'_, T>, jolt_java_syntax::JavaSyntaxInvariantError>,
-) -> Option<T> {
-    match field.ok()? {
+fn present<T>(field: JavaSyntaxField<'_, T>) -> Option<T> {
+    match field {
         JavaSyntaxField::Present(value) => Some(value),
         JavaSyntaxField::Missing(_) | JavaSyntaxField::Malformed(_) => None,
     }
@@ -347,11 +341,10 @@ fn format_operator_with_comments<'source>(
     let components = operator.components();
     doc.concat_list(|docs| {
         for component in components {
-            let component = crate::helpers::recovery::format_required_field(
-                Ok(component),
-                docs,
-                |token, docs| format_token_with_comments(docs, &token),
-            );
+            let component =
+                crate::helpers::recovery::format_required_field(component, docs, |token, docs| {
+                    format_token_with_comments(docs, &token)
+                });
             docs.push(component);
         }
     })
