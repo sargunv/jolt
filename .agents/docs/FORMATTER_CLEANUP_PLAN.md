@@ -787,6 +787,118 @@ Final reconciliation scope (2026-07-23):
   zero-width import/program visibility and `when` recovery spacing, plus Java
   ordinary/ignored program joining around invisible entries.
 
+## Residue Resolution Extension (2026-07-23)
+
+The PR 14 audit proved that several intentionally recorded seams still exist.
+Resolve them in new descendants of PR 14 rather than rewriting reviewed PRs.
+Structural, behavior, and parser-complexity changes have separate rollback
+boundaries:
+
+```text
+cleanup/14-final-reconciliation
+  └─ cleanup/15-modifier-presence
+      └─ cleanup/16-recovery-layout-parts
+          └─ cleanup/17-ignore-boundary-ownership
+              └─ cleanup/18-java-program-joining
+                  └─ cleanup/19-kotlin-recovery-layout
+                      └─ cleanup/20-java-delimiter-summaries
+                          └─ cleanup/21-java-generic-depth
+                              └─ cleanup/22-residue-reconciliation
+```
+
+### PR 15 — Syntax-owned Java modifier presence
+
+- replace semantic `ConcatBuilder::is_empty` decisions in Java modifier-prefix
+  formatting with syntax-derived presence;
+- preserve tokenless recovery proof documents without treating them as lexical
+  layout content;
+- delete the generic opaque annotation-document iterator and duplicate prefix
+  state where the narrower representation permits it;
+- preserve byte-for-byte output, source claims, and modifier comment ownership.
+
+Reject any wrapper that merely mirrors builder emptiness or survives with one
+hypothetical client. This PR closes the unfulfilled PR 01 -> PR 04 promise.
+
+### PR 16 — Barrier-aware recovery layout parts
+
+- prototype one private layout carrier that distinguishes visible content from
+  claim-only recovery while preserving every physical syntax-list position;
+- use it to replace Kotlin `Invisible(Doc)`/`layout_visible` and Java's parallel
+  `(part, visible)` resolution only where separator behavior remains local;
+- do not add a generic list visitor or move comma, sorting, normalization, or
+  orphan-separator policy out of its language owner;
+- preserve byte-for-byte output and exact source claims.
+
+This PR is conditional on net deletion of branches/concepts and non-growth of
+the touched production subsystem. If the shared carrier cannot meet that gate,
+keep the physical recovery states and close the debt by documenting them as the
+minimal barrier representation; do not publish a renamed boolean framework.
+
+### PR 17 — Formatter-ignore boundary ownership
+
+- let formatter-ignore runs answer semantically whether they own a control
+  comment at the root boundary;
+- keep the already-derived root runs alive through EOF formatting;
+- delete both language-owned `Vec<Range<usize>>` projections and duplicated raw
+  containment checks without rescanning tokens or source;
+- preserve output and the existing linear discovery/query bounds.
+
+### PR 18 — Java program joining behavior
+
+- make invisible retained segments transparent to the preceding visible section
+  state in ordinary and ignore-aware joining;
+- preserve every formatter control marker exactly once across adjacent or
+  separated root ignore runs;
+- isolate and snapshot any intended whitespace correction;
+- require source conservation and second-pass idempotence for focused fixtures.
+
+### PR 19 — Kotlin recovery visibility and spacing
+
+- derive import/program section visibility from represented syntax tokens or
+  comments, never opaque `Doc` topology;
+- make top-level missing and tokenless malformed pieces claim-only for joining;
+- make malformed `when` keyword recovery use the same lexical spacing rule as a
+  represented keyword when it has visible source;
+- isolate all output changes in focused recovery snapshots and prove
+  idempotence/source conservation.
+
+### PR 20 — Bounded Java delimiter and annotation summaries
+
+- eliminate quadratic nested parenthesized-lambda rejection with a Java-local
+  lazy delimiter summary that activates only after an explicitly counted scan
+  budget;
+- route annotation-argument skipping through the same exact parenthesis boundary
+  summary, eliminating the deeply nested malformed-annotation rescan without
+  introducing an independent annotation memo;
+- preserve exact grammar classification and recovery; the budget may select an
+  implementation path but must never cap accepted syntax or change a tree;
+- prove total balanced-token work is `O(B * tokens)` for fixed documented `B`;
+- require zero new allocation on the realistic corpus common path and reject a
+  material side model or production growth without offsetting deletion.
+
+### PR 21 — Bounded Java generic depth
+
+- prototype removal of input-depth recursion from both generic-type lookahead
+  and the consuming type grammar with an explicit iterative work stack;
+- if that duplicates the type grammar or adds a large state machine, use one
+  documented finite nesting limit shared by lookahead and consumption, then
+  preserve the over-depth suffix in one syntax-owned malformed type with an
+  owned diagnostic; never silently truncate or lose tokens;
+- keep ownership local to type parsing and delete recursive helper state as the
+  iterative path lands;
+- prove linear token work, bounded native/WASM stack use, following-declaration
+  recovery, fixture parity, and neutral realistic allocations.
+
+### PR 22 — Residue reconciliation
+
+- update formatter architecture and finite-cost documentation to match the
+  implemented extension;
+- record exact stack LOC/concept/performance deltas and every rejected
+  prototype;
+- remove transition-only APIs introduced by PRs 15-21;
+- leave no item labeled deferred without either an implemented owner or an
+  explicit minimality decision supported by the extension's measurements.
+
 ## Pull Request Contract
 
 Every pull request description records:
@@ -863,6 +975,14 @@ ready for review.
 | 12  | `cleanup/12-java-lookahead`              | draft open | PR 11  | [#14](https://github.com/sargunv/jolt/pull/14) | full + release + benchmark | Local deletion; cache frameworks rejected.       |
 | 13  | `cleanup/13-java-comment-conservation`   | draft open | PR 12  | [#15](https://github.com/sargunv/jolt/pull/15) | full + release + benchmark | Localize Java comment and separator ownership.   |
 | 14  | `cleanup/14-final-reconciliation`        | draft open | PR 13  | [#16](https://github.com/sargunv/jolt/pull/16) | full + static checks       | Actual docs, metrics, and API deletions only.    |
+| 15  | `cleanup/15-modifier-presence`           | draft open | PR 14  | [#17](https://github.com/sargunv/jolt/pull/17) | full + benchmark           | Syntax-owned modifier layout presence.           |
+| 16  | `cleanup/16-recovery-layout-parts`       | planned    | PR 15  | —                                              | —                          | Barrier-aware visible/claim-only layout.         |
+| 17  | `cleanup/17-ignore-boundary-ownership`   | planned    | PR 16  | —                                              | —                          | Delete raw EOF ignore-range projections.         |
+| 18  | `cleanup/18-java-program-joining`        | planned    | PR 17  | —                                              | —                          | Reconcile root joining and marker ownership.     |
+| 19  | `cleanup/19-kotlin-recovery-layout`      | planned    | PR 18  | —                                              | —                          | Isolate Kotlin recovery behavior corrections.    |
+| 20  | `cleanup/20-java-delimiter-summaries`    | planned    | PR 19  | —                                              | —                          | Bound lambda and annotation parenthesis scans.   |
+| 21  | `cleanup/21-java-generic-depth`          | planned    | PR 20  | —                                              | —                          | Bound recursive generic-type parsing.            |
+| 22  | `cleanup/22-residue-reconciliation`      | planned    | PR 21  | —                                              | —                          | Final evidence and transition deletion.          |
 
 ### PR 01 evidence
 
@@ -1518,6 +1638,38 @@ slices remove Java nodes and allocations or leave topology unchanged.
   release, benchmark, debug-WASM Spring, optimized WASM, and PGO evidence; PR 14
   changes no formatting or rendering behavior.
 
+### PR 15 evidence
+
+- Java modifier and annotation layout now derives visibility from represented
+  tokens rather than `ConcatBuilder::is_empty`, collection emptiness, or
+  physical first/last positions. Claim-only missing and tokenless malformed
+  documents remain emitted in source order and remain sorting barriers without
+  selecting separators, terminal layout, or leading-comment ownership.
+- One `VisibleDoc` carrier is used only where a preformatted annotation or
+  ellipsis must retain syntax visibility. Inline and ordinary modifier joining
+  share one state machine; the generic annotation-document iterator, duplicate
+  modifier loop, and duplicate first-visible traversal are deleted.
+- Adversarial review found and closed analogous source-order, trailing
+  annotation, type-use, receiver, varargs, and ellipsis presence leaks before
+  publication. Visible syntax retains the existing output; tokenless recovery no
+  longer injects or suppresses lexical spaces or line breaks.
+- Java formatter production Rust is +314/-255 lines (+59 net). The explicit
+  state closes the unfulfilled PR 01 promise and makes tokenless recovery
+  behavior independent of document topology; no public API or cross-language
+  framework was added.
+- The first consolidated implementation added one concat node per visible
+  prefix: +24,144 Java document nodes, +15 allocations, and +2,832,944 allocated
+  bytes. That result was rejected before publication. Terminal separators now
+  emit inside the existing concat. Against the pre-PR parent, the final Java
+  corpus has five fewer document nodes, identical child count, reserved memory,
+  allocation count, and allocation bytes; format median moved -0.38% and peak
+  RSS -139,264 bytes, both treated as neutral.
+- `mise run fix` passed workspace formatting, Clippy, dependency, native, and
+  WASM checks. All 184 repository tests passed with zero skips, including both
+  formatter corpora, recovery snapshots, imported-fixture idempotence/source
+  conservation, layout, trivia, CLI, and dprint integration tests. Formatter
+  snapshots are unchanged.
+
 ## Decision Log
 
 | Date       | Decision                                                       | Reason                                                                                                                                                                                                     |
@@ -1562,6 +1714,9 @@ slices remove Java nodes and allocations or leave topology unchanged.
 | 2026-07-23 | Reject the Java parenthesis-summary cache.                     | It fixes quadratic lambda rejection, but adds 80 production lines and 3.75% realistic parse allocations; a second representation would further weaken local reasoning.                                     |
 | 2026-07-23 | Reject the top-level annotation-start memo.                    | It makes flat and repeated top-level runs linear but cannot bound one deeply nested annotation without broadening into a generic cache or changing exact recovery boundaries.                              |
 | 2026-07-23 | Reject a general Java member-header classifier.                | Exact declaration precedence still requires independent restarts, so the enum would hide rather than remove repeated grammar work and would not shrink the parser.                                         |
+| 2026-07-23 | Extend the stack rather than rewrite PRs 01-14.                | Residue now crosses structural layout, output policy, and parser cost models; new descendants preserve reviewed rollback boundaries.                                                                       |
+| 2026-07-23 | Make modifier layout presence syntax-owned end to end.         | A preformatted claim document cannot reveal whether it owns visible syntax; one narrow carrier closes builder, collection, first/last, varargs, and ellipsis presence leaks.                               |
+| 2026-07-23 | Share one thresholded parenthesis summary in PR 20.            | Lambda rejection and nested annotation recovery repeat the same balanced-parenthesis scan; one dormant Java-local summary can bound both without an independent annotation memo.                           |
 
 ## Resume Protocol
 

@@ -12,23 +12,46 @@ pub(crate) enum ModifierEntry<'source> {
     Token(JavaSyntaxToken<'source>),
     Sealed(JavaSyntaxToken<'source>),
     NonSealed(NonSealedModifier<'source>),
-    Malformed(Doc<'source>),
+    Malformed(Doc<'source>, bool),
 }
 
 impl ModifierEntry<'_> {
     fn is_structured(&self) -> bool {
-        !matches!(self, Self::Malformed(_))
+        !matches!(self, Self::Malformed(..))
     }
 
-    fn trailing_comments_force_line(&self) -> bool {
+    pub(crate) fn is_visible(&self) -> bool {
+        match self {
+            Self::Token(_) | Self::Sealed(_) => true,
+            Self::NonSealed(modifier) => modifier.first_token().is_some(),
+            Self::Malformed(_, visible) => *visible,
+        }
+    }
+
+    pub(crate) fn trailing_comments_force_line(&self) -> bool {
         match self {
             Self::Token(token) | Self::Sealed(token) => trailing_comments_force_line(token),
             Self::NonSealed(modifier) => modifier
                 .last_token()
                 .is_some_and(|token| trailing_comments_force_line(&token)),
-            Self::Malformed(_) => false,
+            Self::Malformed(..) => false,
         }
     }
+}
+
+#[derive(Clone, Copy)]
+pub(crate) struct VisibleDoc<'source> {
+    pub(crate) doc: Doc<'source>,
+    pub(crate) visible: bool,
+}
+
+#[derive(Clone, Copy)]
+enum ModifierTerminal {
+    Prefix,
+    Inline {
+        forces_line: bool,
+        append_line: bool,
+    },
 }
 
 pub(crate) fn modifier_prefix_from_docs<'source>(
@@ -36,70 +59,56 @@ pub(crate) fn modifier_prefix_from_docs<'source>(
     modifier_entries: Vec<ModifierEntry<'source>>,
     suppress_first_entry_leading: bool,
 ) -> Doc<'source> {
-    let modifier_entries = sorted_modifier_entries(modifier_entries);
-    doc.concat_list(|docs| {
-        let mut previous_is_structured = false;
-        let mut previous_forces_line = false;
-        for (index, entry) in modifier_entries.into_iter().enumerate() {
-            let entry_is_structured = entry.is_structured();
-            let entry_forces_line = entry.trailing_comments_force_line();
-            if !docs.is_empty()
-                && previous_is_structured
-                && (entry_is_structured || previous_forces_line)
-            {
-                let separator = if previous_forces_line {
-                    docs.hard_line()
-                } else {
-                    docs.space()
-                };
-                docs.push(separator);
-            }
-            let leading = if suppress_first_entry_leading && index == 0 {
-                LeadingComments::Suppress
-            } else {
-                LeadingComments::Preserve
-            };
-            let entry = format_modifier_entry(docs, &entry, leading);
-            docs.push(entry);
-            previous_is_structured = entry_is_structured;
-            previous_forces_line = entry_forces_line;
-        }
-        if previous_is_structured {
-            let separator = if previous_forces_line {
-                docs.hard_line()
-            } else {
-                docs.space()
-            };
-            docs.push(separator);
-        }
-    })
+    modifier_docs(
+        doc,
+        None,
+        modifier_entries,
+        suppress_first_entry_leading,
+        ModifierTerminal::Prefix,
+    )
 }
 
 pub(crate) fn inline_modifier_prefix_from_docs<'source>(
     doc: &mut DocBuilder<'source>,
-    annotation_docs: impl IntoIterator<Item = Doc<'source>>,
+    annotations: Option<VisibleDoc<'source>>,
     modifier_entries: Vec<ModifierEntry<'source>>,
     suppress_first_entry_leading: bool,
     terminal_forces_line: bool,
     append_terminal_line: bool,
 ) -> Doc<'source> {
+    modifier_docs(
+        doc,
+        annotations,
+        modifier_entries,
+        suppress_first_entry_leading,
+        ModifierTerminal::Inline {
+            forces_line: terminal_forces_line,
+            append_line: append_terminal_line,
+        },
+    )
+}
+
+fn modifier_docs<'source>(
+    doc: &mut DocBuilder<'source>,
+    annotations: Option<VisibleDoc<'source>>,
+    modifier_entries: Vec<ModifierEntry<'source>>,
+    suppress_first_entry_leading: bool,
+    terminal: ModifierTerminal,
+) -> Doc<'source> {
     let modifier_entries = sorted_modifier_entries(modifier_entries);
-    let mut has_docs = false;
-    let mut ends_with_structured = false;
-    let docs = doc.concat_list(|docs| {
-        for annotation in annotation_docs {
-            if !docs.is_empty() {
-                let space = docs.space();
-                docs.push(space);
-            }
-            docs.push(annotation);
+    let mut visible = annotations.is_some_and(|annotations| annotations.visible);
+    let mut previous_is_structured = visible;
+    let mut previous_forces_line = false;
+    doc.concat_list(|docs| {
+        if let Some(annotations) = annotations {
+            docs.push(annotations.doc);
         }
-        let mut previous_is_structured = !docs.is_empty();
-        let mut previous_forces_line = false;
-        for (index, entry) in modifier_entries.into_iter().enumerate() {
+        for entry in modifier_entries {
             let entry_is_structured = entry.is_structured();
+            let entry_is_visible = entry.is_visible();
             let entry_forces_line = entry.trailing_comments_force_line();
-            if !docs.is_empty()
+            if entry_is_visible
+                && visible
                 && previous_is_structured
                 && (entry_is_structured || previous_forces_line)
             {
@@ -110,33 +119,41 @@ pub(crate) fn inline_modifier_prefix_from_docs<'source>(
                 };
                 docs.push(separator);
             }
-            let leading = if suppress_first_entry_leading && index == 0 && docs.is_empty() {
+            let leading = if suppress_first_entry_leading && !visible {
                 LeadingComments::Suppress
             } else {
                 LeadingComments::Preserve
             };
             let entry = format_modifier_entry(docs, &entry, leading);
             docs.push(entry);
-            previous_is_structured = entry_is_structured;
-            previous_forces_line = entry_forces_line;
+            if entry_is_visible {
+                visible = true;
+                previous_is_structured = entry_is_structured;
+                previous_forces_line = entry_forces_line;
+            }
         }
-        has_docs = !docs.is_empty();
-        ends_with_structured = previous_is_structured;
-    });
-    if !has_docs {
-        return Doc::nil();
-    }
-    if append_terminal_line {
-        let line = doc.hard_line();
-        doc_concat!(doc, [docs, line])
-    } else if terminal_forces_line {
-        docs
-    } else if ends_with_structured {
-        let space = doc.space();
-        doc_concat!(doc, [docs, space])
-    } else {
-        docs
-    }
+        if !visible {
+            return;
+        }
+        let separator = match terminal {
+            ModifierTerminal::Prefix if previous_is_structured => Some(if previous_forces_line {
+                docs.hard_line()
+            } else {
+                docs.space()
+            }),
+            ModifierTerminal::Inline {
+                append_line: true, ..
+            } => Some(docs.hard_line()),
+            ModifierTerminal::Inline {
+                forces_line: false,
+                append_line: false,
+            } if previous_is_structured => Some(docs.space()),
+            ModifierTerminal::Prefix | ModifierTerminal::Inline { .. } => None,
+        };
+        if let Some(separator) = separator {
+            docs.push(separator);
+        }
+    })
 }
 
 fn sorted_modifier_entries(mut entries: Vec<ModifierEntry<'_>>) -> Vec<ModifierEntry<'_>> {
@@ -145,7 +162,7 @@ fn sorted_modifier_entries(mut entries: Vec<ModifierEntry<'_>>) -> Vec<ModifierE
         ModifierEntry::NonSealed(non_sealed) => non_sealed
             .token_iter()
             .any(|token| token_has_comments(&token)),
-        ModifierEntry::Malformed(_) => true,
+        ModifierEntry::Malformed(..) => true,
     };
     let mut run_start = None;
     for index in 0..entries.len() {
@@ -177,7 +194,7 @@ fn modifier_entry_order(entry: &ModifierEntry<'_>) -> u8 {
         ModifierEntry::Token(token) => modifier_order(token.kind()),
         ModifierEntry::Sealed(_) => 11,
         ModifierEntry::NonSealed(_) => 12,
-        ModifierEntry::Malformed(_) => u8::MAX,
+        ModifierEntry::Malformed(..) => u8::MAX,
     }
 }
 
@@ -190,7 +207,7 @@ fn format_modifier_entry<'source>(
         ModifierEntry::Token(token) | ModifierEntry::Sealed(token) => {
             format_modifier_token(doc, token, leading_comments)
         }
-        ModifierEntry::Malformed(malformed) => *malformed,
+        ModifierEntry::Malformed(doc, _) => *doc,
         ModifierEntry::NonSealed(non_sealed) => doc.concat_list(|docs| {
             let non = format_required_field(non_sealed.non_keyword(), docs, |token, docs| {
                 format_modifier_token(docs, &token, leading_comments)

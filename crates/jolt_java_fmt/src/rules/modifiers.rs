@@ -1,11 +1,11 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_java_syntax::{Annotation, ModifierList, ParameterModifierList, PartitionedModifierItem};
-
-use crate::helpers::comments::{
-    comment_forces_line, format_construct_leading_comments, trailing_comments_force_line,
+use jolt_java_syntax::{
+    Annotation, JavaSyntaxView, ModifierList, ParameterModifierList, PartitionedModifierItem,
 };
+
+use crate::helpers::comments::{comment_forces_line, format_construct_leading_comments};
 use crate::helpers::modifiers::{
-    ModifierEntry, inline_modifier_prefix_from_docs, modifier_prefix_from_docs,
+    ModifierEntry, VisibleDoc, inline_modifier_prefix_from_docs, modifier_prefix_from_docs,
 };
 use crate::helpers::recovery::format_malformed;
 use crate::rules::annotations::{format_annotation, format_annotation_without_leading_comments};
@@ -25,13 +25,9 @@ pub(crate) fn format_modifier_prefix<'source>(
     let Some(authorization) = modifiers.canonical_reorder_claim() else {
         return format_modifier_items_in_source_order(modifiers.partitioned_items(), true, doc);
     };
-    let first_is_annotation = matches!(
-        modifiers.partitioned_items().next(),
-        Some(Ok(PartitionedModifierItem::DeclarationAnnotation(_)
-            | PartitionedModifierItem::TypeUseAnnotation(_)))
-    );
     let leading = format_construct_leading_comments(doc, modifiers.first_token().as_ref());
     let parts = partition_modifier_items(&modifiers, doc);
+    let first_is_annotation = parts.first_visible_is_annotation == Some(true);
     let annotations = parts
         .declaration_annotations
         .into_iter()
@@ -111,48 +107,39 @@ pub(crate) fn format_inline_typed_parameter_modifier_prefix<'source>(
         };
     };
     let parts = partition_parameter_modifier_items(modifiers, doc);
-    let type_use_is_first = parts.declaration_annotations.is_empty() && parts.entries.is_empty();
+    let type_use_is_first = !parts
+        .declaration_annotations
+        .iter()
+        .any(annotation_is_visible)
+        && !parts.entries.iter().any(ModifierEntry::is_visible);
     let (type_use_forces_line, type_use_needs_line) =
         last_annotation_line_state(&parts.type_use_annotations);
-    let (terminal_forces_line, terminal_needs_line) = if let Some(entry) = parts.entries.last() {
-        let token = match entry {
-            ModifierEntry::Token(token) | ModifierEntry::Sealed(token) => Some(*token),
-            ModifierEntry::NonSealed(modifier) => modifier.last_token(),
-            ModifierEntry::Malformed(_) => None,
+    let (terminal_forces_line, terminal_needs_line) =
+        if let Some(entry) = parts.entries.iter().rev().find(|entry| entry.is_visible()) {
+            let forces = entry.trailing_comments_force_line();
+            (forces, forces)
+        } else {
+            last_annotation_line_state(&parts.declaration_annotations)
         };
-        let forces = token.is_some_and(|token| {
-            token
-                .trailing_comments()
-                .any(|comment| comment_forces_line(&comment))
-        });
-        (forces, forces)
-    } else {
-        last_annotation_line_state(&parts.declaration_annotations)
-    };
     let declaration_annotations =
         format_inline_annotations(parts.declaration_annotations, true, doc);
     let declaration_prefix = inline_modifier_prefix_from_docs(
         doc,
-        [declaration_annotations],
+        Some(declaration_annotations),
         parts.entries,
         true,
         terminal_forces_line,
         terminal_needs_line,
     );
-    let type_use_prefix = if parts.type_use_annotations.is_empty() {
-        Doc::nil()
-    } else {
-        let annotations =
-            format_inline_annotations(parts.type_use_annotations, type_use_is_first, doc);
-        inline_modifier_prefix_from_docs(
-            doc,
-            [annotations],
-            Vec::new(),
-            false,
-            type_use_forces_line,
-            type_use_needs_line,
-        )
-    };
+    let annotations = format_inline_annotations(parts.type_use_annotations, type_use_is_first, doc);
+    let type_use_prefix = inline_modifier_prefix_from_docs(
+        doc,
+        Some(annotations),
+        Vec::new(),
+        false,
+        type_use_forces_line,
+        type_use_needs_line,
+    );
     authorize_typed_prefix(
         &TypedModifierPrefix {
             declaration_prefix,
@@ -187,6 +174,15 @@ struct PartitionedModifiers<'source> {
     declaration_annotations: Vec<Annotation<'source>>,
     type_use_annotations: Vec<Annotation<'source>>,
     entries: Vec<ModifierEntry<'source>>,
+    first_visible_is_annotation: Option<bool>,
+}
+
+impl PartitionedModifiers<'_> {
+    fn record_first_visible(&mut self, visible: bool, annotation: bool) {
+        if visible {
+            self.first_visible_is_annotation.get_or_insert(annotation);
+        }
+    }
 }
 
 fn format_modifier_items_in_source_order<'source>(
@@ -204,67 +200,47 @@ fn format_modifier_items_in_source_order<'source>(
                 | PartitionedModifierItem::TypeUseAnnotation(annotation),
             ) => {
                 let forces_line = last_annotation_line_state(std::slice::from_ref(&annotation)).0;
-                (format_annotation(&annotation, doc), true, true, forces_line)
-            }
-            Ok(PartitionedModifierItem::Token(token)) => (
-                inline_modifier_prefix_from_docs(
-                    doc,
-                    std::iter::empty(),
-                    vec![ModifierEntry::Token(token)],
-                    false,
-                    true,
-                    false,
-                ),
-                true,
-                false,
-                trailing_comments_force_line(&token),
-            ),
-            Ok(PartitionedModifierItem::Sealed(token)) => (
-                inline_modifier_prefix_from_docs(
-                    doc,
-                    std::iter::empty(),
-                    vec![ModifierEntry::Sealed(token)],
-                    false,
-                    true,
-                    false,
-                ),
-                true,
-                false,
-                trailing_comments_force_line(&token),
-            ),
-            Ok(PartitionedModifierItem::NonSealed(non_sealed)) => {
-                let forces_line = non_sealed
-                    .last_token()
-                    .is_some_and(|token| trailing_comments_force_line(&token));
                 (
-                    inline_modifier_prefix_from_docs(
-                        doc,
-                        std::iter::empty(),
-                        vec![ModifierEntry::NonSealed(non_sealed)],
-                        false,
-                        true,
-                        false,
-                    ),
+                    format_annotation(&annotation, doc),
                     true,
-                    false,
+                    true,
                     forces_line,
+                    annotation_is_visible(&annotation),
                 )
             }
-            Ok(PartitionedModifierItem::Bogus(bogus)) => {
-                (format_malformed(&bogus, doc), false, false, false)
+            Ok(PartitionedModifierItem::Token(token)) => {
+                format_source_order_modifier(ModifierEntry::Token(token), doc)
             }
-            Ok(PartitionedModifierItem::Malformed(malformed)) => {
-                (format_malformed(&malformed, doc), false, false, false)
+            Ok(PartitionedModifierItem::Sealed(token)) => {
+                format_source_order_modifier(ModifierEntry::Sealed(token), doc)
             }
+            Ok(PartitionedModifierItem::NonSealed(modifier)) => {
+                format_source_order_modifier(ModifierEntry::NonSealed(modifier), doc)
+            }
+            Ok(PartitionedModifierItem::Bogus(bogus)) => (
+                format_malformed(&bogus, doc),
+                false,
+                false,
+                false,
+                bogus.first_token().is_some(),
+            ),
+            Ok(PartitionedModifierItem::Malformed(malformed)) => (
+                format_malformed(&malformed, doc),
+                false,
+                false,
+                false,
+                malformed.first_token().is_some(),
+            ),
             Ok(PartitionedModifierItem::Missing(missing)) => (
                 crate::helpers::recovery::format_missing(&missing, doc),
+                false,
                 false,
                 false,
                 false,
             ),
             Err(error) => {
                 doc.block_on_invariant(error.to_string());
-                (Doc::nil(), false, false, false)
+                (Doc::nil(), false, false, false, false)
             }
         })
         .collect::<Vec<_>>();
@@ -272,20 +248,22 @@ fn format_modifier_items_in_source_order<'source>(
         let mut previous_structured = false;
         let mut previous_annotation = false;
         let mut previous_forces_line = false;
-        for (item, structured, annotation, forces_line) in items {
-            if previous_structured && (structured || previous_forces_line) {
-                let separator =
-                    if previous_forces_line || (annotations_break && previous_annotation) {
-                        docs.hard_line()
-                    } else {
-                        docs.space()
-                    };
-                docs.push(separator);
+        for (item, structured, annotation, forces_line, visible) in items {
+            if visible {
+                if previous_structured && (structured || previous_forces_line) {
+                    let separator =
+                        if previous_forces_line || (annotations_break && previous_annotation) {
+                            docs.hard_line()
+                        } else {
+                            docs.space()
+                        };
+                    docs.push(separator);
+                }
+                previous_structured = structured;
+                previous_annotation = annotation;
+                previous_forces_line = forces_line;
             }
             docs.push(item);
-            previous_structured = structured;
-            previous_annotation = annotation;
-            previous_forces_line = forces_line;
         }
         if previous_structured {
             let separator = if previous_forces_line || (annotations_break && previous_annotation) {
@@ -296,6 +274,16 @@ fn format_modifier_items_in_source_order<'source>(
             docs.push(separator);
         }
     })
+}
+
+fn format_source_order_modifier<'source>(
+    entry: ModifierEntry<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> (Doc<'source>, bool, bool, bool, bool) {
+    let visible = entry.is_visible();
+    let forces_line = entry.trailing_comments_force_line();
+    let formatted = inline_modifier_prefix_from_docs(doc, None, vec![entry], false, true, false);
+    (formatted, true, false, forces_line, visible)
 }
 
 fn partition_parameter_modifier_items<'source>(
@@ -322,42 +310,57 @@ fn partition_items<'source>(
         declaration_annotations: Vec::new(),
         type_use_annotations: Vec::new(),
         entries: Vec::new(),
+        first_visible_is_annotation: None,
     };
     for item in items {
         match item {
             Ok(PartitionedModifierItem::DeclarationAnnotation(annotation)) => {
+                result.record_first_visible(annotation_is_visible(&annotation), true);
                 result.declaration_annotations.push(annotation);
             }
             Ok(PartitionedModifierItem::TypeUseAnnotation(annotation)) => {
+                result.record_first_visible(annotation_is_visible(&annotation), true);
                 result.type_use_annotations.push(annotation);
             }
             Ok(PartitionedModifierItem::Token(token)) => {
+                result.record_first_visible(true, false);
                 result.entries.push(ModifierEntry::Token(token));
             }
             Ok(PartitionedModifierItem::Sealed(token)) => {
+                result.record_first_visible(true, false);
                 result.entries.push(ModifierEntry::Sealed(token));
             }
             Ok(PartitionedModifierItem::NonSealed(non_sealed)) => {
+                result.record_first_visible(non_sealed.first_token().is_some(), false);
                 result.entries.push(ModifierEntry::NonSealed(non_sealed));
             }
             Ok(PartitionedModifierItem::Bogus(bogus)) => {
-                result
-                    .entries
-                    .push(ModifierEntry::Malformed(format_malformed(&bogus, doc)));
+                let visible = bogus.first_token().is_some();
+                result.record_first_visible(visible, false);
+                result.entries.push(ModifierEntry::Malformed(
+                    format_malformed(&bogus, doc),
+                    visible,
+                ));
             }
             Ok(PartitionedModifierItem::Malformed(malformed)) => {
-                result
-                    .entries
-                    .push(ModifierEntry::Malformed(format_malformed(&malformed, doc)));
+                let visible = malformed.first_token().is_some();
+                result.record_first_visible(visible, false);
+                result.entries.push(ModifierEntry::Malformed(
+                    format_malformed(&malformed, doc),
+                    visible,
+                ));
             }
             Ok(PartitionedModifierItem::Missing(missing)) => {
                 result.entries.push(ModifierEntry::Malformed(
                     crate::helpers::recovery::format_missing(&missing, doc),
+                    false,
                 ));
             }
             Err(error) => {
                 doc.block_on_invariant(error.to_string());
-                result.entries.push(ModifierEntry::Malformed(Doc::nil()));
+                result
+                    .entries
+                    .push(ModifierEntry::Malformed(Doc::nil(), false));
             }
         }
     }
@@ -372,21 +375,17 @@ fn format_typed_modifier_prefix_from_split_parts<'source>(
 ) -> TypedModifierPrefix<'source> {
     let declaration_prefix =
         format_modifier_prefix_from_parts(declaration_annotations, modifier_entries, doc);
-    let type_use_prefix = if type_use_annotations.is_empty() {
-        Doc::nil()
-    } else {
-        let (terminal_forces_line, terminal_needs_line) =
-            last_annotation_line_state(&type_use_annotations);
-        let type_use_annotations = format_inline_annotations(type_use_annotations, false, doc);
-        inline_modifier_prefix_from_docs(
-            doc,
-            [type_use_annotations],
-            Vec::new(),
-            false,
-            terminal_forces_line,
-            terminal_needs_line,
-        )
-    };
+    let (terminal_forces_line, terminal_needs_line) =
+        last_annotation_line_state(&type_use_annotations);
+    let type_use_annotations = format_inline_annotations(type_use_annotations, false, doc);
+    let type_use_prefix = inline_modifier_prefix_from_docs(
+        doc,
+        Some(type_use_annotations),
+        Vec::new(),
+        false,
+        terminal_forces_line,
+        terminal_needs_line,
+    );
 
     TypedModifierPrefix {
         declaration_prefix,
@@ -397,7 +396,11 @@ fn format_typed_modifier_prefix_from_split_parts<'source>(
 fn last_annotation_token<'source>(
     annotations: &[Annotation<'source>],
 ) -> Option<jolt_java_syntax::JavaSyntaxToken<'source>> {
-    annotations.last().and_then(Annotation::last_token)
+    annotations.iter().rev().find_map(Annotation::last_token)
+}
+
+fn annotation_is_visible(annotation: &Annotation<'_>) -> bool {
+    annotation.first_token().is_some()
 }
 
 fn last_annotation_line_state(annotations: &[Annotation<'_>]) -> (bool, bool) {
@@ -414,12 +417,11 @@ fn last_annotation_line_state(annotations: &[Annotation<'_>]) -> (bool, bool) {
 }
 
 pub(crate) fn format_modifier_prefix_from_parts<'source>(
-    annotations: impl IntoIterator<Item = Annotation<'source>>,
+    annotations: Vec<Annotation<'source>>,
     modifier_entries: Vec<ModifierEntry<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut annotations = annotations.into_iter().peekable();
-    let modifiers_own_leading = annotations.peek().is_none();
+    let modifiers_own_leading = !annotations.iter().any(annotation_is_visible);
     let annotations = format_declaration_annotations(annotations, !modifiers_own_leading, doc);
     let modifiers = modifier_prefix_from_docs(doc, modifier_entries, modifiers_own_leading);
     doc_concat!(doc, [annotations, modifiers])
@@ -429,21 +431,28 @@ fn format_inline_annotations<'source>(
     annotations: Vec<Annotation<'source>>,
     suppress_first_leading: bool,
     doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    doc.concat_list(|docs| {
-        for (index, annotation) in annotations.into_iter().enumerate() {
-            if !docs.is_empty() {
+) -> VisibleDoc<'source> {
+    let mut visible = false;
+    let annotations = doc.concat_list(|docs| {
+        for annotation in annotations {
+            let annotation_visible = annotation_is_visible(&annotation);
+            if visible && annotation_visible {
                 let space = docs.space();
                 docs.push(space);
             }
-            let annotation = if suppress_first_leading && index == 0 {
+            let annotation = if suppress_first_leading && !visible && annotation_visible {
                 format_annotation_without_leading_comments(&annotation, docs)
             } else {
                 format_annotation(&annotation, docs)
             };
             docs.push(annotation);
+            visible |= annotation_visible;
         }
-    })
+    });
+    VisibleDoc {
+        doc: annotations,
+        visible,
+    }
 }
 
 fn format_declaration_annotations<'source>(
@@ -451,16 +460,21 @@ fn format_declaration_annotations<'source>(
     suppress_first_leading: bool,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    let mut visible = false;
     doc.concat_list(|docs| {
-        for (index, annotation) in annotations.into_iter().enumerate() {
-            let annotation = if suppress_first_leading && index == 0 {
+        for annotation in annotations {
+            let annotation_visible = annotation_is_visible(&annotation);
+            let annotation = if suppress_first_leading && !visible && annotation_visible {
                 format_annotation_without_leading_comments(&annotation, docs)
             } else {
                 format_annotation(&annotation, docs)
             };
             docs.push(annotation);
-            let hard_line = docs.hard_line();
-            docs.push(hard_line);
+            if annotation_visible {
+                let hard_line = docs.hard_line();
+                docs.push(hard_line);
+                visible = true;
+            }
         }
     })
 }
