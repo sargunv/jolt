@@ -14,6 +14,7 @@ pub(super) use jolt_syntax::TokenCursor;
 pub(super) struct Parser<'source> {
     pub(super) inner: jolt_syntax::Parser<'source, JavaLanguage>,
     pub(super) parentheses: ParenthesisSummary,
+    pub(super) generic_depth: usize,
 }
 
 #[derive(Default)]
@@ -27,10 +28,12 @@ impl<'source> Parser<'source> {
         Self {
             inner: jolt_syntax::Parser::new(source),
             parentheses: ParenthesisSummary::default(),
+            generic_depth: 0,
         }
     }
 
     pub(super) fn finish(self) -> ParseEvents {
+        debug_assert_eq!(self.generic_depth, 0, "generic depth must unwind at EOF");
         self.inner.finish()
     }
 

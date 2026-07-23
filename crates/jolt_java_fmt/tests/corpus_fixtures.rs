@@ -124,6 +124,34 @@ fn imported_fixture_inputs_format_idempotently_and_conserve_represented_syntax()
     );
 }
 
+#[test]
+fn deeply_nested_generic_recovery_formats_without_panicking_or_losing_following_syntax() {
+    let depth = 4096;
+    let mut ty = String::with_capacity(depth * 3 + 4);
+    ty.push_str(&"T<".repeat(depth));
+    ty.push_str("Leaf");
+    ty.push_str(&">".repeat(depth));
+    let source = format!("class C {{ {ty} value; int following; }} class D {{}}");
+
+    let parse = parse_compilation_unit(&source);
+    assert_eq!(
+        parse.syntax().expect("represented input").source_text(),
+        source
+    );
+    let formatted = format_source(&source, FormatOptions::default())
+        .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
+    assert!(formatted.contains("int following;"));
+    assert!(formatted.contains("class D"));
+    let reparsed = parse_compilation_unit(&formatted);
+    assert_eq!(
+        reparsed
+            .syntax()
+            .expect("represented formatted output")
+            .source_text(),
+        formatted
+    );
+}
+
 fn format_source(
     source: &str,
     options: FormatOptions,
