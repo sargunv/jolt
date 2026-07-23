@@ -2357,14 +2357,14 @@ slices remove Java nodes and allocations or leave topology unchanged.
   native and WASM checks; the complete non-update suite passed all 225 tests
   with zero skips and unchanged snapshots.
 - Realistic Java/Kotlin syntax topology, document topology, allocation counts,
-  and allocation bytes are exactly unchanged. The aggregate Kotlin-format run
-  remained noisy; immediate focused reruns measured 34.91 ms and 34.43 ms
-  against PR 29's 33.89 ms and 33.36 ms, a repeatable +3.0%/+3.2% focused cost.
-  A shallow/deep split would add a threshold and two formatter algorithms; the
-  measured cost is accepted for one allocation-free, semantics-preserving walk.
-- The original walker benchmark recorded +3,903 optimized WASM bytes (+0.22%).
-  Folding its non-panic invariant handling into this PR does not change the
-  measured ordinary traversal.
+  and allocation bytes are exactly unchanged. Repeated full-corpus runs show a
+  +6.4% to +6.9% Kotlin formatter-only cost; immediate focused reruns measured
+  +3.0%/+3.2%. No end-to-end regression is demonstrated, but the formatter cost
+  is treated as real. A shallow/deep split would add a threshold and two
+  formatter algorithms; the cost is accepted for one allocation-free,
+  semantics-preserving walk.
+- Refreshed optimized WASM moves 1,766,396 -> 1,769,538 bytes (+3,142, +0.18%).
+  The exact benchmark records clean committed subject `1b1ffc5f`.
 
 ## Decision Log
 
