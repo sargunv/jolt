@@ -194,6 +194,56 @@ fn deeply_nested_value_recovery_formats_without_panicking_or_losing_following_sy
     }
 }
 
+#[test]
+fn deeply_nested_structural_recovery_formats_without_panicking_or_losing_following_syntax() {
+    let depth = 4096;
+    let pattern = format!("{}Tail value{}", "R(".repeat(depth), ")".repeat(depth));
+    let sources = [
+        format!(
+            "class C {{ void m(Object value) {{ switch (value) {{ case Outer({pattern}, Following following): break; }} }} int following; }} class D {{}}"
+        ),
+        format!(
+            "{}{} class D {{ int following; }}",
+            "class C { ".repeat(depth),
+            "}".repeat(depth)
+        ),
+        format!(
+            "class C {{ void m() {{ {}; }} int following; }} class D {{}}",
+            "label: ".repeat(depth)
+        ),
+        format!(
+            "class C {{ Object value = {}true{}; int following; }} class D {{}}",
+            "target = !new Object() { Object nested = ".repeat(depth),
+            "; }".repeat(depth)
+        ),
+    ];
+
+    for source in sources {
+        let parse = parse_compilation_unit(&source);
+        assert_eq!(
+            parse.syntax().expect("represented input").source_text(),
+            source
+        );
+        let formatted = format_source(&source, FormatOptions::default())
+            .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
+        assert!(formatted.contains("int following;"));
+        assert!(formatted.contains("class D"));
+        let reparsed = parse_compilation_unit(&formatted);
+        assert_eq!(
+            reparsed
+                .syntax()
+                .expect("represented formatted output")
+                .source_text(),
+            formatted
+        );
+        assert_eq!(
+            format_source(&formatted, FormatOptions::default())
+                .expect("second format must complete"),
+            formatted
+        );
+    }
+}
+
 fn format_source(
     source: &str,
     options: FormatOptions,

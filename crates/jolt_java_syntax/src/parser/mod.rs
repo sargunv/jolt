@@ -268,6 +268,41 @@ mod tests {
         count
     }
 
+    fn count_nodes_containing(source: &str, kind: JavaSyntaxKind, text: &str) -> usize {
+        let parse = parse_compilation_unit(source);
+        let root = parse.syntax().expect("represented compilation unit");
+        let mut nodes = vec![*root.syntax()];
+        let mut count = 0;
+        while let Some(node) = nodes.pop() {
+            nodes.extend(node.children());
+            let range = node.text_range();
+            let node_text =
+                &node.source()[range.start().get() as usize..range.end().get() as usize];
+            count += usize::from(node.kind() == kind && node_text.contains(text));
+        }
+        count
+    }
+
+    fn contains_direct_kind_path(source: &str, path: &[JavaSyntaxKind]) -> bool {
+        fn follows(node: crate::nodes::JavaSyntaxNode, path: &[JavaSyntaxKind]) -> bool {
+            path.is_empty()
+                || node
+                    .children()
+                    .any(|child| child.kind() == path[0] && follows(child, &path[1..]))
+        }
+
+        let parse = parse_compilation_unit(source);
+        let root = parse.syntax().expect("represented compilation unit");
+        let mut nodes = vec![*root.syntax()];
+        while let Some(node) = nodes.pop() {
+            nodes.extend(node.children());
+            if node.kind() == path[0] && follows(node, &path[1..]) {
+                return true;
+            }
+        }
+        false
+    }
+
     fn count_nodes_owned_by(
         source: &str,
         owner_kind: JavaSyntaxKind,
@@ -306,6 +341,14 @@ mod tests {
         format!("{}{}{}", "@A(".repeat(depth), leaf, ")".repeat(depth))
     }
 
+    fn nested_type_bodies(open: &str, depth: usize) -> String {
+        format!(
+            "{}{} class Following {{}}",
+            open.repeat(depth),
+            "}".repeat(depth)
+        )
+    }
+
     #[test]
     fn expression_nesting_has_an_exact_edge_and_bounded_deep_recovery() {
         let parenthesized = |depth| {
@@ -315,8 +358,8 @@ mod tests {
                 ")".repeat(depth)
             )
         };
-        assert_eq!(excessive_syntax_diagnostic_count(&parenthesized(63)), 0);
-        let edge = parenthesized(64);
+        assert_eq!(excessive_syntax_diagnostic_count(&parenthesized(62)), 0);
+        let edge = parenthesized(63);
         check(
             &edge,
             JavaParseDiagnosticCode::ExcessiveSyntaxNesting.id(),
@@ -326,7 +369,7 @@ mod tests {
         );
         assert_eq!(
             count_nodes(&edge, JavaSyntaxKind::ParenthesizedExpression),
-            64
+            63
         );
 
         for expression in [
@@ -400,12 +443,12 @@ mod tests {
     #[test]
     fn array_initializer_nesting_recovers_one_child_and_keeps_following_syntax() {
         let initializer = |depth| format!("{}{}", "{".repeat(depth), "}".repeat(depth));
-        let clean = format!("class C {{ Object value = {}; }}", initializer(129));
+        let clean = format!("class C {{ Object value = {}; }}", initializer(128));
         assert_eq!(excessive_syntax_diagnostic_count(&clean), 0);
 
         let edge = format!(
             "class C {{ Object value = {}; int following; }} class D {{}}",
-            initializer(130)
+            initializer(129)
         );
         let parse = parse_compilation_unit(&edge);
         assert_eq!(
@@ -442,12 +485,12 @@ mod tests {
                 .source_text(),
             sibling
         );
-        assert_eq!(excessive_syntax_diagnostic_count(&sibling), 2);
+        assert_eq!(excessive_syntax_diagnostic_count(&sibling), 1);
         assert_eq!(
             count_nodes(&sibling, JavaSyntaxKind::BogusVariableInitializer),
             1
         );
-        assert_eq!(count_nodes(&sibling, JavaSyntaxKind::BogusExpression), 1);
+        assert_eq!(count_nodes(&sibling, JavaSyntaxKind::BogusExpression), 0);
         assert_eq!(count_nodes(&sibling, JavaSyntaxKind::FieldDeclaration), 2);
         assert_eq!(count_nodes(&sibling, JavaSyntaxKind::ClassDeclaration), 2);
 
@@ -458,6 +501,249 @@ mod tests {
         assert_eq!(excessive_syntax_diagnostic_count(&deep), 1);
         assert_eq!(count_nodes(&deep, JavaSyntaxKind::FieldDeclaration), 2);
         assert_eq!(count_nodes(&deep, JavaSyntaxKind::ClassDeclaration), 2);
+    }
+
+    #[test]
+    fn record_pattern_nesting_has_an_exact_edge_and_preserves_its_sibling() {
+        let source = |depth| {
+            let pattern = format!("{}Tail value{}", "R(".repeat(depth), ")".repeat(depth));
+            format!(
+                "class C {{ void m(Object value) {{ switch (value) {{ case Outer({pattern}, Following following): break; }} }} int after; }} class D {{}}"
+            )
+        };
+
+        assert_eq!(excessive_syntax_diagnostic_count(&source(125)), 0);
+        let edge = source(126);
+        assert_eq!(excessive_syntax_diagnostic_count(&edge), 1);
+        assert_eq!(count_nodes(&edge, JavaSyntaxKind::BogusPattern), 1);
+        assert_eq!(count_nodes(&edge, JavaSyntaxKind::TypePattern), 1);
+
+        let annotated = format!(
+            "{}@A(value = (left)) R(Tail t){}",
+            "R(".repeat(125),
+            ")".repeat(125)
+        );
+        let annotated = format!(
+            "class C {{ void m(Object value) {{ switch (value) {{ case Outer({annotated}, Following following): break; }} }} }}"
+        );
+        assert_eq!(excessive_syntax_diagnostic_count(&annotated), 1);
+        assert_eq!(
+            count_nodes_containing(
+                &annotated,
+                JavaSyntaxKind::BogusPattern,
+                "@A(value = (left)) R(Tail t)"
+            ),
+            1
+        );
+        assert_eq!(count_nodes(&annotated, JavaSyntaxKind::TypePattern), 1);
+
+        let pattern = format!(
+            "{}Tail value; inner{}",
+            "@A R<T>(".repeat(4096),
+            ")".repeat(4096)
+        );
+        let deep = format!(
+            "class C {{ void m(Object value) {{ switch (value) {{ case Outer({pattern}, Following following): break; }} }} int after; }} class D {{}}"
+        );
+        let parse = parse_compilation_unit(&deep);
+        assert_eq!(
+            parse
+                .syntax()
+                .expect("represented deep record pattern")
+                .source_text(),
+            deep
+        );
+        assert_eq!(excessive_syntax_diagnostic_count(&deep), 1);
+        assert_eq!(count_nodes(&deep, JavaSyntaxKind::FieldDeclaration), 1);
+        assert_eq!(count_nodes(&deep, JavaSyntaxKind::ClassDeclaration), 2);
+    }
+
+    #[test]
+    fn all_type_body_kinds_are_bounded_and_keep_the_following_declaration() {
+        assert_eq!(
+            excessive_syntax_diagnostic_count(&nested_type_bodies("class C { ", 128)),
+            0
+        );
+        assert_eq!(
+            excessive_syntax_diagnostic_count(&nested_type_bodies("class C { ", 129)),
+            1
+        );
+
+        for (open, body_kind, list_kind, bogus_kind) in [
+            (
+                "class C { ",
+                JavaSyntaxKind::ClassBody,
+                JavaSyntaxKind::ClassBodyMemberList,
+                JavaSyntaxKind::BogusClassBodyMember,
+            ),
+            (
+                "record R() { ",
+                JavaSyntaxKind::RecordBody,
+                JavaSyntaxKind::RecordBodyMemberList,
+                JavaSyntaxKind::BogusClassBodyMember,
+            ),
+            (
+                "interface I { ",
+                JavaSyntaxKind::InterfaceBody,
+                JavaSyntaxKind::InterfaceBodyMemberList,
+                JavaSyntaxKind::BogusInterfaceBodyMember,
+            ),
+            (
+                "@interface A { ",
+                JavaSyntaxKind::AnnotationInterfaceBody,
+                JavaSyntaxKind::AnnotationInterfaceBodyMemberList,
+                JavaSyntaxKind::BogusAnnotationInterfaceBodyMember,
+            ),
+            (
+                "enum E { ; ",
+                JavaSyntaxKind::EnumBody,
+                JavaSyntaxKind::ClassBodyMemberList,
+                JavaSyntaxKind::BogusClassBodyMember,
+            ),
+        ] {
+            let source = nested_type_bodies(open, 4096);
+            let parse = parse_compilation_unit(&source);
+            assert_eq!(
+                parse
+                    .syntax()
+                    .expect("represented deep type body")
+                    .source_text(),
+                source,
+                "{body_kind:?}"
+            );
+            assert_eq!(
+                excessive_syntax_diagnostic_count(&source),
+                1,
+                "{body_kind:?}"
+            );
+            check(
+                &source,
+                JavaParseDiagnosticCode::ExcessiveSyntaxNesting.id(),
+                "syntax is too deeply nested to parse safely",
+                bogus_kind,
+                None,
+            );
+            let mut path = vec![body_kind];
+            if body_kind == JavaSyntaxKind::AnnotationInterfaceBody {
+                path.push(JavaSyntaxKind::AnnotationElementList);
+            }
+            path.extend([list_kind, bogus_kind]);
+            assert!(contains_direct_kind_path(&source, &path), "{body_kind:?}");
+            assert_eq!(
+                count_nodes_containing(&source, JavaSyntaxKind::ClassDeclaration, "Following"),
+                1,
+                "{body_kind:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn anonymous_class_reentry_shares_one_syntax_budget() {
+        let depth = 4096;
+        let source = format!(
+            "class C {{ Object value = {}true{}; int following; }} class D {{}}",
+            "target = !new Object() { Object nested = ".repeat(depth),
+            "; }".repeat(depth)
+        );
+        let parse = parse_compilation_unit(&source);
+        assert_eq!(
+            parse
+                .syntax()
+                .expect("represented anonymous-class reentry")
+                .source_text(),
+            source
+        );
+        assert_eq!(excessive_syntax_diagnostic_count(&source), 1);
+        assert_eq!(
+            count_nodes_containing(&source, JavaSyntaxKind::FieldDeclaration, "following"),
+            1
+        );
+        assert_eq!(count_nodes(&source, JavaSyntaxKind::ClassDeclaration), 2);
+    }
+
+    #[test]
+    fn statement_nesting_absorbs_the_suffix_but_keeps_the_enclosing_body() {
+        let unbraced = |depth| {
+            format!(
+                "class C {{ void m() {{ {}; sibling(); }} int after; }} class D {{}}",
+                "label: ".repeat(depth)
+            )
+        };
+        assert_eq!(excessive_syntax_diagnostic_count(&unbraced(126)), 0);
+        let edge = unbraced(127);
+        assert_eq!(excessive_syntax_diagnostic_count(&edge), 1);
+        assert_eq!(count_nodes(&edge, JavaSyntaxKind::BogusStatement), 1);
+        assert_eq!(count_nodes(&edge, JavaSyntaxKind::LabeledStatement), 127);
+
+        for (tail, retained) in [
+            ("if (true) one(); else two(); sibling();", "else two()"),
+            ("do one(); while (true); sibling();", "while (true)"),
+            ("try {} catch (E e) {} finally {} sibling();", "catch (E e)"),
+            (
+                "switch (value) { case 1: one(); default: two(); } sibling();",
+                "default: two()",
+            ),
+        ] {
+            let source = format!(
+                "class C {{ void m() {{ {}{tail} }} int after; }} class D {{}}",
+                "label: ".repeat(127)
+            );
+            assert_eq!(excessive_syntax_diagnostic_count(&source), 1, "{tail}");
+            assert_eq!(
+                count_nodes_containing(&source, JavaSyntaxKind::BogusStatement, retained),
+                1,
+                "{tail}"
+            );
+            assert_eq!(count_nodes(&source, JavaSyntaxKind::FieldDeclaration), 1);
+            assert_eq!(count_nodes(&source, JavaSyntaxKind::ClassDeclaration), 2);
+        }
+
+        let deep = unbraced(4096);
+        let parse = parse_compilation_unit(&deep);
+        assert_eq!(
+            parse
+                .syntax()
+                .expect("represented deep statement")
+                .source_text(),
+            deep
+        );
+        assert_eq!(excessive_syntax_diagnostic_count(&deep), 1);
+        assert_eq!(count_nodes(&deep, JavaSyntaxKind::FieldDeclaration), 1);
+        assert_eq!(count_nodes(&deep, JavaSyntaxKind::ClassDeclaration), 2);
+
+        let braced = format!(
+            "class C {{ void m() {{ {} ; sibling();{} }} int after; }} class D {{}}",
+            "{ ".repeat(4096),
+            " }".repeat(4096)
+        );
+        let parse = parse_compilation_unit(&braced);
+        assert_eq!(
+            parse
+                .syntax()
+                .expect("represented deep braced statement")
+                .source_text(),
+            braced
+        );
+        assert_eq!(excessive_syntax_diagnostic_count(&braced), 1);
+        assert_eq!(count_nodes(&braced, JavaSyntaxKind::FieldDeclaration), 1);
+
+        let missing_close = format!(
+            "class C {{ void m() {{ {}if (true) value()",
+            "label: ".repeat(127)
+        );
+        let parse = parse_compilation_unit(&missing_close);
+        assert_eq!(
+            parse
+                .syntax()
+                .expect("represented missing-close statement")
+                .source_text(),
+            missing_close
+        );
+        assert_eq!(excessive_syntax_diagnostic_count(&missing_close), 1);
+        assert_eq!(
+            count_nodes(&missing_close, JavaSyntaxKind::BogusStatement),
+            1
+        );
     }
 
     #[test]

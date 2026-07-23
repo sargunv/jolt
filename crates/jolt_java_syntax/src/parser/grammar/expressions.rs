@@ -1270,16 +1270,7 @@ impl Parser<'_> {
         let values = self.start();
         let bogus = self.start();
         let diagnostic = self.pending_excessive_syntax_nesting();
-        let mut brace_depth = 0usize;
-        while !self.at_eof() {
-            match self.current_kind() {
-                JavaSyntaxKind::RBrace if brace_depth == 0 => break,
-                JavaSyntaxKind::LBrace => brace_depth += 1,
-                JavaSyntaxKind::RBrace => brace_depth -= 1,
-                _ => {}
-            }
-            self.bump();
-        }
+        self.consume_until_enclosing_brace();
         self.complete_recovery(
             bogus,
             JavaSyntaxKind::BogusVariableInitializer,

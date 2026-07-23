@@ -1068,7 +1068,7 @@ ready for review.
 | 23  | `cleanup/23-layout-doc-consolidation`    | draft open | PR 22  | [#25](https://github.com/sargunv/jolt/pull/25) | full + benchmark           | Delete duplicate recovery visibility carriers.   |
 | 24  | `cleanup/24-java-annotation-cost`        | draft open | PR 23  | [#26](https://github.com/sargunv/jolt/pull/26) | full + release + benchmark | Bound flat malformed-annotation lookahead.       |
 | 25  | `cleanup/25-java-value-recursion`        | draft open | PR 24  | [#27](https://github.com/sargunv/jolt/pull/27) | full + WASM + benchmark    | Bound recursive Java value families.             |
-| 26  | `cleanup/26-java-structural-recursion`   | planned    | PR 25  | —                                              | —                          | Bound recursive Java bodies and statements.      |
+| 26  | `cleanup/26-java-structural-recursion`   | draft open | PR 25  | [#28](https://github.com/sargunv/jolt/pull/28) | full + WASM + benchmark    | Bound recursive Java bodies and statements.      |
 | 27  | `cleanup/27-kotlin-recursion-budget`     | planned    | PR 26  | —                                              | —                          | Bound recursive Kotlin syntax families.          |
 | 28  | `cleanup/28-residue-reconciliation`      | planned    | PR 27  | —                                              | —                          | Final evidence and debt-ledger closure.          |
 
@@ -2126,6 +2126,52 @@ slices remove Java nodes and allocations or leave topology unchanged.
   and WASM checks. The complete non-update suite passed all 206 tests with zero
   skips. The benchmark records clean committed subject `e20e97b`.
 
+### PR 26 evidence
+
+- The remaining Java input-depth cycles now cross the same 128-owner policy at
+  record-pattern, physical type-body, or statement ownership. Together with PR
+  25's value owners and PR 22's separately counted generic owners, every
+  recursive parser cycle has a fixed dynamic bound; binary recursion remains
+  bounded by the finite precedence ladder.
+- `pattern_start` already performs the exact modifier/type lookahead and now
+  carries the record opener it found. Over-limit recovery reuses that syntax
+  fact and the existing balanced-parenthesis endpoint, so annotated/generic
+  component types and their argument parentheses are not re-parsed or mistaken
+  for the record boundary. One `BogusPattern` owns the unsupported component.
+- Physical class, record, interface, annotation-interface, and enum bodies keep
+  their real braces and exact required list shape around one category-correct
+  bogus member. Missing bodies do not spend the budget. One brace-specific,
+  allocation-free consumer is shared with statement and array recovery and
+  replaced PR 25's duplicate two-pass loop.
+- Statement overflow intentionally becomes one `BogusStatement` through, but not
+  including, the enclosing unmatched `}`. This absorbs unsupported `else`,
+  `do`/`while`, handlers, switch labels, and sibling statements rather than
+  installing a second iterative statement grammar; the enclosing body and later
+  members/top-level declarations remain structured.
+- On the actual 1 MiB dprint-WASM stack, uncapped nested labels succeed at 1,978
+  and fail at 1,979; blocks at 2,042/2,043; type bodies at 1,423/1,424; and
+  record patterns at 2,963/2,964. The 128-owner policy retains about 11x-23x
+  headroom across these families. This is a parser resource limit: beyond it,
+  valid source remains lossless but the documented bogus node deliberately
+  replaces finer structure.
+- Production is +76 lines and focused tests are +336 lines. Exact active-owner
+  edges, all five body paths, annotation-bearing record openers,
+  braced/unbraced/ EOF statement recovery, control tails, and 4,096-layer
+  record/body/statement/ anonymous-class re-entry are covered with source and
+  diagnostic ownership checks. A generated formatter test proves completion and
+  idempotence.
+- One combined actual dprint-WASM stdin smoke formatted all four 4,096-layer
+  structural adversaries and retained every sentinel. Every realistic
+  Java/Kotlin allocation sample, syntax topology, and formatter document
+  topology is exactly unchanged.
+- Java parse/format/end-to-end medians moved +0.28%/-1.48%/+0.53%, all below
+  their run MAD. The untouched Kotlin path moved faster relative to its noisy
+  parent run and is not attributed to this PR. Optimized WASM moved from by
+  +3,030 bytes (+0.17%) in the recorded parent/child build.
+- `mise run fix` passed strict formatting, workspace Clippy, dependency, native,
+  and WASM checks. The complete non-update suite passed all 211 tests with zero
+  skips. The benchmark records clean committed subject `23fd33f`.
+
 ## Decision Log
 
 | Date       | Decision                                                         | Reason                                                                                                                                                                                                                   |
@@ -2184,6 +2230,8 @@ slices remove Java nodes and allocations or leave topology unchanged.
 | 2026-07-23 | Extend the lazy lookahead summary for flat annotations.          | Token-disjoint, path-compressed `@` endpoints close the remaining quadratic suffixes with one linear algorithm; measured allocation growth has no throughput or peak-memory consequence.                                 |
 | 2026-07-23 | Share one Java recursion policy across separate counters.        | Generic lookahead must mirror consuming grammar independently, while the syntax-owner counter closes cross-family cycles; one calibrated value removes an arbitrary policy split without conflating their state.         |
 | 2026-07-23 | Split Java value and structural recursion recovery.              | One combined implementation was estimated at 220-290 production lines; the value slice is +183, while record/body/statement recovery has a separate endpoint model and rollback boundary in PR 26.                       |
+| 2026-07-23 | Carry the syntax-found record-pattern opener into recovery.      | The existing exact type lookahead already owns disambiguation; carrying its opener lets one balanced scan recover the record without a second type/annotation grammar or semicolon special cases.                        |
+| 2026-07-23 | Coarsen unsupported statements to their enclosing body boundary. | Exact iterative handling of `if`/`else`, `do`/`while`, try handlers, and switch labels would duplicate statement grammar; one lossless BogusStatement preserves the enclosing body and later declarations.               |
 
 ## Resume Protocol
 

@@ -130,6 +130,15 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_statement(&mut self) {
+        if self
+            .with_syntax_nesting(Self::parse_statement_inner)
+            .is_none()
+        {
+            self.parse_excessive_statement();
+        }
+    }
+
+    fn parse_statement_inner(&mut self) {
         match self.current_kind() {
             JavaSyntaxKind::LBrace => self.parse_block(),
             JavaSyntaxKind::Semicolon => self.parse_empty_statement(),
@@ -149,6 +158,13 @@ impl Parser<'_> {
             _ if self.starts_labeled_statement() => self.parse_labeled_statement(),
             _ => self.parse_expression_statement(),
         }
+    }
+
+    fn parse_excessive_statement(&mut self) {
+        let statement = self.start();
+        let diagnostic = self.pending_excessive_syntax_nesting();
+        self.consume_until_enclosing_brace();
+        self.complete_recovery(statement, JavaSyntaxKind::BogusStatement, [diagnostic]);
     }
 
     pub(super) fn parse_empty_statement(&mut self) {
