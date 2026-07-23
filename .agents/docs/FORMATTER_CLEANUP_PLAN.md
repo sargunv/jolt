@@ -862,7 +862,7 @@ ready for review.
 | 11  | `cleanup/11-lexer-substrate`             | draft open | PR 10  | [#13](https://github.com/sargunv/jolt/pull/13) | full + release + benchmark | Shared cursor rejected; local scans are bounded. |
 | 12  | `cleanup/12-java-lookahead`              | draft open | PR 11  | [#14](https://github.com/sargunv/jolt/pull/14) | full + release + benchmark | Local deletion; cache frameworks rejected.       |
 | 13  | `cleanup/13-java-comment-conservation`   | draft open | PR 12  | [#15](https://github.com/sargunv/jolt/pull/15) | full + release + benchmark | Localize Java comment and separator ownership.   |
-| 14  | `cleanup/14-final-reconciliation`        | planned    | PR 13  | —                                              | —                          | Actual docs, metrics, and API deletions only.    |
+| 14  | `cleanup/14-final-reconciliation`        | ready      | PR 13  | —                                              | full + static checks       | Actual docs, metrics, and API deletions only.    |
 
 ### PR 01 evidence
 
@@ -1458,7 +1458,7 @@ ready for review.
 ### Whole-stack reconciliation through PR 14
 
 The implementation comparison is `main` commit `a82ab675` through this final
-reconciliation branch, a 73-commit stack. Durable planning and architecture
+reconciliation branch, a 74-commit stack. Durable planning and architecture
 documentation are excluded from production source metrics.
 
 | Measure                        |   Main |  PR 14 |         Delta |
@@ -1498,6 +1498,25 @@ Likewise, noisy adjacent timing medians are treated only as repeated
 non-regression evidence. The material topology costs remain the explicitly
 accepted PR 01 profile-independent nodes and PR 09's 346 Kotlin nodes; later
 slices remove Java nodes and allocations or leave topology unchanged.
+
+### PR 14 evidence
+
+- The unused `Language::from_extension` convenience seam is deleted; its only
+  behavior remains directly in the sole `from_path` client. Production Rust is
+  +1/-8 lines (-7 net), with no replacement API or compatibility layer.
+- `docs/internals/formatter.md` now describes the actual run coordinator, syntax
+  and rule boundary, source-conservation proof, normalization authority,
+  malformed verbatim cores, root formatter-ignore plan, exceptional lexical
+  joins, arena topology, and bounded fit algorithm. It does not describe a
+  desired architecture as though it already existed.
+- The final reconciliation records exact main-to-stack source deltas and the
+  earliest honest artifact anchor without inventing a main-relative binary or
+  treating noisy timing medians as improvements.
+- `mise run fix` passed strict workspace formatting, Clippy, dependency, native,
+  and WASM checks. Repository-defined Ona automation passed all 184 tests with
+  zero skips on the final branch. PR 13 already supplies the immediately prior
+  release, benchmark, debug-WASM Spring, optimized WASM, and PGO evidence; PR 14
+  changes no formatting or rendering behavior.
 
 ## Decision Log
 
