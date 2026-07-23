@@ -19,12 +19,15 @@ use jolt_java_syntax::{ArrayCreationTypeSyntax, ObjectCreationTypeSyntax};
 
 pub(super) fn format_array_access_expression<'source>(
     expression: &ArrayAccessExpression<'source>,
+    array: Option<Doc<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let open_bracket = resolve_required_delimiter(expression.open_bracket(), doc);
     let close_bracket = resolve_required_delimiter(expression.close_bracket(), doc);
-    let array = format_required_field(expression.array(), doc, |array, doc| {
-        format_expression(&array, doc)
+    let array = array.unwrap_or_else(|| {
+        format_required_field(expression.array(), doc, |array, doc| {
+            format_expression(&array, doc)
+        })
     });
     let index = format_required_field(expression.index(), doc, |index, doc| {
         format_expression(&index, doc)
@@ -36,10 +39,13 @@ pub(super) fn format_array_access_expression<'source>(
 
 pub(super) fn format_object_creation_expression<'source>(
     expression: &ObjectCreationExpression<'source>,
+    qualifier: Option<Doc<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let qualifier = format_optional_field(expression.qualifier(), doc, |qualifier, doc| {
-        format_expression(&qualifier, doc)
+    let qualifier = qualifier.unwrap_or_else(|| {
+        format_optional_field(expression.qualifier(), doc, |qualifier, doc| {
+            format_expression(&qualifier, doc)
+        })
     });
     let dot = format_optional_field(expression.dot(), doc, |token, doc| {
         format_token_with_comments(doc, &token)

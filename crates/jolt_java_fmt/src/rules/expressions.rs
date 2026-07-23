@@ -2,8 +2,8 @@ use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
     ArgumentList, ArrayAccessExpression, ArrayCreationExpression, ArrayInitializer,
     AssignmentExpression, BinaryExpression, CastExpression, ClassLiteralExpression,
-    ConditionalExpression, DimExpression, Expression, ExpressionParentRole, FieldAccessExpression,
-    InstanceofExpression, JavaSyntaxToken, LambdaExpression, LambdaParameter, LiteralExpression,
+    ConditionalExpression, DimExpression, Expression, FieldAccessExpression, InstanceofExpression,
+    JavaSyntaxToken, LambdaExpression, LambdaParameter, LiteralExpression,
     MethodInvocationExpression, MethodReferenceExpression, NameExpression,
     ObjectCreationExpression, ParenthesizedExpression, PostfixExpression, SuperExpression,
     SwitchExpression, ThisExpression, UnaryExpression, VariableInitializerValue,
@@ -39,26 +39,17 @@ mod operators;
 mod parenthesized;
 mod switches;
 
+use arrays_objects::format_array_creation_expression;
 pub(crate) use arrays_objects::format_variable_initializer_value;
-use arrays_objects::{
-    format_array_access_expression, format_array_creation_expression,
-    format_object_creation_expression,
-};
 pub(crate) use calls::format_argument_list;
-use calls::{
-    format_field_access_expression, format_method_invocation_expression_with_leading_comments,
-};
-use casts_patterns::{format_cast_expression, format_instanceof_expression};
+use casts_patterns::format_cast_expression;
 use lambdas::format_lambda_expression;
-use leaves::{
-    format_class_literal_expression, format_literal_expression, format_name_expression,
-    format_super_expression, format_this_expression,
-};
-use member_chains::{format_member_chain, format_member_dot, is_member_chain_child};
+use leaves::{format_class_literal_expression, format_literal_expression, format_name_expression};
+use member_chains::{format_member_dot, format_postfix_family_expression};
 use method_references::format_method_reference_expression;
 use operators::{
-    format_assignment_expression, format_binary_expression, format_conditional_expression,
-    format_postfix_expression, format_unary_expression,
+    format_assignment_expression, format_conditional_expression, format_operator_spine,
+    format_unary_expression,
 };
 use parenthesized::format_parenthesized_expression;
 use switches::format_switch_expression;
@@ -85,21 +76,25 @@ fn format_expression_with_leading_comments<'source>(
         Expression::ConditionalExpression(expression) => {
             format_conditional_expression(expression, doc)
         }
-        Expression::BinaryExpression(expression) => format_binary_expression(expression, doc),
+        Expression::BinaryExpression(expression) => {
+            format_operator_spine(Expression::BinaryExpression(*expression), doc)
+        }
         Expression::UnaryExpression(expression) => format_unary_expression(expression, doc),
-        Expression::PostfixExpression(expression) => format_postfix_expression(expression, doc),
+        Expression::PostfixExpression(_)
+        | Expression::ThisExpression(_)
+        | Expression::SuperExpression(_)
+        | Expression::FieldAccessExpression(_)
+        | Expression::ArrayAccessExpression(_)
+        | Expression::MethodInvocationExpression(_)
+        | Expression::ObjectCreationExpression(_) => {
+            format_postfix_family_expression(*expression, leading_comments, doc)
+        }
         Expression::LambdaExpression(expression) => format_lambda_expression(expression, doc),
         Expression::LiteralExpression(expression) => {
             format_literal_expression(expression, leading_comments, doc)
         }
         Expression::NameExpression(expression) => {
             format_name_expression(expression, leading_comments, doc)
-        }
-        Expression::ThisExpression(expression) => {
-            format_this_expression(expression, leading_comments, doc)
-        }
-        Expression::SuperExpression(expression) => {
-            format_super_expression(expression, leading_comments, doc)
         }
         Expression::ClassLiteralExpression(expression) => {
             format_class_literal_expression(expression, doc)
@@ -112,25 +107,9 @@ fn format_expression_with_leading_comments<'source>(
             format_array_creation_expression(expression, doc)
         }
         Expression::InstanceofExpression(expression) => {
-            format_instanceof_expression(expression, doc)
+            format_operator_spine(Expression::InstanceofExpression(*expression), doc)
         }
         Expression::CastExpression(expression) => format_cast_expression(expression, doc),
-        Expression::FieldAccessExpression(expression) => {
-            format_field_access_expression(expression, doc)
-        }
-        Expression::ArrayAccessExpression(expression) => {
-            format_array_access_expression(expression, doc)
-        }
-        Expression::MethodInvocationExpression(expression) => {
-            format_method_invocation_expression_with_leading_comments(
-                expression,
-                leading_comments,
-                doc,
-            )
-        }
-        Expression::ObjectCreationExpression(expression) => {
-            format_object_creation_expression(expression, doc)
-        }
         Expression::BogusExpression(expression) => format_malformed(expression, doc),
     }
 }

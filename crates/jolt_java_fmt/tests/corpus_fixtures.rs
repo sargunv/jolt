@@ -244,6 +244,64 @@ fn deeply_nested_structural_recovery_formats_without_panicking_or_losing_followi
     }
 }
 
+#[test]
+fn deep_formatter_spines_format_idempotently_and_keep_following_syntax() {
+    let depth = 4096;
+    let expression = |suffix: &str| {
+        format!(
+            "class C {{ Object value = root{}; int following; }} class Following {{}}",
+            suffix.repeat(depth)
+        )
+    };
+    let sources = [
+        expression(".field"),
+        expression(".method()"),
+        expression("[0]"),
+        expression("++"),
+        expression(".new Inner()"),
+        expression(".this"),
+        expression(".super"),
+        expression(".field.method()[0]++.new Inner().this.super"),
+        expression(" + value"),
+        expression(" instanceof T"),
+        expression(" + value instanceof T"),
+    ];
+
+    for source in sources {
+        let parse = parse_compilation_unit(&source);
+        assert!(
+            parse.diagnostics().is_empty(),
+            "deep formatter spine did not remain structured: {:#?}",
+            parse.diagnostics()
+        );
+        assert_eq!(
+            parse
+                .syntax()
+                .expect("represented deep formatter spine")
+                .source_text(),
+            source
+        );
+
+        let formatted = format_source(&source, FormatOptions::default())
+            .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
+        assert!(formatted.contains("int following;"));
+        assert!(formatted.contains("class Following"));
+        let reparsed = parse_compilation_unit(&formatted);
+        assert_eq!(
+            reparsed
+                .syntax()
+                .expect("represented formatted output")
+                .source_text(),
+            formatted
+        );
+        assert_eq!(
+            format_source(&formatted, FormatOptions::default())
+                .expect("second format must complete"),
+            formatted
+        );
+    }
+}
+
 fn format_source(
     source: &str,
     options: FormatOptions,
