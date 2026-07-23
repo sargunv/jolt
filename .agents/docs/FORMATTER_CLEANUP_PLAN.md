@@ -707,7 +707,7 @@ ready for review.
 | 07  | `cleanup/07-core-module-boundaries`      | draft open | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9)   | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.     |
 | 08a | `cleanup/08a-renderer-boundaries`        | draft open | PR 07  | [#10](https://github.com/sargunv/jolt/pull/10) | full + release + benchmark | Kept hot loop concrete; deleted duplicate state. |
 | 08b | `cleanup/08b-renderer-audit-pass`        | rejected   | PR 08a | —                                              | design audit complete      | Exact single pass requires an output trace.      |
-| 09  | `cleanup/09-kotlin-rules`                | planned    | PR 08a | —                                              | —                          | Kotlin hotspot purification.                     |
+| 09  | `cleanup/09-kotlin-rules`                | draft open | PR 08a | [#11](https://github.com/sargunv/jolt/pull/11) | full + release + benchmark | Rule state and helper indirection deleted.       |
 | 10  | `cleanup/10-java-rules`                  | planned    | PR 09  | —                                              | —                          | Java hotspot purification.                       |
 | 11  | `cleanup/11-lexer-substrate`             | planned    | PR 10  | —                                              | —                          | Share cursor mechanics only.                     |
 | 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                              | —                          | Counted bounded lookahead work.                  |
@@ -1087,6 +1087,65 @@ ready for review.
   budgets, and smaller than every behavior-equivalent replacement. PR 09 stacks
   directly on PR 08a.
 
+### PR 09 working scope
+
+- Begin with three disjoint local state reductions: remove unreachable member-
+  chain builder states, unify the duplicated declaration assignment-body layout,
+  and replace the impossible block-content option/boolean product with its two
+  reachable states.
+- Follow with Kotlin-local helper deletion: inline one-use or constant-policy
+  layers where their owner remains clear, remove stale optional inputs, and
+  centralize only byte-identical delimiter behavior with more than one client.
+- Audit repeated control-flow field resolution, stale optional node parameters,
+  and physical comma assembly only after the local slices pass. Keep a slice
+  only when it reduces branches and concepts without obscuring malformed-token
+  spacing or orphan-comma ownership.
+- Preserve byte-for-byte output throughout PR 09. Potential fixes for zero-
+  width import/program section visibility and when-condition recovery spacing
+  are behavior changes and remain outside this structural PR.
+- Do not introduce a generic list visitor, control-flow macro, shared class-
+  header context, or Java/Kotlin rule abstraction. The apparent duplicates carry
+  different separator, recovery, comment, and formatter-ignore policies.
+
+### PR 09 evidence
+
+- Ten production commits remove unreachable member-chain and block-body states,
+  unify assignment-body layout, resolve seven control-flow fields once, remove
+  three stale optional rule inputs, and delete one-use or constant-policy token,
+  comment, delimiter, and member-body helpers. No context, visitor, macro,
+  compatibility layer, public API, or Java/Kotlin abstraction was added.
+- Kotlin production Rust is +201/-349 lines (-148 net). Including the durable
+  plan updates, the branch is +241/-366 (-125 net). Formatter output and every
+  snapshot are unchanged.
+- Two prototypes were rejected and fully reverted. Merging malformed/invisible
+  list variants retained the same boolean state and grew policy-sensitive
+  matches. A generic physical-comma walker could delete 45 lines, but exact
+  delegation recovery required independent comma-attachment and orphan-rendering
+  policies, turning it into a two-dimensional mini-framework.
+- Independent adversarial review found no correctness, recovery, trivia,
+  source-claim, or caller-exhaustiveness regression. The repository-defined Ona
+  task passed all 183 workspace tests with zero skips, including dprint smoke
+  tests. `mise run fix`, strict Clippy, WASM checks, both complete release
+  formatter suites, the 9,899-file PGO build, and the optimized dprint build
+  passed.
+- Paired parent/child architecture runs used the same 9,206-file Java and
+  485-file Kotlin corpora. Java topology and allocation metrics are identical;
+  its format median moved -4.47%. Kotlin format time moved -1.74%, allocation
+  count 38,083 -> 38,076, allocation bytes 49,074,816 -> 49,068,984, and peak
+  RSS 22,872,064 -> 22,523,904 bytes.
+- Resolving each represented control-flow field once creates one independent
+  space document for each ordinary `while` body rather than reusing the
+  condition's handle: Kotlin document nodes are 461,999 -> 462,345 (+346,
+  +0.075%). Child references fell by 816, reserved document memory fell by 2,356
+  bytes, and maximum live allocation bytes remained identical. Special-casing
+  this one handle would reintroduce state into the otherwise local helper, so
+  the bounded topology cost is accepted.
+- The non-PGO native CLI shrank from 5,943,952 to 5,942,576 bytes (-0.02%). The
+  optimized WASM plugin grew from 1,763,515 to 1,764,334 bytes (+0.05%), with
+  SHA-256 `4684101e45d8e02f9d7d793cdda545cad2211858238a07f778ab99c68956fe4f`.
+  This deterministic 819-byte cost is accepted against the rule-state deletion;
+  no runtime or allocation regression accompanied it.
+
 ## Decision Log
 
 | Date       | Decision                                                       | Reason                                                                                                                                                                                                     |
@@ -1118,6 +1177,11 @@ ready for review.
 | 2026-07-22 | Treat flat mode as the successful-fit proof.                   | Rendering starts broken and enters flat mode only after a complete accepted probe; a second mutable flag duplicated that state and could not diverge on a reachable flat path.                             |
 | 2026-07-22 | Carry exactly one diagnostic when formatting is blocked.       | All five producers create one fatal diagnostic; a vector added an allocation and forced consumers to handle impossible empty/multiple cases.                                                               |
 | 2026-07-22 | Reject single-pass debug rendering without an output trace.    | Atomic late failures plus observable sink chunk/halt behavior require either deterministic replay or retaining every callback; replay is zero-allocation and smaller.                                      |
+| 2026-07-22 | Purify Kotlin rules through bounded owner-local slices.        | Member chains, assignment bodies, blocks, control flow, and helper layers have provably unreachable or duplicated state; broad rule frameworks would obscure distinct recovery and trivia contracts.       |
+| 2026-07-22 | Keep PR 09 structural and byte-for-byte output preserving.     | Zero-width section visibility and when-condition recovery spacing may be bugs, but mixing style corrections with state deletion would weaken review and rollback boundaries.                               |
+| 2026-07-22 | Reject a boolean-valued Kotlin recovery-list merger.           | It preserved the same two layout states, grew policy-sensitive matches, and reduced no behavioral concept.                                                                                                 |
+| 2026-07-22 | Keep distinct physical comma assembly loops.                   | Delegation and destructuring differ in both attachment search and orphan rendering; exact sharing requires a two-policy mini-framework that weakens local reasoning.                                       |
+| 2026-07-22 | Accept one extra document node per ordinary Kotlin `while`.    | Resolving each field once deletes seven repeated probes and 39 lines; the measured +0.075% node cost does not increase allocation count, reserved memory, peak RSS, or format time.                        |
 
 ## Resume Protocol
 

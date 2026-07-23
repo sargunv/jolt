@@ -126,7 +126,7 @@ fn format_statement_node<'source>(
         format_statement_role(doc, inner, leading)
     });
     let tail = format_required_field(statement.tail(), doc, |tail, doc| {
-        format_terminator_list(doc, &tail, true)
+        format_terminator_list(doc, &tail)
     });
     doc.concat([statement_doc, tail])
 }

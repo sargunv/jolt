@@ -10,7 +10,10 @@ use jolt_kotlin_syntax::{
     KotlinSyntaxView,
 };
 
-use super::comments::{comment_forces_line, format_comment, format_leading_comment_list};
+use super::comments::{
+    LeadingTrivia, TrailingTrivia, comment_forces_line, format_comment,
+    format_leading_comment_list, format_token,
+};
 use super::lexical_safety::KotlinLexicalSafety;
 
 pub(crate) type KotlinFormatField<'source, T> = FormatField<'source, T>;
@@ -65,6 +68,19 @@ impl<'source> KotlinFormatDelimiter<'source> {
             Self::Source(_) => Doc::nil(),
             Self::Recovery(recovery) => *recovery,
         }
+    }
+}
+
+pub(crate) fn format_delimiter_with_preserved_trailing<'source>(
+    doc: &mut DocBuilder<'source>,
+    delimiter: KotlinFormatDelimiter<'source>,
+    leading: LeadingTrivia,
+) -> Doc<'source> {
+    match delimiter {
+        KotlinFormatDelimiter::Source(token) => {
+            format_token(doc, &token, leading, TrailingTrivia::Preserve)
+        }
+        KotlinFormatDelimiter::Recovery(recovery) => recovery,
     }
 }
 

@@ -2,10 +2,9 @@ use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{KotlinSyntaxListPart, KotlinSyntaxToken};
 
 use crate::helpers::comments::{
-    InlineLeadingTrivia, TrailingTrivia, delimiter_dangling_comments, format_dangling_comments,
-    format_leading_comments, format_separator_with_comments,
-    format_token_after_relocated_leading_comments, format_token_with_inline_leading_comments,
-    has_delimiter_dangling_comments,
+    TrailingTrivia, delimiter_dangling_comments, format_dangling_comments, format_leading_comments,
+    format_separator_with_comments, format_token_after_relocated_leading_comments,
+    format_token_with_inline_leading_comments, has_delimiter_dangling_comments,
 };
 
 pub(crate) struct CommaListItem<'source> {
@@ -80,7 +79,7 @@ fn delimited_comma_list_with<'source>(
         .rev()
         .find(|item| item.layout_visible)
         .is_some_and(|item| item.comma.is_some());
-    let open_doc = format_open_delimiter_before_items(doc, open);
+    let open_doc = format_open_delimiter_with_trailing(doc, open, TrailingTrivia::BeforeSoftLine);
     let list = comma_list(doc, items);
     let close_comments = format_close_leading_comments(doc, close);
     let indented_contents = doc.concat([open_doc, list, close_comments]);
@@ -160,13 +159,6 @@ pub(crate) fn physical_comma_list_items<'source, Entry>(
     items
 }
 
-fn format_open_delimiter<'source>(
-    doc: &mut DocBuilder<'source>,
-    token: Option<&KotlinSyntaxToken<'source>>,
-) -> Doc<'source> {
-    format_open_delimiter_with_trailing(doc, token, TrailingTrivia::RelocatedToEnclosingContext)
-}
-
 fn empty_delimited_list<'source>(
     doc: &mut DocBuilder<'source>,
     open: Option<&KotlinSyntaxToken<'source>>,
@@ -174,14 +166,19 @@ fn empty_delimited_list<'source>(
     close_trailing: TrailingTrivia,
 ) -> Doc<'source> {
     if !has_delimiter_dangling_comments(open, close) {
-        let open = format_open_delimiter(doc, open);
+        let open = format_open_delimiter_with_trailing(
+            doc,
+            open,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        );
         let close = format_close_delimiter(doc, close, close_trailing);
         return doc.concat([open, close]);
     }
 
-    let open_doc = format_open_delimiter(doc, open);
+    let open_doc =
+        format_open_delimiter_with_trailing(doc, open, TrailingTrivia::RelocatedToEnclosingContext);
     let line = doc.hard_line();
-    let comments = format_delimiter_dangling_comments(doc, open, close);
+    let comments = format_dangling_comments(doc, delimiter_dangling_comments(open, close));
     let body = doc.concat([line, comments]);
     let body = doc.indent(body);
     let close_line = doc.hard_line();
@@ -190,34 +187,13 @@ fn empty_delimited_list<'source>(
     doc.force_group(list)
 }
 
-fn format_open_delimiter_before_items<'source>(
-    doc: &mut DocBuilder<'source>,
-    token: Option<&KotlinSyntaxToken<'source>>,
-) -> Doc<'source> {
-    if let Some(token) = token {
-        format_token_with_inline_leading_comments(
-            doc,
-            token,
-            InlineLeadingTrivia::BeforeToken,
-            TrailingTrivia::BeforeSoftLine,
-        )
-    } else {
-        doc.nil()
-    }
-}
-
 fn format_open_delimiter_with_trailing<'source>(
     doc: &mut DocBuilder<'source>,
     token: Option<&KotlinSyntaxToken<'source>>,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
     if let Some(token) = token {
-        format_token_with_inline_leading_comments(
-            doc,
-            token,
-            InlineLeadingTrivia::BeforeToken,
-            trailing,
-        )
+        format_token_with_inline_leading_comments(doc, token, trailing)
     } else {
         doc.nil()
     }
@@ -286,13 +262,4 @@ fn format_close_delimiter_without_leading<'source>(
     } else {
         doc.nil()
     }
-}
-
-fn format_delimiter_dangling_comments<'source>(
-    doc: &mut DocBuilder<'source>,
-    open: Option<&KotlinSyntaxToken<'source>>,
-    close: Option<&KotlinSyntaxToken<'source>>,
-) -> Doc<'source> {
-    let comments = delimiter_dangling_comments(open, close);
-    format_dangling_comments(doc, comments)
 }

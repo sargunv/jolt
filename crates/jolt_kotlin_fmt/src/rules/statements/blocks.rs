@@ -27,12 +27,13 @@ pub(crate) fn format_block<'source>(
     let open = resolve_required_delimiter(block.open_brace(), doc);
     let close = resolve_required_delimiter(block.close_brace(), doc);
     let contents = format_block_contents(doc, block, open.source(), close.source());
-    format_braced_body(doc, open, close, contents.doc, contents.empty)
+    format_braced_body(doc, open, close, contents)
 }
 
-struct BlockContents<'source> {
-    doc: Option<Doc<'source>>,
-    empty: bool,
+#[derive(Clone, Copy)]
+enum BlockContents<'source> {
+    Empty,
+    Body(Doc<'source>),
 }
 
 fn format_block_contents<'source>(
@@ -44,10 +45,7 @@ fn format_block_contents<'source>(
     let items = match resolve_required_field(block.items(), doc) {
         KotlinFormatField::Present(items) => items,
         KotlinFormatField::Malformed(malformed) => {
-            return BlockContents {
-                doc: Some(malformed),
-                empty: false,
-            };
+            return BlockContents::Body(malformed);
         }
     };
     let parts = collect_block_parts(doc, &items);
@@ -67,10 +65,10 @@ fn format_block_contents<'source>(
     if let Some(comments) = format_close_dangling_comments(doc, close) {
         body_items.push(BodyItem::new(comments, BodyItemSeparator::Line));
     }
-    let empty = body_items.is_empty();
-    BlockContents {
-        empty,
-        doc: (!body_items.is_empty()).then(|| join_body_items(doc, body_items)),
+    if body_items.is_empty() {
+        BlockContents::Empty
+    } else {
+        BlockContents::Body(join_body_items(doc, body_items))
     }
 }
 
@@ -275,8 +273,7 @@ fn format_braced_body<'source>(
     doc: &mut DocBuilder<'source>,
     open: KotlinFormatDelimiter<'source>,
     close: KotlinFormatDelimiter<'source>,
-    body: Option<Doc<'source>>,
-    empty: bool,
+    contents: BlockContents<'source>,
 ) -> Doc<'source> {
     let has_close = close.source().is_some();
     let open = format_delimiter(
@@ -285,27 +282,27 @@ fn format_braced_body<'source>(
         LeadingTrivia::Preserve,
         TrailingTrivia::RelocatedToEnclosingContext,
     );
-    if empty {
-        let close = format_delimiter(
-            doc,
-            close,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::Preserve,
-        );
-        return doc.concat([open, close]);
-    }
-    let contents = if let Some(body) = body {
-        let line = doc.hard_line();
-        let body = doc.concat([line, body]);
-        let body = doc.indent(body);
-        if has_close {
-            let line = doc.hard_line();
-            doc.concat([body, line])
-        } else {
-            body
+    let contents = match contents {
+        BlockContents::Empty => {
+            let close = format_delimiter(
+                doc,
+                close,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::Preserve,
+            );
+            return doc.concat([open, close]);
         }
-    } else {
-        doc.hard_line()
+        BlockContents::Body(body) => {
+            let line = doc.hard_line();
+            let body = doc.concat([line, body]);
+            let body = doc.indent(body);
+            if has_close {
+                let line = doc.hard_line();
+                doc.concat([body, line])
+            } else {
+                body
+            }
+        }
     };
     let close = format_delimiter(
         doc,

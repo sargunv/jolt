@@ -36,7 +36,7 @@ pub(super) fn format_class_declaration<'source>(
     let name = format_required_field(declaration.name(), doc, |name, doc| format_name(doc, &name));
     let type_parameters =
         format_optional_field(declaration.type_parameters(), doc, |parameters, doc| {
-            format_type_parameter_list(doc, Some(parameters))
+            format_type_parameter_list(doc, parameters)
         });
     let constructor = format_optional_field(
         declaration.primary_constructor(),
@@ -70,7 +70,7 @@ pub(super) fn format_interface_declaration<'source>(
     let name = format_required_field(declaration.name(), doc, |name, doc| format_name(doc, &name));
     let type_parameters =
         format_optional_field(declaration.type_parameters(), doc, |parameters, doc| {
-            format_type_parameter_list(doc, Some(parameters))
+            format_type_parameter_list(doc, parameters)
         });
     let tail = format_type_tail(
         doc,
@@ -148,7 +148,7 @@ pub(crate) fn format_object_expression<'source>(
         if body.first_token().is_none() {
             Doc::nil()
         } else {
-            format_class_body(doc, Some(body))
+            format_class_body(doc, body)
         }
     });
     let expression = doc.concat([keyword, delegation, body]);
@@ -168,10 +168,10 @@ fn format_type_tail<'source>(
     });
     let constraints = constraints.map_or_else(Doc::nil, |constraints| {
         format_optional_field(constraints, doc, |constraints, doc| {
-            format_type_constraint_list(doc, Some(constraints))
+            format_type_constraint_list(doc, constraints)
         })
     });
-    let body = format_optional_field(body, doc, |body, doc| format_class_body(doc, Some(body)));
+    let body = format_optional_field(body, doc, |body, doc| format_class_body(doc, body));
     doc.concat([delegation, constraints, body])
 }
 

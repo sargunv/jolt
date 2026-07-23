@@ -94,7 +94,7 @@ fn format_enum_entry<'source>(
         format_value_argument_list(doc, &arguments)
     });
     let body = format_optional_field(entry.body(), doc, |body, doc| {
-        member_bodies::format_class_body(doc, Some(body))
+        member_bodies::format_class_body(doc, body)
     });
     let comma = format_optional_field(entry.comma(), doc, |comma, doc| {
         format_token(
@@ -142,7 +142,7 @@ pub(super) fn format_function_declaration<'source>(
         matches!(declaration.type_parameters(), KotlinSyntaxField::Present(_));
     let type_parameters =
         format_optional_field(declaration.type_parameters(), doc, |parameters, doc| {
-            format_type_parameter_list(doc, Some(parameters))
+            format_type_parameter_list(doc, parameters)
         });
     let type_parameter_space = if has_type_parameters {
         doc.space()
@@ -159,7 +159,7 @@ pub(super) fn format_function_declaration<'source>(
     let return_type =
         format_type_annotation(doc, declaration.return_colon(), declaration.return_type());
     let constraints = format_optional_field(declaration.constraints(), doc, |constraints, doc| {
-        format_type_constraint_list(doc, Some(constraints))
+        format_type_constraint_list(doc, constraints)
     });
     let body = format_optional_declaration_body(doc, declaration.body());
     let header = doc.concat([
@@ -253,7 +253,7 @@ pub(super) fn format_property_declaration<'source>(
     let keyword = keyword_with_space(doc, declaration.binding_keyword());
     let type_parameters =
         format_optional_field(declaration.type_parameters(), doc, |parameters, doc| {
-            let parameters = format_type_parameter_list(doc, Some(parameters));
+            let parameters = format_type_parameter_list(doc, parameters);
             let space = doc.space();
             doc.concat([parameters, space])
         });
@@ -262,7 +262,7 @@ pub(super) fn format_property_declaration<'source>(
     });
     let ty = format_type_annotation(doc, declaration.type_colon(), declaration.r#type());
     let constraints = format_optional_field(declaration.constraints(), doc, |constraints, doc| {
-        format_type_constraint_list(doc, Some(constraints))
+        format_type_constraint_list(doc, constraints)
     });
     let initializer = format_optional_property_initializer(
         doc,
@@ -308,7 +308,6 @@ fn format_property_initializer<'source>(
         KotlinSyntaxField::Present(operator) => operator.token(),
         _ => None,
     };
-    let has_expression = syntax_field_has_token(initializer.expression());
     let before = if leading_space {
         doc.space()
     } else {
@@ -335,7 +334,28 @@ fn format_property_initializer<'source>(
             )
         }
     });
-    let expression = format_required_field(initializer.expression(), doc, |expression, doc| {
+    format_assignment_rhs(
+        doc,
+        before,
+        operator,
+        operator_token,
+        initializer.expression(),
+    )
+}
+
+fn format_assignment_rhs<'source>(
+    doc: &mut DocBuilder<'source>,
+    before: Doc<'source>,
+    operator: Doc<'source>,
+    operator_token: Option<KotlinSyntaxToken<'source>>,
+    expression: KotlinSyntaxField<'source, jolt_kotlin_syntax::Expression<'source>>,
+) -> Doc<'source> {
+    let has_expression = syntax_field_has_token(expression);
+    let is_annotated = matches!(
+        expression,
+        KotlinSyntaxField::Present(jolt_kotlin_syntax::Expression::AnnotatedExpression(_))
+    );
+    let expression = format_required_field(expression, doc, |expression, doc| {
         format_expression(doc, &expression)
     });
     if has_expression
@@ -344,10 +364,7 @@ fn format_property_initializer<'source>(
         let line = doc.hard_line();
         return doc.concat([before, operator, line, expression]);
     }
-    if matches!(
-        initializer.expression(),
-        KotlinSyntaxField::Present(jolt_kotlin_syntax::Expression::AnnotatedExpression(_))
-    ) {
+    if is_annotated {
         let line = doc.hard_line();
         let expression = doc.concat([line, expression]);
         let expression = doc.indent(expression);
@@ -600,7 +617,7 @@ pub(super) fn format_type_alias_declaration<'source>(
     let name = format_required_field(declaration.name(), doc, |name, doc| format_name(doc, &name));
     let parameters =
         format_optional_field(declaration.type_parameters(), doc, |parameters, doc| {
-            format_type_parameter_list(doc, Some(parameters))
+            format_type_parameter_list(doc, parameters)
         });
     let assign = format_required_field(declaration.assign(), doc, |assign, doc| {
         keyword_token(doc, assign)
@@ -863,7 +880,6 @@ fn format_expression_body<'source>(
     doc: &mut DocBuilder<'source>,
     body: &ExpressionBody<'source>,
 ) -> Doc<'source> {
-    let has_expression = syntax_field_has_token(body.expression());
     let assign_token = match body.assign() {
         KotlinSyntaxField::Present(assign) => Some(assign),
         _ => None,
@@ -881,29 +897,7 @@ fn format_expression_body<'source>(
             keyword_token(doc, assign)
         }
     });
-    let expression = format_required_field(body.expression(), doc, |expression, doc| {
-        format_expression(doc, &expression)
-    });
-    if has_expression && assign_token.is_some_and(|assign| trailing_comments_force_line(&assign)) {
-        let line = doc.hard_line();
-        return doc.concat([before, assign, line, expression]);
-    }
-    if matches!(
-        body.expression(),
-        KotlinSyntaxField::Present(jolt_kotlin_syntax::Expression::AnnotatedExpression(_))
-    ) {
-        let line = doc.hard_line();
-        let expression = doc.concat([line, expression]);
-        let expression = doc.indent(expression);
-        return doc.concat([before, assign, expression]);
-    }
-    let after = if assign_token.is_some() && has_expression {
-        doc.space()
-    } else {
-        Doc::nil()
-    };
-    let contents = doc.concat([before, assign, after, expression]);
-    doc.group(contents)
+    format_assignment_rhs(doc, before, assign, assign_token, body.expression())
 }
 
 fn keyword_with_space<'source>(
