@@ -41,6 +41,7 @@ style/program/comment-only-file.kt
 style/program/formatter-ignore.kt
 style/program/package-import-spacing.kt
 style/program/qualified-names.kt
+style/program/section-visibility.kt
 style/program/top-level-blank-lines.kt
 style/statements/if-else.kt
 style/statements/local-declarations.kt

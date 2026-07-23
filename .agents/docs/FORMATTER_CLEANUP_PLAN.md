@@ -801,9 +801,10 @@ cleanup/14-final-reconciliation
           └─ cleanup/17-ignore-boundary-ownership
               └─ cleanup/18-java-program-joining
                   └─ cleanup/19-kotlin-recovery-layout
-                      └─ cleanup/20-java-delimiter-summaries
-                          └─ cleanup/21-java-generic-depth
-                              └─ cleanup/22-residue-reconciliation
+                      └─ cleanup/20-kotlin-marker-recovery
+                          └─ cleanup/21-java-delimiter-summaries
+                              └─ cleanup/22-java-generic-depth
+                                  └─ cleanup/23-residue-reconciliation
 ```
 
 ### PR 15 — Syntax-owned Java modifier presence
@@ -863,7 +864,27 @@ minimal barrier representation; do not publish a renamed boolean framework.
 - isolate all output changes in focused recovery snapshots and prove
   idempotence/source conservation.
 
-### PR 20 — Bounded Java delimiter and annotation summaries
+### PR 20 — Kotlin parser marker recovery
+
+- fix the parser panic discovered while isolating malformed `when` keyword
+  spacing: `fun f(x: Any) = when(x) { is @ String -> 1 }` must return a
+  represented recovered tree and diagnostics rather than abandoning a non-latest
+  marker;
+- keep the change in Kotlin parser marker/recovery ownership; do not teach the
+  formatter to avoid the represented case or weaken the marker invariant;
+- add the smallest parser fixture plus losslessness, following-syntax recovery,
+  formatter non-panic, and native/WASM stack checks;
+- once the recovered keyword field is reachable, make its formatter spacing
+  syntax-visible: a token-owning malformed keyword gets the same following space
+  as a represented keyword, while tokenless recovery remains claim-only; isolate
+  the intended output in that exact recovery snapshot;
+- preserve linear parsing and avoid a general marker rollback framework unless
+  the exact cause proves one is required.
+
+This layer was inserted after PR 19 probing exposed a distinct parser defect. It
+remains separate so the formatter behavior PR has a narrow rollback boundary.
+
+### PR 21 — Bounded Java delimiter and annotation summaries
 
 - eliminate quadratic nested parenthesized-lambda rejection with a Java-local
   lazy delimiter summary that activates only after an explicitly counted scan
@@ -877,7 +898,7 @@ minimal barrier representation; do not publish a renamed boolean framework.
 - require zero new allocation on the realistic corpus common path and reject a
   material side model or production growth without offsetting deletion.
 
-### PR 21 — Bounded Java generic depth
+### PR 22 — Bounded Java generic depth
 
 - prototype removal of input-depth recursion from both generic-type lookahead
   and the consuming type grammar with an explicit iterative work stack;
@@ -890,13 +911,13 @@ minimal barrier representation; do not publish a renamed boolean framework.
 - prove linear token work, bounded native/WASM stack use, following-declaration
   recovery, fixture parity, and neutral realistic allocations.
 
-### PR 22 — Residue reconciliation
+### PR 23 — Residue reconciliation
 
 - update formatter architecture and finite-cost documentation to match the
   implemented extension;
 - record exact stack LOC/concept/performance deltas and every rejected
   prototype;
-- remove transition-only APIs introduced by PRs 15-21;
+- remove transition-only APIs introduced by PRs 15-22;
 - leave no item labeled deferred without either an implemented owner or an
   explicit minimality decision supported by the extension's measurements.
 
@@ -980,10 +1001,11 @@ ready for review.
 | 16  | `cleanup/16-recovery-layout-parts`       | draft open | PR 15  | [#18](https://github.com/sargunv/jolt/pull/18) | full + benchmark           | Barrier-aware visible/claim-only layout.         |
 | 17  | `cleanup/17-ignore-boundary-ownership`   | draft open | PR 16  | [#19](https://github.com/sargunv/jolt/pull/19) | full + benchmark           | Delete raw EOF ignore-range projections.         |
 | 18  | `cleanup/18-java-program-joining`        | draft open | PR 17  | [#20](https://github.com/sargunv/jolt/pull/20) | full + benchmark           | Reconcile root joining and marker ownership.     |
-| 19  | `cleanup/19-kotlin-recovery-layout`      | planned    | PR 18  | —                                              | —                          | Isolate Kotlin recovery behavior corrections.    |
-| 20  | `cleanup/20-java-delimiter-summaries`    | planned    | PR 19  | —                                              | —                          | Bound lambda and annotation parenthesis scans.   |
-| 21  | `cleanup/21-java-generic-depth`          | planned    | PR 20  | —                                              | —                          | Bound recursive generic-type parsing.            |
-| 22  | `cleanup/22-residue-reconciliation`      | planned    | PR 21  | —                                              | —                          | Final evidence and transition deletion.          |
+| 19  | `cleanup/19-kotlin-recovery-layout`      | draft open | PR 18  | [#21](https://github.com/sargunv/jolt/pull/21) | full + benchmark           | Isolate Kotlin recovery behavior corrections.    |
+| 20  | `cleanup/20-kotlin-marker-recovery`      | planned    | PR 19  | —                                              | —                          | Fix malformed-when parser marker panic.          |
+| 21  | `cleanup/21-java-delimiter-summaries`    | planned    | PR 20  | —                                              | —                          | Bound lambda and annotation parenthesis scans.   |
+| 22  | `cleanup/22-java-generic-depth`          | planned    | PR 21  | —                                              | —                          | Bound recursive generic-type parsing.            |
+| 23  | `cleanup/23-residue-reconciliation`      | planned    | PR 22  | —                                              | —                          | Final evidence and transition deletion.          |
 
 ### PR 01 evidence
 
@@ -1764,6 +1786,44 @@ slices remove Java nodes and allocations or leave topology unchanged.
   all 185 tests with zero skips. The benchmark records committed subject
   `9d142fd`; only the new intended Java syntax/formatter snapshots were added.
 
+### PR 19 evidence
+
+- Kotlin import and file-root joining now derives visible versus claim-only
+  state from represented tokens/comments and the actual separator removal claim.
+  Missing and tokenless malformed parts remain emitted as physical barriers
+  without selecting separators or resetting the preceding visible section's
+  compact state.
+- `LayoutDoc` carries aggregate import visibility from the import owner to the
+  file root. Inner import sections retain their comment-barrier policy; outer
+  formatter-ignore chunks retain their hard-line policy. Unifying those joins
+  was rejected because it changed a genuine language-local boundary rule.
+- A reachable leading top-level semicolon previously formatted `;class A`; it is
+  now a visible compact section and formats `;\nclass A`. Tokenless body items
+  still emit claims in source order but do not become separator endpoints.
+  Annotation-to-content spacing now depends on aggregate syntax visibility.
+- Kotlin removed separators now render owned formatter-control comments. The
+  exact ignore / on-owned-by-semicolon / ignore fixture preserves all four
+  markers once, removes the semicolon, keeps ignored class text byte-for-byte,
+  remains compact, and formats the following class structurally. The shared
+  comment-inventory and second-pass checks prove conservation and idempotence.
+- Formatter production is +99/-78 lines (+21 net). This is accepted explicit
+  state rather than a new framework: existing `LayoutDoc` is reused, existing
+  `FileSection` is made compositional, `ImportSection` gains one local presence
+  bit, and no collection or generic join policy is added. Adversarial review
+  found no smaller representation that preserved both import join policies.
+- The deferred malformed-`when` spacing branch is formatter-unreachable in the
+  current parser corpus. Probing it exposed a parser panic on a non-latest type
+  marker; the new PR 20 owns that parser fix and will land the spacing
+  correction with an exact reachable recovery snapshot rather than an untestable
+  branch.
+- Realistic Java/Kotlin document topology, allocation counts, and allocation
+  bytes are exactly unchanged. Format medians moved -0.83%/-0.82%; peak RSS
+  moved -315,392/-32,768 bytes, all neutral. Optimized WASM moved from 1,746,572
+  to 1,746,930 bytes (+358, +0.02%), also neutral.
+- `mise run fix`, snapshot update, and the subsequent non-update suite passed
+  all 185 tests with zero skips. The benchmark records committed subject
+  `24bc209`; only the new intended Kotlin syntax/formatter snapshots changed.
+
 ## Decision Log
 
 | Date       | Decision                                                       | Reason                                                                                                                                                                                                     |
@@ -1810,8 +1870,9 @@ slices remove Java nodes and allocations or leave topology unchanged.
 | 2026-07-23 | Reject a general Java member-header classifier.                | Exact declaration precedence still requires independent restarts, so the enum would hide rather than remove repeated grammar work and would not shrink the parser.                                         |
 | 2026-07-23 | Extend the stack rather than rewrite PRs 01-14.                | Residue now crosses structural layout, output policy, and parser cost models; new descendants preserve reviewed rollback boundaries.                                                                       |
 | 2026-07-23 | Make modifier layout presence syntax-owned end to end.         | A preformatted claim document cannot reveal whether it owns visible syntax; one narrow carrier closes builder, collection, first/last, varargs, and ellipsis presence leaks.                               |
-| 2026-07-23 | Share one thresholded parenthesis summary in PR 20.            | Lambda rejection and nested annotation recovery repeat the same balanced-parenthesis scan; one dormant Java-local summary can bound both without an independent annotation memo.                           |
+| 2026-07-23 | Share one thresholded parenthesis summary in PR 21.            | Lambda rejection and nested annotation recovery repeat the same balanced-parenthesis scan; one dormant Java-local summary can bound both without an independent annotation memo.                           |
 | 2026-07-23 | Share resolved recovery layout contribution in formatter IR.   | One visible/claim-only carrier deletes both language-local list states and Kotlin's duplicate comma-item boolean while leaving all joining and separator policy with each language.                        |
+| 2026-07-23 | Isolate Kotlin marker abandonment in a new PR 20.              | PR 19 formatter probing exposed a parser panic on malformed `when` syntax; parser marker ownership needs its own recovery fixture and rollback boundary before Java complexity work.                       |
 
 ## Resume Protocol
 
