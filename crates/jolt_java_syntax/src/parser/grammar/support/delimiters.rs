@@ -160,7 +160,7 @@ mod tests {
 
     #[test]
     fn full_parse_handles_deep_parentheses_and_malformed_annotations() {
-        let depth = 64;
+        let depth = 63;
         let nested = format!(
             "class C {{ Object value = {}input{}; }} class D {{}}",
             "(".repeat(depth),
@@ -260,6 +260,19 @@ mod tests {
 }
 
 impl Parser<'_> {
+    pub(in crate::parser::grammar) fn consume_until_enclosing_brace(&mut self) {
+        let mut depth = 0usize;
+        while !self.at_eof() {
+            match self.current_kind() {
+                JavaSyntaxKind::LBrace => depth += 1,
+                JavaSyntaxKind::RBrace if depth == 0 => return,
+                JavaSyntaxKind::RBrace => depth -= 1,
+                _ => {}
+            }
+            self.bump();
+        }
+    }
+
     pub(in crate::parser::grammar) fn skip_balanced_from(
         &mut self,
         mut index: usize,

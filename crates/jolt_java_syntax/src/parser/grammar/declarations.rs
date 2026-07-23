@@ -57,22 +57,23 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_type_body(&mut self, kind: JavaSyntaxKind, type_name: Option<usize>) {
+        if !self.at(JavaSyntaxKind::LBrace) {
+            self.parse_type_body_inner(kind, type_name);
+        } else if self
+            .with_syntax_nesting(|parser| parser.parse_type_body_inner(kind, type_name))
+            .is_none()
+        {
+            self.parse_excessive_type_body(kind);
+        }
+    }
+
+    fn parse_type_body_inner(&mut self, kind: JavaSyntaxKind, type_name: Option<usize>) {
         let body = self.start();
         let owner = body.anchor();
         if !self.at(JavaSyntaxKind::LBrace) {
             self.record_missing_slot("expected type body", owner, type_body_open_brace_slot(kind));
             let members = self.start();
-            self.complete(
-                members,
-                match kind {
-                    JavaSyntaxKind::AnnotationInterfaceBody => {
-                        JavaSyntaxKind::AnnotationInterfaceBodyMemberList
-                    }
-                    JavaSyntaxKind::InterfaceBody => JavaSyntaxKind::InterfaceBodyMemberList,
-                    JavaSyntaxKind::RecordBody => JavaSyntaxKind::RecordBodyMemberList,
-                    _ => JavaSyntaxKind::ClassBodyMemberList,
-                },
-            );
+            self.complete(members, type_body_member_list_kind(kind));
             self.complete(body, kind);
             self.eat(JavaSyntaxKind::Semicolon);
             return;
@@ -89,17 +90,32 @@ impl Parser<'_> {
             while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) {
                 self.parse_body_declaration(kind, type_name);
             }
-            self.complete(
-                members,
-                match kind {
-                    JavaSyntaxKind::ClassBody => JavaSyntaxKind::ClassBodyMemberList,
-                    JavaSyntaxKind::RecordBody => JavaSyntaxKind::RecordBodyMemberList,
-                    JavaSyntaxKind::InterfaceBody => JavaSyntaxKind::InterfaceBodyMemberList,
-                    _ => unreachable!("non-special type bodies own a member-list role"),
-                },
-            );
+            self.complete(members, type_body_member_list_kind(kind));
         }
 
+        self.expect_required(
+            JavaSyntaxKind::RBrace,
+            "expected `}` after type body",
+            owner,
+            type_body_close_brace_slot(kind),
+        );
+        self.complete(body, kind);
+    }
+
+    fn parse_excessive_type_body(&mut self, kind: JavaSyntaxKind) {
+        let body = self.start();
+        let owner = body.anchor();
+        self.bump();
+        let elements = (kind == JavaSyntaxKind::AnnotationInterfaceBody).then(|| self.start());
+        let members = self.start();
+        let bogus = self.start();
+        let diagnostic = self.pending_excessive_syntax_nesting();
+        self.consume_until_enclosing_brace();
+        self.complete_recovery(bogus, type_body_bogus_member_kind(kind), [diagnostic]);
+        self.complete(members, type_body_member_list_kind(kind));
+        if let Some(elements) = elements {
+            self.complete(elements, JavaSyntaxKind::AnnotationElementList);
+        }
         self.expect_required(
             JavaSyntaxKind::RBrace,
             "expected `}` after type body",
@@ -1427,6 +1443,27 @@ fn body_kind_for_type(kind: JavaSyntaxKind) -> JavaSyntaxKind {
         JavaSyntaxKind::EnumDeclaration => JavaSyntaxKind::EnumBody,
         JavaSyntaxKind::RecordDeclaration => JavaSyntaxKind::RecordBody,
         _ => JavaSyntaxKind::ClassBody,
+    }
+}
+
+fn type_body_member_list_kind(kind: JavaSyntaxKind) -> JavaSyntaxKind {
+    match kind {
+        JavaSyntaxKind::AnnotationInterfaceBody => {
+            JavaSyntaxKind::AnnotationInterfaceBodyMemberList
+        }
+        JavaSyntaxKind::InterfaceBody => JavaSyntaxKind::InterfaceBodyMemberList,
+        JavaSyntaxKind::RecordBody => JavaSyntaxKind::RecordBodyMemberList,
+        _ => JavaSyntaxKind::ClassBodyMemberList,
+    }
+}
+
+fn type_body_bogus_member_kind(kind: JavaSyntaxKind) -> JavaSyntaxKind {
+    match kind {
+        JavaSyntaxKind::AnnotationInterfaceBody => {
+            JavaSyntaxKind::BogusAnnotationInterfaceBodyMember
+        }
+        JavaSyntaxKind::InterfaceBody => JavaSyntaxKind::BogusInterfaceBodyMember,
+        _ => JavaSyntaxKind::BogusClassBodyMember,
     }
 }
 

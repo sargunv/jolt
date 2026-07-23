@@ -14,7 +14,9 @@ impl Parser<'_> {
         if lookahead.at_variable_identifier() {
             Some(PatternStart::Type)
         } else if lookahead.at(JavaSyntaxKind::LParen) {
-            Some(PatternStart::Record)
+            Some(PatternStart::Record {
+                open_paren: lookahead.position(),
+            })
         } else {
             None
         }
