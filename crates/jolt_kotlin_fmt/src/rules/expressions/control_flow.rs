@@ -112,9 +112,7 @@ pub(super) fn format_when_expression<'source>(
                     KotlinFormatListPart::Separator(token) => format_plain_token(doc, token),
                     KotlinFormatListPart::Malformed(recovery) => recovery,
                     KotlinFormatListPart::Invisible(recovery) => {
-                        if recovery != Doc::nil() {
-                            invisible.push(recovery);
-                        }
+                        invisible.push(recovery);
                         continue;
                     }
                 };
@@ -168,24 +166,32 @@ pub(super) fn format_try_expression<'source>(
     let clauses = match resolve_required_field(expression.clauses(), doc) {
         KotlinFormatField::Present(clauses) => doc.concat_list(|docs| {
             for part in clauses.parts() {
-                let part = match resolve_list_part(part, docs) {
+                let (part, visible) = match resolve_list_part(part, docs) {
                     KotlinFormatListPart::Item(TryClause::CatchClause(clause)) => {
-                        format_catch_clause(docs, &clause)
+                        let visible = clause.first_token().is_some();
+                        (format_catch_clause(docs, &clause), visible)
                     }
                     KotlinFormatListPart::Item(TryClause::FinallyClause(clause)) => {
-                        format_finally_clause(docs, &clause)
+                        let visible = clause.first_token().is_some();
+                        (format_finally_clause(docs, &clause), visible)
                     }
                     KotlinFormatListPart::Item(TryClause::BogusTryClause(bogus)) => {
-                        crate::helpers::recovery::format_malformed(&bogus, docs)
+                        let visible = bogus.first_token().is_some();
+                        (
+                            crate::helpers::recovery::format_malformed(&bogus, docs),
+                            visible,
+                        )
                     }
-                    KotlinFormatListPart::Separator(token) => format_plain_token(docs, token),
-                    KotlinFormatListPart::Malformed(recovery) => recovery,
+                    KotlinFormatListPart::Separator(token) => {
+                        (format_plain_token(docs, token), true)
+                    }
+                    KotlinFormatListPart::Malformed(recovery) => (recovery, true),
                     KotlinFormatListPart::Invisible(recovery) => {
                         docs.push(recovery);
                         continue;
                     }
                 };
-                if part != Doc::nil() {
+                if visible {
                     let space = docs.space();
                     docs.push(space);
                 }

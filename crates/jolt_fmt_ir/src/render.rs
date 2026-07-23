@@ -950,8 +950,6 @@ mod tests {
     };
     use jolt_text::{TextRange, TextSize};
 
-    #[cfg(not(debug_assertions))]
-    use crate::Doc;
     #[cfg(debug_assertions)]
     use crate::document::DocNode;
     use crate::formatter_ignore::formatter_ignore_ranges_with_safety;
@@ -959,7 +957,7 @@ mod tests {
     use crate::source_fragment::SourceClaim;
     use crate::source_fragment::{ExceptionalSeparators, exceptional_separators};
     use crate::{
-        DocBuilder, ExceptionalSeparator, FragmentBoundary, LexicalAtom, LexicalAtomKind,
+        Doc, DocBuilder, ExceptionalSeparator, FragmentBoundary, LexicalAtom, LexicalAtomKind,
         LexicalSafety, NormalizedToken, RemovalClaim, RemovalReason, RenderControl, RenderSink,
         ReplacementClaim, SynthesisClaim,
     };
@@ -1738,9 +1736,8 @@ mod tests {
         assert_eq!(sink.0, "x ;");
     }
 
-    #[cfg(not(debug_assertions))]
     #[test]
-    fn proof_metadata_allocates_no_release_documents() {
+    fn empty_claims_preserve_document_topology() {
         let source = "x";
         let tree = syntax_tree(source);
         let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
@@ -1756,7 +1753,7 @@ mod tests {
             NormalizedToken::EnumSemicolon,
         ));
 
-        assert_eq!(reordered, Doc::nil());
+        assert_ne!(reordered, Doc::nil());
         assert_ne!(synthesized.doc(), Doc::nil());
     }
 

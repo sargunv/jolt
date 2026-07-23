@@ -19,9 +19,6 @@ pub(crate) fn push_recovery_item<'source>(
     recovery: Doc<'source>,
     layout_visible: bool,
 ) {
-    if !layout_visible && recovery == Doc::nil() {
-        return;
-    }
     items.push(CommaListItem {
         doc: recovery,
         comma: None,

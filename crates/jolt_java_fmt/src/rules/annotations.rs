@@ -2,6 +2,7 @@ use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
     Annotation, AnnotationArgumentList, AnnotationArgumentSyntax, AnnotationArrayInitializer,
     AnnotationElementValue, AnnotationElementValueContentItem, AnnotationElementValuePair,
+    AnnotationList, JavaSyntaxField, JavaSyntaxInvariantError, JavaSyntaxView,
 };
 
 use crate::helpers::comments::{
@@ -12,7 +13,8 @@ use crate::helpers::lists::{
     syntax_comma_list_items,
 };
 use crate::helpers::recovery::{
-    JavaFormatField, format_optional_field, format_required_field, resolve_required_delimiter,
+    JavaFormatField, JavaFormatListPart, format_malformed, format_missing, format_optional_field,
+    format_required_field, resolve_list_part_with_visibility, resolve_required_delimiter,
 };
 use crate::rules::expressions::format_expression;
 use crate::rules::names::format_name;
@@ -33,6 +35,53 @@ pub(crate) fn format_annotation_without_leading_comments<'source>(
     format_annotation_with_at_token(annotation, doc, |doc, token| {
         format_token_after_relocated_leading_comments(doc, token, TrailingTrivia::Preserve)
     })
+}
+
+/// Formats package/module annotation lines while keeping layout presence
+/// separate from zero-width source-conservation claims.
+pub(crate) fn format_required_annotation_lines<'source>(
+    field: Result<JavaSyntaxField<'source, AnnotationList<'source>>, JavaSyntaxInvariantError>,
+    doc: &mut DocBuilder<'source>,
+) -> (Doc<'source>, bool) {
+    let annotations = match field {
+        Ok(JavaSyntaxField::Present(annotations)) => annotations,
+        Ok(JavaSyntaxField::Malformed(malformed)) => {
+            let visible = malformed.first_token().is_some();
+            return (format_malformed(&malformed, doc), visible);
+        }
+        Ok(JavaSyntaxField::Missing(missing)) => return (format_missing(&missing, doc), false),
+        Err(error) => {
+            doc.block_on_invariant(error.to_string());
+            return (Doc::nil(), false);
+        }
+    };
+
+    let mut visible = false;
+    let annotations = doc.concat_list(|docs| {
+        for part in annotations.parts() {
+            let (part, part_is_visible) =
+                resolve_list_part_with_visibility(part, docs, |item| item.first_token().is_some());
+            match part {
+                JavaFormatListPart::Item(annotation) => {
+                    if visible {
+                        let line = docs.hard_line();
+                        docs.push(line);
+                    }
+                    let annotation = format_annotation(&annotation, docs);
+                    docs.push(annotation);
+                }
+                JavaFormatListPart::Separator(separator) => {
+                    let separator = format_token_with_comments(docs, &separator);
+                    docs.push(separator);
+                }
+                JavaFormatListPart::Malformed(malformed) => {
+                    docs.push(malformed);
+                }
+            }
+            visible |= part_is_visible;
+        }
+    });
+    (annotations, visible)
 }
 
 fn format_annotation_with_at_token<'source>(

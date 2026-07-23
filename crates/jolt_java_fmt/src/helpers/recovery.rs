@@ -79,18 +79,36 @@ pub(crate) fn resolve_list_part<'source, T>(
     part: Result<JavaSyntaxListPart<'source, T>, JavaSyntaxInvariantError>,
     doc: &mut DocBuilder<'source>,
 ) -> JavaFormatListPart<'source, T> {
+    resolve_list_part_with_visibility(part, doc, |_| false).0
+}
+
+pub(crate) fn resolve_list_part_with_visibility<'source, T>(
+    part: Result<JavaSyntaxListPart<'source, T>, JavaSyntaxInvariantError>,
+    doc: &mut DocBuilder<'source>,
+    item_is_visible: impl FnOnce(&T) -> bool,
+) -> (JavaFormatListPart<'source, T>, bool) {
     match part {
-        Ok(JavaSyntaxListPart::Item(item)) => JavaFormatListPart::Item(item),
-        Ok(JavaSyntaxListPart::Separator(separator)) => JavaFormatListPart::Separator(separator),
-        Ok(JavaSyntaxListPart::Missing(missing)) => {
-            JavaFormatListPart::Malformed(format_missing(&missing, doc))
+        Ok(JavaSyntaxListPart::Item(item)) => {
+            let visible = item_is_visible(&item);
+            (JavaFormatListPart::Item(item), visible)
         }
+        Ok(JavaSyntaxListPart::Separator(separator)) => {
+            (JavaFormatListPart::Separator(separator), true)
+        }
+        Ok(JavaSyntaxListPart::Missing(missing)) => (
+            JavaFormatListPart::Malformed(format_missing(&missing, doc)),
+            false,
+        ),
         Ok(JavaSyntaxListPart::Malformed(malformed)) => {
-            JavaFormatListPart::Malformed(format_malformed(&malformed, doc))
+            let visible = malformed.first_token().is_some();
+            (
+                JavaFormatListPart::Malformed(format_malformed(&malformed, doc)),
+                visible,
+            )
         }
         Err(error) => {
             doc.block_on_invariant(error.to_string());
-            JavaFormatListPart::Malformed(Doc::nil())
+            (JavaFormatListPart::Malformed(Doc::nil()), false)
         }
     }
 }

@@ -1,7 +1,8 @@
 use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    LabeledLambdaExpression, LambdaBody, LambdaBodyItemSyntax, LambdaExpression, LambdaForm,
-    LambdaParameter, LambdaParameterBindingSyntax, LambdaParameterList, LambdaParameterListEntry,
+    KotlinSyntaxField, KotlinSyntaxView, LabeledLambdaExpression, LambdaBody, LambdaBodyItemSyntax,
+    LambdaExpression, LambdaForm, LambdaParameter, LambdaParameterBindingSyntax,
+    LambdaParameterList, LambdaParameterListEntry,
 };
 
 use crate::helpers::comments::{
@@ -95,6 +96,7 @@ fn format_lambda_body<'source>(
     };
     let body_doc = lambda_body_doc(doc, body, close_source.as_ref());
     if body_doc.is_empty() {
+        let invisible_body = body_doc.doc;
         let parameters = if let Some(parameters) = parameters {
             let before = doc.space();
             let after = doc.space();
@@ -102,7 +104,7 @@ fn format_lambda_body<'source>(
         } else {
             doc.nil()
         };
-        return doc.concat([open, parameters, close]);
+        return doc.concat([open, parameters, invisible_body, close]);
     }
 
     let count = body_doc.count;
@@ -146,9 +148,15 @@ fn format_lambda_parameter_prefix<'source>(
     doc: &mut DocBuilder<'source>,
     parameter_list: &LambdaParameterList<'source>,
 ) -> Doc<'source> {
-    let items = match resolve_required_field(parameter_list.parameters(), doc) {
+    let parameters = parameter_list.parameters();
+    let malformed_is_visible = matches!(
+        &parameters,
+        Ok(KotlinSyntaxField::Malformed(malformed)) if malformed.first_token().is_some()
+    );
+    let items = match resolve_required_field(parameters, doc) {
         KotlinFormatField::Present(parameters) => {
             physical_comma_list_items(doc, parameters.parts(), |doc, parameter| CommaListItem {
+                layout_visible: parameter.first_token().is_some(),
                 doc: match parameter {
                     LambdaParameterListEntry::LambdaParameter(parameter) => {
                         format_lambda_parameter(doc, &parameter)
@@ -158,13 +166,12 @@ fn format_lambda_parameter_prefix<'source>(
                     }
                 },
                 comma: None,
-                layout_visible: true,
             })
         }
         KotlinFormatField::Malformed(recovery) => vec![CommaListItem {
+            layout_visible: malformed_is_visible,
             doc: recovery,
             comma: None,
-            layout_visible: true,
         }],
     };
     let arrow = format_required_field(parameter_list.arrow(), doc, |arrow, doc| {
@@ -175,20 +182,25 @@ fn format_lambda_parameter_prefix<'source>(
             TrailingTrivia::RelocatedToEnclosingContext,
         )
     });
-    let mut items = items.into_iter().peekable();
+    let visible_item_count = items.iter().filter(|item| item.layout_visible).count();
     doc.concat_list(|docs| {
-        while let Some(item) = items.next() {
+        let mut visible_index = 0;
+        for item in items {
             docs.push(item.doc);
+            if !item.layout_visible {
+                continue;
+            }
             if let Some(comma) = item.comma {
                 let space = docs.space();
                 let comma = format_separator_with_comments(docs, &comma, space);
                 docs.push(comma);
-            } else if items.peek().is_some() {
+            } else if visible_index + 1 < visible_item_count {
                 let space = docs.space();
                 docs.push(space);
             }
+            visible_index += 1;
         }
-        if !docs.is_empty() {
+        if visible_item_count > 0 {
             let space = docs.space();
             docs.push(space);
         }
@@ -243,21 +255,32 @@ pub(super) fn lambda_body_doc<'source>(
     close: Option<&jolt_kotlin_syntax::KotlinSyntaxToken<'source>>,
 ) -> LambdaBodyDoc<'source> {
     let mut count = 0;
-    let body_doc = match resolve_required_field(body.items(), doc) {
+    let items = body.items();
+    let malformed_is_visible = matches!(
+        &items,
+        Ok(KotlinSyntaxField::Malformed(malformed)) if malformed.first_token().is_some()
+    );
+    let body_doc = match resolve_required_field(items, doc) {
         KotlinFormatField::Present(items) => doc.concat_list(|docs| {
             for part in items.parts() {
-                let item = match resolve_list_part(part, docs) {
+                let (item, layout_visible) = match resolve_list_part(part, docs) {
                     KotlinFormatListPart::Item(role) => match role.classify() {
-                        Ok(LambdaBodyItemSyntax::Item(item)) => format_block_item(docs, &item),
-                        Ok(LambdaBodyItemSyntax::Terminator(token)) => format_token(
-                            docs,
-                            &token,
-                            LeadingTrivia::Preserve,
-                            TrailingTrivia::Preserve,
+                        Ok(LambdaBodyItemSyntax::Item(item)) => {
+                            let visible = item.first_token().is_some();
+                            (format_block_item(docs, &item), visible)
+                        }
+                        Ok(LambdaBodyItemSyntax::Terminator(token)) => (
+                            format_token(
+                                docs,
+                                &token,
+                                LeadingTrivia::Preserve,
+                                TrailingTrivia::Preserve,
+                            ),
+                            true,
                         ),
                         Err(error) => {
                             docs.block_on_invariant(error.to_string());
-                            Doc::nil()
+                            (Doc::nil(), false)
                         }
                     },
                     KotlinFormatListPart::Separator(separator) => {
@@ -265,16 +288,18 @@ pub(super) fn lambda_body_doc<'source>(
                             "unexpected lambda-body separator: {:?}",
                             separator.kind()
                         ));
-                        Doc::nil()
+                        (Doc::nil(), false)
                     }
-                    KotlinFormatListPart::Malformed(recovery) => recovery,
+                    KotlinFormatListPart::Malformed(recovery) => (recovery, true),
                     KotlinFormatListPart::Invisible(recovery) => {
                         docs.push(recovery);
                         continue;
                     }
                 };
-                if item != Doc::nil() {
+                if layout_visible {
                     push_lambda_body_doc(docs, &mut count, item);
+                } else {
+                    docs.push(item);
                 }
             }
             if let Some(close) = close {
@@ -286,7 +311,7 @@ pub(super) fn lambda_body_doc<'source>(
             }
         }),
         KotlinFormatField::Malformed(recovery) => {
-            count = 1;
+            count = usize::from(malformed_is_visible);
             recovery
         }
     };

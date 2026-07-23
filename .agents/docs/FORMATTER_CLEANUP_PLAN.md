@@ -672,23 +672,52 @@ This table is the source of truth after a context compaction. Update it whenever
 a branch is created, a PR is opened, scope changes, a gate fails, or a PR is
 ready for review.
 
-| PR  | Branch                                   | Status     | Parent | Draft PR                                     | Verification            | Notes                                         |
-| --- | ---------------------------------------- | ---------- | ------ | -------------------------------------------- | ----------------------- | --------------------------------------------- |
-| 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2) | baseline audit complete | Durable plan and gates only.                  |
-| 01  | `cleanup/01-doc-semantics`               | planned    | PR 00  | —                                            | —                       | Profile-independent topology/presence.        |
-| 02  | `cleanup/02-formatter-ignore-plan`       | planned    | PR 01  | —                                            | —                       | One linear root plan.                         |
-| 03  | `cleanup/03-infallible-generated-fields` | planned    | PR 02  | —                                            | —                       | Generated physical slots only.                |
-| 04  | `cleanup/04-syntax-recovery-visibility`  | planned    | PR 03  | —                                            | —                       | Syntax-owned recovery/list classification.    |
-| 05  | `cleanup/05-root-coordination`           | planned    | PR 04  | —                                            | —                       | Narrow root ownership, no god context.        |
-| 06  | `cleanup/06-source-audit-reporting`      | planned    | PR 05  | —                                            | —                       | Structured normalization facts.               |
-| 07  | `cleanup/07-core-module-boundaries`      | planned    | PR 06  | —                                            | —                       | Conditional crate extraction gate.            |
-| 08a | `cleanup/08a-renderer-boundaries`        | planned    | PR 07  | —                                            | —                       | Separate contracts without output changes.    |
-| 08b | `cleanup/08b-renderer-audit-pass`        | optional   | PR 08a | —                                            | —                       | Proceed only if two-pass semantics shrink.    |
-| 09  | `cleanup/09-kotlin-rules`                | planned    | PR 08b | —                                            | —                       | Kotlin hotspot purification.                  |
-| 10  | `cleanup/10-java-rules`                  | planned    | PR 09  | —                                            | —                       | Java hotspot purification.                    |
-| 11  | `cleanup/11-lexer-substrate`             | planned    | PR 10  | —                                            | —                       | Share cursor mechanics only.                  |
-| 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                            | —                       | Counted bounded lookahead work.               |
-| 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                            | —                       | Actual docs, metrics, and API deletions only. |
+| PR  | Branch                                   | Status     | Parent | Draft PR                                     | Verification              | Notes                                         |
+| --- | ---------------------------------------- | ---------- | ------ | -------------------------------------------- | ------------------------- | --------------------------------------------- |
+| 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2) | baseline audit complete   | Durable plan and gates only.                  |
+| 01  | `cleanup/01-doc-semantics`               | draft open | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3) | debug/release + benchmark | Profile-independent topology/presence.        |
+| 02  | `cleanup/02-formatter-ignore-plan`       | planned    | PR 01  | —                                            | —                         | One linear root plan.                         |
+| 03  | `cleanup/03-infallible-generated-fields` | planned    | PR 02  | —                                            | —                         | Generated physical slots only.                |
+| 04  | `cleanup/04-syntax-recovery-visibility`  | planned    | PR 03  | —                                            | —                         | Syntax-owned recovery/list classification.    |
+| 05  | `cleanup/05-root-coordination`           | planned    | PR 04  | —                                            | —                         | Narrow root ownership, no god context.        |
+| 06  | `cleanup/06-source-audit-reporting`      | planned    | PR 05  | —                                            | —                         | Structured normalization facts.               |
+| 07  | `cleanup/07-core-module-boundaries`      | planned    | PR 06  | —                                            | —                         | Conditional crate extraction gate.            |
+| 08a | `cleanup/08a-renderer-boundaries`        | planned    | PR 07  | —                                            | —                         | Separate contracts without output changes.    |
+| 08b | `cleanup/08b-renderer-audit-pass`        | optional   | PR 08a | —                                            | —                         | Proceed only if two-pass semantics shrink.    |
+| 09  | `cleanup/09-kotlin-rules`                | planned    | PR 08b | —                                            | —                         | Kotlin hotspot purification.                  |
+| 10  | `cleanup/10-java-rules`                  | planned    | PR 09  | —                                            | —                         | Java hotspot purification.                    |
+| 11  | `cleanup/11-lexer-substrate`             | planned    | PR 10  | —                                            | —                         | Share cursor mechanics only.                  |
+| 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                            | —                         | Counted bounded lookahead work.               |
+| 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                            | —                         | Actual docs, metrics, and API deletions only. |
+
+### PR 01 evidence
+
+- Empty source claims now have identical non-nil document topology in debug and
+  release; all ten language-rule `Doc ==/!= Doc::nil()` decisions were removed.
+- Java/Kotlin layout presence is derived from represented tokens or existing
+  list visibility while zero-width proof/recovery documents remain emitted.
+- Debug `jolt_fmt_ir`, Java, and Kotlin suites passed, including both corpora,
+  imported fixtures, recovery, fit, trivia conservation, and idempotence.
+- The new topology invariant and all Java/Kotlin formatter suites passed in
+  release. Strict library Clippy passed.
+- Code-only delta before the ledger update: +326/-210 lines (+116 net). This is
+  below the reassessment threshold; the added state deletes opaque document
+  identity decisions and makes malformed/list visibility explicit.
+- Clean same-machine parent/child measurements found Java/Kotlin document-node
+  growth of 2.19%/1.54%, reserved document memory growth of 1.99%/1.02%, and
+  allocation-count growth of 0.024%/0.021%. Max-live memory was unchanged. Java
+  timing moved +2.68% in a bimodal run and Kotlin -2.19%; neither is strong
+  runtime evidence. The bounded structural cost is accepted for
+  profile-independent semantics.
+- Peak RSS was unavailable because the repository benchmark's required
+  `/usr/bin/time` executable is absent. Tests were run through direct Cargo
+  commands because the Ona automation had previously failed to start without
+  systemd; no test was skipped or weakened.
+- `inline_modifier_prefix_from_docs` still infers annotation presence from its
+  builder because its opaque `Doc` input lacks visibility metadata. A local
+  replacement produced a corpus regression and was rejected. PR 04 must remove
+  this last syntax-contract leak when recovery/list visibility becomes
+  syntax-owned; PR 01 does not add a second or temporary API for it.
 
 ## Decision Log
 
@@ -700,6 +729,7 @@ ready for review.
 | 2026-07-22 | Treat growth without deleted complexity as a stop condition. | The cleanup exists to reduce reasoning load, not install a new framework.                             |
 | 2026-07-22 | Keep leaf rules free of a general formatting context.        | Narrow dependencies prevent a service locator and preserve local reasoning.                           |
 | 2026-07-22 | Split CST, recovery, renderer, language, and lexer risks.    | Each now has an independent correctness model, benchmark gate, and rollback boundary.                 |
+| 2026-07-22 | Accept PR 01's bounded release document-node cost.           | Stable topology costs 1.5–2.2% more nodes but keeps allocations/max-live memory effectively flat.     |
 
 ## Resume Protocol
 
