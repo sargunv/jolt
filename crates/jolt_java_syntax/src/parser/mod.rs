@@ -33,6 +33,7 @@ pub(crate) enum JavaParseDiagnosticCode {
     MisplacedConstructorInvocation,
     RestrictedTypeIdentifier,
     ExcessiveTypeNesting,
+    ExcessiveSyntaxNesting,
     InvalidEventStream,
 }
 
@@ -65,6 +66,9 @@ impl JavaParseDiagnosticCode {
             }
             Self::ExcessiveTypeNesting => {
                 DiagnosticCodeId::new("java.parse.excessive_type_nesting")
+            }
+            Self::ExcessiveSyntaxNesting => {
+                DiagnosticCodeId::new("java.parse.excessive_syntax_nesting")
             }
             Self::InvalidEventStream => {
                 DiagnosticCodeId::new("internal.syntax.invalid_event_stream")
@@ -286,6 +290,174 @@ mod tests {
             count += usize::from(node.kind() == kind);
         }
         count
+    }
+
+    fn excessive_syntax_diagnostic_count(source: &str) -> usize {
+        parse_compilation_unit(source)
+            .diagnostics()
+            .iter()
+            .filter(|diagnostic| {
+                diagnostic.code == JavaParseDiagnosticCode::ExcessiveSyntaxNesting.id()
+            })
+            .count()
+    }
+
+    fn nested_annotation_value(depth: usize, leaf: &str) -> String {
+        format!("{}{}{}", "@A(".repeat(depth), leaf, ")".repeat(depth))
+    }
+
+    #[test]
+    fn expression_nesting_has_an_exact_edge_and_bounded_deep_recovery() {
+        let parenthesized = |depth| {
+            format!(
+                "class C {{ Object value = {}input{}; }}",
+                "(".repeat(depth),
+                ")".repeat(depth)
+            )
+        };
+        assert_eq!(excessive_syntax_diagnostic_count(&parenthesized(63)), 0);
+        let edge = parenthesized(64);
+        check(
+            &edge,
+            JavaParseDiagnosticCode::ExcessiveSyntaxNesting.id(),
+            "syntax is too deeply nested to parse safely",
+            JavaSyntaxKind::BogusExpression,
+            None,
+        );
+        assert_eq!(
+            count_nodes(&edge, JavaSyntaxKind::ParenthesizedExpression),
+            64
+        );
+
+        for expression in [
+            format!("{}true", "!".repeat(4096)),
+            format!("{}leaf", "value = ".repeat(4096)),
+        ] {
+            let source =
+                format!("class C {{ Object value = {expression}; int following; }} class D {{}}");
+            let parse = parse_compilation_unit(&source);
+            assert_eq!(
+                parse
+                    .syntax()
+                    .expect("represented deep expression")
+                    .source_text(),
+                source
+            );
+            assert_eq!(excessive_syntax_diagnostic_count(&source), 1);
+            assert_eq!(count_nodes(&source, JavaSyntaxKind::FieldDeclaration), 2);
+            assert_eq!(count_nodes(&source, JavaSyntaxKind::ClassDeclaration), 2);
+        }
+    }
+
+    #[test]
+    fn annotation_value_nesting_preserves_ternaries_and_following_arguments() {
+        let clean = format!("{} class C {{}}", nested_annotation_value(128, "@Leaf"));
+        assert_eq!(excessive_syntax_diagnostic_count(&clean), 0);
+
+        let deep = format!(
+            "{} class C {{ int following; }}",
+            nested_annotation_value(4096, "@Leaf")
+        );
+        let parse = parse_compilation_unit(&deep);
+        assert_eq!(
+            parse
+                .syntax()
+                .expect("represented deep annotation")
+                .source_text(),
+            deep
+        );
+        assert_eq!(excessive_syntax_diagnostic_count(&deep), 1);
+        check(
+            &deep,
+            JavaParseDiagnosticCode::ExcessiveSyntaxNesting.id(),
+            "syntax is too deeply nested to parse safely",
+            JavaSyntaxKind::BogusExpression,
+            None,
+        );
+        assert_eq!(count_nodes(&deep, JavaSyntaxKind::ClassDeclaration), 1);
+        assert_eq!(count_nodes(&deep, JavaSyntaxKind::FieldDeclaration), 1);
+
+        let ternary = format!(
+            "{} class C {{ int following; }}",
+            nested_annotation_value(127, "condition ? left : right, following = value")
+        );
+        let parse = parse_compilation_unit(&ternary);
+        assert_eq!(
+            parse
+                .syntax()
+                .expect("represented annotation ternary")
+                .source_text(),
+            ternary
+        );
+        assert_eq!(excessive_syntax_diagnostic_count(&ternary), 2);
+        assert_eq!(
+            count_nodes(&ternary, JavaSyntaxKind::AnnotationElementValuePair),
+            1
+        );
+        assert_eq!(count_nodes(&ternary, JavaSyntaxKind::FieldDeclaration), 1);
+    }
+
+    #[test]
+    fn array_initializer_nesting_recovers_one_child_and_keeps_following_syntax() {
+        let initializer = |depth| format!("{}{}", "{".repeat(depth), "}".repeat(depth));
+        let clean = format!("class C {{ Object value = {}; }}", initializer(129));
+        assert_eq!(excessive_syntax_diagnostic_count(&clean), 0);
+
+        let edge = format!(
+            "class C {{ Object value = {}; int following; }} class D {{}}",
+            initializer(130)
+        );
+        let parse = parse_compilation_unit(&edge);
+        assert_eq!(
+            parse
+                .syntax()
+                .expect("represented array edge")
+                .source_text(),
+            edge
+        );
+        assert_eq!(excessive_syntax_diagnostic_count(&edge), 1);
+        check(
+            &edge,
+            JavaParseDiagnosticCode::ExcessiveSyntaxNesting.id(),
+            "syntax is too deeply nested to parse safely",
+            JavaSyntaxKind::BogusVariableInitializer,
+            None,
+        );
+        assert_eq!(
+            count_nodes(&edge, JavaSyntaxKind::BogusVariableInitializer),
+            1
+        );
+        assert_eq!(count_nodes(&edge, JavaSyntaxKind::FieldDeclaration), 2);
+        assert_eq!(count_nodes(&edge, JavaSyntaxKind::ClassDeclaration), 2);
+
+        let sibling_initializer = format!("{}{{}}, sibling{}", "{".repeat(129), "}".repeat(129));
+        let sibling = format!(
+            "class C {{ Object value = {sibling_initializer}; int following; }} class D {{}}"
+        );
+        let parse = parse_compilation_unit(&sibling);
+        assert_eq!(
+            parse
+                .syntax()
+                .expect("represented over-depth array sibling")
+                .source_text(),
+            sibling
+        );
+        assert_eq!(excessive_syntax_diagnostic_count(&sibling), 2);
+        assert_eq!(
+            count_nodes(&sibling, JavaSyntaxKind::BogusVariableInitializer),
+            1
+        );
+        assert_eq!(count_nodes(&sibling, JavaSyntaxKind::BogusExpression), 1);
+        assert_eq!(count_nodes(&sibling, JavaSyntaxKind::FieldDeclaration), 2);
+        assert_eq!(count_nodes(&sibling, JavaSyntaxKind::ClassDeclaration), 2);
+
+        let deep = format!(
+            "class C {{ Object value = {}; int following; }} class D {{}}",
+            initializer(4096)
+        );
+        assert_eq!(excessive_syntax_diagnostic_count(&deep), 1);
+        assert_eq!(count_nodes(&deep, JavaSyntaxKind::FieldDeclaration), 2);
+        assert_eq!(count_nodes(&deep, JavaSyntaxKind::ClassDeclaration), 2);
     }
 
     #[test]

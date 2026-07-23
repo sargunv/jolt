@@ -152,6 +152,48 @@ fn deeply_nested_generic_recovery_formats_without_panicking_or_losing_following_
     );
 }
 
+#[test]
+fn deeply_nested_value_recovery_formats_without_panicking_or_losing_following_syntax() {
+    let depth = 4096;
+    let annotation = format!(
+        "{}@Leaf{} class C {{ int following; }} class D {{}}",
+        "@A(".repeat(depth),
+        ")".repeat(depth)
+    );
+    let sources = [
+        format!(
+            "class C {{ Object value = {}true; int following; }} class D {{}}",
+            "!".repeat(depth)
+        ),
+        annotation,
+        format!(
+            "class C {{ Object value = {}{}; int following; }} class D {{}}",
+            "{".repeat(depth),
+            "}".repeat(depth)
+        ),
+    ];
+
+    for source in sources {
+        let parse = parse_compilation_unit(&source);
+        assert_eq!(
+            parse.syntax().expect("represented input").source_text(),
+            source
+        );
+        let formatted = format_source(&source, FormatOptions::default())
+            .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
+        assert!(formatted.contains("int following;"));
+        assert!(formatted.contains("class D"));
+        let reparsed = parse_compilation_unit(&formatted);
+        assert_eq!(
+            reparsed
+                .syntax()
+                .expect("represented formatted output")
+                .source_text(),
+            formatted
+        );
+    }
+}
+
 fn format_source(
     source: &str,
     options: FormatOptions,

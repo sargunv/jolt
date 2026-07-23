@@ -378,7 +378,12 @@ impl Parser<'_> {
 
     pub(super) fn parse_annotation_element_value(&mut self, stop: JavaSyntaxKind) {
         let value = self.start();
-        self.parse_annotation_element_value_contents(stop);
+        if self
+            .with_syntax_nesting(|parser| parser.parse_annotation_element_value_contents(stop))
+            .is_none()
+        {
+            self.parse_excessive_annotation_expression(stop);
+        }
         self.complete(value, JavaSyntaxKind::AnnotationElementValue);
     }
 

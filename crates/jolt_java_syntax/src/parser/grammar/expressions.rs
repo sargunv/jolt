@@ -159,6 +159,15 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_assignment_expression(&mut self) -> jolt_syntax::CompletedMarker {
+        if let Some(expression) = self.with_syntax_nesting(Self::parse_assignment_expression_inner)
+        {
+            return expression;
+        }
+
+        self.parse_excessive_expression(None)
+    }
+
+    fn parse_assignment_expression_inner(&mut self) -> jolt_syntax::CompletedMarker {
         if self.starts_lambda_expression() {
             return self.parse_lambda_expression();
         }
@@ -323,6 +332,19 @@ impl Parser<'_> {
         &mut self,
         allow_decimal_boundary_literal: bool,
     ) -> jolt_syntax::CompletedMarker {
+        if let Some(expression) = self.with_syntax_nesting(|parser| {
+            parser.parse_unary_expression_inner(allow_decimal_boundary_literal)
+        }) {
+            return expression;
+        }
+
+        self.parse_excessive_expression(None)
+    }
+
+    fn parse_unary_expression_inner(
+        &mut self,
+        allow_decimal_boundary_literal: bool,
+    ) -> jolt_syntax::CompletedMarker {
         if matches!(
             self.current_kind(),
             JavaSyntaxKind::PlusPlus
@@ -350,6 +372,84 @@ impl Parser<'_> {
         }
 
         self.parse_postfix_expression(allow_decimal_boundary_literal)
+    }
+
+    fn parse_excessive_expression(
+        &mut self,
+        extra_stop: Option<JavaSyntaxKind>,
+    ) -> jolt_syntax::CompletedMarker {
+        self.parse_excessive_expression_with_policy(extra_stop, false)
+    }
+
+    pub(super) fn parse_excessive_annotation_expression(
+        &mut self,
+        stop: JavaSyntaxKind,
+    ) -> jolt_syntax::CompletedMarker {
+        self.parse_excessive_expression_with_policy(Some(stop), true)
+    }
+
+    fn parse_excessive_expression_with_policy(
+        &mut self,
+        extra_stop: Option<JavaSyntaxKind>,
+        annotation_value: bool,
+    ) -> jolt_syntax::CompletedMarker {
+        let expression = self.start();
+        let diagnostic = self.pending_excessive_syntax_nesting();
+        let end = self.excessive_expression_end(extra_stop, annotation_value);
+        while self.position() < end {
+            self.bump();
+        }
+        self.complete_bogus_expression(expression, diagnostic)
+    }
+
+    fn excessive_expression_end(
+        &mut self,
+        extra_stop: Option<JavaSyntaxKind>,
+        annotation_value: bool,
+    ) -> usize {
+        let mut index = self.position();
+        let (mut parens, mut braces, mut brackets) = (0usize, 0usize, 0usize);
+        let mut questions = 0usize;
+        loop {
+            let kind = self.kind_at(index);
+            let outside = parens == 0 && braces == 0 && brackets == 0;
+            if kind == JavaSyntaxKind::Eof
+                || kind == JavaSyntaxKind::RParen && parens == 0
+                || kind == JavaSyntaxKind::RBrace && braces == 0
+                || kind == JavaSyntaxKind::RBracket && brackets == 0
+                || outside
+                    && (extra_stop == Some(kind)
+                        || matches!(kind, JavaSyntaxKind::Comma | JavaSyntaxKind::Semicolon)
+                        || !annotation_value
+                            && (kind == JavaSyntaxKind::Colon && questions == 0
+                                || matches!(
+                                    kind,
+                                    JavaSyntaxKind::Arrow
+                                        | JavaSyntaxKind::ElseKw
+                                        | JavaSyntaxKind::CaseKw
+                                        | JavaSyntaxKind::DefaultKw
+                                )
+                                || kind == JavaSyntaxKind::Identifier
+                                    && self.text_at(index) == Some("when")))
+            {
+                return index;
+            }
+
+            match kind {
+                JavaSyntaxKind::LParen => parens += 1,
+                JavaSyntaxKind::RParen => parens -= 1,
+                JavaSyntaxKind::LBrace => braces += 1,
+                JavaSyntaxKind::RBrace => braces -= 1,
+                JavaSyntaxKind::LBracket => brackets += 1,
+                JavaSyntaxKind::RBracket => brackets -= 1,
+                JavaSyntaxKind::Question if outside => questions += 1,
+                JavaSyntaxKind::Colon if outside => {
+                    questions = questions.saturating_sub(1);
+                }
+                _ => {}
+            }
+            index += 1;
+        }
     }
 
     /// Delimiters owned by the surrounding grammar must remain available when
@@ -1129,7 +1229,14 @@ impl Parser<'_> {
         let values = self.start();
         while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) {
             if self.at(JavaSyntaxKind::LBrace) {
-                self.parse_array_initializer_fragment(None);
+                if self
+                    .with_syntax_nesting(|parser| {
+                        parser.parse_array_initializer_fragment(None);
+                    })
+                    .is_none()
+                {
+                    self.parse_excessive_array_initializer();
+                }
             } else {
                 self.parse_expression_until(&[JavaSyntaxKind::Comma, JavaSyntaxKind::RBrace]);
             }
@@ -1148,6 +1255,44 @@ impl Parser<'_> {
         } else {
             self.complete(initializer, JavaSyntaxKind::ArrayInitializer);
         }
+    }
+
+    fn parse_excessive_array_initializer(&mut self) {
+        let initializer = self.start();
+        let owner = initializer.anchor();
+        self.expect_required(
+            JavaSyntaxKind::LBrace,
+            "expected array initializer",
+            owner,
+            crate::shape::array_initializer::Slot::open_brace as u16,
+        );
+
+        let values = self.start();
+        let bogus = self.start();
+        let diagnostic = self.pending_excessive_syntax_nesting();
+        let mut brace_depth = 0usize;
+        while !self.at_eof() {
+            match self.current_kind() {
+                JavaSyntaxKind::RBrace if brace_depth == 0 => break,
+                JavaSyntaxKind::LBrace => brace_depth += 1,
+                JavaSyntaxKind::RBrace => brace_depth -= 1,
+                _ => {}
+            }
+            self.bump();
+        }
+        self.complete_recovery(
+            bogus,
+            JavaSyntaxKind::BogusVariableInitializer,
+            [diagnostic],
+        );
+        self.complete(values, JavaSyntaxKind::VariableInitializerList);
+        self.expect_required(
+            JavaSyntaxKind::RBrace,
+            "expected `}` after array initializer",
+            owner,
+            crate::shape::array_initializer::Slot::close_brace as u16,
+        );
+        self.complete(initializer, JavaSyntaxKind::ArrayInitializer);
     }
 
     pub(super) fn parse_argument_list(&mut self) {

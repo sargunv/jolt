@@ -20,6 +20,7 @@ pub(super) struct Parser<'source> {
     pub(super) inner: jolt_syntax::Parser<'source, JavaLanguage>,
     pub(super) lookahead_summary: LookaheadSummary,
     pub(super) generic_depth: usize,
+    syntax_nesting_depth: usize,
 }
 
 #[derive(Default)]
@@ -34,12 +35,38 @@ impl<'source> Parser<'source> {
             inner: jolt_syntax::Parser::new(source),
             lookahead_summary: LookaheadSummary::default(),
             generic_depth: 0,
+            syntax_nesting_depth: 0,
         }
     }
 
     pub(super) fn finish(self) -> ParseEvents {
         debug_assert_eq!(self.generic_depth, 0, "generic depth must unwind at EOF");
+        debug_assert_eq!(
+            self.syntax_nesting_depth, 0,
+            "syntax nesting depth must unwind at EOF"
+        );
         self.inner.finish()
+    }
+
+    pub(super) fn with_syntax_nesting<T>(
+        &mut self,
+        parse: impl FnOnce(&mut Self) -> T,
+    ) -> Option<T> {
+        if self.syntax_nesting_depth >= MAX_RECURSIVE_PARSE_OWNERS {
+            return None;
+        }
+
+        self.syntax_nesting_depth += 1;
+        let parsed = parse(self);
+        self.syntax_nesting_depth -= 1;
+        Some(parsed)
+    }
+
+    pub(super) fn pending_excessive_syntax_nesting(&mut self) -> PendingDiagnostic {
+        self.pending_error(
+            JavaParseDiagnosticCode::ExcessiveSyntaxNesting.id(),
+            "syntax is too deeply nested to parse safely",
+        )
     }
 
     pub(super) fn expect_required(
