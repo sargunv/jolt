@@ -1,5 +1,5 @@
 // Answers expression-level grammar questions before the parser commits to a branch.
-use super::{JavaSyntaxKind, Parser, is_literal_expression_start};
+use super::{JavaSyntaxKind, Parser, is_literal_expression_start, is_primitive_type_start};
 use crate::nodes::{
     COMPOSITE_BINARY_OPERATORS, assignment_operator_kind, binary_operator_kind,
     binary_operator_precedence as java_binary_operator_precedence,
@@ -50,10 +50,7 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn binary_operator(&mut self) -> Option<ParserOperator> {
-        self.binary_operator_at(self.position())
-    }
-
-    fn binary_operator_at(&mut self, index: usize) -> Option<ParserOperator> {
+        let index = self.position();
         if self.matches_adjacent_kinds(index, COMPOSITE_BINARY_OPERATORS[0].tokens) {
             return Some(ParserOperator {
                 precedence: 7,
@@ -116,31 +113,13 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn starts_primitive_or_void_class_literal(&mut self) -> bool {
-        self.starts_primitive_or_void_class_literal_at(self.position())
-    }
-
-    pub(in crate::parser::grammar) fn starts_primitive_or_void_class_literal_at(
-        &mut self,
-        mut index: usize,
-    ) -> bool {
-        if !matches!(
-            self.kind_at(index),
-            JavaSyntaxKind::BooleanKw
-                | JavaSyntaxKind::ByteKw
-                | JavaSyntaxKind::CharKw
-                | JavaSyntaxKind::DoubleKw
-                | JavaSyntaxKind::FloatKw
-                | JavaSyntaxKind::IntKw
-                | JavaSyntaxKind::LongKw
-                | JavaSyntaxKind::ShortKw
-                | JavaSyntaxKind::VoidKw
-        ) {
+        let kind = self.current_kind();
+        if !is_primitive_type_start(kind) && kind != JavaSyntaxKind::VoidKw {
             return false;
         }
 
-        let is_void = self.kind_at(index) == JavaSyntaxKind::VoidKw;
-        index += 1;
-        if is_void {
+        let mut index = self.position() + 1;
+        if kind == JavaSyntaxKind::VoidKw {
             return self.kind_at(index) == JavaSyntaxKind::Dot
                 && self.kind_at(index + 1) == JavaSyntaxKind::ClassKw;
         }
@@ -173,14 +152,7 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn starts_literal_expression(&mut self) -> bool {
-        self.starts_literal_expression_at(self.position())
-    }
-
-    pub(in crate::parser::grammar) fn starts_literal_expression_at(
-        &mut self,
-        index: usize,
-    ) -> bool {
-        is_literal_expression_start(self.kind_at(index))
+        is_literal_expression_start(self.current_kind())
     }
 
     pub(in crate::parser::grammar) fn new_expression_is_array_creation(&mut self) -> bool {

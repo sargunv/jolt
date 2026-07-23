@@ -472,17 +472,11 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
     }
 
     pub(in crate::parser::grammar) fn starts_expression(&mut self) -> bool {
+        let kind = self.kind();
         matches!(
-            self.kind(),
+            kind,
             JavaSyntaxKind::Identifier
                 | JavaSyntaxKind::UnderscoreKw
-                | JavaSyntaxKind::IntegerLiteral
-                | JavaSyntaxKind::FloatingPointLiteral
-                | JavaSyntaxKind::BooleanLiteral
-                | JavaSyntaxKind::CharacterLiteral
-                | JavaSyntaxKind::StringLiteral
-                | JavaSyntaxKind::TextBlockLiteral
-                | JavaSyntaxKind::NullLiteral
                 | JavaSyntaxKind::ThisKw
                 | JavaSyntaxKind::SuperKw
                 | JavaSyntaxKind::SwitchKw
@@ -494,7 +488,8 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
                 | JavaSyntaxKind::Minus
                 | JavaSyntaxKind::Bang
                 | JavaSyntaxKind::Tilde
-        ) || self.starts_primitive_or_void_class_literal()
+        ) || is_literal_expression_start(kind)
+            || self.starts_primitive_or_void_class_literal()
     }
 
     pub(in crate::parser::grammar) fn starts_expression_not_plus_minus(&mut self) -> bool {
@@ -507,25 +502,14 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
     }
 
     fn starts_primitive_or_void_class_literal(&mut self) -> bool {
-        if !matches!(
-            self.kind(),
-            JavaSyntaxKind::BooleanKw
-                | JavaSyntaxKind::ByteKw
-                | JavaSyntaxKind::CharKw
-                | JavaSyntaxKind::DoubleKw
-                | JavaSyntaxKind::FloatKw
-                | JavaSyntaxKind::IntKw
-                | JavaSyntaxKind::LongKw
-                | JavaSyntaxKind::ShortKw
-                | JavaSyntaxKind::VoidKw
-        ) {
+        let kind = self.kind();
+        if !is_primitive_type_start(kind) && kind != JavaSyntaxKind::VoidKw {
             return false;
         }
 
-        let is_void = self.kind() == JavaSyntaxKind::VoidKw;
         let mut cursor = self.cursor.fork();
         cursor.bump(self.buffer);
-        if is_void {
+        if kind == JavaSyntaxKind::VoidKw {
             return cursor.kind(self.buffer) == JavaSyntaxKind::Dot
                 && cursor.nth_kind(self.buffer, 1) == JavaSyntaxKind::ClassKw;
         }
