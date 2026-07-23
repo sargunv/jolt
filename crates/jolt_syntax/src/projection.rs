@@ -277,13 +277,10 @@ macro_rules! define_typed_cst_access {
         }
 
         trait $list_item<'source>: Sized {
-            const IS_FAMILY: bool;
             fn cast_element(element: $role_element<'source>) -> Option<Self>;
         }
 
         impl<'source> $list_item<'source> for $role_element<'source> {
-            const IS_FAMILY: bool = false;
-
             fn cast_element(element: $role_element<'source>) -> Option<Self> {
                 Some(element)
             }
@@ -311,10 +308,7 @@ macro_rules! define_typed_cst_access {
                         $list_part::Separator(token)
                     }
                     SyntaxSlot::Node(node) => T::cast_element($role_element::Node(node))
-                        .filter(|_| {
-                            !node.is_directly_malformed()
-                                || (T::IS_FAMILY && $category_bogus(node.kind()))
-                        })
+                        .filter(|_| !node.is_directly_malformed() || $category_bogus(node.kind()))
                         .map($list_part::Item)
                         .unwrap_or_else(|| {
                             if node.is_directly_malformed() {
@@ -460,8 +454,6 @@ macro_rules! define_typed_cst_projection {
         list_item_trait: $list_item_trait:ident,
         syntax_view_trait: $syntax_view_trait:ident,
         any_node: { $($any_node:ident)? },
-        node_list_item_marker: $node_list_item_marker:ident,
-        family_list_item_marker: $family_list_item_marker:ident,
         nodes {
             $($node:ident => $kind:ident [$class:ident],)*
         }
@@ -541,8 +533,6 @@ macro_rules! define_typed_cst_projection {
             }
 
             impl<'source> $list_item_trait<'source> for $node<'source> {
-                $node_list_item_marker!();
-
                 fn cast_element(element: $role_element<'source>) -> Option<Self> {
                     <Self as $typed_node_trait<'source>>::cast_element(element)
                 }
@@ -623,8 +613,6 @@ macro_rules! define_typed_cst_projection {
             }
 
             impl<'source> $list_item_trait<'source> for $family<'source> {
-                $family_list_item_marker!();
-
                 fn cast_element(element: $role_element<'source>) -> Option<Self> {
                     match element {
                         $role_element::Node(node) => Self::cast(node),

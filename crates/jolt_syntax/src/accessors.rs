@@ -68,8 +68,6 @@ macro_rules! define_typed_cst_role {
         }
 
         impl<'source> $list_item<'source> for $role<'source> {
-            const IS_FAMILY: bool = false;
-
             fn cast_element(element: $role_element<'source>) -> Option<Self> {
                 Some(Self { element })
             }

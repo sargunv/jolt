@@ -47,6 +47,24 @@ impl<'a, const N: usize> From<&'a [KotlinSyntaxKind; N]> for StopSet<'a> {
     }
 }
 
+impl Parser<'_> {
+    fn parse_excessive_braced_contents(&mut self, kind: KotlinSyntaxKind) {
+        let contents = self.start();
+        let diagnostic = self.pending_excessive_syntax_nesting();
+        let mut depth = 0usize;
+        while !self.at_eof() {
+            match self.current_kind() {
+                KotlinSyntaxKind::RBrace if depth == 0 => break,
+                KotlinSyntaxKind::LBrace => depth += 1,
+                KotlinSyntaxKind::RBrace => depth -= 1,
+                _ => {}
+            }
+            self.bump();
+        }
+        self.complete_recovery(contents, kind, [diagnostic]);
+    }
+}
+
 #[path = "grammar/declarations.rs"]
 mod declarations;
 #[path = "grammar/expressions.rs"]

@@ -1093,7 +1093,7 @@ ready for review.
 | 25  | `cleanup/25-java-value-recursion`        | draft open | PR 24  | [#27](https://github.com/sargunv/jolt/pull/27) | full + WASM + benchmark    | Bound recursive Java value families.             |
 | 26  | `cleanup/26-java-structural-recursion`   | draft open | PR 25  | [#28](https://github.com/sargunv/jolt/pull/28) | full + WASM + benchmark    | Bound recursive Java bodies and statements.      |
 | 27  | `cleanup/27-kotlin-value-recursion`      | draft open | PR 26  | [#29](https://github.com/sargunv/jolt/pull/29) | full + WASM + benchmark    | Bound recursive Kotlin type/expression syntax.   |
-| 28  | `cleanup/28-kotlin-structural-recursion` | planned    | PR 27  | —                                              | —                          | Bound recursive Kotlin blocks and class bodies.  |
+| 28  | `cleanup/28-kotlin-structural-recursion` | draft open | PR 27  | [#30](https://github.com/sargunv/jolt/pull/30) | full + WASM + benchmark    | Bound recursive Kotlin blocks and class bodies.  |
 | 29  | `cleanup/29-formatter-cst-depth`         | planned    | PR 28  | —                                              | —                          | Bound deep structured formatter traversal.       |
 | 30  | `cleanup/30-residue-reconciliation`      | planned    | PR 29  | —                                              | —                          | Final evidence and debt-ledger closure.          |
 
@@ -2221,8 +2221,12 @@ slices remove Java nodes and allocations or leave topology unchanged.
 - Actual dprint-WASM stdin smokes completed for depth-4,096 alternating-type and
   unary inputs and preserved their following declarations. The diagnostic calls
   this a parser-safety limit rather than claiming that 128 owners equal 128
-  syntax levels. `mise run fix` passed strict native and WASM checks; the
-  complete non-update suite passed all 218 tests with zero skips.
+  syntax levels. With the guard disabled, actual dprint-WASM succeeds/fails at
+  990/991 parentheses, 1,107/1,108 unary and assignment operators, and
+  1,127/1,128 nested types. The effective 64/127/128 edges retain about
+  8.7x-15.5x headroom on the fixed 1 MiB plugin stack. `mise run fix` passed
+  strict native and WASM checks; the complete non-update suite passed all 218
+  tests with zero skips.
 - Realistic Java and Kotlin allocation totals, syntax topology, and formatter
   document topology are exactly unchanged. Kotlin parse/format/end-to-end
   medians moved +0.91%/-0.27%/+4.19%; the latter run's 2.8% median absolute
@@ -2232,6 +2236,48 @@ slices remove Java nodes and allocations or leave topology unchanged.
   build, with SHA-256
   `ac4c06af6b7de09639f7f3840e6250eaed8e95ede0342c789f9699a27ae82a53`. The
   benchmark records clean committed subject `51653f2`.
+
+### PR 28 evidence
+
+- Nonempty physical blocks and class bodies now spend PR 27's shared 128-owner
+  budget. These two guards are independently necessary and jointly close the
+  remaining Kotlin parser cycles. Missing openings and empty/EOF-only bodies do
+  not spend the budget because those paths cannot recurse.
+- At overflow, one shared allocation-free borrowed-token scan consumes through
+  the matching body brace or EOF. The real `Block`/`ClassBody` delimiters and
+  required list remain structured around one diagnostic-owned
+  `BogusBlockItem`/`BogusClassMember`; everything inside the unsupported body is
+  deliberately one malformed item rather than a duplicated statement grammar.
+- The new recovery exposed a projection mismatch: Kotlin hardcoded every
+  category-bogus kind as untyped, while Java derived those kinds from the
+  schema. Kotlin now uses the same schema-derived rule, and heterogeneous role
+  lists no longer suppress category-bogus items behind an `IS_FAMILY` marker.
+  Existing `BogusBlockItem`/`BogusClassMember` formatter arms receive the typed
+  nodes, so all 104 lines of new formatter visibility plumbing are deleted. One
+  existing bogus declaration-body arm now preserves the same leading space as
+  generic malformed recovery.
+- Production is +41 lines: +75 parser/formatter policy and -34 shared projection
+  machinery; focused tests are +243 lines. This replaces the original +175-line
+  design while making Java and Kotlin category projections consistent.
+- Tests cover exact 129/130 block and class-body edges, depth-4,096 block/class/
+  alternating recursion, enum-entry and object-expression re-entry, nested
+  braces/semicolons/comments, formatter-ignore overlap, retained outer siblings,
+  empty claim-only layout, unclosed EOF recovery, source conservation, and
+  formatter completion/idempotence.
+- A combined actual dprint-WASM depth-4,096 smoke preserved distinct block,
+  class, and mixed sentinels. `mise run fix` passed strict native and WASM
+  checks. With the guard disabled, actual dprint-WASM succeeds/fails at 976/977
+  nested function blocks and 1,422/1,423 class bodies, leaving about 7.5x/10.9x
+  headroom at the selected policy. The complete non-update suite passed all 223
+  tests with zero skips.
+- Realistic Java/Kotlin syntax topology, document topology, allocation counts,
+  and allocation bytes are exactly unchanged. Against the same revised lazy
+  lookahead baseline, cumulative Java parse/format medians move -0.36%/-0.17%
+  and Kotlin +0.81%/+0.26%; end-to-end timing remains noisy. No ordinary-path
+  regression is demonstrated.
+- Optimized WASM is 1,766,389 bytes, 1,731 bytes smaller than the discarded
+  +175-line design. The exact benchmark records subject `c86bd69a` with its
+  dirty worktree hash.
 
 ## Decision Log
 
@@ -2293,6 +2339,8 @@ slices remove Java nodes and allocations or leave topology unchanged.
 | 2026-07-23 | Split Java value and structural recursion recovery.              | One combined implementation was estimated at 220-290 production lines; the value slice is +183, while record/body/statement recovery has a separate endpoint model and rollback boundary in PR 26.                       |
 | 2026-07-23 | Carry the syntax-found record-pattern opener into recovery.      | The existing exact type lookahead already owns disambiguation; carrying its opener lets one balanced scan recover the record without a second type/annotation grammar or semicolon special cases.                        |
 | 2026-07-23 | Coarsen unsupported statements to their enclosing body boundary. | Exact iterative handling of `if`/`else`, `do`/`while`, try handlers, and switch labels would duplicate statement grammar; one lossless BogusStatement preserves the enclosing body and later declarations.               |
+| 2026-07-23 | Use 128 active recursive owners as Kotlin's parser policy.       | Actual 1 MiB dprint-WASM failure edges leave about 7.5x-15.5x headroom across value, type, block, and class cycles; diagnostics describe parser safety rather than source levels.                                        |
+| 2026-07-23 | Keep schema-declared Kotlin category recovery typed.             | Matching Java's projection deletes family-marker machinery and all 104 lines of structural-recovery formatter plumbing while preserving snapshots and source ownership.                                                  |
 
 ## Resume Protocol
 
