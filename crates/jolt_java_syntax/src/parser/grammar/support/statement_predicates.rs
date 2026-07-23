@@ -19,20 +19,6 @@ impl Parser<'_> {
         false
     }
 
-    pub(in crate::parser::grammar) fn starts_local_class_or_interface_declaration(
-        &mut self,
-    ) -> bool {
-        let mut lookahead = self.lookahead();
-        lookahead.skip_type_modifiers();
-        matches!(
-            lookahead.kind(),
-            JavaSyntaxKind::ClassKw | JavaSyntaxKind::InterfaceKw | JavaSyntaxKind::EnumKw
-        ) || (lookahead.at_contextual("record")
-            && lookahead.nth_kind(1) == JavaSyntaxKind::Identifier)
-            || (lookahead.at(JavaSyntaxKind::At)
-                && lookahead.nth_kind(1) == JavaSyntaxKind::InterfaceKw)
-    }
-
     pub(in crate::parser::grammar) fn starts_local_variable_declaration(&mut self) -> bool {
         let mut lookahead = self.lookahead();
         lookahead.skip_variable_modifiers();
@@ -58,12 +44,6 @@ impl Parser<'_> {
         lookahead.skip_type();
         lookahead.at_variable_identifier()
             && !matches!(lookahead.nth_kind(1), JavaSyntaxKind::LParen)
-    }
-
-    pub(in crate::parser::grammar) fn starts_resource_local_variable_declaration(
-        &mut self,
-    ) -> bool {
-        self.starts_local_variable_declaration()
     }
 
     pub(in crate::parser::grammar) fn starts_labeled_statement(&mut self) -> bool {

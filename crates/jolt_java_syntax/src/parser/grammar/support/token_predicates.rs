@@ -1,5 +1,5 @@
 // Contains shallow token checks that do not need full grammar lookahead.
-use super::{JavaSyntaxKind, Parser, type_modifier_len};
+use super::{JavaSyntaxKind, Parser, is_primitive_type_start, type_modifier_len};
 
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn at_type_modifier(&mut self) -> bool {
@@ -60,16 +60,6 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn is_primitive_type_start_at(&mut self, index: usize) -> bool {
-        matches!(
-            self.kind_at(index),
-            JavaSyntaxKind::BooleanKw
-                | JavaSyntaxKind::ByteKw
-                | JavaSyntaxKind::CharKw
-                | JavaSyntaxKind::DoubleKw
-                | JavaSyntaxKind::FloatKw
-                | JavaSyntaxKind::IntKw
-                | JavaSyntaxKind::LongKw
-                | JavaSyntaxKind::ShortKw
-        )
+        is_primitive_type_start(self.kind_at(index))
     }
 }

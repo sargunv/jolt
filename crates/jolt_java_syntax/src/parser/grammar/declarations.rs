@@ -525,7 +525,7 @@ impl Parser<'_> {
         annotation_body: bool,
         bogus_kind: JavaSyntaxKind,
     ) {
-        if self.starts_top_level_type_declaration() {
+        if self.starts_type_declaration() {
             self.parse_type_declaration(bogus_kind);
             return;
         }
@@ -1251,7 +1251,7 @@ impl Parser<'_> {
             } else if self.at(JavaSyntaxKind::Semicolon) {
                 self.bump();
                 break;
-            } else if self.starts_top_level_type_declaration() {
+            } else if self.starts_type_declaration() {
                 break;
             } else {
                 self.bump();
@@ -1317,7 +1317,7 @@ impl Parser<'_> {
                     self.bump();
                 }
                 expects_throws_type = false;
-            } else if self.starts_top_level_type_declaration()
+            } else if self.starts_type_declaration()
                 || (!expects_throws_type
                     && (self.starts_method_declaration()
                         || self.starts_field_declaration()

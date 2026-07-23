@@ -76,7 +76,7 @@ impl Parser<'_> {
     pub(super) fn parse_block_statement(&mut self) {
         let block_statement = self.start();
 
-        if self.starts_local_class_or_interface_declaration() {
+        if self.starts_type_declaration() {
             self.parse_local_class_or_interface_declaration();
         } else if self.starts_local_variable_declaration() {
             self.parse_local_variable_declaration_statement(
@@ -701,7 +701,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_resource(&mut self) {
         let resource = self.start();
-        if self.starts_resource_local_variable_declaration() {
+        if self.starts_local_variable_declaration() {
             self.parse_resource_variable_declaration_until(&[
                 JavaSyntaxKind::Semicolon,
                 JavaSyntaxKind::RParen,

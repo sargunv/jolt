@@ -221,7 +221,7 @@ impl Parser<'_> {
             && self.nth_is_name_segment(3)
     }
 
-    pub(in crate::parser::grammar) fn starts_top_level_type_declaration(&mut self) -> bool {
+    pub(in crate::parser::grammar) fn starts_type_declaration(&mut self) -> bool {
         let mut lookahead = self.lookahead();
         lookahead.skip_type_modifiers();
         matches!(

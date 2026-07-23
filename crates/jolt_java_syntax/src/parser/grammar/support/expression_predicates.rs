@@ -1,5 +1,5 @@
 // Answers expression-level grammar questions before the parser commits to a branch.
-use super::{JavaSyntaxKind, Parser};
+use super::{JavaSyntaxKind, Parser, is_literal_expression_start};
 use crate::nodes::{
     COMPOSITE_BINARY_OPERATORS, assignment_operator_kind, binary_operator_kind,
     binary_operator_precedence as java_binary_operator_precedence,
@@ -91,9 +91,7 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn starts_cast_expression(&mut self) -> bool {
-        if self.current_kind() != JavaSyntaxKind::LParen
-            || self.starts_parenthesized_lambda_expression()
-        {
+        if self.current_kind() != JavaSyntaxKind::LParen {
             return false;
         }
 
@@ -182,16 +180,7 @@ impl Parser<'_> {
         &mut self,
         index: usize,
     ) -> bool {
-        matches!(
-            self.kind_at(index),
-            JavaSyntaxKind::IntegerLiteral
-                | JavaSyntaxKind::FloatingPointLiteral
-                | JavaSyntaxKind::BooleanLiteral
-                | JavaSyntaxKind::CharacterLiteral
-                | JavaSyntaxKind::StringLiteral
-                | JavaSyntaxKind::TextBlockLiteral
-                | JavaSyntaxKind::NullLiteral
-        )
+        is_literal_expression_start(self.kind_at(index))
     }
 
     pub(in crate::parser::grammar) fn new_expression_is_array_creation(&mut self) -> bool {

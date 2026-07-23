@@ -1,7 +1,8 @@
 // Provides a markerless grammar scanner over the same logical tokens as the parser.
 use super::{
-    JavaSyntaxKind, MissingConstructorHeaderAction, Parser, is_type_argument_recovery_boundary,
-    is_type_argument_value_start, missing_constructor_header_action, type_modifier_len,
+    JavaSyntaxKind, MissingConstructorHeaderAction, Parser, is_literal_expression_start,
+    is_primitive_type_start, is_type_argument_recovery_boundary, is_type_argument_value_start,
+    missing_constructor_header_action, type_modifier_len,
 };
 use crate::parser::source::{TokenBuffer, TokenCursor};
 
@@ -452,17 +453,7 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
     }
 
     pub(in crate::parser::grammar) fn at_primitive_type_start(&mut self) -> bool {
-        matches!(
-            self.kind(),
-            JavaSyntaxKind::BooleanKw
-                | JavaSyntaxKind::ByteKw
-                | JavaSyntaxKind::CharKw
-                | JavaSyntaxKind::DoubleKw
-                | JavaSyntaxKind::FloatKw
-                | JavaSyntaxKind::IntKw
-                | JavaSyntaxKind::LongKw
-                | JavaSyntaxKind::ShortKw
-        )
+        is_primitive_type_start(self.kind())
     }
 
     pub(in crate::parser::grammar) fn at_type_modifier(&mut self) -> bool {
@@ -512,16 +503,7 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
     }
 
     pub(in crate::parser::grammar) fn starts_literal_expression(&mut self) -> bool {
-        matches!(
-            self.kind(),
-            JavaSyntaxKind::IntegerLiteral
-                | JavaSyntaxKind::FloatingPointLiteral
-                | JavaSyntaxKind::BooleanLiteral
-                | JavaSyntaxKind::CharacterLiteral
-                | JavaSyntaxKind::StringLiteral
-                | JavaSyntaxKind::TextBlockLiteral
-                | JavaSyntaxKind::NullLiteral
-        )
+        is_literal_expression_start(self.kind())
     }
 
     fn starts_primitive_or_void_class_literal(&mut self) -> bool {

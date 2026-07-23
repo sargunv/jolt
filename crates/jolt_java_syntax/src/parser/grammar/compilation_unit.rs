@@ -15,7 +15,7 @@ impl Parser<'_> {
                 self.parse_empty_declaration();
             } else if self.starts_module_declaration() {
                 self.parse_module_declaration();
-            } else if self.starts_top_level_type_declaration() {
+            } else if self.starts_type_declaration() {
                 self.parse_type_declaration(JavaSyntaxKind::BogusCompilationUnitItem);
             } else if self.starts_misspelled_non_sealed_type_declaration() {
                 self.error_unexpected_top_level_token();
@@ -342,40 +342,34 @@ impl Parser<'_> {
     }
 
     fn module_directive_boundary_at(&mut self, offset: usize) -> bool {
-        let mut lookahead = self.lookahead();
-        for _ in 0..offset {
-            lookahead.bump();
-        }
+        let index = self.position() + offset;
         if !matches!(
-            lookahead.text(),
+            self.text_at(index),
             Some("requires" | "exports" | "opens" | "uses" | "provides")
         ) {
             return false;
         }
-        lookahead.bump();
-        lookahead.at_name_segment() || lookahead.at(JavaSyntaxKind::StaticKw)
+        self.is_name_segment_at(index + 1) || self.kind_at(index + 1) == JavaSyntaxKind::StaticKw
     }
 
     fn module_target_boundary_at(&mut self, offset: usize) -> bool {
         if Self::module_directive_boundary_at(self, offset) {
             return true;
         }
-        let mut lookahead = self.lookahead();
-        for _ in 0..offset {
-            lookahead.bump();
-        }
-        lookahead.at_contextual("to") && lookahead.nth_kind(1) == JavaSyntaxKind::Identifier
+        let index = self.position() + offset;
+        self.kind_at(index) == JavaSyntaxKind::Identifier
+            && self.text_at(index) == Some("to")
+            && self.kind_at(index + 1) == JavaSyntaxKind::Identifier
     }
 
     fn module_implementation_boundary_at(&mut self, offset: usize) -> bool {
         if Self::module_directive_boundary_at(self, offset) {
             return true;
         }
-        let mut lookahead = self.lookahead();
-        for _ in 0..offset {
-            lookahead.bump();
-        }
-        lookahead.at_contextual("with") && lookahead.nth_kind(1) == JavaSyntaxKind::Identifier
+        let index = self.position() + offset;
+        self.kind_at(index) == JavaSyntaxKind::Identifier
+            && self.text_at(index) == Some("with")
+            && self.kind_at(index + 1) == JavaSyntaxKind::Identifier
     }
 
     fn parse_optional_module_target_clause(&mut self) {
