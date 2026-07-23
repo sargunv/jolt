@@ -13,10 +13,7 @@ mod leaves;
 mod operators;
 mod references;
 
-use calls::{
-    format_call_expression, format_collection_literal_expression, format_index_expression,
-    format_navigation_expression,
-};
+use calls::{format_collection_literal_expression, format_suffix_expression};
 pub(crate) use calls::{format_value_argument, format_value_argument_list};
 use control_flow::{
     format_do_while_statement, format_for_statement, format_if_expression, format_jump_expression,
@@ -31,9 +28,8 @@ use leaves::{
 };
 use operators::{
     format_assignment_expression, format_binary_expression, format_parenthesized_expression,
-    format_postfix_expression, format_unary_expression,
+    format_unary_expression,
 };
-use references::format_callable_reference_expression;
 
 pub(crate) fn format_expression<'source>(
     doc: &mut DocBuilder<'source>,
@@ -87,18 +83,12 @@ fn format_expression_with_leading<'source>(
         Expression::UnaryExpression(expression) => {
             format_unary_expression(doc, expression, leading)
         }
-        Expression::PostfixExpression(expression) => {
-            format_postfix_expression(doc, expression, leading)
-        }
-        Expression::NavigationExpression(expression) => {
-            format_navigation_expression(doc, expression, leading)
-        }
-        Expression::CallExpression(expression) => format_call_expression(doc, expression, leading),
-        Expression::IndexExpression(expression) => {
-            format_index_expression(doc, expression, leading)
-        }
-        Expression::CallableReferenceExpression(expression) => {
-            format_callable_reference_expression(doc, expression, leading)
+        expression @ (Expression::PostfixExpression(_)
+        | Expression::NavigationExpression(_)
+        | Expression::CallExpression(_)
+        | Expression::IndexExpression(_)
+        | Expression::CallableReferenceExpression(_)) => {
+            format_suffix_expression(doc, *expression, leading)
         }
         Expression::IfExpression(expression) => format_if_expression(doc, expression, leading),
         Expression::WhenExpression(expression) => format_when_expression(doc, expression, leading),

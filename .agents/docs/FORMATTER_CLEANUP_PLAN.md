@@ -1116,7 +1116,7 @@ ready for review.
 | 27  | `cleanup/27-kotlin-value-recursion`      | draft open | PR 26  | [#29](https://github.com/sargunv/jolt/pull/29) | full + WASM + benchmark    | Bound recursive Kotlin type/expression syntax.   |
 | 28  | `cleanup/28-kotlin-structural-recursion` | draft open | PR 27  | [#30](https://github.com/sargunv/jolt/pull/30) | full + WASM + benchmark    | Bound recursive Kotlin blocks and class bodies.  |
 | 29  | `cleanup/29-kotlin-infix-type-depth`     | draft open | PR 28  | [#31](https://github.com/sargunv/jolt/pull/31) | full + WASM + benchmark    | Bound Kotlin infix and type formatting.          |
-| 30  | `cleanup/30-kotlin-suffix-depth`         | planned    | PR 29  | —                                              | —                          | Bound Kotlin postfix/member suffix formatting.   |
+| 30  | `cleanup/30-kotlin-suffix-depth`         | draft open | PR 29  | [#32](https://github.com/sargunv/jolt/pull/32) | full + WASM + benchmark    | Bound Kotlin postfix/member suffix formatting.   |
 | 31  | `cleanup/31-java-formatter-depth`        | planned    | PR 30  | —                                              | —                          | Bound deep Java formatter traversal.             |
 | 32  | `cleanup/32-residue-reconciliation`      | planned    | PR 31  | —                                              | —                          | Final evidence and debt-ledger closure.          |
 
@@ -2332,6 +2332,39 @@ slices remove Java nodes and allocations or leave topology unchanged.
 - The refreshed optimized WASM is 1,766,396 bytes, seven bytes larger than the
   rewritten PR 28 parent. The exact benchmark records clean committed subject
   `4fa53398`.
+
+### PR 30 evidence
+
+- One Kotlin-local suffix walk now descends through call, navigation, index,
+  postfix, and expression-valued callable-reference receivers, formats one local
+  base, then ascends only to its captured outer node. No work stack, generic
+  visitor, source replay, syntax clone, formatter depth limit, or valid syntax
+  fallback was introduced.
+- The old recursive member-chain collector was deleted. The existing
+  `MemberChainBuilder` now receives maximal consecutive suffixes from the parent
+  walk, preserving navigation/call fusion, field-run grouping, forced breaks,
+  tight suffix boundaries, and leading comments exactly once. Missing or
+  malformed recursive fields stop descent; impossible missing traversal nodes
+  select the formatter's blocking invariant diagnostic rather than panicking.
+- Production is +255/-126 lines (+129 net) and the generated integration slice
+  is +25 lines. The final review added an explicit captured-outer boundary and
+  removed transitional comment state and repeated dispatch boilerplate before
+  approving layout, recovery, trivia, topology, and allocation behavior.
+- Six clean depth-4,096 pure/alternating suffix adversaries completed natively,
+  reconstructed losslessly, retained following declarations, and formatted
+  idempotently. A combined actual dprint-WASM stdin smoke retained mixed,
+  bare-call, and callable-reference sentinels. `mise run fix` passed strict
+  native and WASM checks; the complete non-update suite passed all 225 tests
+  with zero skips and unchanged snapshots.
+- Realistic Java/Kotlin syntax topology, document topology, allocation counts,
+  and allocation bytes are exactly unchanged. Repeated full-corpus runs show a
+  +6.4% to +6.9% Kotlin formatter-only cost; immediate focused reruns measured
+  +3.0%/+3.2%. No end-to-end regression is demonstrated, but the formatter cost
+  is treated as real. A shallow/deep split would add a threshold and two
+  formatter algorithms; the cost is accepted for one allocation-free,
+  semantics-preserving walk.
+- Refreshed optimized WASM moves 1,766,396 -> 1,769,538 bytes (+3,142, +0.18%).
+  The exact benchmark records clean committed subject `1b1ffc5f`.
 
 ## Decision Log
 

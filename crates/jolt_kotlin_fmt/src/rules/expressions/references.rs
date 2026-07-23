@@ -14,27 +14,33 @@ pub(super) fn format_callable_reference_expression<'source>(
     doc: &mut DocBuilder<'source>,
     expression: &CallableReferenceExpression<'source>,
     leading: LeadingTrivia,
+    receiver: Option<Doc<'source>>,
 ) -> Doc<'source> {
-    let (receiver, has_receiver) = match resolve_optional_field(expression.receiver(), doc) {
-        KotlinFormatField::Present(Some(receiver)) => {
-            let receiver = format_required_field(receiver.receiver(), doc, |receiver, doc| {
-                match receiver.classify() {
-                    Ok(CallableReferenceReceiverSyntax::Expression(receiver)) => {
-                        format_expression_with_leading(doc, &receiver, leading)
-                    }
-                    Ok(CallableReferenceReceiverSyntax::TypeReference(receiver)) => {
-                        crate::rules::types::format_type_reference(doc, &receiver)
-                    }
-                    Err(error) => {
-                        doc.block_on_invariant(error.to_string());
-                        Doc::nil()
-                    }
-                }
-            });
-            (receiver, true)
+    let (receiver, has_receiver) = if let Some(receiver) = receiver {
+        (receiver, true)
+    } else {
+        match resolve_optional_field(expression.receiver(), doc) {
+            KotlinFormatField::Present(Some(receiver)) => {
+                let receiver =
+                    format_required_field(receiver.receiver(), doc, |receiver, doc| match receiver
+                        .classify()
+                    {
+                        Ok(CallableReferenceReceiverSyntax::Expression(receiver)) => {
+                            format_expression_with_leading(doc, &receiver, leading)
+                        }
+                        Ok(CallableReferenceReceiverSyntax::TypeReference(receiver)) => {
+                            crate::rules::types::format_type_reference(doc, &receiver)
+                        }
+                        Err(error) => {
+                            doc.block_on_invariant(error.to_string());
+                            Doc::nil()
+                        }
+                    });
+                (receiver, true)
+            }
+            KotlinFormatField::Present(None) => (Doc::nil(), false),
+            KotlinFormatField::Malformed(recovery) => (recovery, true),
         }
-        KotlinFormatField::Present(None) => (Doc::nil(), false),
-        KotlinFormatField::Malformed(recovery) => (recovery, true),
     };
     let separator = format_required_field(expression.separator(), doc, |separator, doc| {
         format_token(

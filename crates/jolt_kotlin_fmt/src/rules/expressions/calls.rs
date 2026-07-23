@@ -1,7 +1,9 @@
 use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    CallExpression, CollectionLiteralExpression, Expression, IndexExpression, KotlinSyntaxField,
-    KotlinSyntaxListPart, KotlinSyntaxToken, NavigationExpression, NavigationOperatorSyntax,
+    CallExpression, CallableReferenceExpression, CallableReferenceReceiver,
+    CallableReferenceReceiverSyntax, CollectionLiteralExpression, Expression, IndexExpression,
+    KotlinFamily, KotlinNode, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxNode,
+    KotlinSyntaxToken, KotlinSyntaxView, NavigationExpression, NavigationOperatorSyntax,
     NavigationOperatorValue, NavigationSelectorSyntax, NavigationSelectorValue, ValueArgument,
     ValueArgumentEntryList, ValueArgumentList, ValueArgumentListEntry, ValueArgumentPrefix,
     ValueArgumentPrefixSyntax,
@@ -19,20 +21,170 @@ use crate::rules::annotations::format_annotation;
 use crate::rules::names::format_name;
 use crate::rules::types::format_type_argument_list;
 
-use super::{format_expression_with_leading, lambdas::format_lambda_expression};
+use super::{
+    format_expression_with_leading, lambdas::format_lambda_expression,
+    operators::format_postfix_expression, references::format_callable_reference_expression,
+};
+
+pub(super) fn format_suffix_expression<'source>(
+    doc: &mut DocBuilder<'source>,
+    expression: Expression<'source>,
+    leading: LeadingTrivia,
+) -> Doc<'source> {
+    let Some(outer) = expression.syntax_node() else {
+        doc.block_on_invariant("Kotlin suffix expression has no syntax node");
+        return Doc::nil();
+    };
+    let mut current = expression;
+    let mut outer_member = None;
+    while let Some(inner) = suffix_inner(current) {
+        if outer_member.is_none() && is_member_chain_expression(current) {
+            outer_member = current.syntax_node();
+        }
+        current = inner;
+    }
+
+    let comments = if outer_member.is_some() {
+        format_expression_leading_comments(doc, &expression, leading)
+    } else {
+        Doc::nil()
+    };
+    let base_leading = if outer_member.is_some() {
+        LeadingTrivia::SuppressAlreadyHandled
+    } else {
+        leading
+    };
+    let Some(mut current_node) = current.syntax_node() else {
+        doc.block_on_invariant("Kotlin suffix base has no syntax node");
+        return Doc::nil();
+    };
+    let mut formatted = format_suffix_base(doc, &current, base_leading);
+    while current_node != outer {
+        if let Some((chain, parent, parent_node)) =
+            format_member_chain(doc, current, formatted, current_node, outer)
+        {
+            formatted = if outer_member == Some(parent_node) {
+                doc.concat([comments, chain])
+            } else {
+                chain
+            };
+            current = parent;
+            current_node = parent_node;
+            continue;
+        }
+        let Some((parent, parent_node)) = suffix_parent(current_node) else {
+            doc.block_on_invariant("expression suffix spine crossed an unexpected parent");
+            break;
+        };
+        formatted = match parent {
+            Expression::CallExpression(call) => {
+                let suffix = format_call_arguments(doc, &call);
+                doc.concat([formatted, suffix])
+            }
+            Expression::NavigationExpression(navigation) => {
+                format_navigation_expression(doc, &navigation, base_leading, Some(formatted))
+            }
+            Expression::PostfixExpression(postfix) => {
+                format_postfix_expression(doc, &postfix, base_leading, Some(formatted))
+            }
+            Expression::CallableReferenceExpression(reference) => {
+                format_callable_reference_expression(doc, &reference, base_leading, Some(formatted))
+            }
+            _ => {
+                doc.block_on_invariant("expression suffix parent was not a tight suffix");
+                break;
+            }
+        };
+        current = parent;
+        current_node = parent_node;
+    }
+    formatted
+}
+
+fn is_member_chain_expression(expression: Expression<'_>) -> bool {
+    match expression {
+        Expression::IndexExpression(index) => present_required(index.receiver()).is_some(),
+        Expression::NavigationExpression(navigation) => {
+            present_required(navigation.receiver()).is_some()
+                && present_required(navigation.operator()).is_some()
+                && present_required(navigation.selector()).is_some()
+        }
+        Expression::CallExpression(call) => {
+            let Some(Expression::NavigationExpression(navigation)) =
+                present_required(call.callee())
+            else {
+                return false;
+            };
+            is_member_chain_expression(Expression::NavigationExpression(navigation))
+        }
+        _ => false,
+    }
+}
+
+fn suffix_inner(expression: Expression<'_>) -> Option<Expression<'_>> {
+    match expression {
+        Expression::CallExpression(call) => present_required(call.callee()),
+        Expression::IndexExpression(index) => present_required(index.receiver()),
+        Expression::NavigationExpression(navigation) => present_required(navigation.receiver()),
+        Expression::PostfixExpression(postfix) => present_required(postfix.operand()),
+        Expression::CallableReferenceExpression(reference) => {
+            let receiver = match reference.receiver() {
+                KotlinSyntaxField::Present(receiver) => receiver,
+                KotlinSyntaxField::Missing(_) | KotlinSyntaxField::Malformed(_) => return None,
+            };
+            match present_required(receiver.receiver())?.classify().ok()? {
+                CallableReferenceReceiverSyntax::Expression(receiver) => Some(receiver),
+                CallableReferenceReceiverSyntax::TypeReference(_) => None,
+            }
+        }
+        _ => None,
+    }
+}
+
+fn suffix_parent(current: KotlinSyntaxNode<'_>) -> Option<(Expression<'_>, KotlinSyntaxNode<'_>)> {
+    let parent = current.parent()?;
+    if let Some(expression) = Expression::cast(parent) {
+        return Some((expression, parent));
+    }
+    CallableReferenceReceiver::cast(parent)?;
+    let owner = parent.parent()?;
+    Some((
+        Expression::CallableReferenceExpression(CallableReferenceExpression::cast(owner)?),
+        owner,
+    ))
+}
+
+fn format_suffix_base<'source>(
+    doc: &mut DocBuilder<'source>,
+    expression: &Expression<'source>,
+    leading: LeadingTrivia,
+) -> Doc<'source> {
+    match expression {
+        Expression::CallExpression(call) => format_call_expression(doc, call, leading),
+        Expression::IndexExpression(index) => format_index_expression(doc, index, leading),
+        Expression::NavigationExpression(navigation) => {
+            format_navigation_expression(doc, navigation, leading, None)
+        }
+        Expression::PostfixExpression(postfix) => {
+            format_postfix_expression(doc, postfix, leading, None)
+        }
+        Expression::CallableReferenceExpression(reference) => {
+            format_callable_reference_expression(doc, reference, leading, None)
+        }
+        _ => format_expression_with_leading(doc, expression, leading),
+    }
+}
 
 pub(super) fn format_navigation_expression<'source>(
     doc: &mut DocBuilder<'source>,
     expression: &NavigationExpression<'source>,
     leading: LeadingTrivia,
+    receiver: Option<Doc<'source>>,
 ) -> Doc<'source> {
-    if let Some(chain) =
-        format_member_chain(doc, Expression::NavigationExpression(*expression), leading)
-    {
-        return chain;
-    }
-    let receiver = format_required_field(expression.receiver(), doc, |receiver, doc| {
-        format_expression_with_leading(doc, &receiver, leading)
+    let receiver = receiver.unwrap_or_else(|| {
+        format_required_field(expression.receiver(), doc, |receiver, doc| {
+            format_expression_with_leading(doc, &receiver, leading)
+        })
     });
     let operator = format_required_field(expression.operator(), doc, |operator, doc| {
         format_navigation_operator(
@@ -53,10 +205,6 @@ pub(super) fn format_call_expression<'source>(
     expression: &CallExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    if let Some(chain) = format_member_chain(doc, Expression::CallExpression(*expression), leading)
-    {
-        return chain;
-    }
     let callee = format_required_field(expression.callee(), doc, |callee, doc| {
         format_expression_with_leading(doc, &callee, leading)
     });
@@ -69,10 +217,6 @@ pub(super) fn format_index_expression<'source>(
     expression: &IndexExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let expression_family = Expression::IndexExpression(*expression);
-    if let Some(chain) = format_member_chain(doc, expression_family, leading) {
-        return chain;
-    }
     let receiver = format_required_field(expression.receiver(), doc, |receiver, doc| {
         format_expression_with_leading(doc, &receiver, leading)
     });
@@ -95,7 +239,6 @@ pub(super) fn format_collection_literal_expression<'source>(
 }
 
 struct MemberChainBuilder<'source> {
-    root: Option<Expression<'source>>,
     first_suffix: Option<Doc<'source>>,
     first_suffix_forces_break: bool,
     has_rest_suffixes: bool,
@@ -107,17 +250,14 @@ impl<'source> MemberChainBuilder<'source> {
     fn finish(
         self,
         doc: &mut DocBuilder<'source>,
-        leading: LeadingTrivia,
+        root: &Expression<'source>,
+        root_doc: Doc<'source>,
         rest_suffixes: Doc<'source>,
     ) -> Option<Doc<'source>> {
-        let root = self.root?;
         let first_suffix = self.first_suffix?;
-        let keep_first_suffix_with_root = is_simple_member_chain_root(&root)
+        let keep_first_suffix_with_root = is_simple_member_chain_root(root)
             && (!self.first_suffix_forces_break || matches!(root, Expression::CallExpression(_)));
-        let leading_comments = format_expression_leading_comments(doc, &root, leading);
-        let root_doc =
-            format_expression_with_leading(doc, &root, LeadingTrivia::SuppressAlreadyHandled);
-        let chain = member_chain(
+        Some(member_chain(
             doc,
             root_doc,
             first_suffix,
@@ -125,8 +265,7 @@ impl<'source> MemberChainBuilder<'source> {
             self.has_rest_suffixes,
             self.force_multiline,
             keep_first_suffix_with_root,
-        );
-        Some(doc.concat([leading_comments, chain]))
+        ))
     }
 
     fn push_suffix(
@@ -182,75 +321,66 @@ impl<'source> MemberChainBuilder<'source> {
 
 fn format_member_chain<'source>(
     doc: &mut DocBuilder<'source>,
-    expression: Expression<'source>,
-    leading: LeadingTrivia,
-) -> Option<Doc<'source>> {
+    root: Expression<'source>,
+    root_doc: Doc<'source>,
+    root_node: KotlinSyntaxNode<'source>,
+    outer: KotlinSyntaxNode<'source>,
+) -> Option<(Doc<'source>, Expression<'source>, KotlinSyntaxNode<'source>)> {
     let mut builder = MemberChainBuilder {
-        root: None,
         first_suffix: None,
         first_suffix_forces_break: false,
         has_rest_suffixes: false,
         force_multiline: false,
         field_run: None,
     };
-    let mut valid = false;
+    let mut current = root;
+    let mut current_node = root_node;
     let rest = doc.concat_list(|rest| {
-        valid = append_chain_expression(rest, &mut builder, expression).is_some();
-        if valid {
-            builder.flush_field_run(rest);
-        }
-    });
-    if !valid {
-        return None;
-    }
-    builder.finish(doc, leading, rest)
-}
-
-fn append_chain_expression<'source>(
-    rest: &mut ConcatBuilder<'_, 'source>,
-    builder: &mut MemberChainBuilder<'source>,
-    expression: Expression<'source>,
-) -> Option<()> {
-    match expression {
-        Expression::CallExpression(call) => {
-            let callee = present_required(call.callee())?;
-            let Expression::NavigationExpression(navigation) = callee else {
-                return None;
+        loop {
+            if current_node == outer {
+                break;
+            }
+            let Some((parent, parent_node)) = suffix_parent(current_node) else {
+                break;
             };
-            append_chain_receiver(rest, builder, present_required(navigation.receiver())?);
-            let forces_break = navigation_operator_has_leading_comments(&navigation)
-                || (call_has_lambdas(&call) && !call_has_parenthesized_arguments(&call));
-            let navigation = format_navigation_suffix(rest, &navigation)?;
-            let arguments = format_call_arguments(rest, &call);
-            let suffix = rest.concat([navigation, arguments]);
-            builder.push_suffix(rest, suffix, forces_break);
-            Some(())
+            match parent {
+                Expression::NavigationExpression(navigation) => {
+                    let forces_break = navigation_operator_has_leading_comments(&navigation);
+                    let Some(navigation_doc) = format_navigation_suffix(rest, &navigation) else {
+                        break;
+                    };
+                    if parent_node != outer
+                        && let Some((Expression::CallExpression(call), call_node)) =
+                            suffix_parent(parent_node)
+                    {
+                        let forces_break = forces_break
+                            || (call_has_lambdas(&call)
+                                && !call_has_parenthesized_arguments(&call));
+                        let arguments = format_call_arguments(rest, &call);
+                        let suffix = rest.concat([navigation_doc, arguments]);
+                        builder.push_suffix(rest, suffix, forces_break);
+                        current = Expression::CallExpression(call);
+                        current_node = call_node;
+                        continue;
+                    }
+                    builder.push_navigation_suffix(rest, navigation_doc, forces_break);
+                    current = Expression::NavigationExpression(navigation);
+                    current_node = parent_node;
+                }
+                Expression::IndexExpression(index) => {
+                    let suffix = format_index_suffix(rest, &index);
+                    builder.push_suffix(rest, suffix, false);
+                    current = Expression::IndexExpression(index);
+                    current_node = parent_node;
+                }
+                _ => break,
+            }
         }
-        Expression::NavigationExpression(navigation) => {
-            append_chain_receiver(rest, builder, present_required(navigation.receiver())?);
-            let suffix = format_navigation_suffix(rest, &navigation)?;
-            let forces_break = navigation_operator_has_leading_comments(&navigation);
-            builder.push_navigation_suffix(rest, suffix, forces_break);
-            Some(())
-        }
-        Expression::IndexExpression(index) => {
-            append_chain_receiver(rest, builder, present_required(index.receiver())?);
-            let suffix = format_index_suffix(rest, &index);
-            builder.push_suffix(rest, suffix, false);
-            Some(())
-        }
-        _ => None,
-    }
-}
-
-fn append_chain_receiver<'source>(
-    rest: &mut ConcatBuilder<'_, 'source>,
-    builder: &mut MemberChainBuilder<'source>,
-    receiver: Expression<'source>,
-) {
-    if append_chain_expression(rest, builder, receiver).is_none() {
-        builder.root = Some(receiver);
-    }
+        builder.flush_field_run(rest);
+    });
+    builder
+        .finish(doc, &root, root_doc, rest)
+        .map(|chain| (chain, current, current_node))
 }
 
 fn member_chain<'source>(
