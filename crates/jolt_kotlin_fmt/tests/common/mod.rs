@@ -2,8 +2,7 @@ use jolt_fmt_ir::FormatOptions;
 use jolt_kotlin_fmt::format_source_to_sink;
 use jolt_kotlin_syntax::parse_kotlin_file;
 use jolt_test_support::{
-    CorpusLanguage, CorpusParseFacts, RepresentedTokenRemoval, corpus_parse_facts,
-    format_source_or_panic,
+    CorpusLanguage, CorpusParseFacts, corpus_parse_facts, format_source_or_panic,
 };
 
 pub(crate) struct KotlinCorpus;
@@ -38,9 +37,5 @@ impl CorpusLanguage for KotlinCorpus {
         name.starts_with("diagnoses-")
             || name.starts_with("recovers-")
             || name == "parses-destructuring-square-preview.kt"
-    }
-
-    fn allowed_clean_removals(&self, _relative: &str) -> &'static [RepresentedTokenRemoval] {
-        &[]
     }
 }

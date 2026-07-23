@@ -17,6 +17,8 @@ mod syntax_tree;
 mod red;
 
 pub use comment::{Comment, CommentKind, Comments};
+#[cfg(debug_assertions)]
+pub use conservation::NormalizationOperation;
 pub use conservation::{
     ConservationError, SourceIdentity, SourceNodeId, SourceRangeClaim, SourceTokenId,
     SourceTriviaId, SourceTriviaPiece, SourceTriviaSide, SyntaxConservationTracker,

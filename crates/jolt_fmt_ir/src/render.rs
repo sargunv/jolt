@@ -951,11 +951,13 @@ mod tests {
 
     use jolt_diagnostics::{Diagnostic, DiagnosticCodeId};
     use jolt_java_syntax::{JavaLanguage, JavaSyntaxKind, JavaSyntaxView, parse_compilation_unit};
+    #[cfg(debug_assertions)]
+    use jolt_syntax::NormalizationOperation;
     use jolt_syntax::{
-        BuildSyntaxTreeError, Event, FactoryNode, Language, LanguageLexer, LexedToken,
-        ParsedChildren, RawSyntaxKind, ReorderClaim, ReorderReason, SourceIdentity, SourceTokenId,
-        SyntaxFactory, SyntaxNode, SyntaxTokenData, SyntaxTreeSink, SyntaxTrivia, TriviaKind,
-        build_syntax_tree_with_factory,
+        BuildSyntaxTreeError, ConservationError, Event, FactoryNode, Language, LanguageLexer,
+        LexedToken, ParsedChildren, RawSyntaxKind, ReorderClaim, ReorderReason, SourceIdentity,
+        SourceTokenId, SourceTriviaSide, SyntaxFactory, SyntaxNode, SyntaxTokenData,
+        SyntaxTreeSink, SyntaxTrivia, TriviaKind, build_syntax_tree_with_factory,
     };
     use jolt_text::{TextRange, TextSize};
 
@@ -1096,6 +1098,13 @@ mod tests {
             line_width: TextWidth::new(80),
             indent_width: 4,
             indent_style: IndentStyle::Space,
+        }
+    }
+
+    fn conservation_error(error: super::RenderError) -> ConservationError {
+        match error.kind {
+            super::RenderErrorKind::Conservation(error) => error,
+            other => panic!("expected conservation error, got {other:?}"),
         }
     }
 
@@ -1299,7 +1308,13 @@ mod tests {
         let error = render_source_to(&arena, ordinary, options(), &mut sink, &root)
             .expect_err("ordinary text cannot stand in for structured source");
 
-        assert!(error.to_string().starts_with("MissingToken"));
+        assert_eq!(
+            conservation_error(error),
+            ConservationError::MissingToken {
+                token: 0,
+                range: TextRange::new(TextSize::new(0), TextSize::new(1)),
+            }
+        );
         assert!(sink.0.is_empty());
     }
 
@@ -1319,7 +1334,90 @@ mod tests {
         let error = render_source_to(&arena, document, options(), &mut sink, &root)
             .expect_err("duplicate claim must fail conservation");
 
-        assert!(error.to_string().starts_with("DuplicateToken"));
+        assert_eq!(
+            conservation_error(error),
+            ConservationError::DuplicateToken {
+                token: 0,
+                range: TextRange::new(TextSize::new(0), TextSize::new(1)),
+            }
+        );
+        assert!(sink.0.is_empty());
+    }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    fn replacement_failure_reports_its_operation_and_source() {
+        let source = "x";
+        let tree = syntax_tree(source);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
+        let token = root.first_token().expect("source token");
+        let mut builder = DocBuilder::new();
+        let source_doc = builder.source_token(&token);
+        let replacement = builder.replaced_source(replacement_claim(
+            &root,
+            token.source_id(),
+            NormalizedToken::ImportKeyword,
+        ));
+        let mut safety = CountingSafety::default();
+        let replacement = builder.resolve_exceptional(replacement, Some(&token), None, &mut safety);
+        let document = builder.concat([source_doc, replacement]);
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        let error = render_source_to(&arena, document, options(), &mut sink, &root)
+            .expect_err("duplicate replacement source must fail conservation");
+
+        assert_eq!(
+            conservation_error(error),
+            ConservationError::Normalization {
+                operation: NormalizationOperation::Replacement(NormalizedToken::ImportKeyword),
+                error: Box::new(ConservationError::DuplicateToken {
+                    token: 0,
+                    range: TextRange::new(TextSize::new(0), TextSize::new(1)),
+                }),
+            }
+        );
+        assert!(sink.0.is_empty());
+    }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    fn removal_failure_reports_its_reason_and_trivia() {
+        let source = "x//c\n";
+        let tree = syntax_tree_with_line_comment();
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
+        let token = root.first_token().expect("source token");
+        let trivia = token.trailing_trivia_with_ids().collect::<Vec<_>>();
+        let comment = trivia[0];
+        let mut builder = DocBuilder::new();
+        let token_doc = builder.source_token(&token);
+        let comment_doc = builder.source_trivia(trivia, |docs| docs.literal_text("//c"));
+        let line = builder.hard_line();
+        let removal = builder.removed_source(removal_claim(
+            &root,
+            SourceIdentity::Trivia(comment.id()),
+            RemovalReason::DuplicateImport,
+        ));
+        let document = builder.concat([token_doc, comment_doc, line, removal]);
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        let error = render_source_to(&arena, document, options(), &mut sink, &root)
+            .expect_err("duplicate removed trivia must fail conservation");
+
+        assert_eq!(
+            conservation_error(error),
+            ConservationError::Normalization {
+                operation: NormalizationOperation::Removal(RemovalReason::DuplicateImport),
+                error: Box::new(ConservationError::DuplicateTrivia {
+                    token: 0,
+                    side: SourceTriviaSide::Trailing,
+                    ordinal: 0,
+                    kind: TriviaKind::LineComment,
+                    range: TextRange::new(TextSize::new(1), TextSize::new(4)),
+                }),
+            }
+        );
         assert!(sink.0.is_empty());
     }
 
@@ -1417,6 +1515,7 @@ mod tests {
         assert!(!outcome.used_malformed_verbatim());
     }
 
+    #[cfg(debug_assertions)]
     #[test]
     fn synthesis_rejects_a_foreign_anchor() {
         let source = "x";
@@ -1440,7 +1539,16 @@ mod tests {
             panic!("foreign synthesis anchor must be rejected");
         };
 
-        assert_eq!(error.to_string(), "ForeignToken");
+        assert_eq!(
+            conservation_error(error),
+            ConservationError::Normalization {
+                operation: NormalizationOperation::Synthesis(NormalizedToken::EnumSemicolon),
+                error: Box::new(ConservationError::ForeignToken {
+                    token: 0,
+                    range: TextRange::new(TextSize::new(0), TextSize::new(1)),
+                }),
+            }
+        );
         assert!(sink.0.is_empty());
     }
 
@@ -1657,6 +1765,7 @@ mod tests {
         assert_eq!(sink.0, source);
     }
 
+    #[cfg(debug_assertions)]
     #[test]
     fn foreign_reorder_owner_is_rejected_before_output() {
         let source = "x";
@@ -1677,7 +1786,16 @@ mod tests {
         let error = render_source_to(&arena, document, options(), &mut sink, &root)
             .expect_err("foreign reorder authority must be rejected");
 
-        assert_eq!(error.to_string(), "ForeignToken");
+        assert_eq!(
+            conservation_error(error),
+            ConservationError::Normalization {
+                operation: NormalizationOperation::Reorder(ReorderReason::Imports),
+                error: Box::new(ConservationError::ForeignToken {
+                    token: 0,
+                    range: TextRange::new(TextSize::new(0), TextSize::new(1)),
+                }),
+            }
+        );
         assert!(sink.0.is_empty());
     }
 
@@ -1706,7 +1824,12 @@ mod tests {
         let error = render_source_to(&arena, document, options(), &mut sink, &root)
             .expect_err("foreign ignore range must be rejected");
 
-        assert_eq!(error.to_string(), "ForeignSourceRange");
+        assert_eq!(
+            conservation_error(error),
+            ConservationError::ForeignSourceRange {
+                range: TextRange::new(TextSize::new(0), TextSize::new(1)),
+            }
+        );
         assert!(sink.0.is_empty());
     }
 
