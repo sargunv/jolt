@@ -679,6 +679,33 @@ Audit findings and working scope (2026-07-23):
   query caches, and a member-classification framework unless a smaller local
   prototype preserves the exact existing precedence and recovery trees.
 
+Rejected parenthesis-summary prototype (2026-07-23): a Java-private lazy cache
+made the generated depth-1,600 ordinary-parenthesis family effectively linear
+and reduced its debug parse time from about 0.37 seconds to 0.02 seconds. It
+also added 80 production lines and 65 test lines, increased realistic Java parse
+allocations from 109,539 to 113,644 (+4,105, +3.75%), and allocated 293,888 more
+bytes. A flat/spill representation would add another state model. The cache was
+fully reverted; retain the remaining repeated lambda rejection scan until its
+grammar decision can be made without a material side structure.
+
+Rejected annotation-start memo prototype (2026-07-23): remembering failed
+top-level annotation starts plus their run end made flat malformed runs exactly
+`16N` speculative advances, malformed import suffixes `8N`, and repeated
+balanced top-level `@A(value=@B)` items `70N`. It did not bound a single deeply
+nested annotation: depth 256 still performed 600,581 advances because every
+interior `@` must run the ordinary boundary predicates, each of which scans the
+remaining nested suffix. Broader memoization would introduce the generic cache
+and invalidation model rejected by this PR; fast-forwarding is recovery-inexact
+because malformed annotation arguments can contain later declaration boundaries.
+The prototype was fully reverted.
+
+Rejected member-header classifier (2026-07-23): annotation elements, malformed
+constructors, methods, fields, and compact members intentionally use different
+precedence and recovery gates. With no rewindable lookahead, an exact classifier
+must restart those same probes and merely hide them behind an enum, growing by
+an estimated 0-15 lines without reducing work. Keep the decisions local until a
+smaller owner-specific deletion is proven.
+
 ### PR 13 — Final reconciliation, docs, and API deletions
 
 Scope:
@@ -1340,6 +1367,9 @@ ready for review.
 | 2026-07-22 | Keep Java program join policies separate.                      | Ordinary and ignored section joining differ around invisible entries between ignored runs; reconciling them may change output and does not belong in structural PR 10.                                     |
 | 2026-07-22 | Reject the shared lexer cursor prototype.                      | Explicit composition grew production by 163 lines and made every token rule noisier; traits, macros, implicit dereferencing, or cryptic names only hide that cost.                                         |
 | 2026-07-22 | Cache only the end of failed Kotlin dollar runs.               | A locally linear prefix helper still rescanned malformed suffixes quadratically; one forward-only boundary preserves token ownership with one scan per maximal run.                                        |
+| 2026-07-23 | Reject the Java parenthesis-summary cache.                     | It fixes quadratic lambda rejection, but adds 80 production lines and 3.75% realistic parse allocations; a second representation would further weaken local reasoning.                                     |
+| 2026-07-23 | Reject the top-level annotation-start memo.                    | It makes flat and repeated top-level runs linear but cannot bound one deeply nested annotation without broadening into a generic cache or changing exact recovery boundaries.                              |
+| 2026-07-23 | Reject a general Java member-header classifier.                | Exact declaration precedence still requires independent restarts, so the enum would hide rather than remove repeated grammar work and would not shrink the parser.                                         |
 
 ## Resume Protocol
 
