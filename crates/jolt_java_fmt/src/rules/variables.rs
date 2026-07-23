@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_fmt_ir::{Doc, DocBuilder, LayoutDoc};
 use jolt_java_syntax::{
     Annotation, EnhancedForVariable, FieldDeclaration, FormalParameter, JavaSyntaxField,
     JavaSyntaxInvariantError, JavaSyntaxToken, JavaSyntaxView, LocalVariableDeclaration,
@@ -12,7 +12,7 @@ use crate::helpers::comments::{
     format_token_with_inline_leading_comments,
 };
 use crate::helpers::lists::{CommaListItem, comma_list, syntax_comma_list_items};
-use crate::helpers::modifiers::{VisibleDoc, inline_modifier_prefix_from_docs};
+use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::helpers::recovery::{
     JavaFormatField, JavaFormatListPart, format_malformed, format_missing, format_optional_field,
     format_required_field, resolve_list_part, resolve_optional_field, resolve_required_field,
@@ -247,10 +247,10 @@ pub(crate) fn format_receiver_parameter<'source>(
         format_annotation_parts(annotations.parts(), true, doc).map_or_else(
             Doc::nil,
             |annotations| {
-                if annotations.visible {
-                    doc_concat!(doc, [annotations.doc, doc.space()])
+                if annotations.is_visible() {
+                    doc_concat!(doc, [annotations.doc(), doc.space()])
                 } else {
-                    annotations.doc
+                    annotations.doc()
                 }
             },
         )
@@ -290,7 +290,7 @@ fn format_annotation_parts<'source>(
     parts: impl IntoIterator<Item = jolt_java_syntax::JavaSyntaxListPart<'source, Annotation<'source>>>,
     suppress_first_leading: bool,
     doc: &mut DocBuilder<'source>,
-) -> Option<VisibleDoc<'source>> {
+) -> Option<LayoutDoc<'source>> {
     let mut has_parts = false;
     let mut visible = false;
     let docs = doc.concat_list(|docs| {
@@ -322,41 +322,39 @@ fn format_annotation_parts<'source>(
         }
     });
 
-    has_parts.then_some(VisibleDoc { doc: docs, visible })
+    has_parts.then_some(LayoutDoc::from_visibility(docs, visible))
 }
 
 fn resolve_annotation_list_docs<'source>(
     field: jolt_java_syntax::JavaSyntaxField<'source, jolt_java_syntax::AnnotationList<'source>>,
     doc: &mut DocBuilder<'source>,
-) -> Option<VisibleDoc<'source>> {
+) -> Option<LayoutDoc<'source>> {
     match field {
         JavaSyntaxField::Present(annotations) => {
             format_annotation_parts(annotations.parts(), false, doc)
         }
-        JavaSyntaxField::Malformed(malformed) => Some(VisibleDoc {
-            visible: malformed.first_token().is_some(),
-            doc: format_malformed(&malformed, doc),
-        }),
-        JavaSyntaxField::Missing(missing) => Some(VisibleDoc {
-            doc: format_missing(&missing, doc),
-            visible: false,
-        }),
+        JavaSyntaxField::Malformed(malformed) => Some(LayoutDoc::from_visibility(
+            format_malformed(&malformed, doc),
+            malformed.first_token().is_some(),
+        )),
+        JavaSyntaxField::Missing(missing) => {
+            Some(LayoutDoc::ClaimOnly(format_missing(&missing, doc)))
+        }
     }
 }
 
 fn resolve_ellipsis_doc<'source>(
     field: JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
-) -> Option<VisibleDoc<'source>> {
+) -> Option<LayoutDoc<'source>> {
     match field {
-        JavaSyntaxField::Present(ellipsis) => Some(VisibleDoc {
-            doc: format_token_with_comments(doc, &ellipsis),
-            visible: true,
-        }),
-        JavaSyntaxField::Malformed(malformed) => Some(VisibleDoc {
-            visible: malformed.first_token().is_some(),
-            doc: format_malformed(&malformed, doc),
-        }),
+        JavaSyntaxField::Present(ellipsis) => Some(LayoutDoc::Visible(format_token_with_comments(
+            doc, &ellipsis,
+        ))),
+        JavaSyntaxField::Malformed(malformed) => Some(LayoutDoc::from_visibility(
+            format_malformed(&malformed, doc),
+            malformed.first_token().is_some(),
+        )),
         JavaSyntaxField::Missing(_) => None,
     }
 }
@@ -364,15 +362,14 @@ fn resolve_ellipsis_doc<'source>(
 fn format_named_typed_declaration<'source>(
     modifiers: Doc<'source>,
     ty: Doc<'source>,
-    varargs_annotations: Option<VisibleDoc<'source>>,
+    varargs_annotations: Option<LayoutDoc<'source>>,
     name: Doc<'source>,
     dimensions: Doc<'source>,
-    ellipsis: Option<VisibleDoc<'source>>,
+    ellipsis: Option<LayoutDoc<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let has_varargs_annotations =
-        varargs_annotations.is_some_and(|annotations| annotations.visible);
-    let has_ellipsis = ellipsis.is_some_and(|ellipsis| ellipsis.visible);
+    let has_varargs_annotations = varargs_annotations.is_some_and(LayoutDoc::is_visible);
+    let has_ellipsis = ellipsis.is_some_and(LayoutDoc::is_visible);
     let ellipsis = if let Some(ellipsis) = ellipsis {
         if let Some(varargs_annotations) = varargs_annotations {
             let annotations = inline_modifier_prefix_from_docs(
@@ -383,9 +380,9 @@ fn format_named_typed_declaration<'source>(
                 false,
                 false,
             );
-            doc_concat!(doc, [annotations, ellipsis.doc])
+            doc_concat!(doc, [annotations, ellipsis.doc()])
         } else {
-            ellipsis.doc
+            ellipsis.doc()
         }
     } else {
         Doc::nil()

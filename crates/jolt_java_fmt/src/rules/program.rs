@@ -59,7 +59,8 @@ pub(crate) fn format_compilation_unit<'source>(
     let container = unit.text_range();
     let runs = doc.formatter_ignore_runs(container, entries.iter().map(ProgramEntry::ignore_range));
     let contents = if runs.is_empty() {
-        format_program_entries(entries, doc)
+        let sections = format_program_sections(entries, doc);
+        join_program_sections(doc, sections)
     } else {
         format_program_entries_with_ignored(entries, &runs, doc)
     };
@@ -150,14 +151,6 @@ fn ignore_range<'source>(view: &impl JavaSyntaxView<'source>) -> Option<Formatte
         &syntax.first_token()?,
         &syntax.last_token()?,
     ))
-}
-
-fn format_program_entries<'source>(
-    entries: Vec<ProgramEntry<'source>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let sections = format_program_sections(entries, doc);
-    join_program_sections(doc, sections)
 }
 
 fn format_program_sections<'source>(

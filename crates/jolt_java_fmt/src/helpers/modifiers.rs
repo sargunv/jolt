@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_fmt_ir::{Doc, DocBuilder, LayoutDoc};
 use jolt_java_syntax::{JavaSyntaxKind, JavaSyntaxToken, NonSealedModifier};
 
 use crate::helpers::comments::{
@@ -12,7 +12,7 @@ pub(crate) enum ModifierEntry<'source> {
     Token(JavaSyntaxToken<'source>),
     Sealed(JavaSyntaxToken<'source>),
     NonSealed(NonSealedModifier<'source>),
-    Malformed(Doc<'source>, bool),
+    Malformed(LayoutDoc<'source>),
 }
 
 impl ModifierEntry<'_> {
@@ -24,7 +24,7 @@ impl ModifierEntry<'_> {
         match self {
             Self::Token(_) | Self::Sealed(_) => true,
             Self::NonSealed(modifier) => modifier.first_token().is_some(),
-            Self::Malformed(_, visible) => *visible,
+            Self::Malformed(layout) => layout.is_visible(),
         }
     }
 
@@ -37,12 +37,6 @@ impl ModifierEntry<'_> {
             Self::Malformed(..) => false,
         }
     }
-}
-
-#[derive(Clone, Copy)]
-pub(crate) struct VisibleDoc<'source> {
-    pub(crate) doc: Doc<'source>,
-    pub(crate) visible: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -70,7 +64,7 @@ pub(crate) fn modifier_prefix_from_docs<'source>(
 
 pub(crate) fn inline_modifier_prefix_from_docs<'source>(
     doc: &mut DocBuilder<'source>,
-    annotations: Option<VisibleDoc<'source>>,
+    annotations: Option<LayoutDoc<'source>>,
     modifier_entries: Vec<ModifierEntry<'source>>,
     suppress_first_entry_leading: bool,
     terminal_forces_line: bool,
@@ -90,18 +84,18 @@ pub(crate) fn inline_modifier_prefix_from_docs<'source>(
 
 fn modifier_docs<'source>(
     doc: &mut DocBuilder<'source>,
-    annotations: Option<VisibleDoc<'source>>,
+    annotations: Option<LayoutDoc<'source>>,
     modifier_entries: Vec<ModifierEntry<'source>>,
     suppress_first_entry_leading: bool,
     terminal: ModifierTerminal,
 ) -> Doc<'source> {
     let modifier_entries = sorted_modifier_entries(modifier_entries);
-    let mut visible = annotations.is_some_and(|annotations| annotations.visible);
+    let mut visible = annotations.is_some_and(LayoutDoc::is_visible);
     let mut previous_is_structured = visible;
     let mut previous_forces_line = false;
     doc.concat_list(|docs| {
         if let Some(annotations) = annotations {
-            docs.push(annotations.doc);
+            docs.push(annotations.doc());
         }
         for entry in modifier_entries {
             let entry_is_structured = entry.is_structured();
@@ -162,7 +156,7 @@ fn sorted_modifier_entries(mut entries: Vec<ModifierEntry<'_>>) -> Vec<ModifierE
         ModifierEntry::NonSealed(non_sealed) => non_sealed
             .token_iter()
             .any(|token| token_has_comments(&token)),
-        ModifierEntry::Malformed(..) => true,
+        ModifierEntry::Malformed(_) => true,
     };
     let mut run_start = None;
     for index in 0..entries.len() {
@@ -194,7 +188,7 @@ fn modifier_entry_order(entry: &ModifierEntry<'_>) -> u8 {
         ModifierEntry::Token(token) => modifier_order(token.kind()),
         ModifierEntry::Sealed(_) => 11,
         ModifierEntry::NonSealed(_) => 12,
-        ModifierEntry::Malformed(..) => u8::MAX,
+        ModifierEntry::Malformed(_) => u8::MAX,
     }
 }
 
@@ -207,7 +201,7 @@ fn format_modifier_entry<'source>(
         ModifierEntry::Token(token) | ModifierEntry::Sealed(token) => {
             format_modifier_token(doc, token, leading_comments)
         }
-        ModifierEntry::Malformed(doc, _) => *doc,
+        ModifierEntry::Malformed(layout) => layout.doc(),
         ModifierEntry::NonSealed(non_sealed) => doc.concat_list(|docs| {
             let non = format_required_field(non_sealed.non_keyword(), docs, |token, docs| {
                 format_modifier_token(docs, &token, leading_comments)
