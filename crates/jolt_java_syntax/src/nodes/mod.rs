@@ -326,17 +326,6 @@ macro_rules! define_java_cst_from_schema {
         categories { $($family:ident => $bogus:ident { $($member:ident,)* })* }
         nodes { $($kind:ident => $wrapper:ident [$module:ident $class:ident] { $($fields:tt)* })* }
     ) => {
-        macro_rules! ordinary_list_item {
-            () => {
-                const IS_FAMILY: bool = false;
-            };
-        }
-        macro_rules! family_list_item {
-            () => {
-                const IS_FAMILY: bool = true;
-            };
-        }
-
         fn java_kind_is_category_bogus(kind: JavaSyntaxKind) -> bool {
             matches!(kind, $(JavaSyntaxKind::$bogus)|*)
         }
@@ -353,8 +342,6 @@ macro_rules! define_java_cst_from_schema {
             list_item_trait: JavaListItem,
             syntax_view_trait: JavaSyntaxView,
             any_node: {},
-            node_list_item_marker: ordinary_list_item,
-            family_list_item_marker: family_list_item,
             nodes {
                 $($wrapper => $kind [$class],)*
                 $($bogus => $bogus [malformed],)*

@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, DocBuilder, LayoutDoc};
+use jolt_fmt_ir::{Doc, DocBuilder};
 pub(crate) struct BodyItem<'source> {
     doc: Doc<'source>,
     separator: BodyItemSeparator,
@@ -58,9 +58,9 @@ pub(crate) fn join_hard_lines<'source>(
 pub(crate) fn join_body_items<'source>(
     doc: &mut DocBuilder<'source>,
     items: Vec<BodyItem<'source>>,
-) -> LayoutDoc<'source> {
-    let mut has_visible_item = false;
-    let joined = doc.concat_list(|joined| {
+) -> Doc<'source> {
+    doc.concat_list(|joined| {
+        let mut has_visible_item = false;
         for item in items {
             if item.visible && has_visible_item {
                 let separator = item.separator.doc(joined);
@@ -69,6 +69,5 @@ pub(crate) fn join_body_items<'source>(
             joined.push(item.doc);
             has_visible_item |= item.visible;
         }
-    });
-    LayoutDoc::from_visibility(joined, has_visible_item)
+    })
 }

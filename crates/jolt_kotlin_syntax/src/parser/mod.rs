@@ -568,14 +568,14 @@ val following = 1
 
     #[test]
     fn block_and_class_body_nesting_have_exact_edges_and_structured_recovery() {
-        for clean in [nested_blocks(128), nested_class_bodies(128)] {
+        for clean in [nested_blocks(129), nested_class_bodies(129)] {
             assert_eq!(excessive_syntax_diagnostic_count(&clean), 0);
         }
 
-        let block_edge = format!("{}\nclass Following\n", nested_blocks(129));
+        let block_edge = format!("{}\nclass Following\n", nested_blocks(130));
         check_code(
             &block_edge,
-            "syntax nesting exceeds 128 levels",
+            "syntax is too deeply nested to parse safely",
             KotlinParseDiagnosticCode::ExcessiveSyntaxNesting,
             KotlinSyntaxKind::BogusBlockItem,
             None,
@@ -590,10 +590,10 @@ val following = 1
             1
         );
 
-        let class_edge = format!("{}\nclass Following\n", nested_class_bodies(129));
+        let class_edge = format!("{}\nclass Following\n", nested_class_bodies(130));
         check_code(
             &class_edge,
-            "syntax nesting exceeds 128 levels",
+            "syntax is too deeply nested to parse safely",
             KotlinParseDiagnosticCode::ExcessiveSyntaxNesting,
             KotlinSyntaxKind::BogusClassMember,
             None,
@@ -633,11 +633,11 @@ val following = 1
 
         for (source, list_kind) in [
             (
-                "fun nested() {".repeat(129),
+                "fun nested() {".repeat(130),
                 KotlinSyntaxKind::BlockItemList,
             ),
             (
-                "class Nested {".repeat(129),
+                "class Nested {".repeat(130),
                 KotlinSyntaxKind::ClassMemberList,
             ),
         ] {

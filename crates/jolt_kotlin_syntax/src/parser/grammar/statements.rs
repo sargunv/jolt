@@ -23,7 +23,7 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_block(&mut self) {
-        if !self.at(K::LBrace) {
+        if !self.at(K::LBrace) || matches!(self.nth_kind(1), K::RBrace | K::Eof) {
             self.parse_block_inner();
             return;
         }

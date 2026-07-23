@@ -24,46 +24,35 @@ jolt_syntax::define_typed_cst_fields! {
     fixed_syntax: KotlinFixedSyntax,
 }
 
-fn kotlin_kind_is_category_bogus(_: KotlinSyntaxKind) -> bool {
-    false
-}
-
-jolt_syntax::define_typed_cst_access! {
-    language: KotlinLanguage,
-    syntax_kind: KotlinSyntaxKind,
-    syntax_node: KotlinSyntaxNode,
-    syntax_token: KotlinSyntaxToken,
-    invariant_error: KotlinSyntaxInvariantError,
-    syntax_result: KotlinSyntaxResult,
-    syntax_field: KotlinSyntaxField,
-    malformed_syntax: KotlinMalformedSyntax,
-    missing_syntax: KotlinMissingSyntax,
-    fixed_syntax: KotlinFixedSyntax,
-    syntax_view: KotlinSyntaxView,
-    typed_node: KotlinTypedNode,
-    node: KotlinNode,
-    family: KotlinFamily,
-    role_element: KotlinRoleElement,
-    list_item: KotlinListItem,
-    list_part: KotlinSyntaxListPart,
-    category_bogus: kotlin_kind_is_category_bogus,
-}
-
 macro_rules! define_kotlin_cst_from_schema {
     (
         tokens { $($token:ident,)* }
         categories { $($family:ident => $bogus:ident { $($member:ident,)* })* }
         nodes { $($kind:ident => $wrapper:ident [$module:ident $class:ident] { $($fields:tt)* })* }
     ) => {
-        macro_rules! ordinary_list_item {
-            () => {
-                const IS_FAMILY: bool = false;
-            };
+        fn kotlin_kind_is_category_bogus(kind: KotlinSyntaxKind) -> bool {
+            matches!(kind, $(KotlinSyntaxKind::$bogus)|*)
         }
-        macro_rules! family_list_item {
-            () => {
-                const IS_FAMILY: bool = true;
-            };
+
+        jolt_syntax::define_typed_cst_access! {
+            language: KotlinLanguage,
+            syntax_kind: KotlinSyntaxKind,
+            syntax_node: KotlinSyntaxNode,
+            syntax_token: KotlinSyntaxToken,
+            invariant_error: KotlinSyntaxInvariantError,
+            syntax_result: KotlinSyntaxResult,
+            syntax_field: KotlinSyntaxField,
+            malformed_syntax: KotlinMalformedSyntax,
+            missing_syntax: KotlinMissingSyntax,
+            fixed_syntax: KotlinFixedSyntax,
+            syntax_view: KotlinSyntaxView,
+            typed_node: KotlinTypedNode,
+            node: KotlinNode,
+            family: KotlinFamily,
+            role_element: KotlinRoleElement,
+            list_item: KotlinListItem,
+            list_part: KotlinSyntaxListPart,
+            category_bogus: kotlin_kind_is_category_bogus,
         }
 
         jolt_syntax::define_typed_cst_projection! {
@@ -78,8 +67,6 @@ macro_rules! define_kotlin_cst_from_schema {
             list_item_trait: KotlinListItem,
             syntax_view_trait: KotlinSyntaxView,
             any_node: { AnyKotlinNode },
-            node_list_item_marker: ordinary_list_item,
-            family_list_item_marker: family_list_item,
             nodes {
                 $($wrapper => $kind [$class],)*
                 $($bogus => $bogus [malformed],)*

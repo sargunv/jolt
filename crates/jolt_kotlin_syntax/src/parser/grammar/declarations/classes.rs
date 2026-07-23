@@ -42,6 +42,10 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn parse_class_body(&mut self) {
+        if matches!(self.nth_kind(1), K::RBrace | K::Eof) {
+            self.parse_class_body_inner();
+            return;
+        }
         if self
             .with_syntax_nesting(Self::parse_class_body_inner)
             .is_none()

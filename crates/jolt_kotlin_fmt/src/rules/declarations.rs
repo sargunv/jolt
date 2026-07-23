@@ -846,7 +846,11 @@ pub(crate) fn format_declaration_body<'source>(
             doc.concat([space, body])
         }
         DeclarationBody::ExpressionBody(expression) => format_expression_body(doc, expression),
-        DeclarationBody::BogusDeclarationBody(bogus) => format_malformed(bogus, doc),
+        DeclarationBody::BogusDeclarationBody(bogus) => {
+            let space = doc.space();
+            let bogus = format_malformed(bogus, doc);
+            doc.concat([space, bogus])
+        }
     }
 }
 

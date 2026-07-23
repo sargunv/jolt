@@ -205,7 +205,7 @@ fn empty_excessive_body_keeps_claims_without_selecting_body_layout() {
 
 #[test]
 fn unclosed_excessive_bodies_format_idempotently() {
-    for source in ["fun nested() {".repeat(129), "class Nested {".repeat(129)] {
+    for source in ["fun nested() {".repeat(130), "class Nested {".repeat(130)] {
         let parse = parse_kotlin_file(&source);
         assert_eq!(
             parse

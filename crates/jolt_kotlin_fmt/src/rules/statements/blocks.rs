@@ -1,8 +1,7 @@
-use jolt_fmt_ir::{Doc, DocBuilder, LayoutDoc};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     Block, BlockItem, BlockItemList, BlockItemListElement, BlockItemListElementSyntax,
-    KotlinCommentKind, KotlinMalformedSyntax, KotlinSyntaxListPart, KotlinSyntaxToken,
-    KotlinSyntaxView, boundary_separator_removal_claim,
+    KotlinCommentKind, KotlinSyntaxListPart, KotlinSyntaxToken, boundary_separator_removal_claim,
 };
 use jolt_syntax::tokens_have_blank_line_between;
 
@@ -12,8 +11,7 @@ use crate::helpers::comments::{
     format_token, token_has_comments,
 };
 use crate::helpers::recovery::{
-    KotlinFormatDelimiter, KotlinFormatField, format_malformed, format_missing,
-    resolve_required_delimiter, resolve_required_field,
+    KotlinFormatDelimiter, KotlinFormatField, resolve_required_delimiter, resolve_required_field,
 };
 use jolt_fmt_ir::formatter_ignore::{
     FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
@@ -35,7 +33,7 @@ pub(crate) fn format_block<'source>(
 #[derive(Clone, Copy)]
 enum BlockContents<'source> {
     Empty,
-    Body(LayoutDoc<'source>),
+    Body(Doc<'source>),
 }
 
 fn format_block_contents<'source>(
@@ -44,19 +42,10 @@ fn format_block_contents<'source>(
     open: Option<&KotlinSyntaxToken<'source>>,
     close: Option<&KotlinSyntaxToken<'source>>,
 ) -> BlockContents<'source> {
-    let items = block.items();
-    let malformed_is_visible = matches!(
-        &items,
-        jolt_kotlin_syntax::KotlinSyntaxField::Malformed(malformed)
-            if malformed.first_token().is_some()
-    );
-    let items = match resolve_required_field(items, doc) {
+    let items = match resolve_required_field(block.items(), doc) {
         KotlinFormatField::Present(items) => items,
         KotlinFormatField::Malformed(malformed) => {
-            return BlockContents::Body(LayoutDoc::from_visibility(
-                malformed,
-                malformed_is_visible,
-            ));
+            return BlockContents::Body(malformed);
         }
     };
     let parts = collect_block_parts(doc, &items);
@@ -106,13 +95,6 @@ enum BlockPart<'source> {
         removed: Doc<'source>,
         visible: bool,
     },
-    Missing {
-        doc: Doc<'source>,
-    },
-    Malformed {
-        syntax: KotlinMalformedSyntax<'source>,
-        doc: Doc<'source>,
-    },
 }
 
 impl<'source> BlockPart<'source> {
@@ -120,8 +102,6 @@ impl<'source> BlockPart<'source> {
         match self {
             Self::Item(item) => item.first_token(),
             Self::Separator { token, .. } => Some(*token),
-            Self::Missing { .. } => None,
-            Self::Malformed { syntax, .. } => syntax.first_token(),
         }
     }
 
@@ -129,10 +109,6 @@ impl<'source> BlockPart<'source> {
         match self {
             Self::Item(item) => item.last_token(),
             Self::Separator { token, .. } => Some(*token),
-            Self::Missing { .. } => None,
-            Self::Malformed { syntax, .. } => {
-                syntax.syntax_node().and_then(|syntax| syntax.last_token())
-            }
         }
     }
 }
@@ -148,22 +124,11 @@ fn collect_block_parts<'source>(
             KotlinSyntaxListPart::Item(element) => {
                 block_element_part(doc, &mut preceding_item, element)
             }
-            KotlinSyntaxListPart::Missing(missing) => {
+            KotlinSyntaxListPart::Separator(_)
+            | KotlinSyntaxListPart::Missing(_)
+            | KotlinSyntaxListPart::Malformed(_) => {
                 preceding_item = None;
-                Some(BlockPart::Missing {
-                    doc: format_missing(&missing, doc),
-                })
-            }
-            KotlinSyntaxListPart::Malformed(malformed) => {
-                preceding_item = None;
-                Some(BlockPart::Malformed {
-                    doc: format_malformed(&malformed, doc),
-                    syntax: malformed,
-                })
-            }
-            KotlinSyntaxListPart::Separator(_) => {
-                preceding_item = None;
-                doc.block_on_invariant("typed Kotlin block list exposed a raw separator");
+                doc.block_on_invariant("typed Kotlin block list exposed a non-item part");
                 None
             }
         };
@@ -239,11 +204,6 @@ fn block_body_part<'source>(
             }
             *removed
         }
-        BlockPart::Missing { doc } => return BodyItem::invisible(*doc),
-        BlockPart::Malformed { doc, .. } if part.first_token().is_none() => {
-            return BodyItem::invisible(*doc);
-        }
-        BlockPart::Malformed { doc, .. } => *doc,
     };
     BodyItem::new(part_doc, block_item_separator(previous, part.first_token()))
 }
@@ -332,16 +292,7 @@ fn format_braced_body<'source>(
             );
             return doc.concat([open, close]);
         }
-        BlockContents::Body(LayoutDoc::ClaimOnly(claim)) => {
-            let close = format_delimiter(
-                doc,
-                close,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::Preserve,
-            );
-            return doc.concat([open, claim, close]);
-        }
-        BlockContents::Body(LayoutDoc::Visible(body)) => {
+        BlockContents::Body(body) => {
             let line = doc.hard_line();
             let body = doc.concat([line, body]);
             let body = doc.indent(body);
