@@ -106,27 +106,23 @@ pub(super) fn format_operator_spine<'source>(
                     && let (Some(operator), Some(right)) = (operator, right)
                 {
                     if let Some(run) = run.as_mut().filter(|run| {
-                        should_flatten_binary(operator.kind(), run.root_operator.kind())
+                        run.parts.last().is_some_and(|(root_operator, _)| {
+                            should_flatten_binary(operator.kind(), root_operator.kind())
+                        })
                     }) {
                         run.owner = binary;
-                        run.root_operator = operator;
-                        run.operators.push(operator);
-                        run.operands.push(right);
+                        run.parts.push((operator, right));
                         run.removed_parentheses.extend(parentheses);
                     } else {
                         formatted = finish_pending_binary_run(formatted, run.take(), doc);
-                        let mut operands = Vec::new();
-                        let mut operators = Vec::new();
+                        let mut parts = Vec::new();
                         let mut removed_parentheses = Vec::new();
-                        operands.push(current);
-                        operands.push(right);
-                        operators.push(operator);
+                        parts.push((operator, right));
                         removed_parentheses.extend(parentheses);
                         run = Some(PendingBinaryRun {
                             owner: binary,
-                            root_operator: operator,
-                            operands,
-                            operators,
+                            first_operand: current,
+                            parts,
                             removed_parentheses,
                         });
                     }
@@ -282,9 +278,8 @@ pub(super) fn format_postfix_expression<'source>(
 
 struct PendingBinaryRun<'source> {
     owner: BinaryExpression<'source>,
-    root_operator: JavaOperator<'source>,
-    operands: Vec<Expression<'source>>,
-    operators: Vec<JavaOperator<'source>>,
+    first_operand: Expression<'source>,
+    parts: Vec<(JavaOperator<'source>, Expression<'source>)>,
     removed_parentheses: Vec<ParenthesizedExpression<'source>>,
 }
 
@@ -296,15 +291,18 @@ fn finish_pending_binary_run<'source>(
     let Some(run) = run else {
         return formatted;
     };
-    let mut operands = run.operands.into_iter();
-    let Some(first_expression) = operands.next() else {
-        doc.block_on_invariant("Java binary run has no left operand");
+    let Some(root_operator_kind) = run
+        .parts
+        .last()
+        .map(|(root_operator, _)| root_operator.kind())
+    else {
+        doc.block_on_invariant("Java binary run has no operator and right operand");
         return Doc::nil();
     };
     let first = format_binary_operand_doc(
         &run.owner,
-        &first_expression,
-        run.root_operator.kind(),
+        &run.first_operand,
+        root_operator_kind,
         formatted,
         doc,
     );
@@ -320,7 +318,7 @@ fn finish_pending_binary_run<'source>(
                 rest.push(removed);
             }
         }
-        for (operator, operand) in run.operators.into_iter().zip(operands) {
+        for (operator, operand) in run.parts {
             let operand = format_binary_operand(&run.owner, &operand, operator.kind(), rest);
             let operator = format_operator_with_comments(&operator, rest);
             let item = binary_chain_item(operator, operand, rest);
