@@ -1,0 +1,22 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class NestedParentheses {
+  Object value = (((((input)))));
+}
+
+@Outer(value = @Middle(value = @Inner(value = (1 + (2));
+class FollowingDeclaration {}
+
+formatted:
+class NestedParentheses {
+  Object value = (((((input)))));
+}@Outer(value = @Middle(value = @Inner(value = (1 + (2));
+
+class FollowingDeclaration {
+}
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=unexpected token at top level

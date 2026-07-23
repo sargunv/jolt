@@ -11,15 +11,27 @@ pub(super) type ParseEvents = jolt_syntax::ParseEvents;
 pub(super) type TokenBuffer<'source> = jolt_syntax::TokenBuffer<'source, JavaLanguage>;
 pub(super) use jolt_syntax::TokenCursor;
 
-pub(super) struct Parser<'source>(pub jolt_syntax::Parser<'source, JavaLanguage>);
+pub(super) struct Parser<'source> {
+    pub(super) inner: jolt_syntax::Parser<'source, JavaLanguage>,
+    pub(super) parentheses: ParenthesisSummary,
+}
+
+#[derive(Default)]
+pub(super) struct ParenthesisSummary {
+    pub(super) base: usize,
+    pub(super) boundaries: Option<Vec<usize>>,
+}
 
 impl<'source> Parser<'source> {
     pub(super) fn new(source: &'source str) -> Self {
-        Self(jolt_syntax::Parser::new(source))
+        Self {
+            inner: jolt_syntax::Parser::new(source),
+            parentheses: ParenthesisSummary::default(),
+        }
     }
 
     pub(super) fn finish(self) -> ParseEvents {
-        self.0.finish()
+        self.inner.finish()
     }
 
     pub(super) fn expect_required(
@@ -53,13 +65,13 @@ impl<'source> Deref for Parser<'source> {
     type Target = jolt_syntax::Parser<'source, JavaLanguage>;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.inner
     }
 }
 
 impl DerefMut for Parser<'_> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+        &mut self.inner
     }
 }
 

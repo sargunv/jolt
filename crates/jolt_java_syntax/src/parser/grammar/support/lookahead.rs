@@ -4,13 +4,18 @@ use super::{
     is_primitive_type_start, is_type_argument_recovery_boundary, is_type_argument_value_start,
     missing_constructor_header_action, type_modifier_len,
 };
-use crate::parser::source::{TokenBuffer, TokenCursor};
+use crate::parser::source::{ParenthesisSummary, TokenBuffer, TokenCursor};
 
 impl<'source> Parser<'source> {
     pub(in crate::parser::grammar) fn lookahead(&mut self) -> JavaLookahead<'_, 'source> {
-        let source = self.source;
-        let cursor = self.fork_cursor();
-        JavaLookahead::new(source, &mut self.buffer, cursor)
+        let source = self.inner.source;
+        let cursor = self.inner.fork_cursor();
+        JavaLookahead::new(
+            source,
+            &mut self.inner.buffer,
+            cursor,
+            &mut self.parentheses,
+        )
     }
 }
 
@@ -18,6 +23,8 @@ pub(in crate::parser::grammar) struct JavaLookahead<'buffer, 'source> {
     source: &'source str,
     buffer: &'buffer mut TokenBuffer<'source>,
     cursor: TokenCursor,
+    base: TokenCursor,
+    parentheses: &'buffer mut ParenthesisSummary,
 }
 
 impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
@@ -25,11 +32,14 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         source: &'source str,
         buffer: &'buffer mut TokenBuffer<'source>,
         cursor: TokenCursor,
+        parentheses: &'buffer mut ParenthesisSummary,
     ) -> Self {
         Self {
             source,
             buffer,
             cursor,
+            base: cursor,
+            parentheses,
         }
     }
 
@@ -95,7 +105,8 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         }
 
         if self.at(JavaSyntaxKind::LParen) {
-            self.skip_balanced(JavaSyntaxKind::LParen, JavaSyntaxKind::RParen);
+            let after = self.parentheses.after(self.buffer, self.cursor, self.base);
+            self.cursor.seek_forward(after);
         }
 
         true
@@ -264,27 +275,6 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
             }
         }
         false
-    }
-
-    pub(in crate::parser::grammar) fn skip_balanced(
-        &mut self,
-        open: JavaSyntaxKind,
-        close: JavaSyntaxKind,
-    ) {
-        let mut depth = 0usize;
-        while !self.at_eof() {
-            if self.at(open) {
-                depth += 1;
-            } else if self.at(close) {
-                depth = depth.saturating_sub(1);
-                self.bump();
-                if depth == 0 {
-                    return;
-                }
-                continue;
-            }
-            self.bump();
-        }
     }
 
     pub(in crate::parser::grammar) fn skip_type(&mut self) -> bool {
