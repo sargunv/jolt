@@ -975,7 +975,7 @@ ready for review.
 | 12  | `cleanup/12-java-lookahead`              | draft open | PR 11  | [#14](https://github.com/sargunv/jolt/pull/14) | full + release + benchmark | Local deletion; cache frameworks rejected.       |
 | 13  | `cleanup/13-java-comment-conservation`   | draft open | PR 12  | [#15](https://github.com/sargunv/jolt/pull/15) | full + release + benchmark | Localize Java comment and separator ownership.   |
 | 14  | `cleanup/14-final-reconciliation`        | draft open | PR 13  | [#16](https://github.com/sargunv/jolt/pull/16) | full + static checks       | Actual docs, metrics, and API deletions only.    |
-| 15  | `cleanup/15-modifier-presence`           | ready      | PR 14  | —                                              | full + static checks       | Syntax-owned modifier layout presence.           |
+| 15  | `cleanup/15-modifier-presence`           | ready      | PR 14  | —                                              | full + benchmark           | Syntax-owned modifier layout presence.           |
 | 16  | `cleanup/16-recovery-layout-parts`       | planned    | PR 15  | —                                              | —                          | Barrier-aware visible/claim-only layout.         |
 | 17  | `cleanup/17-ignore-boundary-ownership`   | planned    | PR 16  | —                                              | —                          | Delete raw EOF ignore-range projections.         |
 | 18  | `cleanup/18-java-program-joining`        | planned    | PR 17  | —                                              | —                          | Reconcile root joining and marker ownership.     |
@@ -1653,10 +1653,17 @@ slices remove Java nodes and allocations or leave topology unchanged.
   annotation, type-use, receiver, varargs, and ellipsis presence leaks before
   publication. Visible syntax retains the existing output; tokenless recovery no
   longer injects or suppresses lexical spaces or line breaks.
-- Java formatter production Rust is +290/-253 lines (+37 net). The explicit
+- Java formatter production Rust is +314/-255 lines (+59 net). The explicit
   state closes the unfulfilled PR 01 promise and makes tokenless recovery
   behavior independent of document topology; no public API or cross-language
   framework was added.
+- The first consolidated implementation added one concat node per visible
+  prefix: +24,144 Java document nodes, +15 allocations, and +2,832,944 allocated
+  bytes. That result was rejected before publication. Terminal separators now
+  emit inside the existing concat. Against the pre-PR parent, the final Java
+  corpus has five fewer document nodes, identical child count, reserved memory,
+  allocation count, and allocation bytes; format median moved -0.38% and peak
+  RSS -139,264 bytes, both treated as neutral.
 - `mise run fix` passed workspace formatting, Clippy, dependency, native, and
   WASM checks. All 184 repository tests passed with zero skips, including both
   formatter corpora, recovery snapshots, imported-fixture idempotence/source
