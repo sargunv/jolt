@@ -45,23 +45,27 @@ pub(crate) struct VisibleDoc<'source> {
     pub(crate) visible: bool,
 }
 
+#[derive(Clone, Copy)]
+enum ModifierTerminal {
+    Prefix,
+    Inline {
+        forces_line: bool,
+        append_line: bool,
+    },
+}
+
 pub(crate) fn modifier_prefix_from_docs<'source>(
     doc: &mut DocBuilder<'source>,
     modifier_entries: Vec<ModifierEntry<'source>>,
     suppress_first_entry_leading: bool,
 ) -> Doc<'source> {
-    let (docs, visible, structured, forces_line) =
-        modifier_docs(doc, None, modifier_entries, suppress_first_entry_leading);
-    if visible && structured {
-        let separator = if forces_line {
-            doc.hard_line()
-        } else {
-            doc.space()
-        };
-        doc_concat!(doc, [docs, separator])
-    } else {
-        docs
-    }
+    modifier_docs(
+        doc,
+        None,
+        modifier_entries,
+        suppress_first_entry_leading,
+        ModifierTerminal::Prefix,
+    )
 }
 
 pub(crate) fn inline_modifier_prefix_from_docs<'source>(
@@ -72,25 +76,16 @@ pub(crate) fn inline_modifier_prefix_from_docs<'source>(
     terminal_forces_line: bool,
     append_terminal_line: bool,
 ) -> Doc<'source> {
-    let (docs, visible, structured, _) = modifier_docs(
+    modifier_docs(
         doc,
         annotations,
         modifier_entries,
         suppress_first_entry_leading,
-    );
-    if !visible {
-        docs
-    } else if append_terminal_line {
-        let line = doc.hard_line();
-        doc_concat!(doc, [docs, line])
-    } else if terminal_forces_line {
-        docs
-    } else if structured {
-        let space = doc.space();
-        doc_concat!(doc, [docs, space])
-    } else {
-        docs
-    }
+        ModifierTerminal::Inline {
+            forces_line: terminal_forces_line,
+            append_line: append_terminal_line,
+        },
+    )
 }
 
 fn modifier_docs<'source>(
@@ -98,12 +93,13 @@ fn modifier_docs<'source>(
     annotations: Option<VisibleDoc<'source>>,
     modifier_entries: Vec<ModifierEntry<'source>>,
     suppress_first_entry_leading: bool,
-) -> (Doc<'source>, bool, bool, bool) {
+    terminal: ModifierTerminal,
+) -> Doc<'source> {
     let modifier_entries = sorted_modifier_entries(modifier_entries);
     let mut visible = annotations.is_some_and(|annotations| annotations.visible);
     let mut previous_is_structured = visible;
     let mut previous_forces_line = false;
-    let docs = doc.concat_list(|docs| {
+    doc.concat_list(|docs| {
         if let Some(annotations) = annotations {
             docs.push(annotations.doc);
         }
@@ -136,8 +132,28 @@ fn modifier_docs<'source>(
                 previous_forces_line = entry_forces_line;
             }
         }
-    });
-    (docs, visible, previous_is_structured, previous_forces_line)
+        if !visible {
+            return;
+        }
+        let separator = match terminal {
+            ModifierTerminal::Prefix if previous_is_structured => Some(if previous_forces_line {
+                docs.hard_line()
+            } else {
+                docs.space()
+            }),
+            ModifierTerminal::Inline {
+                append_line: true, ..
+            } => Some(docs.hard_line()),
+            ModifierTerminal::Inline {
+                forces_line: false,
+                append_line: false,
+            } if previous_is_structured => Some(docs.space()),
+            ModifierTerminal::Prefix | ModifierTerminal::Inline { .. } => None,
+        };
+        if let Some(separator) = separator {
+            docs.push(separator);
+        }
+    })
 }
 
 fn sorted_modifier_entries(mut entries: Vec<ModifierEntry<'_>>) -> Vec<ModifierEntry<'_>> {
