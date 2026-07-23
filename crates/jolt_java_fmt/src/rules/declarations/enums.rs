@@ -304,8 +304,8 @@ fn enum_constant_entries<'source>(
                     doc.block_on_invariant("enum separator had no preceding constant");
                 }
             }
-            JavaFormatListPart::Malformed(malformed) => entries.push(FormattedEnumConstant {
-                doc: malformed,
+            JavaFormatListPart::Recovery(malformed) => entries.push(FormattedEnumConstant {
+                doc: malformed.doc(),
                 comma: None,
                 is_malformed: true,
             }),
@@ -477,7 +477,7 @@ fn format_enum_constant_annotations<'source>(
                 JavaFormatListPart::Item(annotation) => {
                     crate::rules::annotations::format_annotation(&annotation, docs)
                 }
-                JavaFormatListPart::Malformed(malformed) => malformed,
+                JavaFormatListPart::Recovery(malformed) => malformed.doc(),
                 JavaFormatListPart::Separator(separator) => {
                     docs.block_on_invariant("annotation list contained a separator");
                     format_token_with_comments(docs, &separator)

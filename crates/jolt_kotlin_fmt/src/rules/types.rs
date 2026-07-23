@@ -28,17 +28,15 @@ pub(crate) fn format_type_parameter_list<'source>(
     let close = resolve_required_delimiter(parameters.close_angle(), doc);
     let items = match resolve_required_field(parameters.entries(), doc) {
         KotlinFormatField::Present(entries) => {
-            physical_comma_list_items(doc, entries.parts(), |doc, parameter| CommaListItem {
-                doc: match parameter {
+            physical_comma_list_items(doc, entries.parts(), |doc, parameter| {
+                CommaListItem::visible(match parameter {
                     TypeParameterListEntry::TypeParameter(parameter) => {
                         format_type_parameter(doc, &parameter)
                     }
                     TypeParameterListEntry::BogusTypeParameter(bogus) => {
                         format_bogus_list_entry(doc, &bogus)
                     }
-                },
-                comma: None,
-                layout_visible: true,
+                })
             })
         }
         KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
@@ -62,17 +60,15 @@ pub(crate) fn format_type_constraint_list<'source>(
     });
     let items = match resolve_required_field(constraints.entries(), doc) {
         KotlinFormatField::Present(entries) => {
-            physical_comma_list_items(doc, entries.parts(), |doc, constraint| CommaListItem {
-                doc: match constraint {
+            physical_comma_list_items(doc, entries.parts(), |doc, constraint| {
+                CommaListItem::visible(match constraint {
                     TypeConstraintListEntry::TypeConstraint(constraint) => {
                         format_type_constraint(doc, &constraint)
                     }
                     TypeConstraintListEntry::BogusTypeConstraint(bogus) => {
                         format_bogus_list_entry(doc, &bogus)
                     }
-                },
-                comma: None,
-                layout_visible: true,
+                })
             })
         }
         KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
@@ -230,8 +226,7 @@ fn format_user_type<'source>(
                         );
                         docs.push(separator);
                     }
-                    KotlinFormatListPart::Malformed(recovery)
-                    | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
+                    KotlinFormatListPart::Recovery(recovery) => docs.push(recovery.doc()),
                 }
             }
         }),
@@ -258,8 +253,7 @@ fn format_user_type_segment<'source>(
                         "unexpected annotation separator: {:?}",
                         separator.kind()
                     )),
-                    KotlinFormatListPart::Malformed(recovery)
-                    | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
+                    KotlinFormatListPart::Recovery(recovery) => docs.push(recovery.doc()),
                 }
             }
         })
@@ -286,10 +280,8 @@ pub(crate) fn format_type_argument_list<'source>(
     let close = resolve_required_delimiter(arguments.close_angle(), doc);
     let items = match resolve_required_field(arguments.entries(), doc) {
         KotlinFormatField::Present(entries) => {
-            physical_comma_list_items(doc, entries.parts(), |doc, argument| CommaListItem {
-                doc: format_type_argument(doc, &argument),
-                comma: None,
-                layout_visible: true,
+            physical_comma_list_items(doc, entries.parts(), |doc, argument| {
+                CommaListItem::visible(format_type_argument(doc, &argument))
             })
         }
         KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
@@ -385,8 +377,7 @@ fn format_parenthesized_type<'source>(
                         "unexpected annotation separator: {:?}",
                         separator.kind()
                     )),
-                    KotlinFormatListPart::Malformed(recovery)
-                    | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
+                    KotlinFormatListPart::Recovery(recovery) => docs.push(recovery.doc()),
                 }
             }
         })
@@ -395,10 +386,8 @@ fn format_parenthesized_type<'source>(
     let close = resolve_required_delimiter(ty.close_paren(), doc);
     let items = match resolve_required_field(ty.entries(), doc) {
         KotlinFormatField::Present(entries) => {
-            physical_comma_list_items(doc, entries.parts(), |doc, entry| CommaListItem {
-                doc: format_function_type_parameter_entry(doc, &entry),
-                comma: None,
-                layout_visible: true,
+            physical_comma_list_items(doc, entries.parts(), |doc, entry| {
+                CommaListItem::visible(format_function_type_parameter_entry(doc, &entry))
             })
         }
         KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
@@ -538,10 +527,8 @@ fn format_context_function_type<'source>(
     let close = resolve_required_delimiter(ty.close_paren(), doc);
     let items = match resolve_required_field(ty.context_parameters(), doc) {
         KotlinFormatField::Present(entries) => {
-            physical_comma_list_items(doc, entries.parts(), |doc, entry| CommaListItem {
-                doc: format_function_type_parameter_entry(doc, &entry),
-                comma: None,
-                layout_visible: true,
+            physical_comma_list_items(doc, entries.parts(), |doc, entry| {
+                CommaListItem::visible(format_function_type_parameter_entry(doc, &entry))
             })
         }
         KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
@@ -638,8 +625,7 @@ pub(crate) fn format_modifier_sequence<'source>(
                     "unexpected modifier separator: {:?}",
                     separator.kind()
                 )),
-                KotlinFormatListPart::Malformed(recovery)
-                | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
+                KotlinFormatListPart::Recovery(recovery) => docs.push(recovery.doc()),
             }
         }
     })
@@ -658,11 +644,7 @@ fn format_role_token<'source>(
 }
 
 fn malformed_item(recovery: Doc<'_>) -> Vec<CommaListItem<'_>> {
-    vec![CommaListItem {
-        doc: recovery,
-        comma: None,
-        layout_visible: true,
-    }]
+    vec![CommaListItem::visible(recovery)]
 }
 
 pub(crate) fn format_bogus_list_entry<'source>(
@@ -680,7 +662,7 @@ fn format_indented_comma_items<'source>(
     let Some(first) = items.next() else {
         return doc.nil();
     };
-    let first_doc = first.doc;
+    let first_doc = first.doc();
     let mut previous_comma = first.comma;
     let rest = doc.concat_list(|rest| {
         for entry in items {
@@ -693,7 +675,7 @@ fn format_indented_comma_items<'source>(
                 let line = rest.line();
                 rest.push(line);
             }
-            rest.push(entry.doc);
+            rest.push(entry.doc());
             previous_comma = entry.comma;
         }
     });

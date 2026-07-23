@@ -106,10 +106,13 @@ pub(super) fn format_string_template_expression<'source>(
                     KotlinFormatListPart::Separator(separator) => {
                         format_token(docs, &separator, part_leading, TrailingTrivia::Preserve)
                     }
-                    KotlinFormatListPart::Malformed(recovery) => recovery,
-                    KotlinFormatListPart::Invisible(recovery) => {
-                        docs.push(recovery);
-                        continue;
+                    KotlinFormatListPart::Recovery(recovery) => {
+                        if recovery.is_visible() {
+                            recovery.doc()
+                        } else {
+                            docs.push(recovery.doc());
+                            continue;
+                        }
                     }
                 };
                 docs.push(part);

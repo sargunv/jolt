@@ -4,7 +4,9 @@
 //! in `jolt_fmt_ir::recovery`. This module owns Java field/list resolution
 //! against typed CST enums.
 
-use jolt_fmt_ir::{Doc, DocBuilder, FormatField, assemble_malformed_fragment};
+use jolt_fmt_ir::{
+    Doc, DocBuilder, FormatField, FormatListPart, LayoutDoc, assemble_malformed_fragment,
+};
 use jolt_java_syntax::{
     JavaMissingSyntax, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxToken, JavaSyntaxView,
 };
@@ -37,11 +39,8 @@ pub(crate) fn format_malformed<'source>(
     )
 }
 
-pub(crate) enum JavaFormatListPart<'source, T> {
-    Item(T),
-    Separator(JavaSyntaxToken<'source>),
-    Malformed(Doc<'source>),
-}
+pub(crate) type JavaFormatListPart<'source, T> =
+    FormatListPart<'source, T, JavaSyntaxToken<'source>>;
 
 /// A delimiter slot resolved without losing its exact source position.
 /// Required missing/malformed slots carry their recovery document; optional
@@ -75,32 +74,19 @@ pub(crate) fn resolve_list_part<'source, T>(
     part: JavaSyntaxListPart<'source, T>,
     doc: &mut DocBuilder<'source>,
 ) -> JavaFormatListPart<'source, T> {
-    resolve_list_part_with_visibility(part, doc, |_| false).0
-}
-
-pub(crate) fn resolve_list_part_with_visibility<'source, T>(
-    part: JavaSyntaxListPart<'source, T>,
-    doc: &mut DocBuilder<'source>,
-    item_is_visible: impl FnOnce(&T) -> bool,
-) -> (JavaFormatListPart<'source, T>, bool) {
     match part {
-        JavaSyntaxListPart::Item(item) => {
-            let visible = item_is_visible(&item);
-            (JavaFormatListPart::Item(item), visible)
+        JavaSyntaxListPart::Item(item) => JavaFormatListPart::Item(item),
+        JavaSyntaxListPart::Separator(separator) => JavaFormatListPart::Separator(separator),
+        JavaSyntaxListPart::Missing(missing) => {
+            JavaFormatListPart::Recovery(LayoutDoc::ClaimOnly(format_missing(&missing, doc)))
         }
-        JavaSyntaxListPart::Separator(separator) => {
-            (JavaFormatListPart::Separator(separator), true)
-        }
-        JavaSyntaxListPart::Missing(missing) => (
-            JavaFormatListPart::Malformed(format_missing(&missing, doc)),
-            false,
-        ),
         JavaSyntaxListPart::Malformed(malformed) => {
-            let visible = malformed.first_token().is_some();
-            (
-                JavaFormatListPart::Malformed(format_malformed(&malformed, doc)),
-                visible,
-            )
+            let recovery = format_malformed(&malformed, doc);
+            if malformed.first_token().is_some() {
+                JavaFormatListPart::Recovery(LayoutDoc::Visible(recovery))
+            } else {
+                JavaFormatListPart::Recovery(LayoutDoc::ClaimOnly(recovery))
+            }
         }
     }
 }

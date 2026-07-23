@@ -156,9 +156,8 @@ pub(crate) fn format_terminator_list<'source>(
                     docs.block_on_invariant("Kotlin terminator list contained a node");
                     continue;
                 }
-                KotlinFormatListPart::Malformed(recovery)
-                | KotlinFormatListPart::Invisible(recovery) => {
-                    docs.push(recovery);
+                KotlinFormatListPart::Recovery(recovery) => {
+                    docs.push(recovery.doc());
                     continue;
                 }
             };

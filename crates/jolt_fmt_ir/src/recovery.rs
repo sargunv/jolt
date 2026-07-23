@@ -1,10 +1,7 @@
 //! Shared recovery field scaffolding for language formatters.
 //!
-//! Language crates own field/list resolution against their typed CST enums and
-//! layout-specific recovery states such as Kotlin's invisible list parts. This
-//! module holds the pieces that are the same specification: present-or-malformed
-//! field results, and assembling a malformed verbatim fragment once boundary
-//! comments and neighbor tokens are known.
+//! Language crates own resolution against their typed CST enums. This module
+//! holds the shared resolved field/list shapes and malformed-fragment assembly.
 
 use jolt_syntax::{Language, SyntaxToken, SyntaxVerbatimCore};
 
@@ -16,6 +13,48 @@ use crate::{Doc, DocBuilder};
 pub enum FormatField<'source, T> {
     Present(T),
     Malformed(Doc<'source>),
+}
+
+/// A formatted document's contribution to surrounding layout.
+#[derive(Clone, Copy)]
+pub enum LayoutDoc<'source> {
+    Visible(Doc<'source>),
+    ClaimOnly(Doc<'source>),
+}
+
+impl<'source> LayoutDoc<'source> {
+    #[must_use]
+    pub const fn doc(self) -> Doc<'source> {
+        match self {
+            Self::Visible(doc) | Self::ClaimOnly(doc) => doc,
+        }
+    }
+
+    #[must_use]
+    pub const fn is_visible(self) -> bool {
+        matches!(self, Self::Visible(_))
+    }
+}
+
+/// One resolved physical syntax-list part.
+pub enum FormatListPart<'source, T, Separator> {
+    Item(T),
+    Separator(Separator),
+    Recovery(LayoutDoc<'source>),
+}
+
+impl<T, Separator> FormatListPart<'_, T, Separator> {
+    pub fn is_visible(
+        &self,
+        item_is_visible: impl FnOnce(&T) -> bool,
+        separator_is_visible: impl FnOnce(&Separator) -> bool,
+    ) -> bool {
+        match self {
+            Self::Item(item) => item_is_visible(item),
+            Self::Separator(separator) => separator_is_visible(separator),
+            Self::Recovery(recovery) => recovery.is_visible(),
+        }
+    }
 }
 
 /// Assembles leading comments + malformed verbatim + trailing comments with the

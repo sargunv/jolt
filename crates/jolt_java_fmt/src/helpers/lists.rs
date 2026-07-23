@@ -69,8 +69,8 @@ pub(crate) fn syntax_comma_list_items<'source, Entry>(
                     });
                 }
             }
-            JavaFormatListPart::Malformed(malformed) => items.push(CommaListItem {
-                doc: malformed,
+            JavaFormatListPart::Recovery(malformed) => items.push(CommaListItem {
+                doc: malformed.doc(),
                 comma: None,
             }),
         }

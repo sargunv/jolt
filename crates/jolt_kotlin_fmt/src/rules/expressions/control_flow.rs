@@ -94,10 +94,13 @@ pub(super) fn format_when_expression<'source>(
                 let part = match resolve_list_part(part, doc) {
                     KotlinFormatListPart::Item(element) => format_when_entry_element(doc, element),
                     KotlinFormatListPart::Separator(token) => format_plain_token(doc, token),
-                    KotlinFormatListPart::Malformed(recovery) => recovery,
-                    KotlinFormatListPart::Invisible(recovery) => {
-                        invisible.push(recovery);
-                        continue;
+                    KotlinFormatListPart::Recovery(recovery) => {
+                        if recovery.is_visible() {
+                            recovery.doc()
+                        } else {
+                            invisible.push(recovery.doc());
+                            continue;
+                        }
                     }
                 };
                 parts.push(part);
@@ -164,10 +167,8 @@ pub(super) fn format_try_expression<'source>(
                     KotlinFormatListPart::Separator(token) => {
                         (format_plain_token(docs, token), true)
                     }
-                    KotlinFormatListPart::Malformed(recovery) => (recovery, true),
-                    KotlinFormatListPart::Invisible(recovery) => {
-                        docs.push(recovery);
-                        continue;
+                    KotlinFormatListPart::Recovery(recovery) => {
+                        (recovery.doc(), recovery.is_visible())
                     }
                 };
                 if visible {
@@ -551,24 +552,20 @@ fn format_when_conditions<'source>(
     match resolve_required_field(entry.conditions(), doc) {
         KotlinFormatField::Present(conditions) => {
             let items = physical_comma_list_items(doc, conditions.parts(), |doc, condition| {
-                CommaListItem {
-                    doc: match condition {
-                        WhenConditionSyntax::WhenCondition(condition) => {
-                            format_when_condition(doc, &condition)
-                        }
-                        WhenConditionSyntax::WhenGuard(guard) => format_when_guard(doc, &guard),
-                        WhenConditionSyntax::BogusWhenCondition(bogus) => {
-                            crate::helpers::recovery::format_malformed(&bogus, doc)
-                        }
-                    },
-                    comma: None,
-                    layout_visible: true,
-                }
+                CommaListItem::visible(match condition {
+                    WhenConditionSyntax::WhenCondition(condition) => {
+                        format_when_condition(doc, &condition)
+                    }
+                    WhenConditionSyntax::WhenGuard(guard) => format_when_guard(doc, &guard),
+                    WhenConditionSyntax::BogusWhenCondition(bogus) => {
+                        crate::helpers::recovery::format_malformed(&bogus, doc)
+                    }
+                })
             });
             let mut items = items.into_iter().peekable();
             doc.concat_list(|docs| {
                 while let Some(item) = items.next() {
-                    docs.push(item.doc);
+                    docs.push(item.doc());
                     if let Some(comma) = item.comma {
                         let comma = format_token(
                             docs,

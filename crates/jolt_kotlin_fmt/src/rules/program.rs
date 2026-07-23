@@ -338,8 +338,13 @@ fn format_file_annotations<'source>(
                 LeadingTrivia::Preserve,
                 TrailingTrivia::Preserve,
             )),
-            KotlinFormatListPart::Malformed(recovery) => formatted.push(recovery),
-            KotlinFormatListPart::Invisible(recovery) => invisible.push(recovery),
+            KotlinFormatListPart::Recovery(recovery) => {
+                if recovery.is_visible() {
+                    formatted.push(recovery.doc());
+                } else {
+                    invisible.push(recovery.doc());
+                }
+            }
         }
     }
     let invisible = doc.concat(invisible);

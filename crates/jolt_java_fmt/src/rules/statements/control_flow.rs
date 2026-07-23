@@ -516,8 +516,8 @@ fn format_statement_expression_list<'source>(
                     let comma = format_separator_with_comments(docs, &comma, space);
                     docs.push(comma);
                 }
-                crate::helpers::recovery::JavaFormatListPart::Malformed(recovery) => {
-                    docs.push(recovery);
+                crate::helpers::recovery::JavaFormatListPart::Recovery(recovery) => {
+                    docs.push(recovery.doc());
                 }
             }
         }

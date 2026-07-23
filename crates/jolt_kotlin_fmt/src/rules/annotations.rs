@@ -7,9 +7,7 @@ use jolt_kotlin_syntax::{
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_token, trailing_comments_force_line,
 };
-use crate::helpers::lists::{
-    CommaListItem, annotation_parenthesized_list, delimited_comma_list, push_recovery_item,
-};
+use crate::helpers::lists::{CommaListItem, annotation_parenthesized_list, delimited_comma_list};
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_optional_field, format_required_field,
     join_delimited_recovery, resolve_list_part, resolve_required_delimiter, resolve_required_field,
@@ -130,11 +128,7 @@ fn annotation_argument_list_items<'source>(
     let entries = match resolve_required_field(arguments.entries(), doc) {
         KotlinFormatField::Present(entries) => entries,
         KotlinFormatField::Malformed(recovery) => {
-            return vec![CommaListItem {
-                doc: recovery,
-                comma: None,
-                layout_visible: true,
-            }];
+            return vec![CommaListItem::visible(recovery)];
         }
     };
 
@@ -150,35 +144,24 @@ fn annotation_argument_list_items<'source>(
                         crate::helpers::recovery::format_malformed(&bogus, doc)
                     }
                 };
-                items.push(CommaListItem {
-                    doc: formatted,
-                    comma: None,
-                    layout_visible: true,
-                });
+                items.push(CommaListItem::visible(formatted));
             }
             KotlinFormatListPart::Separator(comma) => {
-                if let Some(item) = items.iter_mut().rev().find(|item| item.layout_visible)
+                if let Some(item) = items.iter_mut().rev().find(|item| item.is_visible())
                     && item.comma.is_none()
                 {
                     item.comma = Some(comma);
                 } else {
-                    items.push(CommaListItem {
-                        doc: format_token(
-                            doc,
-                            &comma,
-                            LeadingTrivia::Preserve,
-                            TrailingTrivia::Preserve,
-                        ),
-                        comma: None,
-                        layout_visible: true,
-                    });
+                    items.push(CommaListItem::visible(format_token(
+                        doc,
+                        &comma,
+                        LeadingTrivia::Preserve,
+                        TrailingTrivia::Preserve,
+                    )));
                 }
             }
-            KotlinFormatListPart::Malformed(recovery) => {
-                push_recovery_item(&mut items, recovery, true);
-            }
-            KotlinFormatListPart::Invisible(recovery) => {
-                push_recovery_item(&mut items, recovery, false);
+            KotlinFormatListPart::Recovery(recovery) => {
+                items.push(CommaListItem::recovery(recovery));
             }
         }
     }

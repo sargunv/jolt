@@ -332,8 +332,8 @@ fn format_record_components<'source>(
                             );
                         }
                     }
-                    JavaFormatListPart::Malformed(malformed) => items.push(CommaListItem {
-                        doc: malformed,
+                    JavaFormatListPart::Recovery(malformed) => items.push(CommaListItem {
+                        doc: malformed.doc(),
                         comma: None,
                     }),
                 }
@@ -402,8 +402,8 @@ fn format_permits<'source>(
                     item.comma = Some(comma);
                 }
             }
-            JavaFormatListPart::Malformed(malformed) => items.push(CommaListItem {
-                doc: malformed,
+            JavaFormatListPart::Recovery(malformed) => items.push(CommaListItem {
+                doc: malformed.doc(),
                 comma: None,
             }),
         }
@@ -478,8 +478,8 @@ fn format_type_clause<'source>(
                     item.comma = Some(comma);
                 }
             }
-            JavaFormatListPart::Malformed(malformed) => items.push(CommaListItem {
-                doc: malformed,
+            JavaFormatListPart::Recovery(malformed) => items.push(CommaListItem {
+                doc: malformed.doc(),
                 comma: None,
             }),
         }

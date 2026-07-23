@@ -25,24 +25,18 @@ pub(crate) fn format_value_parameter_list<'source>(
     let close = resolve_required_delimiter(list.close_paren(), doc);
     let items = match resolve_required_field(list.entries(), doc) {
         KotlinFormatField::Present(entries) => {
-            physical_comma_list_items(doc, entries.parts(), |doc, parameter| CommaListItem {
-                doc: match parameter {
+            physical_comma_list_items(doc, entries.parts(), |doc, parameter| {
+                CommaListItem::visible(match parameter {
                     ValueParameterListEntry::ValueParameter(parameter) => {
                         format_value_parameter(doc, &parameter)
                     }
                     ValueParameterListEntry::BogusValueParameter(bogus) => {
                         format_bogus_list_entry(doc, &bogus)
                     }
-                },
-                comma: None,
-                layout_visible: true,
+                })
             })
         }
-        KotlinFormatField::Malformed(recovery) => vec![CommaListItem {
-            doc: recovery,
-            comma: None,
-            layout_visible: true,
-        }],
+        KotlinFormatField::Malformed(recovery) => vec![CommaListItem::visible(recovery)],
     };
     let list = delimited_comma_list(doc, open.source(), close.source(), items);
     join_delimited_recovery(doc, &open, list, &close)

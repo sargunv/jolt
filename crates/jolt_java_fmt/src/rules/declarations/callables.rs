@@ -262,7 +262,7 @@ fn format_optional_annotation_list<'source>(
                         docs.block_on_invariant("annotation list had a separator");
                         format_token_with_comments(docs, &separator)
                     }
-                    JavaFormatListPart::Malformed(recovery) => recovery,
+                    JavaFormatListPart::Recovery(recovery) => recovery.doc(),
                 };
                 docs.push(part);
             }
@@ -374,8 +374,8 @@ fn parameter_list_items<'source, 'fmt>(
                     doc.block_on_invariant("formal parameter separator had no preceding item");
                 }
             }
-            JavaFormatListPart::Malformed(malformed) => items.push(CommaListItem {
-                doc: malformed,
+            JavaFormatListPart::Recovery(malformed) => items.push(CommaListItem {
+                doc: malformed.doc(),
                 comma: None,
             }),
         }
@@ -485,10 +485,10 @@ fn format_throws_entry<'source>(
         JavaFormatListPart::Separator(token) => {
             format_throws_entry_separator(doc, Some(*token), has_next)
         }
-        JavaFormatListPart::Malformed(malformed) => doc_concat!(
+        JavaFormatListPart::Recovery(malformed) => doc_concat!(
             doc,
             [
-                *malformed,
+                malformed.doc(),
                 format_throws_entry_separator(doc, None, has_next && !next_is_separator),
             ]
         ),

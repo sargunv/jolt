@@ -472,7 +472,7 @@ fn format_requires<'source>(
                     JavaFormatListPart::Separator(token) => {
                         (format_token_with_comments(parts, &token), false)
                     }
-                    JavaFormatListPart::Malformed(raw) => (raw, false),
+                    JavaFormatListPart::Recovery(raw) => (raw.doc(), false),
                 };
                 if previous_was_structured && structured {
                     let space = parts.space();
@@ -507,7 +507,7 @@ fn sort_requires_modifier_runs<'source>(
         JavaFormatListPart::Item(modifier) => modifier
             .token()
             .is_some_and(|token| !token_has_comments(&token)),
-        JavaFormatListPart::Separator(_) | JavaFormatListPart::Malformed(_) => false,
+        JavaFormatListPart::Separator(_) | JavaFormatListPart::Recovery(_) => false,
     });
     if sortable {
         parts.sort_by_key(requires_modifier_order);
@@ -526,7 +526,7 @@ fn requires_modifier_order(
             0
         }
         JavaFormatListPart::Item(_) => 1,
-        JavaFormatListPart::Separator(_) | JavaFormatListPart::Malformed(_) => 2,
+        JavaFormatListPart::Separator(_) | JavaFormatListPart::Recovery(_) => 2,
     }
 }
 

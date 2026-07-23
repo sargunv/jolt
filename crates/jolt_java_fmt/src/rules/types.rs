@@ -125,7 +125,7 @@ pub(crate) fn format_array_dimensions<'source>(
                 JavaFormatListPart::Separator(separator) => {
                     format_token_with_comments(docs, &separator)
                 }
-                JavaFormatListPart::Malformed(recovery) => recovery,
+                JavaFormatListPart::Recovery(recovery) => recovery.doc(),
             };
             docs.push(part);
         }
@@ -201,7 +201,7 @@ fn format_class_type<'source>(
                         format_class_type_segment(&segment, comments, docs)
                     }
                     JavaFormatListPart::Separator(dot) => format_token_with_comments(docs, &dot),
-                    JavaFormatListPart::Malformed(recovery) => recovery,
+                    JavaFormatListPart::Recovery(recovery) => recovery.doc(),
                 };
                 docs.push(part);
             }
@@ -258,7 +258,7 @@ fn format_type_name<'source>(
                                 JavaFormatListPart::Separator(dot) => {
                                     format_token_with_comments(docs, &dot)
                                 }
-                                JavaFormatListPart::Malformed(recovery) => recovery,
+                                JavaFormatListPart::Recovery(recovery) => recovery.doc(),
                             };
                             docs.push(part);
                         }
@@ -404,9 +404,9 @@ fn format_type_operator_list<'source>(
                     indent_next = type_operator_forces_line(&separator);
                     format_type_operator_separator(&separator, docs)
                 }
-                JavaFormatListPart::Malformed(recovery) => {
+                JavaFormatListPart::Recovery(recovery) => {
                     indent_next = false;
-                    recovery
+                    recovery.doc()
                 }
             };
             docs.push(part);
@@ -542,7 +542,7 @@ fn format_inline_annotation_parts_impl<'source>(
                 JavaFormatListPart::Separator(separator) => {
                     format_token_with_comments(docs, &separator)
                 }
-                JavaFormatListPart::Malformed(recovery) => recovery,
+                JavaFormatListPart::Recovery(recovery) => recovery.doc(),
             };
             docs.push(part);
         }

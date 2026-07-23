@@ -13,8 +13,7 @@ use crate::helpers::blocks::BodyItem;
 use crate::helpers::comments::token_has_comments;
 use crate::helpers::recovery::{
     JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_malformed, resolve_list_part,
-    resolve_list_part_with_visibility, resolve_optional_field, resolve_required_delimiter,
-    resolve_required_field,
+    resolve_optional_field, resolve_required_delimiter, resolve_required_field,
 };
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{
@@ -69,8 +68,8 @@ pub(crate) fn format_switch_block<'source>(
     let mut has_body = false;
     let body = doc.concat_list(|docs| {
         for part in entries.parts() {
-            let (part, visible) =
-                resolve_list_part_with_visibility(part, docs, |item| item.first_token().is_some());
+            let part = resolve_list_part(part, docs);
+            let visible = part.is_visible(|item| item.first_token().is_some(), |_| true);
             let entry = match part {
                 JavaFormatListPart::Item(entry) => match entry {
                     SwitchEntrySyntax::SwitchBlockStatementGroup(group) => {
@@ -79,7 +78,7 @@ pub(crate) fn format_switch_block<'source>(
                     SwitchEntrySyntax::SwitchRule(rule) => format_switch_rule(&rule, docs),
                     SwitchEntrySyntax::BogusSwitchEntry(bogus) => format_malformed(&bogus, docs),
                 },
-                JavaFormatListPart::Malformed(malformed) => malformed,
+                JavaFormatListPart::Recovery(malformed) => malformed.doc(),
                 JavaFormatListPart::Separator(separator) => {
                     docs.block_on_invariant("unseparated switch entry list had a separator");
                     format_token_with_comments(docs, &separator)
@@ -187,8 +186,8 @@ fn format_switch_group_labels<'source>(
     let labels_doc = doc.concat_list(|docs| {
         let mut pending: Option<(Doc<'source>, bool)> = None;
         for part in parts {
-            let (part, part_is_visible) =
-                resolve_list_part_with_visibility(part, docs, |item| item.first_token().is_some());
+            let part = resolve_list_part(part, docs);
+            let part_is_visible = part.is_visible(|item| item.first_token().is_some(), |_| true);
             match part {
                 JavaFormatListPart::Item(label) => {
                     if let Some((previous, previous_is_visible)) = pending.take() {
@@ -220,12 +219,12 @@ fn format_switch_group_labels<'source>(
                     docs.push(formatted);
                     has_visible_output = true;
                 }
-                JavaFormatListPart::Malformed(malformed) => {
+                JavaFormatListPart::Recovery(malformed) => {
                     if let Some((previous, previous_is_visible)) = pending.take() {
                         docs.push(previous);
                         has_visible_output |= previous_is_visible;
                     }
-                    docs.push(malformed);
+                    docs.push(malformed.doc());
                     has_visible_output |= part_is_visible;
                 }
             }
@@ -520,12 +519,12 @@ fn format_switch_label_items<'source>(
                     docs.push(comma);
                     need_line = false;
                 }
-                JavaFormatListPart::Malformed(value) => {
+                JavaFormatListPart::Recovery(value) => {
                     if need_line {
                         let line = docs.line();
                         docs.push(line);
                     }
-                    docs.push(value);
+                    docs.push(value.doc());
                     need_line = true;
                 }
             }

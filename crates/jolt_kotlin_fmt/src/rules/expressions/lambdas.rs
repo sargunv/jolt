@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
+use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder, LayoutDoc};
 use jolt_kotlin_syntax::{
     KotlinSyntaxField, KotlinSyntaxView, LabeledLambdaExpression, LambdaBody, LambdaBodyItemSyntax,
     LambdaExpression, LambdaForm, LambdaParameter, LambdaParameterBindingSyntax,
@@ -155,24 +155,32 @@ fn format_lambda_parameter_prefix<'source>(
     );
     let items = match resolve_required_field(parameters, doc) {
         KotlinFormatField::Present(parameters) => {
-            physical_comma_list_items(doc, parameters.parts(), |doc, parameter| CommaListItem {
-                layout_visible: parameter.first_token().is_some(),
-                doc: match parameter {
+            physical_comma_list_items(doc, parameters.parts(), |doc, parameter| {
+                let visible = parameter.first_token().is_some();
+                let parameter = match parameter {
                     LambdaParameterListEntry::LambdaParameter(parameter) => {
                         format_lambda_parameter(doc, &parameter)
                     }
                     LambdaParameterListEntry::BogusLambdaParameter(bogus) => {
                         crate::helpers::recovery::format_malformed(&bogus, doc)
                     }
-                },
-                comma: None,
+                };
+                let layout = if visible {
+                    LayoutDoc::Visible(parameter)
+                } else {
+                    LayoutDoc::ClaimOnly(parameter)
+                };
+                CommaListItem::recovery(layout)
             })
         }
-        KotlinFormatField::Malformed(recovery) => vec![CommaListItem {
-            layout_visible: malformed_is_visible,
-            doc: recovery,
-            comma: None,
-        }],
+        KotlinFormatField::Malformed(recovery) => {
+            let layout = if malformed_is_visible {
+                LayoutDoc::Visible(recovery)
+            } else {
+                LayoutDoc::ClaimOnly(recovery)
+            };
+            vec![CommaListItem::recovery(layout)]
+        }
     };
     let arrow = format_required_field(parameter_list.arrow(), doc, |arrow, doc| {
         format_token(
@@ -182,12 +190,12 @@ fn format_lambda_parameter_prefix<'source>(
             TrailingTrivia::RelocatedToEnclosingContext,
         )
     });
-    let visible_item_count = items.iter().filter(|item| item.layout_visible).count();
+    let visible_item_count = items.iter().filter(|item| item.is_visible()).count();
     doc.concat_list(|docs| {
         let mut visible_index = 0;
         for item in items {
-            docs.push(item.doc);
-            if !item.layout_visible {
+            docs.push(item.doc());
+            if !item.is_visible() {
                 continue;
             }
             if let Some(comma) = item.comma {
@@ -290,10 +298,8 @@ pub(super) fn lambda_body_doc<'source>(
                         ));
                         (Doc::nil(), false)
                     }
-                    KotlinFormatListPart::Malformed(recovery) => (recovery, true),
-                    KotlinFormatListPart::Invisible(recovery) => {
-                        docs.push(recovery);
-                        continue;
+                    KotlinFormatListPart::Recovery(recovery) => {
+                        (recovery.doc(), recovery.is_visible())
                     }
                 };
                 if layout_visible {
