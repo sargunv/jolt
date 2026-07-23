@@ -784,23 +784,23 @@ This table is the source of truth after a context compaction. Update it whenever
 a branch is created, a PR is opened, scope changes, a gate fails, or a PR is
 ready for review.
 
-| PR  | Branch                                   | Status      | Parent | Draft PR                                       | Verification               | Notes                                            |
-| --- | ---------------------------------------- | ----------- | ------ | ---------------------------------------------- | -------------------------- | ------------------------------------------------ |
-| 00  | `cleanup/00-plan-and-gates`              | draft open  | `main` | [#2](https://github.com/sargunv/jolt/pull/2)   | baseline audit complete    | Durable plan and gates only.                     |
-| 01  | `cleanup/01-doc-semantics`               | draft open  | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3)   | debug/release + benchmark  | Profile-independent topology/presence.           |
-| 02  | `cleanup/02-formatter-ignore-plan`       | draft open  | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4)   | debug/release + benchmark  | Root plan with bounded immutable queries.        |
-| 03  | `cleanup/03-infallible-generated-fields` | draft open  | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5)   | debug/release + benchmark  | Generated physical slots only.                   |
-| 04  | `cleanup/04-syntax-recovery-visibility`  | draft open  | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6)   | full + release + benchmark | Syntax-owned malformed lexical boundaries.       |
-| 05  | `cleanup/05-root-coordination`           | draft open  | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7)   | full + release + benchmark | Narrow root ownership, no god context.           |
-| 06  | `cleanup/06-source-audit-reporting`      | draft open  | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8)   | full + release + benchmark | Syntax claims replace filename/count policy.     |
-| 07  | `cleanup/07-core-module-boundaries`      | draft open  | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9)   | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.     |
-| 08a | `cleanup/08a-renderer-boundaries`        | draft open  | PR 07  | [#10](https://github.com/sargunv/jolt/pull/10) | full + release + benchmark | Kept hot loop concrete; deleted duplicate state. |
-| 08b | `cleanup/08b-renderer-audit-pass`        | rejected    | PR 08a | —                                              | design audit complete      | Exact single pass requires an output trace.      |
-| 09  | `cleanup/09-kotlin-rules`                | draft open  | PR 08a | [#11](https://github.com/sargunv/jolt/pull/11) | full + release + benchmark | Rule state and helper indirection deleted.       |
-| 10  | `cleanup/10-java-rules`                  | draft open  | PR 09  | [#12](https://github.com/sargunv/jolt/pull/12) | full + release + benchmark | Total rules and native module parts.             |
-| 11  | `cleanup/11-lexer-substrate`             | draft open  | PR 10  | [#13](https://github.com/sargunv/jolt/pull/13) | full + release + benchmark | Shared cursor rejected; local scans are bounded. |
-| 12  | `cleanup/12-java-lookahead`              | in progress | PR 11  | —                                              | —                          | Auditing repeated grammar work before design.    |
-| 13  | `cleanup/13-final-reconciliation`        | planned     | PR 12  | —                                              | —                          | Actual docs, metrics, and API deletions only.    |
+| PR  | Branch                                   | Status     | Parent | Draft PR                                       | Verification               | Notes                                            |
+| --- | ---------------------------------------- | ---------- | ------ | ---------------------------------------------- | -------------------------- | ------------------------------------------------ |
+| 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2)   | baseline audit complete    | Durable plan and gates only.                     |
+| 01  | `cleanup/01-doc-semantics`               | draft open | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3)   | debug/release + benchmark  | Profile-independent topology/presence.           |
+| 02  | `cleanup/02-formatter-ignore-plan`       | draft open | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4)   | debug/release + benchmark  | Root plan with bounded immutable queries.        |
+| 03  | `cleanup/03-infallible-generated-fields` | draft open | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5)   | debug/release + benchmark  | Generated physical slots only.                   |
+| 04  | `cleanup/04-syntax-recovery-visibility`  | draft open | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6)   | full + release + benchmark | Syntax-owned malformed lexical boundaries.       |
+| 05  | `cleanup/05-root-coordination`           | draft open | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7)   | full + release + benchmark | Narrow root ownership, no god context.           |
+| 06  | `cleanup/06-source-audit-reporting`      | draft open | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8)   | full + release + benchmark | Syntax claims replace filename/count policy.     |
+| 07  | `cleanup/07-core-module-boundaries`      | draft open | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9)   | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.     |
+| 08a | `cleanup/08a-renderer-boundaries`        | draft open | PR 07  | [#10](https://github.com/sargunv/jolt/pull/10) | full + release + benchmark | Kept hot loop concrete; deleted duplicate state. |
+| 08b | `cleanup/08b-renderer-audit-pass`        | rejected   | PR 08a | —                                              | design audit complete      | Exact single pass requires an output trace.      |
+| 09  | `cleanup/09-kotlin-rules`                | draft open | PR 08a | [#11](https://github.com/sargunv/jolt/pull/11) | full + release + benchmark | Rule state and helper indirection deleted.       |
+| 10  | `cleanup/10-java-rules`                  | draft open | PR 09  | [#12](https://github.com/sargunv/jolt/pull/12) | full + release + benchmark | Total rules and native module parts.             |
+| 11  | `cleanup/11-lexer-substrate`             | draft open | PR 10  | [#13](https://github.com/sargunv/jolt/pull/13) | full + release + benchmark | Shared cursor rejected; local scans are bounded. |
+| 12  | `cleanup/12-java-lookahead`              | draft open | PR 11  | [#14](https://github.com/sargunv/jolt/pull/14) | full + release + benchmark | Local deletion; cache frameworks rejected.       |
+| 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                              | —                          | Actual docs, metrics, and API deletions only.    |
 
 ### PR 01 evidence
 
@@ -1321,6 +1321,40 @@ ready for review.
 - The non-PGO native CLI shrank from 5,923,408 to 5,919,472 bytes (-0.07%). The
   optimized WASM plugin shrank from 1,759,618 to 1,758,605 bytes (-0.06%), with
   SHA-256 `88e74840fd1cc89bfe575d86281026ec8471ae58f7231f6945672da4cbbe525a`.
+
+### PR 12 evidence
+
+- Duplicate typed-lambda and cast probes, top/local type-declaration predicates,
+  the resource-variable alias, module cursor replay, five wrapper-only offset
+  helpers, and repeated primitive/literal token taxonomies are deleted. One
+  private `PatternStart` decision replaces up to three pattern-prefix probes and
+  is passed directly into its consuming grammar.
+- Production Rust is +112/-220 lines (-108 net). Tests add no source, state, or
+  fixture. Including the durable audit and decision ledger, the whole PR is
+  +196/-241 lines (-45 net). No public API, CST schema, parser cache, or
+  compatibility path is added.
+- Measured parenthesis-summary, annotation-start-memo, and member-header
+  classifier prototypes were rejected and fully reverted. The first added 80
+  production lines and 3.75% realistic parse allocations; the second did not
+  bound a single deeply nested annotation; the third had to restart the same
+  precedence-sensitive probes it purported to classify.
+- The retained grammar still has known `Theta(n^2)` nested ordinary-parenthesis
+  lambda rejection and malformed nested-annotation recovery. Generic-type
+  lookahead and its consuming grammar both retain recursive input depth. PR 12
+  records these costs explicitly rather than hiding them behind a generic cache
+  or claiming an asymptotic improvement it did not achieve.
+- Repository-defined Ona automation passed all 184 workspace tests with zero
+  skips. `mise run fix`, complete Java syntax/formatter release suites, strict
+  workspace Clippy, dependency and WASM checks, the architecture benchmark, and
+  the 9,899-file PGO build passed with no output or snapshot delta.
+- Against PR 11 on the same machine and 9,206-file Java corpus, realistic parse
+  median moved 1,020.168 to 1,033.988 ms (+1.35%, treated as run noise). Parse
+  allocations are exactly unchanged at 109,539 and 1,288,505,194 bytes; peak RSS
+  moved 64,253,952 to 64,303,104 bytes (+48 KiB). Syntax/document structure is
+  unchanged.
+- The non-PGO native CLI shrank from 5,919,472 to 5,917,176 bytes (-0.04%). The
+  optimized WASM plugin shrank from 1,758,605 to 1,757,814 bytes (-0.04%), with
+  SHA-256 `32fa2028a827adc33b606ac8a08c116c8951e91cae4189697a01c1d225832b16`.
 
 ## Decision Log
 
