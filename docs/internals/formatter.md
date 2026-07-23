@@ -18,7 +18,7 @@ After parsing, `jolt_fmt_ir::format_root_to_sink` owns the shared lifetime of
 one formatting run:
 
 1. Discover formatter-ignore ranges at the syntax root.
-2. Create one root `DocBuilder` and install the immutable ignore plan.
+2. Create one root `DocBuilder` with the immutable ignore plan.
 3. Invoke the language's root layout function.
 4. Freeze the builder into its document arena.
 5. Render the selected layouts to the sink and map completion, early halt, or a
@@ -53,6 +53,56 @@ Valid represented syntax is always formatted structurally. Verbatim output is
 reserved for a syntax-owned malformed core and for a parser-backed
 formatter-ignore range; an unhandled valid node or a formatter failure does not
 fall back to source replay.
+
+## Finite input depth and work
+
+Formatting starts by parsing the source, so its finite-cost contract has parser
+and CST-layout parts. Parser recursion is charged only at grammar owners that
+can re-enter a recursive cycle. Java and Kotlin allow 128 active recursive
+owners. Java generic lookahead and consuming grammar retain a counter separate
+from other Java syntax owners because speculative and consuming decisions must
+agree, but both counters use that one policy value. Parser loops that build
+binary, member, call, and type-suffix spines do not spend these budgets because
+they do not grow the native or WASM call stack.
+
+When an owner budget is exhausted, the syntax crate uses a borrowed,
+allocation-free token scan to a documented enclosing recovery boundary. Recovery
+is syntax-shape specific: ordinary expressions and most types become one
+diagnostic-owned bogus subtree; an excessive Java generic argument and a Kotlin
+required function-type slot retain their required outer shape around malformed
+content. Array initializers, type bodies, blocks, and class bodies retain their
+real delimiters and required list shape around one bogus child. Java statement
+overflow deliberately coarsens unsupported siblings and control tails through
+the enclosing body boundary, but leaves that body's closing brace and following
+syntax to their real owners. Every shape preserves all consumed tokens and
+trivia. The formatter receives that ordinary represented recovery structure; it
+does not impose another depth limit or synthesize a repair.
+
+Java's repeated parenthesis and annotation lookahead has a separate work bound.
+The first relevant query builds one exact table for the remaining token suffix.
+`(` entries record the position after their matching close, and queried `@`
+entries are path-compressed to the end of their maximal annotation run. The
+build is linear in the suffix length, each later query is an indexed lookup, and
+storage is one `usize` per remaining token. There is no activation threshold,
+cumulative counter, or direct/table dual algorithm.
+
+Iterative parser loops can still produce valid CST spines much deeper than the
+parser call-stack limits. The language formatters therefore use borrowed,
+parent-aware descent/ascent walks for the repeatable families:
+
+- Java postfix expressions and alternating binary/`instanceof` expressions;
+- Kotlin call/navigation/index/postfix/callable-reference expressions;
+- Kotlin ordinary/type binary expressions and nullable, receiver, and
+  definitely-non-null type suffixes.
+
+Each walk follows exact typed child fields to one base, formats that base once,
+and replays the existing suffix layout while ascending only to the captured
+outer node. Missing or malformed recursive fields stop descent and use their
+local structured recovery rule. The walks are linear in spine length, borrow the
+existing CST, and introduce neither syntax clones nor a general heap work stack.
+Existing operator-run vectors remain only where layout already needs them. For
+parser-produced trees, the remaining recursively formatted structural families
+are bounded by the syntax-owner limits above.
 
 ## Source conservation and normalization
 

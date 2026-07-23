@@ -1,6 +1,6 @@
 # Formatter Cleanup Plan
 
-Status: active\
+Status: complete\
 Started: 2026-07-22\
 Owner: formatter cleanup stack
 
@@ -957,9 +957,8 @@ remains separate so the formatter behavior PR has a narrow rollback boundary.
 
 ### PR 26 — Bounded recursive Java structure
 
-- extend the same 128-entry syntax-owner budget to record patterns, type bodies,
-  and statements, completing the cut set for every input-depth Java parser
-  cycle;
+- extend the same 128-owner syntax policy to record patterns, type bodies, and
+  statements, completing the cut set for every input-depth Java parser cycle;
 - preserve an over-limit record-pattern component as one `BogusPattern` with an
   allocation-free endpoint that respects annotated component types;
 - preserve over-limit body braces and the required language-specific member-list
@@ -974,8 +973,8 @@ remains separate so the formatter behavior PR has a narrow rollback boundary.
 
 - audit the complete Kotlin parser call graph across types, annotation
   arguments, expressions, lambdas, declarations, and their cross-grammar cycles;
-- introduce one shared 128-entry active-owner budget and guard the type,
-  assignment, and unary value cycles with their existing caller stops;
+- introduce one shared 128-owner policy and guard the type, assignment, and
+  unary value cycles with their existing caller stops;
 - preserve an over-limit type or expression as one syntax-owned recovered
   subtree using distinct allocation-free type/expression scanners;
 - prove native and actual dprint-WASM bounds, source conservation,
@@ -1144,7 +1143,7 @@ ready for review.
 | 30  | `cleanup/30-kotlin-suffix-depth`         | draft open | PR 29  | [#32](https://github.com/sargunv/jolt/pull/32) | full + WASM + benchmark    | Bound Kotlin postfix/member suffix formatting.   |
 | 31  | `cleanup/31-java-formatter-depth`        | draft open | PR 30  | [#33](https://github.com/sargunv/jolt/pull/33) | full + WASM + benchmark    | Bound deep Java formatter traversal.             |
 | 32  | `cleanup/32-formatter-state-residue`     | draft open | PR 31  | [#34](https://github.com/sargunv/jolt/pull/34) | full + WASM + benchmark    | Delete final mirrored formatter state.           |
-| 33  | `cleanup/33-residue-reconciliation`      | planned    | PR 32  | —                                              | —                          | Final evidence and debt-ledger closure.          |
+| 33  | `cleanup/33-residue-reconciliation`      | draft open | PR 32  | [#35](https://github.com/sargunv/jolt/pull/35) | full inherited + audit     | Final evidence and debt-ledger closure.          |
 
 ### PR 01 evidence
 
@@ -2151,7 +2150,7 @@ slices remove Java nodes and allocations or leave topology unchanged.
 - `mise run fix` passed strict formatting, workspace Clippy, dependency, native,
   and WASM checks. Debug and release focused suites passed; the complete
   non-update suite passed all 202 tests with zero skips. The exact lazy-table
-  benchmark records subject `a8f7589a` with its dirty worktree hash.
+  benchmark records clean committed subject `a8f7589a`.
 
 ### PR 25 evidence
 
@@ -2326,8 +2325,8 @@ slices remove Java nodes and allocations or leave topology unchanged.
   and Kotlin +0.81%/+0.26%; end-to-end timing remains noisy. No ordinary-path
   regression is demonstrated.
 - Optimized WASM is 1,766,389 bytes, 1,731 bytes smaller than the discarded
-  +175-line design. The exact benchmark records subject `c86bd69a` with its
-  dirty worktree hash.
+  +175-line design. The exact benchmark records clean committed subject
+  `c86bd69a`.
 
 ### PR 29 evidence
 
@@ -2513,8 +2512,8 @@ This table makes the negative architectural decisions discoverable in one place.
 
 ## Whole-stack reconciliation through PR 32
 
-The exact source comparison remains main commit `a82ab675`. The PR 32 code
-subject is `92d666f`; planning and architecture Markdown are excluded.
+The exact source comparison remains main commit `a82ab675`. The PR 32 benchmark
+subject is `932470b0`; planning and architecture Markdown are excluded.
 
 | Measure                        |   Main |  PR 14 |  PR 32 |   Main to PR 32 |
 | ------------------------------ | -----: | -----: | -----: | --------------: |
@@ -2555,19 +2554,43 @@ language-local borrowed CST walks. No general formatter context, visitor, heap
 traversal stack, source clone, token-reparse layer, or second CST schema was
 added.
 
-The final optimized dprint WASM is 1,777,637 bytes with SHA-256
-`e0357ff5f17d7cbb3bdd8a2b63fe91c7bee94e5b7c8e90a02fbfac15a43ef7af`. That is
-1,320 bytes smaller than PR 31, 20,794 bytes (+1.18%) larger than the PR 13
-artifact inherited unchanged by PR 14, and 85,255 bytes (-4.58%) smaller than
-the earliest exact PR 02 anchor. No main artifact exists, so no main-relative
-binary claim is made. Adjacent timing remained noise-level through the
-extension; the final Java traversal measurement was parse -1.29%, format +0.03%,
-and end-to-end +1.48%. Realistic topology stayed unchanged across the
-finite-cost traversal slices, apart from the earlier explicitly recorded
-profile-independent document nodes, 346 Kotlin layout nodes, five removed Java
-nodes, and PR 20's declared annotation-field child bytes. Allocation reductions
-from the binary-state changes belong to PRs 29 and 31; PR 32 only consolidates
-an allocation-neutral carrier.
+The final optimized dprint WASM is 1,775,919 bytes with SHA-256
+`b9422c7bee69bbcdc3eb33eceb1dbdcc0e6c99a8716636b7cc747816ae82a69f`. That is 47
+bytes (+0.003%) larger than PR 31, 19,076 bytes (+1.09%) larger than the PR 13
+artifact used as the pre-extension PR 14 anchor, and 86,973 bytes (-4.67%)
+smaller than the earliest exact PR 02 anchor. No main artifact exists, so no
+main-relative binary claim is made. Refreshed adjacent timing varied in both
+directions and supports no causal claim. Realistic topology stayed unchanged
+across the finite-cost traversal slices, apart from the earlier explicitly
+recorded profile-independent document nodes, 346 Kotlin layout nodes, five
+removed Java nodes, and PR 20's declared annotation-field child bytes.
+Allocation reductions from the binary-state changes belong to PRs 29 and 31; PR
+32 only consolidates an allocation-neutral carrier.
+
+### PR 33 evidence
+
+- Three independent audits mapped every historical deferral, temporary bridge,
+  conditional future design, and later-PR assignment to its implementing PR or a
+  measured final rejection. The two promises that moved from their initially
+  named destinations—modifier presence and malformed-`when` spacing—are
+  explicitly reconciled rather than silently relabeled.
+- Final production scans find no transition carrier, dual API, raw EOF range
+  projection, recursive formatter collector, formatter `expect`, TODO/FIXME, or
+  unresolved finite-cost marker. Conditional Java body/macro and language-local
+  lexer/recovery decisions remain only with a recorded smaller-design rationale.
+- `docs/internals/formatter.md` now documents the shared 128-owner parser
+  policy, Java's separate speculative/consuming generic state, shape-specific
+  lossless recovery, the first-query linear Java lookahead table, and borrowed
+  parent-aware formatter walks in addition to the existing ignore and fit
+  bounds.
+- Both historical stack diagrams, the execution ledger, aggregate LOC/concept/
+  performance evidence, and consolidated rejected-prototype ledger now match the
+  actual PR 00-33 stack. No main-relative artifact or causal timing improvement
+  is invented where the stack lacks a stable measurement.
+- This reconciliation changes Markdown only. `mise run fix` passes on the final
+  branch; PR 32's identical code supplies the full 226/226 native and actual
+  dprint-WASM test run, strict checks, benchmark, allocation, topology, and
+  optimized artifact evidence.
 
 ## Decision Log
 
@@ -2587,9 +2610,9 @@ an allocation-neutral carrier.
 | 2026-07-22 | Split PR 03 codegen policy by native versus WASM.                | Native accessor inlining preserves measured throughput; a narrow WASM field boundary reverses aggregate-return code duplication.                                                                                         |
 | 2026-07-22 | Let exceptional fragments own malformed lexical joins.           | Existing boundary atoms already make empty fragments inert, so Java/Kotlin pre-filter policies duplicate the same fact.                                                                                                  |
 | 2026-07-22 | Keep physical recovery parts in variable-list iteration.         | Real interior empty and tokenless malformed parts are positional sorting/normalization barriers; some zero-width recovery docs also own comment claims.                                                                  |
-| 2026-07-22 | Defer list visibility staging to a barrier-aware layout slice.   | A global sparse projection lost trivia and segmented normalization, while a second recovery-run API would increase rather than reduce local reasoning.                                                                   |
+| 2026-07-22 | Initially defer list visibility to a barrier-aware slice.        | The global sparse projection lost trivia and segmented normalization; PR 16 introduced the smaller shared carrier and PR 23 removed its transition duplicate.                                                            |
 | 2026-07-22 | Make PR 05 root coordination a one-shot shared function.         | One lifecycle function can delete duplicated setup/audit code and narrow APIs without creating a persistent context or changing any leaf-rule signature.                                                                 |
-| 2026-07-22 | Defer the root EOF ignore-range leak.                            | Replacing two raw range vectors is worthwhile only when one ignore-owned capability deletes more plumbing than it adds; PR 05 does not yet prove that.                                                                   |
+| 2026-07-22 | Initially defer the root EOF ignore-range leak.                  | PR 05 had not proved a smaller capability; PR 17 later kept root runs alive and deleted both raw vectors with one bounded ownership query.                                                                               |
 | 2026-07-22 | Keep PR 06 reporting failure-oriented.                           | Exact selected-render identity accounting already owns normalization authority; operation-tagged failures delete weaker filename/count policy without a successful-fact vector or test-only formatter API.               |
 | 2026-07-22 | Trust syntax-issued normalization claims in corpus tests.        | Syntax accessors are the declared authority; test-side spelling counts duplicated policy, could bless the wrong equal-spelling token, and ignored output-only tokens.                                                    |
 | 2026-07-22 | Keep normalization permissions affine.                           | Retaining whole claims in copyable document nodes made synthesis authority reusable and grew production reporting machinery; selected claims instead retain only their existing operation data.                          |
@@ -2626,8 +2649,8 @@ an allocation-neutral carrier.
 | 2026-07-23 | Extend the stack through parser recursion before reconciliation. | Flat annotations still had quadratic suffix scans, and native probes proved reachable Java/Kotlin stack exhaustion; these are correctness and finite-cost debts, not defensible documentation exceptions.                |
 | 2026-07-23 | Extend the lazy lookahead summary for flat annotations.          | Token-disjoint, path-compressed `@` endpoints close the remaining quadratic suffixes with one linear algorithm; measured allocation growth has no throughput or peak-memory consequence.                                 |
 | 2026-07-23 | Share one Java recursion policy across separate counters.        | Generic lookahead must mirror consuming grammar independently, while the syntax-owner counter closes cross-family cycles; one calibrated value removes an arbitrary policy split without conflating their state.         |
-| 2026-07-23 | Split Java value and structural recursion recovery.              | One combined implementation was estimated at 220-290 production lines; the value slice is +183, while record/body/statement recovery has a separate endpoint model and rollback boundary in PR 26.                       |
-| 2026-07-23 | Split Kotlin infix/type and suffix formatter traversal.          | The combined prototype crossed the production growth gate; the +109-net infix/type walk and member-layout suffix walk replace different recursive mechanisms and have independent tests and rollback boundaries.         |
+| 2026-07-23 | Split Java value and structural recursion recovery.              | One combined implementation was estimated at 220-290 production lines; the value slice is +182, while record/body/statement recovery has a separate endpoint model and rollback boundary in PR 26.                       |
+| 2026-07-23 | Split Kotlin infix/type and suffix formatter traversal.          | The combined prototype crossed the production growth gate; the +87-net infix/type walk and member-layout suffix walk replace different recursive mechanisms and have independent tests and rollback boundaries.          |
 | 2026-07-23 | Carry the syntax-found record-pattern opener into recovery.      | The existing exact type lookahead already owns disambiguation; carrying its opener lets one balanced scan recover the record without a second type/annotation grammar or semicolon special cases.                        |
 | 2026-07-23 | Coarsen unsupported statements to their enclosing body boundary. | Exact iterative handling of `if`/`else`, `do`/`while`, try handlers, and switch labels would duplicate statement grammar; one lossless BogusStatement preserves the enclosing body and later declarations.               |
 | 2026-07-23 | Use 128 active recursive owners as Kotlin's parser policy.       | Actual 1 MiB dprint-WASM failure edges leave about 7.5x-15.5x headroom across value, type, block, and class cycles; diagnostics describe parser safety rather than source levels.                                        |
