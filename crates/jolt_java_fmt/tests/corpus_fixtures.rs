@@ -132,7 +132,7 @@ fn format_source(
     match format_source_to_sink(source, &options, &mut sink) {
         FormatSinkResult::Complete => Ok(sink.into_string()),
         FormatSinkResult::Halted => panic!("formatter unexpectedly halted with StringSink"),
-        FormatSinkResult::Blocked { diagnostics } => Err(diagnostics),
+        FormatSinkResult::Blocked { diagnostic } => Err(vec![diagnostic]),
     }
 }
 

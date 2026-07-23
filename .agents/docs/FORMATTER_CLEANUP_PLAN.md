@@ -259,12 +259,11 @@ main
                           └─ cleanup/06-source-audit-reporting
                               └─ cleanup/07-core-module-boundaries
                                   └─ cleanup/08a-renderer-boundaries
-                                      └─ cleanup/08b-renderer-audit-pass
-                                          └─ cleanup/09-kotlin-rules
-                                              └─ cleanup/10-java-rules
-                                                  └─ cleanup/11-lexer-substrate
-                                                      └─ cleanup/12-java-lookahead
-                                                          └─ cleanup/13-final-reconciliation
+                                      └─ cleanup/09-kotlin-rules
+                                          └─ cleanup/10-java-rules
+                                              └─ cleanup/11-lexer-substrate
+                                                  └─ cleanup/12-java-lookahead
+                                                      └─ cleanup/13-final-reconciliation
 ```
 
 The plan is deliberately ambitious, but the stack is not immutable. Merge
@@ -696,23 +695,23 @@ This table is the source of truth after a context compaction. Update it whenever
 a branch is created, a PR is opened, scope changes, a gate fails, or a PR is
 ready for review.
 
-| PR  | Branch                                   | Status     | Parent | Draft PR                                     | Verification               | Notes                                         |
-| --- | ---------------------------------------- | ---------- | ------ | -------------------------------------------- | -------------------------- | --------------------------------------------- |
-| 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2) | baseline audit complete    | Durable plan and gates only.                  |
-| 01  | `cleanup/01-doc-semantics`               | draft open | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3) | debug/release + benchmark  | Profile-independent topology/presence.        |
-| 02  | `cleanup/02-formatter-ignore-plan`       | draft open | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4) | debug/release + benchmark  | Root plan with bounded immutable queries.     |
-| 03  | `cleanup/03-infallible-generated-fields` | draft open | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5) | debug/release + benchmark  | Generated physical slots only.                |
-| 04  | `cleanup/04-syntax-recovery-visibility`  | draft open | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6) | full + release + benchmark | Syntax-owned malformed lexical boundaries.    |
-| 05  | `cleanup/05-root-coordination`           | draft open | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7) | full + release + benchmark | Narrow root ownership, no god context.        |
-| 06  | `cleanup/06-source-audit-reporting`      | draft open | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8) | full + release + benchmark | Syntax claims replace filename/count policy.  |
-| 07  | `cleanup/07-core-module-boundaries`      | draft open | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9) | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.  |
-| 08a | `cleanup/08a-renderer-boundaries`        | planned    | PR 07  | —                                            | —                          | Separate contracts without output changes.    |
-| 08b | `cleanup/08b-renderer-audit-pass`        | optional   | PR 08a | —                                            | —                          | Proceed only if two-pass semantics shrink.    |
-| 09  | `cleanup/09-kotlin-rules`                | planned    | PR 08b | —                                            | —                          | Kotlin hotspot purification.                  |
-| 10  | `cleanup/10-java-rules`                  | planned    | PR 09  | —                                            | —                          | Java hotspot purification.                    |
-| 11  | `cleanup/11-lexer-substrate`             | planned    | PR 10  | —                                            | —                          | Share cursor mechanics only.                  |
-| 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                            | —                          | Counted bounded lookahead work.               |
-| 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                            | —                          | Actual docs, metrics, and API deletions only. |
+| PR  | Branch                                   | Status     | Parent | Draft PR                                       | Verification               | Notes                                            |
+| --- | ---------------------------------------- | ---------- | ------ | ---------------------------------------------- | -------------------------- | ------------------------------------------------ |
+| 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2)   | baseline audit complete    | Durable plan and gates only.                     |
+| 01  | `cleanup/01-doc-semantics`               | draft open | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3)   | debug/release + benchmark  | Profile-independent topology/presence.           |
+| 02  | `cleanup/02-formatter-ignore-plan`       | draft open | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4)   | debug/release + benchmark  | Root plan with bounded immutable queries.        |
+| 03  | `cleanup/03-infallible-generated-fields` | draft open | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5)   | debug/release + benchmark  | Generated physical slots only.                   |
+| 04  | `cleanup/04-syntax-recovery-visibility`  | draft open | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6)   | full + release + benchmark | Syntax-owned malformed lexical boundaries.       |
+| 05  | `cleanup/05-root-coordination`           | draft open | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7)   | full + release + benchmark | Narrow root ownership, no god context.           |
+| 06  | `cleanup/06-source-audit-reporting`      | draft open | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8)   | full + release + benchmark | Syntax claims replace filename/count policy.     |
+| 07  | `cleanup/07-core-module-boundaries`      | draft open | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9)   | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.     |
+| 08a | `cleanup/08a-renderer-boundaries`        | draft open | PR 07  | [#10](https://github.com/sargunv/jolt/pull/10) | full + release + benchmark | Kept hot loop concrete; deleted duplicate state. |
+| 08b | `cleanup/08b-renderer-audit-pass`        | rejected   | PR 08a | —                                              | design audit complete      | Exact single pass requires an output trace.      |
+| 09  | `cleanup/09-kotlin-rules`                | planned    | PR 08a | —                                              | —                          | Kotlin hotspot purification.                     |
+| 10  | `cleanup/10-java-rules`                  | planned    | PR 09  | —                                              | —                          | Java hotspot purification.                       |
+| 11  | `cleanup/11-lexer-substrate`             | planned    | PR 10  | —                                              | —                          | Share cursor mechanics only.                     |
+| 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                              | —                          | Counted bounded lookahead work.                  |
+| 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                              | —                          | Actual docs, metrics, and API deletions only.    |
 
 ### PR 01 evidence
 
@@ -1009,6 +1008,85 @@ ready for review.
   Peak RSS remains unavailable because this environment lacks the benchmark's
   required `/usr/bin/time`; no test or other measurement was skipped.
 
+### PR 08a evidence
+
+- Three independent audits rejected renderer, fit, sink, error, and source-audit
+  file extraction. Fit consumes the active render continuation, group modes,
+  column, pending indentation, and horizontal-whitespace state. Moving it
+  creates a back-edge into `Renderer` or a shared context while deleting no
+  interpreter dispatch. Output delegation has the same problem because fit must
+  inspect most of the proposed emitter state. The concrete hot loop therefore
+  remains in one module.
+- The retained renderer is smaller instead. `RenderOptions` and `IndentStyle`
+  duplicated `FormatOptions`; `GroupFrame` duplicated `Mode`; and
+  `measured_group_fits` duplicated the proof already carried by flat mode.
+  Rendering begins broken and can enter flat mode only after a complete accepted
+  probe, whose measured group rejects hard/empty lines, multiline text, forced
+  groups, and budget exhaustion.
+- The single-use render command scratch vector and its forwarding loop are
+  deleted. Pending indentation is one count whose character derives from
+  immutable options. Fit no longer tracks indentation depth it never reads, but
+  its unit end-indent command preserves the exact 4,096-command budget. Fit
+  scratch vectors, lazy concat cursors, continuation overlay, and measured-group
+  boundary remain concrete and unchanged.
+- The private unaudited renderer route, caller-asserted `source_verified` flag,
+  missing-proof error, and hypothetical test are deleted. Production still has
+  exactly the debug discard audit followed by trusted emission, while release
+  remains single-pass. Debug errors are still output-atomic, late audit errors
+  still precede sink halt, and sink callback/chunk behavior is unchanged.
+- Malformed source claims now retain only their consumed `SourceRangeClaim`;
+  unread kind/range copies are deleted. `FormatSinkResult::Blocked` carries the
+  one fatal diagnostic produced by every caller instead of a vector, deleting an
+  error-path allocation and dprint's impossible empty/multiple formatting cases.
+- Rust source is +149/-296 lines (-147 net), including integration-test API
+  migration. No new trait, context, visitor, module, callback, state object, or
+  compatibility path was introduced.
+- Repository-defined Ona automation passed all 183 workspace tests with no
+  skips. One hypothetical private-renderer test was deleted with its impossible
+  state. Debug IR passed 43 tests; release IR now passes its 31 applicable tests
+  instead of compiling audit-only assertions into a profile without audit
+  claims. `mise run fix`, `mise run check`, dependency machete, strict Clippy,
+  WASM checks, all-features checks, both complete release formatter suites, the
+  9,899-file PGO build, and optimized dprint build passed with zero snapshot or
+  output delta.
+- Parent and child syntax/document topology and all allocation counts, total
+  bytes, and maximum-live bytes are identical on the 9,206-file Java and
+  485-file Kotlin corpora. Alternating format-only medians moved +1.39% for Java
+  and -3.12% for Kotlin; treat both as noise-level non-regression evidence.
+  Clean workspace check time moved from 19.962 to 19.693 seconds (-1.35%).
+- The non-PGO native CLI shrank from 5,948,344 to 5,943,952 bytes (-0.07%). The
+  optimized WASM plugin shrank from 1,766,057 to 1,763,515 bytes (-0.14%), with
+  SHA-256 `90f16905c8f2dff3ee97b58ef02f5fe5daf7acbb483489f7ee49d3da55db8b08`.
+  Peak RSS remains unavailable because this environment lacks the benchmark's
+  required `/usr/bin/time`; no test or other measurement was skipped.
+
+### PR 08b rejection
+
+- Debug formatting currently checks arena invariants, renders the complete
+  selected layout into a zero-sized discard sink while consuming claims,
+  finishes conservation, and checks malformed dispatch before the real sink
+  receives its first callback. A late audit error therefore produces no partial
+  output, and an early sink halt cannot hide an invalid tail claim.
+- Three independent audits established the lower bound for preserving that
+  contract: either replay the deterministic producer after validation, as the
+  current implementation does, or retain the exact sink-callback trace until
+  validation succeeds. Callback boundaries are observable because a sink may
+  halt on any chunk.
+- The smallest exact single-traversal prototype needs a `String` plus every
+  chunk-end offset. It adds a type, two allocation streams, roughly 25-40 lines,
+  `O(output bytes + callbacks)` live memory, and duplicate output buffering for
+  CLI, dprint, and tests. It deletes only the zero-sized discard sink and a few
+  call-site lines.
+- A coalesced string changes halt/chunk behavior; borrowed chunk vectors add
+  lifetime machinery; group-decision logs retain two traversals and add
+  per-occurrence state; transactional sinks cannot roll back arbitrary side
+  effects and expand the public contract; direct proof-to-sink permits partial
+  output and lets halt hide later failures.
+- PR 08b is therefore intentionally not opened. The current debug-only second
+  traversal is allocation-free, explicitly bounded by the same finite fit
+  budgets, and smaller than every behavior-equivalent replacement. PR 09 stacks
+  directly on PR 08a.
+
 ## Decision Log
 
 | Date       | Decision                                                       | Reason                                                                                                                                                                                                     |
@@ -1036,6 +1114,10 @@ ready for review.
 | 2026-07-22 | Keep dense source auditing debug-only.                         | Debug owns exact identity proof and actionable ranges; release suites own output parity, snapshots, idempotence, integration behavior, and performance without a second audit path.                        |
 | 2026-07-22 | Keep the document, ignore, and render lifecycle in one crate.  | Their real source-claim, root-plan, and proof-observation cycle cannot be extracted without adding a context, side table, callback, or generic audit abstraction.                                          |
 | 2026-07-22 | Make `jolt_formatter` the integration-facing facade.           | Its public sink function requires the sink/control contracts; CLI and dprint should not depend directly on the lower document IR, while language formatter crates remain implementation details.           |
+| 2026-07-22 | Keep render, fit, and output state in one concrete hot loop.   | Fit consumes the active command continuation and output-position state; extracting it adds a back-edge or shared context while deleting no interpreter dispatch.                                           |
+| 2026-07-22 | Treat flat mode as the successful-fit proof.                   | Rendering starts broken and enters flat mode only after a complete accepted probe; a second mutable flag duplicated that state and could not diverge on a reachable flat path.                             |
+| 2026-07-22 | Carry exactly one diagnostic when formatting is blocked.       | All five producers create one fatal diagnostic; a vector added an allocation and forced consumers to handle impossible empty/multiple cases.                                                               |
+| 2026-07-22 | Reject single-pass debug rendering without an output trace.    | Atomic late failures plus observable sink chunk/halt behavior require either deterministic replay or retaining every callback; replay is zero-allocation and smaller.                                      |
 
 ## Resume Protocol
 

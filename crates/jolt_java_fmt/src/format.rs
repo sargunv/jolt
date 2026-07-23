@@ -36,7 +36,7 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
 
     let Some(syntax) = parse.syntax() else {
         return FormatSinkResult::Blocked {
-            diagnostics: vec![no_syntax_tree_diagnostic()],
+            diagnostic: no_syntax_tree_diagnostic(),
         };
     };
 
@@ -51,7 +51,7 @@ fn format_syntax_to_sink<S: RenderSink + ?Sized>(
     let Some(root) = syntax.syntax_node() else {
         return (
             FormatSinkResult::Blocked {
-                diagnostics: vec![no_syntax_tree_diagnostic()],
+                diagnostic: no_syntax_tree_diagnostic(),
             },
             FormatRootMetrics::default(),
         );

@@ -4,7 +4,7 @@ use jolt_diagnostics::Diagnostic;
 use jolt_syntax::{Language, SyntaxNode};
 
 use crate::formatter_ignore::formatter_ignore_plan_with_safety;
-use crate::render::{RenderOptions, render_source_to};
+use crate::render::render_source_to;
 use crate::{
     Doc, DocBuilder, FormatOptions, FormatSinkResult, LexicalSafety, RenderError, RenderSink,
 };
@@ -46,11 +46,11 @@ where
     #[cfg(not(feature = "bench"))]
     let metrics = ();
 
-    let result = match render_source_to(&arena, doc, RenderOptions::from(options), sink, root) {
+    let result = match render_source_to(&arena, doc, options, sink, root) {
         Ok(outcome) if outcome.halted() => FormatSinkResult::Halted,
         Ok(_) => FormatSinkResult::Complete,
         Err(error) => FormatSinkResult::Blocked {
-            diagnostics: vec![render_error_diagnostic(&error)],
+            diagnostic: render_error_diagnostic(&error),
         },
     };
 

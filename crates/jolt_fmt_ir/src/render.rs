@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::fmt;
 
+use crate::FormatOptions;
 use crate::document::{Doc, DocArena, DocNode, DocumentText, FlatLine, Line, LineMode};
 use crate::source_fragment::RenderProof;
 use crate::width::{TextWidth, add_width};
@@ -13,33 +14,6 @@ use jolt_syntax::{ConservationError, Language, SyntaxNode};
 // the document commands they expose. When the budget is exhausted, the group is
 // treated as not fitting and rendered in break mode.
 const FLAT_FIT_COMMAND_BUDGET: usize = 4096;
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum IndentStyle {
-    Space,
-    Tab,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) struct RenderOptions {
-    line_width: TextWidth,
-    indent_width: u16,
-    indent_style: IndentStyle,
-}
-
-impl From<crate::FormatOptions> for RenderOptions {
-    fn from(options: crate::FormatOptions) -> Self {
-        Self {
-            line_width: TextWidth::from(options.line_width),
-            indent_width: u16::from(options.indent_width),
-            indent_style: if options.use_tabs {
-                IndentStyle::Tab
-            } else {
-                IndentStyle::Space
-            },
-        }
-    }
-}
 
 /// A completed source-aware render.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -91,13 +65,6 @@ impl RenderError {
         }
     }
 
-    #[cfg_attr(not(debug_assertions), allow(dead_code))]
-    pub(crate) const fn missing_conservation_proof() -> Self {
-        Self {
-            kind: RenderErrorKind::MissingConservationProof,
-        }
-    }
-
     pub(crate) fn syntax_invariant(message: &str) -> Self {
         Self {
             kind: RenderErrorKind::SyntaxInvariant(message.to_owned()),
@@ -109,8 +76,6 @@ impl RenderError {
 enum RenderErrorKind {
     NoCurrentGroup,
     #[cfg_attr(not(debug_assertions), allow(dead_code))]
-    MissingConservationProof,
-    #[cfg_attr(not(debug_assertions), allow(dead_code))]
     Conservation(ConservationError),
     SyntaxInvariant(String),
 }
@@ -120,9 +85,6 @@ impl fmt::Display for RenderError {
         match self.kind {
             RenderErrorKind::NoCurrentGroup => {
                 formatter.write_str("if_break requires a current group")
-            }
-            RenderErrorKind::MissingConservationProof => {
-                formatter.write_str("exceptional source fragment requires a conservation proof")
             }
             RenderErrorKind::Conservation(ref error) => write!(formatter, "{error}"),
             RenderErrorKind::SyntaxInvariant(ref message) => {
@@ -134,26 +96,6 @@ impl fmt::Display for RenderError {
 
 impl Error for RenderError {}
 
-/// Renders a document using the provided options.
-///
-/// # Errors
-///
-/// Returns [`RenderError`] when the document is structurally invalid.
-#[cfg(test)]
-fn render_to<S: RenderSink>(
-    arena: &DocArena<'_>,
-    doc: Doc<'_>,
-    options: RenderOptions,
-    sink: S,
-) -> Result<bool, RenderError> {
-    if let Some(error) = arena.invariant_error() {
-        return Err(RenderError::syntax_invariant(error));
-    }
-    let mut renderer = Renderer::new(arena, options, sink, None, false);
-    renderer.render_doc(doc, Mode::Break)?;
-    Ok(renderer.finish())
-}
-
 /// Renders a source document while proving exact conservation for the selected
 /// document branches.
 ///
@@ -164,7 +106,7 @@ fn render_to<S: RenderSink>(
 pub(crate) fn render_source_to<'source, L: Language, S: RenderSink>(
     arena: &DocArena<'source>,
     doc: Doc<'source>,
-    options: RenderOptions,
+    options: FormatOptions,
     sink: S,
     root: &SyntaxNode<'source, L>,
 ) -> Result<SourceRenderOutcome, RenderError> {
@@ -174,7 +116,7 @@ pub(crate) fn render_source_to<'source, L: Language, S: RenderSink>(
     #[cfg(debug_assertions)]
     let used_malformed_verbatim = {
         let mut proof = RenderProof::new(root.conservation_tracker());
-        let mut renderer = Renderer::new(arena, options, DiscardSink, Some(&mut proof), false);
+        let mut renderer = Renderer::new(arena, options, DiscardSink, Some(&mut proof));
         renderer.render_doc(doc, Mode::Break)?;
         proof.finish().map_err(|error| RenderError {
             kind: RenderErrorKind::Conservation(error),
@@ -187,9 +129,9 @@ pub(crate) fn render_source_to<'source, L: Language, S: RenderSink>(
     );
     #[cfg(not(debug_assertions))]
     let _ = root;
-    let mut renderer = Renderer::new(arena, options, sink, None, true);
+    let mut renderer = Renderer::new(arena, options, sink, None);
     renderer.render_doc(doc, Mode::Break)?;
-    if renderer.finish() {
+    if renderer.halted {
         return Ok(SourceRenderOutcome {
             halted: true,
             #[cfg(test)]
@@ -216,20 +158,9 @@ impl RenderSink for DiscardSink {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum Mode {
+enum Mode {
     Flat,
     Break,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct GroupFrame {
-    is_broken: bool,
-}
-
-#[derive(Clone, Copy, Debug)]
-struct PendingIndent {
-    character: char,
-    count: u32,
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -252,7 +183,7 @@ enum RenderCommand<'source> {
 enum FitCommand<'source> {
     Doc(Doc<'source>, Mode),
     ConcatRange { next: u32, end: u32, mode: Mode },
-    EndIndent(i16),
+    EndIndent,
     EndGroup,
     EndMeasuredGroup,
 }
@@ -261,7 +192,7 @@ impl<'source> From<RenderCommand<'source>> for FitCommand<'source> {
     fn from(command: RenderCommand<'source>) -> Self {
         match command {
             RenderCommand::Doc(doc, mode) => Self::Doc(doc, mode),
-            RenderCommand::EndIndent(levels) => Self::EndIndent(levels),
+            RenderCommand::EndIndent(_) => Self::EndIndent,
             RenderCommand::EndGroup => Self::EndGroup,
         }
     }
@@ -269,31 +200,26 @@ impl<'source> From<RenderCommand<'source>> for FitCommand<'source> {
 
 struct Renderer<'arena, 'proof, 'source, S> {
     arena: &'arena DocArena<'source>,
-    options: RenderOptions,
+    options: FormatOptions,
     sink: S,
     halted: bool,
     column: TextWidth,
     indent_levels: i32,
-    pending_indent: Option<PendingIndent>,
+    pending_indent: u32,
     horizontal_whitespace: HorizontalWhitespace,
-    group_stack: Vec<GroupFrame>,
-    command_stack: Vec<RenderCommand<'source>>,
-    fit_group_stack: Vec<GroupFrame>,
+    group_stack: Vec<Mode>,
+    fit_group_stack: Vec<Mode>,
     fit_overlay_stack: Vec<FitCommand<'source>>,
-    measured_group_fits: bool,
     #[cfg_attr(not(debug_assertions), allow(dead_code))]
     proof: Option<&'proof mut RenderProof<'source>>,
-    #[cfg_attr(not(debug_assertions), allow(dead_code))]
-    source_verified: bool,
 }
 
 impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S> {
     fn new(
         arena: &'arena DocArena<'source>,
-        options: RenderOptions,
+        options: FormatOptions,
         sink: S,
         proof: Option<&'proof mut RenderProof<'source>>,
-        source_verified: bool,
     ) -> Self {
         Self {
             arena,
@@ -302,42 +228,26 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
             halted: false,
             column: TextWidth::ZERO,
             indent_levels: 0,
-            pending_indent: None,
+            pending_indent: 0,
             horizontal_whitespace: HorizontalWhitespace::None,
             group_stack: Vec::new(),
-            command_stack: Vec::new(),
             fit_group_stack: Vec::new(),
             fit_overlay_stack: Vec::new(),
-            measured_group_fits: false,
             proof,
-            source_verified,
         }
     }
 
-    fn finish(self) -> bool {
-        self.halted
-    }
-
     fn render_doc(&mut self, doc: Doc<'source>, mode: Mode) -> Result<(), RenderError> {
-        let mut stack = std::mem::take(&mut self.command_stack);
-        stack.clear();
+        let mut stack = Vec::new();
         stack.push(RenderCommand::Doc(doc, mode));
-        let result = self.render_commands(&mut stack);
-        stack.clear();
-        self.command_stack = stack;
-        result
-    }
-
-    fn render_commands(
-        &mut self,
-        stack: &mut Vec<RenderCommand<'source>>,
-    ) -> Result<(), RenderError> {
         while let Some(command) = stack.pop() {
             if self.halted {
                 break;
             }
             match command {
-                RenderCommand::Doc(doc, mode) => self.render_command_doc(doc, mode, stack)?,
+                RenderCommand::Doc(doc, mode) => {
+                    self.render_command_doc(doc, mode, &mut stack)?;
+                }
                 RenderCommand::EndIndent(levels) => {
                     self.indent_levels -= i32::from(levels);
                 }
@@ -360,21 +270,19 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
             None => Ok(()),
             Some(DocNode::Text(text)) => {
                 #[cfg(debug_assertions)]
-                if let Some(claim) = text.claim {
-                    if let Some(proof) = self.proof.as_mut() {
-                        proof.consume(claim).map_err(|error| RenderError {
-                            kind: RenderErrorKind::Conservation(error),
-                        })?;
-                    } else if !self.source_verified {
-                        return Err(RenderError::missing_conservation_proof());
-                    }
+                if let Some(claim) = text.claim
+                    && let Some(proof) = self.proof.as_mut()
+                {
+                    proof.consume(claim).map_err(|error| RenderError {
+                        kind: RenderErrorKind::Conservation(error),
+                    })?;
                 }
-                if text.text == " " && !text.is_multiline() {
+                if text.text == " " {
                     if self.horizontal_whitespace == HorizontalWhitespace::None {
                         self.horizontal_whitespace = HorizontalWhitespace::Pending;
                     }
                 } else if text.is_multiline() {
-                    self.write_literal(text);
+                    self.write_multiline_literal(text);
                 } else {
                     self.write_measured_str(&text.text, text.final_width());
                 }
@@ -439,23 +347,16 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         mode: Mode,
         stack: &mut Vec<RenderCommand<'source>>,
     ) {
-        let is_broken = if should_break {
-            true
-        } else if mode == Mode::Flat && self.measured_group_fits {
-            false
+        let group_mode = if should_break {
+            Mode::Break
+        } else if mode == Mode::Flat || self.group_fits(contents, stack) {
+            Mode::Flat
         } else {
-            let fits = self.group_fits(contents, stack);
-            if fits {
-                self.measured_group_fits = true;
-            }
-            !fits
+            Mode::Break
         };
-        self.group_stack.push(GroupFrame { is_broken });
+        self.group_stack.push(group_mode);
         stack.push(RenderCommand::EndGroup);
-        stack.push(RenderCommand::Doc(
-            contents,
-            if is_broken { Mode::Break } else { Mode::Flat },
-        ));
+        stack.push(RenderCommand::Doc(contents, group_mode));
     }
 
     fn group_fits(&mut self, contents: Doc<'source>, stack: &[RenderCommand<'source>]) -> bool {
@@ -490,7 +391,8 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
     fn group_break_state(&self) -> Result<bool, RenderError> {
         self.group_stack
             .last()
-            .map(|frame| frame.is_broken)
+            .copied()
+            .map(|mode| mode == Mode::Break)
             .ok_or_else(RenderError::no_current_group)
     }
 
@@ -499,15 +401,9 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         self.add_width(width);
     }
 
-    fn write_literal(&mut self, literal: &DocumentText<'_>) {
+    fn write_multiline_literal(&mut self, literal: &DocumentText<'_>) {
         self.write_str(&literal.text);
-        let final_width = literal.final_width();
-        if literal.is_multiline() {
-            self.column = final_width;
-            self.measured_group_fits = false;
-        } else {
-            self.add_width(final_width);
-        }
+        self.column = literal.final_width();
         if matches!(literal.text.as_bytes().last(), Some(b'\n' | b'\r')) {
             self.horizontal_whitespace = HorizontalWhitespace::LiteralLineEnding;
         }
@@ -525,7 +421,7 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
     }
 
     fn write_newlines(&mut self, indent_delta: i16, count: u32) {
-        self.pending_indent = None;
+        self.pending_indent = 0;
         let literal_ended_line =
             self.horizontal_whitespace == HorizontalWhitespace::LiteralLineEnding;
         self.horizontal_whitespace = HorizontalWhitespace::None;
@@ -533,29 +429,23 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         for _ in 0..count {
             self.write_sink_str("\n");
             self.column = TextWidth::ZERO;
-            self.measured_group_fits = false;
         }
         let (indent, width) = self.pending_newline_indent(indent_delta);
         self.pending_indent = indent;
         self.column = width;
     }
 
-    fn pending_newline_indent(&self, indent_delta: i16) -> (Option<PendingIndent>, TextWidth) {
+    fn pending_newline_indent(&self, indent_delta: i16) -> (u32, TextWidth) {
         let effective_levels = (self.indent_levels + i32::from(indent_delta))
             .max(0)
             .cast_unsigned();
         let width = effective_levels * u32::from(self.options.indent_width);
-        let (character, indent_count) = match self.options.indent_style {
-            IndentStyle::Space => (' ', width),
-            IndentStyle::Tab => ('\t', effective_levels),
+        let indent_count = if self.options.use_tabs {
+            effective_levels
+        } else {
+            width
         };
-        (
-            (indent_count > 0).then_some(PendingIndent {
-                character,
-                count: indent_count,
-            }),
-            TextWidth::new(width),
-        )
+        (indent_count, TextWidth::new(width))
     }
 
     fn write_str(&mut self, text: &str) {
@@ -563,12 +453,12 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
             return;
         }
         if matches!(text.as_bytes().first(), Some(b'\n' | b'\r')) {
-            self.pending_indent = None;
+            self.pending_indent = 0;
             self.horizontal_whitespace = HorizontalWhitespace::None;
         } else if matches!(text.as_bytes().first(), Some(b' ' | b'\t')) {
             self.horizontal_whitespace = HorizontalWhitespace::None;
         }
-        if self.pending_indent.is_some() {
+        if self.pending_indent > 0 {
             self.horizontal_whitespace = HorizontalWhitespace::None;
         }
         self.flush_pending_indent();
@@ -596,10 +486,11 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
     }
 
     fn flush_pending_indent(&mut self) {
-        let Some(indent) = self.pending_indent.take() else {
+        let count = std::mem::take(&mut self.pending_indent);
+        if count == 0 {
             return;
-        };
-        self.write_repeated(indent.character, indent.count);
+        }
+        self.write_repeated(if self.options.use_tabs { '\t' } else { ' ' }, count);
     }
 
     fn flush_pending_spaces(&mut self) {
@@ -620,7 +511,7 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         };
         let chunk_len = u32::try_from(chunk.len()).expect("indent chunk length fits u32");
         let mut remaining = count;
-        while remaining > 0 {
+        while remaining > 0 && !self.halted {
             let write_len = remaining.min(chunk_len);
             self.write_sink_str(
                 &chunk[..usize::try_from(write_len).expect("chunk length fits usize")],
@@ -636,14 +527,13 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
 
 struct FitChecker<'base, 'scratch, 'source> {
     arena: &'base DocArena<'source>,
-    options: RenderOptions,
+    line_width: TextWidth,
     column: TextWidth,
     horizontal_whitespace: HorizontalWhitespace,
     pending_indent: bool,
-    indent_levels: i32,
-    base_group_stack: &'base [GroupFrame],
+    base_group_stack: &'base [Mode],
     base_group_len: usize,
-    group_stack: &'scratch mut Vec<GroupFrame>,
+    group_stack: &'scratch mut Vec<Mode>,
     remaining_commands: usize,
     measured_group_active: bool,
 }
@@ -651,15 +541,14 @@ struct FitChecker<'base, 'scratch, 'source> {
 impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
     fn from_renderer<S>(
         renderer: &'base Renderer<'_, '_, 'source, S>,
-        group_stack: &'scratch mut Vec<GroupFrame>,
+        group_stack: &'scratch mut Vec<Mode>,
     ) -> Self {
         Self {
             arena: renderer.arena,
-            options: renderer.options,
+            line_width: TextWidth::from(renderer.options.line_width),
             column: renderer.column,
             horizontal_whitespace: renderer.horizontal_whitespace,
-            pending_indent: renderer.pending_indent.is_some(),
-            indent_levels: renderer.indent_levels,
+            pending_indent: renderer.pending_indent > 0,
             base_group_stack: &renderer.group_stack,
             base_group_len: renderer.group_stack.len(),
             group_stack,
@@ -683,7 +572,7 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
             }
         }
 
-        self.column <= self.options.line_width
+        self.column <= self.line_width
     }
 
     fn fit_command(
@@ -696,10 +585,7 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
             FitCommand::ConcatRange { next, end, mode } => {
                 self.fit_concat_range(next, end, mode, stack)
             }
-            FitCommand::EndIndent(levels) => {
-                self.indent_levels -= i32::from(levels);
-                FitResult::Continue
-            }
+            FitCommand::EndIndent => FitResult::Continue,
             FitCommand::EndMeasuredGroup => {
                 self.group_stack.pop();
                 self.measured_group_active = false;
@@ -723,7 +609,7 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
         let arena = self.arena;
         match arena.node(doc) {
             None => FitResult::Continue,
-            Some(DocNode::Text(text)) if text.text == " " && !text.is_multiline() => {
+            Some(DocNode::Text(text)) if text.text == " " => {
                 if self.horizontal_whitespace == HorizontalWhitespace::None {
                     self.horizontal_whitespace = HorizontalWhitespace::Pending;
                 }
@@ -760,15 +646,14 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
                 contents,
                 should_break,
             }) => self.fit_group(*contents, *should_break, mode, stack),
-            Some(DocNode::Indent { contents, levels }) => {
-                self.indent_levels += i32::from(*levels);
-                stack.push(FitCommand::EndIndent(*levels));
+            Some(DocNode::Indent { contents, .. }) => {
+                stack.push(FitCommand::EndIndent);
                 stack.push(FitCommand::Doc(*contents, mode));
                 FitResult::Continue
             }
             Some(DocNode::Line(line)) => self.fit_line(line, mode),
             Some(DocNode::IfBreak { breaks, flat }) => {
-                let is_broken = self.group_break_state().unwrap_or(false);
+                let is_broken = self.group_is_broken();
                 stack.push(FitCommand::Doc(
                     if is_broken { *breaks } else { *flat },
                     mode,
@@ -811,13 +696,10 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
         if mode == Mode::Flat && should_break {
             return FitResult::No;
         }
-        let is_broken = mode == Mode::Break || should_break;
-        self.group_stack.push(GroupFrame { is_broken });
+        let group_mode = mode;
+        self.group_stack.push(group_mode);
         stack.push(FitCommand::EndGroup);
-        stack.push(FitCommand::Doc(
-            contents,
-            if is_broken { Mode::Break } else { Mode::Flat },
-        ));
+        stack.push(FitCommand::Doc(contents, group_mode));
         FitResult::Continue
     }
 
@@ -827,7 +709,7 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
         stack: &[RenderCommand<'source>],
         overlay: &mut Vec<FitCommand<'source>>,
     ) -> bool {
-        self.group_stack.push(GroupFrame { is_broken: false });
+        self.group_stack.push(Mode::Flat);
         let mut fit_stack = FitStack::new(stack, overlay);
         fit_stack.push(FitCommand::EndMeasuredGroup);
         fit_stack.push(FitCommand::Doc(contents, Mode::Flat));
@@ -839,7 +721,7 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
             (Mode::Flat, LineMode::Soft | LineMode::SoftOrSpace) => self.fit_flat_line(&line.flat),
             (Mode::Flat, LineMode::Hard | LineMode::Empty) => FitResult::No,
             (Mode::Break, _) => {
-                if self.column <= self.options.line_width {
+                if self.column <= self.line_width {
                     FitResult::Done
                 } else {
                     FitResult::No
@@ -860,17 +742,17 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
         }
     }
 
-    fn group_break_state(&self) -> Result<bool, RenderError> {
+    fn group_is_broken(&self) -> bool {
         self.group_stack
             .last()
             .or_else(|| self.base_group_stack[..self.base_group_len].last())
-            .map(|frame| frame.is_broken)
-            .ok_or_else(RenderError::no_current_group)
+            .copied()
+            .is_some_and(|mode| mode == Mode::Break)
     }
 
     fn width_result(&mut self, width: TextWidth) -> FitResult {
         self.column = add_width(self.column, width);
-        if self.column <= self.options.line_width {
+        if self.column <= self.line_width {
             FitResult::Continue
         } else {
             FitResult::No
@@ -944,29 +826,30 @@ mod tests {
 
     use jolt_diagnostics::{Diagnostic, DiagnosticCodeId};
     use jolt_java_syntax::{JavaLanguage, JavaSyntaxKind, JavaSyntaxView, parse_compilation_unit};
-    #[cfg(debug_assertions)]
-    use jolt_syntax::NormalizationOperation;
     use jolt_syntax::{
-        BuildSyntaxTreeError, ConservationError, Event, FactoryNode, Language, LanguageLexer,
-        LexedToken, NormalizedToken, ParsedChildren, RawSyntaxKind, RemovalClaim, RemovalReason,
-        ReorderClaim, ReorderReason, ReplacementClaim, SourceIdentity, SourceTokenId,
-        SourceTriviaSide, SyntaxFactory, SyntaxNode, SyntaxTokenData, SyntaxTreeSink, SyntaxTrivia,
-        SynthesisClaim, TriviaKind, build_syntax_tree_with_factory,
+        BuildSyntaxTreeError, Event, FactoryNode, Language, LanguageLexer, LexedToken,
+        NormalizedToken, ParsedChildren, RawSyntaxKind, RemovalClaim, RemovalReason, ReorderClaim,
+        ReorderReason, ReplacementClaim, SourceIdentity, SourceTokenId, SyntaxFactory, SyntaxNode,
+        SyntaxTokenData, SyntaxTreeSink, SyntaxTrivia, SynthesisClaim, TriviaKind,
+        build_syntax_tree_with_factory,
     };
+    #[cfg(debug_assertions)]
+    use jolt_syntax::{ConservationError, NormalizationOperation, SourceTriviaSide};
     use jolt_text::{TextRange, TextSize};
 
+    use crate::document::DocArena;
     #[cfg(debug_assertions)]
     use crate::document::DocNode;
     use crate::formatter_ignore::formatter_ignore_plan_with_safety;
-    use crate::source_fragment::{ExceptionalSeparators, exceptional_separators};
     #[cfg(debug_assertions)]
-    use crate::source_fragment::{FragmentBoundary, SourceClaim};
+    use crate::source_fragment::{ExceptionalSeparators, SourceClaim};
+    use crate::source_fragment::{FragmentBoundary, exceptional_separators};
     use crate::{
-        Doc, DocBuilder, ExceptionalSeparator, LexicalAtom, LexicalAtomKind, LexicalSafety,
-        RenderControl, RenderSink,
+        Doc, DocBuilder, ExceptionalSeparator, FormatOptions, LexicalAtom, LexicalAtomKind,
+        LexicalSafety, RenderControl, RenderSink,
     };
 
-    use super::{IndentStyle, RenderOptions, TextWidth, render_source_to, render_to};
+    use super::{RenderError, render_source_to};
 
     #[derive(Default)]
     struct StringSink(String);
@@ -1086,14 +969,15 @@ mod tests {
         }
     }
 
-    fn options() -> RenderOptions {
-        RenderOptions {
-            line_width: TextWidth::new(80),
+    fn options() -> FormatOptions {
+        FormatOptions {
+            line_width: 80,
             indent_width: 4,
-            indent_style: IndentStyle::Space,
+            use_tabs: false,
         }
     }
 
+    #[cfg(debug_assertions)]
     fn conservation_error(error: super::RenderError) -> ConservationError {
         match error.kind {
             super::RenderErrorKind::Conservation(error) => error,
@@ -1142,10 +1026,23 @@ mod tests {
         syntax_tree_with_root_kind(source, JavaSyntaxKind::CompilationUnit)
     }
 
+    fn render_to<S: RenderSink>(
+        arena: &DocArena<'_>,
+        doc: Doc<'_>,
+        options: FormatOptions,
+        sink: S,
+    ) -> Result<bool, RenderError> {
+        let source = "";
+        let tree = syntax_tree(source);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
+        render_source_to(arena, doc, options, sink, &root).map(|outcome| outcome.halted())
+    }
+
     fn bogus_syntax_tree(source: &str) -> jolt_syntax::SyntaxTree {
         syntax_tree_with_root_kind(source, JavaSyntaxKind::BogusExpression)
     }
 
+    #[cfg(debug_assertions)]
     fn mixed_syntax_tree() -> jolt_syntax::SyntaxTree {
         let source = "ab";
         let tokens = source
@@ -1203,6 +1100,7 @@ mod tests {
             .expect("comment test syntax tree builds")
     }
 
+    #[cfg(debug_assertions)]
     #[test]
     fn malformed_verbatim_is_one_tracked_borrowed_core() {
         let source = "a+b";
@@ -1232,6 +1130,7 @@ mod tests {
         assert!(root.malformed_verbatim_core().is_none());
     }
 
+    #[cfg(debug_assertions)]
     #[test]
     fn structured_token_and_malformed_core_complete_one_source_render() {
         let source = "ab";
@@ -1288,6 +1187,7 @@ mod tests {
         assert_eq!(sink.0, source);
     }
 
+    #[cfg(debug_assertions)]
     #[test]
     fn source_looking_ordinary_text_cannot_complete_conservation() {
         let source = "x";
@@ -1311,6 +1211,7 @@ mod tests {
         assert!(sink.0.is_empty());
     }
 
+    #[cfg(debug_assertions)]
     #[test]
     fn duplicate_claim_is_rejected_before_any_output() {
         let source = "ab";
@@ -1412,6 +1313,7 @@ mod tests {
         assert!(sink.0.is_empty());
     }
 
+    #[cfg(debug_assertions)]
     #[test]
     fn zero_token_malformed_core_records_dispatch() {
         let source = "";
@@ -1535,32 +1437,7 @@ mod tests {
     }
 
     #[test]
-    fn exceptional_fragment_cannot_render_without_proof() {
-        let source = "";
-        let tree = bogus_syntax_tree(source);
-        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
-        let core = root
-            .malformed_verbatim_core()
-            .expect("error node owns a verbatim core");
-        let mut builder = DocBuilder::new();
-        let fragment = builder.malformed_verbatim(&core, empty_boundary());
-        let mut safety = CountingSafety::default();
-        let document = builder.resolve_exceptional(fragment, None, None, &mut safety);
-        let arena = builder.into_arena();
-        let mut sink = StringSink::default();
-
-        let error = render_to(&arena, document, options(), &mut sink)
-            .expect_err("untracked exceptional output must be rejected");
-
-        assert_eq!(
-            error.to_string(),
-            "exceptional source fragment requires a conservation proof"
-        );
-        assert!(sink.0.is_empty());
-    }
-
-    #[test]
-    fn unselected_exceptional_branch_does_not_require_proof() {
+    fn unselected_exceptional_branch_does_not_consume_its_claim() {
         let source = "";
         let tree = bogus_syntax_tree(source);
         let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
@@ -1750,6 +1627,7 @@ mod tests {
         assert!(sink.0.is_empty());
     }
 
+    #[cfg(debug_assertions)]
     #[test]
     fn foreign_formatter_ignore_range_is_rejected_before_separator_output() {
         let source = "x";

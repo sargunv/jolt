@@ -51,10 +51,12 @@ impl JoltDprintPlugin {
                     "Jolt formatter halted before producing complete output",
                 ));
             }
-            FormatSinkResult::Blocked { diagnostics } => {
-                return Err(FormatError::from(format_blocked_diagnostics(
+            FormatSinkResult::Blocked { diagnostic } => {
+                let line_index = LineIndex::new(source);
+                return Err(FormatError::from(format_diagnostic(
                     source,
-                    &diagnostics,
+                    &line_index,
+                    &diagnostic,
                 )));
             }
         }
@@ -146,22 +148,6 @@ fn language_for_path(file_path: &Path) -> Result<Language, FormatError> {
             )),
         },
     }
-}
-
-fn format_blocked_diagnostics(source: &str, diagnostics: &[Diagnostic]) -> String {
-    if diagnostics.is_empty() {
-        return "Jolt formatter blocked without diagnostics.".to_owned();
-    }
-
-    let line_index = LineIndex::new(source);
-    let mut text = String::new();
-    for (index, diagnostic) in diagnostics.iter().enumerate() {
-        if index > 0 {
-            text.push('\n');
-        }
-        text.push_str(&format_diagnostic(source, &line_index, diagnostic));
-    }
-    text
 }
 
 fn format_diagnostic(source: &str, line_index: &LineIndex, diagnostic: &Diagnostic) -> String {

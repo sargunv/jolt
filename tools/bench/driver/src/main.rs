@@ -246,8 +246,8 @@ fn ensure_complete(result: FormatSinkResult) -> Result<(), String> {
     match result {
         FormatSinkResult::Complete => Ok(()),
         FormatSinkResult::Halted => Err("formatter sink halted unexpectedly".into()),
-        FormatSinkResult::Blocked { diagnostics } => {
-            Err(format!("formatter was blocked: {diagnostics:?}"))
+        FormatSinkResult::Blocked { diagnostic } => {
+            Err(format!("formatter was blocked: {diagnostic:?}"))
         }
     }
 }

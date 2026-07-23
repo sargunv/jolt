@@ -63,8 +63,8 @@ fn format_or_panic(source: &str, line_width: u16) -> String {
     match format_source_to_sink(source, &options, &mut sink) {
         FormatSinkResult::Complete => sink.into_string(),
         FormatSinkResult::Halted => panic!("formatter unexpectedly halted with StringSink"),
-        FormatSinkResult::Blocked { diagnostics } => {
-            panic!("formatter diagnostics: {diagnostics:#?}")
+        FormatSinkResult::Blocked { diagnostic } => {
+            panic!("formatter diagnostic: {diagnostic:#?}")
         }
     }
 }

@@ -28,9 +28,9 @@ fn trivia_markers_are_conserved_by_formatter() {
                     "formatter unexpectedly halted with StringSink in {}",
                     path.display()
                 ),
-                FormatSinkResult::Blocked { diagnostics } => {
+                FormatSinkResult::Blocked { diagnostic } => {
                     panic!(
-                        "formatter diagnostics in {}: {diagnostics:#?}",
+                        "formatter diagnostic in {}: {diagnostic:#?}",
                         path.display()
                     )
                 }
