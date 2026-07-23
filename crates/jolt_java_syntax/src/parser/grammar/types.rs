@@ -1,11 +1,11 @@
 use super::{
     JavaSyntaxKind, Parser,
     support::{
-        MAX_GENERIC_TYPE_DEPTH, is_type_argument_recovery_boundary, is_type_argument_value_start,
-        over_depth_type_end,
+        is_type_argument_recovery_boundary, is_type_argument_value_start, over_depth_type_end,
     },
 };
 use crate::parser::JavaParseDiagnosticCode;
+use crate::parser::source::MAX_RECURSIVE_PARSE_OWNERS;
 
 impl Parser<'_> {
     pub(super) fn parse_type(&mut self) -> jolt_syntax::CompletedMarker {
@@ -236,7 +236,7 @@ impl Parser<'_> {
 
     fn parse_type_argument(&mut self) {
         let argument = self.start();
-        if self.generic_depth > MAX_GENERIC_TYPE_DEPTH {
+        if self.generic_depth > MAX_RECURSIVE_PARSE_OWNERS {
             let annotations = self.start();
             self.complete(annotations, JavaSyntaxKind::AnnotationList);
             self.parse_excessive_type_argument();
@@ -271,7 +271,7 @@ impl Parser<'_> {
         let ty = self.start();
         let diagnostic = self.pending_error(
             JavaParseDiagnosticCode::ExcessiveTypeNesting.id(),
-            "generic type nesting exceeds 64 levels",
+            "generic type nesting is too deep to parse safely",
         );
         let cursor = self.inner.fork_cursor();
         let end = over_depth_type_end(&mut self.inner.buffer, cursor);

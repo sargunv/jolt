@@ -2,10 +2,6 @@
 use super::{JavaSyntaxKind, Parser};
 use crate::parser::source::{TokenBuffer, TokenCursor};
 
-// Bounds native and WASM parser stacks without limiting token consumption.
-// The next nested argument becomes one lossless bogus type.
-pub(in crate::parser::grammar) const MAX_GENERIC_TYPE_DEPTH: usize = 64;
-
 pub(in crate::parser::grammar) fn over_depth_type_end(
     buffer: &mut TokenBuffer<'_>,
     mut cursor: TokenCursor,
@@ -137,15 +133,15 @@ mod tests {
 
     #[test]
     fn generic_depth_limit_preserves_the_last_structured_level() {
-        let depth_64 = format!("class C {{ {} value; }}", nested_type(64, "Leaf"));
-        assert!(parse_compilation_unit(&depth_64).diagnostics().is_empty());
-        assert_eq!(count_nodes(&depth_64, JavaSyntaxKind::BogusType), 0);
+        let depth_128 = format!("class C {{ {} value; }}", nested_type(128, "Leaf"));
+        assert!(parse_compilation_unit(&depth_128).diagnostics().is_empty());
+        assert_eq!(count_nodes(&depth_128, JavaSyntaxKind::BogusType), 0);
 
-        let depth_65 = format!(
+        let depth_129 = format!(
             "class C {{ {} value; int following; }} class D {{}}",
-            nested_type(65, "Leaf")
+            nested_type(129, "Leaf")
         );
-        let parse = parse_compilation_unit(&depth_65);
+        let parse = parse_compilation_unit(&depth_129);
         assert_eq!(parse.diagnostics().len(), 1);
         assert_eq!(
             parse.diagnostics()[0].code,
@@ -153,7 +149,7 @@ mod tests {
         );
         assert_eq!(
             parse.diagnostics()[0].message,
-            "generic type nesting exceeds 64 levels"
+            "generic type nesting is too deep to parse safely"
         );
         let root = parse.syntax().expect("represented compilation unit");
         assert_exact_diagnostic_owner(
@@ -161,13 +157,13 @@ mod tests {
             parse.diagnostics(),
             parse.structural_diagnostic_owners(),
             JavaParseDiagnosticCode::ExcessiveTypeNesting.id(),
-            "generic type nesting exceeds 64 levels",
+            "generic type nesting is too deep to parse safely",
             JavaSyntaxKind::BogusType,
             None,
         );
-        assert_eq!(count_nodes(&depth_65, JavaSyntaxKind::BogusType), 1);
-        assert_eq!(count_nodes(&depth_65, JavaSyntaxKind::FieldDeclaration), 2);
-        assert_eq!(count_nodes(&depth_65, JavaSyntaxKind::ClassDeclaration), 2);
+        assert_eq!(count_nodes(&depth_129, JavaSyntaxKind::BogusType), 1);
+        assert_eq!(count_nodes(&depth_129, JavaSyntaxKind::FieldDeclaration), 2);
+        assert_eq!(count_nodes(&depth_129, JavaSyntaxKind::ClassDeclaration), 2);
     }
 
     #[test]
@@ -208,7 +204,7 @@ mod tests {
         let malformed_leaf = format!("+ @A(({}) value) Leaf", nested_type(4096, "Leaf"));
         let malformed = format!(
             "class C {{ {} value; int following; }} class D {{}}",
-            nested_type(65, &malformed_leaf)
+            nested_type(129, &malformed_leaf)
         );
         assert_eq!(count_nodes(&malformed, JavaSyntaxKind::FieldDeclaration), 2);
         assert_eq!(count_nodes(&malformed, JavaSyntaxKind::ClassDeclaration), 2);
@@ -216,7 +212,10 @@ mod tests {
 
     #[test]
     fn over_depth_wildcard_is_normalized_to_one_bogus_type() {
-        let source = format!("class C {{ {} value; }}", nested_type(65, "? extends Leaf"));
+        let source = format!(
+            "class C {{ {} value; }}",
+            nested_type(129, "? extends Leaf")
+        );
         let parse = parse_compilation_unit(&source);
         assert_eq!(parse.diagnostics().len(), 1);
         assert_eq!(
@@ -259,7 +258,7 @@ mod tests {
 
         let deep = format!(
             "class C {{ {} value; int following; }}",
-            nested_type(65, "+")
+            nested_type(129, "+")
         );
         let parse = parse_compilation_unit(&deep);
         assert_eq!(parse.diagnostics().len(), 1);
@@ -275,7 +274,7 @@ mod tests {
         for leaf in ["Broken(value", "Broken[value"] {
             let source = format!(
                 "class C {{ {} ; int following; }} class D {{}}",
-                nested_type(65, leaf).trim_end_matches('>')
+                nested_type(129, leaf).trim_end_matches('>')
             );
             assert_eq!(count_nodes(&source, JavaSyntaxKind::BogusType), 1);
             assert_eq!(count_nodes(&source, JavaSyntaxKind::FieldDeclaration), 2);

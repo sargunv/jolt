@@ -1903,12 +1903,14 @@ slices remove Java nodes and allocations or leave topology unchanged.
   need continuations for class segments, annotations, wildcards, arrays,
   separators, malformed recovery, and marker completion, duplicating both the
   consuming and markerless type grammars in a larger state machine.
-- One shared limit instead allows 64 active generic argument lists. The parser
-  owns one depth counter, and every lookahead copies that active depth and
-  scopes its own increments. This counts re-entry through annotation expressions
-  and casts; the explicit-parameter prototype reset at public `parse_type()`
-  calls and stack-aborted on a generated 1,000-layer alternating adversary.
-- At depth 65, the next physical `TypeArgument` is intentionally normalized to
+- One parser-wide numeric policy allows 128 active recursive grammar owners. In
+  this PR, the consuming type grammar and lookahead retain separate counters but
+  apply that same value to active generic argument lists. The parser owns one
+  depth counter, and every lookahead copies that active depth and scopes its own
+  increments. This counts re-entry through annotation expressions and casts; the
+  explicit-parameter prototype reset at public `parse_type()` calls and
+  stack-aborted on a generated 1,000-layer alternating adversary.
+- At depth 129, the next physical `TypeArgument` is intentionally normalized to
   its required empty `AnnotationList` plus one diagnostic-owned `BogusType`. One
   allocation-free Java-local scanner finds the exact argument endpoint;
   lookahead seeks there and the parser emits every token to the same endpoint.
@@ -1916,21 +1918,27 @@ slices remove Java nodes and allocations or leave topology unchanged.
 - The scanner is iterative and linear, tracks generic and annotation delimiters,
   stops at unmatched corresponding closers or semicolons, and preserves every
   token/trivia item and following syntax. Parser generic recursion is capped at
-  64 on native and WASM without a heap work stack. Parser finish debug-asserts
+  128 on native and WASM without a heap work stack. Parser finish debug-asserts
   that the scoped counter returned to zero.
 - Fine wildcard/malformed CST distinctions beyond the documented limit are not
   retained. Preserving them required roughly 65 more production lines and
   duplicated over-depth decisions through parser and lookahead recovery. One
   whole-argument bogus policy is smaller, locally obvious, and lossless.
-- Generated tests cover depth 64 unchanged, depth 65 with exactly one owned
+- Generated tests cover depth 128 unchanged, depth 129 with exactly one owned
   diagnostic/bogus type, depth 4,096, invalid and wildcard normalization,
   unmatched delimiters, following fields/classes, and a 4,096-layer
   generic→annotation→cast re-entry adversary. A compact formatter test proves
   non-panic and following-syntax preservation without an 832-line snapshot.
-- The same 4,096-depth source passed the actual dprint WASM plugin via stdin.
-  Existing realistic fixtures reach only depth 4. Production is +102/-5 lines
-  (+97 net), concentrated in one counter, one lookahead field, one shared
-  scanner, and owner-local branches; no production allocation is introduced.
+- The same 4,096-depth source passed the actual dprint WASM plugin via stdin. An
+  uncapped release build fails between 18,040 and 18,050 generic levels on the 8
+  MiB native main stack. The optimized plugin has a 1 MiB WASM stack and
+  succeeds at 1,451 generic levels but fails at 1,452. The costlier
+  generic→annotation→cast cycle succeeds at 413 and fails at 414, leaving at
+  least 3.2x headroom at the selected limit on the smallest production stack.
+  Existing realistic fixtures reach only depth 4. Production is +106/-5 lines
+  (+101 net), concentrated in one numeric policy, one counter, one lookahead
+  field, one shared scanner, and owner-local branches; no production allocation
+  is introduced.
 - Realistic Java/Kotlin allocation counts and bytes, syntax topology, and
   formatter document topology are exactly unchanged. Java/Kotlin parse medians
   moved -3.36%/-2.09%; Java format moved -0.14%, while Kotlin format moved
@@ -1992,7 +2000,7 @@ slices remove Java nodes and allocations or leave topology unchanged.
 | 2026-07-23 | Isolate Kotlin marker abandonment in a new PR 20.              | PR 19 formatter probing exposed a parser panic on malformed `when` syntax; parser marker ownership needs its own recovery fixture and rollback boundary before Java complexity work.                                     |
 | 2026-07-23 | Give annotated function types direct syntax ownership.         | Guarding the special branches avoided the panic but misclassified valid annotated `suspend` and `context` types; two optional schema fields plus one shared formatter helper preserve the grammar at +1 production line. |
 | 2026-07-23 | Reject malformed-`when` formatter visibility state.            | The recovered keyword is a present `is` token and already spaces correctly; the malformed-keyword field remains unreachable, so an API or token probe would encode no representable behavior.                            |
-| 2026-07-23 | Cap active Java generic argument depth at 64.                  | An iterative rewrite duplicated the type grammar; one dynamic counter survives annotation/cast re-entry, while a shared linear scanner preserves the unsupported suffix as one syntax-owned bogus type.                  |
+| 2026-07-23 | Use one Java recursive-owner policy value of 128.              | The 1 MiB plugin fails at 414 layers on the worst measured generic re-entry path; 128 keeps 3.2x headroom, removes an unexplained 64/128 split, and preserves twice as much valid generic structure.                     |
 | 2026-07-23 | Normalize the whole over-depth type argument.                  | Preserving wildcard and malformed subshape beyond the limit added about 65 lines of duplicated parser/lookahead policy; one bogus value is lossless, bounded, and easier to reason about locally.                        |
 
 ## Resume Protocol

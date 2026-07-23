@@ -11,6 +11,11 @@ pub(super) type ParseEvents = jolt_syntax::ParseEvents;
 pub(super) type TokenBuffer<'source> = jolt_syntax::TokenBuffer<'source, JavaLanguage>;
 pub(super) use jolt_syntax::TokenCursor;
 
+// Resource budget for simultaneously active recursive grammar owners. This is
+// not source depth: one construct may activate more than one owner. The value
+// is calibrated with headroom for the optimized plugin's 1 MiB WASM stack.
+pub(super) const MAX_RECURSIVE_PARSE_OWNERS: usize = 128;
+
 pub(super) struct Parser<'source> {
     pub(super) inner: jolt_syntax::Parser<'source, JavaLanguage>,
     pub(super) parentheses: ParenthesisSummary,

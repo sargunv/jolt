@@ -12,7 +12,7 @@ mod token_predicates;
 mod type_arguments;
 
 pub(in crate::parser::grammar) use lookahead::JavaLookahead;
-pub(super) use type_arguments::{MAX_GENERIC_TYPE_DEPTH, over_depth_type_end};
+pub(super) use type_arguments::over_depth_type_end;
 
 #[derive(Clone, Copy)]
 pub(super) enum MissingConstructorHeaderAction {
