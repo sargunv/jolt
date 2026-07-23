@@ -1,9 +1,9 @@
 use super::leaves::format_leaf_token;
 use super::{
-    ArgumentList, CommaListItem, Doc, Expression, FieldAccessExpression, LeadingComments,
+    ArgumentList, CommaListItem, Doc, FieldAccessExpression, LeadingComments,
     MethodInvocationExpression, delimited_comma_list, format_expression,
-    format_expression_with_leading_comments, format_member_chain, format_member_dot,
-    format_token_with_comments, format_type_argument_list, is_member_chain_child,
+    format_expression_with_leading_comments, format_member_dot, format_token_with_comments,
+    format_type_argument_list,
 };
 use crate::helpers::lists::syntax_comma_list_items;
 use crate::helpers::recovery::{
@@ -21,13 +21,6 @@ pub(super) fn format_method_invocation_expression_with_leading_comments<'source>
     leading_comments: LeadingComments,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let expression_family = Expression::from(*expression);
-    if !is_member_chain_child(&expression_family)
-        && let Some(chain) = format_member_chain(expression_family, doc)
-    {
-        return chain;
-    }
-
     doc_group!(
         doc,
         doc_concat!(
@@ -55,12 +48,6 @@ pub(super) fn format_field_access_expression<'source>(
     expression: &FieldAccessExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let expression_family = Expression::from(*expression);
-    if !is_member_chain_child(&expression_family)
-        && let Some(chain) = format_member_chain(expression_family, doc)
-    {
-        return chain;
-    }
     doc_group!(
         doc,
         doc_concat!(

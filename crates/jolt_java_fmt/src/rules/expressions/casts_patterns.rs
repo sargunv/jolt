@@ -87,10 +87,13 @@ fn format_cast_close_paren<'source>(
 
 pub(super) fn format_instanceof_expression<'source>(
     expression: &InstanceofExpression<'source>,
+    left: Option<Doc<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let expression_doc = format_required_field(expression.expression(), doc, |expression, doc| {
-        format_expression(&expression, doc)
+    let expression_doc = left.unwrap_or_else(|| {
+        format_required_field(expression.expression(), doc, |expression, doc| {
+            format_expression(&expression, doc)
+        })
     });
     let operator = format_required_field(expression.instanceof_keyword(), doc, |token, doc| {
         format_instanceof_operator(&token, doc)

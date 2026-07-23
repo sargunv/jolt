@@ -78,11 +78,14 @@ fn format_annotation_parts<'source>(
 pub(super) fn format_this_expression<'source>(
     expression: &ThisExpression<'source>,
     leading_comments: LeadingComments,
+    qualifier: Option<Doc<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     format_qualified_keyword_expression(
-        format_optional_field(expression.qualifier(), doc, |qualifier, doc| {
-            format_expression(&qualifier, doc)
+        qualifier.unwrap_or_else(|| {
+            format_optional_field(expression.qualifier(), doc, |qualifier, doc| {
+                format_expression(&qualifier, doc)
+            })
         }),
         format_optional_field(expression.dot(), doc, |dot, doc| {
             format_member_dot(&dot, doc)
@@ -97,11 +100,14 @@ pub(super) fn format_this_expression<'source>(
 pub(super) fn format_super_expression<'source>(
     expression: &SuperExpression<'source>,
     leading_comments: LeadingComments,
+    qualifier: Option<Doc<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     format_qualified_keyword_expression(
-        format_optional_field(expression.qualifier(), doc, |qualifier, doc| {
-            format_expression(&qualifier, doc)
+        qualifier.unwrap_or_else(|| {
+            format_optional_field(expression.qualifier(), doc, |qualifier, doc| {
+                format_expression(&qualifier, doc)
+            })
         }),
         format_optional_field(expression.dot(), doc, |dot, doc| {
             format_member_dot(&dot, doc)
@@ -151,7 +157,11 @@ pub(super) fn format_class_literal_expression<'source>(
             format_name_expression(&target, LeadingComments::Preserve, doc)
         }
         ClassLiteralTargetSyntax::FieldAccessExpression(target) => {
-            super::format_field_access_expression(&target, doc)
+            super::format_postfix_family_expression(
+                super::Expression::FieldAccessExpression(target),
+                LeadingComments::Preserve,
+                doc,
+            )
         }
         ClassLiteralTargetSyntax::BogusClassLiteralTarget(bogus) => format_malformed(&bogus, doc),
     });

@@ -1117,7 +1117,7 @@ ready for review.
 | 28  | `cleanup/28-kotlin-structural-recursion` | draft open | PR 27  | [#30](https://github.com/sargunv/jolt/pull/30) | full + WASM + benchmark    | Bound recursive Kotlin blocks and class bodies.  |
 | 29  | `cleanup/29-kotlin-infix-type-depth`     | draft open | PR 28  | [#31](https://github.com/sargunv/jolt/pull/31) | full + WASM + benchmark    | Bound Kotlin infix and type formatting.          |
 | 30  | `cleanup/30-kotlin-suffix-depth`         | draft open | PR 29  | [#32](https://github.com/sargunv/jolt/pull/32) | full + WASM + benchmark    | Bound Kotlin postfix/member suffix formatting.   |
-| 31  | `cleanup/31-java-formatter-depth`        | planned    | PR 30  | —                                              | —                          | Bound deep Java formatter traversal.             |
+| 31  | `cleanup/31-java-formatter-depth`        | draft open | PR 30  | [#33](https://github.com/sargunv/jolt/pull/33) | full + WASM + benchmark    | Bound deep Java formatter traversal.             |
 | 32  | `cleanup/32-residue-reconciliation`      | planned    | PR 31  | —                                              | —                          | Final evidence and debt-ledger closure.          |
 
 ### PR 01 evidence
@@ -2365,6 +2365,44 @@ slices remove Java nodes and allocations or leave topology unchanged.
   semantics-preserving walk.
 - Refreshed optimized WASM moves 1,766,396 -> 1,769,538 bytes (+3,142, +0.18%).
   The exact benchmark records clean committed subject `1b1ffc5f`.
+
+### PR 31 evidence
+
+- One Java-local postfix walk now covers the genuinely repeatable field-access,
+  qualified-invocation, array-access, postfix-operator, qualified-object,
+  qualified-`this`, and qualified-`super` receiver/qualifier fields. Method
+  references and class literals remain local base barriers because the parser
+  makes a second `::` or `.class` syntax-owned bogus structure rather than a
+  repeatable valid spine.
+- The recursive member collector was deleted; the existing builder receives
+  maximal field/invocation segments from parent-aware ascent and retains exact
+  wrapper, grouping, forced-break, and innermost literal/name comment-relocation
+  behavior. Every direct and qualified-invocation two-hop ascent stops at the
+  captured outer node.
+- One alternating operator walk covers binary and `instanceof` left spines. One
+  first operand plus paired operator/operand parts replaces mirrored root state
+  and parallel vectors. Transparent comment-free parentheses are recorded on
+  first and appended runs, then removal claims replay outer-to-inner. The outer
+  run owner still supplies readability parenthesis and removal authority.
+  Missing or malformed recursive fields use their existing shallow structured
+  formatters.
+- Production is +446/-288 lines (+158 net) and the generated integration test is
+  +58 lines. A large intermediate enum was rejected after strict Clippy exposed
+  its 320-byte hot state; the final representation is one formatted document
+  plus an optional existing-shape run, with no new production allocation.
+- Eleven clean depth-4,096 pure/alternating postfix and operator adversaries
+  completed natively, reconstructed losslessly, retained following declarations,
+  and formatted idempotently. A combined actual dprint-WASM stdin smoke retained
+  mixed-suffix and alternating-operator sentinels. `mise run fix` passed strict
+  native and WASM checks; the complete non-update suite passed all 226 tests
+  with zero skips and unchanged snapshots.
+- Realistic Java/Kotlin syntax and document topology are exactly unchanged.
+  Deleting Java's mirrored operator state lowers formatter allocations from
+  1,510,091 to 1,469,656 (-40,435, -2.68%) and allocated bytes from
+  1,984,927,118 to 1,984,737,038 (-190,080). Repeated timing runs varied too
+  widely for a causal performance claim.
+- Refreshed optimized WASM moves 1,769,538 -> 1,775,872 bytes (+6,334, +0.36%).
+  The exact benchmark records clean committed subject `c06701c5`.
 
 ## Decision Log
 

@@ -1,19 +1,171 @@
-use super::calls::format_qualified_invocation_name;
+use super::arrays_objects::{format_array_access_expression, format_object_creation_expression};
+use super::calls::{
+    format_field_access_expression, format_method_invocation_expression_with_leading_comments,
+    format_qualified_invocation_name,
+};
+use super::leaves::{format_super_expression, format_this_expression};
+use super::operators::format_postfix_expression;
 use super::{
-    Doc, Expression, ExpressionParentRole, FieldAccessExpression, JavaSyntaxToken, LeadingComments,
-    LeadingTrivia, MethodInvocationExpression, TrailingTrivia, format_argument_list,
-    format_expression, format_expression_with_leading_comments, format_leading_comments,
-    format_token, format_token_with_comments, format_type_argument_list,
-    trailing_comments_force_line,
+    Doc, Expression, FieldAccessExpression, JavaSyntaxToken, LeadingComments, LeadingTrivia,
+    MethodInvocationExpression, TrailingTrivia, format_argument_list,
+    format_expression_with_leading_comments, format_leading_comments, format_token,
+    format_token_with_comments, format_type_argument_list, trailing_comments_force_line,
 };
 use crate::helpers::recovery::{format_optional_field, format_required_field};
 use jolt_fmt_ir::{ConcatBuilder, DocBuilder};
-use jolt_java_syntax::{JavaSyntaxField, MethodInvocationFormSyntax, QualifiedMethodInvocation};
+use jolt_java_syntax::{
+    JavaFamily, JavaNode, JavaSyntaxField, JavaSyntaxNode, JavaSyntaxView,
+    MethodInvocationFormSyntax, QualifiedMethodInvocation,
+};
 
 type ChainSuffix<'source> = (Doc<'source>, bool);
 
+pub(super) fn format_postfix_family_expression<'source>(
+    expression: Expression<'source>,
+    leading_comments: LeadingComments,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let Some(outer) = expression.syntax_node() else {
+        doc.block_on_invariant("Java postfix expression has no syntax node");
+        return Doc::nil();
+    };
+    let mut current = expression;
+    while let Some(inner) = postfix_inner(current) {
+        current = inner;
+    }
+
+    let Some(mut current_node) = current.syntax_node() else {
+        doc.block_on_invariant("Java postfix base has no syntax node");
+        return Doc::nil();
+    };
+    let relocate_comments = matches!(
+        current,
+        Expression::LiteralExpression(_) | Expression::NameExpression(_)
+    ) && postfix_parent(current_node)
+        .is_some_and(|(parent, _)| is_member_expression(parent));
+    let mut comments = relocate_comments.then(|| format_expression_leading_comments(&current, doc));
+    let base_leading = if relocate_comments {
+        LeadingComments::SuppressFirstToken
+    } else {
+        leading_comments
+    };
+    let mut formatted = format_postfix_base(&current, base_leading, doc);
+
+    while current_node != outer {
+        if let Some((chain, parent, parent_node)) =
+            format_member_chain(current, formatted, current_node, outer, doc)
+        {
+            formatted = if let Some(comments) = comments.take() {
+                doc_concat!(doc, [comments, chain])
+            } else {
+                chain
+            };
+            current = parent;
+            current_node = parent_node;
+            continue;
+        }
+        let Some((parent, parent_node)) = postfix_parent(current_node) else {
+            doc.block_on_invariant("Java postfix spine crossed an unexpected parent");
+            break;
+        };
+        formatted = match parent {
+            Expression::ArrayAccessExpression(access) => {
+                format_array_access_expression(&access, Some(formatted), doc)
+            }
+            Expression::PostfixExpression(postfix) => {
+                format_postfix_expression(&postfix, Some(formatted), doc)
+            }
+            Expression::ObjectCreationExpression(creation) => {
+                format_object_creation_expression(&creation, Some(formatted), doc)
+            }
+            Expression::ThisExpression(this) => {
+                format_this_expression(&this, leading_comments, Some(formatted), doc)
+            }
+            Expression::SuperExpression(super_expression) => {
+                format_super_expression(&super_expression, leading_comments, Some(formatted), doc)
+            }
+            _ => {
+                doc.block_on_invariant("Java postfix parent was not a suffix expression");
+                break;
+            }
+        };
+        current = parent;
+        current_node = parent_node;
+    }
+    formatted
+}
+
+fn postfix_inner(expression: Expression<'_>) -> Option<Expression<'_>> {
+    match expression {
+        Expression::FieldAccessExpression(access) => present(access.receiver()),
+        Expression::ArrayAccessExpression(access) => present(access.array()),
+        Expression::PostfixExpression(postfix) => present(postfix.operand()),
+        Expression::ObjectCreationExpression(creation) => present(creation.qualifier()),
+        Expression::ThisExpression(this) => present(this.qualifier()),
+        Expression::SuperExpression(super_expression) => present(super_expression.qualifier()),
+        Expression::MethodInvocationExpression(invocation) => {
+            present(qualified_invocation(&invocation)?.receiver())
+        }
+        _ => None,
+    }
+}
+
+fn postfix_parent(current: JavaSyntaxNode<'_>) -> Option<(Expression<'_>, JavaSyntaxNode<'_>)> {
+    let parent = current.parent()?;
+    if let Some(expression) = Expression::cast(parent) {
+        return Some((expression, parent));
+    }
+    QualifiedMethodInvocation::cast(parent)?;
+    let owner = parent.parent()?;
+    Some((
+        Expression::MethodInvocationExpression(MethodInvocationExpression::cast(owner)?),
+        owner,
+    ))
+}
+
+fn format_postfix_base<'source>(
+    expression: &Expression<'source>,
+    leading_comments: LeadingComments,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    match expression {
+        Expression::FieldAccessExpression(access) => format_field_access_expression(access, doc),
+        Expression::MethodInvocationExpression(invocation) => {
+            format_method_invocation_expression_with_leading_comments(
+                invocation,
+                leading_comments,
+                doc,
+            )
+        }
+        Expression::ArrayAccessExpression(access) => {
+            format_array_access_expression(access, None, doc)
+        }
+        Expression::PostfixExpression(postfix) => format_postfix_expression(postfix, None, doc),
+        Expression::ObjectCreationExpression(creation) => {
+            format_object_creation_expression(creation, None, doc)
+        }
+        Expression::ThisExpression(this) => {
+            format_this_expression(this, leading_comments, None, doc)
+        }
+        Expression::SuperExpression(super_expression) => {
+            format_super_expression(super_expression, leading_comments, None, doc)
+        }
+        _ => format_expression_with_leading_comments(expression, leading_comments, doc),
+    }
+}
+
+fn is_member_expression(expression: Expression<'_>) -> bool {
+    matches!(expression, Expression::FieldAccessExpression(_))
+        || matches!(
+            expression,
+            Expression::MethodInvocationExpression(invocation)
+                if qualified_invocation(&invocation)
+                    .and_then(|qualified| present(qualified.receiver()))
+                    .is_some()
+        )
+}
+
 struct MemberChainBuilder<'source> {
-    root: Option<Expression<'source>>,
     first_suffix: Option<ChainSuffix<'source>>,
     has_rest_suffixes: bool,
     field_run: Option<ChainSuffix<'source>>,
@@ -86,45 +238,50 @@ impl<'source> MemberChainBuilder<'source> {
 }
 
 pub(super) fn format_member_chain<'source>(
-    expression: Expression<'source>,
+    root: Expression<'source>,
+    root_doc: Doc<'source>,
+    root_node: JavaSyntaxNode<'source>,
+    outer: JavaSyntaxNode<'source>,
     doc: &mut DocBuilder<'source>,
-) -> Option<Doc<'source>> {
+) -> Option<(Doc<'source>, Expression<'source>, JavaSyntaxNode<'source>)> {
     let mut chain = None;
+    let mut current = root;
+    let mut current_node = root_node;
     let rest_suffixes = doc.concat_list(|rest_suffixes| {
         let mut builder = MemberChainBuilder {
-            root: None,
             first_suffix: None,
             has_rest_suffixes: false,
             field_run: None,
         };
-        if append_chain_expression(&mut builder, expression, rest_suffixes).is_some() {
-            builder.flush_field_run(rest_suffixes);
-            chain = Some((
-                builder.root,
-                builder.first_suffix,
-                builder.has_rest_suffixes,
-            ));
+        loop {
+            if current_node == outer {
+                break;
+            }
+            let Some((parent, parent_node)) = postfix_parent(current_node) else {
+                break;
+            };
+            match parent {
+                Expression::FieldAccessExpression(access) => {
+                    builder.push_field_access(&access, rest_suffixes);
+                }
+                Expression::MethodInvocationExpression(invocation) => {
+                    let Some(qualified) = qualified_invocation(&invocation) else {
+                        break;
+                    };
+                    builder.push_method_invocation(&qualified, rest_suffixes);
+                }
+                _ => break,
+            }
+            current = parent;
+            current_node = parent_node;
         }
+        builder.flush_field_run(rest_suffixes);
+        chain = Some((builder.first_suffix, builder.has_rest_suffixes));
     });
-    let (root, first_suffix, has_rest_suffixes) = chain?;
-    let root = root?;
+    let (first_suffix, has_rest_suffixes) = chain?;
     let (first_suffix, first_suffix_has_leading_comments) = first_suffix?;
     let keep_first_suffix_with_root =
         is_simple_member_chain_root(&root) && !first_suffix_has_leading_comments;
-    let relocate_leading_comments = matches!(
-        root,
-        Expression::LiteralExpression(_) | Expression::NameExpression(_)
-    );
-    let leading_comments = if relocate_leading_comments {
-        format_expression_leading_comments(&root, doc)
-    } else {
-        Doc::nil()
-    };
-    let root_doc = if relocate_leading_comments {
-        format_expression_with_leading_comments(&root, LeadingComments::SuppressFirstToken, doc)
-    } else {
-        format_expression(&root, doc)
-    };
     let chain = member_chain(
         doc,
         root_doc,
@@ -133,35 +290,11 @@ pub(super) fn format_member_chain<'source>(
         has_rest_suffixes,
         keep_first_suffix_with_root,
     );
-
-    Some(doc_concat!(doc, [leading_comments, chain]))
+    Some((chain, current, current_node))
 }
 
 fn required_dot_has_leading_comments(dot: JavaSyntaxField<'_, JavaSyntaxToken<'_>>) -> bool {
     matches!(dot, JavaSyntaxField::Present(dot) if !dot.leading_comments().is_empty())
-}
-
-fn append_chain_expression<'source>(
-    builder: &mut MemberChainBuilder<'source>,
-    expression: Expression<'source>,
-    rest_suffixes: &mut ConcatBuilder<'_, 'source>,
-) -> Option<()> {
-    match expression {
-        Expression::FieldAccessExpression(access) => {
-            let receiver = present(access.receiver())?;
-            append_chain_receiver(builder, receiver, rest_suffixes);
-            builder.push_field_access(&access, rest_suffixes);
-            Some(())
-        }
-        Expression::MethodInvocationExpression(invocation) => {
-            let qualified = qualified_invocation(&invocation)?;
-            let receiver = present(qualified.receiver())?;
-            append_chain_receiver(builder, receiver, rest_suffixes);
-            builder.push_method_invocation(&qualified, rest_suffixes);
-            Some(())
-        }
-        _ => None,
-    }
 }
 
 fn present<T>(field: JavaSyntaxField<'_, T>) -> Option<T> {
@@ -178,16 +311,6 @@ fn qualified_invocation<'source>(
         MethodInvocationFormSyntax::QualifiedMethodInvocation(invocation) => Some(invocation),
         MethodInvocationFormSyntax::UnqualifiedMethodInvocation(_)
         | MethodInvocationFormSyntax::BogusMethodInvocationForm(_) => None,
-    }
-}
-
-fn append_chain_receiver<'source>(
-    builder: &mut MemberChainBuilder<'source>,
-    receiver: Expression<'source>,
-    rest_suffixes: &mut ConcatBuilder<'_, 'source>,
-) {
-    if append_chain_expression(builder, receiver, rest_suffixes).is_none() {
-        builder.root = Some(receiver);
     }
 }
 
@@ -300,15 +423,5 @@ const fn is_simple_member_chain_root(expression: &Expression) -> bool {
             | Expression::ThisExpression(_)
             | Expression::SuperExpression(_)
             | Expression::ClassLiteralExpression(_)
-    )
-}
-
-pub(super) fn is_member_chain_child(expression: &Expression) -> bool {
-    matches!(
-        expression.parent_role(),
-        Some(
-            ExpressionParentRole::FieldAccessReceiver
-                | ExpressionParentRole::MethodInvocationQualifier
-        )
     )
 }
