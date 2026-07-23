@@ -978,7 +978,7 @@ ready for review.
 | 14  | `cleanup/14-final-reconciliation`        | draft open | PR 13  | [#16](https://github.com/sargunv/jolt/pull/16) | full + static checks       | Actual docs, metrics, and API deletions only.    |
 | 15  | `cleanup/15-modifier-presence`           | draft open | PR 14  | [#17](https://github.com/sargunv/jolt/pull/17) | full + benchmark           | Syntax-owned modifier layout presence.           |
 | 16  | `cleanup/16-recovery-layout-parts`       | draft open | PR 15  | [#18](https://github.com/sargunv/jolt/pull/18) | full + benchmark           | Barrier-aware visible/claim-only layout.         |
-| 17  | `cleanup/17-ignore-boundary-ownership`   | planned    | PR 16  | —                                              | —                          | Delete raw EOF ignore-range projections.         |
+| 17  | `cleanup/17-ignore-boundary-ownership`   | draft open | PR 16  | [#19](https://github.com/sargunv/jolt/pull/19) | full + benchmark           | Delete raw EOF ignore-range projections.         |
 | 18  | `cleanup/18-java-program-joining`        | planned    | PR 17  | —                                              | —                          | Reconcile root joining and marker ownership.     |
 | 19  | `cleanup/19-kotlin-recovery-layout`      | planned    | PR 18  | —                                              | —                          | Isolate Kotlin recovery behavior corrections.    |
 | 20  | `cleanup/20-java-delimiter-summaries`    | planned    | PR 19  | —                                              | —                          | Bound lambda and annotation parenthesis scans.   |
@@ -1700,6 +1700,35 @@ slices remove Java nodes and allocations or leave topology unchanged.
   both corpora, imported-fixture idempotence/conservation, recovery, layout,
   trivia, CLI, and dprint integration tests. The architecture benchmark report
   records committed subject `0a3543a`; formatter snapshots are unchanged.
+
+### PR 17 evidence
+
+- Root-derived `FormatterIgnoreRun`s now remain alive through Java and Kotlin
+  EOF formatting. Their opaque boundary-comment query replaces the public raw
+  on-marker range projection, two `Vec<Range<usize>>` copies, two duplicated
+  containment policies, and Kotlin's mixed document-plus-metadata result.
+- The first prototype scanned every run for every EOF comment. Adversarial
+  review rejected its `O(runs * comments)` cost. The final query uses the
+  ordered run starts and `partition_point` to select the only possible owner in
+  `O(log runs)` per comment; a counted 1,024-run midpoint test requires at most
+  11 comparisons.
+- Boundary ownership remains byte-for-byte equivalent: only a selected run that
+  owns its closing on marker can suppress the fully contained boundary comment.
+  Adjacent runs, terminal runs, half-open equality, and non-owning candidates
+  have focused assertions. Formatter snapshots remain unchanged.
+- Production Rust across formatter IR and the two roots is +48/-51 lines (-3
+  net). The new bounded-work test adds 36 lines while replacing four weaker
+  projection assertions.
+- Realistic Java and Kotlin document topology, allocation counts, and allocation
+  bytes are exactly unchanged. Format peak RSS moved -81,920 bytes for Java and
+  +77,824 bytes for Kotlin; timing moved -2.45% and +0.10% respectively and is
+  treated as neutral. Optimized WASM shrank from 1,751,838 to 1,750,965 bytes
+  (-873, -0.05%).
+- `mise run fix` passed workspace formatting, Clippy, dependency, native, and
+  WASM checks. All 185 repository tests passed with zero skips, including both
+  formatter corpora, recovery, imported-fixture idempotence/conservation,
+  trivia, CLI, and dprint integration. The benchmark records committed subject
+  `e97b098`; snapshots are unchanged.
 
 ## Decision Log
 
