@@ -102,6 +102,8 @@ mod tests {
             ("Type @A(value = {1, 2}), tail", 12),
             ("Broken(value; int following", 3),
             ("Broken[value; int following", 3),
+            ("Broken[> value; int following", 2),
+            ("Broken[, tail", 2),
             ("Broken(value } class Following", 3),
             ("Broken[value ) tail", 3),
             ("Type & Other", 1),

@@ -11,7 +11,6 @@ formatted:
   {
     "first", // Present separator.
     "last" // A synthesized comma here would become comment text.
-
   }
 )
 class AnnotationValues {
@@ -22,14 +21,12 @@ class ArrayValues {
     {
       "first", // Present separator.
       "last" // A synthesized comma here would become comment text.
-
     };
 }
 
 enum EnumValues {
   FIRST, // Present separator.
   LAST // A synthesized comma here would become comment text.
-
 }
 
 diagnostics:

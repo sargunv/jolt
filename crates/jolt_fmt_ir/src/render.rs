@@ -1191,6 +1191,36 @@ mod tests {
         assert_eq!(sink.0, source);
     }
 
+    // Language fixtures cannot isolate this IR invariant: zero-width source claims
+    // deliberately have no rendered spelling, but must still leave fit-checking
+    // whitespace state exactly as the renderer would.
+    #[test]
+    fn empty_source_claim_does_not_change_flat_group_fit() {
+        let source = "x";
+        let tree = syntax_tree(source);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
+        let token = root.first_token().expect("source token");
+        let mut builder = DocBuilder::new();
+        let prefix = builder.text("a".repeat(78));
+        let first_line = builder.line();
+        let removed = builder.removed_source(removal_claim(
+            &root,
+            SourceIdentity::Token(token.source_id()),
+            RemovalReason::DuplicateImport,
+        ));
+        let second_line = builder.line();
+        let suffix = builder.text("b");
+        let contents = builder.concat([prefix, first_line, removed, second_line, suffix]);
+        let document = builder.group(contents);
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        render_source_to(&arena, document, options(), &mut sink, &root)
+            .expect("removed source completes conservation");
+
+        assert_eq!(sink.0, format!("{} b", "a".repeat(78)));
+    }
+
     #[cfg(debug_assertions)]
     #[test]
     fn source_looking_ordinary_text_cannot_complete_conservation() {

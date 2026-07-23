@@ -83,6 +83,10 @@ enum Values {
   B,
 }
 
+public
+// Between two modifier tokens.
+static class LeadingModifierComment {}
+
 syntax:
 syntax:
 CompilationUnit
@@ -551,7 +555,17 @@ CompilationUnit
           Comma "," @ 1683..1684
         ClassBodyMemberList
         RBrace "}" @ 1685..1686 leading=[Newline "\n"]
-  Eof "" @ 1687..1687 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+        PublicKw "public" @ 1688..1694 leading=[Newline "\n", Newline "\n"]
+        StaticKw "static" @ 1727..1733 leading=[Newline "\n", LineComment "// Between two modifier tokens.", Newline "\n"] trailing=[Whitespace " "]
+      ClassKw "class" @ 1734..1739 trailing=[Whitespace " "]
+      Identifier "LeadingModifierComment" @ 1740..1762 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 1763..1764
+        ClassBodyMemberList
+        RBrace "}" @ 1764..1765
+  Eof "" @ 1766..1766 leading=[Newline "\n"]
 
 diagnostics:
   (none)

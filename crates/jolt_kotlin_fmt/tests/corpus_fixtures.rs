@@ -3,7 +3,8 @@ use std::path::PathBuf;
 use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
 use jolt_kotlin_fmt::format_source_to_sink;
 use jolt_kotlin_syntax::{
-    KotlinFile, KotlinFileItem, KotlinSyntaxField, KotlinSyntaxListPart, parse_kotlin_file,
+    KotlinFile, KotlinFileItem, KotlinSyntaxField, KotlinSyntaxKind, KotlinSyntaxListPart,
+    KotlinSyntaxView, parse_kotlin_file,
 };
 use jolt_test_support::{StringSink, collect_kotlin_files, read_to_string, workspace_root};
 
@@ -184,6 +185,10 @@ class Following
         let syntax = parse.syntax().expect("represented deep input");
         assert_eq!(syntax.source_text(), source);
         assert_top_level_following(syntax);
+        assert_expected_adjacent_properties(syntax, &source);
+        if source.contains("when (value)") {
+            assert_structured_kind_count(syntax, KotlinSyntaxKind::WhenEntry, 2);
+        }
 
         let formatted = format_source(&source, FormatOptions::default())
             .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
@@ -191,10 +196,56 @@ class Following
         let reparsed_syntax = reparsed.syntax().expect("represented formatted output");
         assert_eq!(reparsed_syntax.source_text(), formatted);
         assert_top_level_following(reparsed_syntax);
+        assert_expected_adjacent_properties(reparsed_syntax, &source);
+        if source.contains("when (value)") {
+            assert_structured_kind_count(reparsed_syntax, KotlinSyntaxKind::WhenEntry, 2);
+        }
         let formatted_again = format_source(&formatted, FormatOptions::default())
             .unwrap_or_else(|diagnostics| panic!("second format blocked: {diagnostics:#?}"));
         assert_eq!(formatted_again, formatted);
     }
+}
+
+#[test]
+fn deep_type_recovery_honors_when_entry_boundary() {
+    let source = format!(
+        "fun choose(value: Any) = when (value) {{ is {}Broken( -> 1; else -> 0 }}\nval following = 1\nclass Following\n",
+        "Box<".repeat(128),
+    );
+    assert_when_recovery_keeps_following_syntax(&source, "val following");
+}
+
+#[test]
+fn deep_expression_recovery_honors_when_entry_boundary() {
+    let source = format!(
+        "fun choose(value: Int) = when (value) {{ in {}(candidate -> 1; else -> 0 }}\nval sibling = 1\nclass Following\n",
+        "! ".repeat(127),
+    );
+    assert_when_recovery_keeps_following_syntax(&source, "val sibling");
+}
+
+fn assert_when_recovery_keeps_following_syntax(source: &str, property: &str) {
+    let parse = parse_kotlin_file(source);
+    let syntax = parse.syntax().expect("represented deep when input");
+    assert_eq!(syntax.source_text(), source);
+    assert_structured_kind_count(syntax, KotlinSyntaxKind::WhenEntry, 2);
+    assert_top_level_property(syntax, property);
+    assert_top_level_following(syntax);
+
+    let formatted = format_source(source, FormatOptions::default())
+        .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
+    let reparsed = parse_kotlin_file(&formatted);
+    let reparsed_syntax = reparsed
+        .syntax()
+        .expect("represented formatted when output");
+    assert_eq!(reparsed_syntax.source_text(), formatted);
+    assert_structured_kind_count(reparsed_syntax, KotlinSyntaxKind::WhenEntry, 2);
+    assert_top_level_property(reparsed_syntax, property);
+    assert_top_level_following(reparsed_syntax);
+    assert_eq!(
+        format_source(&formatted, FormatOptions::default()).expect("second format must complete"),
+        formatted
+    );
 }
 
 fn assert_top_level_following(syntax: KotlinFile<'_>) {
@@ -216,6 +267,51 @@ fn assert_top_level_following(syntax: KotlinFile<'_>) {
             )
         }),
         "deep recovery swallowed the following top-level class"
+    );
+}
+
+fn assert_expected_adjacent_properties(syntax: KotlinFile<'_>, source: &str) {
+    for expected in ["val following", "val sibling"] {
+        if source.contains(expected) {
+            assert_top_level_property(syntax, expected);
+        }
+    }
+}
+
+fn assert_top_level_property(syntax: KotlinFile<'_>, expected_prefix: &str) {
+    let KotlinSyntaxField::Present(items) = syntax.items() else {
+        panic!("deep input did not retain structured top-level items");
+    };
+    assert!(
+        items.parts().any(|part| {
+            let KotlinSyntaxListPart::Item(item) = part else {
+                return false;
+            };
+            matches!(
+                item.cast_family::<KotlinFileItem<'_>>(),
+                Some(KotlinFileItem::PropertyDeclaration(declaration))
+                    if declaration.source_text().trim_start().starts_with(expected_prefix)
+            )
+        }),
+        "deep recovery swallowed top-level property {expected_prefix:?}"
+    );
+}
+
+fn assert_structured_kind_count(
+    syntax: KotlinFile<'_>,
+    expected_kind: KotlinSyntaxKind,
+    expected_count: usize,
+) {
+    let root = syntax.syntax_node().expect("Kotlin file has a root");
+    let mut nodes = vec![root];
+    let mut count = 0;
+    while let Some(node) = nodes.pop() {
+        count += usize::from(node.kind() == expected_kind && !node.is_directly_malformed());
+        nodes.extend(node.children());
+    }
+    assert_eq!(
+        count, expected_count,
+        "deep recovery changed structured {expected_kind:?} count"
     );
 }
 
