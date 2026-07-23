@@ -1,0 +1,143 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+@interface Values {
+  String[] value();
+}
+
+@Values({
+  "first", // Present separator.
+  "last" // A synthesized comma here would become comment text.
+})
+class AnnotationValues {}
+
+class ArrayValues {
+  String[] values = {
+    "first", // Present separator.
+    "last" // A synthesized comma here would become comment text.
+  };
+}
+
+enum EnumValues {
+  FIRST, // Present separator.
+  LAST // A synthesized comma here would become comment text.
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    AnnotationInterfaceDeclaration
+      At "@" @ 0..1
+      InterfaceKw "interface" @ 1..10 trailing=[Whitespace " "]
+      Identifier "Values" @ 11..17 trailing=[Whitespace " "]
+      AnnotationInterfaceBody
+        LBrace "{" @ 18..19
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+            AnnotationElementDeclaration
+              ArrayType
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 22..28 leading=[Newline "\n", Whitespace "  "]
+                ArrayDimensions
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 28..29
+                    RBracket "]" @ 29..30 trailing=[Whitespace " "]
+              Identifier "value" @ 31..36
+              LParen "(" @ 36..37
+              RParen ")" @ 37..38
+              Semicolon ";" @ 38..39
+        RBrace "}" @ 40..41 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+        Annotation
+          At "@" @ 43..44 leading=[Newline "\n", Newline "\n"]
+          Name
+            Identifier "Values" @ 44..50
+          AnnotationArgumentList
+            LParen "(" @ 50..51
+            AnnotationElementList
+              AnnotationElementArgumentList
+                AnnotationElementValue
+                  AnnotationArrayInitializer
+                    LBrace "{" @ 51..52
+                    AnnotationElementValueList
+                      AnnotationElementValue
+                        LiteralExpression
+                          StringLiteral "\"first\"" @ 55..62 leading=[Newline "\n", Whitespace "  "]
+                      Comma "," @ 62..63 trailing=[Whitespace " ", LineComment "// Present separator."]
+                      AnnotationElementValue
+                        LiteralExpression
+                          StringLiteral "\"last\"" @ 88..94 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", LineComment "// A synthesized comma here would become comment text."]
+                    RBrace "}" @ 150..151 leading=[Newline "\n"]
+            RParen ")" @ 151..152
+      ClassKw "class" @ 153..158 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "AnnotationValues" @ 159..175 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 176..177
+        ClassBodyMemberList
+        RBrace "}" @ 177..178
+    ClassDeclaration
+      ClassKw "class" @ 180..185 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "ArrayValues" @ 186..197 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 198..199
+        ClassBodyMemberList
+          FieldDeclaration
+            ArrayType
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 202..208 leading=[Newline "\n", Whitespace "  "]
+              ArrayDimensions
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 208..209
+                  RBracket "]" @ 209..210 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "values" @ 211..217 trailing=[Whitespace " "]
+                Assign "=" @ 218..219 trailing=[Whitespace " "]
+                VariableInitializer
+                  ArrayInitializer
+                    LBrace "{" @ 220..221
+                    VariableInitializerList
+                      LiteralExpression
+                        StringLiteral "\"first\"" @ 226..233 leading=[Newline "\n", Whitespace "    "]
+                      Comma "," @ 233..234 trailing=[Whitespace " ", LineComment "// Present separator."]
+                      LiteralExpression
+                        StringLiteral "\"last\"" @ 261..267 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", LineComment "// A synthesized comma here would become comment text."]
+                    RBrace "}" @ 325..326 leading=[Newline "\n", Whitespace "  "]
+            Semicolon ";" @ 326..327
+        RBrace "}" @ 328..329 leading=[Newline "\n"]
+    EnumDeclaration
+      EnumKw "enum" @ 331..335 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "EnumValues" @ 336..346 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 347..348
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+            Identifier "FIRST" @ 351..356 leading=[Newline "\n", Whitespace "  "]
+          Comma "," @ 356..357 trailing=[Whitespace " ", LineComment "// Present separator."]
+          EnumConstant
+            AnnotationList
+            Identifier "LAST" @ 382..386 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", LineComment "// A synthesized comma here would become comment text."]
+        ClassBodyMemberList
+        RBrace "}" @ 442..443 leading=[Newline "\n"]
+  Eof "" @ 444..444 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

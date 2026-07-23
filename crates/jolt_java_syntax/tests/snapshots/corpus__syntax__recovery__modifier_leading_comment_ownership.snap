@@ -1,0 +1,117 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class ModifierLeadingCommentOwnership {
+  // Malformed method modifier documentation.
+  transient void method() {}
+
+  // Malformed constructor modifier documentation.
+  volatile ModifierLeadingCommentOwnership() {}
+
+  // Malformed field modifier documentation.
+  synchronized int field;
+
+  void parameter(
+      // Malformed parameter modifier documentation.
+      transient String value) {}
+}
+
+// Malformed type modifier documentation.
+transient class RecoveredType {}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "ModifierLeadingCommentOwnership" @ 6..37 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 38..39
+        ClassBodyMemberList
+          MethodDeclaration
+            ModifierList
+              BogusModifier
+                TransientKw "transient" @ 88..97 leading=[Newline "\n", Whitespace "  ", LineComment "// Malformed method modifier documentation.", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VoidType
+              VoidKw "void" @ 98..102 trailing=[Whitespace " "]
+            Identifier "method" @ 103..109
+            LParen "(" @ 109..110
+            RParen ")" @ 110..111 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 112..113
+              BlockStatementList
+              RBrace "}" @ 113..114
+          ConstructorDeclaration
+            ModifierList
+              BogusModifier
+                VolatileKw "volatile" @ 169..177 leading=[Newline "\n", Newline "\n", Whitespace "  ", LineComment "// Malformed constructor modifier documentation.", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "ModifierLeadingCommentOwnership" @ 178..209
+            LParen "(" @ 209..210
+            RParen ")" @ 210..211 trailing=[Whitespace " "]
+            ConstructorBody
+              LBrace "{" @ 212..213
+              ConstructorBodyEntryList
+              RBrace "}" @ 213..214
+          FieldDeclaration
+            ModifierList
+              BogusModifier
+                SynchronizedKw "synchronized" @ 263..275 leading=[Newline "\n", Newline "\n", Whitespace "  ", LineComment "// Malformed field modifier documentation.", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 276..279 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "field" @ 280..285
+            Semicolon ";" @ 285..286
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 290..294 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "parameter" @ 295..304
+            LParen "(" @ 304..305
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                  BogusModifier
+                    TransientKw "transient" @ 365..374 leading=[Newline "\n", Whitespace "      ", LineComment "// Malformed parameter modifier documentation.", Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 375..381 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 382..387
+            RParen ")" @ 387..388 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 389..390
+              BlockStatementList
+              RBrace "}" @ 390..391
+        RBrace "}" @ 392..393 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+        BogusModifier
+          TransientKw "transient" @ 437..446 leading=[Newline "\n", Newline "\n", LineComment "// Malformed type modifier documentation.", Newline "\n"] trailing=[Whitespace " "]
+      ClassKw "class" @ 447..452 trailing=[Whitespace " "]
+      Identifier "RecoveredType" @ 453..466 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 467..468
+        ClassBodyMemberList
+        RBrace "}" @ 468..469
+  Eof "" @ 470..470 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=88..97 message="invalid method modifier"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=169..177 message="invalid constructor modifier"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=263..275 message="invalid field modifier"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=365..374 message="invalid parameter modifier"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=437..446 message="invalid type modifier"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(88), end: TextSize(97) }) message=invalid method modifier
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(169), end: TextSize(177) }) message=invalid constructor modifier
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(263), end: TextSize(275) }) message=invalid field modifier
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(365), end: TextSize(374) }) message=invalid parameter modifier
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(437), end: TextSize(446) }) message=invalid type modifier

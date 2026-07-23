@@ -1,0 +1,560 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import java.io.InputStream;
+
+@interface A {}
+
+class LeadingCommentOwnership {
+  /** Before a structured modifier that precedes an annotation. */
+  public @A static class DocumentedModifierFirst {}
+
+  @A
+  // Between an annotation and a field type.
+  String annotatedField;
+
+  @A
+  // Between an annotation and a method return type.
+  void annotatedMethod() {}
+
+  @A
+  // Between an annotation and a modifier token.
+  public String modifiedField;
+
+  public
+  // Between a modifier token and an annotation.
+  @A static class Nested {}
+
+  public // Trailing modifier comment.
+  @A static class Trailing {}
+
+  /** Generic method documentation. */
+  <T> @A T method(T value) {
+    return value;
+  }
+
+  /** Generic constructor documentation. */
+  <T> LeadingCommentOwnership(T value) {}
+
+  void declarations(Iterable<String> values, InputStream input, Object candidate)
+      throws Exception {
+    int before = 0;
+    // Local variable documentation.
+    @A String local = "";
+
+    for (
+        // Enhanced-for variable documentation.
+        @A String value : values) {}
+
+    try (
+        // Resource variable documentation.
+        final InputStream resource = input) {}
+
+    if (candidate
+        instanceof
+        // Type pattern documentation.
+        final String text) {}
+  }
+
+}
+
+@A
+// Between an annotation and a type keyword.
+class AnnotatedType {}
+
+record Compact(int value) {
+  /** Compact constructor documentation. */
+  @A Compact {}
+}
+
+@interface Elements {
+  /** Annotated element documentation. */
+  @A String value();
+
+  /** Modified element documentation. */
+  public String explicit();
+}
+
+enum Values {
+  /** Annotated constant documentation. */
+  @Deprecated A,
+  B,
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ImportDeclaration
+      ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "java" @ 7..11
+        Dot "." @ 11..12
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "io" @ 12..14
+          Dot "." @ 14..15
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "InputStream" @ 15..26
+      Semicolon ";" @ 26..27
+    AnnotationInterfaceDeclaration
+      At "@" @ 29..30 leading=[Newline "\n", Newline "\n"]
+      InterfaceKw "interface" @ 30..39 trailing=[Whitespace " "]
+      Identifier "A" @ 40..41 trailing=[Whitespace " "]
+      AnnotationInterfaceBody
+        LBrace "{" @ 42..43
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+        RBrace "}" @ 43..44
+    ClassDeclaration
+      ClassKw "class" @ 46..51 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "LeadingCommentOwnership" @ 52..75 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 76..77
+        ClassBodyMemberList
+          ClassDeclaration
+            ModifierList
+              PublicKw "public" @ 147..153 leading=[Newline "\n", Whitespace "  ", DocComment "/** Before a structured modifier that precedes an annotation. */", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Annotation
+                At "@" @ 154..155
+                Name
+                  Identifier "A" @ 155..156 trailing=[Whitespace " "]
+              StaticKw "static" @ 157..163 trailing=[Whitespace " "]
+            ClassKw "class" @ 164..169 trailing=[Whitespace " "]
+            Identifier "DocumentedModifierFirst" @ 170..193 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 194..195
+              ClassBodyMemberList
+              RBrace "}" @ 195..196
+          FieldDeclaration
+            ModifierList
+              Annotation
+                At "@" @ 200..201 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+                Name
+                  Identifier "A" @ 201..202
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "String" @ 250..256 leading=[Newline "\n", Whitespace "  ", LineComment "// Between an annotation and a field type.", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "annotatedField" @ 257..271
+            Semicolon ";" @ 271..272
+          MethodDeclaration
+            ModifierList
+              Annotation
+                At "@" @ 276..277 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+                Name
+                  Identifier "A" @ 277..278
+            VoidType
+              VoidKw "void" @ 334..338 leading=[Newline "\n", Whitespace "  ", LineComment "// Between an annotation and a method return type.", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "annotatedMethod" @ 339..354
+            LParen "(" @ 354..355
+            RParen ")" @ 355..356 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 357..358
+              BlockStatementList
+              RBrace "}" @ 358..359
+          FieldDeclaration
+            ModifierList
+              Annotation
+                At "@" @ 363..364 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+                Name
+                  Identifier "A" @ 364..365
+              PublicKw "public" @ 417..423 leading=[Newline "\n", Whitespace "  ", LineComment "// Between an annotation and a modifier token.", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "String" @ 424..430 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "modifiedField" @ 431..444
+            Semicolon ";" @ 444..445
+          ClassDeclaration
+            ModifierList
+              PublicKw "public" @ 449..455 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+              Annotation
+                At "@" @ 507..508 leading=[Newline "\n", Whitespace "  ", LineComment "// Between a modifier token and an annotation.", Newline "\n", Whitespace "  "]
+                Name
+                  Identifier "A" @ 508..509 trailing=[Whitespace " "]
+              StaticKw "static" @ 510..516 trailing=[Whitespace " "]
+            ClassKw "class" @ 517..522 trailing=[Whitespace " "]
+            Identifier "Nested" @ 523..529 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 530..531
+              ClassBodyMemberList
+              RBrace "}" @ 531..532
+          ClassDeclaration
+            ModifierList
+              PublicKw "public" @ 536..542 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " ", LineComment "// Trailing modifier comment."]
+              Annotation
+                At "@" @ 575..576 leading=[Newline "\n", Whitespace "  "]
+                Name
+                  Identifier "A" @ 576..577 trailing=[Whitespace " "]
+              StaticKw "static" @ 578..584 trailing=[Whitespace " "]
+            ClassKw "class" @ 585..590 trailing=[Whitespace " "]
+            Identifier "Trailing" @ 591..599 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 600..601
+              ClassBodyMemberList
+              RBrace "}" @ 601..602
+          MethodDeclaration
+            TypeParameterList
+              Lt "<" @ 645..646 leading=[Newline "\n", Newline "\n", Whitespace "  ", DocComment "/** Generic method documentation. */", Newline "\n", Whitespace "  "]
+              TypeParameterSeparatedList
+                TypeParameter
+                  AnnotationList
+                  Identifier "T" @ 646..647
+              Gt ">" @ 647..648 trailing=[Whitespace " "]
+            AnnotationList
+              Annotation
+                At "@" @ 649..650
+                Name
+                  Identifier "A" @ 650..651 trailing=[Whitespace " "]
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "T" @ 652..653 trailing=[Whitespace " "]
+            Identifier "method" @ 654..660
+            LParen "(" @ 660..661
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "T" @ 661..662 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 663..668
+            RParen ")" @ 668..669 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 670..671
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 676..682 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "value" @ 683..688
+                    Semicolon ";" @ 688..689
+              RBrace "}" @ 692..693 leading=[Newline "\n", Whitespace "  "]
+          ConstructorDeclaration
+            TypeParameterList
+              Lt "<" @ 741..742 leading=[Newline "\n", Newline "\n", Whitespace "  ", DocComment "/** Generic constructor documentation. */", Newline "\n", Whitespace "  "]
+              TypeParameterSeparatedList
+                TypeParameter
+                  AnnotationList
+                  Identifier "T" @ 742..743
+              Gt ">" @ 743..744 trailing=[Whitespace " "]
+            Identifier "LeadingCommentOwnership" @ 745..768
+            LParen "(" @ 768..769
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "T" @ 769..770 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 771..776
+            RParen ")" @ 776..777 trailing=[Whitespace " "]
+            ConstructorBody
+              LBrace "{" @ 778..779
+              ConstructorBodyEntryList
+              RBrace "}" @ 779..780
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 784..788 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "declarations" @ 789..801
+            LParen "(" @ 801..802
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Iterable" @ 802..810
+                      TypeArgumentList
+                        Lt "<" @ 810..811
+                        TypeArgumentSeparatedList
+                          TypeArgument
+                            AnnotationList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "String" @ 811..817
+                        Gt ">" @ 817..818 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "values" @ 819..825
+              Comma "," @ 825..826 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "InputStream" @ 827..838 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "input" @ 839..844
+              Comma "," @ 844..845 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 846..852 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "candidate" @ 853..862
+            RParen ")" @ 862..863
+            ThrowsClause
+              ThrowsKw "throws" @ 870..876 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+              TypeList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Exception" @ 877..886 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 887..888
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 893..896 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "before" @ 897..903 trailing=[Whitespace " "]
+                        Assign "=" @ 904..905 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "0" @ 906..907
+                  Semicolon ";" @ 907..908
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                      Annotation
+                        At "@" @ 950..951 leading=[Newline "\n", Whitespace "    ", LineComment "// Local variable documentation.", Newline "\n", Whitespace "    "]
+                        Name
+                          Identifier "A" @ 951..952 trailing=[Whitespace " "]
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "String" @ 953..959 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "local" @ 960..965 trailing=[Whitespace " "]
+                        Assign "=" @ 966..967 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            StringLiteral "\"\"" @ 968..970
+                  Semicolon ";" @ 970..971
+                BlockStatement
+                  ForStatement
+                    EnhancedForStatement
+                      ForKw "for" @ 977..980 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      LParen "(" @ 981..982
+                      EnhancedForVariable
+                        ParameterModifierList
+                          Annotation
+                            At "@" @ 1039..1040 leading=[Newline "\n", Whitespace "        ", LineComment "// Enhanced-for variable documentation.", Newline "\n", Whitespace "        "]
+                            Name
+                              Identifier "A" @ 1040..1041 trailing=[Whitespace " "]
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 1042..1048 trailing=[Whitespace " "]
+                        Identifier "value" @ 1049..1054 trailing=[Whitespace " "]
+                      Colon ":" @ 1055..1056 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "values" @ 1057..1063
+                      RParen ")" @ 1063..1064 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 1065..1066
+                        BlockStatementList
+                        RBrace "}" @ 1066..1067
+                BlockStatement
+                  TryWithResourcesStatement
+                    TryKw "try" @ 1073..1076 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ResourceSpecification
+                      LParen "(" @ 1077..1078
+                      ResourceList
+                        Resource
+                          ResourceVariableDeclaration
+                            ParameterModifierList
+                              FinalKw "final" @ 1131..1136 leading=[Newline "\n", Whitespace "        ", LineComment "// Resource variable documentation.", Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "InputStream" @ 1137..1148 trailing=[Whitespace " "]
+                            Identifier "resource" @ 1149..1157 trailing=[Whitespace " "]
+                            Assign "=" @ 1158..1159 trailing=[Whitespace " "]
+                            VariableInitializer
+                              NameExpression
+                                Identifier "input" @ 1160..1165
+                      RParen ")" @ 1165..1166 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 1167..1168
+                      BlockStatementList
+                      RBrace "}" @ 1168..1169
+                    CatchClauseList
+                BlockStatement
+                  IfStatement
+                    IfKw "if" @ 1175..1177 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    LParen "(" @ 1178..1179
+                    InstanceofExpression
+                      NameExpression
+                        Identifier "candidate" @ 1179..1188
+                      InstanceofKw "instanceof" @ 1197..1207 leading=[Newline "\n", Whitespace "        "]
+                      TypePattern
+                        ParameterModifierList
+                          FinalKw "final" @ 1255..1260 leading=[Newline "\n", Whitespace "        ", LineComment "// Type pattern documentation.", Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 1261..1267 trailing=[Whitespace " "]
+                        Identifier "text" @ 1268..1272
+                    RParen ")" @ 1272..1273 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 1274..1275
+                      BlockStatementList
+                      RBrace "}" @ 1275..1276
+              RBrace "}" @ 1279..1280 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 1282..1283 leading=[Newline "\n", Newline "\n"]
+    ClassDeclaration
+      ModifierList
+        Annotation
+          At "@" @ 1285..1286 leading=[Newline "\n", Newline "\n"]
+          Name
+            Identifier "A" @ 1286..1287
+      ClassKw "class" @ 1333..1338 leading=[Newline "\n", LineComment "// Between an annotation and a type keyword.", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "AnnotatedType" @ 1339..1352 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 1353..1354
+        ClassBodyMemberList
+        RBrace "}" @ 1354..1355
+    RecordDeclaration
+      Identifier "record" @ 1357..1363 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Compact" @ 1364..1371
+      LParen "(" @ 1371..1372
+      RecordComponentList
+        RecordComponent
+          ParameterModifierList
+          PrimitiveType
+            AnnotationList
+            IntKw "int" @ 1372..1375 trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "value" @ 1376..1381
+      RParen ")" @ 1381..1382 trailing=[Whitespace " "]
+      RecordBody
+        LBrace "{" @ 1383..1384
+        RecordBodyMemberList
+          CompactConstructorDeclaration
+            ModifierList
+              Annotation
+                At "@" @ 1431..1432 leading=[Newline "\n", Whitespace "  ", DocComment "/** Compact constructor documentation. */", Newline "\n", Whitespace "  "]
+                Name
+                  Identifier "A" @ 1432..1433 trailing=[Whitespace " "]
+            Identifier "Compact" @ 1434..1441 trailing=[Whitespace " "]
+            ConstructorBody
+              LBrace "{" @ 1442..1443
+              ConstructorBodyEntryList
+              RBrace "}" @ 1443..1444
+        RBrace "}" @ 1445..1446 leading=[Newline "\n"]
+    AnnotationInterfaceDeclaration
+      At "@" @ 1448..1449 leading=[Newline "\n", Newline "\n"]
+      InterfaceKw "interface" @ 1449..1458 trailing=[Whitespace " "]
+      Identifier "Elements" @ 1459..1467 trailing=[Whitespace " "]
+      AnnotationInterfaceBody
+        LBrace "{" @ 1468..1469
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+            AnnotationElementDeclaration
+              ModifierList
+                Annotation
+                  At "@" @ 1514..1515 leading=[Newline "\n", Whitespace "  ", DocComment "/** Annotated element documentation. */", Newline "\n", Whitespace "  "]
+                  Name
+                    Identifier "A" @ 1515..1516 trailing=[Whitespace " "]
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 1517..1523 trailing=[Whitespace " "]
+              Identifier "value" @ 1524..1529
+              LParen "(" @ 1529..1530
+              RParen ")" @ 1530..1531
+              Semicolon ";" @ 1531..1532
+            AnnotationElementDeclaration
+              ModifierList
+                PublicKw "public" @ 1577..1583 leading=[Newline "\n", Newline "\n", Whitespace "  ", DocComment "/** Modified element documentation. */", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 1584..1590 trailing=[Whitespace " "]
+              Identifier "explicit" @ 1591..1599
+              LParen "(" @ 1599..1600
+              RParen ")" @ 1600..1601
+              Semicolon ";" @ 1601..1602
+        RBrace "}" @ 1603..1604 leading=[Newline "\n"]
+    EnumDeclaration
+      EnumKw "enum" @ 1606..1610 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Values" @ 1611..1617 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 1618..1619
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+              Annotation
+                At "@" @ 1665..1666 leading=[Newline "\n", Whitespace "  ", DocComment "/** Annotated constant documentation. */", Newline "\n", Whitespace "  "]
+                Name
+                  Identifier "Deprecated" @ 1666..1676 trailing=[Whitespace " "]
+            Identifier "A" @ 1677..1678
+          Comma "," @ 1678..1679
+          EnumConstant
+            AnnotationList
+            Identifier "B" @ 1682..1683 leading=[Newline "\n", Whitespace "  "]
+          Comma "," @ 1683..1684
+        ClassBodyMemberList
+        RBrace "}" @ 1685..1686 leading=[Newline "\n"]
+  Eof "" @ 1687..1687 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -87,7 +87,7 @@ pub(crate) fn braced_comma_list_with_trailing_separator<'source>(
 ) -> Doc<'source> {
     let mut items = items.into_iter().peekable();
     if items.peek().is_none() {
-        return empty_delimited_list(doc, open, close);
+        return empty_delimited_list(doc, open, close, LeadingTrivia::Preserve);
     }
 
     let (items_doc, has_source_trailing_separator) =
@@ -98,7 +98,7 @@ pub(crate) fn braced_comma_list_with_trailing_separator<'source>(
     let contents = doc_concat!(
         doc,
         [
-            format_open_delimiter(doc, open),
+            format_open_delimiter(doc, open, LeadingTrivia::Preserve),
             doc_indent!(doc, doc_concat!(doc, [open_spacing, items_doc])),
             doc.line(),
             format_close_delimiter(doc, close),
@@ -118,9 +118,34 @@ pub(crate) fn delimited_comma_list<'source>(
     close: JavaFormatDelimiter<'source>,
     items: impl IntoIterator<Item = CommaListItem<'source>>,
 ) -> Doc<'source> {
+    delimited_comma_list_with_open_leading(doc, open, close, items, LeadingTrivia::Preserve)
+}
+
+pub(crate) fn delimited_comma_list_without_open_leading_comments<'source>(
+    doc: &mut DocBuilder<'source>,
+    open: JavaFormatDelimiter<'source>,
+    close: JavaFormatDelimiter<'source>,
+    items: impl IntoIterator<Item = CommaListItem<'source>>,
+) -> Doc<'source> {
+    delimited_comma_list_with_open_leading(
+        doc,
+        open,
+        close,
+        items,
+        LeadingTrivia::SuppressAlreadyHandled,
+    )
+}
+
+fn delimited_comma_list_with_open_leading<'source>(
+    doc: &mut DocBuilder<'source>,
+    open: JavaFormatDelimiter<'source>,
+    close: JavaFormatDelimiter<'source>,
+    items: impl IntoIterator<Item = CommaListItem<'source>>,
+    open_leading: LeadingTrivia,
+) -> Doc<'source> {
     let mut items = items.into_iter().peekable();
     if items.peek().is_none() {
-        return empty_delimited_list(doc, open, close);
+        return empty_delimited_list(doc, open, close, open_leading);
     }
 
     let trailing = close.source().map_or_else(Doc::nil, |close| {
@@ -150,7 +175,7 @@ pub(crate) fn delimited_comma_list<'source>(
                     doc_concat!(
                         doc,
                         [
-                            format_open_delimiter_before_items(doc, open),
+                            format_open_delimiter_before_items(doc, open, open_leading),
                             comma_list(doc, items),
                             format_close_leading_comments(doc, close.source()),
                         ]
@@ -167,12 +192,13 @@ fn empty_delimited_list<'source>(
     doc: &mut DocBuilder<'source>,
     open: JavaFormatDelimiter<'source>,
     close: JavaFormatDelimiter<'source>,
+    open_leading: LeadingTrivia,
 ) -> Doc<'source> {
     if !has_delimiter_dangling_comments(open.source(), close.source()) {
         return doc_concat!(
             doc,
             [
-                format_open_delimiter(doc, open),
+                format_open_delimiter(doc, open, open_leading),
                 format_close_delimiter(doc, close),
             ]
         );
@@ -188,7 +214,7 @@ fn empty_delimited_list<'source>(
         doc_concat!(
             doc,
             [
-                format_open_delimiter(doc, open),
+                format_open_delimiter(doc, open, open_leading),
                 doc_indent!(doc, doc_concat!(doc, [doc.hard_line(), dangling,])),
                 doc.hard_line(),
                 format_close_delimiter_without_leading(doc, close),
@@ -200,21 +226,25 @@ fn empty_delimited_list<'source>(
 fn format_open_delimiter<'source>(
     doc: &mut DocBuilder<'source>,
     open: JavaFormatDelimiter<'source>,
+    leading: LeadingTrivia,
 ) -> Doc<'source> {
-    format_open_delimiter_with_trailing(doc, open, TrailingTrivia::RelocatedToEnclosingContext)
+    format_open_delimiter_with_trailing(
+        doc,
+        open,
+        leading,
+        TrailingTrivia::RelocatedToEnclosingContext,
+    )
 }
 
 fn format_open_delimiter_before_items<'source>(
     doc: &mut DocBuilder<'source>,
     open: JavaFormatDelimiter<'source>,
+    leading: LeadingTrivia,
 ) -> Doc<'source> {
     match open {
-        JavaFormatDelimiter::Source(open) => format_token_with_inline_leading_comments(
-            doc,
-            &open,
-            InlineLeadingTrivia::BeforeToken,
-            TrailingTrivia::BeforeSoftLine,
-        ),
+        JavaFormatDelimiter::Source(open) => {
+            format_source_open_delimiter(doc, &open, leading, TrailingTrivia::BeforeSoftLine)
+        }
         JavaFormatDelimiter::Recovery(recovery) => {
             doc_concat!(doc, [recovery, doc.soft_line()])
         }
@@ -224,16 +254,33 @@ fn format_open_delimiter_before_items<'source>(
 fn format_open_delimiter_with_trailing<'source>(
     doc: &mut DocBuilder<'source>,
     open: JavaFormatDelimiter<'source>,
+    leading: LeadingTrivia,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
     match open {
-        JavaFormatDelimiter::Source(open) => format_token_with_inline_leading_comments(
+        JavaFormatDelimiter::Source(open) => {
+            format_source_open_delimiter(doc, &open, leading, trailing)
+        }
+        JavaFormatDelimiter::Recovery(recovery) => recovery,
+    }
+}
+
+fn format_source_open_delimiter<'source>(
+    doc: &mut DocBuilder<'source>,
+    open: &JavaSyntaxToken<'source>,
+    leading: LeadingTrivia,
+    trailing: TrailingTrivia,
+) -> Doc<'source> {
+    match leading {
+        LeadingTrivia::Preserve => format_token_with_inline_leading_comments(
             doc,
-            &open,
+            open,
             InlineLeadingTrivia::BeforeToken,
             trailing,
         ),
-        JavaFormatDelimiter::Recovery(recovery) => recovery,
+        LeadingTrivia::SuppressAlreadyHandled => {
+            format_token_after_relocated_leading_comments(doc, open, trailing)
+        }
     }
 }
 

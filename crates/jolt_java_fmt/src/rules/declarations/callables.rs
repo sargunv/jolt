@@ -1,12 +1,12 @@
 use super::{
     AnnotationElementDeclaration, CommaListItem, Doc, FormalParameterList, JavaSyntaxToken,
-    LeadingTrivia, MethodDeclaration, ThrowsClause, TrailingTrivia, comment_forces_line,
-    delimited_comma_list, format_annotation_element_value, format_array_dimensions, format_block,
-    format_construct_leading_comments, format_constructor_body, format_formal_parameter,
-    format_modifier_prefix, format_receiver_parameter, format_separator_with_comments,
-    format_statement_semicolon, format_token, format_token_after_construct_leading_comments,
-    format_token_with_comments, format_type, format_type_parameter_list,
-    format_type_without_leading_comments, format_typed_modifier_prefix, source_braced_body,
+    LeadingTrivia, MethodDeclaration, ThrowsClause, TrailingTrivia, TypeLeadingComments,
+    comment_forces_line, delimited_comma_list, format_annotation_element_value,
+    format_array_dimensions, format_block, format_construct_leading_comments,
+    format_constructor_body, format_formal_parameter, format_modifier_prefix,
+    format_receiver_parameter, format_separator_with_comments, format_statement_semicolon,
+    format_token, format_token_with_comments, format_type, format_type_parameter_list,
+    format_typed_modifier_prefix, source_braced_body,
 };
 use jolt_fmt_ir::DocBuilder;
 
@@ -29,11 +29,31 @@ fn format_optional_modifier_prefix<'source>(
 
 fn format_optional_type_parameters<'source>(
     parameters: JavaFormatField<'source, Option<jolt_java_syntax::TypeParameterList<'source>>>,
+    construct_first_token: Option<&JavaSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> (Doc<'source>, bool) {
     match parameters {
         JavaFormatField::Present(Some(parameters)) => {
-            (format_type_parameter_list(parameters, doc), true)
+            let owns_leading = parameters.first_token().as_ref() == construct_first_token;
+            let leading_comments = if owns_leading {
+                TypeLeadingComments::SuppressFirstToken
+            } else {
+                TypeLeadingComments::Preserve
+            };
+            (
+                doc_concat!(
+                    doc,
+                    [
+                        if owns_leading {
+                            format_construct_leading_comments(doc, construct_first_token)
+                        } else {
+                            Doc::nil()
+                        },
+                        format_type_parameter_list(parameters, leading_comments, doc),
+                    ]
+                ),
+                true,
+            )
         }
         JavaFormatField::Present(None) => (Doc::nil(), false),
         JavaFormatField::Malformed(malformed) => (malformed, true),
@@ -80,20 +100,14 @@ pub(super) fn format_constructor_declaration<'source>(
     let throws = resolve_optional_field(constructor.throws(), doc);
     let type_parameters = resolve_optional_field(constructor.type_parameters(), doc);
     let name = format_required_field(constructor.name(), doc, |name, doc| {
-        format_token_after_construct_leading_comments(doc, &name, constructor_first_token.as_ref())
+        format_token_with_comments(doc, &name)
     });
     let open_paren = resolve_required_delimiter(constructor.open_paren(), doc);
     let parameters = resolve_optional_field(constructor.parameters(), doc);
     let close_paren = resolve_required_delimiter(constructor.close_paren(), doc);
-    let prefix = doc_concat!(
-        doc,
-        [
-            format_construct_leading_comments(doc, constructor_first_token.as_ref()),
-            format_optional_modifier_prefix(modifiers, doc),
-        ]
-    );
+    let prefix = format_optional_modifier_prefix(modifiers, doc);
     let (type_parameters, has_type_parameters) =
-        format_optional_type_parameters(type_parameters, doc);
+        format_optional_type_parameters(type_parameters, constructor_first_token.as_ref(), doc);
     let header = doc_concat!(
         doc,
         [
@@ -138,6 +152,7 @@ pub(crate) fn format_method_declaration<'source>(
     method: &MethodDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    let method_first_token = method.first_token();
     let method_modifiers = resolve_optional_field(method.modifiers(), doc);
     let throws = resolve_optional_field(method.throws(), doc);
     let type_parameters = resolve_optional_field(method.type_parameters(), doc);
@@ -152,7 +167,7 @@ pub(crate) fn format_method_declaration<'source>(
         format_array_dimensions(&dimensions, doc)
     });
     let return_type = format_required_field(method.return_type(), doc, |return_type, doc| {
-        format_type_without_leading_comments(&return_type, doc)
+        format_type(&return_type, doc)
     });
     let body = resolve_required_field(method.body(), doc);
     let modifiers = match method_modifiers {
@@ -162,15 +177,9 @@ pub(crate) fn format_method_declaration<'source>(
             type_use_prefix: Doc::nil(),
         },
     };
-    let prefix = doc_concat!(
-        doc,
-        [
-            format_construct_leading_comments(doc, method.first_token().as_ref()),
-            modifiers.declaration_prefix,
-        ]
-    );
+    let prefix = modifiers.declaration_prefix;
     let (type_parameters, has_type_parameters) =
-        format_optional_type_parameters(type_parameters, doc);
+        format_optional_type_parameters(type_parameters, method_first_token.as_ref(), doc);
     let return_annotations = format_optional_annotation_list(return_annotations, doc);
     let has_return_annotations = return_annotations.is_some();
     let name_and_parameters = doc_concat!(

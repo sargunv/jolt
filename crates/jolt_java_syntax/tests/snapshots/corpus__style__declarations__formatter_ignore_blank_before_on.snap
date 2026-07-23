@@ -1,0 +1,53 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class FormatterIgnoreBlankBeforeOn {
+  // @formatter:off
+  void   raw( ) { }
+
+  // @formatter:on
+  static void formatted() {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "FormatterIgnoreBlankBeforeOn" @ 6..34 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 35..36
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 59..63 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+            Identifier "raw" @ 66..69
+            LParen "(" @ 69..70 trailing=[Whitespace " "]
+            RParen ")" @ 71..72 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 73..74 trailing=[Whitespace " "]
+              BlockStatementList
+              RBrace "}" @ 75..76
+          MethodDeclaration
+            ModifierList
+              StaticKw "static" @ 99..105 leading=[Newline "\n", Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VoidType
+              VoidKw "void" @ 106..110 trailing=[Whitespace " "]
+            Identifier "formatted" @ 111..120
+            LParen "(" @ 120..121
+            RParen ")" @ 121..122 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 123..124
+              BlockStatementList
+              RBrace "}" @ 124..125
+        RBrace "}" @ 126..127 leading=[Newline "\n"]
+  Eof "" @ 128..128 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

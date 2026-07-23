@@ -11,6 +11,7 @@ use crate::helpers::comments::{
     format_token_after_relocated_leading_comments, format_token_with_comments,
     format_token_with_inline_leading_comments,
 };
+use crate::helpers::lists::delimited_comma_list_without_open_leading_comments;
 use crate::helpers::lists::{CommaListItem, delimited_comma_list, syntax_comma_list_items};
 use crate::helpers::recovery::{
     JavaFormatField, JavaFormatListPart, format_malformed, format_optional_field,
@@ -62,13 +63,14 @@ fn format_type_with_leading_comments<'source>(
 }
 
 #[derive(Clone, Copy)]
-enum LeadingComments {
+pub(crate) enum LeadingComments {
     Preserve,
     SuppressFirstToken,
 }
 
 pub(crate) fn format_type_parameter_list<'source>(
     parameters: TypeParameterList<'source>,
+    leading_comments: LeadingComments,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let open = resolve_required_delimiter(parameters.open_angle(), doc);
@@ -84,7 +86,12 @@ pub(crate) fn format_type_parameter_list<'source>(
             comma: None,
         }],
     };
-    delimited_comma_list(doc, open, close, items)
+    match leading_comments {
+        LeadingComments::Preserve => delimited_comma_list(doc, open, close, items),
+        LeadingComments::SuppressFirstToken => {
+            delimited_comma_list_without_open_leading_comments(doc, open, close, items)
+        }
+    }
 }
 
 pub(crate) fn format_type_argument_list<'source>(

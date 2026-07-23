@@ -7,10 +7,10 @@ use crate::language::{JavaLanguage, NORMALIZATION_AUTHORITY};
 use crate::{
     AnnotationArrayInitializer, ArrayInitializer, BasicForStatement, BinaryExpression,
     ClassBodyMember, DoStatement, EmptyDeclaration, EmptyStatement, EnhancedForStatement, EnumBody,
-    Expression, Guard, IfStatement, ImportDeclaration, JavaSyntaxField, JavaSyntaxListPart,
-    JavaSyntaxToken, JavaSyntaxView, LambdaExpression, LambdaParameter, ModifierList,
-    ModuleDirective, ParameterModifierList, ParenthesizedExpression, RequiresModifierList,
-    ResourceSpecification, Statement, WhileStatement,
+    Expression, Guard, IfStatement, ImportDeclaration, JavaCommentKind, JavaSyntaxField,
+    JavaSyntaxListPart, JavaSyntaxToken, JavaSyntaxView, LambdaExpression, LambdaParameter,
+    ModifierList, ModuleDirective, ParameterModifierList, ParenthesizedExpression,
+    RequiresModifierList, ResourceSpecification, Statement, WhileStatement,
 };
 
 /// Paired source-free delimiters authorized by one valid Java syntax owner.
@@ -317,7 +317,15 @@ impl<'source> BinaryExpression<'source> {
 
 fn trailing_comma<'source>(
     owner: &impl JavaSyntaxView<'source>,
+    list: &impl JavaSyntaxView<'source>,
 ) -> Option<SynthesisClaim<'source>> {
+    let terminal = list.syntax_node()?.last_token()?;
+    if terminal
+        .trailing_comments()
+        .any(|comment| comment.kind() == JavaCommentKind::Line)
+    {
+        return None;
+    }
     let syntax = owner.syntax_node()?;
     let owner = normalization_owner(owner)?;
     let anchor = syntax
@@ -344,7 +352,7 @@ impl<'source> ArrayInitializer<'source> {
             return None;
         }
         present(self.close_brace())?;
-        trailing_comma(self)
+        trailing_comma(self, &values)
     }
 }
 
@@ -361,7 +369,7 @@ impl<'source> AnnotationArrayInitializer<'source> {
             return None;
         }
         present(self.close_brace())?;
-        trailing_comma(self)
+        trailing_comma(self, &values)
     }
 }
 
@@ -381,7 +389,7 @@ impl<'source> EnumBody<'source> {
             return None;
         }
         present(self.close_brace())?;
-        trailing_comma(self)
+        trailing_comma(self, &constants)
     }
 
     /// Authorizes normalizing the represented enum body separator.

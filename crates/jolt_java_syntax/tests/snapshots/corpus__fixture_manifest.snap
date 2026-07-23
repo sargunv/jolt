@@ -26,11 +26,13 @@ style/declarations/enum-constants.java
 style/declarations/enum-empty-constants-with-members.java
 style/declarations/field-modifiers-and-member-spacing.java
 style/declarations/formatter-ignore-annotation-interface-members.java
+style/declarations/formatter-ignore-blank-before-on.java
 style/declarations/formatter-ignore-constructor-body.java
 style/declarations/formatter-ignore-enum-member-boundaries.java
 style/declarations/formatter-ignore-interface-members.java
 style/declarations/formatter-ignore-members.java
 style/declarations/formatter-ignore-nested-member-body.java
+style/declarations/leading-comment-ownership.java
 style/declarations/long-array-dimensions.java
 style/declarations/long-variable-declarator.java
 style/declarations/member-leading-comments.java
@@ -69,6 +71,7 @@ style/imports/star-import-sorting.java
 style/layout-fit-boundaries/call-single-argument-ternary.java
 style/layout-fit-boundaries/local-variable-nested-ternary.java
 style/layout-fit-boundaries/statement-boundary.java
+style/lists/trailing-comma-line-comment.java
 style/modules/case-sensitive-sorting.java
 style/modules/comment-barrier.java
 style/modules/directive-ordering.java
@@ -382,6 +385,7 @@ syntax/recovery/member-body-with-formatter-ignore.java
 syntax/recovery/method-invocation-without-name.java
 syntax/recovery/missing-type-body-token.java
 syntax/recovery/mixed-line-ending-comment-missing-type.java
+syntax/recovery/modifier-leading-comment-ownership.java
 syntax/recovery/module-annotation.java
 syntax/recovery/module-body.java
 syntax/recovery/module-recovery-barriers.java

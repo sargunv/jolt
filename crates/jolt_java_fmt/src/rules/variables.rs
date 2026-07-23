@@ -39,16 +39,8 @@ pub(crate) fn format_field_declaration<'source>(
             type_use_prefix: Doc::nil(),
         },
     };
-    let declaration_prefix = doc_concat!(
-        doc,
-        [
-            format_construct_leading_comments(doc, field.first_token().as_ref()),
-            modifiers.declaration_prefix,
-        ]
-    );
-    let ty = format_required_field(field.r#type(), doc, |ty, doc| {
-        format_type_without_leading_comments(&ty, doc)
-    });
+    let declaration_prefix = modifiers.declaration_prefix;
+    let ty = format_required_field(field.r#type(), doc, |ty, doc| format_type(&ty, doc));
 
     if let Some(declarators) = present_required(field.declarators())
         && let Some(declarator) = single_declarator(&declarators)
@@ -83,15 +75,13 @@ pub(crate) fn format_local_variable_declaration<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let modifiers = format_required_parameter_modifiers(declaration.modifiers(), doc);
+    let declaration_prefix = modifiers.declaration_prefix;
     let ty = local_variable_type(declaration, doc);
 
     if let Some(declarators) = present_required(declaration.declarators())
         && let Some(declarator) = single_declarator(&declarators)
     {
-        let typed_prefix = doc_concat!(
-            doc,
-            [modifiers.declaration_prefix, modifiers.type_use_prefix, ty]
-        );
+        let typed_prefix = doc_concat!(doc, [declaration_prefix, modifiers.type_use_prefix, ty]);
         return format_single_variable_declaration(typed_prefix, &declarator, doc);
     }
 
@@ -103,7 +93,7 @@ pub(crate) fn format_local_variable_declaration<'source>(
     doc_concat!(
         doc,
         [
-            modifiers.declaration_prefix,
+            declaration_prefix,
             modifiers.type_use_prefix,
             ty,
             space,
@@ -117,6 +107,7 @@ pub(crate) fn format_enhanced_for_variable<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let modifiers = format_required_parameter_modifiers(variable.modifiers(), doc);
+    let declaration_prefix = modifiers.declaration_prefix;
     let ty = format_required_field(variable.r#type(), doc, |ty, doc| {
         format_variable_type(ty.classify(), doc)
     });
@@ -129,7 +120,7 @@ pub(crate) fn format_enhanced_for_variable<'source>(
     doc_concat!(
         doc,
         [
-            modifiers.declaration_prefix,
+            declaration_prefix,
             modifiers.type_use_prefix,
             ty,
             doc.space(),
@@ -144,6 +135,7 @@ pub(crate) fn format_resource_variable_declaration<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let modifiers = format_required_parameter_modifiers(declaration.modifiers(), doc);
+    let declaration_prefix = modifiers.declaration_prefix;
     let ty = format_required_field(declaration.r#type(), doc, |ty, doc| {
         format_variable_type(ty.classify(), doc)
     });
@@ -164,7 +156,7 @@ pub(crate) fn format_resource_variable_declaration<'source>(
     doc_concat!(
         doc,
         [
-            modifiers.declaration_prefix,
+            declaration_prefix,
             modifiers.type_use_prefix,
             ty,
             doc.space(),
@@ -182,8 +174,6 @@ pub(crate) fn format_formal_parameter<'source>(
     parameter: &FormalParameter<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let parameter_first = parameter.first_token();
-    let leading_comments = format_construct_leading_comments(doc, parameter_first.as_ref());
     let modifiers = match resolve_required_field(parameter.modifiers(), doc) {
         JavaFormatField::Present(modifiers) => {
             format_inline_typed_parameter_modifier_prefix(&modifiers, doc)
@@ -193,14 +183,8 @@ pub(crate) fn format_formal_parameter<'source>(
             type_use_prefix: Doc::nil(),
         },
     };
-    let declaration_prefix = doc_concat!(doc, [leading_comments, modifiers.declaration_prefix]);
-    let ty = format_required_field(parameter.r#type(), doc, |ty, doc| {
-        if ty.first_token() == parameter_first {
-            format_type_without_leading_comments(&ty, doc)
-        } else {
-            format_type(&ty, doc)
-        }
-    });
+    let declaration_prefix = modifiers.declaration_prefix;
+    let ty = format_required_field(parameter.r#type(), doc, |ty, doc| format_type(&ty, doc));
     let ty = doc_concat!(doc, [modifiers.type_use_prefix, ty]);
     let varargs_annotations = resolve_annotation_list_docs(parameter.varargs_annotations(), doc);
     let name = format_required_field(parameter.name(), doc, |name, doc| {
@@ -227,8 +211,6 @@ pub(crate) fn format_record_component<'source>(
     component: &RecordComponent<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let component_first = component.first_token();
-    let leading_comments = format_construct_leading_comments(doc, component_first.as_ref());
     let modifiers = match resolve_required_field(component.modifiers(), doc) {
         JavaFormatField::Present(modifiers) => {
             format_inline_typed_parameter_modifier_prefix(&modifiers, doc)
@@ -238,14 +220,8 @@ pub(crate) fn format_record_component<'source>(
             type_use_prefix: Doc::nil(),
         },
     };
-    let declaration_prefix = doc_concat!(doc, [leading_comments, modifiers.declaration_prefix]);
-    let ty = format_required_field(component.r#type(), doc, |ty, doc| {
-        if ty.first_token() == component_first {
-            format_type_without_leading_comments(&ty, doc)
-        } else {
-            format_type(&ty, doc)
-        }
-    });
+    let declaration_prefix = modifiers.declaration_prefix;
+    let ty = format_required_field(component.r#type(), doc, |ty, doc| format_type(&ty, doc));
     let ty = doc_concat!(doc, [modifiers.type_use_prefix, ty]);
     let varargs_annotations = resolve_annotation_list_docs(component.varargs_annotations(), doc);
     let name = format_required_field(component.name(), doc, |name, doc| {
@@ -269,7 +245,8 @@ pub(crate) fn format_receiver_parameter<'source>(
     parameter: &ReceiverParameter<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let leading_comments = format_construct_leading_comments(doc, parameter.first_token().as_ref());
+    let parameter_first = parameter.first_token();
+    let leading_comments = format_construct_leading_comments(doc, parameter_first.as_ref());
     let modifiers = format_required_field(parameter.annotations(), doc, |annotations, doc| {
         format_annotation_parts(annotations.parts(), true, doc)
             .map_or_else(Doc::nil, |annotations| {
@@ -277,7 +254,11 @@ pub(crate) fn format_receiver_parameter<'source>(
             })
     });
     let ty = format_required_field(parameter.r#type(), doc, |ty, doc| {
-        format_type_without_leading_comments(&ty, doc)
+        if ty.first_token() == parameter_first {
+            format_type_without_leading_comments(&ty, doc)
+        } else {
+            format_type(&ty, doc)
+        }
     });
     let space = doc.space();
     let qualifier = format_optional_field(parameter.qualifier(), doc, |qualifier, doc| {

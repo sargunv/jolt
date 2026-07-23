@@ -39,9 +39,7 @@ fn format_type_pattern<'source>(
             type_use_prefix: Doc::nil(),
         },
     };
-    let ty = format_required_field(pattern.r#type(), doc, |ty, doc| {
-        format_type_pattern_type(ty, doc)
-    });
+    let ty = format_required_field(pattern.r#type(), doc, format_type_pattern_type);
     let name = format_required_field(pattern.name(), doc, |name, doc| {
         format_token_with_comments(doc, &name)
     });
@@ -76,18 +74,19 @@ fn format_type_pattern_type<'source>(
     ty: TypePatternType<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    if let Some(ty) = ty.cast_node::<ClassType<'source>>() {
-        format_type(&ty.into(), doc)
+    let ty = if let Some(ty) = ty.cast_node::<ClassType<'source>>() {
+        ty.into()
     } else if let Some(ty) = ty.cast_node::<PrimitiveType<'source>>() {
-        format_type(&ty.into(), doc)
+        ty.into()
     } else if let Some(ty) = ty.cast_node::<ArrayType<'source>>() {
-        format_type(&ty.into(), doc)
+        ty.into()
     } else if let Some(ty) = ty.cast_node::<BogusType<'source>>() {
-        format_malformed(&ty, doc)
+        return format_malformed(&ty, doc);
     } else {
         doc.block_on_invariant("invalid type pattern type role");
-        Doc::nil()
-    }
+        return Doc::nil();
+    };
+    format_type(&ty, doc)
 }
 
 fn format_record_pattern_type<'source>(

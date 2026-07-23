@@ -471,16 +471,9 @@ fn format_enum_constant_annotations<'source>(
     annotations: jolt_java_syntax::AnnotationList<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut first = true;
     doc.concat_list(|docs| {
         for part in annotations.parts() {
             let annotation = match resolve_list_part(part, docs) {
-                JavaFormatListPart::Item(annotation) if first => {
-                    crate::rules::annotations::format_annotation_without_leading_comments(
-                        &annotation,
-                        docs,
-                    )
-                }
                 JavaFormatListPart::Item(annotation) => {
                     crate::rules::annotations::format_annotation(&annotation, docs)
                 }
@@ -490,7 +483,6 @@ fn format_enum_constant_annotations<'source>(
                     format_token_with_comments(docs, &separator)
                 }
             };
-            first = false;
             docs.push(annotation);
             let hard_line = docs.hard_line();
             docs.push(hard_line);
