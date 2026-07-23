@@ -1,7 +1,11 @@
 use super::{
     JavaSyntaxKind, Parser,
-    support::{is_type_argument_recovery_boundary, is_type_argument_value_start},
+    support::{
+        is_type_argument_recovery_boundary, is_type_argument_value_start, over_depth_type_end,
+    },
 };
+use crate::parser::JavaParseDiagnosticCode;
+use crate::parser::source::MAX_RECURSIVE_PARSE_OWNERS;
 
 impl Parser<'_> {
     pub(super) fn parse_type(&mut self) -> jolt_syntax::CompletedMarker {
@@ -208,6 +212,7 @@ impl Parser<'_> {
         let list = self.start();
         let owner = list.anchor();
         self.bump();
+        self.generic_depth += 1;
         let arguments = self.start();
         while !self.at_eof() && !self.at_type_argument_close() {
             self.parse_type_argument();
@@ -224,12 +229,21 @@ impl Parser<'_> {
                 [diagnostic],
             );
         }
+        self.generic_depth -= 1;
         self.complete(list, JavaSyntaxKind::TypeArgumentList);
         true
     }
 
-    pub(super) fn parse_type_argument(&mut self) {
+    fn parse_type_argument(&mut self) {
         let argument = self.start();
+        if self.generic_depth > MAX_RECURSIVE_PARSE_OWNERS {
+            let annotations = self.start();
+            self.complete(annotations, JavaSyntaxKind::AnnotationList);
+            self.parse_excessive_type_argument();
+            self.complete(argument, JavaSyntaxKind::TypeArgument);
+            return;
+        }
+
         self.parse_annotations();
         if is_type_argument_value_start(self.current_kind()) {
             self.parse_type_argument_value();
@@ -251,6 +265,20 @@ impl Parser<'_> {
         } else {
             self.parse_type();
         }
+    }
+
+    fn parse_excessive_type_argument(&mut self) {
+        let ty = self.start();
+        let diagnostic = self.pending_error(
+            JavaParseDiagnosticCode::ExcessiveTypeNesting.id(),
+            "generic type nesting is too deep to parse safely",
+        );
+        let cursor = self.inner.fork_cursor();
+        let end = over_depth_type_end(&mut self.inner.buffer, cursor);
+        while self.position() < end {
+            self.bump();
+        }
+        self.complete_recovery(ty, JavaSyntaxKind::BogusType, [diagnostic]);
     }
 
     fn parse_malformed_type_argument_value(&mut self) {

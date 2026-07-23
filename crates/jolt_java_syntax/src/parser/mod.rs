@@ -32,6 +32,7 @@ pub(crate) enum JavaParseDiagnosticCode {
     MisplacedReceiverParameter,
     MisplacedConstructorInvocation,
     RestrictedTypeIdentifier,
+    ExcessiveTypeNesting,
     InvalidEventStream,
 }
 
@@ -61,6 +62,9 @@ impl JavaParseDiagnosticCode {
             }
             Self::RestrictedTypeIdentifier => {
                 DiagnosticCodeId::new("java.parse.restricted_type_identifier")
+            }
+            Self::ExcessiveTypeNesting => {
+                DiagnosticCodeId::new("java.parse.excessive_type_nesting")
             }
             Self::InvalidEventStream => {
                 DiagnosticCodeId::new("internal.syntax.invalid_event_stream")

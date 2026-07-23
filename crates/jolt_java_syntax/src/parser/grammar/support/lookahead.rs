@@ -2,9 +2,11 @@
 use super::{
     JavaSyntaxKind, MissingConstructorHeaderAction, Parser, is_literal_expression_start,
     is_primitive_type_start, is_type_argument_recovery_boundary, is_type_argument_value_start,
-    missing_constructor_header_action, type_modifier_len,
+    missing_constructor_header_action, over_depth_type_end, type_modifier_len,
 };
-use crate::parser::source::{ParenthesisSummary, TokenBuffer, TokenCursor};
+use crate::parser::source::{
+    MAX_RECURSIVE_PARSE_OWNERS, ParenthesisSummary, TokenBuffer, TokenCursor,
+};
 
 impl<'source> Parser<'source> {
     pub(in crate::parser::grammar) fn lookahead(&mut self) -> JavaLookahead<'_, 'source> {
@@ -15,6 +17,7 @@ impl<'source> Parser<'source> {
             &mut self.inner.buffer,
             cursor,
             &mut self.parentheses,
+            self.generic_depth,
         )
     }
 }
@@ -25,6 +28,7 @@ pub(in crate::parser::grammar) struct JavaLookahead<'buffer, 'source> {
     cursor: TokenCursor,
     base: TokenCursor,
     parentheses: &'buffer mut ParenthesisSummary,
+    generic_depth: usize,
 }
 
 impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
@@ -33,6 +37,7 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         buffer: &'buffer mut TokenBuffer<'source>,
         cursor: TokenCursor,
         parentheses: &'buffer mut ParenthesisSummary,
+        generic_depth: usize,
     ) -> Self {
         Self {
             source,
@@ -40,6 +45,7 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
             cursor,
             base: cursor,
             parentheses,
+            generic_depth,
         }
     }
 
@@ -354,6 +360,7 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
             return false;
         }
 
+        self.generic_depth += 1;
         while !self.at_eof() && !self.at_type_argument_close() {
             if !self.skip_type_argument() {
                 while !is_type_argument_recovery_boundary(self.kind()) {
@@ -375,6 +382,7 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         }
 
         self.eat_type_argument_close();
+        self.generic_depth -= 1;
         true
     }
 
@@ -404,6 +412,12 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
     }
 
     fn skip_type_argument(&mut self) -> bool {
+        if self.generic_depth > MAX_RECURSIVE_PARSE_OWNERS {
+            let end = over_depth_type_end(self.buffer, self.cursor);
+            self.cursor.seek_forward(end);
+            return true;
+        }
+
         self.skip_annotations();
         if self.eat(JavaSyntaxKind::Question) {
             if self.eat(JavaSyntaxKind::ExtendsKw) || self.eat(JavaSyntaxKind::SuperKw) {
