@@ -621,13 +621,15 @@ pretranslation, final-SUB handling, non-nested block comments, and CR-or-LF
 line-comment termination. A common trivia loop therefore needs semantic hooks or
 policy flags and weakens the language boundary.
 
-### PR 12 — Bounded Java lookahead
+### PR 12 — Java lookahead audit and local deletion
 
 Scope:
 
 - measure adversarial work in the Java lookahead parallel grammar;
-- memoize, explicitly bound, shrink, or replace productions using existing
-  parser mechanisms;
+- shrink repeated productions and pass completed classifications directly into
+  their consuming grammar where this needs no cache or extra ownership model;
+- prototype bounded replacements for the proven superlinear paths, but keep them
+  only when they remain locally understandable and allocation-neutral;
 - delete parallel productions as soon as the owning parse decision migrates.
 
 Expected deletions: repeated lookahead work and parallel grammar code.
@@ -637,40 +639,33 @@ grammar complexity behind a generic API.
 
 Gates:
 
-- adversarial tests assert counted finite work, not wall-clock alone;
+- counted prototypes identify the retained adversarial costs and prove any
+  claimed improvement; PR 12 must not add a new unmeasured repeated scan;
 - Java parser fixtures and recovery snapshots remain stable;
 - realistic and adversarial parser time/allocation improve or remain neutral;
 - the resulting grammar is shorter and locally traceable.
 
 Audit findings and working scope (2026-07-23):
 
-- nested ordinary parenthesized expressions are `Theta(n^2)`: every `(` scans to
-  its matching close to reject a lambda, and cast classification currently
-  repeats that scan. A depth-`D` generated family performs approximately
-  `4D^2 + 6D` balanced-token advances;
+- in the PR 11 parent, nested ordinary parenthesized expressions are
+  `Theta(n^2)`: every `(` scans to its matching close to reject a lambda, and
+  cast classification repeats that scan. A depth-`D` generated family performs
+  approximately `4D^2 + 6D` balanced-token advances. PR 12 deletes the cast
+  pre-scan but retains the fundamental lambda-rejection scan;
 - malformed top-level annotation suffixes are also `Theta(n^2)`: recovery asks
   package, module, and type predicates to rescan the remaining annotation run at
   successive `@` tokens;
 - one nested generic type probe is linear in tokens but recursively uses input
   depth. The consuming type grammar is recursive too, so changing only the
   parallel scanner would not close the stack-depth risk;
-- add Java-private, test-only speculative-step counting at actual lookahead and
-  balanced-scan advances. Generated tests assert explicit linear bounds and
-  source identity; timing alone is not acceptance evidence;
-- prototype only a current-parser-position parenthesis summary. One uncached
-  scan records its root and every nested `(` in source order, fills matching
-  closes through predecessor links encoded in placeholders, and finalizes
-  unmatched opens to EOF. Monotonic parser positions reuse or skip entries;
-  forked lookahead cursors never touch the summary;
-- keep the summary Java-private and lazy. Reject it if it needs arbitrary-index
-  lookup, sorting, hashing, shared parser APIs, more than roughly 80 production
-  lines, or material allocation/RSS growth. Pair it with enough predicate
-  deletion that PR 12 remains net-small;
-- delete immediate repeated work first: the second typed-lambda probe, the cast
-  lambda pre-scan, duplicate top/local type-declaration predicates, the
+- Java-private speculative-step counting at actual lookahead and balanced-scan
+  advances measured the prototypes below. It was reverted with them because the
+  accepted implementation does not claim a new asymptotic bound;
+- the retained implementation deletes the second typed-lambda probe, cast lambda
+  pre-scan, duplicate top/local type-declaration predicates, the
   resource-variable alias, module cursor replay, duplicated primitive/literal
-  kind matches, and repeated pattern-prefix classification where the result can
-  be passed directly;
+  kind matches, and repeated pattern-prefix classification where the result is
+  passed directly;
 - do not fast-forward failed annotation runs. Unterminated annotation arguments
   can contain semicolon or later program boundaries that tokenwise recovery must
   preserve. Any annotation memo must reproduce suffix boundaries exactly; a
@@ -696,8 +691,9 @@ nested annotation: depth 256 still performed 600,581 advances because every
 interior `@` must run the ordinary boundary predicates, each of which scans the
 remaining nested suffix. Broader memoization would introduce the generic cache
 and invalidation model rejected by this PR; fast-forwarding is recovery-inexact
-because malformed annotation arguments can contain later declaration boundaries.
-The prototype was fully reverted.
+because malformed annotation arguments can contain later declaration boundaries,
+as in `import a @A(value; class C {}`, `@A( class C {}`, and `@module 0`. The
+prototype was fully reverted.
 
 Rejected member-header classifier (2026-07-23): annotation elements, malformed
 constructors, methods, fields, and compact members intentionally use different
