@@ -5,7 +5,8 @@
 //! against typed CST enums.
 
 use jolt_fmt_ir::{
-    Doc, DocBuilder, FormatField, FormatListPart, LayoutDoc, assemble_malformed_fragment,
+    Doc, DocBuilder, FormatDelimiter, FormatField, FormatListPart, LayoutDoc,
+    assemble_malformed_fragment,
 };
 use jolt_java_syntax::{
     JavaMissingSyntax, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxToken, JavaSyntaxView,
@@ -42,23 +43,7 @@ pub(crate) fn format_malformed<'source>(
 pub(crate) type JavaFormatListPart<'source, T> =
     FormatListPart<'source, T, JavaSyntaxToken<'source>>;
 
-/// A delimiter slot resolved without losing its exact source position.
-/// Required missing/malformed slots carry their recovery document; optional
-/// absence is represented separately from recovery.
-#[derive(Clone, Copy)]
-pub(crate) enum JavaFormatDelimiter<'source> {
-    Source(JavaSyntaxToken<'source>),
-    Recovery(Doc<'source>),
-}
-
-impl<'source> JavaFormatDelimiter<'source> {
-    pub(crate) fn source(&self) -> Option<&JavaSyntaxToken<'source>> {
-        match self {
-            Self::Source(token) => Some(token),
-            Self::Recovery(_) => None,
-        }
-    }
-}
+pub(crate) type JavaFormatDelimiter<'source> = FormatDelimiter<'source, JavaSyntaxToken<'source>>;
 
 pub(crate) fn resolve_required_delimiter<'source>(
     field: JavaSyntaxField<'source, JavaSyntaxToken<'source>>,

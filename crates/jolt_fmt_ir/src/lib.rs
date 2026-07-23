@@ -20,8 +20,8 @@ pub use document::DocArenaMetrics;
 pub use document::{ConcatBuilder, Doc, DocBuilder};
 pub use options::{FormatOptions, FormatSinkResult};
 pub use recovery::{
-    FormatField, FormatListPart, LayoutDoc, assemble_malformed_fragment, format_optional_field,
-    format_required_field,
+    FormatDelimiter, FormatField, FormatListPart, LayoutDoc, assemble_malformed_fragment,
+    format_optional_field, format_required_field,
 };
 pub use render::{RenderControl, RenderError, RenderSink};
 #[doc(hidden)]

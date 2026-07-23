@@ -246,7 +246,8 @@ starting point.
 ## Stack
 
 Every pull request is a draft until its dependent slice has passed its gates.
-Branches are stacked in this order:
+The stack initially ran through PR 14 in this order; the later extension graph
+and execution ledger supersede this historical prefix:
 
 ```text
 main
@@ -612,9 +613,9 @@ local and less explicit. The prototype compiled, preserved all Java corpus
 snapshots, and passed the complete Kotlin syntax suite, so this is a design
 rejection rather than a correctness failure.
 
-Keep the duplicated two-field source cursors until Rust can express composition
-without expanding their clients or a later design deletes more surrounding
-scanner machinery.
+Keep the duplicated two-field source cursors. The completed stack found no
+smaller composition or surrounding deletion; this measured rejection is the
+accepted final language boundary, not an open follow-up.
 
 Trivia sharing was also rejected. Kotlin has string-mode gating, shebangs,
 nested block comments, and LF-only line-comment termination; Java has Unicode
@@ -700,8 +701,9 @@ Rejected member-header classifier (2026-07-23): annotation elements, malformed
 constructors, methods, fields, and compact members intentionally use different
 precedence and recovery gates. With no rewindable lookahead, an exact classifier
 must restart those same probes and merely hide them behind an enum, growing by
-an estimated 0-15 lines without reducing work. Keep the decisions local until a
-smaller owner-specific deletion is proven.
+an estimated 0-15 lines without reducing work. The completed stack keeps these
+decisions local as the smaller representation; no follow-up classifier is
+planned.
 
 ### PR 13 — Java declaration comment conservation
 
@@ -804,7 +806,17 @@ cleanup/14-final-reconciliation
                       └─ cleanup/20-kotlin-marker-recovery
                           └─ cleanup/21-java-delimiter-summaries
                               └─ cleanup/22-java-generic-depth
-                                  └─ cleanup/23-residue-reconciliation
+                                  └─ cleanup/23-layout-doc-consolidation
+                                      └─ cleanup/24-java-annotation-cost
+                                          └─ cleanup/25-java-value-recursion
+                                              └─ cleanup/26-java-structural-recursion
+                                                  └─ cleanup/27-kotlin-value-recursion
+                                                      └─ cleanup/28-kotlin-structural-recursion
+                                                          └─ cleanup/29-kotlin-infix-type-depth
+                                                              └─ cleanup/30-kotlin-suffix-depth
+                                                                  └─ cleanup/31-java-formatter-depth
+                                                                      └─ cleanup/32-formatter-state-residue
+                                                                          └─ cleanup/33-residue-reconciliation
 ```
 
 ### PR 15 — Syntax-owned Java modifier presence
@@ -1015,7 +1027,20 @@ remains separate so the formatter behavior PR has a narrow rollback boundary.
 - require the same depth-4,096 native/WASM/idempotence and realistic allocation/
   topology gates as PRs 29-30.
 
-### PR 32 — Residue reconciliation
+### PR 32 — Final formatter-state residue
+
+- consolidate the identical Java/Kotlin resolved-delimiter carrier in formatter
+  IR;
+- keep delimiter trivia and layout policy language-local through narrow type
+  aliases;
+- preserve output, document topology, and allocations while requiring a net
+  production deletion.
+
+Keep recovery joining and separator policy language-local. Do not generalize
+walkers, recovery scanners, or parser budgets merely because the final audit
+found one identical representational duplicate.
+
+### PR 33 — Residue reconciliation
 
 - update formatter/parser architecture and finite-cost documentation to match
   the implemented extension;
@@ -1118,7 +1143,8 @@ ready for review.
 | 29  | `cleanup/29-kotlin-infix-type-depth`     | draft open | PR 28  | [#31](https://github.com/sargunv/jolt/pull/31) | full + WASM + benchmark    | Bound Kotlin infix and type formatting.          |
 | 30  | `cleanup/30-kotlin-suffix-depth`         | draft open | PR 29  | [#32](https://github.com/sargunv/jolt/pull/32) | full + WASM + benchmark    | Bound Kotlin postfix/member suffix formatting.   |
 | 31  | `cleanup/31-java-formatter-depth`        | draft open | PR 30  | [#33](https://github.com/sargunv/jolt/pull/33) | full + WASM + benchmark    | Bound deep Java formatter traversal.             |
-| 32  | `cleanup/32-residue-reconciliation`      | planned    | PR 31  | —                                              | —                          | Final evidence and debt-ledger closure.          |
+| 32  | `cleanup/32-formatter-state-residue`     | draft open | PR 31  | [#34](https://github.com/sargunv/jolt/pull/34) | full + WASM + benchmark    | Delete final mirrored formatter state.           |
+| 33  | `cleanup/33-residue-reconciliation`      | planned    | PR 32  | —                                              | —                          | Final evidence and debt-ledger closure.          |
 
 ### PR 01 evidence
 
@@ -1169,9 +1195,10 @@ ready for review.
   enforce the per-query bound `O(items * log(ranges + 1) + items + runs)`.
 - Missing and duplicate plan installation use the renderer's existing invariant
   diagnostic path rather than debug-only panics.
-- The private, install-once plan currently travels on `DocBuilder`, never
-  `DocArena`. PR 05 must revisit this temporary transport when root coordination
-  is consolidated; PR 07 must not preserve it merely to justify a new crate.
+- The private, install-once plan initially traveled on `DocBuilder`, never
+  `DocArena`. PR 05 had to revisit this transport when root coordination was
+  consolidated; its final atomic construction and PR 07's measured lifecycle
+  decision are reconciled below.
 - Production Rust before test modules is +83 lines: `jolt_fmt_ir` +122 and the
   language formatters -39. Test-module Rust is +422 lines. This is below the
   reassessment threshold and centralizes ownership checks while shrinking the
@@ -1924,11 +1951,11 @@ slices remove Java nodes and allocations or leave topology unchanged.
   `FileSection` is made compositional, `ImportSection` gains one local presence
   bit, and no collection or generic join policy is added. Adversarial review
   found no smaller representation that preserved both import join policies.
-- The deferred malformed-`when` spacing branch is formatter-unreachable in the
-  current parser corpus. Probing it exposed a parser panic on a non-latest type
-  marker; the new PR 20 owns that parser fix and will land the spacing
-  correction with an exact reachable recovery snapshot rather than an untestable
-  branch.
+- The deferred malformed-`when` spacing branch was formatter-unreachable in the
+  PR 19 parser corpus. Probing it exposed a parser panic on a non-latest type
+  marker, which PR 20 owns. After the repair, PR 20 proved that the represented
+  keyword already spaces correctly and rejected an untestable extra visibility
+  state.
 - Realistic Java/Kotlin document topology, allocation counts, and allocation
   bytes are exactly unchanged. Format medians moved -0.83%/-0.82%; peak RSS
   moved -315,392/-32,768 bytes, all neutral. Optimized WASM moved from 1,746,572
@@ -2404,6 +2431,144 @@ slices remove Java nodes and allocations or leave topology unchanged.
 - Refreshed optimized WASM moves 1,769,538 -> 1,775,872 bytes (+6,334, +0.36%).
   The exact benchmark records clean committed subject `c06701c5`.
 
+### PR 32 evidence
+
+- The identical Java/Kotlin resolved-delimiter enums are one neutral
+  `FormatDelimiter<Token>` value in formatter IR. Language-local aliases retain
+  all delimiter trivia and layout policy.
+- Production Rust is +35/-43 lines (-8 net): formatter IR +28, Java formatter
+  -17, and Kotlin formatter -19. No generic walker, recovery scanner, parser
+  budget, list policy, or cross-language operator abstraction was introduced.
+- This is a representation-only substitution with no new allocation or layout
+  path. Refreshed Java and Kotlin allocation counts, bytes, and topology are
+  identical to PR 31; timing moved inconsistently, so no speed claim is made.
+  Optimized WASM moves 1,775,872 -> 1,775,919 bytes (+47, +0.003%). The exact
+  benchmark records clean committed subject `932470b0`.
+
+## Historical deferral reconciliation
+
+This is the final disposition of every implementation deferral, temporary
+bridge, conditional follow-up, and intentionally retained seam recorded above.
+“Accepted” means the stack measured or traced the alternative and found the
+retained local design smaller; it does not mean the item was forgotten.
+
+| Origin                    | Deferred or conditional work                                                                                                          | Final disposition                                                                                                                                                                                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Target boundaries / PR 07 | Extract document or formatter-core crates only if clean dependency edges emerge.                                                      | Accepted rejection. PR 07 traced the document/ignore/audit lifecycle as one real strongly connected component; extraction required a context, side table, callback, or generic audit layer while deleting nothing.                                              |
+| PR 01                     | Replace Java modifier-prefix visibility inferred from builder emptiness.                                                              | Completed by PR 15, then consolidated by PR 23. Visibility is syntax-derived and the temporary Java carrier is gone.                                                                                                                                            |
+| PR 02                     | Revisit formatter-ignore plan transport on `DocBuilder`.                                                                              | Completed as an ownership decision in PRs 05 and 07. Root construction now supplies the private immutable plan atomically; the setter and double-install state are gone. Keeping the plan on the builder avoids another context and it never enters `DocArena`. |
+| PR 03 / PR 04             | Refine physical missing/malformed list states and stage visibility without losing recovery barriers.                                  | Completed by PR 16's shared `LayoutDoc`/`FormatListPart` representation and PR 23's carrier consolidation. Physical positions remain because they are real sorting, normalization, separator, and claim barriers.                                               |
+| PR 05                     | Delete the two raw root EOF ignore-range projections.                                                                                 | Completed by PR 17. Root runs remain alive and answer one opaque `O(log runs)` boundary-ownership query.                                                                                                                                                        |
+| PR 07                     | Finish renderer-specific boundary work without forcing crate extraction.                                                              | Completed by PR 08a through local state/scratch deletion. Broader module extraction was rejected because fit and emission share the active continuation and output state.                                                                                       |
+| PR 08b                    | Remove the debug discard audit traversal if exact sink behavior can be retained more simply.                                          | Accepted rejection. Atomic late failure plus observable sink chunk/halt behavior requires deterministic replay or buffering the exact callback trace; replay is zero-allocation and smaller.                                                                    |
+| PR 09                     | Resolve Kotlin zero-width import/program visibility.                                                                                  | Completed by PR 19 with syntax-derived visible/claim-only section state.                                                                                                                                                                                        |
+| PR 09 / PR 19             | Resolve malformed-`when` spacing once the case is representable.                                                                      | Superseded by PR 20's parser-marker fix. The recovered keyword is a present `is` token and already spaces correctly; the proposed malformed-keyword visibility state is unreachable and was rejected as convenience state with no behavior.                     |
+| PR 10                     | Reconcile Java ordinary/ignore-aware program joining around invisible entries.                                                        | Completed by PR 18 with one Java-local `ProgramSection` stream and joiner, plus marker-conservation coverage.                                                                                                                                                   |
+| PR 11                     | Share lexer cursor or trivia mechanics if a smaller neutral composition emerges.                                                      | Accepted rejection. The cursor prototype added 163 production lines and obscured every token rule; trivia sharing required language-semantic hooks. The two small language-owned scanners are the final boundary.                                               |
+| PR 12                     | Bound nested parenthesis and annotation-argument rescans.                                                                             | Completed by PR 21's lazy exact delimiter summary. The first relevant query builds one `O(N)` table and all later queries are indexed lookups.                                                                                                                  |
+| PR 12                     | Bound flat malformed annotation suffix rescans.                                                                                       | Completed by PR 24, which extends the same lazy table with path-compressed annotation endpoints while retaining one linear algorithm.                                                                                                                           |
+| PR 12                     | Bound recursive Java generic lookahead and consumption.                                                                               | Completed by PR 22's 128-owner policy, separate speculative/consuming counters, and one lossless owner-local recovery scan.                                                                                                                                     |
+| PR 12                     | Replace local Java member-header decisions with a classifier if it deletes work.                                                      | Accepted rejection. Exact precedence still restarts the same owner-specific probes, so the enum hid work and did not shrink code.                                                                                                                               |
+| PR 14                     | Resolve the recorded modifier, recovery-layout, EOF-ignore, root-joining, Kotlin recovery, Java lookahead, and generic-depth residue. | Completed by PRs 15-24 or explicitly rejected above. The debug audit and language-specific lexer mechanics are the two measured accepted designs, not open tasks.                                                                                               |
+| PR 15                     | Remove the Java-local `VisibleDoc` transition carrier once shared recovery layout is available.                                       | Completed by PR 23; only `LayoutDoc::{Visible, ClaimOnly}` remains.                                                                                                                                                                                             |
+| PR 25                     | Move record-pattern, type-body, and statement recursion out of the value slice after its growth gate.                                 | Completed by PR 26 using the same syntax-owner budget and separate structural recovery endpoints.                                                                                                                                                               |
+| PR 28                     | Bound deep valid CST spines built by parser loops without charging parser recursion.                                                  | Completed by PRs 29-31 with language-local borrowed descent/ascent walks.                                                                                                                                                                                       |
+| PR 29                     | Split Kotlin suffix traversal after the combined formatter prototype crossed the growth gate.                                         | Completed by PR 30 with an independent implementation and rollback boundary.                                                                                                                                                                                    |
+| PR 32 audit               | Remove Kotlin traversal `expect` calls left by PRs 29-30.                                                                             | Completed in PRs 29-30. Missing node identities now block rendering through the existing invariant diagnostic, matching Java and avoiding formatter panics.                                                                                                     |
+
+No transition-only API, future-PR assignment, or unresolved finite-cost claim
+remains. Conditional ideas with no promised destination—such as replacing the
+three-state Java body representation or multi-client borrow-order macros—remain
+only where no concrete smaller design was found.
+
+## Consolidated rejected-design ledger
+
+The individual evidence sections retain measurements and behavioral details.
+This table makes the negative architectural decisions discoverable in one place.
+
+| Rejected design                                                                                                        | Why it did not survive                                                                                                                                                                                              |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime CST validation, provenance flags, proof graphs, dual accessors, or a second generated schema model             | Added a parallel authority to remove impossible generated-field results. The single schema/factory/accessor proof was smaller.                                                                                      |
+| Sparse source-bearing recovery lists                                                                                   | Lost positional barriers, trivia, segmented normalization, iterator sizing, and capacity behavior. Shared visible/claim-only layout retained the physical list instead.                                             |
+| Successful source-fact vectors and reusable normalization claims                                                       | Added 131 production lines and made affine synthesis authority reusable through copyable documents. Failure-oriented identity reporting retained one authority.                                                     |
+| Extracted document/core crates or renderer/fit/output modules                                                          | Introduced contexts, callbacks, side tables, or back-edges around real shared lifecycle/hot-loop state without deleting dispatch.                                                                                   |
+| Single-traversal debug source auditing                                                                                 | Required output plus every observable sink callback boundary, adding two allocations and `O(output)` live memory; deterministic replay is smaller and output-atomic.                                                |
+| Kotlin malformed/invisible list merger and generic comma walker                                                        | Preserved the same boolean state or required independent attachment/orphan policies, creating a mini-framework rather than deleting concepts.                                                                       |
+| Shared Java/Kotlin lexer cursor and trivia loop                                                                        | Grew production by 163 lines or required semantic policy hooks for genuinely different Unicode, string, shebang, comment, and newline rules.                                                                        |
+| Uncached malformed Kotlin dollar-prefix scan                                                                           | Would perform 2,147,516,416 predicate visits for 65,536 dollars. One forward-only failed-run endpoint preserves token ownership and makes the maximal run linear.                                                   |
+| PR 12 eager Java parenthesis cache                                                                                     | Added 80 production lines and a second representation. PR 21 instead builds one exact table on the first relevant query; its measured allocation cost has no demonstrated throughput or RSS consequence.            |
+| Top-level annotation-start memo                                                                                        | Made flat runs linear but left a deeply nested annotation quadratic and introduced a second lifecycle. PR 24 reused the exact delimiter table instead.                                                              |
+| General Java member-header classifier                                                                                  | Replayed precedence-sensitive probes behind an enum, adding code without reducing work.                                                                                                                             |
+| Generalized Java first-token/recovery comment framework                                                                | Added about 191 lines before the actual repairs; declaration-local ownership was smaller.                                                                                                                           |
+| PR 15 prefix concatenation topology                                                                                    | Added 24,144 realistic Java document nodes, 15 allocations, and 2,832,944 allocated bytes. Emitting separators inside the existing concat removed the cost.                                                         |
+| Linear scan of every formatter-ignore run for every EOF comment                                                        | Was `O(runs * comments)`; PR 17 selects the only possible owner by binary search.                                                                                                                                   |
+| Unified Kotlin inner-import and outer-file joining                                                                     | Changed a genuine comment-barrier versus hard-line language policy. The two local joins remain explicit.                                                                                                            |
+| Malformed-`when` token probing or visibility API                                                                       | Encoded no reachable represented behavior after the actual parser-marker fix.                                                                                                                                       |
+| Guard-only Kotlin annotation-marker repair                                                                             | Avoided the panic by misclassifying valid annotated `suspend` and `context` function types. Direct optional syntax fields retained correct ownership at +1 net production line.                                     |
+| Fully iterative Java type parser, resettable explicit depth parameters, or fine over-depth wildcard CST reconstruction | Duplicated consuming/markerless type grammar, missed cross-grammar re-entry, or added about 65 lines of duplicated recovery policy. One shared counter and one whole-argument bogus owner are smaller and lossless. |
+| One combined Java value/structural recursion PR                                                                        | Crossed the growth gate and mixed distinct endpoint/rollback models; PRs 25 and 26 keep the shared counter but separate recovery ownership.                                                                         |
+| One combined Kotlin infix/type/suffix formatter walk                                                                   | Crossed the production growth gate and coupled different layout algorithms; PRs 29 and 30 keep independent local walks.                                                                                             |
+| Wide Kotlin structural-recovery parts                                                                                  | Added formatter-side state for distinctions the schema can own directly. Schema-typed category-bogus nodes preserve recovery roles and delete the formatter workaround.                                             |
+| Large Java traversal state enum                                                                                        | Produced a 320-byte hot state under strict Clippy. PR 31 retains only one formatted document plus an optional existing-shape binary run.                                                                            |
+
+## Whole-stack reconciliation through PR 32
+
+The exact source comparison remains main commit `a82ab675`. The PR 32 code
+subject is `92d666f`; planning and architecture Markdown are excluded.
+
+| Measure                        |   Main |  PR 14 |  PR 32 |   Main to PR 32 |
+| ------------------------------ | -----: | -----: | -----: | --------------: |
+| All Rust                       | 60,978 | 60,262 | 62,941 | +1,963 (+3.22%) |
+| Rust under all `src/` trees    | 57,887 | 57,297 | 59,585 | +1,698 (+2.93%) |
+| Java + Kotlin formatter source | 21,961 | 21,165 | 21,413 |   -548 (-2.50%) |
+| Java formatter source          | 13,315 | 12,908 | 13,044 |   -271 (-2.04%) |
+| Kotlin formatter source        |  8,646 |  8,257 |  8,369 |   -277 (-3.20%) |
+| Shared formatter IR            |  4,263 |      — |  4,839 |  +576 (+13.51%) |
+| Shared + Java + Kotlin syntax  | 26,569 |      — | 28,462 | +1,893 (+7.13%) |
+
+The repository did not shrink overall. That is a material exception to the
+initial expectation, not a metric to hide. PRs 01-14 did shrink all Rust by 716
+lines and both formatter crates by 796. The extension then resolved parser stack
+exhaustion, quadratic lookahead, recovery panics, root joining defects, and deep
+formatter recursion with exact native/WASM and source-conservation contracts.
+Most final growth is syntax-owned finite-cost/recovery machinery (+1,893 lines)
+and shared root/audit/recovery ownership (+576 in formatter IR); reductions in
+language layout and other crates offset part of it. Every growth-bearing slice
+has its own measured stop gate and rollback boundary, and the consolidated
+prototypes above show why a smaller generic framework was not retained.
+
+The production decomposition is explicit: shared syntax is +99 lines, Java
+syntax +1,148, Kotlin syntax +646, and formatter IR +576; Java formatting is
+-271, Kotlin formatting -277, test support -202, dprint -13, the facade -9, and
+CLI +1. This places almost all net growth at syntax finite-cost and shared proof
+ownership rather than inside language layout rules.
+
+The architectural concept count still contracts where local formatter reasoning
+is concerned: opaque document-presence tests, nested ignore discovery, duplicate
+root lifecycles, filename normalization policy, duplicate conservation
+inventories, recovery visibility carriers, raw EOF projections, recursive chain
+collectors, and duplicated lookahead probes/classifiers are gone. The principal
+new concepts are one shared recovery-layout value, one lazy Java lookahead
+table, separate generic traversal state under one 128-owner policy,
+language-local syntax-owner budgets, owner-local lossless recovery scans, and
+language-local borrowed CST walks. No general formatter context, visitor, heap
+traversal stack, source clone, token-reparse layer, or second CST schema was
+added.
+
+The final optimized dprint WASM is 1,777,637 bytes with SHA-256
+`e0357ff5f17d7cbb3bdd8a2b63fe91c7bee94e5b7c8e90a02fbfac15a43ef7af`. That is
+1,320 bytes smaller than PR 31, 20,794 bytes (+1.18%) larger than the PR 13
+artifact inherited unchanged by PR 14, and 85,255 bytes (-4.58%) smaller than
+the earliest exact PR 02 anchor. No main artifact exists, so no main-relative
+binary claim is made. Adjacent timing remained noise-level through the
+extension; the final Java traversal measurement was parse -1.29%, format +0.03%,
+and end-to-end +1.48%. Realistic topology stayed unchanged across the
+finite-cost traversal slices, apart from the earlier explicitly recorded
+profile-independent document nodes, 346 Kotlin layout nodes, five removed Java
+nodes, and PR 20's declared annotation-field child bytes. Allocation reductions
+from the binary-state changes belong to PRs 29 and 31; PR 32 only consolidates
+an allocation-neutral carrier.
+
 ## Decision Log
 
 | Date       | Decision                                                         | Reason                                                                                                                                                                                                                   |
@@ -2417,7 +2582,7 @@ slices remove Java nodes and allocations or leave topology unchanged.
 | 2026-07-22 | Accept PR 01's bounded release document-node cost.               | Stable topology costs 1.5–2.2% more nodes but keeps allocations/max-live memory effectively flat.                                                                                                                        |
 | 2026-07-22 | Use immutable bounded ignore-plan queries.                       | Independent nested rules stay order-independent; counted binary search replaces hidden mutable cursors.                                                                                                                  |
 | 2026-07-22 | Reject partial and cross-partition ignore ranges.                | Structured syntax ownership must never overlap a raw source claim; rejected markers remain structured.                                                                                                                   |
-| 2026-07-22 | Temporarily transport the ignore plan on `DocBuilder`.           | The field is private, immutable, install-once, and absent from `DocArena`; PR 05 must revisit it.                                                                                                                        |
+| 2026-07-22 | Initially transport the ignore plan on `DocBuilder`.             | PR 05 resolved the temporary installation state with atomic root construction; PR 07 accepted the private builder-owned field as the smallest lifecycle boundary, absent from `DocArena`.                                |
 | 2026-07-22 | Scope PR 03 to production-factory physical projections.          | Runtime validation or a second proof model would add more architecture than deleting outer results.                                                                                                                      |
 | 2026-07-22 | Split PR 03 codegen policy by native versus WASM.                | Native accessor inlining preserves measured throughput; a narrow WASM field boundary reverses aggregate-return code duplication.                                                                                         |
 | 2026-07-22 | Let exceptional fragments own malformed lexical joins.           | Existing boundary atoms already make empty fragments inert, so Java/Kotlin pre-filter policies duplicate the same fact.                                                                                                  |
@@ -2467,6 +2632,8 @@ slices remove Java nodes and allocations or leave topology unchanged.
 | 2026-07-23 | Coarsen unsupported statements to their enclosing body boundary. | Exact iterative handling of `if`/`else`, `do`/`while`, try handlers, and switch labels would duplicate statement grammar; one lossless BogusStatement preserves the enclosing body and later declarations.               |
 | 2026-07-23 | Use 128 active recursive owners as Kotlin's parser policy.       | Actual 1 MiB dprint-WASM failure edges leave about 7.5x-15.5x headroom across value, type, block, and class cycles; diagnostics describe parser safety rather than source levels.                                        |
 | 2026-07-23 | Keep schema-declared Kotlin category recovery typed.             | Matching Java's projection deletes family-marker machinery and all 104 lines of structural-recovery formatter plumbing while preserving snapshots and source ownership.                                                  |
+| 2026-07-23 | Fold walker-state cleanup into its owning traversal PRs.         | Binary representation and missing-node invariants are easiest to review with the walks that use them; the final residue PR retains only the independently duplicated delimiter carrier.                                  |
+| 2026-07-23 | Keep final formatter consolidation language-local.               | A neutral delimiter value deletes identical representation, while language-local aliases retain real trivia and joining policy. Binary-state cleanup and traversal invariants belong to their walker PRs.                |
 
 ## Resume Protocol
 
