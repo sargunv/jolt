@@ -369,12 +369,14 @@ syntax/recovery/compilation-unit-top-level.java
 syntax/recovery/constructor-body.java
 syntax/recovery/declarations.java
 syntax/recovery/delimiter-summary-boundaries.java
+syntax/recovery/delimiter-summary-recovery-contexts.java
 syntax/recovery/empty-clauses.java
 syntax/recovery/empty-statement-comments.java
 syntax/recovery/enum-pattern-and-for-lists.java
 syntax/recovery/eof-comments.java
 syntax/recovery/expressions.java
 syntax/recovery/formatter-ignore-constructor-missing-open-paren.java
+syntax/recovery/formatter-ignore-module-missing-open.java
 syntax/recovery/header-clauses.java
 syntax/recovery/import-and-module-directives.java
 syntax/recovery/import-trailing-tokens.java

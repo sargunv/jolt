@@ -18,6 +18,22 @@ call( a,b );
 int afterLocal=5;
 }
 }
+
+class CrossingSiblingBoundary {
+void first() {
+// @formatter:off
+int raw=1;
+}
+void second() {}
+// @formatter:on
+void after() {}
+}
+
+class HeaderMarker { /* @formatter:off */
+int stillFormatted=1+2;
+// @formatter:on
+int after=3;
+}
 }
 
 syntax:
@@ -139,8 +155,94 @@ CompilationUnit
                           Semicolon ";" @ 208..209
                       RBrace "}" @ 210..211 leading=[Newline "\n"]
               RBrace "}" @ 212..213 leading=[Newline "\n"]
-        RBrace "}" @ 214..215 leading=[Newline "\n"]
-  Eof "" @ 216..216 leading=[Newline "\n"]
+          ClassDeclaration
+            ClassKw "class" @ 215..220 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "CrossingSiblingBoundary" @ 221..244 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 245..246
+              ClassBodyMemberList
+                MethodDeclaration
+                  VoidType
+                    VoidKw "void" @ 247..251 leading=[Newline "\n"] trailing=[Whitespace " "]
+                  Identifier "first" @ 252..257
+                  LParen "(" @ 257..258
+                  RParen ")" @ 258..259 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 260..261
+                    BlockStatementList
+                      BlockStatement
+                        LocalVariableDeclaration
+                          ParameterModifierList
+                          PrimitiveType
+                            AnnotationList
+                            IntKw "int" @ 280..283 leading=[Newline "\n", LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace " "]
+                          VariableDeclaratorList
+                            VariableDeclarator
+                              Identifier "raw" @ 284..287
+                              Assign "=" @ 287..288
+                              VariableInitializer
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 288..289
+                        Semicolon ";" @ 289..290
+                    RBrace "}" @ 291..292 leading=[Newline "\n"]
+                MethodDeclaration
+                  VoidType
+                    VoidKw "void" @ 293..297 leading=[Newline "\n"] trailing=[Whitespace " "]
+                  Identifier "second" @ 298..304
+                  LParen "(" @ 304..305
+                  RParen ")" @ 305..306 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 307..308
+                    BlockStatementList
+                    RBrace "}" @ 308..309
+                MethodDeclaration
+                  VoidType
+                    VoidKw "void" @ 327..331 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+                  Identifier "after" @ 332..337
+                  LParen "(" @ 337..338
+                  RParen ")" @ 338..339 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 340..341
+                    BlockStatementList
+                    RBrace "}" @ 341..342
+              RBrace "}" @ 343..344 leading=[Newline "\n"]
+          ClassDeclaration
+            ClassKw "class" @ 346..351 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "HeaderMarker" @ 352..364 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 365..366 trailing=[Whitespace " ", BlockComment "/* @formatter:off */"]
+              ClassBodyMemberList
+                FieldDeclaration
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 388..391 leading=[Newline "\n"] trailing=[Whitespace " "]
+                  VariableDeclaratorList
+                    VariableDeclarator
+                      Identifier "stillFormatted" @ 392..406
+                      Assign "=" @ 406..407
+                      VariableInitializer
+                        BinaryExpression
+                          LiteralExpression
+                            IntegerLiteral "1" @ 407..408
+                          Plus "+" @ 408..409
+                          LiteralExpression
+                            IntegerLiteral "2" @ 409..410
+                  Semicolon ";" @ 410..411
+                FieldDeclaration
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 429..432 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+                  VariableDeclaratorList
+                    VariableDeclarator
+                      Identifier "after" @ 433..438
+                      Assign "=" @ 438..439
+                      VariableInitializer
+                        LiteralExpression
+                          IntegerLiteral "3" @ 439..440
+                  Semicolon ";" @ 440..441
+              RBrace "}" @ 442..443 leading=[Newline "\n"]
+        RBrace "}" @ 444..445 leading=[Newline "\n"]
+  Eof "" @ 446..446 leading=[Newline "\n"]
 
 diagnostics:
   (none)

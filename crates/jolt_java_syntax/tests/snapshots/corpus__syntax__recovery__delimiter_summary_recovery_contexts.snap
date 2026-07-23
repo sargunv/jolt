@@ -1,0 +1,135 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import a @A(value;
+
+class FollowingMalformedImport {}
+
+@A(@B)
+@interface ValidNestedAnnotation {}
+
+@ @interface RecoveredAnnotationInterface {}
+
+class NestedRecoveryContexts {
+  @A @A 0;
+  class FollowingMalformedMember {}
+
+  NestedRecoveryContexts int value) @A @A 0;
+  class FollowingMalformedConstructor {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ImportDeclaration
+      ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+      Name
+        Identifier "a" @ 7..8 trailing=[Whitespace " "]
+      BogusImportSuffix
+        At "@" @ 9..10
+        Identifier "A" @ 10..11
+        LParen "(" @ 11..12
+        Identifier "value" @ 12..17
+      Semicolon ";" @ 17..18
+    ClassDeclaration
+      ClassKw "class" @ 20..25 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "FollowingMalformedImport" @ 26..50 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 51..52
+        ClassBodyMemberList
+        RBrace "}" @ 52..53
+    AnnotationInterfaceDeclaration
+      ModifierList
+        Annotation
+          At "@" @ 55..56 leading=[Newline "\n", Newline "\n"]
+          Name
+            Identifier "A" @ 56..57
+          AnnotationArgumentList
+            LParen "(" @ 57..58
+            AnnotationElementList
+              AnnotationElementArgumentList
+                AnnotationElementValue
+                  Annotation
+                    At "@" @ 58..59
+                    Name
+                      Identifier "B" @ 59..60
+            RParen ")" @ 60..61
+      At "@" @ 62..63 leading=[Newline "\n"]
+      InterfaceKw "interface" @ 63..72 trailing=[Whitespace " "]
+      Identifier "ValidNestedAnnotation" @ 73..94 trailing=[Whitespace " "]
+      AnnotationInterfaceBody
+        LBrace "{" @ 95..96
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+        RBrace "}" @ 96..97
+    AnnotationInterfaceDeclaration
+      ModifierList
+        Annotation
+          At "@" @ 99..100 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      At "@" @ 101..102
+      InterfaceKw "interface" @ 102..111 trailing=[Whitespace " "]
+      Identifier "RecoveredAnnotationInterface" @ 112..140 trailing=[Whitespace " "]
+      AnnotationInterfaceBody
+        LBrace "{" @ 141..142
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+        RBrace "}" @ 142..143
+    ClassDeclaration
+      ClassKw "class" @ 145..150 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "NestedRecoveryContexts" @ 151..173 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 174..175
+        ClassBodyMemberList
+          BogusClassBodyMember
+            At "@" @ 178..179 leading=[Newline "\n", Whitespace "  "]
+            Identifier "A" @ 179..180 trailing=[Whitespace " "]
+            At "@" @ 181..182
+            Identifier "A" @ 182..183 trailing=[Whitespace " "]
+            IntegerLiteral "0" @ 184..185
+            Semicolon ";" @ 185..186
+          ClassDeclaration
+            ClassKw "class" @ 189..194 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "FollowingMalformedMember" @ 195..219 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 220..221
+              ClassBodyMemberList
+              RBrace "}" @ 221..222
+          BogusClassBodyMember
+            Identifier "NestedRecoveryContexts" @ 226..248 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            IntKw "int" @ 249..252 trailing=[Whitespace " "]
+            Identifier "value" @ 253..258
+            RParen ")" @ 258..259 trailing=[Whitespace " "]
+            Annotation
+              At "@" @ 260..261
+              Name
+                Identifier "A" @ 261..262 trailing=[Whitespace " "]
+            Annotation
+              At "@" @ 263..264
+              Name
+                Identifier "A" @ 264..265 trailing=[Whitespace " "]
+            IntegerLiteral "0" @ 266..267
+            Semicolon ";" @ 267..268
+          ClassDeclaration
+            ClassKw "class" @ 271..276 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "FollowingMalformedConstructor" @ 277..306 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 307..308
+              ClassBodyMemberList
+              RBrace "}" @ 308..309
+        RBrace "}" @ 310..311 leading=[Newline "\n"]
+  Eof "" @ 312..312 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=9..10 message="unexpected token in import declaration"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=101..102 message="expected identifier"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=178..179 message="unexpected token in type body"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=226..248 message="unexpected token in type body"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(9), end: TextSize(10) }) message=unexpected token in import declaration
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(101), end: TextSize(102) }) message=expected identifier
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(178), end: TextSize(179) }) message=unexpected token in type body
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(226), end: TextSize(248) }) message=unexpected token in type body

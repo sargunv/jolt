@@ -108,8 +108,6 @@ pub fn formatter_ignore_runs_claim_boundary_comment<'source>(
 pub(crate) struct FormatterIgnorePlan<'source> {
     ranges: Vec<FormatterIgnoreRange<'source>>,
     #[cfg(test)]
-    discovery_tokens: usize,
-    #[cfg(test)]
     query_comparisons: Cell<usize>,
 }
 
@@ -132,8 +130,8 @@ impl FormatterIgnoreItemRange {
 
 impl FormatterIgnorePlan<'_> {
     #[cfg(test)]
-    pub(crate) fn test_counts(&self) -> (usize, usize) {
-        (self.ranges.len(), self.discovery_tokens)
+    pub(crate) fn test_range_count(&self) -> usize {
+        self.ranges.len()
     }
 
     #[cfg(test)]
@@ -423,8 +421,6 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
     populate_separators(&mut ranges, &tokens, safety);
     FormatterIgnorePlan {
         ranges,
-        #[cfg(test)]
-        discovery_tokens: tokens.len(),
         #[cfg(test)]
         query_comparisons: Cell::new(0),
     }
@@ -825,18 +821,17 @@ pub fn is_formatter_control_marker(comment: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use std::cell::Cell;
+    use std::fmt::Write as _;
 
     use jolt_java_syntax::{JavaLanguage, JavaSyntaxView, parse_compilation_unit};
-    use jolt_syntax::{Comment, SyntaxNode, SyntaxToken};
-    use jolt_text::TextRange;
+    use jolt_syntax::{SyntaxNode, SyntaxToken};
 
     use crate::{ExceptionalSeparator, LexicalAtom, LexicalAtomKind, LexicalSafety};
 
     use super::{
         CommentLine, FormatterIgnoreItemRange, FormatterIgnoreSplice, SourceLineCursor,
-        for_each_formatter_ignore_splice, formatter_ignore_content_range,
-        formatter_ignore_plan_with_safety, formatter_ignore_runs,
-        formatter_ignore_runs_claim_boundary_comment, is_formatter_on_marker, latest_at_or_before,
+        for_each_formatter_ignore_splice, formatter_ignore_plan_with_safety, formatter_ignore_runs,
+        is_formatter_on_marker, latest_at_or_before,
     };
 
     #[derive(Default)]
@@ -856,26 +851,12 @@ mod tests {
         }
     }
 
-    fn token_range(root: &SyntaxNode<'_, JavaLanguage>, text: &str) -> TextRange {
-        root.tokens()
-            .find(|token| token.text() == text)
-            .unwrap_or_else(|| panic!("missing token {text:?}"))
-            .token_text_range()
-    }
-
     fn item_range(root: &SyntaxNode<'_, JavaLanguage>, text: &str) -> FormatterIgnoreItemRange {
         let token = root
             .tokens()
             .find(|token| token.text() == text)
             .unwrap_or_else(|| panic!("missing token {text:?}"));
         FormatterIgnoreItemRange::between(&token, &token)
-    }
-
-    fn comment<'source>(root: &SyntaxNode<'source, JavaLanguage>, text: &str) -> Comment<'source> {
-        root.tokens()
-            .flat_map(|token| token.leading_comments().chain(token.trailing_comments()))
-            .find(|comment| comment.text() == text)
-            .unwrap_or_else(|| panic!("missing comment {text:?}"))
     }
 
     #[test]
@@ -886,64 +867,6 @@ mod tests {
         assert!(!is_formatter_on_marker("// @formatter:on later"));
         assert!(!is_formatter_on_marker("/* prefix @formatter:on */"));
         assert!(!is_formatter_on_marker("@formatter:on"));
-    }
-
-    #[test]
-    fn only_complete_pairs_form_ranges_and_first_off_wins() {
-        let repeated = "class C {\n// @formatter:off\nint first;\n// @formatter:off\nint second;\n// @formatter:on\n}";
-        let parse = parse_compilation_unit(repeated);
-        let syntax = parse.syntax().expect("test source has syntax");
-        let root = syntax.syntax_node().expect("test source has a root");
-        let plan = formatter_ignore_plan_with_safety(repeated, root.tokens(), &mut TestSafety);
-        assert_eq!(plan.ranges.len(), 1);
-        assert_eq!(
-            plan.ranges[0].interior.start().get(),
-            repeated.find("// @formatter:off").unwrap()
-        );
-        assert!(plan.ranges[0].raw_text.contains("int first"));
-        assert!(
-            plan.ranges[0]
-                .raw_text
-                .contains("// @formatter:off\nint second")
-        );
-
-        for unmatched in [
-            "class C {\n// @formatter:off\nint value;\n}",
-            "class C {\n// @formatter:on\nint value;\n}",
-        ] {
-            let parse = parse_compilation_unit(unmatched);
-            let syntax = parse.syntax().expect("test source has syntax");
-            let root = syntax.syntax_node().expect("test source has a root");
-            let plan = formatter_ignore_plan_with_safety(unmatched, root.tokens(), &mut TestSafety);
-            assert!(plan.ranges.is_empty());
-        }
-    }
-
-    #[test]
-    fn same_line_on_off_transition_has_disjoint_exact_output() {
-        let source = "class C {\n// @formatter:off\nint first;\n/* @formatter:on */ /* @formatter:off */\nint second;\n// @formatter:on\nint after;\n}";
-        let parse = parse_compilation_unit(source);
-        let syntax = parse.syntax().expect("test source has syntax");
-        let root = syntax.syntax_node().expect("test source has a root");
-        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
-        let runs = formatter_ignore_runs(
-            &plan,
-            root.text_range(),
-            &[
-                Some(item_range(&root, "first")),
-                Some(item_range(&root, "second")),
-                Some(item_range(&root, "after")),
-            ],
-        );
-        assert_eq!(runs.len(), 2);
-        assert!(!runs[0].ends_with_on_marker());
-        assert_eq!(runs[0].raw_text(), "// @formatter:off\nint first;");
-        assert_eq!(
-            runs[1].raw_text(),
-            "/* @formatter:on */ /* @formatter:off */\nint second;"
-        );
-        let first_end = runs[0].range.interior.start().get() + runs[0].raw_text().len();
-        assert!(first_end <= runs[1].range.interior.start().get());
     }
 
     #[test]
@@ -976,190 +899,7 @@ mod tests {
         );
     }
 
-    #[test]
-    fn partial_sibling_range_is_rejected_before_overlapping_a_retained_item() {
-        let source = "class Outer { void first() {\n// @formatter:off\nint raw=1;\n} void second() {}\n// @formatter:on\nvoid after() {} }";
-        let parse = parse_compilation_unit(source);
-        let syntax = parse.syntax().expect("test source has syntax");
-        let root = syntax.syntax_node().expect("test source has a root");
-        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
-        let retained_first = TextRange::new(
-            token_range(&root, "void").start(),
-            jolt_text::TextSize::new(
-                source
-                    .find("} void second")
-                    .expect("first method close exists")
-                    + 1,
-            ),
-        );
-        let raw = plan.ranges[0].interior;
-        assert!(
-            raw.start() < retained_first.end() && retained_first.start() < raw.end(),
-            "characterization requires an overlapping partial sibling",
-        );
-        let parent_items = [
-            Some(FormatterIgnoreItemRange {
-                owned: retained_first,
-            }),
-            Some(item_range(&root, "second")),
-            Some(item_range(&root, "after")),
-        ];
-        assert!(formatter_ignore_runs(&plan, root.text_range(), &parent_items).is_empty());
-
-        let child_end = token_range(&root, "raw").end();
-        let child = TextRange::new(token_range(&root, "first").start(), child_end);
-        let child_runs = formatter_ignore_runs(&plan, child, &[Some(item_range(&root, "raw"))]);
-        assert!(child_runs.is_empty());
-    }
-
-    #[test]
-    fn child_owns_a_range_nested_inside_its_parent_item() {
-        let source = "class Outer { void method() {\n// @formatter:off\nint raw=1;\n// @formatter:on\nint after=2;\n} }";
-        let parse = parse_compilation_unit(source);
-        let syntax = parse.syntax().expect("test source has syntax");
-        let root = syntax.syntax_node().expect("test source has a root");
-        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
-        let parent = formatter_ignore_runs(
-            &plan,
-            root.text_range(),
-            &[Some(item_range(&root, "class"))],
-        );
-        assert!(parent.is_empty());
-
-        let child = TextRange::new(
-            token_range(&root, "method").start(),
-            token_range(&root, "after").end(),
-        );
-        let child_runs = formatter_ignore_runs(
-            &plan,
-            child,
-            &[
-                Some(item_range(&root, "raw")),
-                Some(item_range(&root, "after")),
-            ],
-        );
-        assert_eq!(child_runs.len(), 1);
-        assert_eq!(child_runs[0].skip_start..child_runs[0].skip_end, 0..1);
-        assert_eq!(
-            child_runs,
-            formatter_ignore_runs(
-                &plan,
-                child,
-                &[
-                    Some(item_range(&root, "raw")),
-                    Some(item_range(&root, "after")),
-                ],
-            )
-        );
-    }
-
-    #[test]
-    fn content_boundaries_reject_header_claims_with_present_or_missing_open() {
-        let source = "class C { /* @formatter:off */\nint raw;\n// @formatter:on\n}";
-        let parse = parse_compilation_unit(source);
-        let syntax = parse.syntax().expect("test source has syntax");
-        let root = syntax.syntax_node().expect("test source has a root");
-        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
-        let open = root.tokens().find(|token| token.text() == "{").unwrap();
-        let close = root.tokens().find(|token| token.text() == "}").unwrap();
-        let raw = item_range(&root, "raw");
-        let fallback = raw.owned;
-
-        for container in [
-            formatter_ignore_content_range(fallback, Some(open), Some(close)),
-            formatter_ignore_content_range(fallback, None, Some(close)),
-        ] {
-            assert!(formatter_ignore_runs(&plan, container, &[Some(raw)]).is_empty());
-        }
-    }
-
-    #[test]
-    fn leading_layout_and_non_control_comment_stay_in_one_supported_raw_run() {
-        let source = "class C {\n// ordinary\n// @formatter:off\nint raw=1;\n// @formatter:on\nint after=2;\n}";
-        let parse = parse_compilation_unit(source);
-        let syntax = parse.syntax().expect("test source has syntax");
-        let root = syntax.syntax_node().expect("test source has a root");
-        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
-        let runs = formatter_ignore_runs(
-            &plan,
-            root.text_range(),
-            &[
-                Some(item_range(&root, "raw")),
-                Some(item_range(&root, "after")),
-            ],
-        );
-        assert_eq!(runs.len(), 1);
-        assert!(
-            runs[0]
-                .raw_text()
-                .starts_with("// ordinary\n// @formatter:off")
-        );
-        assert!(!runs[0].ends_with_on_marker());
-    }
-
-    #[test]
-    fn enum_constant_member_crossing_is_rejected_by_the_member_interval() {
-        let source =
-            "enum E { A,\n// @formatter:off\nB;\nint member;\n// @formatter:on\nint after;\n}";
-        let parse = parse_compilation_unit(source);
-        let syntax = parse.syntax().expect("test source has syntax");
-        let root = syntax.syntax_node().expect("test source has a root");
-        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
-        let member_items = [
-            Some(item_range(&root, "member")),
-            Some(item_range(&root, "after")),
-        ];
-
-        let member_container = TextRange::new(
-            token_range(&root, "member").start(),
-            token_range(&root, "after").end(),
-        );
-        assert!(plan.ranges[0].interior.start() < member_container.start());
-        assert!(formatter_ignore_runs(&plan, member_container, &member_items).is_empty());
-    }
-
-    #[test]
-    fn adjacent_runs_own_the_intervening_on_marker_once() {
-        let source = "class C { void m() {\n// @formatter:off\nint first=1;\n// @formatter:on\n// @formatter:off\nint second=2;\n// @formatter:on\nint after=3;\n} }";
-        let parse = parse_compilation_unit(source);
-        let syntax = parse.syntax().expect("test source has syntax");
-        let root = syntax.syntax_node().expect("test source has a root");
-        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
-        let runs = formatter_ignore_runs(
-            &plan,
-            root.text_range(),
-            &[
-                Some(item_range(&root, "first")),
-                Some(item_range(&root, "second")),
-                Some(item_range(&root, "after")),
-            ],
-        );
-        assert_eq!(runs.len(), 2);
-        assert!(runs[0].ends_with_on_marker());
-        assert!(!runs[1].ends_with_on_marker());
-        let on = comment(&root, "// @formatter:on");
-        assert!(formatter_ignore_runs_claim_boundary_comment(&runs, &on));
-        assert!(!formatter_ignore_runs_claim_boundary_comment(
-            &runs[1..],
-            &on
-        ));
-    }
-
-    #[test]
-    fn terminal_run_leaves_the_on_marker_to_the_eof_boundary() {
-        let source = "class C {\n// @formatter:off\nint raw=1;\n// @formatter:on\n}";
-        let parse = parse_compilation_unit(source);
-        let syntax = parse.syntax().expect("test source has syntax");
-        let root = syntax.syntax_node().expect("test source has a root");
-        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
-        let runs =
-            formatter_ignore_runs(&plan, root.text_range(), &[Some(item_range(&root, "raw"))]);
-        assert_eq!(runs.len(), 1);
-        assert!(!runs[0].ends_with_on_marker());
-        let on = comment(&root, "// @formatter:on");
-        assert!(!formatter_ignore_runs_claim_boundary_comment(&runs, &on));
-    }
-
+    // Output fixtures cannot distinguish this binary search from a linear scan.
     #[test]
     fn latest_candidate_lookup_is_logarithmic() {
         let starts = (0..1_024).collect::<Vec<_>>();
@@ -1176,25 +916,7 @@ mod tests {
         );
     }
 
-    #[test]
-    fn represented_malformed_item_can_be_fully_contained() {
-        let source = "class C {\n// @formatter:off\n+ ;\n// @formatter:on\nint after;\n}";
-        let parse = parse_compilation_unit(source);
-        let syntax = parse.syntax().expect("test source has syntax");
-        let root = syntax.syntax_node().expect("test source has a root");
-        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
-        let runs = formatter_ignore_runs(
-            &plan,
-            root.text_range(),
-            &[
-                Some(item_range(&root, "+")),
-                Some(item_range(&root, "after")),
-            ],
-        );
-        assert_eq!(runs.len(), 1);
-        assert_eq!(runs[0].skip_start..runs[0].skip_end, 0..1);
-    }
-
+    // Tokenless missing CST entries have no source or rendered output for a fixture to assert.
     #[test]
     fn missing_parts_between_physical_items_stay_inside_the_skip_span() {
         let source =
@@ -1223,28 +945,27 @@ mod tests {
         assert_eq!(visited, ["ignore", "after"]);
     }
 
+    // Output fixtures cannot measure the required O(items * log ranges) query bound.
     #[test]
     fn query_comparisons_are_bounded_by_items_and_range_depth() {
         let mut source = String::from("class C { void m() {\n");
         for index in 0..64 {
             source.push_str("// @formatter:off\n");
-            source.push_str(&format!("int value{index}=0;\n"));
+            writeln!(source, "int value{index}=0;").expect("writing to a string cannot fail");
             source.push_str("// @formatter:on\n");
         }
         source.push_str("} }");
         let parse = parse_compilation_unit(&source);
         let syntax = parse.syntax().expect("test source has syntax");
         let root = syntax.syntax_node().expect("test source has a root");
-        let token_count = root.tokens().count();
         let plan = formatter_ignore_plan_with_safety(&source, root.tokens(), &mut TestSafety);
         let items = (0..64)
             .map(|index| Some(item_range(&root, &format!("value{index}"))))
             .collect::<Vec<_>>();
         let runs = formatter_ignore_runs(&plan, root.text_range(), &items);
-        let (range_count, discovery_tokens) = plan.test_counts();
+        let range_count = plan.test_range_count();
         assert_eq!(runs.len(), 64);
         assert_eq!(range_count, 64);
-        assert_eq!(discovery_tokens, token_count);
         let comparisons = plan.test_query_comparisons();
         let max_probes = usize::BITS - range_count.leading_zeros();
         assert!(comparisons > 0);

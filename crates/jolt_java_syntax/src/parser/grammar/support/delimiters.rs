@@ -68,20 +68,9 @@ impl LookaheadSummary {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parse_compilation_unit;
 
-    fn count_nodes(source: &str, kind: JavaSyntaxKind) -> usize {
-        let parse = parse_compilation_unit(source);
-        let root = parse.syntax().expect("represented compilation unit");
-        assert_eq!(root.source_text(), source);
-        let mut nodes = vec![*root.syntax()];
-        let mut count = 0;
-        while let Some(node) = nodes.pop() {
-            nodes.extend(node.children());
-            count += usize::from(node.kind() == kind);
-        }
-        count
-    }
+    // Corpus fixtures can verify parse results, but cannot prove summary activation,
+    // cache reuse, or the counted-work bound that makes repeated lookahead linear.
 
     #[test]
     fn nested_lambda_rejection_builds_one_lazy_summary() {
@@ -158,27 +147,10 @@ mod tests {
         assert_eq!(lookahead.text(), Some("value"));
     }
 
+    // The forced-summary EOF endpoint is an internal cache contract; surrounding
+    // recovery can compensate for an off-by-one result in a fixture parse.
     #[test]
-    fn full_parse_handles_deep_parentheses_and_malformed_annotations() {
-        let depth = 63;
-        let nested = format!(
-            "class C {{ Object value = {}input{}; }} class D {{}}",
-            "(".repeat(depth),
-            ")".repeat(depth)
-        );
-        assert_eq!(
-            count_nodes(&nested, JavaSyntaxKind::ParenthesizedExpression),
-            depth
-        );
-        assert_eq!(count_nodes(&nested, JavaSyntaxKind::ClassDeclaration), 2);
-
-        let malformed = format!("{}value; class Following {{}}", "@A(value=".repeat(96));
-        assert_eq!(count_nodes(&malformed, JavaSyntaxKind::ClassDeclaration), 1);
-        assert!(!parse_compilation_unit(&malformed).diagnostics().is_empty());
-    }
-
-    #[test]
-    fn unmatched_parenthesis_summary_and_bounded_annotation_recovery_are_exact() {
+    fn unmatched_parenthesis_summary_ends_at_eof() {
         let mut parser = Parser::new("(value");
         let cursor = parser.inner.fork_cursor();
         assert_eq!(
@@ -193,69 +165,6 @@ mod tests {
                 .after(&mut parser.inner.buffer, cursor, cursor),
             2
         );
-
-        for (source, classes) in [
-            ("import a @A(value; class C {}", 1),
-            ("@A( class C {}", 1),
-            ("@module 0", 0),
-        ] {
-            assert_eq!(
-                count_nodes(source, JavaSyntaxKind::ClassDeclaration),
-                classes
-            );
-            assert!(!parse_compilation_unit(source).diagnostics().is_empty());
-        }
-    }
-
-    #[test]
-    fn annotation_run_summary_preserves_malformed_recovery_boundaries() {
-        let depth = 128;
-        let annotations = "@A ".repeat(depth);
-        let cases = [
-            (format!("{annotations}0; class Following {{}}"), 1, true),
-            (
-                format!("import a {annotations}; class Following {{}}"),
-                1,
-                true,
-            ),
-            (
-                format!("class Outer {{ {annotations}0; class Nested {{}} }}"),
-                2,
-                true,
-            ),
-            (
-                format!("class Outer {{ Outer int value) {annotations}0; class Nested {{}} }}"),
-                2,
-                true,
-            ),
-            ("@A(@B) class C {}".to_owned(), 1, false),
-        ];
-
-        for (source, classes, malformed) in cases {
-            assert_eq!(
-                count_nodes(&source, JavaSyntaxKind::ClassDeclaration),
-                classes,
-                "{source}"
-            );
-            assert_eq!(
-                !parse_compilation_unit(&source).diagnostics().is_empty(),
-                malformed,
-                "{source}"
-            );
-        }
-
-        for (source, malformed) in [("@A @interface C {}", false), ("@ @interface C {}", true)] {
-            assert_eq!(
-                count_nodes(source, JavaSyntaxKind::AnnotationInterfaceDeclaration),
-                1,
-                "{source}"
-            );
-            assert_eq!(
-                !parse_compilation_unit(source).diagnostics().is_empty(),
-                malformed,
-                "{source}"
-            );
-        }
     }
 }
 

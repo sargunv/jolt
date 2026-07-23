@@ -1,0 +1,50 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+import a @A(value;
+
+class FollowingMalformedImport {}
+
+@A(@B)
+@interface ValidNestedAnnotation {}
+
+@ @interface RecoveredAnnotationInterface {}
+
+class NestedRecoveryContexts {
+  @A @A 0;
+  class FollowingMalformedMember {}
+
+  NestedRecoveryContexts int value) @A @A 0;
+  class FollowingMalformedConstructor {}
+}
+
+formatted:
+import a@A(value;
+
+class FollowingMalformedImport {
+}
+
+@A(@B)
+@interface ValidNestedAnnotation {
+}
+
+@
+@interface RecoveredAnnotationInterface {
+}
+
+class NestedRecoveryContexts {
+  @A @A 0;
+  class FollowingMalformedMember {
+  }
+  NestedRecoveryContexts int value) @A @A 0;
+  class FollowingMalformedConstructor {
+  }
+}
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(9), end: TextSize(10) }) message=unexpected token in import declaration
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(101), end: TextSize(102) }) message=expected identifier
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(178), end: TextSize(179) }) message=unexpected token in type body
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(226), end: TextSize(248) }) message=unexpected token in type body
