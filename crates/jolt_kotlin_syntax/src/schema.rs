@@ -628,9 +628,11 @@ macro_rules! kotlin_syntax_schema {
                     question: required (token Question);
                 }
                 FunctionType => FunctionType [function_type valid] {
+                    annotations: optional (list AnnotationList);
                     form: required (category FunctionTypeForm);
                 }
                 ContextFunctionType => ContextFunctionType [context_function_type valid] {
+                    annotations: optional (list AnnotationList);
                     context_token: required (contextual "context");
                     open_paren: required (token LParen);
                     context_parameters: required (list FunctionTypeParameterSeparatedList);

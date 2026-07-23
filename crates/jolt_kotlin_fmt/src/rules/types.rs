@@ -1,13 +1,14 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    Annotation, ArrowFunctionType, BangDefinitelyNonNullableType, ContextFunctionType,
-    DefinitelyNonNullableType, DefinitelyNonNullableTypeForm, FunctionType, FunctionTypeForm,
-    FunctionTypeParameter, FunctionTypeParameterListEntry, IntersectionDefinitelyNonNullableType,
-    KotlinRoleElement, KotlinSyntaxField, KotlinSyntaxToken, KotlinSyntaxView, ModifierList,
-    NullableType, ParenthesizedType, ReceiverType, StarProjection, SuspendedFunctionType,
-    TypeArgumentList, TypeArgumentListEntry, TypeConstraint, TypeConstraintList,
-    TypeConstraintListEntry, TypeParameter, TypeParameterList, TypeParameterListEntry,
-    TypeProjection, TypeReference, TypeSyntax, UserType, UserTypeSegment, UserTypeSegmentSyntax,
+    Annotation, AnnotationList, ArrowFunctionType, BangDefinitelyNonNullableType,
+    ContextFunctionType, DefinitelyNonNullableType, DefinitelyNonNullableTypeForm, FunctionType,
+    FunctionTypeForm, FunctionTypeParameter, FunctionTypeParameterListEntry,
+    IntersectionDefinitelyNonNullableType, KotlinRoleElement, KotlinSyntaxField, KotlinSyntaxToken,
+    KotlinSyntaxView, ModifierList, NullableType, ParenthesizedType, ReceiverType, StarProjection,
+    SuspendedFunctionType, TypeArgumentList, TypeArgumentListEntry, TypeConstraint,
+    TypeConstraintList, TypeConstraintListEntry, TypeParameter, TypeParameterList,
+    TypeParameterListEntry, TypeProjection, TypeReference, TypeSyntax, UserType, UserTypeSegment,
+    UserTypeSegmentSyntax,
 };
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
@@ -239,25 +240,7 @@ fn format_user_type_segment<'source>(
     doc: &mut DocBuilder<'source>,
     segment: &UserTypeSegment<'source>,
 ) -> Doc<'source> {
-    let annotations = format_optional_field(segment.annotations(), doc, |annotations, doc| {
-        doc.concat_list(|docs| {
-            for part in annotations.parts() {
-                match resolve_list_part(part, docs) {
-                    KotlinFormatListPart::Item(annotation) => {
-                        let annotation = format_annotation(docs, &annotation);
-                        docs.push(annotation);
-                        let space = docs.space();
-                        docs.push(space);
-                    }
-                    KotlinFormatListPart::Separator(separator) => docs.block_on_invariant(format!(
-                        "unexpected annotation separator: {:?}",
-                        separator.kind()
-                    )),
-                    KotlinFormatListPart::Recovery(recovery) => docs.push(recovery.doc()),
-                }
-            }
-        })
-    });
+    let annotations = format_optional_field(segment.annotations(), doc, format_type_annotations);
     let name = format_required_field(segment.name(), doc, |name, doc| {
         format_token(
             doc,
@@ -363,25 +346,7 @@ fn format_parenthesized_type<'source>(
     doc: &mut DocBuilder<'source>,
     ty: &ParenthesizedType<'source>,
 ) -> Doc<'source> {
-    let annotations = format_required_field(ty.annotations(), doc, |annotations, doc| {
-        doc.concat_list(|docs| {
-            for part in annotations.parts() {
-                match resolve_list_part(part, docs) {
-                    KotlinFormatListPart::Item(annotation) => {
-                        let annotation = format_annotation(docs, &annotation);
-                        docs.push(annotation);
-                        let space = docs.space();
-                        docs.push(space);
-                    }
-                    KotlinFormatListPart::Separator(separator) => docs.block_on_invariant(format!(
-                        "unexpected annotation separator: {:?}",
-                        separator.kind()
-                    )),
-                    KotlinFormatListPart::Recovery(recovery) => docs.push(recovery.doc()),
-                }
-            }
-        })
-    });
+    let annotations = format_required_field(ty.annotations(), doc, format_type_annotations);
     let open = resolve_required_delimiter(ty.open_paren(), doc);
     let close = resolve_required_delimiter(ty.close_paren(), doc);
     let items = match resolve_required_field(ty.entries(), doc) {
@@ -460,13 +425,15 @@ fn format_function_type<'source>(
     doc: &mut DocBuilder<'source>,
     ty: &FunctionType<'source>,
 ) -> Doc<'source> {
-    format_required_field(ty.form(), doc, |form, doc| match form {
+    let annotations = format_optional_field(ty.annotations(), doc, format_type_annotations);
+    let form = format_required_field(ty.form(), doc, |form, doc| match form {
         FunctionTypeForm::SuspendedFunctionType(suspended) => {
             format_suspended_function_type(doc, &suspended)
         }
         FunctionTypeForm::ArrowFunctionType(arrow) => format_arrow_function_type(doc, &arrow),
         FunctionTypeForm::BogusFunctionTypeForm(bogus) => format_malformed(&bogus, doc),
-    })
+    });
+    doc.concat([annotations, form])
 }
 
 fn format_suspended_function_type<'source>(
@@ -515,6 +482,7 @@ fn format_context_function_type<'source>(
     doc: &mut DocBuilder<'source>,
     ty: &ContextFunctionType<'source>,
 ) -> Doc<'source> {
+    let annotations = format_optional_field(ty.annotations(), doc, format_type_annotations);
     let context = format_required_field(ty.context_token(), doc, |token, doc| {
         format_token(
             doc,
@@ -539,7 +507,30 @@ fn format_context_function_type<'source>(
         format_function_type(doc, &function)
     });
     let space = doc.space();
-    doc.concat([context, parameters, space, function])
+    doc.concat([annotations, context, parameters, space, function])
+}
+
+fn format_type_annotations<'source>(
+    annotations: AnnotationList<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    doc.concat_list(|docs| {
+        for part in annotations.parts() {
+            match resolve_list_part(part, docs) {
+                KotlinFormatListPart::Item(annotation) => {
+                    let annotation = format_annotation(docs, &annotation);
+                    docs.push(annotation);
+                    let space = docs.space();
+                    docs.push(space);
+                }
+                KotlinFormatListPart::Separator(separator) => docs.block_on_invariant(format!(
+                    "unexpected annotation separator: {:?}",
+                    separator.kind()
+                )),
+                KotlinFormatListPart::Recovery(recovery) => docs.push(recovery.doc()),
+            }
+        }
+    })
 }
 
 fn format_definitely_non_nullable_type<'source>(

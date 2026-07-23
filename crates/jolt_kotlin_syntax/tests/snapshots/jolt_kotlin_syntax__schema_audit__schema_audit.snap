@@ -56,6 +56,7 @@ syntax__recovery__statements_and_control_flow: LabelReference occurrence 2 (At("
 syntax__recovery__statements_and_control_flow: Block occurrence 19 (LBrace("{") BlockItemList)
 syntax__recovery__statements_and_control_flow: Block occurrence 20 (LBrace("{") BlockItemList)
 syntax__recovery__statements_and_control_flow: Block occurrence 21 (LBrace("{") BlockItemList)
+syntax__recovery__type_prefix_annotation_recovery: Name occurrence 2 ()
 syntax__recovery__types_and_parameters: TypeConstraintList occurrence 1 (TypeConstraintSeparatedList)
 syntax__recovery__types_and_parameters: TypeConstraint occurrence 2 (Name TypeReference)
 syntax__recovery__when_missing_close: Block occurrence 1 (LBrace("{") BlockItemList)
