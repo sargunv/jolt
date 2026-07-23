@@ -1002,7 +1002,7 @@ ready for review.
 | 17  | `cleanup/17-ignore-boundary-ownership`   | draft open | PR 16  | [#19](https://github.com/sargunv/jolt/pull/19) | full + benchmark           | Delete raw EOF ignore-range projections.         |
 | 18  | `cleanup/18-java-program-joining`        | draft open | PR 17  | [#20](https://github.com/sargunv/jolt/pull/20) | full + benchmark           | Reconcile root joining and marker ownership.     |
 | 19  | `cleanup/19-kotlin-recovery-layout`      | draft open | PR 18  | [#21](https://github.com/sargunv/jolt/pull/21) | full + benchmark           | Isolate Kotlin recovery behavior corrections.    |
-| 20  | `cleanup/20-kotlin-marker-recovery`      | ready      | PR 19  | —                                              | full + benchmark           | Own annotated type recovery without rollback.    |
+| 20  | `cleanup/20-kotlin-marker-recovery`      | draft open | PR 19  | [#22](https://github.com/sargunv/jolt/pull/22) | full + benchmark           | Own annotated type recovery without rollback.    |
 | 21  | `cleanup/21-java-delimiter-summaries`    | planned    | PR 20  | —                                              | —                          | Bound lambda and annotation parenthesis scans.   |
 | 22  | `cleanup/22-java-generic-depth`          | planned    | PR 21  | —                                              | —                          | Bound recursive generic-type parsing.            |
 | 23  | `cleanup/23-residue-reconciliation`      | planned    | PR 22  | —                                              | —                          | Final evidence and transition deletion.          |
