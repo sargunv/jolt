@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { defineAsyncComponent } from "vue";
+import { withBase } from "vitepress";
 import FitOrBreakHero from "./FitOrBreakHero.vue";
 import BenchStrip from "./BenchStrip.vue";
 import CodeFrame from "./CodeFrame.vue";
@@ -56,7 +57,7 @@ const MANUAL = [
       </p>
       <p class="home-links">
         <a href="#playground">Playground ↓</a>
-        <a href="/guides/what-is-jolt">Docs →</a>
+        <a :href="withBase('/guides/what-is-jolt')">Docs →</a>
         <a href="https://github.com/sargunv/jolt" target="_blank" rel="noopener"
           >GitHub ↗</a
         >
@@ -70,7 +71,7 @@ const MANUAL = [
 <span class="term-p">$ </span>jolt fmt .</pre>
       </CodeFrame>
       <p class="home-more">
-        <a href="/guides/installation"
+        <a :href="withBase('/guides/installation')"
           >eget, mise, dprint, Windows, manual download →</a
         >
       </p>
@@ -80,7 +81,7 @@ const MANUAL = [
       <h2 class="home-h2">Benchmark</h2>
       <BenchStrip class="home-window" />
       <p class="home-more">
-        <a href="/guides/what-is-jolt">More about the approach →</a>
+        <a :href="withBase('/guides/what-is-jolt')">More about the approach →</a>
       </p>
     </section>
 
@@ -104,7 +105,7 @@ const MANUAL = [
       <h2 class="home-h2">The manual</h2>
       <ol class="manual">
         <li v-for="entry in MANUAL" :key="entry.href" class="manual-item">
-          <a :href="entry.href" class="manual-link">
+          <a :href="withBase(entry.href)" class="manual-link">
             <span class="manual-name">{{ entry.name }}</span>
             <span class="manual-desc">{{ entry.desc }}</span>
           </a>
