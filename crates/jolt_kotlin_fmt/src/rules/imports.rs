@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_fmt_ir::{Doc, DocBuilder, LayoutDoc};
 use jolt_kotlin_syntax::{
     ImportAlias, ImportDirective, ImportDirectiveList, ImportOnDemandSuffix, KotlinMalformedSyntax,
     KotlinMissingSyntax, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken,
@@ -6,7 +6,7 @@ use jolt_kotlin_syntax::{
 };
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_terminator_list, format_token,
+    LeadingTrivia, TrailingTrivia, format_terminator_list, format_token, token_has_comments,
 };
 use crate::helpers::recovery::{
     format_malformed, format_missing, format_optional_field, format_required_field,
@@ -20,7 +20,7 @@ use jolt_fmt_ir::formatter_ignore::{
 pub(crate) fn format_import_list<'source>(
     doc: &mut DocBuilder<'source>,
     list: &ImportDirectiveList<'source>,
-) -> Doc<'source> {
+) -> LayoutDoc<'source> {
     let entries = list
         .parts()
         .map(|part| match part {
@@ -70,7 +70,7 @@ fn format_import_entries_with_ignored<'source>(
     doc: &mut DocBuilder<'source>,
     entries: Vec<ImportEntry<'source>>,
     runs: &[FormatterIgnoreRun<'source>],
-) -> Doc<'source> {
+) -> LayoutDoc<'source> {
     let mut sections = Vec::new();
     let mut retained = Vec::new();
     let mut entries = entries.into_iter().map(Some).collect::<Vec<_>>();
@@ -79,7 +79,7 @@ fn format_import_entries_with_ignored<'source>(
             if !retained.is_empty() {
                 sections.push(format_import_entries(doc, std::mem::take(&mut retained)));
             }
-            sections.push(formatter_ignore_run_doc(run, doc));
+            sections.push(LayoutDoc::Visible(formatter_ignore_run_doc(run, doc)));
         }
         FormatterIgnoreSplice::Item { index, .. } => {
             if let Some(entry) = entries[index].take() {
@@ -90,26 +90,30 @@ fn format_import_entries_with_ignored<'source>(
     if !retained.is_empty() {
         sections.push(format_import_entries(doc, retained));
     }
-    doc.concat_list(|docs| {
+    let mut has_visible = false;
+    let joined = doc.concat_list(|docs| {
         for section in sections {
-            if !docs.is_empty() {
+            if section.is_visible() && has_visible {
                 let line = docs.hard_line();
                 docs.push(line);
             }
-            docs.push(section);
+            docs.push(section.doc());
+            has_visible |= section.is_visible();
         }
-    })
+    });
+    layout_doc(joined, has_visible)
 }
 
 fn format_import_entries<'source>(
     doc: &mut DocBuilder<'source>,
     entries: Vec<ImportEntry<'source>>,
-) -> Doc<'source> {
+) -> LayoutDoc<'source> {
     let mut sections = Vec::new();
     let mut sortable = Vec::new();
     for entry in entries {
         match entry {
             ImportEntry::Directive(import) => {
+                let visible = import.first_token().is_some();
                 if let Some(formatted) = FormattedImport::new(import) {
                     if formatted
                         .import
@@ -119,6 +123,7 @@ fn format_import_entries<'source>(
                         flush_sortable(doc, &mut sortable, &mut sections);
                         sections.push(ImportSection {
                             doc: formatted.into_doc(doc),
+                            visible,
                             starts_comment_barrier: true,
                         });
                     } else {
@@ -128,12 +133,14 @@ fn format_import_entries<'source>(
                     flush_sortable(doc, &mut sortable, &mut sections);
                     sections.push(ImportSection {
                         doc: format_import(doc, &import),
+                        visible,
                         starts_comment_barrier: false,
                     });
                 }
             }
             ImportEntry::Token(separator) => {
                 flush_sortable(doc, &mut sortable, &mut sections);
+                let visible = !separator.text().is_empty() || token_has_comments(&separator);
                 sections.push(ImportSection {
                     doc: format_token(
                         doc,
@@ -141,13 +148,16 @@ fn format_import_entries<'source>(
                         LeadingTrivia::Preserve,
                         TrailingTrivia::Preserve,
                     ),
+                    visible,
                     starts_comment_barrier: false,
                 });
             }
             ImportEntry::Malformed(malformed) => {
                 flush_sortable(doc, &mut sortable, &mut sections);
+                let visible = malformed.first_token().is_some();
                 sections.push(ImportSection {
                     doc: format_malformed(&malformed, doc),
+                    visible,
                     starts_comment_barrier: false,
                 });
             }
@@ -155,15 +165,18 @@ fn format_import_entries<'source>(
                 flush_sortable(doc, &mut sortable, &mut sections);
                 sections.push(ImportSection {
                     doc: format_missing(&missing, doc),
+                    visible: false,
                     starts_comment_barrier: false,
                 });
             }
         }
     }
     flush_sortable(doc, &mut sortable, &mut sections);
-    doc.concat_list(|docs| {
-        for (index, section) in sections.into_iter().enumerate() {
-            if index != 0 {
+    let visible = sections.iter().any(|section| section.visible);
+    let mut has_visible = false;
+    let joined = doc.concat_list(|docs| {
+        for section in sections {
+            if section.visible && has_visible {
                 let separator = if section.starts_comment_barrier {
                     docs.empty_line()
                 } else {
@@ -172,12 +185,23 @@ fn format_import_entries<'source>(
                 docs.push(separator);
             }
             docs.push(section.doc);
+            has_visible |= section.visible;
         }
-    })
+    });
+    layout_doc(joined, visible)
+}
+
+fn layout_doc(doc: Doc<'_>, visible: bool) -> LayoutDoc<'_> {
+    if visible {
+        LayoutDoc::Visible(doc)
+    } else {
+        LayoutDoc::ClaimOnly(doc)
+    }
 }
 
 struct ImportSection<'source> {
     doc: Doc<'source>,
+    visible: bool,
     starts_comment_barrier: bool,
 }
 
@@ -197,6 +221,7 @@ fn flush_sortable<'source>(
             .into_iter()
             .map(|import| ImportSection {
                 doc: import.into_doc(doc),
+                visible: true,
                 starts_comment_barrier: false,
             }),
     );

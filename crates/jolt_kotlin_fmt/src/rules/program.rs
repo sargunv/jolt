@@ -59,12 +59,12 @@ pub(crate) fn format_file<'source>(
         })
     });
     let contents = match (annotations_visible, contents) {
-        (true, Some(contents)) => {
+        (true, Some(contents)) if contents.visible => {
             let line = doc.empty_line();
-            doc.concat([annotations, line, contents])
+            doc.concat([annotations, line, contents.doc])
         }
         (_, None) => annotations,
-        (false, Some(contents)) => doc.concat([annotations, contents]),
+        (_, Some(contents)) => doc.concat([annotations, contents.doc]),
     };
     let line = doc.hard_line();
     doc.concat([contents, eof, line])
@@ -100,18 +100,16 @@ fn collect_items<'source>(
             }
             KotlinSyntaxListPart::Item(KotlinRoleElement::Token(token))
             | KotlinSyntaxListPart::Separator(token) => {
-                let separator = format_removed_separator(
-                    doc,
-                    &token,
-                    preceding_item
-                        .as_ref()
-                        .and_then(|owner| boundary_separator_removal_claim(owner, token)),
-                    false,
-                );
+                let claim = preceding_item
+                    .as_ref()
+                    .and_then(|owner| boundary_separator_removal_claim(owner, token));
+                let has_comments = token_has_comments(&token);
+                let visible = (claim.is_none() && !token.text().is_empty()) || has_comments;
+                let separator = format_removed_separator(doc, &token, claim, false);
                 entries.push(FileEntry::Separator(
                     separator,
                     FormatterIgnoreItemRange::between(&token, &token),
-                    token_has_comments(&token),
+                    visible,
                 ));
             }
             KotlinSyntaxListPart::Malformed(malformed) => {
@@ -158,9 +156,9 @@ fn format_entries_with_ignored<'source>(
     doc: &mut DocBuilder<'source>,
     entries: Vec<FileEntry<'source>>,
     runs: &[FormatterIgnoreRun<'source>],
-) -> Option<Doc<'source>> {
+) -> Option<FileSection<'source>> {
     if runs.is_empty() {
-        return format_entry_segment(doc, entries).map(|section| section.doc);
+        return format_entry_segment(doc, entries);
     }
 
     let mut sections = Vec::new();
@@ -178,7 +176,7 @@ fn format_entries_with_ignored<'source>(
         }
     });
     push_entry_segment(doc, &mut sections, &mut segment);
-    (!sections.is_empty()).then(|| join_sections(doc, sections))
+    Some(join_sections(doc, sections))
 }
 
 fn push_entry_segment<'source>(
@@ -201,44 +199,41 @@ fn format_entry_segment<'source>(
         match entry {
             FileEntry::Item(KotlinFileItem::ImportDirectiveList(imports)) => {
                 flush_body(doc, &mut body, &mut sections);
-                sections.push(FileSection::visible(format_import_list(doc, &imports)));
+                let imports = format_import_list(doc, &imports);
+                sections.push(FileSection::new(imports.doc(), imports.is_visible()));
             }
             FileEntry::Item(KotlinFileItem::PackageHeader(package)) => {
                 flush_body(doc, &mut body, &mut sections);
-                sections.push(FileSection::visible(format_package_header(doc, &package)));
+                let visible = package.first_token().is_some();
+                sections.push(FileSection::new(
+                    format_package_header(doc, &package),
+                    visible,
+                ));
             }
             FileEntry::Item(item) => {
                 body.push(item);
             }
             FileEntry::Malformed(malformed) => {
                 flush_body(doc, &mut body, &mut sections);
-                sections.push(FileSection::visible(format_malformed(&malformed, doc)));
+                let visible = malformed.first_token().is_some();
+                sections.push(FileSection::new(format_malformed(&malformed, doc), visible));
             }
             FileEntry::Missing(missing) => {
                 flush_body(doc, &mut body, &mut sections);
-                sections.push(FileSection::visible(format_missing(&missing, doc)));
+                sections.push(FileSection::new(format_missing(&missing, doc), false));
             }
             FileEntry::Separator(separator, _, visible) => {
                 flush_body(doc, &mut body, &mut sections);
                 sections.push(FileSection {
                     doc: separator,
                     visible,
-                    ignored: false,
+                    compact_after: visible,
                 });
             }
         }
     }
     flush_body(doc, &mut body, &mut sections);
-    if sections.is_empty() {
-        None
-    } else {
-        let visible = sections.iter().any(|section| section.visible);
-        Some(FileSection {
-            doc: join_sections(doc, sections),
-            visible,
-            ignored: false,
-        })
-    }
+    (!sections.is_empty()).then(|| join_sections(doc, sections))
 }
 
 fn flush_body<'source>(
@@ -247,22 +242,24 @@ fn flush_body<'source>(
     sections: &mut Vec<FileSection<'source>>,
 ) {
     if !body.is_empty() {
+        let visible = body.iter().any(|item| item.first_token().is_some());
         let formatted = format_source_body(doc, body);
         body.clear();
-        sections.push(FileSection::visible(formatted));
+        sections.push(FileSection::new(formatted, visible));
     }
 }
 
 fn join_sections<'source>(
     doc: &mut DocBuilder<'source>,
     sections: Vec<FileSection<'source>>,
-) -> Doc<'source> {
-    doc.concat_list(|docs| {
+) -> FileSection<'source> {
+    let visible = sections.iter().any(|section| section.visible);
+    let mut compact_after = false;
+    let joined = doc.concat_list(|docs| {
         let mut has_visible_section = false;
-        let mut previous_was_ignored = false;
         for section in sections {
             if section.visible && has_visible_section {
-                let line = if previous_was_ignored {
+                let line = if compact_after {
                     docs.hard_line()
                 } else {
                     docs.empty_line()
@@ -270,24 +267,31 @@ fn join_sections<'source>(
                 docs.push(line);
             }
             docs.push(section.doc);
-            has_visible_section |= section.visible;
-            previous_was_ignored = section.ignored;
+            if section.visible {
+                has_visible_section = true;
+                compact_after = section.compact_after;
+            }
         }
-    })
+    });
+    FileSection {
+        doc: joined,
+        visible,
+        compact_after,
+    }
 }
 
 struct FileSection<'source> {
     doc: Doc<'source>,
     visible: bool,
-    ignored: bool,
+    compact_after: bool,
 }
 
 impl<'source> FileSection<'source> {
-    fn visible(doc: Doc<'source>) -> Self {
+    fn new(doc: Doc<'source>, visible: bool) -> Self {
         Self {
             doc,
-            visible: true,
-            ignored: false,
+            visible,
+            compact_after: false,
         }
     }
 
@@ -295,7 +299,7 @@ impl<'source> FileSection<'source> {
         Self {
             doc,
             visible: true,
-            ignored: true,
+            compact_after: true,
         }
     }
 }
@@ -347,17 +351,18 @@ fn format_source_body<'source>(
     items: &[KotlinFileItem<'source>],
 ) -> Doc<'source> {
     doc.concat_list(|body| {
-        let mut index = 0;
-        while let Some(item) = items.get(index) {
-            if index > 0 {
-                let previous = &items[index - 1];
-                let preserve = is_statement_item(previous) || is_statement_item(item);
-                let separator = source_item_separator(previous, item, preserve).doc(body);
-                body.push(separator);
+        let mut previous_visible = None;
+        for item in items {
+            if item.first_token().is_some() {
+                if let Some(previous) = previous_visible {
+                    let preserve = is_statement_item(previous) || is_statement_item(item);
+                    let separator = source_item_separator(previous, item, preserve).doc(body);
+                    body.push(separator);
+                }
+                previous_visible = Some(item);
             }
             let formatted = format_body_item(body, item);
             body.push(formatted);
-            index += 1;
         }
     })
 }
