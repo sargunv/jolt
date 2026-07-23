@@ -884,19 +884,19 @@ minimal barrier representation; do not publish a renamed boolean framework.
 This layer was inserted after PR 19 probing exposed a distinct parser defect. It
 remains separate so the formatter behavior PR has a narrow rollback boundary.
 
-### PR 21 — Bounded Java delimiter and annotation summaries
+### PR 21 — Lazy Java delimiter and annotation summaries
 
 - eliminate quadratic nested parenthesized-lambda rejection with a Java-local
-  lazy delimiter summary that activates only after an explicitly counted scan
-  budget;
+  delimiter summary built on the first query that needs a matching parenthesis;
 - route annotation-argument skipping through the same exact parenthesis boundary
   summary, eliminating the deeply nested malformed-annotation rescan without
   introducing an independent annotation memo;
-- preserve exact grammar classification and recovery; the budget may select an
-  implementation path but must never cap accepted syntax or change a tree;
-- prove total balanced-token work is `O(B * tokens)` for fixed documented `B`;
-- require zero new allocation on the realistic corpus common path and reject a
-  material side model or production growth without offsetting deletion.
+- preserve exact grammar classification and recovery; lazy construction must
+  never cap accepted syntax or change a tree;
+- prove total balanced-token work is `O(tokens)` with one suffix-table build and
+  constant-time queries;
+- measure the table's realistic allocation cost explicitly and prefer the one
+  linear algorithm over a threshold, cumulative policy state, or dual scan path.
 
 ### PR 22 — Bounded Java generic depth
 
@@ -1863,39 +1863,39 @@ slices remove Java nodes and allocations or leave topology unchanged.
   Java-local fact: an opening parenthesis's exact after-close position, or EOF
   when unmatched. Annotation recovery policy remains local;
   `skip_bounded_annotation` and the generic delimiter helpers are unchanged.
-- Direct scans allocate nothing until one parser crosses a fixed 16,384-token
-  work budget. The triggering suffix costs at most `N`, one exact suffix-table
-  build costs at most `N`, and all later queries are `O(1)`, so balanced-token
-  work is bounded by `B + 2N`. Counted depth-128/depth-96 tests force both sites
-  across the threshold and assert the bound and cache reuse.
+- The first matching-parenthesis query builds one exact table from the current
+  parser/lookahead floor to EOF; every query then performs one indexed lookup.
+  Files with no relevant query allocate nothing, and a late first query omits
+  the already-parsed prefix. Total summary work and storage are `O(N)` without a
+  scan budget, activation counter, or second query algorithm.
 - The activated table is one `usize` per remaining token. During its single
   build, those same words encode the open-parenthesis stack; afterward they
   encode exact destinations. No second stack, hash table, generic query cache,
   parser transaction, or recovery memo is retained.
 - A forward-only speculative cursor seek deletes the old lookahead balanced scan
-  loop. Production is +123/-36 lines (+87 net), below the extension's roughly
-  100-line target. One four-field Java parser sidecar has exactly two clients;
-  no recovery behavior or public syntax API depends on it.
-- Adversarial review found and fixed activation from a later annotation using
-  the annotation-local floor. Every lookahead now builds from its creation
-  floor; a repeated-lookahead regression crosses the threshold in the second
-  annotation and then queries the earlier opening parenthesis from the unchanged
-  parser position.
+  loop. Production is +91/-36 lines (+55 net). The Java parser sidecar contains
+  only a base offset and optional boundary vector, has exactly two clients, and
+  exposes no recovery behavior or public syntax API.
+- Every lookahead builds from its creation floor, so a speculative cursor can
+  advance before its first query without producing a table whose base is later
+  than the unchanged parser position.
 - Generated full-parse tests prove deep parenthesized expressions, deep
   malformed annotations, lossless source, following-class recovery, and
   unmatched-open-to-EOF behavior. Exact boundary cases preserve later syntax:
   `import a @A(value; class C {}`, `@A( class C {}`, and `@module 0`. One
   focused syntax/formatter recovery snapshot records ordinary output parity.
-- Realistic Java and Kotlin parse/format/end-to-end allocation counts and bytes,
-  syntax topology, and formatter document topology are exactly unchanged. With
-  no offsetting allocation deletion, this proves the 16K threshold never
-  activates on the realistic corpus. Java parse moved +2.14% with a 3.25% MAD;
-  Kotlin parse moved +2.28% with a 2.66% MAD, both neutral run noise. Optimized
-  WASM moved from 1,747,902 to 1,749,345 bytes (+1,443, +0.08%).
+- On the 9,206-file Java corpus, lazy construction increases parse allocations
+  from 109,539 to 150,934 (+37.79%) and allocated bytes from 1,288,505,194 to
+  1,377,783,498 (+6.93%), about 4.5 allocations and 9.7 KB per file. Peak RSS
+  moves from 64,098,304 to 64,737,280 bytes (+1.00%). Parse median moves -0.78%
+  and whole native CLI median +0.01%, so no throughput regression is
+  demonstrated. Kotlin measurements remain an unaffected noise control.
+  Optimized WASM moves from 1,747,902 to 1,749,099 bytes (+1,197, +0.07%).
 - `mise run fix` passed workspace formatting, Clippy, dependency, native, and
   WASM checks. Snapshot update and the subsequent non-update suite passed all
-  190 tests with zero skips. The benchmark records committed subject `9260462`;
-  its dirty bit reflects only the already-written ledger row.
+  190 tests with zero skips. The exact lazy-construction benchmark records
+  subject `ba1a009d` with the implementation changes reflected by its dirty
+  worktree hash.
 
 ## Decision Log
 
@@ -1943,12 +1943,11 @@ slices remove Java nodes and allocations or leave topology unchanged.
 | 2026-07-23 | Reject a general Java member-header classifier.                | Exact declaration precedence still requires independent restarts, so the enum would hide rather than remove repeated grammar work and would not shrink the parser.                                                       |
 | 2026-07-23 | Extend the stack rather than rewrite PRs 01-14.                | Residue now crosses structural layout, output policy, and parser cost models; new descendants preserve reviewed rollback boundaries.                                                                                     |
 | 2026-07-23 | Make modifier layout presence syntax-owned end to end.         | A preformatted claim document cannot reveal whether it owns visible syntax; one narrow carrier closes builder, collection, first/last, varargs, and ellipsis presence leaks.                                             |
-| 2026-07-23 | Share one thresholded parenthesis summary in PR 21.            | Lambda rejection and nested annotation recovery repeat the same balanced-parenthesis scan; one dormant Java-local summary can bound both without an independent annotation memo.                                         |
+| 2026-07-23 | Build one parenthesis summary on its first relevant query.     | The measured allocation growth has no throughput/RSS consequence; one linear algorithm is easier to reason about than a magic threshold and dual scan path.                                                              |
 | 2026-07-23 | Share resolved recovery layout contribution in formatter IR.   | One visible/claim-only carrier deletes both language-local list states and Kotlin's duplicate comma-item boolean while leaving all joining and separator policy with each language.                                      |
 | 2026-07-23 | Isolate Kotlin marker abandonment in a new PR 20.              | PR 19 formatter probing exposed a parser panic on malformed `when` syntax; parser marker ownership needs its own recovery fixture and rollback boundary before Java complexity work.                                     |
 | 2026-07-23 | Give annotated function types direct syntax ownership.         | Guarding the special branches avoided the panic but misclassified valid annotated `suspend` and `context` types; two optional schema fields plus one shared formatter helper preserve the grammar at +1 production line. |
 | 2026-07-23 | Reject malformed-`when` formatter visibility state.            | The recovered keyword is a present `is` token and already spaces correctly; the malformed-keyword field remains unreachable, so an API or token probe would encode no representable behavior.                            |
-| 2026-07-23 | Activate one compact parenthesis table after fixed work.       | A 16K dormant budget preserves zero realistic allocations; one word/token after activation bounds lambda rejection and ordinary annotation skipping by `B + 2N` without sharing recovery policy.                         |
 
 ## Resume Protocol
 

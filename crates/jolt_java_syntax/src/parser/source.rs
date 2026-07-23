@@ -18,9 +18,6 @@ pub(super) struct Parser<'source> {
 
 #[derive(Default)]
 pub(super) struct ParenthesisSummary {
-    pub(super) direct_work: usize,
-    #[cfg(test)]
-    pub(super) build_work: usize,
     pub(super) base: usize,
     pub(super) boundaries: Option<Vec<usize>>,
 }

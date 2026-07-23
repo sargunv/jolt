@@ -2,53 +2,28 @@
 use super::{JavaSyntaxKind, Parser};
 use crate::parser::source::{ParenthesisSummary, TokenBuffer, TokenCursor};
 
-// A normal file spends no heap space on delimiter queries. Once direct scans
-// cross this fixed budget, one exact table makes all later parenthesis queries
-// constant-time. Thus direct work is at most the budget plus one query, and the
-// table construction visits each remaining token once.
-const DIRECT_PARENTHESIS_WORK_BUDGET: usize = 16 * 1024;
-
 impl ParenthesisSummary {
     pub(super) fn after(
         &mut self,
         buffer: &mut TokenBuffer<'_>,
-        mut cursor: TokenCursor,
+        cursor: TokenCursor,
         floor: TokenCursor,
     ) -> usize {
-        let start = cursor.position();
-        if let Some(boundaries) = &self.boundaries {
-            let offset = start
-                .checked_sub(self.base)
-                .expect("parenthesis query precedes summary floor");
-            return boundaries
-                .get(offset)
-                .copied()
-                .filter(|boundary| *boundary != 0)
-                .expect("summary must contain every in-range opening parenthesis")
-                - 1;
-        }
-
-        let mut depth = 0usize;
-        loop {
-            let kind = cursor.kind(buffer);
-            if kind == JavaSyntaxKind::Eof {
-                break;
-            }
-            match kind {
-                JavaSyntaxKind::LParen => depth += 1,
-                JavaSyntaxKind::RParen => depth = depth.saturating_sub(1),
-                _ => {}
-            }
-            cursor.bump(buffer);
-            if depth == 0 {
-                break;
-            }
-        }
-        self.direct_work = self.direct_work.saturating_add(cursor.position() - start);
-        if self.direct_work >= DIRECT_PARENTHESIS_WORK_BUDGET {
+        if self.boundaries.is_none() {
             self.build(buffer, floor);
         }
-        cursor.position()
+
+        let start = cursor.position();
+        let offset = start
+            .checked_sub(self.base)
+            .expect("parenthesis query precedes summary floor");
+        self.boundaries
+            .as_ref()
+            .and_then(|boundaries| boundaries.get(offset))
+            .copied()
+            .filter(|boundary| *boundary != 0)
+            .expect("summary must contain every in-range opening parenthesis")
+            - 1
     }
 
     fn build(&mut self, buffer: &mut TokenBuffer<'_>, mut cursor: TokenCursor) {
@@ -67,10 +42,6 @@ impl ParenthesisSummary {
                 return;
             }
 
-            #[cfg(test)]
-            {
-                self.build_work += 1;
-            }
             boundaries.push(0);
             if kind == JavaSyntaxKind::LParen {
                 let index = cursor.position() - self.base;
@@ -106,7 +77,7 @@ mod tests {
     }
 
     #[test]
-    fn nested_lambda_rejection_activates_one_bounded_summary() {
+    fn nested_lambda_rejection_builds_one_lazy_summary() {
         let depth = 128;
         let source = format!("{}value{}", "(".repeat(depth), ")".repeat(depth));
         let mut parser = Parser::new(&source);
@@ -117,11 +88,6 @@ mod tests {
         }
 
         assert!(parser.parentheses.boundaries.is_some());
-        assert!(parser.parentheses.direct_work <= DIRECT_PARENTHESIS_WORK_BUDGET + 2 * depth + 1);
-        assert!(
-            parser.parentheses.direct_work + parser.parentheses.build_work
-                <= DIRECT_PARENTHESIS_WORK_BUDGET + 2 * (2 * depth + 1)
-        );
     }
 
     #[test]
@@ -129,38 +95,24 @@ mod tests {
         let depth = 96;
         let source = format!("{}value{}", "@A(value=".repeat(depth), ")".repeat(depth));
         let mut parser = Parser::new(&source);
-        let mut cached_queries = 0;
-
         while !parser.at_eof() {
             if parser.at(JavaSyntaxKind::At) {
-                let work = parser.parentheses.direct_work;
                 let mut lookahead = parser.lookahead();
                 assert!(lookahead.skip_annotation());
-                if parser.parentheses.boundaries.is_some() && parser.parentheses.direct_work == work
-                {
-                    cached_queries += 1;
-                }
             }
             parser.bump();
         }
 
-        assert!(cached_queries > 0);
-        assert!(
-            parser.parentheses.direct_work + parser.parentheses.build_work
-                <= DIRECT_PARENTHESIS_WORK_BUDGET + 2 * (6 * depth + 1)
-        );
+        assert!(parser.parentheses.boundaries.is_some());
     }
 
     #[test]
     fn annotation_summary_uses_the_lookahead_creation_floor() {
         let mut parser = Parser::new("@A(x) @B(y) value");
-        parser.parentheses.direct_work = DIRECT_PARENTHESIS_WORK_BUDGET - 4;
         assert!(parser.lookahead().skip_annotations());
         assert!(parser.parentheses.boundaries.is_some());
 
-        let work = parser.parentheses.direct_work;
         assert!(parser.lookahead().skip_annotations());
-        assert_eq!(parser.parentheses.direct_work, work);
     }
 
     #[test]
@@ -185,7 +137,6 @@ mod tests {
     #[test]
     fn unmatched_parenthesis_summary_and_bounded_annotation_recovery_are_exact() {
         let mut parser = Parser::new("(value");
-        parser.parentheses.direct_work = DIRECT_PARENTHESIS_WORK_BUDGET;
         let cursor = parser.inner.fork_cursor();
         assert_eq!(
             parser
