@@ -94,7 +94,6 @@ impl<'source> LanguageLexer<'source> for JavaLexer<'source> {
 struct Scanner<'source> {
     source: &'source str,
     pos: usize,
-    previous_end: TextSize,
     diagnostics: Vec<LexerDiagnostic>,
 }
 
@@ -113,7 +112,6 @@ impl<'source> Scanner<'source> {
         Self {
             source,
             pos: 0,
-            previous_end: TextSize::new(0),
             diagnostics: Vec::new(),
         }
     }
@@ -131,7 +129,7 @@ impl<'source> Scanner<'source> {
             ch if is_java_identifier_start(ch) => self.identifier_or_keyword(),
             _ => self.operator_or_punctuation(),
         };
-        let end = self.previous_end();
+        let end = TextSize::new(self.pos);
         (kind, TextRange::new(start, end))
     }
 
@@ -213,7 +211,7 @@ impl<'source> Scanner<'source> {
         }
         SyntaxTrivia::new(
             SyntaxTriviaKind::Whitespace,
-            TextRange::new(start, self.previous_end()).len(),
+            TextRange::new(start, TextSize::new(self.pos)).len(),
         )
     }
 
@@ -227,7 +225,7 @@ impl<'source> Scanner<'source> {
         }
         SyntaxTrivia::new(
             SyntaxTriviaKind::Newline,
-            TextRange::new(start, self.previous_end()).len(),
+            TextRange::new(start, TextSize::new(self.pos)).len(),
         )
     }
 
@@ -246,7 +244,7 @@ impl<'source> Scanner<'source> {
         }
         SyntaxTrivia::new(
             SyntaxTriviaKind::LineComment,
-            TextRange::new(start, self.previous_end()).len(),
+            TextRange::new(start, TextSize::new(self.pos)).len(),
         )
     }
 
@@ -268,7 +266,10 @@ impl<'source> Scanner<'source> {
             if self.current_char() == Some('*') && self.peek_char(1) == Some('/') {
                 self.bump();
                 self.bump();
-                return SyntaxTrivia::new(kind, TextRange::new(start, self.previous_end()).len());
+                return SyntaxTrivia::new(
+                    kind,
+                    TextRange::new(start, TextSize::new(self.pos)).len(),
+                );
             }
             self.bump();
         }
@@ -277,10 +278,7 @@ impl<'source> Scanner<'source> {
             JavaLexDiagnosticCode::UnterminatedBlockComment,
             TextRange::new(start, self.raw_end_for_pos(start_pos)),
         ));
-        SyntaxTrivia::new(
-            kind,
-            TextRange::new(start, self.previous_end_or_source_end()).len(),
-        )
+        SyntaxTrivia::new(kind, TextRange::new(start, TextSize::new(self.pos)).len())
     }
 
     fn character_literal(&mut self) -> JavaSyntaxKind {
@@ -343,12 +341,12 @@ impl<'source> Scanner<'source> {
         if !terminated {
             self.diagnostics.push(lexer_diagnostic(
                 JavaLexDiagnosticCode::UnterminatedCharacterLiteral,
-                TextRange::new(start, self.previous_end_or_source_end()),
+                TextRange::new(start, TextSize::new(self.pos)),
             ));
         } else if content_chars != 1 {
             self.diagnostics.push(lexer_diagnostic(
                 JavaLexDiagnosticCode::InvalidCharacterLiteral,
-                TextRange::new(start, self.previous_end()),
+                TextRange::new(start, TextSize::new(self.pos)),
             ));
         }
 
@@ -412,7 +410,7 @@ impl<'source> Scanner<'source> {
         if !terminated {
             self.diagnostics.push(lexer_diagnostic(
                 JavaLexDiagnosticCode::UnterminatedStringLiteral,
-                TextRange::new(start, self.previous_end_or_source_end()),
+                TextRange::new(start, TextSize::new(self.pos)),
             ));
         }
 
@@ -434,7 +432,7 @@ impl<'source> Scanner<'source> {
             self.bump();
         }
         if !self.current_char().is_some_and(is_line_terminator_start) {
-            let range = TextRange::new(start, self.previous_end());
+            let range = TextRange::new(start, TextSize::new(self.pos));
             self.diagnostics.push(lexer_diagnostic(
                 JavaLexDiagnosticCode::MissingTextBlockLineTerminator,
                 range,
@@ -486,7 +484,7 @@ impl<'source> Scanner<'source> {
         if !terminated {
             self.diagnostics.push(lexer_diagnostic(
                 JavaLexDiagnosticCode::UnterminatedTextBlock,
-                TextRange::new(start, self.previous_end_or_source_end()),
+                TextRange::new(start, TextSize::new(self.pos)),
             ));
         }
 
@@ -741,7 +739,7 @@ impl<'source> Scanner<'source> {
                 self.bump();
                 self.diagnostics.push(lexer_diagnostic(
                     JavaLexDiagnosticCode::UnknownCharacter,
-                    TextRange::new(start, self.previous_end()),
+                    TextRange::new(start, TextSize::new(self.pos)),
                 ));
                 JavaSyntaxKind::Unknown
             }
@@ -825,7 +823,7 @@ impl<'source> Scanner<'source> {
     fn invalid_numeric_literal(&mut self, start: TextSize) {
         self.diagnostics.push(lexer_diagnostic(
             JavaLexDiagnosticCode::InvalidNumericLiteral,
-            TextRange::new(start, self.previous_end_or_source_end()),
+            TextRange::new(start, TextSize::new(self.pos)),
         ));
     }
 
@@ -878,10 +876,6 @@ impl<'source> Scanner<'source> {
         kind
     }
 
-    fn current(&self) -> Option<(char, TextRange)> {
-        Some((self.current_char()?, self.current_range()?))
-    }
-
     fn current_char(&self) -> Option<char> {
         let byte = *self.source.as_bytes().get(self.pos)?;
         if byte.is_ascii() {
@@ -903,23 +897,10 @@ impl<'source> Scanner<'source> {
     fn bump(&mut self) {
         debug_assert!(!self.at_end());
         self.pos += utf8_char_width(self.source.as_bytes()[self.pos]);
-        self.previous_end = TextSize::new(self.pos);
     }
 
     fn at_end(&self) -> bool {
         self.pos >= self.source.len()
-    }
-
-    fn previous_end(&self) -> TextSize {
-        self.previous_end
-    }
-
-    fn previous_end_or_source_end(&self) -> TextSize {
-        if self.pos == self.source.len() {
-            TextSize::new(self.source.len())
-        } else {
-            self.previous_end()
-        }
     }
 
     fn raw_end_for_pos(&self, pos: usize) -> TextSize {
@@ -935,8 +916,8 @@ impl<'source> Scanner<'source> {
     fn is_ignored_final_sub(&self) -> bool {
         self.current_char() == Some('\u{001A}')
             && self
-                .current()
-                .is_some_and(|(_, range)| range.end().get() == self.source.len())
+                .current_range()
+                .is_some_and(|range| range.end().get() == self.source.len())
     }
 }
 

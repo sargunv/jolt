@@ -571,26 +571,55 @@ Gates:
 - local branches, macro surface, and file size decline;
 - Java fixtures, recovery, trivia, and idempotence pass after each slice.
 
-### PR 11 — Shared lexer cursor substrate
+### PR 11 — Lexer-local state and bounded scanning
 
-Scope:
+Accepted scope:
 
-- extract only language-neutral UTF-8 movement and trivia cursor mechanics
-  demonstrated to be identical in both lexers;
-- retain language-owned token classification and lexical semantics;
-- delete the two old mechanical implementations as each operation moves.
+- delete the redundant `previous_end` field and helpers independently in both
+  scanners; the value was always exactly the current byte offset;
+- delete Java's one-use current-character/range pair helper;
+- make Kotlin multi-dollar prefix classification end-to-end linear while
+  preserving its existing token boundaries and diagnostics;
+- retain language-owned UTF-8 movement, token classification, trivia,
+  diagnostics, and Unicode semantics.
 
-Expected deletions: duplicate byte/cursor/trivia movement.
+Expected deletions: duplicated position state and its hot-loop stores. The
+bounded Kotlin scan may add one narrow cached boundary, but must not add generic
+cursor policy or change malformed-token ownership.
 
-Risks: Unicode boundary bugs, lexer performance loss, and false sharing between
-different language rules.
+Risks: Unicode/EOF range changes, hiding repeated scans behind a locally linear
+helper, and adding state whose invalidation is hard to reason about.
 
 Gates:
 
-- Unicode, trivia, and malformed-input fixtures pass for both languages;
-- lexer throughput, allocations, and peak memory do not regress;
-- shared APIs contain no Java/Kotlin token semantics;
-- new substrate code is materially smaller than the duplicates removed.
+- Unicode, trivia, malformed-input, and full syntax fixtures pass for both
+  languages with no snapshot delta;
+- generated long valid and invalid dollar runs demonstrate linear end-to-end
+  Kotlin scanning without a giant committed fixture;
+- parse throughput, allocations, peak memory, native size, and WASM size do not
+  regress;
+- both scanners remain locally understandable and expose no new shared/public
+  API.
+
+Rejected shared-cursor prototype (2026-07-22): explicit composition produced a
++298/-298 Java diff, a +316/-260 Kotlin diff, and 107 lines of shared/export
+surface: +163 production lines overall. Qualified cursor access replaced the
+deleted mechanics with wrapping and noise at every token rule. Short field
+names, implicit `Deref`, implementation macros, or a trait of callback-like
+accessors could manufacture a smaller source diff but would make movement less
+local and less explicit. The prototype compiled, preserved all Java corpus
+snapshots, and passed the complete Kotlin syntax suite, so this is a design
+rejection rather than a correctness failure.
+
+Keep the duplicated two-field source cursors until Rust can express composition
+without expanding their clients or a later design deletes more surrounding
+scanner machinery.
+
+Trivia sharing was also rejected. Kotlin has string-mode gating, shebangs,
+nested block comments, and LF-only line-comment termination; Java has Unicode
+pretranslation, final-SUB handling, non-nested block comments, and CR-or-LF
+line-comment termination. A common trivia loop therefore needs semantic hooks or
+policy flags and weakens the language boundary.
 
 ### PR 12 — Bounded Java lookahead
 
@@ -709,7 +738,7 @@ ready for review.
 | 08b | `cleanup/08b-renderer-audit-pass`        | rejected   | PR 08a | —                                              | design audit complete      | Exact single pass requires an output trace.      |
 | 09  | `cleanup/09-kotlin-rules`                | draft open | PR 08a | [#11](https://github.com/sargunv/jolt/pull/11) | full + release + benchmark | Rule state and helper indirection deleted.       |
 | 10  | `cleanup/10-java-rules`                  | draft open | PR 09  | [#12](https://github.com/sargunv/jolt/pull/12) | full + release + benchmark | Total rules and native module parts.             |
-| 11  | `cleanup/11-lexer-substrate`             | planned    | PR 10  | —                                              | —                          | Share cursor mechanics only.                     |
+| 11  | `cleanup/11-lexer-substrate`             | draft open | PR 10  | [#13](https://github.com/sargunv/jolt/pull/13) | full + release + benchmark | Shared cursor rejected; local scans are bounded. |
 | 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                              | —                          | Counted bounded lookahead work.                  |
 | 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                              | —                          | Actual docs, metrics, and API deletions only.    |
 
@@ -1197,6 +1226,42 @@ ready for review.
   optimized WASM plugin shrank from 1,764,334 to 1,759,618 bytes (-0.27%), with
   SHA-256 `f9131f96fe1cc5c8d90ab1a4c093f01bd61421975138daf24d037f5098599307`.
 
+### PR 11 evidence
+
+- Java and Kotlin no longer store a duplicate previous-end offset or write it
+  after every scalar. Java also deletes its one-use current-character/range
+  pair. Production Rust is +46/-73 lines (-27 net); the boundedness regression
+  adds 26 test lines, leaving all Rust at +72/-73 (-1 net).
+- Kotlin classifies a valid multi-dollar string prefix once. A failed maximal
+  dollar run records only its exclusive end, so its first token scans the run
+  and every suffix token rejects in constant time while preserving the existing
+  one-Unknown/one-diagnostic-per-dollar recovery contract. The cached word
+  replaces Kotlin's removed previous-end word; Java's scanner loses one word.
+- The 65,536-dollar valid/invalid stress test exercises actual tokenization and
+  finishes in about 0.12 seconds in debug. The uncached byte-scan prototype
+  would perform 2,147,516,416 predicate visits; the original indexed-character
+  loop would perform roughly 46.9 trillion character visits.
+- Three adversarial reviews found no range, Unicode remapping, EOF, trivia,
+  string-mode, token-boundary, cache-invalidation, or dependency-boundary issue.
+  They did find and close the end-to-end malformed-dollar complexity hole. The
+  shared cursor prototype was rejected because explicit composition grew
+  production by 163 lines; trivia sharing was rejected because it required
+  language-semantic hooks or flags.
+- The repository-defined Ona task passed all 184 tests with zero skips after the
+  final fix. `mise run fix`, strict workspace Clippy, dependency and WASM
+  checks, complete Java/Kotlin release syntax and formatter suites, the
+  9,899-file PGO build, and the optimized dprint build passed with no output or
+  snapshot delta.
+- Against PR 10 on the same machine and corpora, Java parse median moved
+  1,040.179 -> 1,020.168 ms (-1.92%) and Kotlin parse moved 27.665 -> 27.490 ms
+  (-0.64%). Every parse/format/end-to-end allocation count and byte total is
+  identical. Parse peak RSS moved 64,278,528 -> 64,253,952 bytes for Java and
+  4,530,176 -> 4,644,864 bytes for Kotlin; the latter 112 KiB increase is below
+  process/page noise and Kotlin scanner size is unchanged.
+- The non-PGO native CLI shrank from 5,923,408 to 5,919,472 bytes (-0.07%). The
+  optimized WASM plugin shrank from 1,759,618 to 1,758,605 bytes (-0.06%), with
+  SHA-256 `88e74840fd1cc89bfe575d86281026ec8471ae58f7231f6945672da4cbbe525a`.
+
 ## Decision Log
 
 | Date       | Decision                                                       | Reason                                                                                                                                                                                                     |
@@ -1236,6 +1301,8 @@ ready for review.
 | 2026-07-22 | Keep Java borrow-order macros with multiple clients.           | The concat/group/indent macros prevent repeated mutable-borrow temporaries at hundreds of sites; wholesale replacement would grow rules. Only the one-use `if_break` macro was deleted.                    |
 | 2026-07-22 | Use native syntax parts for Java module directives.            | The mirror copied all four physical variants and forced allocation; native parts preserve ignore indices, recovery barriers, and reorder ownership while shrinking the owner.                              |
 | 2026-07-22 | Keep Java program join policies separate.                      | Ordinary and ignored section joining differ around invisible entries between ignored runs; reconciling them may change output and does not belong in structural PR 10.                                     |
+| 2026-07-22 | Reject the shared lexer cursor prototype.                      | Explicit composition grew production by 163 lines and made every token rule noisier; traits, macros, implicit dereferencing, or cryptic names only hide that cost.                                         |
+| 2026-07-22 | Cache only the end of failed Kotlin dollar runs.               | A locally linear prefix helper still rescanned malformed suffixes quadratically; one forward-only boundary preserves token ownership with one scan per maximal run.                                        |
 
 ## Resume Protocol
 
