@@ -12,6 +12,7 @@ pub(crate) enum MemberBodyCategory {
 pub(crate) struct MemberBodyItem<'source> {
     pub(crate) category: Option<MemberBodyCategory>,
     pub(crate) starts_after_blank_line: bool,
+    pub(crate) hard_line_before: bool,
     pub(crate) doc: Doc<'source>,
     pub(crate) visible: bool,
 }
@@ -21,6 +22,7 @@ impl<'source> MemberBodyItem<'source> {
         Self {
             category: None,
             starts_after_blank_line: false,
+            hard_line_before: false,
             doc,
             visible: true,
         }
@@ -30,6 +32,7 @@ impl<'source> MemberBodyItem<'source> {
         Self {
             category: Some(category),
             starts_after_blank_line: false,
+            hard_line_before: false,
             doc,
             visible: true,
         }
@@ -39,6 +42,7 @@ impl<'source> MemberBodyItem<'source> {
         Self {
             category: None,
             starts_after_blank_line: false,
+            hard_line_before: false,
             doc,
             visible: false,
         }
@@ -47,6 +51,7 @@ impl<'source> MemberBodyItem<'source> {
     pub(crate) fn without_blank_line_before(self) -> Self {
         Self {
             starts_after_blank_line: false,
+            hard_line_before: true,
             ..self
         }
     }
@@ -72,6 +77,7 @@ pub(crate) fn join_member_body<'source>(
                     previous_category,
                     member.category,
                     member.starts_after_blank_line,
+                    member.hard_line_before,
                     previous_was_neutral,
                 );
                 joined.push(separator);
@@ -91,9 +97,10 @@ fn member_separator<'source>(
     previous_category: Option<MemberBodyCategory>,
     current_category: Option<MemberBodyCategory>,
     starts_after_blank_line: bool,
+    hard_line_before: bool,
     previous_was_neutral: bool,
 ) -> Doc<'source> {
-    if previous_was_neutral {
+    if previous_was_neutral || hard_line_before {
         return doc.hard_line();
     }
     if starts_after_blank_line {

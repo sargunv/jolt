@@ -3,7 +3,7 @@ use jolt_java_syntax::{JavaSyntaxKind, JavaSyntaxToken, NonSealedModifier};
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_token, format_token_after_relocated_leading_comments,
-    token_has_comments,
+    token_has_comments, trailing_comments_force_line,
 };
 use crate::helpers::recovery::format_required_field;
 
@@ -19,43 +19,58 @@ impl ModifierEntry<'_> {
     fn is_structured(&self) -> bool {
         !matches!(self, Self::Malformed(_))
     }
+
+    fn trailing_comments_force_line(&self) -> bool {
+        match self {
+            Self::Token(token) | Self::Sealed(token) => trailing_comments_force_line(token),
+            Self::NonSealed(modifier) => modifier
+                .last_token()
+                .is_some_and(|token| trailing_comments_force_line(&token)),
+            Self::Malformed(_) => false,
+        }
+    }
 }
 
 pub(crate) fn modifier_prefix_from_docs<'source>(
     doc: &mut DocBuilder<'source>,
-    annotation_docs: impl IntoIterator<Item = Doc<'source>>,
     modifier_entries: Vec<ModifierEntry<'source>>,
+    suppress_first_entry_leading: bool,
 ) -> Doc<'source> {
     let modifier_entries = sorted_modifier_entries(modifier_entries);
     doc.concat_list(|docs| {
-        for annotation in annotation_docs {
-            docs.push(annotation);
-            let hard_line = docs.hard_line();
-            docs.push(hard_line);
+        let mut previous_is_structured = false;
+        let mut previous_forces_line = false;
+        for (index, entry) in modifier_entries.into_iter().enumerate() {
+            let entry_is_structured = entry.is_structured();
+            let entry_forces_line = entry.trailing_comments_force_line();
+            if !docs.is_empty()
+                && previous_is_structured
+                && (entry_is_structured || previous_forces_line)
+            {
+                let separator = if previous_forces_line {
+                    docs.hard_line()
+                } else {
+                    docs.space()
+                };
+                docs.push(separator);
+            }
+            let leading = if suppress_first_entry_leading && index == 0 {
+                LeadingComments::Suppress
+            } else {
+                LeadingComments::Preserve
+            };
+            let entry = format_modifier_entry(docs, &entry, leading);
+            docs.push(entry);
+            previous_is_structured = entry_is_structured;
+            previous_forces_line = entry_forces_line;
         }
-        let mut has_modifiers = false;
-        let mut last_modifier_is_structured = false;
-        let modifiers = docs.concat_list(|modifiers| {
-            let mut previous_is_structured = false;
-            for entry in modifier_entries {
-                let entry_is_structured = entry.is_structured();
-                if !modifiers.is_empty() && previous_is_structured && entry_is_structured {
-                    let space = modifiers.space();
-                    modifiers.push(space);
-                }
-                let entry = format_modifier_entry(modifiers, &entry, LeadingComments::Suppress);
-                modifiers.push(entry);
-                previous_is_structured = entry_is_structured;
-            }
-            has_modifiers = !modifiers.is_empty();
-            last_modifier_is_structured = previous_is_structured;
-        });
-        if has_modifiers {
-            docs.push(modifiers);
-            if last_modifier_is_structured {
-                let space = docs.space();
-                docs.push(space);
-            }
+        if previous_is_structured {
+            let separator = if previous_forces_line {
+                docs.hard_line()
+            } else {
+                docs.space()
+            };
+            docs.push(separator);
         }
     })
 }
@@ -80,11 +95,20 @@ pub(crate) fn inline_modifier_prefix_from_docs<'source>(
             docs.push(annotation);
         }
         let mut previous_is_structured = !docs.is_empty();
+        let mut previous_forces_line = false;
         for (index, entry) in modifier_entries.into_iter().enumerate() {
             let entry_is_structured = entry.is_structured();
-            if !docs.is_empty() && previous_is_structured && entry_is_structured {
-                let space = docs.space();
-                docs.push(space);
+            let entry_forces_line = entry.trailing_comments_force_line();
+            if !docs.is_empty()
+                && previous_is_structured
+                && (entry_is_structured || previous_forces_line)
+            {
+                let separator = if previous_forces_line {
+                    docs.hard_line()
+                } else {
+                    docs.space()
+                };
+                docs.push(separator);
             }
             let leading = if suppress_first_entry_leading && index == 0 && docs.is_empty() {
                 LeadingComments::Suppress
@@ -94,6 +118,7 @@ pub(crate) fn inline_modifier_prefix_from_docs<'source>(
             let entry = format_modifier_entry(docs, &entry, leading);
             docs.push(entry);
             previous_is_structured = entry_is_structured;
+            previous_forces_line = entry_forces_line;
         }
         has_docs = !docs.is_empty();
         ends_with_structured = previous_is_structured;
@@ -172,11 +197,11 @@ fn format_modifier_entry<'source>(
             });
             docs.push(non);
             let minus = format_required_field(non_sealed.minus(), docs, |token, docs| {
-                format_modifier_token(docs, &token, leading_comments)
+                format_modifier_token(docs, &token, LeadingComments::Preserve)
             });
             docs.push(minus);
             let sealed = format_required_field(non_sealed.sealed_keyword(), docs, |token, docs| {
-                format_modifier_token(docs, &token, leading_comments)
+                format_modifier_token(docs, &token, LeadingComments::Preserve)
             });
             docs.push(sealed);
         }),

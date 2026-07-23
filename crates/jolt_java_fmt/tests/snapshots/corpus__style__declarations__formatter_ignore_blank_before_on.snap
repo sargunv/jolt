@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class FormatterIgnoreBlankBeforeOn {
+  // @formatter:off
+  void   raw( ) { }
+
+  // @formatter:on
+  static void formatted() {
+  }
+}
+
+diagnostics:
+(none)

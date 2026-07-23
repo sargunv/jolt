@@ -1,0 +1,53 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class ModifierLeadingCommentOwnership {
+  // Malformed method modifier documentation.
+  transient void method() {}
+
+  // Malformed constructor modifier documentation.
+  volatile ModifierLeadingCommentOwnership() {}
+
+  // Malformed field modifier documentation.
+  synchronized int field;
+
+  void parameter(
+      // Malformed parameter modifier documentation.
+      transient String value) {}
+}
+
+// Malformed type modifier documentation.
+transient class RecoveredType {}
+
+formatted:
+class ModifierLeadingCommentOwnership {
+  // Malformed method modifier documentation.
+  transient void method() {
+  }
+
+  // Malformed constructor modifier documentation.
+  volatile ModifierLeadingCommentOwnership() {
+  }
+
+  // Malformed field modifier documentation.
+  synchronized int field;
+
+  void parameter(
+    // Malformed parameter modifier documentation.
+    transient String value
+  ) {
+  }
+}
+
+// Malformed type modifier documentation.
+transient class RecoveredType {
+}
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(88), end: TextSize(97) }) message=invalid method modifier
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(169), end: TextSize(177) }) message=invalid constructor modifier
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(263), end: TextSize(275) }) message=invalid field modifier
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(365), end: TextSize(374) }) message=invalid parameter modifier
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(437), end: TextSize(446) }) message=invalid type modifier

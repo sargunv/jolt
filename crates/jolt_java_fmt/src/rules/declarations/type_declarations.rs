@@ -1,20 +1,17 @@
 use super::{
     AnnotationInterfaceDeclaration, ClassDeclaration, CommaListItem, Doc, EnumDeclaration,
     ExtendsClause, ImplementsClause, InterfaceDeclaration, JavaSyntaxToken, LeadingTrivia,
-    PermitsClause, RecordDeclaration, TrailingTrivia, comma_list, comment_forces_line,
-    delimited_comma_list, format_annotation_interface_body, format_class_body,
+    PermitsClause, RecordDeclaration, TrailingTrivia, TypeLeadingComments, comma_list,
+    comment_forces_line, delimited_comma_list, format_annotation_interface_body, format_class_body,
     format_construct_leading_comments, format_enum_body_contents, format_interface_body,
-    format_leading_comment_list, format_modifier_prefix, format_name, format_record_body,
-    format_record_component, format_token, format_token_with_comments, format_type_parameter_list,
-    format_type_without_leading_comments, source_braced_body,
+    format_modifier_prefix, format_name, format_record_body, format_record_component, format_token,
+    format_token_with_comments, format_type_parameter_list, format_type_without_leading_comments,
+    source_braced_body,
 };
-use crate::helpers::{
-    comments::format_token_after_relocated_leading_comments,
-    recovery::{
-        JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_optional_field,
-        format_required_field, resolve_list_part, resolve_optional_field,
-        resolve_required_delimiter, resolve_required_field,
-    },
+use crate::helpers::recovery::{
+    JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_optional_field,
+    format_required_field, resolve_list_part, resolve_optional_field, resolve_required_delimiter,
+    resolve_required_field,
 };
 use jolt_fmt_ir::DocBuilder;
 
@@ -33,7 +30,7 @@ pub(super) fn format_class_declaration<'source>(
     });
     let name_separator = structured_separator(name_is_structured, doc);
     let parameters = format_optional_field(class.type_parameters(), doc, |parameters, doc| {
-        format_type_parameter_list(parameters, doc)
+        format_type_parameter_list(parameters, TypeLeadingComments::Preserve, doc)
     });
     let extends = format_optional_field(class.extends(), doc, |extends, doc| {
         format_extends(&extends, doc)
@@ -55,7 +52,6 @@ pub(super) fn format_class_declaration<'source>(
             format_token_with_comments(doc, &semicolon)
         });
     type_with_body(
-        class.first_token().as_ref(),
         modifiers,
         doc_concat!(
             doc,
@@ -92,7 +88,7 @@ pub(super) fn format_interface_declaration<'source>(
         });
     let name_separator = structured_separator(name_is_structured, doc);
     let parameters = format_optional_field(interface.type_parameters(), doc, |parameters, doc| {
-        format_type_parameter_list(parameters, doc)
+        format_type_parameter_list(parameters, TypeLeadingComments::Preserve, doc)
     });
     let extends = format_optional_field(interface.extends(), doc, |extends, doc| {
         format_extends(&extends, doc)
@@ -112,7 +108,6 @@ pub(super) fn format_interface_declaration<'source>(
             format_token_with_comments(doc, &semicolon)
         });
     type_with_body(
-        interface.first_token().as_ref(),
         modifiers,
         doc_concat!(
             doc,
@@ -140,7 +135,7 @@ pub(super) fn format_record_declaration<'source>(
     });
     let name_separator = structured_separator(name_is_structured, doc);
     let parameters = format_optional_field(record.type_parameters(), doc, |parameters, doc| {
-        format_type_parameter_list(parameters, doc)
+        format_type_parameter_list(parameters, TypeLeadingComments::Preserve, doc)
     });
     let component_open = resolve_required_delimiter(record.open_paren(), doc);
     let components = resolve_optional_field(record.components(), doc);
@@ -160,7 +155,6 @@ pub(super) fn format_record_declaration<'source>(
             format_token_with_comments(doc, &semicolon)
         });
     type_with_body(
-        record.first_token().as_ref(),
         modifiers,
         doc_group!(
             doc,
@@ -211,7 +205,6 @@ pub(super) fn format_enum_declaration<'source>(
             format_token_with_comments(doc, &semicolon)
         });
     type_with_body(
-        node.first_token().as_ref(),
         modifiers,
         doc_concat!(doc, [keyword, name_separator, name, implements]),
         body,
@@ -229,7 +222,7 @@ pub(super) fn format_annotation_interface_declaration<'source>(
         format_modifier_prefix(Some(modifiers), doc)
     });
     let at = format_required_field(node.at(), doc, |at, doc| {
-        format_token_after_relocated_leading_comments(doc, &at, TrailingTrivia::Preserve)
+        format_token_with_comments(doc, &at)
     });
     let interface = format_required_field(node.interface_keyword(), doc, |interface, doc| {
         keyword_without_space(interface, doc)
@@ -249,7 +242,6 @@ pub(super) fn format_annotation_interface_declaration<'source>(
             format_token_with_comments(doc, &semicolon)
         });
     type_with_body(
-        node.first_token().as_ref(),
         modifiers,
         doc_concat!(doc, [at, interface, name_separator, name]),
         body,
@@ -260,7 +252,6 @@ pub(super) fn format_annotation_interface_declaration<'source>(
 }
 
 fn type_with_body<'source>(
-    first: Option<&JavaSyntaxToken<'source>>,
     modifiers: Doc<'source>,
     header: Doc<'source>,
     body: Doc<'source>,
@@ -272,18 +263,7 @@ fn type_with_body<'source>(
     doc_concat!(
         doc,
         [
-            doc_concat!(
-                doc,
-                [
-                    format_leading_comment_list(
-                        doc,
-                        first
-                            .into_iter()
-                            .flat_map(JavaSyntaxToken::leading_comments)
-                    ),
-                    modifiers
-                ]
-            ),
+            modifiers,
             doc_group!(doc, header),
             body_separator,
             body,
@@ -323,7 +303,7 @@ fn keyword_without_space<'source>(
     keyword: JavaSyntaxToken<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_token_after_relocated_leading_comments(doc, &keyword, TrailingTrivia::Preserve)
+    format_token_with_comments(doc, &keyword)
 }
 
 fn format_record_components<'source>(

@@ -577,6 +577,7 @@ impl<'source> FormattedMember<'source> {
         Self {
             category: Some(category),
             starts_after_blank_line,
+            hard_line_before: false,
             doc,
             visible: true,
         }
@@ -600,6 +601,7 @@ fn format_empty_member<'source>(
         FormattedMember {
             category: None,
             starts_after_blank_line,
+            hard_line_before: false,
             doc: member_doc,
             visible: true,
         }

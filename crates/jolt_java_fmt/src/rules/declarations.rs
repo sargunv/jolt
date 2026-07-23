@@ -11,9 +11,9 @@ use crate::helpers::blocks::{BodyItem, join_body_items, source_braced_body};
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, comment_is_star_block,
     comments_from_tokens, format_comment, format_construct_leading_comments,
-    format_dangling_comments, format_leading_comment_list, format_removed_comments,
-    format_separator_with_comments, format_token, format_token_after_construct_leading_comments,
-    format_token_with_comments, has_removed_comments,
+    format_dangling_comments, format_removed_comments, format_separator_with_comments,
+    format_token, format_token_after_construct_leading_comments, format_token_with_comments,
+    has_removed_comments,
 };
 use crate::helpers::lists::{CommaListItem, comma_list, delimited_comma_list};
 use crate::helpers::member_body::{
@@ -29,8 +29,8 @@ use crate::rules::statements::{
     format_block, format_block_statement_item, format_statement_semicolon,
 };
 use crate::rules::types::{
-    format_array_dimensions, format_type, format_type_argument_list, format_type_parameter_list,
-    format_type_without_leading_comments,
+    LeadingComments as TypeLeadingComments, format_array_dimensions, format_type,
+    format_type_argument_list, format_type_parameter_list, format_type_without_leading_comments,
 };
 use crate::rules::variables::{
     format_field_declaration, format_formal_parameter, format_receiver_parameter,

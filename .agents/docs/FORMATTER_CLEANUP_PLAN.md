@@ -263,7 +263,8 @@ main
                                           └─ cleanup/10-java-rules
                                               └─ cleanup/11-lexer-substrate
                                                   └─ cleanup/12-java-lookahead
-                                                      └─ cleanup/13-final-reconciliation
+                                                      └─ cleanup/13-java-comment-conservation
+                                                          └─ cleanup/14-final-reconciliation
 ```
 
 The plan is deliberately ambitious, but the stack is not immutable. Merge
@@ -702,7 +703,44 @@ must restart those same probes and merely hide them behind an enum, growing by
 an estimated 0-15 lines without reducing work. Keep the decisions local until a
 smaller owner-specific deletion is proven.
 
-### PR 13 — Final reconciliation, docs, and API deletions
+### PR 13 — Java declaration comment conservation
+
+Scope:
+
+- make each Java declaration rule that relocates construct-leading comments own
+  them exactly once;
+- suppress leading trivia only on the actual first header token after that
+  relocation;
+- cover annotated locals, generic callables, and annotated annotation elements
+  with focused integration fixtures grounded in the reproduced Spring failures.
+
+Expected result: no missing/duplicate comment claims when a declaration starts
+with a modifier annotation, modifier token, or type-parameter list.
+
+Risks: double-formatting comments on one declaration shape while repairing
+another, changing ordinary comment placement, or adding a flag-heavy generic
+header abstraction.
+
+Gates:
+
+- focused debug fixtures reproduce the current failures before the fix and pass
+  after it without weakening conservation checks;
+- Java corpus, recovery, trivia-conservation, idempotence, and release formatter
+  suites pass;
+- the complete Spring architecture benchmark succeeds in debug-audited dprint as
+  well as the native release path;
+- ownership stays declaration-local and the repair adds no parser or generic
+  formatting context.
+
+Audit trigger (2026-07-23): the final benchmark reproduced 199 missing or
+duplicate trivia claims in Spring source, including a line comment before an
+annotated local, a doc comment before a generic method, and a doc comment before
+an annotated annotation element. The exact PR 12 WASM artifact reproduces the
+same single-file failures, and the affected modifier/type-parameter code is
+unchanged from `main`; this is a pre-stack correctness hole exposed by the final
+gate, not a PR 12 regression.
+
+### PR 14 — Final reconciliation, docs, and API deletions
 
 Scope:
 
@@ -800,7 +838,8 @@ ready for review.
 | 10  | `cleanup/10-java-rules`                  | draft open | PR 09  | [#12](https://github.com/sargunv/jolt/pull/12) | full + release + benchmark | Total rules and native module parts.             |
 | 11  | `cleanup/11-lexer-substrate`             | draft open | PR 10  | [#13](https://github.com/sargunv/jolt/pull/13) | full + release + benchmark | Shared cursor rejected; local scans are bounded. |
 | 12  | `cleanup/12-java-lookahead`              | draft open | PR 11  | [#14](https://github.com/sargunv/jolt/pull/14) | full + release + benchmark | Local deletion; cache frameworks rejected.       |
-| 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                              | —                          | Actual docs, metrics, and API deletions only.    |
+| 13  | `cleanup/13-java-comment-conservation`   | draft open | PR 12  | [#15](https://github.com/sargunv/jolt/pull/15) | full + release + benchmark | Localize Java comment and separator ownership.   |
+| 14  | `cleanup/14-final-reconciliation`        | planned    | PR 13  | —                                              | —                          | Actual docs, metrics, and API deletions only.    |
 
 ### PR 01 evidence
 
@@ -1355,6 +1394,43 @@ ready for review.
 - The non-PGO native CLI shrank from 5,919,472 to 5,917,176 bytes (-0.04%). The
   optimized WASM plugin shrank from 1,758,605 to 1,757,814 bytes (-0.04%), with
   SHA-256 `32fa2028a827adc33b606ac8a08c116c8951e91cae4189697a01c1d225832b16`.
+
+### PR 13 evidence
+
+- Java modifier prefixes now own their own leading boundary. Recovery-free
+  prefixes relocate exactly the source-first structured comments under their
+  existing reorder authorization; recovery-bearing prefixes stay in source order
+  and preserve malformed trivia naturally. Declaration callers no longer thread
+  construct-first identity or duplicate that ownership decision.
+- Intermediate annotations and modifiers preserve their own comments, and a
+  structured modifier with a trailing line comment forces the next entry or
+  declaration header onto a hard line. Focused valid, malformed, type-use,
+  `non-sealed`, generic callable, enum, pattern, local, resource, field, method,
+  constructor, parameter, and type fixtures cover the boundary.
+- The required debug Spring audit also exposed two older idempotence defects.
+  Formatter-ignore splices now honor their explicit single-line separator after
+  raw content, and Java syntax normalization withholds trailing-comma synthesis
+  when a line comment would make the comma invisible. Both fixes stay at the
+  existing ownership boundary and have focused integration fixtures.
+- Production Rust is +312/-277 lines (+35 net): formatter source is +297/-270
+  (+27), and Java syntax normalization is +15/-7 (+8). The rejected generalized
+  first-token/recovery framework would have grown this slice by roughly 191
+  lines before the two audit repairs and was fully reverted.
+- The whole stack now contains 60,269 Rust lines, down 709 from the 60,978-line
+  baseline. Java and Kotlin formatter source contains 21,165 lines, down 796
+  from 21,961. The optimized WASM plugin is 1,756,843 bytes, 971 bytes smaller
+  than PR 12 (-0.06%) and 5.69% smaller than the earliest exact PR 02 anchor;
+  SHA-256 is `fe9faffba9a90de923a558ca5835c988f7e9c3a51feb0be8318e684e8c67dcbf`.
+- Repository-defined Ona automation passed all 184 tests with zero skips.
+  `mise run fix`, complete Java debug and release suites, strict workspace
+  Clippy, dependency and WASM checks, the architecture benchmark, a fresh
+  9,206-file debug-WASM Spring conservation/idempotence audit, and the
+  9,899-file PGO build all passed.
+- Against PR 12 on the same 9,206-file corpus, Java parse median is effectively
+  unchanged at 1,033.988 -> 1,034.121 ms (+0.01%). Parse allocation count and
+  bytes are exactly unchanged at 109,539 and 1,288,505,194. The final Java
+  format median is 1,571.916 ms, end-to-end median is 2,753.066 ms, and native
+  and dprint whole-corpus medians are 1,963.889 and 4,136.840 ms.
 
 ## Decision Log
 
