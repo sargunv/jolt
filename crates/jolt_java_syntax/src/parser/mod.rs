@@ -619,7 +619,7 @@ mod tests {
             check(
                 &source,
                 JavaParseDiagnosticCode::ExcessiveSyntaxNesting.id(),
-                "syntax nesting exceeds 128 levels",
+                "syntax is too deeply nested to parse safely",
                 bogus_kind,
                 None,
             );

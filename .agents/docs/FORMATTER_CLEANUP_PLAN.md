@@ -2128,9 +2128,9 @@ slices remove Java nodes and allocations or leave topology unchanged.
 
 ### PR 26 evidence
 
-- The remaining Java input-depth cycles now cross the same 128-entry syntax
-  budget at record-pattern, physical type-body, or statement ownership. Together
-  with PR 25's value owners and PR 22's independent generic counter, every
+- The remaining Java input-depth cycles now cross the same 128-owner policy at
+  record-pattern, physical type-body, or statement ownership. Together with PR
+  25's value owners and PR 22's separately counted generic owners, every
   recursive parser cycle has a fixed dynamic bound; binary recursion remains
   bounded by the finite precedence ladder.
 - `pattern_start` already performs the exact modifier/type lookahead and now
@@ -2148,6 +2148,12 @@ slices remove Java nodes and allocations or leave topology unchanged.
   `do`/`while`, handlers, switch labels, and sibling statements rather than
   installing a second iterative statement grammar; the enclosing body and later
   members/top-level declarations remain structured.
+- On the actual 1 MiB dprint-WASM stack, uncapped nested labels succeed at 1,978
+  and fail at 1,979; blocks at 2,042/2,043; type bodies at 1,423/1,424; and
+  record patterns at 2,963/2,964. The 128-owner policy retains about 11x-23x
+  headroom across these families. This is a parser resource limit: beyond it,
+  valid source remains lossless but the documented bogus node deliberately
+  replaces finer structure.
 - Production is +76 lines and focused tests are +336 lines. Exact active-owner
   edges, all five body paths, annotation-bearing record openers,
   braced/unbraced/ EOF statement recovery, control tails, and 4,096-layer
@@ -2160,8 +2166,8 @@ slices remove Java nodes and allocations or leave topology unchanged.
   topology is exactly unchanged.
 - Java parse/format/end-to-end medians moved +0.28%/-1.48%/+0.53%, all below
   their run MAD. The untouched Kotlin path moved faster relative to its noisy
-  parent run and is not attributed to this PR. Optimized WASM moved from
-  1,755,946 to 1,758,976 bytes (+3,030, +0.17%).
+  parent run and is not attributed to this PR. Optimized WASM moved from by
+  +3,030 bytes (+0.17%) in the recorded parent/child build.
 - `mise run fix` passed strict formatting, workspace Clippy, dependency, native,
   and WASM checks. The complete non-update suite passed all 211 tests with zero
   skips. The benchmark records clean committed subject `23fd33f`.
