@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_fmt_ir::{Doc, DocBuilder, LayoutDoc};
 use jolt_kotlin_syntax::{
     ClassBody, ClassMember, ClassMemberDeclaration, ClassMemberList, Declaration,
     KotlinRoleElement, KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView, StatementSyntax,
@@ -47,10 +47,18 @@ fn format_class_body_contents<'source>(
     body: &ClassBody<'source>,
     open: Option<&KotlinSyntaxToken<'source>>,
     close: Option<&KotlinSyntaxToken<'source>>,
-) -> Option<Doc<'source>> {
-    let members = match resolve_required_field(body.members(), doc) {
+) -> Option<LayoutDoc<'source>> {
+    let members = body.members();
+    let malformed_is_visible = matches!(
+        &members,
+        jolt_kotlin_syntax::KotlinSyntaxField::Malformed(malformed)
+            if malformed.first_token().is_some()
+    );
+    let members = match resolve_required_field(members, doc) {
         KotlinFormatField::Present(members) => members,
-        KotlinFormatField::Malformed(malformed) => return Some(malformed),
+        KotlinFormatField::Malformed(malformed) => {
+            return Some(LayoutDoc::from_visibility(malformed, malformed_is_visible));
+        }
     };
     let parts = collect_class_body_parts(doc, &members);
     let container =
@@ -65,10 +73,10 @@ fn format_class_body_contents<'source>(
     if let Some(close) = close
         && !close.leading_comments().is_empty()
     {
-        sections.push(ClassBodySection {
-            doc: format_dangling_comments(doc, close.leading_comments()),
-            hard_line_after: false,
-        });
+        sections.push(ClassBodySection::new(
+            LayoutDoc::Visible(format_dangling_comments(doc, close.leading_comments())),
+            false,
+        ));
     }
     (!sections.is_empty()).then(|| join_class_body_sections(doc, sections))
 }
@@ -77,9 +85,12 @@ enum ClassBodyPart<'source> {
     Member(ClassMember<'source>),
     Token(KotlinSyntaxToken<'source>),
     Recovery {
+        // Keep the per-part vector packed; LayoutDoc would add an aligned enum
+        // tag to every ordinary class-body part.
         doc: Doc<'source>,
         first: Option<KotlinSyntaxToken<'source>>,
         last: Option<KotlinSyntaxToken<'source>>,
+        visible: bool,
     },
 }
 
@@ -114,6 +125,7 @@ fn collect_class_body_parts<'source>(
                 doc: format_missing(&missing, doc),
                 first: None,
                 last: None,
+                visible: false,
             },
             KotlinSyntaxListPart::Malformed(malformed) => {
                 let first = malformed.first_token();
@@ -124,6 +136,7 @@ fn collect_class_body_parts<'source>(
                     doc: format_malformed(&malformed, doc),
                     first,
                     last,
+                    visible: first.is_some(),
                 }
             }
         })
@@ -144,6 +157,7 @@ fn class_body_element<'source>(
             doc: Doc::nil(),
             first: None,
             last: None,
+            visible: false,
         }
     }
 }
@@ -171,10 +185,10 @@ fn push_class_body_part<'source>(
             *previous_had_comments = member
                 .last_token()
                 .is_some_and(|token| !token.trailing_comments().is_empty());
-            sections.push(ClassBodySection {
-                doc: format_class_member(doc, member),
-                hard_line_after: enum_entry_continues(member),
-            });
+            sections.push(ClassBodySection::new(
+                LayoutDoc::Visible(format_class_member(doc, member)),
+                enum_entry_continues(member),
+            ));
             return;
         }
         ClassBodyPart::Token(token) => format_token(
@@ -183,7 +197,27 @@ fn push_class_body_part<'source>(
             LeadingTrivia::Preserve,
             TrailingTrivia::Preserve,
         ),
-        ClassBodyPart::Recovery { doc, .. } => *doc,
+        ClassBodyPart::Recovery {
+            doc: claim,
+            visible: false,
+            ..
+        } => {
+            *previous_had_comments = false;
+            sections.push(ClassBodySection::new(LayoutDoc::ClaimOnly(*claim), false));
+            return;
+        }
+        ClassBodyPart::Recovery {
+            doc: recovery,
+            last,
+            visible: true,
+            ..
+        } => {
+            push_class_body_physical_doc(doc, sections, *recovery, *previous_had_comments);
+            *previous_had_comments = last
+                .as_ref()
+                .is_some_and(|token| !token.trailing_comments().is_empty());
+            return;
+        }
     };
     push_class_body_physical_doc(doc, sections, physical, *previous_had_comments);
 }
@@ -207,10 +241,10 @@ fn class_body_sections_with_ignored<'source>(
     let mut previous_had_comments = false;
     for_each_formatter_ignore_splice(parts.len(), ignored_runs, |event| match event {
         FormatterIgnoreSplice::Ignore(run) => {
-            sections.push(ClassBodySection {
-                doc: formatter_ignore_run_doc(run, doc),
-                hard_line_after: !run.ends_with_on_marker(),
-            });
+            sections.push(ClassBodySection::new(
+                LayoutDoc::Visible(formatter_ignore_run_doc(run, doc)),
+                !run.ends_with_on_marker(),
+            ));
         }
         FormatterIgnoreSplice::Item {
             index,
@@ -243,25 +277,20 @@ fn push_class_body_physical_doc<'source>(
 ) {
     if previous_had_comments {
         let line = doc.hard_line();
-        sections.push(ClassBodySection {
-            doc: doc.concat([line, physical]),
-            hard_line_after: false,
-        });
+        sections.push(ClassBodySection::new(
+            LayoutDoc::Visible(doc.concat([line, physical])),
+            false,
+        ));
     } else if sections
         .last()
         .is_some_and(|previous| previous.hard_line_after)
     {
-        sections.push(ClassBodySection {
-            doc: physical,
-            hard_line_after: false,
-        });
+        sections.push(ClassBodySection::new(LayoutDoc::Visible(physical), false));
     } else if let Some(previous) = sections.last_mut() {
-        previous.doc = doc.concat([std::mem::replace(&mut previous.doc, Doc::nil()), physical]);
+        previous.doc = doc.concat([previous.doc, physical]);
+        previous.visible = true;
     } else {
-        sections.push(ClassBodySection {
-            doc: physical,
-            hard_line_after: false,
-        });
+        sections.push(ClassBodySection::new(LayoutDoc::Visible(physical), false));
     }
 }
 
@@ -350,22 +379,27 @@ fn format_class_braced_body<'source>(
     doc: &mut DocBuilder<'source>,
     open: KotlinFormatDelimiter<'source>,
     close: KotlinFormatDelimiter<'source>,
-    body: Option<Doc<'source>>,
+    body: Option<LayoutDoc<'source>>,
     has_close: bool,
 ) -> Doc<'source> {
     let open = format_delimiter_with_preserved_trailing(doc, open, LeadingTrivia::Preserve);
-    let contents = if let Some(body) = body {
-        let line = doc.hard_line();
-        let body = doc.concat([line, body]);
-        let body = doc.indent(body);
-        if has_close {
+    let contents = match body {
+        Some(LayoutDoc::Visible(body)) => {
             let line = doc.hard_line();
-            doc.concat([body, line])
-        } else {
-            body
+            let body = doc.concat([line, body]);
+            let body = doc.indent(body);
+            if has_close {
+                let line = doc.hard_line();
+                doc.concat([body, line])
+            } else {
+                body
+            }
         }
-    } else {
-        doc.hard_line()
+        Some(LayoutDoc::ClaimOnly(claim)) => {
+            let line = doc.hard_line();
+            doc.concat([claim, line])
+        }
+        None => doc.hard_line(),
     };
     let close =
         format_delimiter_with_preserved_trailing(doc, close, LeadingTrivia::SuppressAlreadyHandled);
@@ -375,11 +409,12 @@ fn format_class_braced_body<'source>(
 fn join_class_body_sections<'source>(
     doc: &mut DocBuilder<'source>,
     sections: Vec<ClassBodySection<'source>>,
-) -> Doc<'source> {
+) -> LayoutDoc<'source> {
     let mut previous_hard_line_after = false;
-    doc.concat_list(|joined| {
+    let mut has_visible = false;
+    let joined = doc.concat_list(|joined| {
         for section in sections {
-            if !joined.is_empty() {
+            if section.visible && has_visible {
                 let separator = if previous_hard_line_after {
                     joined.hard_line()
                 } else {
@@ -388,12 +423,31 @@ fn join_class_body_sections<'source>(
                 joined.push(separator);
             }
             joined.push(section.doc);
-            previous_hard_line_after = section.hard_line_after;
+            if section.visible {
+                has_visible = true;
+                previous_hard_line_after = section.hard_line_after;
+            } else {
+                previous_hard_line_after = false;
+            }
         }
-    })
+    });
+    LayoutDoc::from_visibility(joined, has_visible)
 }
 
 struct ClassBodySection<'source> {
+    // Project LayoutDoc into the existing flag storage instead of retaining its
+    // enum tag in this per-member vector.
     doc: Doc<'source>,
     hard_line_after: bool,
+    visible: bool,
+}
+
+impl<'source> ClassBodySection<'source> {
+    fn new(layout: LayoutDoc<'source>, hard_line_after: bool) -> Self {
+        Self {
+            doc: layout.doc(),
+            hard_line_after,
+            visible: layout.is_visible(),
+        }
+    }
 }

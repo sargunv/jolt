@@ -130,6 +130,21 @@ fn deeply_nested_recovery_formats_idempotently_and_keeps_following_syntax() {
             "(".repeat(depth),
             ")".repeat(depth)
         ),
+        format!(
+            "{}{}\nclass Following\n",
+            "fun nested() {".repeat(depth),
+            "}".repeat(depth)
+        ),
+        format!(
+            "{}{}\nclass Following\n",
+            "class Nested {".repeat(depth),
+            "}".repeat(depth)
+        ),
+        format!(
+            "{}fun denied() {{\n// @formatter:off\nif (ready) {{ first; second }}\n// @formatter:on\n}}\nval sibling = 1\n{}\nclass Following\n",
+            "fun outer() {".repeat(128),
+            "}".repeat(128),
+        ),
     ];
 
     for source in sources {
@@ -153,6 +168,54 @@ fn deeply_nested_recovery_formats_idempotently_and_keeps_following_syntax() {
                 .source_text(),
             formatted
         );
+        let formatted_again = format_source(&formatted, FormatOptions::default())
+            .unwrap_or_else(|diagnostics| panic!("second format blocked: {diagnostics:#?}"));
+        assert_eq!(formatted_again, formatted);
+    }
+}
+
+#[test]
+fn empty_excessive_body_keeps_claims_without_selecting_body_layout() {
+    let source = format!(
+        "fun value() = {}fun() {{}}{}\n",
+        "(".repeat(63),
+        ")".repeat(63)
+    );
+    let formatted = format_source(&source, FormatOptions::default())
+        .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
+    assert!(formatted.contains("fun() {}"), "{formatted}");
+    assert!(!formatted.contains("fun() {\n"), "{formatted}");
+
+    let source = format!(
+        "fun value() = {}object {{}}{}\n",
+        "(".repeat(63),
+        ")".repeat(63)
+    );
+    let formatted = format_source(&source, FormatOptions::default())
+        .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
+    let body = formatted
+        .split_once("object {")
+        .and_then(|(_, body)| body.split_once('}').map(|(body, _)| body))
+        .expect("formatted object body");
+    assert_eq!(body.matches('\n').count(), 1, "{formatted}");
+    let formatted_again = format_source(&formatted, FormatOptions::default())
+        .unwrap_or_else(|diagnostics| panic!("second format blocked: {diagnostics:#?}"));
+    assert_eq!(formatted_again, formatted);
+}
+
+#[test]
+fn unclosed_excessive_bodies_format_idempotently() {
+    for source in ["fun nested() {".repeat(129), "class Nested {".repeat(129)] {
+        let parse = parse_kotlin_file(&source);
+        assert_eq!(
+            parse
+                .syntax()
+                .expect("represented unclosed input")
+                .source_text(),
+            source
+        );
+        let formatted = format_source(&source, FormatOptions::default())
+            .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
         let formatted_again = format_source(&formatted, FormatOptions::default())
             .unwrap_or_else(|diagnostics| panic!("second format blocked: {diagnostics:#?}"));
         assert_eq!(formatted_again, formatted);

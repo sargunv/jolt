@@ -42,6 +42,15 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn parse_class_body(&mut self) {
+        if self
+            .with_syntax_nesting(Self::parse_class_body_inner)
+            .is_none()
+        {
+            self.parse_excessive_class_body();
+        }
+    }
+
+    fn parse_class_body_inner(&mut self) {
         let marker = self.start();
         self.eat_asserted(K::LBrace);
         let members = self.start();
@@ -96,6 +105,23 @@ impl Parser<'_> {
             );
         }
         self.complete(marker, K::ClassBody);
+    }
+
+    fn parse_excessive_class_body(&mut self) {
+        let body = self.start();
+        self.eat_asserted(K::LBrace);
+        let members = self.start();
+        self.parse_excessive_braced_contents(K::BogusClassMember);
+        self.complete(members, K::ClassMemberList);
+        if !self.eat(K::RBrace) {
+            let diagnostic = self.pending_expected("expected '}' after class body");
+            self.missing_required_slot(
+                body.anchor(),
+                crate::shape::class_body::Slot::close_brace as u16,
+                [diagnostic],
+            );
+        }
+        self.complete(body, K::ClassBody);
     }
 
     fn parse_primary_constructor(&mut self) {

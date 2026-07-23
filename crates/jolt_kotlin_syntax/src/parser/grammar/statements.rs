@@ -23,6 +23,16 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_block(&mut self) {
+        if !self.at(K::LBrace) {
+            self.parse_block_inner();
+            return;
+        }
+        if self.with_syntax_nesting(Self::parse_block_inner).is_none() {
+            self.parse_excessive_block();
+        }
+    }
+
+    fn parse_block_inner(&mut self) {
         let marker = self.start();
         if !self.eat(K::LBrace) {
             let diagnostic = self.pending_expected("expected block");
@@ -48,6 +58,23 @@ impl Parser<'_> {
             );
         }
         self.complete(marker, K::Block);
+    }
+
+    fn parse_excessive_block(&mut self) {
+        let block = self.start();
+        self.eat_asserted(K::LBrace);
+        let items = self.start();
+        self.parse_excessive_braced_contents(K::BogusBlockItem);
+        self.complete(items, K::BlockItemList);
+        if !self.eat(K::RBrace) {
+            let diagnostic = self.pending_expected("expected '}' after block");
+            self.missing_required_slot(
+                block.anchor(),
+                crate::shape::block::Slot::close_brace as u16,
+                [diagnostic],
+            );
+        }
+        self.complete(block, K::Block);
     }
 
     pub(in crate::parser::grammar) fn complete_missing_block(&mut self, message: &'static str) {
