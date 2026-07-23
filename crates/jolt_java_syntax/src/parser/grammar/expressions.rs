@@ -268,14 +268,17 @@ impl Parser<'_> {
             self.parse_binary_operator(operator_info.len);
 
             if operator == JavaSyntaxKind::InstanceofKw {
-                if self.starts_pattern() {
-                    self.parse_pattern_until(&[
-                        JavaSyntaxKind::Semicolon,
-                        JavaSyntaxKind::RParen,
-                        JavaSyntaxKind::RBracket,
-                        JavaSyntaxKind::Comma,
-                        JavaSyntaxKind::Colon,
-                    ]);
+                if let Some(pattern_start) = self.pattern_start() {
+                    self.parse_pattern_until(
+                        pattern_start,
+                        &[
+                            JavaSyntaxKind::Semicolon,
+                            JavaSyntaxKind::RParen,
+                            JavaSyntaxKind::RBracket,
+                            JavaSyntaxKind::Comma,
+                            JavaSyntaxKind::Colon,
+                        ],
+                    );
                 } else {
                     self.parse_reference_type();
                 }

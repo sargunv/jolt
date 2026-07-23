@@ -1032,13 +1032,16 @@ impl Parser<'_> {
                 previous_was_pattern = false;
             } else if self.at_contextual("when") && saw_case_item {
                 break;
-            } else if self.starts_pattern() {
+            } else if let Some(pattern_start) = self.pattern_start() {
                 let case_pattern = self.start();
-                self.parse_pattern_until(&[
-                    JavaSyntaxKind::Comma,
-                    JavaSyntaxKind::Colon,
-                    JavaSyntaxKind::Arrow,
-                ]);
+                self.parse_pattern_until(
+                    pattern_start,
+                    &[
+                        JavaSyntaxKind::Comma,
+                        JavaSyntaxKind::Colon,
+                        JavaSyntaxKind::Arrow,
+                    ],
+                );
                 self.complete(case_pattern, JavaSyntaxKind::CasePattern);
                 saw_case_item = true;
                 previous_was_pattern = true;
