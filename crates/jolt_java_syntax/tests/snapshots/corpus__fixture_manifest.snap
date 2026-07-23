@@ -368,6 +368,7 @@ syntax/recovery/catch-parameter-modifiers.java
 syntax/recovery/compilation-unit-top-level.java
 syntax/recovery/constructor-body.java
 syntax/recovery/declarations.java
+syntax/recovery/delimiter-summary-boundaries.java
 syntax/recovery/empty-clauses.java
 syntax/recovery/empty-statement-comments.java
 syntax/recovery/enum-pattern-and-for-lists.java

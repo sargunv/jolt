@@ -1,0 +1,91 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class NestedParentheses {
+  Object value = (((((input)))));
+}
+
+@Outer(value = @Middle(value = @Inner(value = (1 + (2));
+class FollowingDeclaration {}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "NestedParentheses" @ 6..23 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 24..25
+        ClassBodyMemberList
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "Object" @ 28..34 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "value" @ 35..40 trailing=[Whitespace " "]
+                Assign "=" @ 41..42 trailing=[Whitespace " "]
+                VariableInitializer
+                  ParenthesizedExpression
+                    LParen "(" @ 43..44
+                    ParenthesizedExpression
+                      LParen "(" @ 44..45
+                      ParenthesizedExpression
+                        LParen "(" @ 45..46
+                        ParenthesizedExpression
+                          LParen "(" @ 46..47
+                          ParenthesizedExpression
+                            LParen "(" @ 47..48
+                            NameExpression
+                              Identifier "input" @ 48..53
+                            RParen ")" @ 53..54
+                          RParen ")" @ 54..55
+                        RParen ")" @ 55..56
+                      RParen ")" @ 56..57
+                    RParen ")" @ 57..58
+            Semicolon ";" @ 58..59
+        RBrace "}" @ 60..61 leading=[Newline "\n"]
+    BogusCompilationUnitItem
+      At "@" @ 63..64 leading=[Newline "\n", Newline "\n"]
+      Identifier "Outer" @ 64..69
+      LParen "(" @ 69..70
+      Identifier "value" @ 70..75 trailing=[Whitespace " "]
+      Assign "=" @ 76..77 trailing=[Whitespace " "]
+      At "@" @ 78..79
+      Identifier "Middle" @ 79..85
+      LParen "(" @ 85..86
+      Identifier "value" @ 86..91 trailing=[Whitespace " "]
+      Assign "=" @ 92..93 trailing=[Whitespace " "]
+      At "@" @ 94..95
+      Identifier "Inner" @ 95..100
+      LParen "(" @ 100..101
+      Identifier "value" @ 101..106 trailing=[Whitespace " "]
+      Assign "=" @ 107..108 trailing=[Whitespace " "]
+      LParen "(" @ 109..110
+      IntegerLiteral "1" @ 110..111 trailing=[Whitespace " "]
+      Plus "+" @ 112..113 trailing=[Whitespace " "]
+      LParen "(" @ 114..115
+      IntegerLiteral "2" @ 115..116
+      RParen ")" @ 116..117
+      RParen ")" @ 117..118
+      Semicolon ";" @ 118..119
+    ClassDeclaration
+      ClassKw "class" @ 120..125 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "FollowingDeclaration" @ 126..146 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 147..148
+        ClassBodyMemberList
+        RBrace "}" @ 148..149
+  Eof "" @ 150..150 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=63..64 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=unexpected token at top level

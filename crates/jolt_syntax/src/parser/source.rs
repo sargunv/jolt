@@ -418,6 +418,15 @@ impl TokenCursor {
         self.pos = checkpoint.pos;
     }
 
+    /// Moves this speculative cursor to an already-scanned later token.
+    ///
+    /// # Panics
+    /// Panics when `position` is behind the cursor.
+    pub fn seek_forward(&mut self, position: usize) {
+        assert!(position >= self.pos, "token cursor cannot seek backward");
+        self.pos = position;
+    }
+
     #[must_use]
     pub const fn fork(self) -> Self {
         self

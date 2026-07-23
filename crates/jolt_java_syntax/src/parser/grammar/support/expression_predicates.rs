@@ -17,11 +17,10 @@ impl Parser<'_> {
             return false;
         }
 
-        let after_parameters = self.skip_balanced_from(
-            self.position(),
-            JavaSyntaxKind::LParen,
-            JavaSyntaxKind::RParen,
-        );
+        let cursor = self.inner.fork_cursor();
+        let after_parameters = self
+            .parentheses
+            .after(&mut self.inner.buffer, cursor, cursor);
         self.kind_at(after_parameters) == JavaSyntaxKind::Arrow
     }
 
