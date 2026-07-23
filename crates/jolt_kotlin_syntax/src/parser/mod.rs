@@ -405,7 +405,7 @@ mod tests {
         );
         check_code(
             &edge,
-            "syntax nesting exceeds 128 levels",
+            "syntax is too deeply nested to parse safely",
             KotlinParseDiagnosticCode::ExcessiveSyntaxNesting,
             KotlinSyntaxKind::BogusType,
             None,
@@ -417,7 +417,7 @@ mod tests {
             let source = format!("typealias Deep = {}\n", nested_type(127, leaf));
             check_code(
                 &source,
-                "syntax nesting exceeds 128 levels",
+                "syntax is too deeply nested to parse safely",
                 KotlinParseDiagnosticCode::ExcessiveSyntaxNesting,
                 KotlinSyntaxKind::FunctionType,
                 None,
@@ -439,7 +439,7 @@ mod tests {
         let edge = parenthesized(64);
         check_code(
             &edge,
-            "syntax nesting exceeds 128 levels",
+            "syntax is too deeply nested to parse safely",
             KotlinParseDiagnosticCode::ExcessiveSyntaxNesting,
             KotlinSyntaxKind::BogusExpression,
             None,

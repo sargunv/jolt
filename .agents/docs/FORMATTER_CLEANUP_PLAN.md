@@ -2191,19 +2191,19 @@ slices remove Java nodes and allocations or leave topology unchanged.
   topology is exactly unchanged.
 - Java parse/format/end-to-end medians moved +0.28%/-1.48%/+0.53%, all below
   their run MAD. The untouched Kotlin path moved faster relative to its noisy
-  parent run and is not attributed to this PR. Optimized WASM moved from by
-  +3,030 bytes (+0.17%) in the recorded parent/child build.
+  parent run and is not attributed to this PR. Optimized WASM moved by +3,030
+  bytes (+0.17%) in the recorded parent/child build.
 - `mise run fix` passed strict formatting, workspace Clippy, dependency, native,
   and WASM checks. The complete non-update suite passed all 211 tests with zero
   skips. The benchmark records clean committed subject `23fd33f`.
 
 ### PR 27 evidence
 
-- One 128-entry active-owner counter now cuts every recursive Kotlin value cycle
-  at the existing type, assignment, or unary owner. Parentheses spend both
-  expression owners while right assignment and prefix unary recursion retain
-  only their recursive owner; the exact clean/overflow edges are therefore
-  127/128 types, 63/64 parentheses, and 126/127 unary or assignment operators.
+- One 128-owner counter now cuts every recursive Kotlin value cycle at the
+  existing type, assignment, or unary owner. Parentheses spend both expression
+  owners while right assignment and prefix unary recursion retain only their
+  recursive owner; the exact clean/overflow edges are therefore 127/128 types,
+  63/64 parentheses, and 126/127 unary or assignment operators.
 - Ordinary overflow produces one diagnostic-owned `BogusType` or
   `BogusExpression`. The required child after `suspend` or `context(...)` keeps
   the schema's exact `FunctionType` kind and is directly malformed by the same
@@ -2219,17 +2219,19 @@ slices remove Java nodes and allocations or leave topology unchanged.
   cast -> type re-entry, exact malformed ownership, lossless following syntax,
   and formatter completion/idempotence across seven recovery shapes.
 - Actual dprint-WASM stdin smokes completed for depth-4,096 alternating-type and
-  unary inputs and preserved their following declarations. `mise run fix` passed
-  strict native and WASM checks; the complete non-update suite passed all 218
-  tests with zero skips.
+  unary inputs and preserved their following declarations. The diagnostic calls
+  this a parser-safety limit rather than claiming that 128 owners equal 128
+  syntax levels. `mise run fix` passed strict native and WASM checks; the
+  complete non-update suite passed all 218 tests with zero skips.
 - Realistic Java and Kotlin allocation totals, syntax topology, and formatter
   document topology are exactly unchanged. Kotlin parse/format/end-to-end
   medians moved +0.91%/-0.27%/+4.19%; the latter run's 2.8% median absolute
   deviation was materially noisier than its parent. Java moved
   +1.05%/-1.36%/-1.61% on untouched paths.
-- Optimized WASM moved from 1,758,976 to 1,763,230 bytes (+4,254, +0.24%), with
-  SHA-256 `ac4c06af6b7de09639f7f3840e6250eaed8e95ede0342c789f9699a27ae82a53`.
-  The benchmark records clean committed subject `51653f2`.
+- Optimized WASM moved by +4,254 bytes (+0.24%) in the recorded parent/child
+  build, with SHA-256
+  `ac4c06af6b7de09639f7f3840e6250eaed8e95ede0342c789f9699a27ae82a53`. The
+  benchmark records clean committed subject `51653f2`.
 
 ## Decision Log
 

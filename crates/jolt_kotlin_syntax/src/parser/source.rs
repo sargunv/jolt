@@ -10,7 +10,10 @@ pub(super) type ParseEvents = jolt_syntax::ParseEvents;
 pub(super) type TokenBuffer<'source> = jolt_syntax::TokenBuffer<'source, KotlinLanguage>;
 pub(super) use jolt_syntax::TokenCursor;
 
-pub(super) const MAX_SYNTAX_NESTING: usize = 128;
+// Resource budget for simultaneously active recursive grammar owners. This is
+// not source depth: one construct may activate more than one owner. The value
+// leaves conservative headroom on the optimized plugin's 1 MiB WASM stack.
+pub(super) const MAX_RECURSIVE_PARSE_OWNERS: usize = 128;
 
 pub(super) struct Parser<'source> {
     inner: jolt_syntax::Parser<'source, KotlinLanguage>,
@@ -37,7 +40,7 @@ impl<'source> Parser<'source> {
         &mut self,
         parse: impl FnOnce(&mut Self) -> T,
     ) -> Option<T> {
-        if self.syntax_nesting_depth >= MAX_SYNTAX_NESTING {
+        if self.syntax_nesting_depth >= MAX_RECURSIVE_PARSE_OWNERS {
             return None;
         }
 
@@ -50,7 +53,7 @@ impl<'source> Parser<'source> {
     pub(super) fn pending_excessive_syntax_nesting(&mut self) -> PendingDiagnostic {
         self.pending_error(
             KotlinParseDiagnosticCode::ExcessiveSyntaxNesting.id(),
-            "syntax nesting exceeds 128 levels",
+            "syntax is too deeply nested to parse safely",
         )
     }
 
