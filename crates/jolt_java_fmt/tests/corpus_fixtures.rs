@@ -2,7 +2,10 @@ use std::path::PathBuf;
 
 use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
 use jolt_java_fmt::format_source_to_sink;
-use jolt_java_syntax::parse_compilation_unit;
+use jolt_java_syntax::{
+    CompilationUnit, CompilationUnitItem, JavaSyntaxField, JavaSyntaxListPart,
+    parse_compilation_unit,
+};
 use jolt_test_support::{
     StringSink, collect_java_files, diagnostic_inventory, read_to_string,
     represented_comment_inventory, workspace_root,
@@ -126,116 +129,221 @@ fn imported_fixture_inputs_format_idempotently_and_conserve_represented_syntax()
 
 #[test]
 fn deeply_nested_generic_recovery_formats_without_panicking_or_losing_following_syntax() {
+    // Generate threshold and stress inputs here: syntax-tree snapshots for these
+    // regular nested shapes grow to hundreds of kilobytes without adding signal.
+    let nested_type =
+        |depth: usize, leaf: &str| format!("{}{}{}", "T<".repeat(depth), leaf, ">".repeat(depth));
     let depth = 4096;
-    let mut ty = String::with_capacity(depth * 3 + 4);
-    ty.push_str(&"T<".repeat(depth));
-    ty.push_str("Leaf");
-    ty.push_str(&">".repeat(depth));
-    let source = format!("class C {{ {ty} value; int following; }} class D {{}}");
+    let ty = nested_type(depth, "Leaf");
 
-    let parse = parse_compilation_unit(&source);
-    assert_eq!(
-        parse.syntax().expect("represented input").source_text(),
-        source
-    );
-    let formatted = format_source(&source, FormatOptions::default())
-        .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
-    assert!(formatted.contains("int following;"));
-    assert!(formatted.contains("class D"));
-    let reparsed = parse_compilation_unit(&formatted);
-    assert_eq!(
-        reparsed
-            .syntax()
-            .expect("represented formatted output")
-            .source_text(),
-        formatted
-    );
+    let mut alternating = String::with_capacity(depth * 18 + 4);
+    alternating.push_str(&"T<@A((".repeat(depth));
+    alternating.push_str("Leaf");
+    alternating.push_str(&") value) Leaf>".repeat(depth));
+
+    let malformed_leaf = format!("+ @A(({ty}) value) Leaf");
+    let malformed = nested_type(129, &malformed_leaf);
+
+    for (ty, diagnostics) in [
+        (nested_type(128, "Leaf"), Some(0)),
+        (nested_type(129, "? extends Leaf"), Some(1)),
+        (ty, Some(1)),
+        (alternating, Some(1)),
+        (malformed, None),
+    ] {
+        let source = format!("class C {{ {ty} value; int following; }} class D {{}}");
+        let parse = parse_compilation_unit(&source);
+        if let Some(diagnostics) = diagnostics {
+            assert_eq!(parse.diagnostics().len(), diagnostics);
+        }
+        let syntax = parse.syntax().expect("represented input");
+        assert_eq!(syntax.source_text(), source);
+        assert_structured_top_level_class(syntax, "D");
+        let formatted = format_source(&source, FormatOptions::default())
+            .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
+        assert!(formatted.contains("int following;"));
+        assert!(formatted.contains("class D"));
+        let reparsed = parse_compilation_unit(&formatted);
+        let formatted_syntax = reparsed.syntax().expect("represented formatted output");
+        assert_eq!(formatted_syntax.source_text(), formatted);
+        assert_structured_top_level_class(formatted_syntax, "D");
+    }
 }
 
 #[test]
 fn deeply_nested_value_recovery_formats_without_panicking_or_losing_following_syntax() {
+    // These regular near-limit trees make syntax snapshots enormous; generate
+    // them while still exercising the public parser and formatter boundary.
     let depth = 4096;
     let annotation = format!(
         "{}@Leaf{} class C {{ int following; }} class D {{}}",
         "@A(".repeat(depth),
         ")".repeat(depth)
     );
+    let parenthesized_edge = format!(
+        "class C {{ Object value = {}input{}; int following; }} class D {{}}",
+        "(".repeat(63),
+        ")".repeat(63)
+    );
+    let annotation_edge = format!(
+        "{} class C {{ int following; }} class D {{}}",
+        format!(
+            "{}condition ? left : right, following = value{}",
+            "@A(".repeat(127),
+            ")".repeat(127)
+        )
+    );
+    let array_edge = format!(
+        "class C {{ Object value = {}{{}}, sibling{}; int following; }} class D {{}}",
+        "{".repeat(129),
+        "}".repeat(129)
+    );
     let sources = [
-        format!(
-            "class C {{ Object value = {}true; int following; }} class D {{}}",
-            "!".repeat(depth)
+        (
+            format!(
+                "class C {{ Object value = {}true; int following; }} class D {{}}",
+                "!".repeat(depth)
+            ),
+            None,
         ),
-        annotation,
-        format!(
-            "class C {{ Object value = {}{}; int following; }} class D {{}}",
-            "{".repeat(depth),
-            "}".repeat(depth)
+        (
+            format!(
+                "class C {{ Object value = {}leaf; int following; }} class D {{}}",
+                "value = ".repeat(depth)
+            ),
+            None,
         ),
+        (annotation, None),
+        (
+            format!(
+                "class C {{ Object value = {}{}; int following; }} class D {{}}",
+                "{".repeat(depth),
+                "}".repeat(depth)
+            ),
+            None,
+        ),
+        (parenthesized_edge, Some(1)),
+        (annotation_edge, Some(2)),
+        (array_edge, Some(1)),
     ];
 
-    for source in sources {
+    for (source, diagnostics) in sources {
         let parse = parse_compilation_unit(&source);
-        assert_eq!(
-            parse.syntax().expect("represented input").source_text(),
-            source
-        );
+        if let Some(diagnostics) = diagnostics {
+            assert_eq!(parse.diagnostics().len(), diagnostics);
+        }
+        let syntax = parse.syntax().expect("represented input");
+        assert_eq!(syntax.source_text(), source);
+        assert_structured_top_level_class(syntax, "D");
         let formatted = format_source(&source, FormatOptions::default())
             .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
         assert!(formatted.contains("int following;"));
         assert!(formatted.contains("class D"));
         let reparsed = parse_compilation_unit(&formatted);
-        assert_eq!(
-            reparsed
-                .syntax()
-                .expect("represented formatted output")
-                .source_text(),
-            formatted
-        );
+        let formatted_syntax = reparsed.syntax().expect("represented formatted output");
+        assert_eq!(formatted_syntax.source_text(), formatted);
+        assert_structured_top_level_class(formatted_syntax, "D");
     }
 }
 
 #[test]
 fn deeply_nested_structural_recovery_formats_without_panicking_or_losing_following_syntax() {
+    // Keep structural thresholds generated: the equivalent syntax snapshot trial
+    // was about 1.65 MB and mostly repeated indentation and wrapper nodes.
     let depth = 4096;
     let pattern = format!("{}Tail value{}", "R(".repeat(depth), ")".repeat(depth));
-    let sources = [
-        format!(
-            "class C {{ void m(Object value) {{ switch (value) {{ case Outer({pattern}, Following following): break; }} }} int following; }} class D {{}}"
-        ),
+    let pattern_edge = format!(
+        "{}@A(value = (left)) R(Tail t){}",
+        "R(".repeat(125),
+        ")".repeat(125)
+    );
+    let nested_body = |open: &str| {
         format!(
             "{}{} class D {{ int following; }}",
-            "class C { ".repeat(depth),
+            open.repeat(depth),
             "}".repeat(depth)
-        ),
+        )
+    };
+    let labeled = |tail: &str| {
         format!(
-            "class C {{ void m() {{ {}; }} int following; }} class D {{}}",
-            "label: ".repeat(depth)
+            "class C {{ void m() {{ {}{tail} }} int following; }} class D {{}}",
+            "label: ".repeat(127)
+        )
+    };
+    let sources = [
+        (
+            format!(
+                "class C {{ void m(Object value) {{ switch (value) {{ case Outer({pattern}, Following following): break; }} }} int following; }} class D {{}}"
+            ),
+            "Following following",
         ),
-        format!(
-            "class C {{ Object value = {}true{}; int following; }} class D {{}}",
-            "target = !new Object() { Object nested = ".repeat(depth),
-            "; }".repeat(depth)
+        (
+            format!(
+                "class C {{ void m(Object value) {{ switch (value) {{ case Outer({pattern_edge}, Following following): break; }} }} int following; }} class D {{}}"
+            ),
+            "@A(value = (left)) R(Tail t)",
+        ),
+        (nested_body("class C { "), "class D"),
+        (nested_body("record R() { "), "class D"),
+        (nested_body("interface I { "), "class D"),
+        (nested_body("@interface A { "), "class D"),
+        (nested_body("enum E { ; "), "class D"),
+        (
+            format!(
+                "class C {{ void m() {{ {}; }} int following; }} class D {{}}",
+                "label: ".repeat(depth)
+            ),
+            "int following;",
+        ),
+        (
+            labeled("if (true) one(); else two(); sibling();"),
+            "else two()",
+        ),
+        (
+            labeled("do one(); while (true); sibling();"),
+            "while (true)",
+        ),
+        (
+            labeled("try {} catch (E e) {} finally {} sibling();"),
+            "catch (E e)",
+        ),
+        (
+            labeled("switch (value) { case 1: one(); default: two(); } sibling();"),
+            "default: two()",
+        ),
+        (
+            format!(
+                "class C {{ void m() {{ {} ; sibling();{} }} int following; }} class D {{}}",
+                "{ ".repeat(depth),
+                " }".repeat(depth)
+            ),
+            "sibling()",
+        ),
+        (
+            format!(
+                "class C {{ Object value = {}true{}; int following; }} class D {{}}",
+                "target = !new Object() { Object nested = ".repeat(depth),
+                "; }".repeat(depth)
+            ),
+            "int following;",
         ),
     ];
 
-    for source in sources {
+    for (source, retained) in sources {
         let parse = parse_compilation_unit(&source);
-        assert_eq!(
-            parse.syntax().expect("represented input").source_text(),
-            source
-        );
+        assert_eq!(parse.diagnostics().len(), 1);
+        let syntax = parse.syntax().expect("represented input");
+        assert_eq!(syntax.source_text(), source);
+        assert_structured_top_level_class(syntax, "D");
         let formatted = format_source(&source, FormatOptions::default())
             .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
         assert!(formatted.contains("int following;"));
         assert!(formatted.contains("class D"));
+        assert!(formatted.contains(retained));
         let reparsed = parse_compilation_unit(&formatted);
-        assert_eq!(
-            reparsed
-                .syntax()
-                .expect("represented formatted output")
-                .source_text(),
-            formatted
-        );
+        let formatted_syntax = reparsed.syntax().expect("represented formatted output");
+        assert_eq!(formatted_syntax.source_text(), formatted);
+        assert_structured_top_level_class(formatted_syntax, "D");
         assert_eq!(
             format_source(&formatted, FormatOptions::default())
                 .expect("second format must complete"),
@@ -274,26 +382,18 @@ fn deep_formatter_spines_format_idempotently_and_keep_following_syntax() {
             "deep formatter spine did not remain structured: {:#?}",
             parse.diagnostics()
         );
-        assert_eq!(
-            parse
-                .syntax()
-                .expect("represented deep formatter spine")
-                .source_text(),
-            source
-        );
+        let syntax = parse.syntax().expect("represented deep formatter spine");
+        assert_eq!(syntax.source_text(), source);
+        assert_structured_top_level_class(syntax, "Following");
 
         let formatted = format_source(&source, FormatOptions::default())
             .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
         assert!(formatted.contains("int following;"));
         assert!(formatted.contains("class Following"));
         let reparsed = parse_compilation_unit(&formatted);
-        assert_eq!(
-            reparsed
-                .syntax()
-                .expect("represented formatted output")
-                .source_text(),
-            formatted
-        );
+        let formatted_syntax = reparsed.syntax().expect("represented formatted output");
+        assert_eq!(formatted_syntax.source_text(), formatted);
+        assert_structured_top_level_class(formatted_syntax, "Following");
         assert_eq!(
             format_source(&formatted, FormatOptions::default())
                 .expect("second format must complete"),
@@ -312,6 +412,22 @@ fn format_source(
         FormatSinkResult::Halted => panic!("formatter unexpectedly halted with StringSink"),
         FormatSinkResult::Blocked { diagnostic } => Err(vec![diagnostic]),
     }
+}
+
+fn assert_structured_top_level_class(unit: CompilationUnit<'_>, expected_name: &str) {
+    let JavaSyntaxField::Present(items) = unit.items() else {
+        panic!("compilation-unit items must remain structured");
+    };
+    assert!(items.parts().any(|part| {
+        matches!(
+            part,
+            JavaSyntaxListPart::Item(CompilationUnitItem::ClassDeclaration(declaration))
+                if matches!(
+                    declaration.name(),
+                    JavaSyntaxField::Present(name) if name.text() == expected_name
+                )
+        )
+    }));
 }
 
 fn fixture_root(suite: &str) -> PathBuf {

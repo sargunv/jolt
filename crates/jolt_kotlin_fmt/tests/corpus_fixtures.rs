@@ -2,7 +2,9 @@ use std::path::PathBuf;
 
 use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
 use jolt_kotlin_fmt::format_source_to_sink;
-use jolt_kotlin_syntax::parse_kotlin_file;
+use jolt_kotlin_syntax::{
+    KotlinFile, KotlinFileItem, KotlinSyntaxField, KotlinSyntaxListPart, parse_kotlin_file,
+};
 use jolt_test_support::{StringSink, collect_kotlin_files, read_to_string, workspace_root};
 
 #[test]
@@ -131,6 +133,21 @@ fn deeply_nested_recovery_formats_idempotently_and_keeps_following_syntax() {
             ")".repeat(depth)
         ),
         format!(
+            "fun value() = {}call {{ a; b }}\nval following = 1\nclass Following\n",
+            "! ".repeat(127)
+        ),
+        format!(
+            r#"fun value() = {}call({{ item -> "${{if (item) "${{nested}}" else "fallback"}}"; item }}, [first, second])
+val following = 1
+class Following
+"#,
+            "! ".repeat(127),
+        ),
+        format!(
+            "fun choose(value: Int) = when (value) {{ in {}candidate -> 1; else -> 0 }}\nclass Following\n",
+            "! ".repeat(127),
+        ),
+        format!(
             "{}{}\nclass Following\n",
             "fun nested() {".repeat(depth),
             "}".repeat(depth)
@@ -138,6 +155,21 @@ fn deeply_nested_recovery_formats_idempotently_and_keeps_following_syntax() {
         format!(
             "{}{}\nclass Following\n",
             "class Nested {".repeat(depth),
+            "}".repeat(depth)
+        ),
+        format!(
+            "{}{}\nclass Following\n",
+            "class Nested { fun nested() {".repeat(depth),
+            "}}".repeat(depth)
+        ),
+        format!(
+            "{}{}\nclass Following\n",
+            "enum class Nested { Entry {".repeat(depth),
+            "}}".repeat(depth)
+        ),
+        format!(
+            "fun value() = {}leaf{}\nclass Following\n",
+            "object { val nested = ".repeat(depth),
             "}".repeat(depth)
         ),
         format!(
@@ -149,29 +181,42 @@ fn deeply_nested_recovery_formats_idempotently_and_keeps_following_syntax() {
 
     for source in sources {
         let parse = parse_kotlin_file(&source);
-        assert_eq!(
-            parse
-                .syntax()
-                .expect("represented deep input")
-                .source_text(),
-            source
-        );
+        let syntax = parse.syntax().expect("represented deep input");
+        assert_eq!(syntax.source_text(), source);
+        assert_top_level_following(syntax);
 
         let formatted = format_source(&source, FormatOptions::default())
             .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
-        assert!(formatted.contains("class Following"));
         let reparsed = parse_kotlin_file(&formatted);
-        assert_eq!(
-            reparsed
-                .syntax()
-                .expect("represented formatted output")
-                .source_text(),
-            formatted
-        );
+        let reparsed_syntax = reparsed.syntax().expect("represented formatted output");
+        assert_eq!(reparsed_syntax.source_text(), formatted);
+        assert_top_level_following(reparsed_syntax);
         let formatted_again = format_source(&formatted, FormatOptions::default())
             .unwrap_or_else(|diagnostics| panic!("second format blocked: {diagnostics:#?}"));
         assert_eq!(formatted_again, formatted);
     }
+}
+
+fn assert_top_level_following(syntax: KotlinFile<'_>) {
+    let KotlinSyntaxField::Present(items) = syntax.items() else {
+        panic!("deep input did not retain structured top-level items");
+    };
+    assert!(
+        items.parts().any(|part| {
+            let KotlinSyntaxListPart::Item(item) = part else {
+                return false;
+            };
+            matches!(
+                item.cast_family::<KotlinFileItem<'_>>(),
+                Some(KotlinFileItem::ClassDeclaration(declaration))
+                    if declaration
+                        .source_text()
+                        .trim_start()
+                        .starts_with("class Following")
+            )
+        }),
+        "deep recovery swallowed the following top-level class"
+    );
 }
 
 #[test]

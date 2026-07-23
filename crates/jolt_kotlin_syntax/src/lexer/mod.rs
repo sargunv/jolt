@@ -1226,6 +1226,9 @@ mod tests {
 
     use super::Scanner;
 
+    // This checks scanner cursor progress and token-call boundaries directly. A 65 KiB
+    // corpus fixture would create a large low-signal snapshot without observing either
+    // invariant or the malformed-input diagnostic cardinality.
     #[test]
     fn long_string_prefix_tokenization_remains_bounded() {
         const DOLLAR_COUNT: usize = 65_536;

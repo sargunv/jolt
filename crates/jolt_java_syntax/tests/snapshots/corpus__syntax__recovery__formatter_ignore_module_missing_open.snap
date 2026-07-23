@@ -1,0 +1,62 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+module demo.missing /* @formatter:off */
+requires   raw.dependency;
+// @formatter:on
+requires formatted.dependency;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 0..6 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "demo" @ 7..11
+        Dot "." @ 11..12
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "missing" @ 12..19 trailing=[Whitespace " ", BlockComment "/* @formatter:off */"]
+      ModuleDirectiveList
+        RequiresDirective
+          Identifier "requires" @ 41..49 leading=[Newline "\n"] trailing=[Whitespace "   "]
+          RequiresModifierList
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "raw" @ 52..55
+            Dot "." @ 55..56
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "dependency" @ 56..66
+          Semicolon ";" @ 66..67
+        RequiresDirective
+          Identifier "requires" @ 85..93 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+          RequiresModifierList
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "formatted" @ 94..103
+            Dot "." @ 103..104
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "dependency" @ 104..114
+          Semicolon ";" @ 114..115
+      RBrace "}" @ 116..117 leading=[Newline "\n"]
+  Eof "" @ 118..118 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=41..49 message="expected module body"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(41), end: TextSize(49) }) message=expected module body

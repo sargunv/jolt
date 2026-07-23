@@ -12,6 +12,13 @@ class C { void m() {
   int after;
 } }
 
+class MalformedInsideIgnore { void m() {
+  // @formatter:off
+  +             ;
+  // @formatter:on
+  int after;
+} }
+
 syntax:
 syntax:
 CompilationUnit
@@ -78,12 +85,50 @@ CompilationUnit
                   Semicolon ";" @ 118..119
               RBrace "}" @ 120..121 leading=[Newline "\n"] trailing=[Whitespace " "]
         RBrace "}" @ 122..123
-  Eof "" @ 124..124 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 125..130 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "MalformedInsideIgnore" @ 131..152 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 153..154 trailing=[Whitespace " "]
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 155..159 trailing=[Whitespace " "]
+            Identifier "m" @ 160..161
+            LParen "(" @ 161..162
+            RParen ")" @ 162..163 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 164..165
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    BogusExpression
+                      UnaryExpression
+                        Plus "+" @ 188..189 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "             "]
+                        BogusExpression
+                    Semicolon ";" @ 202..203
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 225..228 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "after" @ 229..234
+                  Semicolon ";" @ 234..235
+              RBrace "}" @ 236..237 leading=[Newline "\n"] trailing=[Whitespace " "]
+        RBrace "}" @ 238..239
+  Eof "" @ 240..240 leading=[Newline "\n"]
 
 diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=105..106 message="expected expression"
   code=java.parse.invalid_statement_expression severity=Error stage=Parser range=105..106 message="expected statement expression"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=202..203 message="expected expression"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=202..203 message="expected statement expression"
 
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(105), end: TextSize(106) }) message=expected expression
 code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(105), end: TextSize(106) }) message=expected statement expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(202), end: TextSize(203) }) message=expected expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(202), end: TextSize(203) }) message=expected statement expression

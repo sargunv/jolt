@@ -828,13 +828,15 @@ mod tests {
     use jolt_java_syntax::{JavaLanguage, JavaSyntaxKind, JavaSyntaxView, parse_compilation_unit};
     use jolt_syntax::{
         BuildSyntaxTreeError, Event, FactoryNode, Language, LanguageLexer, LexedToken,
-        NormalizedToken, ParsedChildren, RawSyntaxKind, RemovalClaim, RemovalReason, ReorderClaim,
-        ReorderReason, ReplacementClaim, SourceIdentity, SourceTokenId, SyntaxFactory, SyntaxNode,
-        SyntaxTokenData, SyntaxTreeSink, SyntaxTrivia, SynthesisClaim, TriviaKind,
-        build_syntax_tree_with_factory,
+        NormalizedToken, ParsedChildren, RawSyntaxKind, RemovalClaim, RemovalReason,
+        ReplacementClaim, SourceIdentity, SourceTokenId, SyntaxFactory, SyntaxNode,
+        SyntaxTokenData, SyntaxTreeSink, SyntaxTrivia, TriviaKind, build_syntax_tree_with_factory,
     };
     #[cfg(debug_assertions)]
-    use jolt_syntax::{ConservationError, NormalizationOperation, SourceTriviaSide};
+    use jolt_syntax::{
+        ConservationError, NormalizationOperation, ReorderClaim, ReorderReason, SourceTriviaSide,
+        SynthesisClaim,
+    };
     use jolt_text::{TextRange, TextSize};
 
     use crate::document::DocArena;
@@ -942,6 +944,7 @@ mod tests {
         RemovalClaim::authorized::<ClaimLanguage>(owner, source, reason)
     }
 
+    #[cfg(debug_assertions)]
     fn synthesis_claim<'tree>(
         owner: &SyntaxNode<'tree, ClaimLanguage>,
         anchor: SourceTokenId<'tree>,
@@ -952,6 +955,7 @@ mod tests {
         SynthesisClaim::authorized::<ClaimLanguage>(owner, anchor, token)
     }
 
+    #[cfg(debug_assertions)]
     fn reorder_claim<'tree>(
         owner: &SyntaxNode<'tree, ClaimLanguage>,
         anchor: SourceTokenId<'tree>,
@@ -1035,7 +1039,7 @@ mod tests {
         let source = "";
         let tree = syntax_tree(source);
         let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
-        render_source_to(arena, doc, options, sink, &root).map(|outcome| outcome.halted())
+        render_source_to(arena, doc, options, sink, &root).map(super::SourceRenderOutcome::halted)
     }
 
     fn bogus_syntax_tree(source: &str) -> jolt_syntax::SyntaxTree {
@@ -1238,6 +1242,7 @@ mod tests {
         assert!(sink.0.is_empty());
     }
 
+    // A valid formatter cannot produce a duplicate replacement claim for a fixture to trigger.
     #[cfg(debug_assertions)]
     #[test]
     fn replacement_failure_reports_its_operation_and_source() {
@@ -1272,6 +1277,7 @@ mod tests {
         assert!(sink.0.is_empty());
     }
 
+    // A valid formatter cannot produce a duplicate removal claim for a fixture to trigger.
     #[cfg(debug_assertions)]
     #[test]
     fn removal_failure_reports_its_reason_and_trivia() {
@@ -1520,7 +1526,7 @@ mod tests {
 
         let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut safety);
 
-        assert_eq!(plan.test_counts().0, 2);
+        assert_eq!(plan.test_range_count(), 2);
         assert!(
             safety.0 <= token_count * 4,
             "{} classifications for {token_count} tokens",
@@ -1692,27 +1698,6 @@ mod tests {
         render_source_to(&arena, document, options(), &mut sink, &root)
             .expect("reason-tagged synthesis completes");
         assert_eq!(sink.0, "x;");
-    }
-
-    #[test]
-    fn empty_claims_preserve_document_topology() {
-        let source = "x";
-        let tree = syntax_tree(source);
-        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
-        let token = root.first_token().expect("source token");
-        let mut builder = DocBuilder::new();
-        let reordered = builder.reordered_source(
-            Doc::nil(),
-            reorder_claim(&root, token.source_id(), ReorderReason::Imports),
-        );
-        let synthesized = builder.synthesized_source(synthesis_claim(
-            &root,
-            token.source_id(),
-            NormalizedToken::EnumSemicolon,
-        ));
-
-        assert_ne!(reordered, Doc::nil());
-        assert_ne!(synthesized, Doc::nil());
     }
 
     #[test]

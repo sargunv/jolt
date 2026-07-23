@@ -1202,6 +1202,9 @@ mod tests {
         );
     }
 
+    // A language fixture cannot deliberately submit duplicate and omitted source
+    // identities through the correct formatter, so this internal failure contract
+    // needs a focused tracker test.
     #[test]
     fn duplicate_and_missing_fail_deterministically() {
         let (source, tree) = test_tree();
@@ -1280,6 +1283,8 @@ mod tests {
         );
     }
 
+    // Source identities from two parser buffers cannot coexist in one language
+    // fixture; construct them directly to keep foreign-identity diagnostics exact.
     #[test]
     fn foreign_claims_report_the_attempted_identity() {
         let (source, tree) = test_tree();

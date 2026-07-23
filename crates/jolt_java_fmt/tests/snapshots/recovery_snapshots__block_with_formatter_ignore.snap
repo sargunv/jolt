@@ -12,6 +12,13 @@ class C { void m() {
   int after;
 } }
 
+class MalformedInsideIgnore { void m() {
+  // @formatter:off
+  +             ;
+  // @formatter:on
+  int after;
+} }
+
 formatted:
 class C {
   void m() {
@@ -25,6 +32,17 @@ class C {
   }
 }
 
+class MalformedInsideIgnore {
+  void m() {
+    // @formatter:off
+    +             ;
+    // @formatter:on
+    int after;
+  }
+}
+
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(105), end: TextSize(106) }) message=expected expression
 code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(105), end: TextSize(106) }) message=expected statement expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(202), end: TextSize(203) }) message=expected expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(202), end: TextSize(203) }) message=expected statement expression

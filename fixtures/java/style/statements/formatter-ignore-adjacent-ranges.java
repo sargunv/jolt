@@ -29,4 +29,16 @@ int second=3+4;
 // @formatter:on
 int after=5;
 }
+
+void unmatchedOff() {
+int before=1;
+// @formatter:off
+int stillFormatted=2+3;
+}
+
+void unmatchedOn() {
+int before=1;
+// @formatter:on
+int stillFormatted=2+3;
+}
 }

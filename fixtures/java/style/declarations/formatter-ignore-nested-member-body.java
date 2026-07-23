@@ -13,4 +13,20 @@ call( a,b );
 int afterLocal=5;
 }
 }
+
+class CrossingSiblingBoundary {
+void first() {
+// @formatter:off
+int raw=1;
+}
+void second() {}
+// @formatter:on
+void after() {}
+}
+
+class HeaderMarker { /* @formatter:off */
+int stillFormatted=1+2;
+// @formatter:on
+int after=3;
+}
 }

@@ -1,0 +1,21 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+module demo.missing /* @formatter:off */
+requires   raw.dependency;
+// @formatter:on
+requires formatted.dependency;
+}
+
+formatted:
+module demo.missing /* @formatter:off */
+  requires raw.dependency;
+
+  // @formatter:on
+  requires formatted.dependency;
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(41), end: TextSize(49) }) message=expected module body

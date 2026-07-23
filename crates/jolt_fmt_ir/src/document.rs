@@ -796,37 +796,17 @@ mod tests {
     use jolt_text::{TextRange, TextSize};
 
     use super::DocBuilder;
-    use crate::formatter_ignore::FormatterIgnorePlan;
 
     fn range() -> TextRange {
         TextRange::new(TextSize::new(0), TextSize::new(1))
     }
 
+    // Root integration always installs a plan, so only direct misuse can exercise this guard.
     #[test]
     fn missing_formatter_ignore_plan_records_an_invariant() {
         let mut builder = DocBuilder::new();
         assert!(!builder.formatter_ignore_may_apply(range()));
         assert!(builder.into_arena().invariant_error().is_some());
-    }
-
-    #[test]
-    fn empty_formatter_ignore_plan_never_applies() {
-        let mut builder = DocBuilder::for_root(0, FormatterIgnorePlan::default());
-        assert!(!builder.formatter_ignore_may_apply(range()));
-        let mut called = false;
-        assert!(
-            builder
-                .formatter_ignore_runs(
-                    range(),
-                    std::iter::once(()).map(|()| {
-                        called = true;
-                        None
-                    })
-                )
-                .is_empty()
-        );
-        assert!(!called);
-        assert!(builder.into_arena().invariant_error().is_none());
     }
 }
 

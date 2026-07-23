@@ -34,6 +34,18 @@ int second=3+4;
 // @formatter:on
 int after=5;
 }
+
+void unmatchedOff() {
+int before=1;
+// @formatter:off
+int stillFormatted=2+3;
+}
+
+void unmatchedOn() {
+int before=1;
+// @formatter:on
+int stillFormatted=2+3;
+}
 }
 
 syntax:
@@ -268,8 +280,92 @@ CompilationUnit
                             IntegerLiteral "5" @ 454..455
                   Semicolon ";" @ 455..456
               RBrace "}" @ 457..458 leading=[Newline "\n"]
-        RBrace "}" @ 459..460 leading=[Newline "\n"]
-  Eof "" @ 461..461 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 460..464 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "unmatchedOff" @ 465..477
+            LParen "(" @ 477..478
+            RParen ")" @ 478..479 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 480..481
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 482..485 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "before" @ 486..492
+                        Assign "=" @ 492..493
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "1" @ 493..494
+                  Semicolon ";" @ 494..495
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 514..517 leading=[Newline "\n", LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "stillFormatted" @ 518..532
+                        Assign "=" @ 532..533
+                        VariableInitializer
+                          BinaryExpression
+                            LiteralExpression
+                              IntegerLiteral "2" @ 533..534
+                            Plus "+" @ 534..535
+                            LiteralExpression
+                              IntegerLiteral "3" @ 535..536
+                  Semicolon ";" @ 536..537
+              RBrace "}" @ 538..539 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 541..545 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "unmatchedOn" @ 546..557
+            LParen "(" @ 557..558
+            RParen ")" @ 558..559 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 560..561
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 562..565 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "before" @ 566..572
+                        Assign "=" @ 572..573
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "1" @ 573..574
+                  Semicolon ";" @ 574..575
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 593..596 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "stillFormatted" @ 597..611
+                        Assign "=" @ 611..612
+                        VariableInitializer
+                          BinaryExpression
+                            LiteralExpression
+                              IntegerLiteral "2" @ 612..613
+                            Plus "+" @ 613..614
+                            LiteralExpression
+                              IntegerLiteral "3" @ 614..615
+                  Semicolon ";" @ 615..616
+              RBrace "}" @ 617..618 leading=[Newline "\n"]
+        RBrace "}" @ 619..620 leading=[Newline "\n"]
+  Eof "" @ 621..621 leading=[Newline "\n"]
 
 diagnostics:
   (none)
