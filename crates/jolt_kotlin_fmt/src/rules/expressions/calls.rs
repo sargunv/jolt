@@ -31,7 +31,10 @@ pub(super) fn format_suffix_expression<'source>(
     expression: Expression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let outer = expression.syntax_node().expect("expression has a node");
+    let Some(outer) = expression.syntax_node() else {
+        doc.block_on_invariant("Kotlin suffix expression has no syntax node");
+        return Doc::nil();
+    };
     let mut current = expression;
     let mut outer_member = None;
     while let Some(inner) = suffix_inner(current) {
@@ -51,7 +54,10 @@ pub(super) fn format_suffix_expression<'source>(
     } else {
         leading
     };
-    let mut current_node = current.syntax_node().expect("expression has a node");
+    let Some(mut current_node) = current.syntax_node() else {
+        doc.block_on_invariant("Kotlin suffix base has no syntax node");
+        return Doc::nil();
+    };
     let mut formatted = format_suffix_base(doc, &current, base_leading);
     while current_node != outer {
         if let Some((chain, parent, parent_node)) =
