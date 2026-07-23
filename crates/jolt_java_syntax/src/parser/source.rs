@@ -18,12 +18,12 @@ pub(super) const MAX_RECURSIVE_PARSE_OWNERS: usize = 128;
 
 pub(super) struct Parser<'source> {
     pub(super) inner: jolt_syntax::Parser<'source, JavaLanguage>,
-    pub(super) parentheses: ParenthesisSummary,
+    pub(super) lookahead_summary: LookaheadSummary,
     pub(super) generic_depth: usize,
 }
 
 #[derive(Default)]
-pub(super) struct ParenthesisSummary {
+pub(super) struct LookaheadSummary {
     pub(super) base: usize,
     pub(super) boundaries: Option<Vec<usize>>,
 }
@@ -32,7 +32,7 @@ impl<'source> Parser<'source> {
     pub(super) fn new(source: &'source str) -> Self {
         Self {
             inner: jolt_syntax::Parser::new(source),
-            parentheses: ParenthesisSummary::default(),
+            lookahead_summary: LookaheadSummary::default(),
             generic_depth: 0,
         }
     }

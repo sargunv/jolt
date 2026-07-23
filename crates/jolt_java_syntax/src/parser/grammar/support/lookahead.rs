@@ -5,7 +5,7 @@ use super::{
     missing_constructor_header_action, over_depth_type_end, type_modifier_len,
 };
 use crate::parser::source::{
-    MAX_RECURSIVE_PARSE_OWNERS, ParenthesisSummary, TokenBuffer, TokenCursor,
+    LookaheadSummary, MAX_RECURSIVE_PARSE_OWNERS, TokenBuffer, TokenCursor,
 };
 
 impl<'source> Parser<'source> {
@@ -16,7 +16,7 @@ impl<'source> Parser<'source> {
             source,
             &mut self.inner.buffer,
             cursor,
-            &mut self.parentheses,
+            &mut self.lookahead_summary,
             self.generic_depth,
         )
     }
@@ -27,7 +27,7 @@ pub(in crate::parser::grammar) struct JavaLookahead<'buffer, 'source> {
     buffer: &'buffer mut TokenBuffer<'source>,
     cursor: TokenCursor,
     base: TokenCursor,
-    parentheses: &'buffer mut ParenthesisSummary,
+    summary: &'buffer mut LookaheadSummary,
     generic_depth: usize,
 }
 
@@ -36,7 +36,7 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         source: &'source str,
         buffer: &'buffer mut TokenBuffer<'source>,
         cursor: TokenCursor,
-        parentheses: &'buffer mut ParenthesisSummary,
+        summary: &'buffer mut LookaheadSummary,
         generic_depth: usize,
     ) -> Self {
         Self {
@@ -44,7 +44,7 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
             buffer,
             cursor,
             base: cursor,
-            parentheses,
+            summary,
             generic_depth,
         }
     }
@@ -94,24 +94,22 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         }
     }
 
-    pub(in crate::parser::grammar) fn skip_annotation(&mut self) -> bool {
-        if !self.at(JavaSyntaxKind::At) || self.nth_kind(1) == JavaSyntaxKind::InterfaceKw {
+    fn skip_annotation(&mut self) -> bool {
+        if !self.at_annotation_start() {
             return false;
         }
 
         self.bump();
-        if !self.at_name_segment() {
-            return true;
-        }
-
-        self.bump();
-        while self.at(JavaSyntaxKind::Dot) && self.nth_kind(1) == JavaSyntaxKind::Identifier {
+        let has_name = self.at_name_segment();
+        if has_name {
             self.bump();
-            self.bump();
+            while self.at(JavaSyntaxKind::Dot) && self.nth_kind(1) == JavaSyntaxKind::Identifier {
+                self.bump();
+                self.bump();
+            }
         }
-
-        if self.at(JavaSyntaxKind::LParen) {
-            let after = self.parentheses.after(self.buffer, self.cursor, self.base);
+        if has_name && self.at(JavaSyntaxKind::LParen) {
+            let after = self.summary.after(self.buffer, self.cursor, self.base);
             self.cursor.seek_forward(after);
         }
 
@@ -119,9 +117,41 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
     }
 
     pub(in crate::parser::grammar) fn skip_annotations(&mut self) -> bool {
-        let start = self.cursor.checkpoint();
-        while self.skip_annotation() {}
-        self.cursor.checkpoint() != start
+        if !self.at_annotation_start() {
+            return false;
+        }
+
+        self.summary.ensure_built(self.buffer, self.base);
+        let start = self.cursor;
+        let mut pending = 0;
+        while self.at_annotation_start() {
+            let offset = self.cursor.position() - self.summary.base;
+            let entry = &mut self.summary.boundaries.as_mut().expect("built summary")[offset];
+            if *entry != 0 {
+                self.cursor.seek_forward(*entry - 1);
+                break;
+            }
+            *entry = pending;
+            pending = offset + 1;
+
+            let skipped = self.skip_annotation();
+            debug_assert!(skipped);
+        }
+
+        let end = self.cursor;
+        let endpoint = end.position() + 1;
+        let boundaries = self.summary.boundaries.as_mut().expect("built summary");
+        while pending != 0 {
+            let index = pending - 1;
+            pending = boundaries[index];
+            boundaries[index] = endpoint;
+        }
+        debug_assert!(end.position() != start.position());
+        true
+    }
+
+    fn at_annotation_start(&mut self) -> bool {
+        self.at(JavaSyntaxKind::At) && self.nth_kind(1) != JavaSyntaxKind::InterfaceKw
     }
 
     fn skip_bounded_annotation(&mut self) -> bool {
@@ -224,7 +254,7 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
 
     pub(in crate::parser::grammar) fn skip_type_modifiers(&mut self) {
         loop {
-            if self.skip_annotation() {
+            if self.skip_annotations() {
                 continue;
             }
 
@@ -239,7 +269,7 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
 
     pub(in crate::parser::grammar) fn skip_variable_modifiers(&mut self) {
         loop {
-            if self.skip_annotation() {
+            if self.skip_annotations() {
                 continue;
             }
 

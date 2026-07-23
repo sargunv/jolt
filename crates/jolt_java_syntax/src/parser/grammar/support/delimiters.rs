@@ -1,17 +1,15 @@
 // Skips or consumes balanced delimiter groups used by grammar lookahead and recovery.
 use super::{JavaSyntaxKind, Parser};
-use crate::parser::source::{ParenthesisSummary, TokenBuffer, TokenCursor};
+use crate::parser::source::{LookaheadSummary, TokenBuffer, TokenCursor};
 
-impl ParenthesisSummary {
+impl LookaheadSummary {
     pub(super) fn after(
         &mut self,
         buffer: &mut TokenBuffer<'_>,
         cursor: TokenCursor,
         floor: TokenCursor,
     ) -> usize {
-        if self.boundaries.is_none() {
-            self.build(buffer, floor);
-        }
+        self.ensure_built(buffer, floor);
 
         let start = cursor.position();
         let offset = start
@@ -24,6 +22,12 @@ impl ParenthesisSummary {
             .filter(|boundary| *boundary != 0)
             .expect("summary must contain every in-range opening parenthesis")
             - 1
+    }
+
+    pub(super) fn ensure_built(&mut self, buffer: &mut TokenBuffer<'_>, floor: TokenCursor) {
+        if self.boundaries.is_none() {
+            self.build(buffer, floor);
+        }
     }
 
     fn build(&mut self, buffer: &mut TokenBuffer<'_>, mut cursor: TokenCursor) {
@@ -87,7 +91,7 @@ mod tests {
             parser.bump();
         }
 
-        assert!(parser.parentheses.boundaries.is_some());
+        assert!(parser.lookahead_summary.boundaries.is_some());
     }
 
     #[test]
@@ -98,21 +102,57 @@ mod tests {
         while !parser.at_eof() {
             if parser.at(JavaSyntaxKind::At) {
                 let mut lookahead = parser.lookahead();
-                assert!(lookahead.skip_annotation());
+                assert!(lookahead.skip_annotations());
             }
             parser.bump();
         }
 
-        assert!(parser.parentheses.boundaries.is_some());
+        assert!(parser.lookahead_summary.boundaries.is_some());
     }
 
     #[test]
     fn annotation_summary_uses_the_lookahead_creation_floor() {
         let mut parser = Parser::new("@A(x) @B(y) value");
         assert!(parser.lookahead().skip_annotations());
-        assert!(parser.parentheses.boundaries.is_some());
+        assert!(parser.lookahead_summary.boundaries.is_some());
 
         assert!(parser.lookahead().skip_annotations());
+    }
+
+    // Corpus fixtures prove parse results, but cannot prove that every suffix of
+    // one annotation run has a constant-time cached endpoint.
+    #[test]
+    fn flat_qualified_annotation_suffixes_share_one_cached_endpoint() {
+        let depth = 256;
+        let segments = 8;
+        let annotation = format!("@{} ", vec!["name"; segments].join("."));
+        let source = format!("{};", annotation.repeat(depth));
+        let tokens_per_annotation = 2 * segments;
+        let token_count = tokens_per_annotation * depth + 1;
+        let mut parser = Parser::new(&source);
+
+        let mut lookahead = parser.lookahead();
+        assert!(lookahead.skip_annotations());
+        assert!(lookahead.at(JavaSyntaxKind::Semicolon));
+
+        let boundaries = parser
+            .lookahead_summary
+            .boundaries
+            .as_ref()
+            .expect("annotation query builds summary");
+        for start in (0..tokens_per_annotation * depth).step_by(tokens_per_annotation) {
+            assert_eq!(boundaries[start], token_count);
+        }
+    }
+
+    #[test]
+    fn annotation_cache_survives_speculative_cursor_rewind() {
+        let mut parser = Parser::new("T @A value");
+        let mut lookahead = parser.lookahead();
+        assert!(lookahead.skip_type());
+        assert!(lookahead.at(JavaSyntaxKind::At));
+        assert!(lookahead.skip_annotations());
+        assert_eq!(lookahead.text(), Some("value"));
     }
 
     #[test]
@@ -140,13 +180,13 @@ mod tests {
         let cursor = parser.inner.fork_cursor();
         assert_eq!(
             parser
-                .parentheses
+                .lookahead_summary
                 .after(&mut parser.inner.buffer, cursor, cursor),
             2
         );
         assert_eq!(
             parser
-                .parentheses
+                .lookahead_summary
                 .after(&mut parser.inner.buffer, cursor, cursor),
             2
         );
@@ -161,6 +201,57 @@ mod tests {
                 classes
             );
             assert!(!parse_compilation_unit(source).diagnostics().is_empty());
+        }
+    }
+
+    #[test]
+    fn annotation_run_summary_preserves_malformed_recovery_boundaries() {
+        let depth = 128;
+        let annotations = "@A ".repeat(depth);
+        let cases = [
+            (format!("{annotations}0; class Following {{}}"), 1, true),
+            (
+                format!("import a {annotations}; class Following {{}}"),
+                1,
+                true,
+            ),
+            (
+                format!("class Outer {{ {annotations}0; class Nested {{}} }}"),
+                2,
+                true,
+            ),
+            (
+                format!("class Outer {{ Outer int value) {annotations}0; class Nested {{}} }}"),
+                2,
+                true,
+            ),
+            ("@A(@B) class C {}".to_owned(), 1, false),
+        ];
+
+        for (source, classes, malformed) in cases {
+            assert_eq!(
+                count_nodes(&source, JavaSyntaxKind::ClassDeclaration),
+                classes,
+                "{source}"
+            );
+            assert_eq!(
+                !parse_compilation_unit(&source).diagnostics().is_empty(),
+                malformed,
+                "{source}"
+            );
+        }
+
+        for (source, malformed) in [("@A @interface C {}", false), ("@ @interface C {}", true)] {
+            assert_eq!(
+                count_nodes(source, JavaSyntaxKind::AnnotationInterfaceDeclaration),
+                1,
+                "{source}"
+            );
+            assert_eq!(
+                !parse_compilation_unit(source).diagnostics().is_empty(),
+                malformed,
+                "{source}"
+            );
         }
     }
 }
