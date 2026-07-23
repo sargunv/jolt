@@ -5,8 +5,6 @@ use jolt_fmt_ir::{
 };
 use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxToken, RemovalClaim};
 
-use jolt_fmt_ir::formatter_ignore::is_formatter_control_marker;
-
 pub(crate) use jolt_fmt_ir::{LeadingTrivia, TrailingTrivia};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -30,9 +28,7 @@ pub(crate) fn comments_from_tokens<'source>(
 pub(crate) fn has_removed_comments<'source>(
     comments: impl IntoIterator<Item = JavaComment<'source>>,
 ) -> bool {
-    comments
-        .into_iter()
-        .any(|comment| !is_formatter_control_marker(comment.text()))
+    comments.into_iter().next().is_some()
 }
 
 pub(crate) fn format_construct_leading_comments<'source>(
@@ -65,28 +61,20 @@ pub(crate) fn format_removed_comments<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = JavaComment<'source>>,
 ) -> Option<Doc<'source>> {
-    let mut has_claims = false;
-    let mut has_output = false;
+    let mut has_comments = false;
     let docs = doc.concat_list(|docs| {
         for comment in comments {
-            if is_formatter_control_marker(comment.text()) {
-                let claim = docs.source_trivia(comment.source_pieces(), |_| Doc::nil());
-                docs.push(claim);
-                has_claims = true;
-                continue;
-            }
-            if has_output {
+            if has_comments {
                 let hard_line = docs.hard_line();
                 docs.push(hard_line);
             }
             let comment = format_comment(docs, &comment);
             docs.push(comment);
-            has_claims = true;
-            has_output = true;
+            has_comments = true;
         }
     });
 
-    has_claims.then_some(docs)
+    has_comments.then_some(docs)
 }
 
 /// Removes a source token only when syntax issued the exact claim.

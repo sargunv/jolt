@@ -634,6 +634,12 @@ pub fn run_formatter_corpus<L: CorpusLanguage>(
             "formatted output produced no syntax tree for {}",
             path.display()
         );
+        if input.comment_inventory != formatted_facts.comment_inventory {
+            conservation_failures.push(format!(
+                "{relative}:\nrepresented comment inventory changed\nexpected: {:#?}\nactual: {:#?}\n",
+                input.comment_inventory, formatted_facts.comment_inventory
+            ));
+        }
         let expected_markers = trivia_markers(&source);
         let actual_markers = trivia_markers(&formatted);
         if actual_markers != expected_markers {

@@ -1,0 +1,48 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+// @formatter:off
+class   A{}
+// @formatter:on
+;
+// @formatter:off
+class   B{}
+// @formatter:on
+class C{}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 18..23 leading=[LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace "   "]
+      Identifier "A" @ 26..27
+      ClassBody
+        LBrace "{" @ 27..28
+        ClassBodyMemberList
+        RBrace "}" @ 28..29
+    EmptyDeclaration
+      Semicolon ";" @ 47..48 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 67..72 leading=[Newline "\n", LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace "   "]
+      Identifier "B" @ 75..76
+      ClassBody
+        LBrace "{" @ 76..77
+        ClassBodyMemberList
+        RBrace "}" @ 77..78
+    ClassDeclaration
+      ClassKw "class" @ 96..101 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "C" @ 102..103
+      ClassBody
+        LBrace "{" @ 103..104
+        ClassBodyMemberList
+        RBrace "}" @ 104..105
+  Eof "" @ 106..106 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

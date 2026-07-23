@@ -979,7 +979,7 @@ ready for review.
 | 15  | `cleanup/15-modifier-presence`           | draft open | PR 14  | [#17](https://github.com/sargunv/jolt/pull/17) | full + benchmark           | Syntax-owned modifier layout presence.           |
 | 16  | `cleanup/16-recovery-layout-parts`       | draft open | PR 15  | [#18](https://github.com/sargunv/jolt/pull/18) | full + benchmark           | Barrier-aware visible/claim-only layout.         |
 | 17  | `cleanup/17-ignore-boundary-ownership`   | draft open | PR 16  | [#19](https://github.com/sargunv/jolt/pull/19) | full + benchmark           | Delete raw EOF ignore-range projections.         |
-| 18  | `cleanup/18-java-program-joining`        | planned    | PR 17  | —                                              | —                          | Reconcile root joining and marker ownership.     |
+| 18  | `cleanup/18-java-program-joining`        | draft open | PR 17  | [#20](https://github.com/sargunv/jolt/pull/20) | full + benchmark           | Reconcile root joining and marker ownership.     |
 | 19  | `cleanup/19-kotlin-recovery-layout`      | planned    | PR 18  | —                                              | —                          | Isolate Kotlin recovery behavior corrections.    |
 | 20  | `cleanup/20-java-delimiter-summaries`    | planned    | PR 19  | —                                              | —                          | Bound lambda and annotation parenthesis scans.   |
 | 21  | `cleanup/21-java-generic-depth`          | planned    | PR 20  | —                                              | —                          | Bound recursive generic-type parsing.            |
@@ -1729,6 +1729,40 @@ slices remove Java nodes and allocations or leave topology unchanged.
   formatter corpora, recovery, imported-fixture idempotence/conservation,
   trivia, CLI, and dprint integration. The benchmark records committed subject
   `e97b098`; snapshots are unchanged.
+
+### PR 18 evidence
+
+- The exact root sequence ignored class / removed semicolon / ignored class
+  dropped the first `@formatter:on` and inserted a phantom blank line. The first
+  run correctly left its marker to the physical semicolon owner, but removed
+  token formatting claimed control comments to nil and the invisible retained
+  segment reset the outer ignored-state boolean.
+- Removed tokens now format every represented comment, including formatter
+  controls. A skipped physical owner is never formatted, so a marker included in
+  a raw ignore run cannot be emitted twice. The valid Java/Kotlin corpus harness
+  now compares canonical represented-comment inventories before and after
+  formatting, closing the test gap that allowed a claim-only deletion to pass.
+- One Java-local `ProgramSection { doc, visible, compact_after }` stream and one
+  joiner replace the two tuple meanings, the retained-segment visibility scan,
+  and the duplicate ignore-aware join loop. Missing and tokenless malformed
+  sections emit claims without changing prior visible state; token-owning
+  recovery, comment-only removed declarations, imports, and ignored runs carry
+  explicit layout semantics.
+- Java formatter production is +89/-97 lines (-8 net); the shared conservation
+  assertion adds six test-support lines. The new irregular fixture proves both
+  ignored classes remain byte-preserved, the semicolon disappears, all four
+  markers occur once, the adjacent runs stay compact, and the following class is
+  structured. It is idempotent and source/comment conserving. No existing
+  formatter snapshot changed.
+- Realistic Java and Kotlin document topology, allocation count, and allocation
+  bytes are exactly unchanged. Format timing moved -1.65% and +0.03%; format
+  peak RSS moved +364,544 and -155,648 bytes respectively, all treated as
+  neutral. Optimized WASM shrank from 1,750,965 to 1,746,572 bytes (-4,393,
+  -0.25%).
+- `mise run fix` passed strict formatting, workspace Clippy, dependency, native,
+  and WASM checks. Snapshot update and the subsequent non-update run both passed
+  all 185 tests with zero skips. The benchmark records committed subject
+  `9d142fd`; only the new intended Java syntax/formatter snapshots were added.
 
 ## Decision Log
 
