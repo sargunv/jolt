@@ -2396,12 +2396,13 @@ slices remove Java nodes and allocations or leave topology unchanged.
   mixed-suffix and alternating-operator sentinels. `mise run fix` passed strict
   native and WASM checks; the complete non-update suite passed all 226 tests
   with zero skips and unchanged snapshots.
-- Realistic Java/Kotlin syntax topology, document topology, allocation counts,
-  and allocation bytes are exactly unchanged. Java parse/format/end-to-end
-  medians moved -1.29%/+0.03%/+1.48%; untouched Kotlin timing remained noisy.
-- The original walker benchmark recorded +6,465 optimized WASM bytes (+0.36%).
-  Folding the later state deletion into this PR changes no output, allocation,
-  or traversal and makes that size result conservative for the final code.
+- Realistic Java/Kotlin syntax and document topology are exactly unchanged.
+  Deleting Java's mirrored operator state lowers formatter allocations from
+  1,510,091 to 1,469,656 (-40,435, -2.68%) and allocated bytes from
+  1,984,927,118 to 1,984,737,038 (-190,080). Repeated timing runs varied too
+  widely for a causal performance claim.
+- Refreshed optimized WASM moves 1,769,538 -> 1,775,872 bytes (+6,334, +0.36%).
+  The exact benchmark records clean committed subject `c06701c5`.
 
 ## Decision Log
 
