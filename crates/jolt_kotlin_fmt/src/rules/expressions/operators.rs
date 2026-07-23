@@ -1,7 +1,7 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     AssignmentExpression, BinaryExpression, BinaryExpressionRightSyntax,
-    BinaryExpressionRightValue, BinaryOperatorSyntax, Expression, KotlinSyntaxField,
+    BinaryExpressionRightValue, BinaryOperatorSyntax, Expression, KotlinFamily, KotlinSyntaxField,
     KotlinSyntaxKind, KotlinSyntaxToken, KotlinSyntaxView, ParenthesizedExpression,
     PostfixExpression, UnaryExpression,
 };
@@ -72,57 +72,172 @@ pub(super) fn format_binary_expression<'source>(
     expression: &BinaryExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let Some(operator) = binary_operator(expression) else {
-        return format_binary_fields(doc, expression, leading);
+    let Some(outer) = expression.syntax_node() else {
+        doc.block_on_invariant("Kotlin binary expression has no syntax node");
+        return Doc::nil();
     };
-    let Some(left) = present(expression.left()) else {
-        return format_binary_fields(doc, expression, leading);
-    };
-    let Some(right) = present(expression.right()) else {
-        return format_binary_fields(doc, expression, leading);
-    };
+    let mut current = Expression::from(*expression);
 
-    if is_type_binary_operator(&operator) {
-        let left = format_expression_with_leading(doc, &left, leading);
-        let operator_doc = format_binary_operator(doc, &operator).doc;
-        let right = format_binary_right(doc, &right);
-        let space = doc.space();
-        let line = doc.line();
-        let right = doc.concat([line, right]);
-        let right = doc.indent(right);
-        let contents = doc.concat([left, space, operator_doc, right]);
-        return doc.group(contents);
+    while let Expression::BinaryExpression(binary) = current {
+        let Some(left) = present(binary.left()) else {
+            break;
+        };
+        current = left;
     }
 
-    let Some(right) = binary_right_expression(&right) else {
-        return format_binary_fields(doc, expression, leading);
+    let Some(mut current_node) = current.syntax_node() else {
+        doc.block_on_invariant("Kotlin binary base has no syntax node");
+        return Doc::nil();
     };
-    let root = Expression::from(*expression);
-    let mut operands = Vec::new();
-    let mut operators = Vec::new();
-    collect_binary_chain(root, &mut operands, &mut operators);
-    if operators.len() + 1 != operands.len() {
-        let left = format_binary_operand_with_leading(doc, expression, &left, &operator, leading);
-        let right = format_binary_operand(doc, expression, &right, &operator);
-        let part = binary_chain_part(doc, operator, right);
-        return binary_chain(doc, left, vec![part]);
+    let base = match current {
+        Expression::BinaryExpression(binary) => format_binary_fields(doc, &binary, leading),
+        _ => format_expression_with_leading(doc, &current, leading),
+    };
+    let mut formatted = base;
+    let mut run = None;
+
+    while current_node != outer {
+        let Some(parent_node) = current_node.parent() else {
+            doc.block_on_invariant("binary left spine ended before its outer expression");
+            break;
+        };
+        let Some(Expression::BinaryExpression(binary)) = Expression::cast(parent_node) else {
+            doc.block_on_invariant("binary left spine crossed a non-binary parent");
+            break;
+        };
+        let operator = binary_operator(&binary);
+        let right = present(binary.right());
+        match (operator, right) {
+            (Some(operator), Some(right)) if is_type_binary_operator(&operator) => {
+                let left = finish_pending_binary_run(doc, formatted, run.take());
+                let operator = format_binary_operator(doc, &operator).doc;
+                let right = format_binary_right(doc, &right);
+                let space = doc.space();
+                let line = doc.line();
+                let right = doc.concat([line, right]);
+                let right = doc.indent(right);
+                let contents = doc.concat([left, space, operator, right]);
+                formatted = doc.group(contents);
+            }
+            (Some(operator), Some(right)) => {
+                let Some(right) = binary_right_expression(&right) else {
+                    let left = finish_pending_binary_run(doc, formatted, run.take());
+                    formatted = format_binary_fields_with_left(doc, &binary, left);
+                    current = Expression::from(binary);
+                    current_node = parent_node;
+                    continue;
+                };
+                if let Some(run) = run.as_mut().filter(|run| {
+                    run.parts.last().is_some_and(|(root_operator, _)| {
+                        should_flatten_binary(&operator, root_operator)
+                    })
+                }) {
+                    run.owner = binary;
+                    run.parts.push((operator, right));
+                } else {
+                    formatted = finish_pending_binary_run(doc, formatted, run.take());
+                    let mut parts = Vec::with_capacity(4);
+                    parts.push((operator, right));
+                    run = Some(PendingBinaryRun {
+                        owner: binary,
+                        first_operand: current,
+                        parts,
+                    });
+                }
+            }
+            _ => {
+                let left = finish_pending_binary_run(doc, formatted, run.take());
+                formatted = format_binary_fields_with_left(doc, &binary, left);
+            }
+        }
+
+        current = Expression::from(binary);
+        current_node = parent_node;
     }
 
-    let mut operands = operands.into_iter();
-    let first = operands.next().unwrap_or(left);
-    let first = format_binary_operand_with_leading(doc, expression, &first, &operator, leading);
-    let mut rest = Vec::new();
-    for (operator, operand) in operators.into_iter().zip(operands) {
-        let operand = format_binary_operand(doc, expression, &operand, &operator);
-        rest.push(binary_chain_part(doc, operator, operand));
-    }
-    binary_chain(doc, first, rest)
+    finish_pending_binary_run(doc, formatted, run)
+}
+
+struct PendingBinaryRun<'source> {
+    owner: BinaryExpression<'source>,
+    first_operand: Expression<'source>,
+    parts: Vec<(KotlinSyntaxToken<'source>, Expression<'source>)>,
+}
+
+fn finish_pending_binary_run<'source>(
+    doc: &mut DocBuilder<'source>,
+    formatted: Doc<'source>,
+    run: Option<PendingBinaryRun<'source>>,
+) -> Doc<'source> {
+    let Some(run) = run else {
+        return formatted;
+    };
+    let Some((root_operator, _)) = run.parts.last() else {
+        doc.block_on_invariant("binary run has no operator");
+        return formatted;
+    };
+    let first = format_binary_operand_doc(
+        doc,
+        formatted,
+        &run.owner,
+        &run.first_operand,
+        root_operator,
+    );
+    let keep_infix_chain_flat = run.parts.len() > 1
+        && run
+            .parts
+            .iter()
+            .all(|(operator, _)| operator.kind() == KotlinSyntaxKind::Identifier);
+    let rest = doc.concat_list(|docs| {
+        for (operator, operand) in run.parts {
+            let operand = format_binary_operand(docs, &run.owner, &operand, &operator);
+            let spaced = !is_range_operator(&operator);
+            let break_before_operator = can_break_before_operator(&operator);
+            let operator = format_binary_operator(docs, &operator);
+            let part = if !break_before_operator {
+                let space = docs.space();
+                let line = if keep_infix_chain_flat {
+                    docs.space()
+                } else {
+                    docs.line()
+                };
+                let operand = docs.concat([line, operand]);
+                let operand = docs.indent(operand);
+                docs.concat([space, operator.doc, operand])
+            } else if operator.forces_line_after {
+                let before = docs.line();
+                let after = docs.line();
+                docs.concat([before, operator.doc, after, operand])
+            } else if spaced {
+                let line = docs.line();
+                let space = docs.space();
+                docs.concat([line, operator.doc, space, operand])
+            } else {
+                docs.concat([operator.doc, operand])
+            };
+            docs.push(part);
+        }
+    });
+    let rest = doc.indent(rest);
+    let contents = doc.concat([first, rest]);
+    doc.group(contents)
 }
 
 fn format_binary_fields<'source>(
     doc: &mut DocBuilder<'source>,
     expression: &BinaryExpression<'source>,
     leading: LeadingTrivia,
+) -> Doc<'source> {
+    let left = format_required_field(expression.left(), doc, |left, doc| {
+        format_expression_with_leading(doc, &left, leading)
+    });
+    format_binary_fields_with_left(doc, expression, left)
+}
+
+fn format_binary_fields_with_left<'source>(
+    doc: &mut DocBuilder<'source>,
+    expression: &BinaryExpression<'source>,
+    left: Doc<'source>,
 ) -> Doc<'source> {
     let has_right = matches!(
         expression.right(),
@@ -131,9 +246,6 @@ fn format_binary_fields<'source>(
         expression.right(),
         KotlinSyntaxField::Malformed(ref malformed) if malformed.first_token().is_some()
     );
-    let left = format_required_field(expression.left(), doc, |left, doc| {
-        format_expression_with_leading(doc, &left, leading)
-    });
     let operator = format_required_field(expression.operator(), doc, |operator, doc| {
         let operator = match operator.classify() {
             Ok(
@@ -214,17 +326,6 @@ fn format_binary_operand<'source>(
     format_binary_operand_doc(doc, formatted, owner, expression, parent_operator)
 }
 
-fn format_binary_operand_with_leading<'source>(
-    doc: &mut DocBuilder<'source>,
-    owner: &BinaryExpression<'source>,
-    expression: &Expression<'source>,
-    parent_operator: &KotlinSyntaxToken<'_>,
-    leading: LeadingTrivia,
-) -> Doc<'source> {
-    let formatted = format_expression_with_leading(doc, expression, leading);
-    format_binary_operand_doc(doc, formatted, owner, expression, parent_operator)
-}
-
 fn format_binary_operand_doc<'source>(
     doc: &mut DocBuilder<'source>,
     formatted: Doc<'source>,
@@ -248,59 +349,6 @@ fn format_binary_operand_doc<'source>(
     doc.group(contents)
 }
 
-fn collect_binary_chain<'source>(
-    expression: Expression<'source>,
-    operands: &mut Vec<Expression<'source>>,
-    operators: &mut Vec<KotlinSyntaxToken<'source>>,
-) {
-    let Expression::BinaryExpression(binary) = expression else {
-        operands.push(expression);
-        return;
-    };
-    let Some(operator) = binary_operator(&binary) else {
-        operands.push(expression);
-        return;
-    };
-    if is_type_binary_operator(&operator) {
-        operands.push(expression);
-        return;
-    }
-    let Some(left) = present(binary.left()) else {
-        operands.push(expression);
-        return;
-    };
-    let Some(right) = present(binary.right()).and_then(|right| binary_right_expression(&right))
-    else {
-        operands.push(expression);
-        return;
-    };
-
-    collect_binary_left(left, &operator, operands, operators);
-    operators.push(operator);
-    operands.push(right);
-}
-
-fn collect_binary_left<'source>(
-    expression: Expression<'source>,
-    parent_operator: &KotlinSyntaxToken<'_>,
-    operands: &mut Vec<Expression<'source>>,
-    operators: &mut Vec<KotlinSyntaxToken<'source>>,
-) {
-    let Expression::BinaryExpression(binary) = expression else {
-        operands.push(expression);
-        return;
-    };
-    let Some(operator) = binary_operator(&binary) else {
-        operands.push(expression);
-        return;
-    };
-    if !should_flatten_binary(parent_operator, &operator) {
-        operands.push(expression);
-        return;
-    }
-    collect_binary_chain(Expression::from(binary), operands, operators);
-}
-
 struct BinaryOperatorDoc<'source> {
     doc: Doc<'source>,
     forces_line_after: bool,
@@ -322,67 +370,6 @@ fn format_binary_operator<'source>(
         doc: format_token(doc, operator, LeadingTrivia::Preserve, trailing),
         forces_line_after,
     }
-}
-
-struct BinaryChainPart<'source> {
-    operator: BinaryOperatorDoc<'source>,
-    operand: Doc<'source>,
-    spaced: bool,
-    break_before_operator: bool,
-    infix_function: bool,
-}
-
-fn binary_chain_part<'source>(
-    doc: &mut DocBuilder<'source>,
-    operator: KotlinSyntaxToken<'source>,
-    operand: Doc<'source>,
-) -> BinaryChainPart<'source> {
-    BinaryChainPart {
-        operator: format_binary_operator(doc, &operator),
-        operand,
-        spaced: !is_range_operator(&operator),
-        break_before_operator: can_break_before_operator(&operator),
-        infix_function: operator.kind() == KotlinSyntaxKind::Identifier,
-    }
-}
-
-fn binary_chain<'source>(
-    doc: &mut DocBuilder<'source>,
-    first: Doc<'source>,
-    rest: Vec<BinaryChainPart<'source>>,
-) -> Doc<'source> {
-    if rest.is_empty() {
-        return first;
-    }
-    let keep_infix_chain_flat = rest.len() > 1 && rest.iter().all(|part| part.infix_function);
-    let mut docs = Vec::new();
-    for part in rest {
-        if !part.break_before_operator {
-            let space = doc.space();
-            let line = if keep_infix_chain_flat {
-                doc.space()
-            } else {
-                doc.line()
-            };
-            let operand = doc.concat([line, part.operand]);
-            let operand = doc.indent(operand);
-            docs.push(doc.concat([space, part.operator.doc, operand]));
-        } else if part.operator.forces_line_after {
-            let before = doc.line();
-            let after = doc.line();
-            docs.push(doc.concat([before, part.operator.doc, after, part.operand]));
-        } else if part.spaced {
-            let line = doc.line();
-            let space = doc.space();
-            docs.push(doc.concat([line, part.operator.doc, space, part.operand]));
-        } else {
-            docs.push(doc.concat([part.operator.doc, part.operand]));
-        }
-    }
-    let rest = doc.concat(docs);
-    let rest = doc.indent(rest);
-    let contents = doc.concat([first, rest]);
-    doc.group(contents)
 }
 
 fn should_flatten_binary(

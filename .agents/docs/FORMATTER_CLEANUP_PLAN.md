@@ -979,22 +979,43 @@ remains separate so the formatter behavior PR has a narrow rollback boundary.
 - prove nested declarations, objects, lambdas, blocks, class/interface/object/
   enum-entry bodies, cross-family re-entry, and actual dprint-WASM depth bounds;
 - retain the deliberate distinction between parser-call bounds and deep CST
-  spines built by iterative loops, which PR 29 owns.
+  spines built by iterative loops, which PRs 29-31 own.
 
-### PR 29 — Bounded formatter CST traversal
+### PR 29 — Bounded Kotlin infix and type formatting
 
-- audit both language formatters for recursive traversal of input-depth CST
-  spines that iterative parser loops can still construct, including postfix,
-  nullable/definitely-non-null, and left-associative binary chains;
-- replace every reachable input-depth formatter call cycle with an iterative
-  borrowed-node walk or another explicitly bounded structured traversal;
+- replace recursive traversal of parser-loop type and alternating ordinary/type
+  binary CST spines with local borrowed-node two-way walks;
+- descend through exact typed child accessors, then ascend parent-aware borrowed
+  syntax to the captured outer node and replay the existing suffix layout;
+- preserve malformed field recovery, comments, trivia, precedence-parenthesis
+  claims, and exact ordinary-input allocations/topology;
+- require depth-4,096 native and actual dprint-WASM formatting and idempotence
+  for every pure and alternating infix/type spine family.
+
+### PR 30 — Bounded Kotlin suffix formatting
+
+- replace recursive traversal of parser-loop postfix/member/call/index and
+  callable-reference CST spines with one language-local borrowed-node walk;
+- preserve maximal member-chain grouping, call/navigation fusion, tight suffix
+  boundaries, malformed field recovery, and leading-comment ownership;
+- require depth-4,096 native and actual dprint-WASM formatting and idempotence
+  for every pure and alternating suffix family;
+- keep this separate from PR 29 because the combined implementation crossed the
+  production growth gate and the two algorithms have independent rollback
+  boundaries.
+
+### PR 31 — Bounded Java formatter CST traversal
+
+- replace recursive traversal of the complete postfix family and alternating
+  binary/`instanceof` spines with Java-local borrowed-node walks;
+- preserve qualified-call wrappers, member-chain grouping, array/object/this/
+  super suffix policies, removed-parenthesis claims, comments, and trivia;
 - do not replay source, clone syntax nodes/tokens, introduce a generic visitor,
   or use verbatim output for valid deep syntax;
-- split Java and Kotlin descendants if the measured implementation crosses the
-  production growth gate; require depth-4,096 native and actual dprint-WASM
-  formatting, idempotence, output parity, and neutral realistic allocations.
+- require the same depth-4,096 native/WASM/idempotence and realistic allocation/
+  topology gates as PRs 29-30.
 
-### PR 30 — Residue reconciliation
+### PR 32 — Residue reconciliation
 
 - update formatter/parser architecture and finite-cost documentation to match
   the implemented extension;
@@ -1094,8 +1115,10 @@ ready for review.
 | 26  | `cleanup/26-java-structural-recursion`   | draft open | PR 25  | [#28](https://github.com/sargunv/jolt/pull/28) | full + WASM + benchmark    | Bound recursive Java bodies and statements.      |
 | 27  | `cleanup/27-kotlin-value-recursion`      | draft open | PR 26  | [#29](https://github.com/sargunv/jolt/pull/29) | full + WASM + benchmark    | Bound recursive Kotlin type/expression syntax.   |
 | 28  | `cleanup/28-kotlin-structural-recursion` | draft open | PR 27  | [#30](https://github.com/sargunv/jolt/pull/30) | full + WASM + benchmark    | Bound recursive Kotlin blocks and class bodies.  |
-| 29  | `cleanup/29-formatter-cst-depth`         | planned    | PR 28  | —                                              | —                          | Bound deep structured formatter traversal.       |
-| 30  | `cleanup/30-residue-reconciliation`      | planned    | PR 29  | —                                              | —                          | Final evidence and debt-ledger closure.          |
+| 29  | `cleanup/29-kotlin-infix-type-depth`     | draft open | PR 28  | [#31](https://github.com/sargunv/jolt/pull/31) | full + WASM + benchmark    | Bound Kotlin infix and type formatting.          |
+| 30  | `cleanup/30-kotlin-suffix-depth`         | planned    | PR 29  | —                                              | —                          | Bound Kotlin postfix/member suffix formatting.   |
+| 31  | `cleanup/31-java-formatter-depth`        | planned    | PR 30  | —                                              | —                          | Bound deep Java formatter traversal.             |
+| 32  | `cleanup/32-residue-reconciliation`      | planned    | PR 31  | —                                              | —                          | Final evidence and debt-ledger closure.          |
 
 ### PR 01 evidence
 
@@ -2279,6 +2302,37 @@ slices remove Java nodes and allocations or leave topology unchanged.
   +175-line design. The exact benchmark records subject `c86bd69a` with its
   dirty worktree hash.
 
+### PR 29 evidence
+
+- Kotlin type suffixes and alternating ordinary/type-binary left spines now use
+  two-way borrowed CST walks: descend through typed recursive fields, format one
+  base, then ascend through syntax parents and replay the existing layout. No
+  syntax/source clone, token parsing, depth limit, valid-syntax verbatim
+  fallback, or generic traversal framework was introduced.
+- Ordinary binary runs retain one first operand plus paired operator/operand
+  parts; mirrored root state and parallel vectors are deleted.
+  Type-operator-only runs and type suffixes remain allocation-free. Missing
+  traversal nodes select the formatter's blocking invariant diagnostic instead
+  of panicking. Production is +269/-182 lines (+87 net); one generated
+  integration test is +59 lines. The separate Kotlin suffix walk moved to PR 30
+  after the combined prototype crossed the production growth gate.
+- The complete Kotlin formatter suite passed with unchanged snapshots, recovery,
+  trivia conservation, and imported-fixture output. Seven clean depth-4,096
+  pure/alternating infix and type adversaries completed natively, reconstructed
+  losslessly, retained following declarations, and formatted idempotently. A
+  combined actual dprint-WASM stdin smoke retained both sentinels.
+  `mise run
+  fix` passed strict native and WASM checks; the complete non-update
+  suite passed all 224 tests with zero skips.
+- Realistic Java/Kotlin syntax and document topology are exactly unchanged.
+  Deleting Kotlin's parallel binary-chain scratch lowers formatter allocations
+  from 38,076 to 35,364 (-2,712, -7.12%) and allocated bytes from 49,068,984 to
+  48,996,504 (-72,480). Refreshed Kotlin-format runs varied from 34.19 to 37.67
+  ms, so no causal speedup is claimed.
+- The refreshed optimized WASM is 1,766,396 bytes, seven bytes larger than the
+  rewritten PR 28 parent. The exact benchmark records clean committed subject
+  `4fa53398`.
+
 ## Decision Log
 
 | Date       | Decision                                                         | Reason                                                                                                                                                                                                                   |
@@ -2337,6 +2391,7 @@ slices remove Java nodes and allocations or leave topology unchanged.
 | 2026-07-23 | Extend the lazy lookahead summary for flat annotations.          | Token-disjoint, path-compressed `@` endpoints close the remaining quadratic suffixes with one linear algorithm; measured allocation growth has no throughput or peak-memory consequence.                                 |
 | 2026-07-23 | Share one Java recursion policy across separate counters.        | Generic lookahead must mirror consuming grammar independently, while the syntax-owner counter closes cross-family cycles; one calibrated value removes an arbitrary policy split without conflating their state.         |
 | 2026-07-23 | Split Java value and structural recursion recovery.              | One combined implementation was estimated at 220-290 production lines; the value slice is +183, while record/body/statement recovery has a separate endpoint model and rollback boundary in PR 26.                       |
+| 2026-07-23 | Split Kotlin infix/type and suffix formatter traversal.          | The combined prototype crossed the production growth gate; the +109-net infix/type walk and member-layout suffix walk replace different recursive mechanisms and have independent tests and rollback boundaries.         |
 | 2026-07-23 | Carry the syntax-found record-pattern opener into recovery.      | The existing exact type lookahead already owns disambiguation; carrying its opener lets one balanced scan recover the record without a second type/annotation grammar or semicolon special cases.                        |
 | 2026-07-23 | Coarsen unsupported statements to their enclosing body boundary. | Exact iterative handling of `if`/`else`, `do`/`while`, try handlers, and switch labels would duplicate statement grammar; one lossless BogusStatement preserves the enclosing body and later declarations.               |
 | 2026-07-23 | Use 128 active recursive owners as Kotlin's parser policy.       | Actual 1 MiB dprint-WASM failure edges leave about 7.5x-15.5x headroom across value, type, block, and class cycles; diagnostics describe parser safety rather than source levels.                                        |
