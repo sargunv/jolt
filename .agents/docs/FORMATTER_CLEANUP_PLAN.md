@@ -1003,7 +1003,7 @@ ready for review.
 | 18  | `cleanup/18-java-program-joining`        | draft open | PR 17  | [#20](https://github.com/sargunv/jolt/pull/20) | full + benchmark           | Reconcile root joining and marker ownership.     |
 | 19  | `cleanup/19-kotlin-recovery-layout`      | draft open | PR 18  | [#21](https://github.com/sargunv/jolt/pull/21) | full + benchmark           | Isolate Kotlin recovery behavior corrections.    |
 | 20  | `cleanup/20-kotlin-marker-recovery`      | draft open | PR 19  | [#22](https://github.com/sargunv/jolt/pull/22) | full + benchmark           | Own annotated type recovery without rollback.    |
-| 21  | `cleanup/21-java-delimiter-summaries`    | planned    | PR 20  | —                                              | —                          | Bound lambda and annotation parenthesis scans.   |
+| 21  | `cleanup/21-java-delimiter-summaries`    | ready      | PR 20  | —                                              | full + benchmark           | Bound lambda and annotation parenthesis scans.   |
 | 22  | `cleanup/22-java-generic-depth`          | planned    | PR 21  | —                                              | —                          | Bound recursive generic-type parsing.            |
 | 23  | `cleanup/23-residue-reconciliation`      | planned    | PR 22  | —                                              | —                          | Final evidence and transition deletion.          |
 
@@ -1857,6 +1857,46 @@ slices remove Java nodes and allocations or leave topology unchanged.
   benchmark records committed subject `0373a75`; its dirty bit reflects only the
   already-written ledger row, not production or fixture changes.
 
+### PR 21 evidence
+
+- Parenthesized-lambda rejection and ordinary annotation lookahead now share one
+  Java-local fact: an opening parenthesis's exact after-close position, or EOF
+  when unmatched. Annotation recovery policy remains local;
+  `skip_bounded_annotation` and the generic delimiter helpers are unchanged.
+- Direct scans allocate nothing until one parser crosses a fixed 16,384-token
+  work budget. The triggering suffix costs at most `N`, one exact suffix-table
+  build costs at most `N`, and all later queries are `O(1)`, so balanced-token
+  work is bounded by `B + 2N`. Counted depth-128/depth-96 tests force both sites
+  across the threshold and assert the bound and cache reuse.
+- The activated table is one `usize` per remaining token. During its single
+  build, those same words encode the open-parenthesis stack; afterward they
+  encode exact destinations. No second stack, hash table, generic query cache,
+  parser transaction, or recovery memo is retained.
+- A forward-only speculative cursor seek deletes the old lookahead balanced scan
+  loop. Production is +123/-36 lines (+87 net), below the extension's roughly
+  100-line target. One four-field Java parser sidecar has exactly two clients;
+  no recovery behavior or public syntax API depends on it.
+- Adversarial review found and fixed activation from a later annotation using
+  the annotation-local floor. Every lookahead now builds from its creation
+  floor; a repeated-lookahead regression crosses the threshold in the second
+  annotation and then queries the earlier opening parenthesis from the unchanged
+  parser position.
+- Generated full-parse tests prove deep parenthesized expressions, deep
+  malformed annotations, lossless source, following-class recovery, and
+  unmatched-open-to-EOF behavior. Exact boundary cases preserve later syntax:
+  `import a @A(value; class C {}`, `@A( class C {}`, and `@module 0`. One
+  focused syntax/formatter recovery snapshot records ordinary output parity.
+- Realistic Java and Kotlin parse/format/end-to-end allocation counts and bytes,
+  syntax topology, and formatter document topology are exactly unchanged. With
+  no offsetting allocation deletion, this proves the 16K threshold never
+  activates on the realistic corpus. Java parse moved +2.14% with a 3.25% MAD;
+  Kotlin parse moved +2.28% with a 2.66% MAD, both neutral run noise. Optimized
+  WASM moved from 1,747,902 to 1,749,345 bytes (+1,443, +0.08%).
+- `mise run fix` passed workspace formatting, Clippy, dependency, native, and
+  WASM checks. Snapshot update and the subsequent non-update suite passed all
+  190 tests with zero skips. The benchmark records committed subject `9260462`;
+  its dirty bit reflects only the already-written ledger row.
+
 ## Decision Log
 
 | Date       | Decision                                                       | Reason                                                                                                                                                                                                                   |
@@ -1908,6 +1948,7 @@ slices remove Java nodes and allocations or leave topology unchanged.
 | 2026-07-23 | Isolate Kotlin marker abandonment in a new PR 20.              | PR 19 formatter probing exposed a parser panic on malformed `when` syntax; parser marker ownership needs its own recovery fixture and rollback boundary before Java complexity work.                                     |
 | 2026-07-23 | Give annotated function types direct syntax ownership.         | Guarding the special branches avoided the panic but misclassified valid annotated `suspend` and `context` types; two optional schema fields plus one shared formatter helper preserve the grammar at +1 production line. |
 | 2026-07-23 | Reject malformed-`when` formatter visibility state.            | The recovered keyword is a present `is` token and already spaces correctly; the malformed-keyword field remains unreachable, so an API or token probe would encode no representable behavior.                            |
+| 2026-07-23 | Activate one compact parenthesis table after fixed work.       | A 16K dormant budget preserves zero realistic allocations; one word/token after activation bounds lambda rejection and ordinary annotation skipping by `B + 2N` without sharing recovery policy.                         |
 
 ## Resume Protocol
 
