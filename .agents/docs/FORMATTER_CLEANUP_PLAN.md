@@ -1003,7 +1003,7 @@ ready for review.
 | 18  | `cleanup/18-java-program-joining`        | draft open | PR 17  | [#20](https://github.com/sargunv/jolt/pull/20) | full + benchmark           | Reconcile root joining and marker ownership.     |
 | 19  | `cleanup/19-kotlin-recovery-layout`      | draft open | PR 18  | [#21](https://github.com/sargunv/jolt/pull/21) | full + benchmark           | Isolate Kotlin recovery behavior corrections.    |
 | 20  | `cleanup/20-kotlin-marker-recovery`      | draft open | PR 19  | [#22](https://github.com/sargunv/jolt/pull/22) | full + benchmark           | Own annotated type recovery without rollback.    |
-| 21  | `cleanup/21-java-delimiter-summaries`    | ready      | PR 20  | —                                              | full + benchmark           | Bound lambda and annotation parenthesis scans.   |
+| 21  | `cleanup/21-java-delimiter-summaries`    | draft open | PR 20  | [#23](https://github.com/sargunv/jolt/pull/23) | full + benchmark           | Bound lambda and annotation parenthesis scans.   |
 | 22  | `cleanup/22-java-generic-depth`          | planned    | PR 21  | —                                              | —                          | Bound recursive generic-type parsing.            |
 | 23  | `cleanup/23-residue-reconciliation`      | planned    | PR 22  | —                                              | —                          | Final evidence and transition deletion.          |
 
