@@ -724,23 +724,23 @@ This table is the source of truth after a context compaction. Update it whenever
 a branch is created, a PR is opened, scope changes, a gate fails, or a PR is
 ready for review.
 
-| PR  | Branch                                   | Status      | Parent | Draft PR                                       | Verification               | Notes                                            |
-| --- | ---------------------------------------- | ----------- | ------ | ---------------------------------------------- | -------------------------- | ------------------------------------------------ |
-| 00  | `cleanup/00-plan-and-gates`              | draft open  | `main` | [#2](https://github.com/sargunv/jolt/pull/2)   | baseline audit complete    | Durable plan and gates only.                     |
-| 01  | `cleanup/01-doc-semantics`               | draft open  | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3)   | debug/release + benchmark  | Profile-independent topology/presence.           |
-| 02  | `cleanup/02-formatter-ignore-plan`       | draft open  | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4)   | debug/release + benchmark  | Root plan with bounded immutable queries.        |
-| 03  | `cleanup/03-infallible-generated-fields` | draft open  | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5)   | debug/release + benchmark  | Generated physical slots only.                   |
-| 04  | `cleanup/04-syntax-recovery-visibility`  | draft open  | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6)   | full + release + benchmark | Syntax-owned malformed lexical boundaries.       |
-| 05  | `cleanup/05-root-coordination`           | draft open  | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7)   | full + release + benchmark | Narrow root ownership, no god context.           |
-| 06  | `cleanup/06-source-audit-reporting`      | draft open  | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8)   | full + release + benchmark | Syntax claims replace filename/count policy.     |
-| 07  | `cleanup/07-core-module-boundaries`      | draft open  | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9)   | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.     |
-| 08a | `cleanup/08a-renderer-boundaries`        | draft open  | PR 07  | [#10](https://github.com/sargunv/jolt/pull/10) | full + release + benchmark | Kept hot loop concrete; deleted duplicate state. |
-| 08b | `cleanup/08b-renderer-audit-pass`        | rejected    | PR 08a | —                                              | design audit complete      | Exact single pass requires an output trace.      |
-| 09  | `cleanup/09-kotlin-rules`                | draft open  | PR 08a | [#11](https://github.com/sargunv/jolt/pull/11) | full + release + benchmark | Rule state and helper indirection deleted.       |
-| 10  | `cleanup/10-java-rules`                  | draft open  | PR 09  | [#12](https://github.com/sargunv/jolt/pull/12) | full + release + benchmark | Total rules and native module parts.             |
-| 11  | `cleanup/11-lexer-substrate`             | in progress | PR 10  | —                                              | prototype + focused suites | Shared cursor rejected; purify local mechanics.  |
-| 12  | `cleanup/12-java-lookahead`              | planned     | PR 11  | —                                              | —                          | Counted bounded lookahead work.                  |
-| 13  | `cleanup/13-final-reconciliation`        | planned     | PR 12  | —                                              | —                          | Actual docs, metrics, and API deletions only.    |
+| PR  | Branch                                   | Status     | Parent | Draft PR                                       | Verification               | Notes                                            |
+| --- | ---------------------------------------- | ---------- | ------ | ---------------------------------------------- | -------------------------- | ------------------------------------------------ |
+| 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2)   | baseline audit complete    | Durable plan and gates only.                     |
+| 01  | `cleanup/01-doc-semantics`               | draft open | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3)   | debug/release + benchmark  | Profile-independent topology/presence.           |
+| 02  | `cleanup/02-formatter-ignore-plan`       | draft open | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4)   | debug/release + benchmark  | Root plan with bounded immutable queries.        |
+| 03  | `cleanup/03-infallible-generated-fields` | draft open | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5)   | debug/release + benchmark  | Generated physical slots only.                   |
+| 04  | `cleanup/04-syntax-recovery-visibility`  | draft open | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6)   | full + release + benchmark | Syntax-owned malformed lexical boundaries.       |
+| 05  | `cleanup/05-root-coordination`           | draft open | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7)   | full + release + benchmark | Narrow root ownership, no god context.           |
+| 06  | `cleanup/06-source-audit-reporting`      | draft open | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8)   | full + release + benchmark | Syntax claims replace filename/count policy.     |
+| 07  | `cleanup/07-core-module-boundaries`      | draft open | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9)   | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.     |
+| 08a | `cleanup/08a-renderer-boundaries`        | draft open | PR 07  | [#10](https://github.com/sargunv/jolt/pull/10) | full + release + benchmark | Kept hot loop concrete; deleted duplicate state. |
+| 08b | `cleanup/08b-renderer-audit-pass`        | rejected   | PR 08a | —                                              | design audit complete      | Exact single pass requires an output trace.      |
+| 09  | `cleanup/09-kotlin-rules`                | draft open | PR 08a | [#11](https://github.com/sargunv/jolt/pull/11) | full + release + benchmark | Rule state and helper indirection deleted.       |
+| 10  | `cleanup/10-java-rules`                  | draft open | PR 09  | [#12](https://github.com/sargunv/jolt/pull/12) | full + release + benchmark | Total rules and native module parts.             |
+| 11  | `cleanup/11-lexer-substrate`             | ready      | PR 10  | —                                              | full + release + benchmark | Shared cursor rejected; local scans are bounded. |
+| 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                              | —                          | Counted bounded lookahead work.                  |
+| 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                              | —                          | Actual docs, metrics, and API deletions only.    |
 
 ### PR 01 evidence
 
@@ -1226,6 +1226,42 @@ ready for review.
   optimized WASM plugin shrank from 1,764,334 to 1,759,618 bytes (-0.27%), with
   SHA-256 `f9131f96fe1cc5c8d90ab1a4c093f01bd61421975138daf24d037f5098599307`.
 
+### PR 11 evidence
+
+- Java and Kotlin no longer store a duplicate previous-end offset or write it
+  after every scalar. Java also deletes its one-use current-character/range
+  pair. Production Rust is +46/-73 lines (-27 net); the boundedness regression
+  adds 26 test lines, leaving all Rust at +72/-73 (-1 net).
+- Kotlin classifies a valid multi-dollar string prefix once. A failed maximal
+  dollar run records only its exclusive end, so its first token scans the run
+  and every suffix token rejects in constant time while preserving the existing
+  one-Unknown/one-diagnostic-per-dollar recovery contract. The cached word
+  replaces Kotlin's removed previous-end word; Java's scanner loses one word.
+- The 65,536-dollar valid/invalid stress test exercises actual tokenization and
+  finishes in about 0.12 seconds in debug. The uncached byte-scan prototype
+  would perform 2,147,516,416 predicate visits; the original indexed-character
+  loop would perform roughly 46.9 trillion character visits.
+- Three adversarial reviews found no range, Unicode remapping, EOF, trivia,
+  string-mode, token-boundary, cache-invalidation, or dependency-boundary issue.
+  They did find and close the end-to-end malformed-dollar complexity hole. The
+  shared cursor prototype was rejected because explicit composition grew
+  production by 163 lines; trivia sharing was rejected because it required
+  language-semantic hooks or flags.
+- The repository-defined Ona task passed all 184 tests with zero skips after the
+  final fix. `mise run fix`, strict workspace Clippy, dependency and WASM
+  checks, complete Java/Kotlin release syntax and formatter suites, the
+  9,899-file PGO build, and the optimized dprint build passed with no output or
+  snapshot delta.
+- Against PR 10 on the same machine and corpora, Java parse median moved
+  1,040.179 -> 1,020.168 ms (-1.92%) and Kotlin parse moved 27.665 -> 27.490 ms
+  (-0.64%). Every parse/format/end-to-end allocation count and byte total is
+  identical. Parse peak RSS moved 64,278,528 -> 64,253,952 bytes for Java and
+  4,530,176 -> 4,644,864 bytes for Kotlin; the latter 112 KiB increase is below
+  process/page noise and Kotlin scanner size is unchanged.
+- The non-PGO native CLI shrank from 5,923,408 to 5,919,472 bytes (-0.07%). The
+  optimized WASM plugin shrank from 1,759,618 to 1,758,605 bytes (-0.06%), with
+  SHA-256 `88e74840fd1cc89bfe575d86281026ec8471ae58f7231f6945672da4cbbe525a`.
+
 ## Decision Log
 
 | Date       | Decision                                                       | Reason                                                                                                                                                                                                     |
@@ -1265,6 +1301,8 @@ ready for review.
 | 2026-07-22 | Keep Java borrow-order macros with multiple clients.           | The concat/group/indent macros prevent repeated mutable-borrow temporaries at hundreds of sites; wholesale replacement would grow rules. Only the one-use `if_break` macro was deleted.                    |
 | 2026-07-22 | Use native syntax parts for Java module directives.            | The mirror copied all four physical variants and forced allocation; native parts preserve ignore indices, recovery barriers, and reorder ownership while shrinking the owner.                              |
 | 2026-07-22 | Keep Java program join policies separate.                      | Ordinary and ignored section joining differ around invisible entries between ignored runs; reconciling them may change output and does not belong in structural PR 10.                                     |
+| 2026-07-22 | Reject the shared lexer cursor prototype.                      | Explicit composition grew production by 163 lines and made every token rule noisier; traits, macros, implicit dereferencing, or cryptic names only hide that cost.                                         |
+| 2026-07-22 | Cache only the end of failed Kotlin dollar runs.               | A locally linear prefix helper still rescanned malformed suffixes quadratically; one forward-only boundary preserves token ownership with one scan per maximal run.                                        |
 
 ## Resume Protocol
 
