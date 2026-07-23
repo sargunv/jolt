@@ -5,10 +5,6 @@ use crate::helpers::comments::{
     format_token, format_token_before_relocated_trailing_comments, format_token_with_comments,
     format_trailing_comments_before_line_break, trailing_comments_force_line,
 };
-use crate::helpers::formatter_ignore::{
-    FormatterIgnoreItemRange, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
-    formatter_ignore_content_range, formatter_ignore_run_doc,
-};
 use crate::helpers::recovery::{JavaFormatField, format_malformed, resolve_required_field};
 use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::format_type_declaration;
@@ -18,6 +14,10 @@ use crate::rules::types::format_type;
 use crate::rules::variables::{
     format_enhanced_for_variable, format_local_variable_declaration,
     format_resource_variable_declaration,
+};
+use jolt_fmt_ir::formatter_ignore::{
+    FormatterIgnoreItemRange, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
+    formatter_ignore_content_range, formatter_ignore_run_doc,
 };
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{

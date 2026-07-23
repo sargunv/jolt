@@ -705,7 +705,7 @@ ready for review.
 | 04  | `cleanup/04-syntax-recovery-visibility`  | draft open | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6) | full + release + benchmark | Syntax-owned malformed lexical boundaries.    |
 | 05  | `cleanup/05-root-coordination`           | draft open | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7) | full + release + benchmark | Narrow root ownership, no god context.        |
 | 06  | `cleanup/06-source-audit-reporting`      | draft open | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8) | full + release + benchmark | Syntax claims replace filename/count policy.  |
-| 07  | `cleanup/07-core-module-boundaries`      | planned    | PR 06  | —                                            | —                          | Conditional crate extraction gate.            |
+| 07  | `cleanup/07-core-module-boundaries`      | draft open | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9) | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.  |
 | 08a | `cleanup/08a-renderer-boundaries`        | planned    | PR 07  | —                                            | —                          | Separate contracts without output changes.    |
 | 08b | `cleanup/08b-renderer-audit-pass`        | optional   | PR 08a | —                                            | —                          | Proceed only if two-pass semantics shrink.    |
 | 09  | `cleanup/09-kotlin-rules`                | planned    | PR 08b | —                                            | —                          | Kotlin hotspot purification.                  |
@@ -956,6 +956,59 @@ ready for review.
   at 5,950,968 bytes. Optimized WASM is 1,767,697 bytes, +196 (+0.011%), with
   SHA-256 `d34636c0956b3371a5f462ad4cd1ff307b5638fbc01bf0eb699a1ce94d8968ae`.
 
+### PR 07 evidence
+
+- Crate extraction was rejected after tracing the real strongly connected
+  component: documents carry debug source claims, the root builder owns the
+  formatter-ignore plan, and rendering observes source-conservation proof state.
+  Splitting files or crates would require a context, side table, callback trait,
+  or generic audit layer while deleting no dependency. The existing partitioned
+  crate is smaller and makes those lifecycle edges explicit; PR 08a retains the
+  renderer-specific boundary work.
+- Replacement and synthesis normalization now return ordinary `Doc` values. They
+  no longer construct exceptional lexical fragments only to resolve them with no
+  neighbors. The unused exceptional join operation, lexical-kind projection,
+  identity resolution calls, and two hypothetical import-keyword normalization
+  capabilities are deleted. Source claims remain affine and the selected-render
+  conservation proof is unchanged.
+- `DocBuilder` can no longer be default-constructed outside the crate or release
+  its arena. Arena identifiers, arena storage, renderer options, text widths,
+  ignore-run coordinates, malformed fragment construction, and exceptional
+  resolution are crate-owned. The one language rule that needs the first ignored
+  member receives a behavioral accessor rather than raw run fields.
+- The compiler-reachable `jolt_fmt_ir` root surface fell from 46 to 28 names
+  under default features and 47 to 29 with benchmarks. The Java/Kotlin formatter
+  roots together fell from six to two default names, and `NormalizedToken` fell
+  from nine to seven closed variants. Both five-line formatter-ignore alias
+  modules are deleted, and Java normalization capabilities come from the syntax
+  crate that owns them.
+- `jolt_formatter` now reexports the two sink contracts required by its public
+  function, allowing the CLI and dprint plugin to delete three direct
+  `jolt_fmt_ir` dependency declarations without changing the transitive build.
+  This is the only added facade surface; language formatter crates remain
+  implementation details.
+- Rust source is +149/-293 lines (-144 net). Excluding integration-test import
+  changes, Rust is +137/-287 (-150 net). No crate, context object, side table,
+  callback, compatibility path, or second lifecycle was introduced.
+- Repository-defined Ona automation passed all 184 workspace tests with no
+  skips, including dprint's external smoke tests. `mise run fix`,
+  `mise run
+  check`, dependency machete, all-features workspace checking,
+  strict Clippy, WASM checking, both complete release formatter suites, the
+  9,899-file PGO build, and the optimized dprint plugin build passed. Formatter
+  snapshots and output are unchanged.
+- Clean workspace check time was 19.834 seconds for PR 06 and 19.962 seconds for
+  PR 07 (+0.65%). Parent and child syntax/document topology and every allocation
+  count, total-byte, and maximum-live-byte measurement are identical on the
+  9,206-file Java and 485-file Kotlin corpora. Alternating format-only medians
+  moved -4.37% for Java and -2.36% for Kotlin; treat these only as
+  non-regression evidence.
+- The non-PGO native CLI shrank from 5,950,968 to 5,948,344 bytes (-0.04%). The
+  optimized WASM plugin shrank from 1,767,697 to 1,766,057 bytes (-0.09%), with
+  SHA-256 `12f75107b0b83dc0527a154448258cd32ddc4959d4340b14fea6cabc973e8230`.
+  Peak RSS remains unavailable because this environment lacks the benchmark's
+  required `/usr/bin/time`; no test or other measurement was skipped.
+
 ## Decision Log
 
 | Date       | Decision                                                       | Reason                                                                                                                                                                                                     |
@@ -981,6 +1034,8 @@ ready for review.
 | 2026-07-22 | Trust syntax-issued normalization claims in corpus tests.      | Syntax accessors are the declared authority; test-side spelling counts duplicated policy, could bless the wrong equal-spelling token, and ignored output-only tokens.                                      |
 | 2026-07-22 | Keep normalization permissions affine.                         | Retaining whole claims in copyable document nodes made synthesis authority reusable and grew production reporting machinery; selected claims instead retain only their existing operation data.            |
 | 2026-07-22 | Keep dense source auditing debug-only.                         | Debug owns exact identity proof and actionable ranges; release suites own output parity, snapshots, idempotence, integration behavior, and performance without a second audit path.                        |
+| 2026-07-22 | Keep the document, ignore, and render lifecycle in one crate.  | Their real source-claim, root-plan, and proof-observation cycle cannot be extracted without adding a context, side table, callback, or generic audit abstraction.                                          |
+| 2026-07-22 | Make `jolt_formatter` the integration-facing facade.           | Its public sink function requires the sink/control contracts; CLI and dprint should not depend directly on the lower document IR, while language formatter crates remain implementation details.           |
 
 ## Resume Protocol
 

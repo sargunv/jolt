@@ -10,12 +10,12 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_dangling_comments, format_removed_separator,
     format_token, token_has_comments,
 };
-use crate::helpers::formatter_ignore::{
-    FormatterIgnoreItemRange, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
-    formatter_ignore_content_range, formatter_ignore_run_doc,
-};
 use crate::helpers::recovery::{
     KotlinFormatDelimiter, KotlinFormatField, resolve_required_delimiter, resolve_required_field,
+};
+use jolt_fmt_ir::formatter_ignore::{
+    FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
+    for_each_formatter_ignore_splice, formatter_ignore_content_range, formatter_ignore_run_doc,
 };
 
 use super::format_block_item;
@@ -213,7 +213,7 @@ fn block_body_part<'source>(
 fn block_body_parts_with_ignored<'source>(
     doc: &mut DocBuilder<'source>,
     parts: &[BlockPart<'source>],
-    ignored_runs: &[crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>],
+    ignored_runs: &[FormatterIgnoreRun<'source>],
 ) -> Vec<BodyItem<'source>> {
     if ignored_runs.is_empty() {
         return block_body_parts(doc, parts);

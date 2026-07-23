@@ -22,7 +22,6 @@ globset = "0.4"
 humanize-duration = "0.0.7"
 ignore = "0.4"
 jolt_diagnostics = { path = "../jolt_diagnostics" }
-jolt_fmt_ir = { path = "../jolt_fmt_ir" }
 jolt_formatter = { path = "../jolt_formatter" }
 jolt_text = { path = "../jolt_text" }
 rayon = "1.10"

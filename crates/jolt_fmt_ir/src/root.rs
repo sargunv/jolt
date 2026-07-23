@@ -4,10 +4,9 @@ use jolt_diagnostics::Diagnostic;
 use jolt_syntax::{Language, SyntaxNode};
 
 use crate::formatter_ignore::formatter_ignore_plan_with_safety;
-use crate::render::render_source_to;
+use crate::render::{RenderOptions, render_source_to};
 use crate::{
-    Doc, DocBuilder, FormatOptions, FormatSinkResult, LexicalSafety, RenderError, RenderOptions,
-    RenderSink,
+    Doc, DocBuilder, FormatOptions, FormatSinkResult, LexicalSafety, RenderError, RenderSink,
 };
 
 /// Document arena measurements returned to benchmark-enabled language crates.

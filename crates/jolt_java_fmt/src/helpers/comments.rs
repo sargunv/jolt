@@ -5,7 +5,7 @@ use jolt_fmt_ir::{
 };
 use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxToken, RemovalClaim};
 
-use crate::helpers::formatter_ignore::is_formatter_control_marker;
+use jolt_fmt_ir::formatter_ignore::is_formatter_control_marker;
 
 pub(crate) use jolt_fmt_ir::{LeadingTrivia, TrailingTrivia};
 

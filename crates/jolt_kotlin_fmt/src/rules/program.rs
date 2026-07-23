@@ -13,10 +13,6 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_comment, format_removed_separator,
     format_terminator_list, format_token, token_has_comments,
 };
-use crate::helpers::formatter_ignore::{
-    FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
-    for_each_formatter_ignore_splice, formatter_ignore_run_doc,
-};
 use crate::helpers::recovery::{
     KotlinFormatListPart, format_malformed, format_missing, format_optional_field,
     format_required_field, resolve_list_part,
@@ -26,6 +22,10 @@ use crate::rules::declarations::format_file_item;
 use crate::rules::imports::format_import_list;
 use crate::rules::names::format_qualified_name;
 use crate::rules::statements::format_statement_syntax_with_leading;
+use jolt_fmt_ir::formatter_ignore::{
+    FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
+    for_each_formatter_ignore_splice, formatter_ignore_run_doc,
+};
 
 pub(crate) fn format_file<'source>(
     file: &KotlinFile<'source>,

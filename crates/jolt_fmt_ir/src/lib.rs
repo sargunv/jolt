@@ -13,27 +13,17 @@ mod width;
 
 pub use comment_text::{
     format_comment_lines, format_star_block_comment, is_empty_single_line_block_comment,
-    is_star_block_comment, normalize_star_block_body_line, preserved_block_comment_lines,
-    preserved_comment_lines, strip_block_comment_delimiters, universal_comment_lines,
+    is_star_block_comment, preserved_block_comment_lines, preserved_comment_lines,
 };
 #[cfg(feature = "bench")]
 pub use document::DocArenaMetrics;
-pub use document::{ConcatBuilder, Doc, DocArena, DocBuilder, DocId};
-pub use jolt_syntax::{
-    NormalizedToken, RemovalClaim, RemovalReason, ReorderClaim, ReplacementClaim, SynthesisClaim,
-};
+pub use document::{ConcatBuilder, Doc, DocBuilder};
 pub use options::{FormatOptions, FormatSinkResult};
 pub use recovery::{
     FormatField, assemble_malformed_fragment, format_optional_field, format_required_field,
 };
-pub use render::{
-    IndentStyle, RenderControl, RenderError, RenderOptions, RenderOutcome, RenderSink, render_to,
-};
+pub use render::{RenderControl, RenderError, RenderSink};
 #[doc(hidden)]
 pub use root::{FormatRootMetrics, format_root_to_sink};
-pub use source_fragment::{
-    ExceptionalFragment, ExceptionalSeparator, FragmentBoundary, LexicalAtom, LexicalAtomKind,
-    LexicalSafety,
-};
+pub use source_fragment::{ExceptionalSeparator, LexicalAtom, LexicalAtomKind, LexicalSafety};
 pub use token_trivia::{LeadingTrivia, TrailingTrivia, format_token_doc};
-pub use width::TextWidth;

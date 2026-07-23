@@ -1,8 +1,7 @@
-use jolt_syntax::{
-    NormalizationOwner, NormalizedToken, RemovalReason, ReorderReason, ReplacementClaim,
-    SourceIdentity, SynthesisClaim,
+use jolt_syntax::{NormalizationOwner, RemovalReason, ReorderReason, SourceIdentity};
+pub use jolt_syntax::{
+    NormalizedToken, RemovalClaim, ReorderClaim, ReplacementClaim, SynthesisClaim,
 };
-pub use jolt_syntax::{RemovalClaim, ReorderClaim};
 
 use crate::language::{JavaLanguage, NORMALIZATION_AUTHORITY};
 use crate::{

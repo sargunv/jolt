@@ -1,5 +1,5 @@
-use jolt_fmt_ir::{Doc, DocBuilder, SynthesisClaim};
-use jolt_java_syntax::{JavaSyntaxListPart, JavaSyntaxToken};
+use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_java_syntax::{JavaSyntaxListPart, JavaSyntaxToken, SynthesisClaim};
 
 use crate::helpers::comments::{
     InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, delimiter_dangling_comments,

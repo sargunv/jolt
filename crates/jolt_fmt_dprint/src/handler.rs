@@ -11,8 +11,9 @@ use dprint_core::{
     },
 };
 use jolt_diagnostics::{Diagnostic, DiagnosticStage, Severity};
-use jolt_fmt_ir::{RenderControl, RenderSink};
-use jolt_formatter::{FormatOptions, FormatSinkResult, Language, format_source_to_sink};
+use jolt_formatter::{
+    FormatOptions, FormatSinkResult, Language, RenderControl, RenderSink, format_source_to_sink,
+};
 use jolt_text::LineIndex;
 
 #[cfg(feature = "wasm")]

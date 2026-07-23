@@ -12,6 +12,7 @@ use crate::helpers::comments::{
 };
 use crate::helpers::recovery::{JavaFormatField, format_malformed, resolve_required_field};
 use jolt_fmt_ir::DocBuilder;
+use jolt_fmt_ir::formatter_ignore::FormatterIgnoreRun;
 use jolt_java_syntax::{JavaSyntaxListPart, JavaSyntaxView, LocalTypeDeclarationSyntax};
 
 pub(crate) fn format_block<'source>(
@@ -111,7 +112,7 @@ fn present_block_token<'source>(
 
 fn format_block_statement_items_with_ignored<'source>(
     entries: &[JavaSyntaxListPart<'source, BlockStatement<'source>>],
-    runs: &[crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>],
+    runs: &[FormatterIgnoreRun<'source>],
     doc: &mut DocBuilder<'source>,
 ) -> Vec<BodyItem<'source>> {
     let mut items = Vec::with_capacity(entries.len().saturating_add(runs.len()));

@@ -4,13 +4,13 @@ use std::ops::{Deref, DerefMut};
 
 use crate::width::{TextWidth, display_width, literal_text_metrics};
 use crate::{
-    ExceptionalFragment, ExceptionalSeparator, FragmentBoundary, LexicalAtom, LexicalSafety,
     formatter_ignore::{
         FormatterIgnoreItemRange, FormatterIgnorePlan, FormatterIgnoreRun,
         formatter_ignore_may_apply, formatter_ignore_runs,
     },
     source_fragment::{
-        ExceptionalSeparators, SourceClaim, exceptional_separators, normalized_lexical_kind,
+        ExceptionalFragment, ExceptionalSeparator, ExceptionalSeparators, FragmentBoundary,
+        LexicalAtom, LexicalSafety, SourceClaim, exceptional_separators,
     },
 };
 use jolt_syntax::{
@@ -56,10 +56,10 @@ impl Doc<'_> {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct DocId(u32);
+pub(crate) struct DocId(u32);
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
-pub struct DocArena<'source> {
+pub(crate) struct DocArena<'source> {
     nodes: Vec<DocNode<'source>>,
     children: Vec<Doc<'source>>,
     invariant_error: Option<String>,
@@ -83,7 +83,7 @@ impl<'source> DocArena<'source> {
     /// Returns allocation-independent size and capacity measurements.
     #[cfg(feature = "bench")]
     #[must_use]
-    pub fn benchmark_metrics(&self) -> DocArenaMetrics {
+    pub(crate) fn benchmark_metrics(&self) -> DocArenaMetrics {
         use std::mem::size_of;
 
         DocArenaMetrics {
@@ -134,7 +134,6 @@ impl<'source> DocArena<'source> {
     }
 }
 
-#[derive(Default)]
 pub struct DocBuilder<'source> {
     arena: DocArena<'source>,
     list_scratch: Vec<Doc<'source>>,
@@ -143,8 +142,12 @@ pub struct DocBuilder<'source> {
 
 impl<'source> DocBuilder<'source> {
     #[must_use]
-    pub fn new() -> Self {
-        Self::default()
+    pub(crate) fn new() -> Self {
+        Self {
+            arena: DocArena::default(),
+            list_scratch: Vec::new(),
+            formatter_ignore: None,
+        }
     }
 
     /// Creates the root document builder with its immutable formatter-ignore
@@ -314,7 +317,7 @@ impl<'source> DocBuilder<'source> {
     /// covers. An empty core and empty claim set still records malformed
     /// dispatch.
     #[must_use]
-    pub fn malformed_verbatim<L: Language>(
+    pub(crate) fn malformed_verbatim<L: Language>(
         &mut self,
         core: &SyntaxVerbatimCore<'source, L>,
         boundary: FragmentBoundary<'source>,
@@ -332,7 +335,7 @@ impl<'source> DocBuilder<'source> {
 
     /// Emits malformed source and derives lexical boundaries from syntax.
     #[must_use]
-    pub fn malformed_verbatim_with_safety<L: Language>(
+    pub(crate) fn malformed_verbatim_with_safety<L: Language>(
         &mut self,
         core: &SyntaxVerbatimCore<'source, L>,
         safety: &mut impl LexicalSafety<L>,
@@ -350,23 +353,10 @@ impl<'source> DocBuilder<'source> {
 
     /// Emits normalized spelling while consuming the replaced source identity.
     #[must_use]
-    pub fn replaced_source(
-        &mut self,
-        claim: ReplacementClaim<'source>,
-    ) -> ExceptionalFragment<'source> {
+    pub fn replaced_source(&mut self, claim: ReplacementClaim<'source>) -> Doc<'source> {
         let (source, token) = claim.into_parts();
         let text = token.text();
-        let contents =
-            self.source_fragment(Cow::Borrowed(text), SourceClaim::Replaced { source, token });
-        let atom = LexicalAtom::new(normalized_lexical_kind(token), text);
-        ExceptionalFragment::new(
-            contents,
-            FragmentBoundary {
-                first: Some(atom),
-                last: Some(atom),
-                ends_with_line_comment: false,
-            },
-        )
+        self.source_fragment(Cow::Borrowed(text), SourceClaim::Replaced { source, token })
     }
 
     /// Consumes a source identity without emitting text.
@@ -378,24 +368,12 @@ impl<'source> DocBuilder<'source> {
 
     /// Emits an authorized source-free token anchored near represented syntax.
     #[must_use]
-    pub fn synthesized_source(
-        &mut self,
-        claim: SynthesisClaim<'source>,
-    ) -> ExceptionalFragment<'source> {
+    pub fn synthesized_source(&mut self, claim: SynthesisClaim<'source>) -> Doc<'source> {
         let (anchor, token) = claim.into_parts();
         let text = token.text();
-        let contents = self.source_fragment(
+        self.source_fragment(
             Cow::Borrowed(text),
             SourceClaim::Synthesized { token, anchor },
-        );
-        let atom = LexicalAtom::new(normalized_lexical_kind(token), text);
-        ExceptionalFragment::new(
-            contents,
-            FragmentBoundary {
-                first: Some(atom),
-                last: Some(atom),
-                ends_with_line_comment: false,
-            },
         )
     }
 
@@ -414,7 +392,7 @@ impl<'source> DocBuilder<'source> {
 
     /// Resolves the only permitted lexical joins around an exceptional fragment.
     #[must_use]
-    pub fn resolve_exceptional<L: Language>(
+    pub(crate) fn resolve_exceptional<L: Language>(
         &mut self,
         fragment: ExceptionalFragment<'source>,
         left: Option<&SyntaxToken<'source, L>>,
@@ -436,44 +414,6 @@ impl<'source> DocBuilder<'source> {
         let before = self.exceptional_separator(separators.before);
         let after = self.exceptional_separator(separators.after);
         self.concat([before, fragment.doc(), after])
-    }
-
-    /// Joins two exceptional fragments while retaining their outer boundary.
-    ///
-    /// This is the only exceptional-to-exceptional composition path. It makes
-    /// exactly one bounded lexical-safety decision at their shared edge.
-    #[must_use]
-    pub fn join_exceptional<L: Language>(
-        &mut self,
-        left: ExceptionalFragment<'source>,
-        right: ExceptionalFragment<'source>,
-        safety: &mut impl LexicalSafety<L>,
-    ) -> ExceptionalFragment<'source> {
-        let left_boundary = left.boundary();
-        let right_boundary = right.boundary();
-        let separator = if left_boundary.ends_with_line_comment && right_boundary.first.is_some() {
-            ExceptionalSeparator::HardLine
-        } else {
-            match (left_boundary.last, right_boundary.first) {
-                (Some(left), Some(right)) => safety.separator(left, right),
-                _ => ExceptionalSeparator::None,
-            }
-        };
-        let separator = self.exceptional_separator(separator);
-        let doc = self.concat([left.doc(), separator, right.doc()]);
-        let right_has_boundary = right_boundary.first.is_some() || right_boundary.last.is_some();
-        ExceptionalFragment::new(
-            doc,
-            FragmentBoundary {
-                first: left_boundary.first.or(right_boundary.first),
-                last: right_boundary.last.or(left_boundary.last),
-                ends_with_line_comment: if right_has_boundary {
-                    right_boundary.ends_with_line_comment
-                } else {
-                    left_boundary.ends_with_line_comment
-                },
-            },
-        )
     }
 
     #[must_use]
@@ -588,7 +528,7 @@ impl<'source> DocBuilder<'source> {
     }
 
     #[must_use]
-    pub fn into_arena(self) -> DocArena<'source> {
+    pub(crate) fn into_arena(self) -> DocArena<'source> {
         self.arena
     }
 
