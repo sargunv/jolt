@@ -1,0 +1,30 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+typealias T=@
+typealias AnnotatedSuspend = @A suspend () -> Unit
+typealias AnnotatedContext = @A context(String) () -> Unit
+
+fun f(x: Any) = when(x) { is @ String -> 1 }
+
+class Following
+
+formatted:
+typealias T = @
+
+typealias AnnotatedSuspend = @A suspend () -> Unit
+
+typealias AnnotatedContext = @A context(String) () -> Unit
+
+fun f(x: Any) = when (x) {
+  is @ String -> 1
+}
+
+class Following
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(23) }) message=expected name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(23) }) message=expected type
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(163), end: TextSize(165) }) message=expected type

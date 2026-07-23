@@ -98,7 +98,7 @@ impl Parser<'_> {
 
         match self.current_kind() {
             _ if self.at_soft_keyword("suspend") => {
-                self.abandon(prefix);
+                self.finish_optional_type_annotations(prefix, prefix_start);
                 let form = self.start();
                 self.bump();
                 self.parse_type_until(stops, stop_position);
@@ -106,7 +106,7 @@ impl Parser<'_> {
                 self.complete(marker, K::FunctionType)
             }
             _ if self.at_soft_keyword("context") && self.nth_kind(1) == K::LParen => {
-                self.abandon(prefix);
+                self.finish_optional_type_annotations(prefix, prefix_start);
                 self.bump();
                 self.parse_parenthesized_type_contents(
                     K::FunctionTypeParameterSeparatedList,
@@ -139,7 +139,7 @@ impl Parser<'_> {
                 self.complete(marker, K::UserType)
             }
             _ => {
-                self.abandon(prefix);
+                self.finish_optional_type_annotations(prefix, prefix_start);
                 let diagnostic = self.pending_expected("expected type");
                 let mut consumed = false;
                 while !(self.at_type_stop(stops, stop_position)
@@ -153,6 +153,14 @@ impl Parser<'_> {
 
                 self.complete_recovery(marker, K::BogusType, [diagnostic])
             }
+        }
+    }
+
+    fn finish_optional_type_annotations(&mut self, annotations: jolt_syntax::Marker, start: usize) {
+        if self.position() == start {
+            self.abandon(annotations);
+        } else {
+            self.complete(annotations, K::AnnotationList);
         }
     }
 

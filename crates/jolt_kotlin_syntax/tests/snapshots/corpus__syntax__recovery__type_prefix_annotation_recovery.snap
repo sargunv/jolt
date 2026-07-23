@@ -1,0 +1,168 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+typealias T=@
+typealias AnnotatedSuspend = @A suspend () -> Unit
+typealias AnnotatedContext = @A context(String) () -> Unit
+
+fun f(x: Any) = when(x) { is @ String -> 1 }
+
+class Following
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    TypeAliasDeclaration
+      ModifierList
+      ModifierList
+      TypeAliasKw "typealias" @ 0..9 trailing=[Whitespace " "]
+      Name
+        Identifier "T" @ 10..11
+      Assign "=" @ 11..12
+      TypeReference
+        BogusType
+          AnnotationList
+            Annotation
+              At "@" @ 12..13
+              QualifiedName
+                QualifiedNameSegmentList
+                  Name
+    TypeAliasDeclaration
+      ModifierList
+      ModifierList
+      TypeAliasKw "typealias" @ 14..23 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "AnnotatedSuspend" @ 24..40 trailing=[Whitespace " "]
+      Assign "=" @ 41..42 trailing=[Whitespace " "]
+      TypeReference
+        FunctionType
+          AnnotationList
+            Annotation
+              At "@" @ 43..44
+              QualifiedName
+                QualifiedNameSegmentList
+                  Name
+                    Identifier "A" @ 44..45 trailing=[Whitespace " "]
+          SuspendedFunctionType
+            Identifier "suspend" @ 46..53 trailing=[Whitespace " "]
+            FunctionType
+              ArrowFunctionType
+                ParenthesizedType
+                  AnnotationList
+                  LParen "(" @ 54..55
+                  ParenthesizedTypeEntryList
+                  RParen ")" @ 55..56 trailing=[Whitespace " "]
+                Arrow "->" @ 57..59 trailing=[Whitespace " "]
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "Unit" @ 60..64
+    TypeAliasDeclaration
+      ModifierList
+      ModifierList
+      TypeAliasKw "typealias" @ 65..74 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "AnnotatedContext" @ 75..91 trailing=[Whitespace " "]
+      Assign "=" @ 92..93 trailing=[Whitespace " "]
+      TypeReference
+        ContextFunctionType
+          AnnotationList
+            Annotation
+              At "@" @ 94..95
+              QualifiedName
+                QualifiedNameSegmentList
+                  Name
+                    Identifier "A" @ 95..96 trailing=[Whitespace " "]
+          Identifier "context" @ 97..104
+          LParen "(" @ 104..105
+          FunctionTypeParameterSeparatedList
+            FunctionTypeParameter
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "String" @ 105..111
+          RParen ")" @ 111..112 trailing=[Whitespace " "]
+          FunctionType
+            ArrowFunctionType
+              ParenthesizedType
+                AnnotationList
+                LParen "(" @ 113..114
+                ParenthesizedTypeEntryList
+                RParen ")" @ 114..115 trailing=[Whitespace " "]
+              Arrow "->" @ 116..118 trailing=[Whitespace " "]
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Unit" @ 119..123
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 125..128 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "f" @ 129..130
+      ValueParameterList
+        LParen "(" @ 130..131
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "x" @ 131..132
+            Colon ":" @ 132..133 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Any" @ 134..137
+        RParen ")" @ 137..138 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 139..140 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 141..145
+          WhenSubject
+            LParen "(" @ 145..146
+            NameExpression
+              Identifier "x" @ 146..147
+            RParen ")" @ 147..148 trailing=[Whitespace " "]
+          LBrace "{" @ 149..150 trailing=[Whitespace " "]
+          WhenEntryList
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  IsKw "is" @ 151..153 trailing=[Whitespace " "]
+                  TypeReference
+                    BogusType
+                      AnnotationList
+                        Annotation
+                          At "@" @ 154..155 trailing=[Whitespace " "]
+                          QualifiedName
+                            QualifiedNameSegmentList
+                              Name
+                                Identifier "String" @ 156..162 trailing=[Whitespace " "]
+              Arrow "->" @ 163..165 trailing=[Whitespace " "]
+              WhenEntryBody
+                LiteralExpression
+                  IntegerLiteral "1" @ 166..167 trailing=[Whitespace " "]
+          RBrace "}" @ 168..169
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 171..176 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Following" @ 177..186
+  Eof "" @ 187..187 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=14..23 message="expected name"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=14..23 message="expected type"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=163..165 message="expected type"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(23) }) message=expected name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(23) }) message=expected type
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(163), end: TextSize(165) }) message=expected type
