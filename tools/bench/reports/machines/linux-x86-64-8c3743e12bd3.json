@@ -47,33 +47,33 @@
             "memory": "/workspaces/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /workspaces/jolt/tools/import/.imports/maplibre-compose/source --language kotlin --mode end-to-end --measurement memory",
             "timing": "/workspaces/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /workspaces/jolt/tools/import/.imports/maplibre-compose/source --language kotlin --mode end-to-end --measurement timing --samples 20 --warmups 2"
           },
-          "peak_rss_bytes": 5914624,
+          "peak_rss_bytes": 6045696,
           "timing": {
             "samples_ns": [
-              64290318,
-              64258254,
-              66377065,
-              64583487,
-              63907219,
-              64202053,
-              64856167,
-              64360669,
-              64779039,
-              64277616,
-              64448902,
-              64492813,
-              64511434,
-              64709844,
-              65150818,
-              65704550,
-              64111365,
-              64251729,
-              64141276,
-              64477967
+              65067368,
+              63994210,
+              64076502,
+              64207304,
+              64048368,
+              64282314,
+              64583833,
+              64528609,
+              66700250,
+              66250657,
+              64797537,
+              64408085,
+              64331246,
+              64477538,
+              65491916,
+              64314784,
+              64978475,
+              64566909,
+              64284045,
+              64625392
             ],
             "summary": {
-              "median_absolute_deviation_ns": 229057.5,
-              "median_ns": 64463434.5
+              "median_absolute_deviation_ns": 257611.5,
+              "median_ns": 64503073.5
             },
             "warmups": 2
           }
@@ -113,33 +113,33 @@
             "memory": "/workspaces/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /workspaces/jolt/tools/import/.imports/maplibre-compose/source --language kotlin --mode format --measurement memory",
             "timing": "/workspaces/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /workspaces/jolt/tools/import/.imports/maplibre-compose/source --language kotlin --mode format --measurement timing --samples 20 --warmups 2"
           },
-          "peak_rss_bytes": 22859776,
+          "peak_rss_bytes": 22851584,
           "timing": {
             "samples_ns": [
-              44588216,
-              34949935,
-              34667420,
-              34626755,
-              34483998,
-              34418071,
-              34704903,
-              34731866,
-              34807694,
-              34915422,
-              35041840,
-              34602944,
-              34545749,
-              34668961,
-              34711148,
-              36540343,
-              34994467,
-              34512801,
-              34748873,
-              34506107
+              35115290,
+              34871988,
+              35634114,
+              35379960,
+              35368526,
+              35095085,
+              35126415,
+              35226738,
+              35050315,
+              35053730,
+              35203843,
+              35411648,
+              35012807,
+              34903120,
+              34918460,
+              34875471,
+              34965807,
+              35880366,
+              45021926,
+              35903353
             ],
             "summary": {
-              "median_absolute_deviation_ns": 178750.5,
-              "median_ns": 34708025.5
+              "median_absolute_deviation_ns": 210062.5,
+              "median_ns": 35120852.5
             },
             "warmups": 2
           }
@@ -179,33 +179,33 @@
             "memory": "/workspaces/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /workspaces/jolt/tools/import/.imports/maplibre-compose/source --language kotlin --mode parse --measurement memory",
             "timing": "/workspaces/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /workspaces/jolt/tools/import/.imports/maplibre-compose/source --language kotlin --mode parse --measurement timing --samples 20 --warmups 2"
           },
-          "peak_rss_bytes": 4743168,
+          "peak_rss_bytes": 4751360,
           "timing": {
             "samples_ns": [
-              27692933,
-              27440806,
-              27662756,
-              44827600,
-              45597388,
-              49738788,
-              38197270,
-              38555014,
-              40374278,
-              44785259,
-              40007814,
-              37200942,
-              35736207,
-              31160019,
-              30847758,
-              29392254,
-              34618052,
-              48469951,
-              31247466,
-              33066451
+              42809369,
+              27940630,
+              27525063,
+              29081794,
+              32641305,
+              30240465,
+              33556728,
+              33296845,
+              34583797,
+              33621605,
+              27383690,
+              29466527,
+              30946250,
+              31501005,
+              27895016,
+              40049543,
+              37141952,
+              27238595,
+              27049362,
+              27109277
             ],
             "summary": {
-              "median_absolute_deviation_ns": 5464686.0,
-              "median_ns": 36468574.5
+              "median_absolute_deviation_ns": 2995809.0,
+              "median_ns": 30593357.5
             },
             "warmups": 2
           }
@@ -220,9 +220,9 @@
         },
         "normalized": {
           "document_nodes_per_token": 2.9539225269775553,
-          "end_to_end_ns_per_token": 411.8569279129051,
-          "format_ns_per_token": 221.7495990902063,
-          "parse_ns_per_token": 232.9977478772545,
+          "end_to_end_ns_per_token": 412.1101815115098,
+          "format_ns_per_token": 224.38715108069945,
+          "parse_ns_per_token": 195.46098237274708,
           "tree_reserved_bytes_per_node": 80.92973703801952,
           "tree_reserved_bytes_per_token": 120.84833151246814
         },
@@ -245,18 +245,18 @@
             "modified_files": 430,
             "timing": {
               "samples_ns": [
-                174620829,
-                153289482,
-                148748432,
-                203336261,
-                153544456
+                193065490,
+                117536294,
+                116864910,
+                118508066,
+                118408391
               ],
               "summary": {
-                "median_absolute_deviation_ns": 4796024.0,
-                "median_ns": 153544456.0
+                "median_absolute_deviation_ns": 872097.0,
+                "median_ns": 118408391.0
               }
             },
-            "version": "dprint 0.54.0; jolt c06701c5"
+            "version": "dprint 0.54.0; jolt 932470b0"
           },
           "jolt-native": {
             "command": "/workspaces/jolt/target/release/jolt fmt /workspaces/jolt/target/bench/architecture/cli/kotlin/jolt-native/source",
@@ -264,13 +264,13 @@
             "label": "jolt (native)",
             "modified_files": 430,
             "timing": {
-              "samples_ns": [55125397, 55717547, 65930914, 66876875, 83466504],
+              "samples_ns": [116177778, 98653829, 89800285, 79277217, 87655306],
               "summary": {
-                "median_absolute_deviation_ns": 10213367.0,
-                "median_ns": 65930914.0
+                "median_absolute_deviation_ns": 8853544.0,
+                "median_ns": 89800285.0
               }
             },
-            "version": "jolt 0.20260721.0 (c06701c5)"
+            "version": "jolt 0.20260721.0 (932470b0)"
           }
         },
         "warmups": 1
@@ -318,33 +318,33 @@
             "memory": "/workspaces/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /workspaces/jolt/tools/import/.imports/spring-framework --language java --mode end-to-end --measurement memory",
             "timing": "/workspaces/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /workspaces/jolt/tools/import/.imports/spring-framework --language java --mode end-to-end --measurement timing --samples 20 --warmups 2"
           },
-          "peak_rss_bytes": 78041088,
+          "peak_rss_bytes": 78176256,
           "timing": {
             "samples_ns": [
-              2619297251,
-              2721994049,
-              2545659155,
-              2888013653,
-              2551939114,
-              2817407856,
-              2542711285,
-              2858084669,
-              2593106611,
-              2715999174,
-              2690557743,
-              2665781118,
-              2670852716,
-              2698298739,
-              2919150787,
-              2608422473,
-              2779716020,
-              2540538584,
-              2761797891,
-              2556751956
+              2548830599,
+              2907870233,
+              2576945856,
+              2784596560,
+              2682946878,
+              2631502034,
+              2828579953,
+              2560354234,
+              2934200101,
+              2561663923,
+              2917193678,
+              2562153938,
+              2937774221,
+              2651635062,
+              2694412890,
+              2783956372,
+              2613940285,
+              2752130255,
+              2600195486,
+              2774754194
             ],
             "summary": {
-              "median_absolute_deviation_ns": 93304704.5,
-              "median_ns": 2680705229.5
+              "median_absolute_deviation_ns": 103825352.0,
+              "median_ns": 2688679884.0
             },
             "warmups": 2
           }
@@ -384,33 +384,33 @@
             "memory": "/workspaces/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /workspaces/jolt/tools/import/.imports/spring-framework --language java --mode format --measurement memory",
             "timing": "/workspaces/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /workspaces/jolt/tools/import/.imports/spring-framework --language java --mode format --measurement timing --samples 20 --warmups 2"
           },
-          "peak_rss_bytes": 721244160,
+          "peak_rss_bytes": 721354752,
           "timing": {
             "samples_ns": [
-              1692971307,
-              1556309921,
-              1699803629,
-              1639818454,
-              1580375525,
-              1816325385,
-              1642050443,
-              1584714348,
-              1749773076,
-              1743167580,
-              1575715249,
-              1752774019,
-              1772363178,
-              1593123759,
-              1726830590,
-              1689461463,
-              1549229259,
-              1696857048,
-              1606154623,
-              1543385114
+              1586002126,
+              1575101243,
+              1974689146,
+              1583309648,
+              1552552893,
+              2067181852,
+              1652453055,
+              1610679979,
+              1725800341,
+              1569584683,
+              1704393758,
+              1738361053,
+              1559911760,
+              1653780883,
+              1789382953,
+              1580689841,
+              1631778083,
+              1923476246,
+              1570617901,
+              1618040958
             ],
             "summary": {
-              "median_absolute_deviation_ns": 79226616.0,
-              "median_ns": 1665755953.0
+              "median_absolute_deviation_ns": 54808228.5,
+              "median_ns": 1624909520.5
             },
             "warmups": 2
           }
@@ -450,33 +450,33 @@
             "memory": "/workspaces/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /workspaces/jolt/tools/import/.imports/spring-framework --language java --mode parse --measurement memory",
             "timing": "/workspaces/jolt/target/bench/architecture/jolt_bench_driver-timing --corpus /workspaces/jolt/tools/import/.imports/spring-framework --language java --mode parse --measurement timing --samples 20 --warmups 2"
           },
-          "peak_rss_bytes": 64684032,
+          "peak_rss_bytes": 64618496,
           "timing": {
             "samples_ns": [
-              1159902833,
-              1015169057,
-              1012007104,
-              1114934380,
-              1316658418,
-              1074479526,
-              1003063257,
-              1010462172,
-              1123039486,
-              1142913582,
-              1015960113,
-              1007542542,
-              1012298809,
-              1255822348,
-              1015156212,
-              1012203401,
-              1009010199,
-              1165942314,
-              1156583115,
-              1013930983
+              1109503142,
+              1013249625,
+              1011416185,
+              1068785036,
+              1175274197,
+              1013341379,
+              999731249,
+              1007130520,
+              1247117244,
+              1062435731,
+              1007412953,
+              1009786365,
+              1021670841,
+              1354778871,
+              1081586071,
+              1005667685,
+              1004773113,
+              1195436675,
+              1260365578,
+              1262586510
             ],
             "summary": {
-              "median_absolute_deviation_ns": 10261685.5,
-              "median_ns": 1015564585.0
+              "median_absolute_deviation_ns": 36832887.0,
+              "median_ns": 1042053286.0
             },
             "warmups": 2
           }
@@ -491,9 +491,9 @@
         },
         "normalized": {
           "document_nodes_per_token": 3.2036548289032494,
-          "end_to_end_ns_per_token": 410.98009823519754,
-          "format_ns_per_token": 255.37777808099176,
-          "parse_ns_per_token": 155.69665337107426,
+          "end_to_end_ns_per_token": 412.2026960254115,
+          "format_ns_per_token": 249.115593542135,
+          "parse_ns_per_token": 159.7576477763164,
           "tree_reserved_bytes_per_node": 86.54594701944993,
           "tree_reserved_bytes_per_token": 112.77569747434848
         },
@@ -516,18 +516,18 @@
             "modified_files": 8772,
             "timing": {
               "samples_ns": [
-                4056576677,
-                4246262451,
-                4283255234,
-                4340986650,
-                4085132689
+                4149450178,
+                4141386924,
+                4214254748,
+                4247244517,
+                3797725350
               ],
               "summary": {
-                "median_absolute_deviation_ns": 94724199.0,
-                "median_ns": 4246262451.0
+                "median_absolute_deviation_ns": 64804570.0,
+                "median_ns": 4149450178.0
               }
             },
-            "version": "dprint 0.54.0; jolt c06701c5"
+            "version": "dprint 0.54.0; jolt 932470b0"
           },
           "jolt-native": {
             "command": "/workspaces/jolt/target/release/jolt fmt /workspaces/jolt/target/bench/architecture/cli/java/jolt-native/source",
@@ -536,18 +536,18 @@
             "modified_files": 8772,
             "timing": {
               "samples_ns": [
-                2412944093,
-                2011949649,
-                1947981857,
-                2011916841,
-                2074556232
+                1971854448,
+                2065582791,
+                2080664104,
+                1984658593,
+                1957637064
               ],
               "summary": {
-                "median_absolute_deviation_ns": 62606583.0,
-                "median_ns": 2011949649.0
+                "median_absolute_deviation_ns": 27021529.0,
+                "median_ns": 1984658593.0
               }
             },
-            "version": "jolt 0.20260721.0 (c06701c5)"
+            "version": "jolt 0.20260721.0 (932470b0)"
           }
         },
         "warmups": 1
@@ -565,10 +565,10 @@
     "release": "7.0.0-1006-aws",
     "system": "Linux"
   },
-  "recorded_at": "2026-07-23T21:30:43.834948+00:00",
+  "recorded_at": "2026-07-23T21:36:54.654391+00:00",
   "schema_version": 1,
   "subject": {
-    "commit": "c06701c50cd4e15f1463edb9e82c96e73f90c565",
+    "commit": "932470b007c0ad1809589abffe908f6f4cc40e1c",
     "dirty": false,
     "worktree_sha256": null
   }

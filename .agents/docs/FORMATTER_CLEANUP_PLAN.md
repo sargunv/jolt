@@ -2440,9 +2440,10 @@ slices remove Java nodes and allocations or leave topology unchanged.
   -17, and Kotlin formatter -19. No generic walker, recovery scanner, parser
   budget, list policy, or cross-language operator abstraction was introduced.
 - This is a representation-only substitution with no new allocation or layout
-  path. The refreshed benchmark artifact includes reductions from binary-state
-  cleanup already folded into PRs 29 and 31, so those cumulative allocation and
-  timing changes are not attributed to PR 32.
+  path. Refreshed Java and Kotlin allocation counts, bytes, and topology are
+  identical to PR 31; timing moved inconsistently, so no speed claim is made.
+  Optimized WASM moves 1,775,872 -> 1,775,919 bytes (+47, +0.003%). The exact
+  benchmark records clean committed subject `932470b0`.
 
 ## Historical deferral reconciliation
 
@@ -2465,7 +2466,7 @@ retained local design smaller; it does not mean the item was forgotten.
 | PR 10                     | Reconcile Java ordinary/ignore-aware program joining around invisible entries.                                                        | Completed by PR 18 with one Java-local `ProgramSection` stream and joiner, plus marker-conservation coverage.                                                                                                                                                   |
 | PR 11                     | Share lexer cursor or trivia mechanics if a smaller neutral composition emerges.                                                      | Accepted rejection. The cursor prototype added 163 production lines and obscured every token rule; trivia sharing required language-semantic hooks. The two small language-owned scanners are the final boundary.                                               |
 | PR 12                     | Bound nested parenthesis and annotation-argument rescans.                                                                             | Completed by PR 21's lazy exact delimiter summary. The first relevant query builds one `O(N)` table and all later queries are indexed lookups.                                                                                                                  |
-| PR 12                     | Bound flat malformed annotation suffix rescans.                                                                                       | Completed by PR 24, which extends the same lazy table with path-compressed annotation endpoints while retaining one linear algorithm.                                                                                                                          |
+| PR 12                     | Bound flat malformed annotation suffix rescans.                                                                                       | Completed by PR 24, which extends the same lazy table with path-compressed annotation endpoints while retaining one linear algorithm.                                                                                                                           |
 | PR 12                     | Bound recursive Java generic lookahead and consumption.                                                                               | Completed by PR 22's 128-owner policy, separate speculative/consuming counters, and one lossless owner-local recovery scan.                                                                                                                                     |
 | PR 12                     | Replace local Java member-header decisions with a classifier if it deletes work.                                                      | Accepted rejection. Exact precedence still restarts the same owner-specific probes, so the enum hid work and did not shrink code.                                                                                                                               |
 | PR 14                     | Resolve the recorded modifier, recovery-layout, EOF-ignore, root-joining, Kotlin recovery, Java lookahead, and generic-depth residue. | Completed by PRs 15-24 or explicitly rejected above. The debug audit and language-specific lexer mechanics are the two measured accepted designs, not open tasks.                                                                                               |
@@ -2495,7 +2496,7 @@ This table makes the negative architectural decisions discoverable in one place.
 | Kotlin malformed/invisible list merger and generic comma walker                                                        | Preserved the same boolean state or required independent attachment/orphan policies, creating a mini-framework rather than deleting concepts.                                                                       |
 | Shared Java/Kotlin lexer cursor and trivia loop                                                                        | Grew production by 163 lines or required semantic policy hooks for genuinely different Unicode, string, shebang, comment, and newline rules.                                                                        |
 | Uncached malformed Kotlin dollar-prefix scan                                                                           | Would perform 2,147,516,416 predicate visits for 65,536 dollars. One forward-only failed-run endpoint preserves token ownership and makes the maximal run linear.                                                   |
-| PR 12 eager Java parenthesis cache                                                                                     | Added 80 production lines and a second representation. PR 21 instead builds one exact table on the first relevant query; its measured allocation cost has no demonstrated throughput or RSS consequence.          |
+| PR 12 eager Java parenthesis cache                                                                                     | Added 80 production lines and a second representation. PR 21 instead builds one exact table on the first relevant query; its measured allocation cost has no demonstrated throughput or RSS consequence.            |
 | Top-level annotation-start memo                                                                                        | Made flat runs linear but left a deeply nested annotation quadratic and introduced a second lifecycle. PR 24 reused the exact delimiter table instead.                                                              |
 | General Java member-header classifier                                                                                  | Replayed precedence-sensitive probes behind an enum, adding code without reducing work.                                                                                                                             |
 | Generalized Java first-token/recovery comment framework                                                                | Added about 191 lines before the actual repairs; declaration-local ownership was smaller.                                                                                                                           |
@@ -2548,10 +2549,11 @@ root lifecycles, filename normalization policy, duplicate conservation
 inventories, recovery visibility carriers, raw EOF projections, recursive chain
 collectors, and duplicated lookahead probes/classifiers are gone. The principal
 new concepts are one shared recovery-layout value, one lazy Java lookahead
-table, separate generic traversal state under one 128-owner policy, language-local syntax-owner budgets, owner-local
-lossless recovery scans, and language-local borrowed CST walks. No general
-formatter context, visitor, heap traversal stack, source clone, token-reparse
-layer, or second CST schema was added.
+table, separate generic traversal state under one 128-owner policy,
+language-local syntax-owner budgets, owner-local lossless recovery scans, and
+language-local borrowed CST walks. No general formatter context, visitor, heap
+traversal stack, source clone, token-reparse layer, or second CST schema was
+added.
 
 The final optimized dprint WASM is 1,777,637 bytes with SHA-256
 `e0357ff5f17d7cbb3bdd8a2b63fe91c7bee94e5b7c8e90a02fbfac15a43ef7af`. That is
@@ -2630,8 +2632,8 @@ an allocation-neutral carrier.
 | 2026-07-23 | Coarsen unsupported statements to their enclosing body boundary. | Exact iterative handling of `if`/`else`, `do`/`while`, try handlers, and switch labels would duplicate statement grammar; one lossless BogusStatement preserves the enclosing body and later declarations.               |
 | 2026-07-23 | Use 128 active recursive owners as Kotlin's parser policy.       | Actual 1 MiB dprint-WASM failure edges leave about 7.5x-15.5x headroom across value, type, block, and class cycles; diagnostics describe parser safety rather than source levels.                                        |
 | 2026-07-23 | Keep schema-declared Kotlin category recovery typed.             | Matching Java's projection deletes family-marker machinery and all 104 lines of structural-recovery formatter plumbing while preserving snapshots and source ownership.                                                  |
-| 2026-07-23 | Fold walker-state cleanup into its owning traversal PRs.          | Binary representation and missing-node invariants are easiest to review with the walks that use them; the final residue PR retains only the independently duplicated delimiter carrier.                                  |
-| 2026-07-23 | Keep final formatter consolidation language-local.               | A neutral delimiter value deletes identical representation, while language-local aliases retain real trivia and joining policy. Binary-state cleanup and traversal invariants belong to their walker PRs.             |
+| 2026-07-23 | Fold walker-state cleanup into its owning traversal PRs.         | Binary representation and missing-node invariants are easiest to review with the walks that use them; the final residue PR retains only the independently duplicated delimiter carrier.                                  |
+| 2026-07-23 | Keep final formatter consolidation language-local.               | A neutral delimiter value deletes identical representation, while language-local aliases retain real trivia and joining policy. Binary-state cleanup and traversal invariants belong to their walker PRs.                |
 
 ## Resume Protocol
 
