@@ -482,9 +482,12 @@ pub(super) fn format_postfix_expression<'source>(
     doc: &mut DocBuilder<'source>,
     expression: &PostfixExpression<'source>,
     leading: LeadingTrivia,
+    operand: Option<Doc<'source>>,
 ) -> Doc<'source> {
-    let operand = format_required_field(expression.operand(), doc, |operand, doc| {
-        format_expression_with_leading(doc, &operand, leading)
+    let operand = operand.unwrap_or_else(|| {
+        format_required_field(expression.operand(), doc, |operand, doc| {
+            format_expression_with_leading(doc, &operand, leading)
+        })
     });
     let operator = format_required_field(expression.operator(), doc, |operator, doc| {
         format_token(

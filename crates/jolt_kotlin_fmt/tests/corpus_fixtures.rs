@@ -201,6 +201,31 @@ fn deep_infix_and_type_formatter_spines_format_idempotently_and_keep_following_s
         ty("?!! & Any.()", " -> Unit"),
     ];
 
+    assert_deep_formatter_spines(sources);
+}
+
+#[test]
+fn deep_suffix_formatter_spines_format_idempotently_and_keep_following_syntax() {
+    let depth = 4096;
+    let expression = |suffix: &str| {
+        format!(
+            "fun value() = root{}\nclass Following\n",
+            suffix.repeat(depth)
+        )
+    };
+    let sources = [
+        expression(".field"),
+        expression("()"),
+        expression("[0]"),
+        expression("!!"),
+        expression("::target"),
+        expression(".field()[0]!!::target"),
+    ];
+
+    assert_deep_formatter_spines(sources);
+}
+
+fn assert_deep_formatter_spines(sources: impl IntoIterator<Item = String>) {
     for source in sources {
         let parse = parse_kotlin_file(&source);
         assert!(
