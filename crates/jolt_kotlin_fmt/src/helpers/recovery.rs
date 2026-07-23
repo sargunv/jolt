@@ -1,13 +1,10 @@
 //! Field/list recovery resolution for the Kotlin formatter.
 //!
 //! Shared present/malformed field results and malformed fragment assembly live
-//! in `jolt_fmt_ir::recovery`. This module owns Kotlin field/list resolve,
-//! including invisible list parts, and Kotlin's tokens-only malformed boundary
-//! policy.
+//! in `jolt_fmt_ir::recovery`. This module owns Kotlin field/list resolution
+//! against typed CST enums, including invisible list parts.
 
-use jolt_fmt_ir::{
-    Doc, DocBuilder, FormatField, MalformedBoundaryPolicy, assemble_malformed_fragment,
-};
+use jolt_fmt_ir::{Doc, DocBuilder, FormatField, assemble_malformed_fragment};
 use jolt_kotlin_syntax::{
     KotlinMissingSyntax, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken,
     KotlinSyntaxView,
@@ -33,7 +30,6 @@ pub(crate) fn format_malformed<'source>(
     assemble_malformed_fragment(
         doc,
         &core,
-        MalformedBoundaryPolicy::TokensOnly,
         &mut safety,
         leading,
         trailing,

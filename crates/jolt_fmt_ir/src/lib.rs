@@ -23,8 +23,7 @@ pub use jolt_syntax::{
 };
 pub use options::{FormatOptions, FormatSinkResult};
 pub use recovery::{
-    FormatField, MalformedBoundaryPolicy, assemble_malformed_fragment, format_optional_field,
-    format_required_field,
+    FormatField, assemble_malformed_fragment, format_optional_field, format_required_field,
 };
 pub use render::{
     IndentStyle, RenderControl, RenderError, RenderOptions, RenderOutcome, RenderSink,

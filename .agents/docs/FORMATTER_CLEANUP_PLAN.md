@@ -384,29 +384,35 @@ Gates:
 - compile time, generated code size, and malformed-tree behavior do not regress;
 - there is still one declarative schema authority and no runtime second model.
 
-### PR 04 — Syntax-owned recovery and list visibility
+### PR 04 — Syntax-owned malformed boundaries
 
 Scope:
 
-- classify recovery fragments and list visibility at the syntax boundary;
-- remove Java `RequireNonEmptyRange` versus Kotlin `TokensOnly` policy from
-  language rules;
-- remove Kotlin `Invisible(Doc)`, `layout_visible`, and equivalent formatter
-  special cases once syntax classification replaces them;
-- preserve all represented malformed pieces and their trivia.
+- let exceptional fragments decide lexical joins from their own syntax-owned
+  boundary atoms;
+- delete the Java `RequireNonEmptyRange` versus Kotlin `TokensOnly` policy enum,
+  language arguments, and export without adding a replacement presence flag;
+- retain physical variable-list `Missing` and tokenless `Malformed` parts,
+  because they are positional recovery barriers and can carry source claims;
+- retain Kotlin `Invisible(Doc)`, `layout_visible`, and Java's parallel
+  visibility-aware resolver until a separate barrier-aware layout adapter can
+  preserve claims without a second syntax-list API.
 
-Expected deletions: malformed/invisible list branches, formatter-selected empty
-core policy, and recovery probes that rediscover syntax state.
+Expected deletions: the formatter-selected empty-core policy and its
+language-specific plumbing.
 
-Risks: dropping invisible-but-conserved recovery docs, treating malformed as
-absent, or making language-specific formatting policy look like syntax.
+Risks: zero-token or zero-width malformed fragments accidentally selecting
+lexical separators, and boundary-comment relocation exposing the wrong neighbor.
 
 Gates:
 
-- malformed, empty, and comment-only lists have explicit syntax-owned cases;
+- zero-token malformed cores emit no lexical separator when exceptional
+  neighbors are offered;
+- boundary comments still suppress the neighbor on the relocated side;
 - every represented token/comment remains claimed exactly once;
 - Java and Kotlin recovery fixture output remains byte-identical;
-- formatter rule call sites shrink rather than wrap old policy.
+- the policy enum, export, imports, and call-site arguments are deleted without
+  a replacement visibility or presence concept.
 
 ### PR 05 — Narrow root coordination
 
@@ -690,23 +696,23 @@ This table is the source of truth after a context compaction. Update it whenever
 a branch is created, a PR is opened, scope changes, a gate fails, or a PR is
 ready for review.
 
-| PR  | Branch                                   | Status     | Parent | Draft PR                                     | Verification              | Notes                                         |
-| --- | ---------------------------------------- | ---------- | ------ | -------------------------------------------- | ------------------------- | --------------------------------------------- |
-| 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2) | baseline audit complete   | Durable plan and gates only.                  |
-| 01  | `cleanup/01-doc-semantics`               | draft open | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3) | debug/release + benchmark | Profile-independent topology/presence.        |
-| 02  | `cleanup/02-formatter-ignore-plan`       | draft open | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4) | debug/release + benchmark | Root plan with bounded immutable queries.     |
-| 03  | `cleanup/03-infallible-generated-fields` | draft open | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5) | debug/release + benchmark | Generated physical slots only.                |
-| 04  | `cleanup/04-syntax-recovery-visibility`  | planned    | PR 03  | —                                            | —                         | Syntax-owned recovery/list classification.    |
-| 05  | `cleanup/05-root-coordination`           | planned    | PR 04  | —                                            | —                         | Narrow root ownership, no god context.        |
-| 06  | `cleanup/06-source-audit-reporting`      | planned    | PR 05  | —                                            | —                         | Structured normalization facts.               |
-| 07  | `cleanup/07-core-module-boundaries`      | planned    | PR 06  | —                                            | —                         | Conditional crate extraction gate.            |
-| 08a | `cleanup/08a-renderer-boundaries`        | planned    | PR 07  | —                                            | —                         | Separate contracts without output changes.    |
-| 08b | `cleanup/08b-renderer-audit-pass`        | optional   | PR 08a | —                                            | —                         | Proceed only if two-pass semantics shrink.    |
-| 09  | `cleanup/09-kotlin-rules`                | planned    | PR 08b | —                                            | —                         | Kotlin hotspot purification.                  |
-| 10  | `cleanup/10-java-rules`                  | planned    | PR 09  | —                                            | —                         | Java hotspot purification.                    |
-| 11  | `cleanup/11-lexer-substrate`             | planned    | PR 10  | —                                            | —                         | Share cursor mechanics only.                  |
-| 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                            | —                         | Counted bounded lookahead work.               |
-| 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                            | —                         | Actual docs, metrics, and API deletions only. |
+| PR  | Branch                                   | Status     | Parent | Draft PR                                     | Verification               | Notes                                         |
+| --- | ---------------------------------------- | ---------- | ------ | -------------------------------------------- | -------------------------- | --------------------------------------------- |
+| 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2) | baseline audit complete    | Durable plan and gates only.                  |
+| 01  | `cleanup/01-doc-semantics`               | draft open | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3) | debug/release + benchmark  | Profile-independent topology/presence.        |
+| 02  | `cleanup/02-formatter-ignore-plan`       | draft open | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4) | debug/release + benchmark  | Root plan with bounded immutable queries.     |
+| 03  | `cleanup/03-infallible-generated-fields` | draft open | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5) | debug/release + benchmark  | Generated physical slots only.                |
+| 04  | `cleanup/04-syntax-recovery-visibility`  | draft open | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6) | full + release + benchmark | Syntax-owned malformed lexical boundaries.    |
+| 05  | `cleanup/05-root-coordination`           | planned    | PR 04  | —                                            | —                          | Narrow root ownership, no god context.        |
+| 06  | `cleanup/06-source-audit-reporting`      | planned    | PR 05  | —                                            | —                          | Structured normalization facts.               |
+| 07  | `cleanup/07-core-module-boundaries`      | planned    | PR 06  | —                                            | —                          | Conditional crate extraction gate.            |
+| 08a | `cleanup/08a-renderer-boundaries`        | planned    | PR 07  | —                                            | —                          | Separate contracts without output changes.    |
+| 08b | `cleanup/08b-renderer-audit-pass`        | optional   | PR 08a | —                                            | —                          | Proceed only if two-pass semantics shrink.    |
+| 09  | `cleanup/09-kotlin-rules`                | planned    | PR 08b | —                                            | —                          | Kotlin hotspot purification.                  |
+| 10  | `cleanup/10-java-rules`                  | planned    | PR 09  | —                                            | —                          | Java hotspot purification.                    |
+| 11  | `cleanup/11-lexer-substrate`             | planned    | PR 10  | —                                            | —                          | Share cursor mechanics only.                  |
+| 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                            | —                          | Counted bounded lookahead work.               |
+| 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                            | —                          | Actual docs, metrics, and API deletions only. |
 
 ### PR 01 evidence
 
@@ -831,22 +837,63 @@ ready for review.
   recovery-visibility, and fallible verbatim-core states while refining their
   ownership.
 
+### PR 04 evidence
+
+- An attempted global source-bearing list projection was rejected before
+  publication. Java fixtures contain real interior list shapes such as
+  `item, comma, empty, comma, item`; those empty positions stop sorting and
+  normalization runs. Kotlin likewise uses physical recovery positions to
+  normalize valid runs on either side independently.
+- Omitting physical empty parts caused a Java recovery corpus source-audit
+  failure for a trailing block comment. Replacing positional barriers with a
+  whole-list `is_recovery_free()` gate changed Kotlin malformed-file-item
+  normalization output. The sparse projection also changed exact iterator size
+  hints and removed existing capacity reservations.
+- The experiment was fully restored. Physical `Missing`, tokenless `Malformed`,
+  `Invisible(Doc)`, `layout_visible`, and visibility-aware Java resolution
+  remain unchanged; no second list or recovery-run API was added.
+- The retained code delta only deletes `MalformedBoundaryPolicy`, its export,
+  and the Java/Kotlin policy arguments. Exceptional fragments now always receive
+  syntax-owned neighboring tokens, except on sides whose boundary comments were
+  relocated. The 44 shared IR tests and both language recovery snapshot suites
+  pass unchanged.
+- Production Rust is +18/-49 lines (-31 net). Repository-defined Ona automation
+  passed all 183 workspace tests with no skips. `mise run fix`,
+  `mise run check`, both complete release formatter suites, the PGO native
+  build, and the optimized dprint plugin build passed.
+- Clean paired PR 03/PR 04 measurements have identical syntax/document topology,
+  allocation count/bytes, and maximum-live allocation metrics. Java median
+  format time moved -3.50% and Kotlin -1.38%; treat both as non-regression
+  evidence rather than a causal speedup.
+- The non-PGO native CLI is 5,955,096 bytes versus 5,952,640 (+0.04%). Optimized
+  WASM is 1,768,947 bytes versus 1,767,457 (+0.08%), with SHA-256
+  `3cc8b03d6c44d5f9f726c4363cc438047c603e8325c86f9198bc0e3ce7822625`. This
+  bounded codegen cost is accepted for the newly exercised Java zero-range
+  neighbor path; the source and conceptual model still shrink.
+- The complete benchmark wrapper could not collect peak RSS because this
+  environment lacks `/usr/bin/time`. Its exact timing and allocation drivers ran
+  against the same 9,206-file Java and 485-file Kotlin corpora in isolated
+  parent/child builds; no test or measurement was silently skipped.
+
 ## Decision Log
 
-| Date       | Decision                                                     | Reason                                                                                                                           |
-| ---------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-07-22 | Use a stack of small draft PRs rather than a rewrite.        | Preserves review and rollback boundaries while allowing ambitious end-state changes.                                             |
-| 2026-07-22 | Centralize branches, commits, rebases, and publication.      | Subagents share a filesystem; central integration avoids hidden branch state and conflicting commits.                            |
-| 2026-07-22 | Make crate extraction conditional.                           | Purity is about dependency direction, not maximizing crate count.                                                                |
-| 2026-07-22 | Treat growth without deleted complexity as a stop condition. | The cleanup exists to reduce reasoning load, not install a new framework.                                                        |
-| 2026-07-22 | Keep leaf rules free of a general formatting context.        | Narrow dependencies prevent a service locator and preserve local reasoning.                                                      |
-| 2026-07-22 | Split CST, recovery, renderer, language, and lexer risks.    | Each now has an independent correctness model, benchmark gate, and rollback boundary.                                            |
-| 2026-07-22 | Accept PR 01's bounded release document-node cost.           | Stable topology costs 1.5–2.2% more nodes but keeps allocations/max-live memory effectively flat.                                |
-| 2026-07-22 | Use immutable bounded ignore-plan queries.                   | Independent nested rules stay order-independent; counted binary search replaces hidden mutable cursors.                          |
-| 2026-07-22 | Reject partial and cross-partition ignore ranges.            | Structured syntax ownership must never overlap a raw source claim; rejected markers remain structured.                           |
-| 2026-07-22 | Temporarily transport the ignore plan on `DocBuilder`.       | The field is private, immutable, install-once, and absent from `DocArena`; PR 05 must revisit it.                                |
-| 2026-07-22 | Scope PR 03 to production-factory physical projections.      | Runtime validation or a second proof model would add more architecture than deleting outer results.                              |
-| 2026-07-22 | Split PR 03 codegen policy by native versus WASM.            | Native accessor inlining preserves measured throughput; a narrow WASM field boundary reverses aggregate-return code duplication. |
+| Date       | Decision                                                       | Reason                                                                                                                                                  |
+| ---------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-07-22 | Use a stack of small draft PRs rather than a rewrite.          | Preserves review and rollback boundaries while allowing ambitious end-state changes.                                                                    |
+| 2026-07-22 | Centralize branches, commits, rebases, and publication.        | Subagents share a filesystem; central integration avoids hidden branch state and conflicting commits.                                                   |
+| 2026-07-22 | Make crate extraction conditional.                             | Purity is about dependency direction, not maximizing crate count.                                                                                       |
+| 2026-07-22 | Treat growth without deleted complexity as a stop condition.   | The cleanup exists to reduce reasoning load, not install a new framework.                                                                               |
+| 2026-07-22 | Keep leaf rules free of a general formatting context.          | Narrow dependencies prevent a service locator and preserve local reasoning.                                                                             |
+| 2026-07-22 | Split CST, recovery, renderer, language, and lexer risks.      | Each now has an independent correctness model, benchmark gate, and rollback boundary.                                                                   |
+| 2026-07-22 | Accept PR 01's bounded release document-node cost.             | Stable topology costs 1.5–2.2% more nodes but keeps allocations/max-live memory effectively flat.                                                       |
+| 2026-07-22 | Use immutable bounded ignore-plan queries.                     | Independent nested rules stay order-independent; counted binary search replaces hidden mutable cursors.                                                 |
+| 2026-07-22 | Reject partial and cross-partition ignore ranges.              | Structured syntax ownership must never overlap a raw source claim; rejected markers remain structured.                                                  |
+| 2026-07-22 | Temporarily transport the ignore plan on `DocBuilder`.         | The field is private, immutable, install-once, and absent from `DocArena`; PR 05 must revisit it.                                                       |
+| 2026-07-22 | Scope PR 03 to production-factory physical projections.        | Runtime validation or a second proof model would add more architecture than deleting outer results.                                                     |
+| 2026-07-22 | Split PR 03 codegen policy by native versus WASM.              | Native accessor inlining preserves measured throughput; a narrow WASM field boundary reverses aggregate-return code duplication.                        |
+| 2026-07-22 | Let exceptional fragments own malformed lexical joins.         | Existing boundary atoms already make empty fragments inert, so Java/Kotlin pre-filter policies duplicate the same fact.                                 |
+| 2026-07-22 | Keep physical recovery parts in variable-list iteration.       | Real interior empty and tokenless malformed parts are positional sorting/normalization barriers; some zero-width recovery docs also own comment claims. |
+| 2026-07-22 | Defer list visibility staging to a barrier-aware layout slice. | A global sparse projection lost trivia and segmented normalization, while a second recovery-run API would increase rather than reduce local reasoning.  |
 
 ## Resume Protocol
 
