@@ -2366,6 +2366,42 @@ slices remove Java nodes and allocations or leave topology unchanged.
 - Refreshed optimized WASM moves 1,766,396 -> 1,769,538 bytes (+3,142, +0.18%).
   The exact benchmark records clean committed subject `1b1ffc5f`.
 
+### PR 31 evidence
+
+- One Java-local postfix walk now covers the genuinely repeatable field-access,
+  qualified-invocation, array-access, postfix-operator, qualified-object,
+  qualified-`this`, and qualified-`super` receiver/qualifier fields. Method
+  references and class literals remain local base barriers because the parser
+  makes a second `::` or `.class` syntax-owned bogus structure rather than a
+  repeatable valid spine.
+- The recursive member collector was deleted; the existing builder receives
+  maximal field/invocation segments from parent-aware ascent and retains exact
+  wrapper, grouping, forced-break, and innermost literal/name comment-relocation
+  behavior. Every direct and qualified-invocation two-hop ascent stops at the
+  captured outer node.
+- One alternating operator walk covers binary and `instanceof` left spines.
+  Existing ordinary-run vectors retain their empty-Vec growth; transparent
+  comment-free parentheses are recorded on first and appended runs, then removal
+  claims replay outer-to-inner. The outer run owner still supplies readability
+  parenthesis and removal authority. Missing or malformed recursive fields use
+  their existing shallow structured formatters.
+- Production is +448/-288 lines (+160 net) and the generated integration test is
+  +58 lines. A large intermediate enum was rejected after strict Clippy exposed
+  its 320-byte hot state; the final representation is one formatted document
+  plus an optional existing-shape run, with no new production allocation.
+- Eleven clean depth-4,096 pure/alternating postfix and operator adversaries
+  completed natively, reconstructed losslessly, retained following declarations,
+  and formatted idempotently. A combined actual dprint-WASM stdin smoke retained
+  mixed-suffix and alternating-operator sentinels. `mise run fix` passed strict
+  native and WASM checks; the complete non-update suite passed all 226 tests
+  with zero skips and unchanged snapshots.
+- Realistic Java/Kotlin syntax topology, document topology, allocation counts,
+  and allocation bytes are exactly unchanged. Java parse/format/end-to-end
+  medians moved -1.29%/+0.03%/+1.48%; untouched Kotlin timing remained noisy.
+- Optimized WASM moved from 1,772,492 to 1,778,957 bytes (+6,465, +0.36%), with
+  SHA-256 `4060b99bb615020dc4c44f6019158e51336182a4ba90bb2898a5f44d65ac2888`.
+  The benchmark records clean committed subject `cbbcf5f`.
+
 ## Decision Log
 
 | Date       | Decision                                                         | Reason                                                                                                                                                                                                                   |
