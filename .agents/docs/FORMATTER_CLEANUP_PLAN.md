@@ -2327,11 +2327,11 @@ slices remove Java nodes and allocations or leave topology unchanged.
 - Realistic Java/Kotlin syntax and document topology are exactly unchanged.
   Deleting Kotlin's parallel binary-chain scratch lowers formatter allocations
   from 38,076 to 35,364 (-2,712, -7.12%) and allocated bytes from 49,068,984 to
-  48,996,504 (-72,480). The refreshed Kotlin-format median is 34.19 ms; the
-  parent's timing sample was noisy, so no causal speedup is claimed.
+  48,996,504 (-72,480). Refreshed Kotlin-format runs varied from 34.19 to 37.67
+  ms, so no causal speedup is claimed.
 - The refreshed optimized WASM is 1,766,396 bytes, seven bytes larger than the
   rewritten PR 28 parent. The exact benchmark records clean committed subject
-  `f5df0c6d`.
+  `4fa53398`.
 
 ## Decision Log
 
