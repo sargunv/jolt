@@ -978,7 +978,7 @@ ready for review.
 | 14  | `cleanup/14-final-reconciliation`        | draft open | PR 13  | [#16](https://github.com/sargunv/jolt/pull/16) | full + static checks       | Actual docs, metrics, and API deletions only.    |
 | 15  | `cleanup/15-modifier-presence`           | draft open | PR 14  | [#17](https://github.com/sargunv/jolt/pull/17) | full + benchmark           | Syntax-owned modifier layout presence.           |
 | 16  | `cleanup/16-recovery-layout-parts`       | draft open | PR 15  | [#18](https://github.com/sargunv/jolt/pull/18) | full + benchmark           | Barrier-aware visible/claim-only layout.         |
-| 17  | `cleanup/17-ignore-boundary-ownership`   | ready      | PR 16  | —                                              | full + benchmark           | Delete raw EOF ignore-range projections.         |
+| 17  | `cleanup/17-ignore-boundary-ownership`   | draft open | PR 16  | [#19](https://github.com/sargunv/jolt/pull/19) | full + benchmark           | Delete raw EOF ignore-range projections.         |
 | 18  | `cleanup/18-java-program-joining`        | planned    | PR 17  | —                                              | —                          | Reconcile root joining and marker ownership.     |
 | 19  | `cleanup/19-kotlin-recovery-layout`      | planned    | PR 18  | —                                              | —                          | Isolate Kotlin recovery behavior corrections.    |
 | 20  | `cleanup/20-java-delimiter-summaries`    | planned    | PR 19  | —                                              | —                          | Bound lambda and annotation parenthesis scans.   |
