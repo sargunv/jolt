@@ -2,6 +2,9 @@
 use super::{JavaSyntaxKind, Parser};
 use crate::parser::source::{LookaheadSummary, TokenBuffer, TokenCursor};
 
+// Built on the first parenthesis or annotation query. Token-disjoint entries
+// store the position after a matching `)` for `(`, or the end of a maximal
+// annotation run for queried `@`; zero means no cached fact.
 impl LookaheadSummary {
     pub(super) fn after(
         &mut self,
