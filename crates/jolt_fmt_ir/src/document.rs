@@ -5,6 +5,10 @@ use std::ops::{Deref, DerefMut};
 use crate::width::{TextWidth, display_width, literal_text_metrics};
 use crate::{
     ExceptionalFragment, ExceptionalSeparator, FragmentBoundary, LexicalAtom, LexicalSafety,
+    formatter_ignore::{
+        FormatterIgnoreItemRange, FormatterIgnorePlan, FormatterIgnoreRun,
+        formatter_ignore_may_apply, formatter_ignore_runs,
+    },
     source_fragment::{
         ExceptionalSeparators, SourceClaim, exceptional_separators, normalized_lexical_kind,
     },
@@ -13,6 +17,7 @@ use jolt_syntax::{
     Language, RemovalClaim, ReorderClaim, ReplacementClaim, SourceIdentity, SourceRangeClaim,
     SourceTriviaPiece, SyntaxToken, SyntaxVerbatimCore, SynthesisClaim,
 };
+use jolt_text::TextRange;
 
 pub(crate) const INLINE_CONCAT_CAPACITY: usize = 4;
 
@@ -133,6 +138,7 @@ impl<'source> DocArena<'source> {
 pub struct DocBuilder<'source> {
     arena: DocArena<'source>,
     list_scratch: Vec<Doc<'source>>,
+    formatter_ignore: Option<FormatterIgnorePlan<'source>>,
 }
 
 impl<'source> DocBuilder<'source> {
@@ -166,7 +172,46 @@ impl<'source> DocBuilder<'source> {
                 invariant_error: None,
             },
             list_scratch: Vec::new(),
+            formatter_ignore: None,
         }
+    }
+
+    /// Installs the root-discovered formatter-ignore plan for this run.
+    pub fn set_formatter_ignore_plan(&mut self, plan: FormatterIgnorePlan<'source>) {
+        if self.formatter_ignore.is_some() {
+            self.block_on_invariant("formatter-ignore plan was installed more than once");
+        } else {
+            self.formatter_ignore = Some(plan);
+        }
+    }
+
+    /// Returns whether a root-discovered ignore range can belong to this
+    /// syntax-owned content interval.
+    pub fn formatter_ignore_may_apply(&mut self, container: TextRange) -> bool {
+        let Some(plan) = self.formatter_ignore.as_ref() else {
+            self.block_on_invariant("formatter-ignore plan was not installed at the syntax root");
+            return false;
+        };
+        formatter_ignore_may_apply(plan, container)
+    }
+
+    /// Lazily derives exact formatter-ignore runs for one syntax-owned item
+    /// list when an ignore range belongs to its content interval.
+    #[must_use]
+    pub fn formatter_ignore_runs(
+        &mut self,
+        container: TextRange,
+        items: impl IntoIterator<Item = Option<FormatterIgnoreItemRange>>,
+    ) -> Vec<FormatterIgnoreRun<'source>> {
+        let Some(plan) = self.formatter_ignore.as_ref() else {
+            self.block_on_invariant("formatter-ignore plan was not installed at the syntax root");
+            return Vec::new();
+        };
+        if !formatter_ignore_may_apply(plan, container) {
+            return Vec::new();
+        }
+        let items = items.into_iter().collect::<Vec<_>>();
+        formatter_ignore_runs(plan, container, &items)
     }
 
     #[must_use]
@@ -805,6 +850,54 @@ impl DocumentText<'_> {
 
     pub(crate) const fn is_multiline(&self) -> bool {
         self.is_multiline
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use jolt_text::{TextRange, TextSize};
+
+    use super::DocBuilder;
+    use crate::formatter_ignore::FormatterIgnorePlan;
+
+    fn range() -> TextRange {
+        TextRange::new(TextSize::new(0), TextSize::new(1))
+    }
+
+    #[test]
+    fn missing_formatter_ignore_plan_records_an_invariant() {
+        let mut builder = DocBuilder::new();
+        assert!(!builder.formatter_ignore_may_apply(range()));
+        assert!(builder.into_arena().invariant_error().is_some());
+    }
+
+    #[test]
+    fn double_formatter_ignore_plan_install_records_an_invariant() {
+        let mut builder = DocBuilder::new();
+        builder.set_formatter_ignore_plan(FormatterIgnorePlan::default());
+        builder.set_formatter_ignore_plan(FormatterIgnorePlan::default());
+        assert!(builder.into_arena().invariant_error().is_some());
+    }
+
+    #[test]
+    fn empty_formatter_ignore_plan_never_applies() {
+        let mut builder = DocBuilder::new();
+        builder.set_formatter_ignore_plan(FormatterIgnorePlan::default());
+        assert!(!builder.formatter_ignore_may_apply(range()));
+        let mut called = false;
+        assert!(
+            builder
+                .formatter_ignore_runs(
+                    range(),
+                    std::iter::once(()).map(|()| {
+                        called = true;
+                        None
+                    })
+                )
+                .is_empty()
+        );
+        assert!(!called);
+        assert!(builder.into_arena().invariant_error().is_none());
     }
 }
 

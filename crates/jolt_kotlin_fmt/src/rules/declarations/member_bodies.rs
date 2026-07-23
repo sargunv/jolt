@@ -9,9 +9,8 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_dangling_comments, format_token,
 };
 use crate::helpers::formatter_ignore::{
-    FormatterIgnoreRange, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
-    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
-    relative_token_range_between,
+    FormatterIgnoreItemRange, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
+    formatter_ignore_content_range, formatter_ignore_run_doc,
 };
 use crate::helpers::recovery::{
     KotlinFormatDelimiter, KotlinFormatField, format_malformed, format_missing,
@@ -41,7 +40,7 @@ pub(super) fn format_class_body<'source>(
     );
     let open = resolve_required_delimiter(body.open_brace(), doc);
     let close = resolve_required_delimiter(body.close_brace(), doc);
-    let contents = format_class_body_contents(doc, &body, close.source());
+    let contents = format_class_body_contents(doc, &body, open.source(), close.source());
     let space = doc.space();
     let body = format_class_braced_body(doc, open, close, contents, has_close);
     doc.concat([space, body])
@@ -50,6 +49,7 @@ pub(super) fn format_class_body<'source>(
 fn format_class_body_contents<'source>(
     doc: &mut DocBuilder<'source>,
     body: &ClassBody<'source>,
+    open: Option<&KotlinSyntaxToken<'source>>,
     close: Option<&KotlinSyntaxToken<'source>>,
 ) -> Option<Doc<'source>> {
     let members = match resolve_required_field(body.members(), doc) {
@@ -57,15 +57,14 @@ fn format_class_body_contents<'source>(
         KotlinFormatField::Malformed(malformed) => return Some(malformed),
     };
     let parts = collect_class_body_parts(doc, &members);
-    let ignored_ranges = formatter_ignore_ranges(
-        body.source_text(),
-        body.text_range().start().get(),
-        body.token_iter(),
-    );
-    let mut sections = if ignored_ranges.is_empty() {
+    let container =
+        formatter_ignore_content_range(members.text_range(), open.copied(), close.copied());
+    let ignored_runs =
+        doc.formatter_ignore_runs(container, parts.iter().map(class_body_part_ignore_range));
+    let mut sections = if ignored_runs.is_empty() {
         class_body_sections(doc, &parts)
     } else {
-        class_body_sections_with_ignored(doc, body, &parts, &ignored_ranges)
+        class_body_sections_with_ignored(doc, &parts, &ignored_runs)
     };
     if let Some(comments) = close
         .map(KotlinSyntaxToken::leading_comments)
@@ -220,23 +219,16 @@ fn enum_entry_continues(member: &ClassMember<'_>) -> bool {
 
 fn class_body_sections_with_ignored<'source>(
     doc: &mut DocBuilder<'source>,
-    body: &ClassBody<'source>,
     parts: &[ClassBodyPart<'source>],
-    ignored_ranges: &[FormatterIgnoreRange<'source>],
+    ignored_runs: &[crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>],
 ) -> Vec<ClassBodySection<'source>> {
-    let body_start = body.text_range().start().get();
-    let ranges = parts
-        .iter()
-        .map(|part| class_body_part_range(part, body_start))
-        .collect::<Vec<_>>();
-    let ignored_runs = formatter_ignore_runs(ignored_ranges, &ranges);
     if ignored_runs.is_empty() {
         return class_body_sections(doc, parts);
     }
 
     let mut sections = Vec::with_capacity(parts.len().saturating_add(ignored_runs.len()));
     let mut previous_had_comments = false;
-    for_each_formatter_ignore_splice(parts.len(), &ignored_runs, |event| match event {
+    for_each_formatter_ignore_splice(parts.len(), ignored_runs, |event| match event {
         FormatterIgnoreSplice::Ignore(run) => {
             sections.push(ClassBodySection {
                 doc: formatter_ignore_run_doc(run, doc),
@@ -372,14 +364,10 @@ fn format_class_statement<'source>(
     )
 }
 
-fn class_body_part_range(
-    part: &ClassBodyPart<'_>,
-    body_start: usize,
-) -> Option<std::ops::Range<usize>> {
-    Some(relative_token_range_between(
+fn class_body_part_ignore_range(part: &ClassBodyPart<'_>) -> Option<FormatterIgnoreItemRange> {
+    Some(FormatterIgnoreItemRange::between(
         &part.first_token()?,
         &part.last_token()?,
-        body_start,
     ))
 }
 

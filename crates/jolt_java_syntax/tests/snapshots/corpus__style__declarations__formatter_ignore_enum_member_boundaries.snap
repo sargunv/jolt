@@ -1,0 +1,117 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+enum MemberOnly {
+  A;
+  // @formatter:off
+  int raw=1+2;
+  // @formatter:on
+  int after=3;
+}
+
+enum CrossingPartitions {
+  A,
+  // @formatter:off
+  B;
+  int raw=1+2;
+  // @formatter:on
+  int after=3;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    EnumDeclaration
+      EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
+      Identifier "MemberOnly" @ 5..15 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 16..17
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+            Identifier "A" @ 20..21 leading=[Newline "\n", Whitespace "  "]
+        Semicolon ";" @ 21..22
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 45..48 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "raw" @ 49..52
+                Assign "=" @ 52..53
+                VariableInitializer
+                  BinaryExpression
+                    LiteralExpression
+                      IntegerLiteral "1" @ 53..54
+                    Plus "+" @ 54..55
+                    LiteralExpression
+                      IntegerLiteral "2" @ 55..56
+            Semicolon ";" @ 56..57
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 79..82 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "after" @ 83..88
+                Assign "=" @ 88..89
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "3" @ 89..90
+            Semicolon ";" @ 90..91
+        RBrace "}" @ 92..93 leading=[Newline "\n"]
+    EnumDeclaration
+      EnumKw "enum" @ 95..99 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "CrossingPartitions" @ 100..118 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 119..120
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+            Identifier "A" @ 123..124 leading=[Newline "\n", Whitespace "  "]
+          Comma "," @ 124..125
+          EnumConstant
+            AnnotationList
+            Identifier "B" @ 148..149 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "]
+        Semicolon ";" @ 149..150
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 153..156 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "raw" @ 157..160
+                Assign "=" @ 160..161
+                VariableInitializer
+                  BinaryExpression
+                    LiteralExpression
+                      IntegerLiteral "1" @ 161..162
+                    Plus "+" @ 162..163
+                    LiteralExpression
+                      IntegerLiteral "2" @ 163..164
+            Semicolon ";" @ 164..165
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 187..190 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "after" @ 191..196
+                Assign "=" @ 196..197
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "3" @ 197..198
+            Semicolon ";" @ 198..199
+        RBrace "}" @ 200..201 leading=[Newline "\n"]
+  Eof "" @ 202..202 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

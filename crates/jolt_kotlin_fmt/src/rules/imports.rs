@@ -1,5 +1,3 @@
-use std::ops::Range;
-
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     ImportAlias, ImportDirective, ImportDirectiveList, ImportOnDemandSuffix, KotlinMalformedSyntax,
@@ -11,9 +9,8 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_terminator_list, format_token,
 };
 use crate::helpers::formatter_ignore::{
-    FormatterIgnoreRun, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
-    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
-    relative_token_range_between,
+    FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
+    for_each_formatter_ignore_splice, formatter_ignore_run_doc,
 };
 use crate::helpers::recovery::{
     format_malformed, format_missing, format_optional_field, format_required_field,
@@ -37,16 +34,8 @@ pub(crate) fn format_import_list<'source>(
             }
         })
         .collect::<Vec<_>>();
-    let base = list.text_range().start().get();
-    let ignored = formatter_ignore_ranges(list.source_text(), base, list.token_iter());
-    if ignored.is_empty() {
-        return format_import_entries(doc, entries);
-    }
-    let ranges = entries
-        .iter()
-        .map(|entry| entry.range(base))
-        .collect::<Vec<_>>();
-    let runs = formatter_ignore_runs(&ignored, &ranges);
+    let container = list.text_range();
+    let runs = doc.formatter_ignore_runs(container, entries.iter().map(ImportEntry::ignore_range));
     if runs.is_empty() {
         format_import_entries(doc, entries)
     } else {
@@ -63,20 +52,18 @@ enum ImportEntry<'source> {
 }
 
 impl ImportEntry<'_> {
-    fn range(&self, base: usize) -> Option<Range<usize>> {
+    fn ignore_range(&self) -> Option<FormatterIgnoreItemRange> {
         match self {
-            Self::Directive(import) => Some(relative_token_range_between(
+            Self::Directive(import) => Some(FormatterIgnoreItemRange::between(
                 &import.first_token()?,
                 &import.last_token()?,
-                base,
             )),
-            Self::Token(token) => Some(relative_token_range_between(token, token, base)),
+            Self::Token(token) => Some(FormatterIgnoreItemRange::between(token, token)),
             Self::Malformed(malformed) => {
                 let syntax = malformed.syntax_node()?;
-                Some(relative_token_range_between(
+                Some(FormatterIgnoreItemRange::between(
                     &syntax.first_token()?,
                     &syntax.last_token()?,
-                    base,
                 ))
             }
             Self::Missing(_) | Self::Invariant => None,

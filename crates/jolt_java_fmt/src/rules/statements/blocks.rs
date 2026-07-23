@@ -1,9 +1,9 @@
 use super::{
-    Block, BlockItem, BlockStatement, BodyItem, Doc, FormatterIgnoreRange, FormatterIgnoreSplice,
-    JavaSyntaxToken, Range, TrailingTrivia, comments_from_tokens, for_each_formatter_ignore_splice,
-    format_dangling_comments, format_local_variable_declaration, format_statement,
-    format_statement_semicolon, format_type_declaration, formatter_ignore_ranges,
-    formatter_ignore_run_doc, formatter_ignore_runs, join_body_items, relative_token_range_between,
+    Block, BlockItem, BlockStatement, BodyItem, Doc, FormatterIgnoreItemRange,
+    FormatterIgnoreSplice, JavaSyntaxToken, TrailingTrivia, comments_from_tokens,
+    for_each_formatter_ignore_splice, format_dangling_comments, format_local_variable_declaration,
+    format_statement, format_statement_semicolon, format_type_declaration,
+    formatter_ignore_content_range, formatter_ignore_run_doc, join_body_items,
 };
 use crate::helpers::blocks::BodyContent;
 use crate::helpers::comments::{
@@ -68,13 +68,17 @@ fn format_block_statements_body<'source>(
             return BodyContent::new(join_body_items(doc, items), true, true);
         }
     };
-    let block_start = block.text_range().start().get();
-    let ignored_ranges =
-        formatter_ignore_ranges(block.source_text(), block_start, block.token_iter());
     let entries = statements.parts().collect::<Vec<_>>();
+    let open = present_block_token(block.open_brace());
+    let close = present_block_token(block.close_brace());
+    let container = formatter_ignore_content_range(statements.text_range(), open, close);
+    let runs = doc.formatter_ignore_runs(
+        container,
+        entries.iter().map(block_statement_part_ignore_range),
+    );
     let mut items = Vec::with_capacity(entries.len().saturating_add(2));
     items.extend(format_block_open_dangling_comments(block, doc));
-    if ignored_ranges.is_empty() {
+    if runs.is_empty() {
         items.extend(
             entries
                 .iter()
@@ -82,10 +86,7 @@ fn format_block_statements_body<'source>(
         );
     } else {
         items.extend(format_block_statement_items_with_ignored(
-            &entries,
-            block_start,
-            &ignored_ranges,
-            doc,
+            &entries, &runs, doc,
         ));
     }
     items.extend(format_block_close_dangling_comments(block, doc));
@@ -99,22 +100,28 @@ fn format_block_statements_body<'source>(
     BodyContent::new(contents, present, visible)
 }
 
+fn present_block_token<'source>(
+    field: Result<
+        jolt_java_syntax::JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
+        jolt_java_syntax::JavaSyntaxInvariantError,
+    >,
+) -> Option<JavaSyntaxToken<'source>> {
+    match field {
+        Ok(jolt_java_syntax::JavaSyntaxField::Present(token)) => Some(token),
+        _ => None,
+    }
+}
+
 fn format_block_statement_items_with_ignored<'source>(
     entries: &[Result<
         JavaSyntaxListPart<'source, BlockStatement<'source>>,
         jolt_java_syntax::JavaSyntaxInvariantError,
     >],
-    block_start: usize,
-    ignored_ranges: &[FormatterIgnoreRange<'source>],
+    runs: &[crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>],
     doc: &mut DocBuilder<'source>,
 ) -> Vec<BodyItem<'source>> {
-    let ranges = entries
-        .iter()
-        .map(|entry| block_statement_part_token_range(entry, block_start))
-        .collect::<Vec<_>>();
-    let runs = formatter_ignore_runs(ignored_ranges, &ranges);
     let mut items = Vec::with_capacity(entries.len().saturating_add(runs.len()));
-    for_each_formatter_ignore_splice(entries.len(), &runs, |event| match event {
+    for_each_formatter_ignore_splice(entries.len(), runs, |event| match event {
         FormatterIgnoreSplice::Ignore(run) => {
             items.push(BodyItem::new(formatter_ignore_run_doc(run, doc), false));
         }
@@ -185,26 +192,22 @@ fn format_block_close_dangling_comments<'source>(
     (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(doc, comments), false))
 }
 
-fn block_statement_part_token_range(
+fn block_statement_part_ignore_range(
     entry: &Result<
         JavaSyntaxListPart<'_, BlockStatement<'_>>,
         jolt_java_syntax::JavaSyntaxInvariantError,
     >,
-    block_start: usize,
-) -> Option<Range<usize>> {
+) -> Option<FormatterIgnoreItemRange> {
     match entry {
-        Ok(JavaSyntaxListPart::Item(statement)) => {
-            block_statement_token_range(statement, block_start)
-        }
+        Ok(JavaSyntaxListPart::Item(statement)) => block_statement_ignore_range(statement),
         Ok(JavaSyntaxListPart::Separator(token)) => {
-            Some(relative_token_range_between(token, token, block_start))
+            Some(FormatterIgnoreItemRange::between(token, token))
         }
         Ok(JavaSyntaxListPart::Malformed(malformed)) => {
             let syntax = malformed.syntax_node()?;
-            Some(relative_token_range_between(
+            Some(FormatterIgnoreItemRange::between(
                 &syntax.first_token()?,
                 &syntax.last_token()?,
-                block_start,
             ))
         }
         Ok(JavaSyntaxListPart::Missing(_)) | Err(_) => None,
@@ -309,13 +312,11 @@ fn format_removed_empty_statement<'source>(
     (normalized, has_comments || !removed)
 }
 
-fn block_statement_token_range(
+fn block_statement_ignore_range(
     statement: &BlockStatement<'_>,
-    block_start: usize,
-) -> Option<Range<usize>> {
-    Some(relative_token_range_between(
+) -> Option<FormatterIgnoreItemRange> {
+    Some(FormatterIgnoreItemRange::between(
         &statement.first_token()?,
         &statement.last_token()?,
-        block_start,
     ))
 }

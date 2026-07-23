@@ -1,14 +1,14 @@
 use super::{
     AnnotationInterfaceBodyMember, ClassBody, ClassBodyMember, Doc, FormattedMember,
-    FormatterIgnoreSplice, InterfaceBody, InterfaceBodyMember, JavaSyntaxToken, MemberCategory,
-    Range, RecordBody, comments_from_tokens, for_each_formatter_ignore_splice,
-    format_annotation_element_declaration, format_annotation_interface_declaration, format_block,
-    format_class_declaration, format_compact_constructor_declaration,
-    format_constructor_declaration, format_dangling_comments, format_enum_declaration,
-    format_field_declaration, format_interface_declaration, format_method_declaration,
-    format_record_declaration, format_removed_comments, format_token_with_comments,
-    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, has_removed_comments,
-    join_member_docs, relative_token_range_between,
+    FormatterIgnoreItemRange, FormatterIgnoreSplice, InterfaceBody, InterfaceBodyMember,
+    JavaSyntaxToken, MemberCategory, RecordBody, comments_from_tokens,
+    for_each_formatter_ignore_splice, format_annotation_element_declaration,
+    format_annotation_interface_declaration, format_block, format_class_declaration,
+    format_compact_constructor_declaration, format_constructor_declaration,
+    format_dangling_comments, format_enum_declaration, format_field_declaration,
+    format_interface_declaration, format_method_declaration, format_record_declaration,
+    format_removed_comments, format_token_with_comments, formatter_ignore_content_range,
+    formatter_ignore_run_doc, has_removed_comments, join_member_docs,
 };
 use crate::helpers::blocks::BodyContent;
 use crate::helpers::comments::format_token_removal;
@@ -19,6 +19,7 @@ use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{
     AnnotationInterfaceBodyMemberList, JavaSyntaxInvariantError, JavaSyntaxListPart, JavaSyntaxView,
 };
+use jolt_text::TextRange;
 
 type PartResult<'source, T> = Result<JavaSyntaxListPart<'source, T>, JavaSyntaxInvariantError>;
 
@@ -38,16 +39,13 @@ macro_rules! standard_member_body {
                     return recovered_member_body(open_comments, malformed, close_comments, doc);
                 }
             };
-            let body_start = body.text_range().start().get();
-            let ignored =
-                formatter_ignore_ranges(body.source_text(), body_start, body.token_iter());
+            let container = formatter_ignore_content_range(members.text_range(), open, close);
             format_member_parts(
-                body_start,
-                &ignored,
+                container,
                 members.parts(),
                 open_comments,
                 close_comments,
-                |member| family_token_range(member, body_start),
+                family_ignore_range,
                 $category,
                 |member, doc| Some($format(member, doc)),
                 doc,
@@ -101,18 +99,13 @@ pub(super) fn format_annotation_interface_body<'source>(
                 return recovered_member_body(open_comments, malformed, close_comments, doc);
             }
         };
-    let ignored = formatter_ignore_ranges(
-        body.source_text(),
-        body.text_range().start().get(),
-        body.token_iter(),
-    );
+    let container = formatter_ignore_content_range(declarations.text_range(), open, close);
     format_member_parts(
-        body.text_range().start().get(),
-        &ignored,
+        container,
         declarations.parts(),
         open_comments,
         close_comments,
-        |member| family_token_range(member, body.text_range().start().get()),
+        family_ignore_range,
         annotation_member_category,
         |member, doc| Some(FormattedMember::from_annotation_member(member, doc)),
         doc,
@@ -153,20 +146,18 @@ fn present_token<'source>(
 }
 
 pub(super) fn format_class_member_body<'source>(
-    body_start: usize,
-    ignored_ranges: &[crate::helpers::formatter_ignore::FormatterIgnoreRange<'source>],
+    container: TextRange,
     members: impl IntoIterator<Item = PartResult<'source, ClassBodyMember<'source>>>,
     open_dangling_comments: Option<FormattedMember<'source>>,
     close_dangling_comments: Option<FormattedMember<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> BodyContent<'source> {
     format_member_parts(
-        body_start,
-        ignored_ranges,
+        container,
         members,
         open_dangling_comments,
         close_dangling_comments,
-        |member| family_token_range(member, body_start),
+        family_ignore_range,
         member_category,
         |member, doc| Some(FormattedMember::from_member(member, doc)),
         doc,
@@ -175,18 +166,17 @@ pub(super) fn format_class_member_body<'source>(
 
 #[allow(clippy::too_many_arguments)]
 fn format_member_parts<'source, T: Copy>(
-    body_start: usize,
-    ignored_ranges: &[crate::helpers::formatter_ignore::FormatterIgnoreRange<'source>],
+    container: TextRange,
     members: impl IntoIterator<Item = PartResult<'source, T>>,
     open_dangling_comments: Option<FormattedMember<'source>>,
     close_dangling_comments: Option<FormattedMember<'source>>,
-    item_range: impl Fn(&T) -> Option<Range<usize>>,
+    item_range: impl Fn(&T) -> Option<FormatterIgnoreItemRange>,
     item_category: impl Fn(&T) -> MemberCategory,
     mut format_item: impl FnMut(&T, &mut DocBuilder<'source>) -> Option<FormattedMember<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> BodyContent<'source> {
     let members = members.into_iter();
-    if ignored_ranges.is_empty() {
+    if !doc.formatter_ignore_may_apply(container) {
         let (lower, _) = members.size_hint();
         let mut formatted = Vec::with_capacity(lower.saturating_add(2));
         formatted.extend(open_dangling_comments);
@@ -207,11 +197,12 @@ fn format_member_parts<'source, T: Copy>(
     }
 
     let members = members.collect::<Vec<_>>();
-    let ranges = members
-        .iter()
-        .map(|part| part_token_range(part, body_start, &item_range))
-        .collect::<Vec<_>>();
-    let runs = formatter_ignore_runs(ignored_ranges, &ranges);
+    let runs = doc.formatter_ignore_runs(
+        container,
+        members
+            .iter()
+            .map(|part| part_ignore_range(part, &item_range)),
+    );
     let mut formatted =
         Vec::with_capacity(members.len().saturating_add(runs.len()).saturating_add(2));
     formatted.extend(open_dangling_comments);
@@ -276,22 +267,20 @@ fn format_part<'source, T>(
     }
 }
 
-fn part_token_range<T>(
+fn part_ignore_range<T>(
     part: &PartResult<'_, T>,
-    body_start: usize,
-    item_range: &impl Fn(&T) -> Option<Range<usize>>,
-) -> Option<Range<usize>> {
+    item_range: &impl Fn(&T) -> Option<FormatterIgnoreItemRange>,
+) -> Option<FormatterIgnoreItemRange> {
     match part {
         Ok(JavaSyntaxListPart::Item(item)) => item_range(item),
         Ok(JavaSyntaxListPart::Separator(token)) => {
-            Some(relative_token_range_between(token, token, body_start))
+            Some(FormatterIgnoreItemRange::between(token, token))
         }
         Ok(JavaSyntaxListPart::Malformed(malformed)) => {
             let syntax = malformed.syntax_node()?;
-            Some(relative_token_range_between(
+            Some(FormatterIgnoreItemRange::between(
                 &syntax.first_token()?,
                 &syntax.last_token()?,
-                body_start,
             ))
         }
         Ok(JavaSyntaxListPart::Missing(_)) | Err(_) => None,
@@ -308,15 +297,13 @@ fn part_category<T>(
     }
 }
 
-fn family_token_range<'source>(
+fn family_ignore_range<'source>(
     member: &impl JavaSyntaxView<'source>,
-    body_start: usize,
-) -> Option<Range<usize>> {
+) -> Option<FormatterIgnoreItemRange> {
     let syntax = member.syntax_node()?;
-    Some(relative_token_range_between(
+    Some(FormatterIgnoreItemRange::between(
         &syntax.first_token()?,
         &syntax.last_token()?,
-        body_start,
     ))
 }
 

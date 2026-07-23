@@ -1,14 +1,3 @@
-use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_java_syntax::{
-    AssertStatement, BasicForStatement, Block, BlockItem, BlockStatement, CatchClause,
-    CatchParameter, DoStatement, EnhancedForStatement, ExpressionStatement, FinallyClause,
-    ForStatement, IfStatement, JavaSyntaxToken, LabeledStatement, Resource, ResourceList,
-    ReturnStatement, Statement, SwitchBlock, SwitchBlockStatementGroup, SwitchLabel, SwitchRule,
-    SwitchStatement, SynchronizedStatement, ThrowStatement, TryStatement,
-    TryWithResourcesStatement, WhileStatement, YieldStatement,
-};
-use std::ops::Range;
-
 use crate::helpers::blocks::{BodyItem, inserted_braced_body, join_body_items};
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, comments_from_tokens,
@@ -17,9 +6,8 @@ use crate::helpers::comments::{
     format_trailing_comments_before_line_break, trailing_comments_force_line,
 };
 use crate::helpers::formatter_ignore::{
-    FormatterIgnoreRange, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
-    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
-    relative_token_range_between,
+    FormatterIgnoreItemRange, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
+    formatter_ignore_content_range, formatter_ignore_run_doc,
 };
 use crate::helpers::recovery::{JavaFormatField, format_malformed, resolve_required_field};
 use crate::rules::annotations::format_annotation;
@@ -30,6 +18,15 @@ use crate::rules::types::format_type;
 use crate::rules::variables::{
     format_enhanced_for_variable, format_local_variable_declaration,
     format_resource_variable_declaration,
+};
+use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_java_syntax::{
+    AssertStatement, BasicForStatement, Block, BlockItem, BlockStatement, CatchClause,
+    CatchParameter, DoStatement, EnhancedForStatement, ExpressionStatement, FinallyClause,
+    ForStatement, IfStatement, JavaSyntaxToken, LabeledStatement, Resource, ResourceList,
+    ReturnStatement, Statement, SwitchBlock, SwitchBlockStatementGroup, SwitchLabel, SwitchRule,
+    SwitchStatement, SynchronizedStatement, ThrowStatement, TryStatement,
+    TryWithResourcesStatement, WhileStatement, YieldStatement,
 };
 
 mod blocks;

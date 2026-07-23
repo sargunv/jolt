@@ -7,7 +7,7 @@ use super::{
     Doc, EnumConstant, FormattedMember, JavaSyntaxToken, comment_forces_line,
     comment_is_star_block, comments_from_tokens, format_argument_list, format_class_body,
     format_comment, format_dangling_comments, format_removed_comments, format_token_with_comments,
-    formatter_ignore_ranges, is_formatter_control_marker, source_braced_body,
+    formatter_ignore_content_range, is_formatter_control_marker, source_braced_body,
 };
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_leading_comments, format_token,
@@ -88,23 +88,36 @@ pub(super) fn format_enum_body_contents<'source>(
     let empty_constant_comments = format_empty_enum_constant_list_comments(constant_list, doc);
     let open_comments = combine_comment_members(doc, open_comments, empty_constant_comments);
     let close_comments = format_body_close_dangling_comments(close, doc);
-    let ignored_ranges = formatter_ignore_ranges(
-        body.source_text(),
-        body.text_range().start().get(),
-        body.token_iter(),
-    );
     let (members_doc, has_body_declarations) = match resolved_members {
-        JavaFormatField::Present(members) => (
-            format_class_member_body(
-                body.text_range().start().get(),
-                &ignored_ranges,
-                members.parts(),
-                open_comments,
-                close_comments,
-                doc,
-            ),
-            resolved_has_body_declarations,
-        ),
+        JavaFormatField::Present(members) => {
+            let member_start = body_declaration_separator.map_or_else(
+                || {
+                    if has_constant_entries {
+                        members.text_range().start()
+                    } else {
+                        open.map_or(members.text_range().start(), |token| {
+                            token.token_text_range().end()
+                        })
+                    }
+                },
+                |token| token.token_text_range().end(),
+            );
+            let container = formatter_ignore_content_range(
+                jolt_text::TextRange::new(member_start, body.text_range().end()),
+                None,
+                close,
+            );
+            (
+                format_class_member_body(
+                    container,
+                    members.parts(),
+                    open_comments,
+                    close_comments,
+                    doc,
+                ),
+                resolved_has_body_declarations,
+            )
+        }
         JavaFormatField::Malformed(recovery) => {
             let comments = combine_comment_members(doc, open_comments, close_comments)
                 .map(|comments| comments.doc);

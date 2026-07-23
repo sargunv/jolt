@@ -12,9 +12,8 @@ use crate::helpers::comments::{
     format_token, token_has_comments,
 };
 use crate::helpers::formatter_ignore::{
-    FormatterIgnoreRange, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
-    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
-    relative_token_range_between,
+    FormatterIgnoreItemRange, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
+    formatter_ignore_content_range, formatter_ignore_run_doc,
 };
 use crate::helpers::recovery::{
     KotlinFormatDelimiter, KotlinFormatField, resolve_required_delimiter, resolve_required_field,
@@ -54,15 +53,14 @@ fn format_block_contents<'source>(
     };
     let parts = collect_block_parts(doc, &items);
 
-    let ignored_ranges = formatter_ignore_ranges(
-        block.source_text(),
-        block.text_range().start().get(),
-        block.token_iter(),
-    );
-    let mut body_items = if ignored_ranges.is_empty() {
+    let container =
+        formatter_ignore_content_range(items.text_range(), open.copied(), close.copied());
+    let ignored_runs =
+        doc.formatter_ignore_runs(container, parts.iter().map(block_part_ignore_range));
+    let mut body_items = if ignored_runs.is_empty() {
         block_body_parts(doc, &parts)
     } else {
-        block_body_parts_with_ignored(doc, block, &parts, &ignored_ranges)
+        block_body_parts_with_ignored(doc, &parts, &ignored_runs)
     };
     if let Some(comments) = format_open_dangling_comments(doc, open) {
         body_items.insert(0, BodyItem::new(comments, BodyItemSeparator::Line));
@@ -229,23 +227,16 @@ fn block_body_part<'source>(
 
 fn block_body_parts_with_ignored<'source>(
     doc: &mut DocBuilder<'source>,
-    block: &Block<'source>,
     parts: &[BlockPart<'source>],
-    ignored_ranges: &[FormatterIgnoreRange<'source>],
+    ignored_runs: &[crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>],
 ) -> Vec<BodyItem<'source>> {
-    let block_start = block.text_range().start().get();
-    let part_ranges = parts
-        .iter()
-        .map(|part| block_part_token_range(part, block_start))
-        .collect::<Vec<_>>();
-    let ignored_runs = formatter_ignore_runs(ignored_ranges, &part_ranges);
     if ignored_runs.is_empty() {
         return block_body_parts(doc, parts);
     }
 
     let mut body_items = Vec::with_capacity(parts.len().saturating_add(ignored_runs.len()));
     let mut previous = None;
-    for_each_formatter_ignore_splice(parts.len(), &ignored_runs, |event| match event {
+    for_each_formatter_ignore_splice(parts.len(), ignored_runs, |event| match event {
         FormatterIgnoreSplice::Ignore(run) => {
             body_items.push(BodyItem::new(
                 formatter_ignore_run_doc(run, doc),
@@ -288,14 +279,10 @@ fn block_item_separator<'source>(
     }
 }
 
-fn block_part_token_range(
-    part: &BlockPart<'_>,
-    block_start: usize,
-) -> Option<std::ops::Range<usize>> {
-    Some(relative_token_range_between(
+fn block_part_ignore_range(part: &BlockPart<'_>) -> Option<FormatterIgnoreItemRange> {
+    Some(FormatterIgnoreItemRange::between(
         &part.first_token()?,
         &part.last_token()?,
-        block_start,
     ))
 }
 

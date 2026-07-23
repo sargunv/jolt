@@ -1,5 +1,3 @@
-use std::ops::Range;
-
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
     ExportsDirective, JavaMalformedSyntax, JavaMissingSyntax, JavaSyntaxField, JavaSyntaxToken,
@@ -16,9 +14,8 @@ use crate::helpers::comments::{
     token_has_comments,
 };
 use crate::helpers::formatter_ignore::{
-    FormatterIgnoreRun, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
-    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
-    relative_token_range_between,
+    FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
+    for_each_formatter_ignore_splice, formatter_ignore_content_range, formatter_ignore_run_doc,
 };
 use crate::helpers::recovery::{
     JavaFormatListPart, format_malformed, format_optional_field, format_required_field,
@@ -102,20 +99,18 @@ fn format_module_directives<'source>(
                 Err(error) => doc.block_on_invariant(error.to_string()),
             }
         }
-        let ignored = formatter_ignore_ranges(
-            module.source_text(),
-            module.text_range().start().get(),
-            module.token_iter(),
-        );
         let visible = entries.iter().any(DirectiveEntry::is_visible);
-        if ignored.is_empty() {
-            return (format_directive_entries(entries, doc), visible);
-        }
-        let ranges = entries
-            .iter()
-            .map(|entry| entry.range(module.text_range().start().get()))
-            .collect::<Vec<_>>();
-        let runs = formatter_ignore_runs(&ignored, &ranges);
+        let open = match module.open_brace() {
+            Ok(JavaSyntaxField::Present(token)) => Some(token),
+            _ => None,
+        };
+        let close = match module.close_brace() {
+            Ok(JavaSyntaxField::Present(token)) => Some(token),
+            _ => None,
+        };
+        let container = formatter_ignore_content_range(list.text_range(), open, close);
+        let runs =
+            doc.formatter_ignore_runs(container, entries.iter().map(DirectiveEntry::ignore_range));
         (
             format_directive_entries_with_ignored(entries, &runs, doc),
             visible || !runs.is_empty(),
@@ -140,20 +135,18 @@ impl DirectiveEntry<'_> {
         }
     }
 
-    fn range(&self, module_start: usize) -> Option<Range<usize>> {
+    fn ignore_range(&self) -> Option<FormatterIgnoreItemRange> {
         match self {
-            Self::Node(node) => Some(relative_token_range_between(
+            Self::Node(node) => Some(FormatterIgnoreItemRange::between(
                 &node.first_token()?,
                 &node.last_token()?,
-                module_start,
             )),
-            Self::Token(token) => Some(relative_token_range_between(token, token, module_start)),
+            Self::Token(token) => Some(FormatterIgnoreItemRange::between(token, token)),
             Self::Malformed(malformed) => {
                 let syntax = malformed.syntax_node()?;
-                Some(relative_token_range_between(
+                Some(FormatterIgnoreItemRange::between(
                     &syntax.first_token()?,
                     &syntax.last_token()?,
-                    module_start,
                 ))
             }
             Self::Missing(_) => None,
