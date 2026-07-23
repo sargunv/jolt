@@ -2344,9 +2344,9 @@ slices remove Java nodes and allocations or leave topology unchanged.
   `MemberChainBuilder` now receives maximal consecutive suffixes from the parent
   walk, preserving navigation/call fusion, field-run grouping, forced breaks,
   tight suffix boundaries, and leading comments exactly once. Missing or
-  malformed recursive fields stop descent and use their existing local
-  structured formatter.
-- Production is +249/-126 lines (+123 net) and the generated integration slice
+  malformed recursive fields stop descent; impossible missing traversal nodes
+  select the formatter's blocking invariant diagnostic rather than panicking.
+- Production is +255/-126 lines (+129 net) and the generated integration slice
   is +25 lines. The final review added an explicit captured-outer boundary and
   removed transitional comment state and repeated dispatch boilerplate before
   approving layout, recovery, trivia, topology, and allocation behavior.
@@ -2359,10 +2359,12 @@ slices remove Java nodes and allocations or leave topology unchanged.
 - Realistic Java/Kotlin syntax topology, document topology, allocation counts,
   and allocation bytes are exactly unchanged. The aggregate Kotlin-format run
   remained noisy; immediate focused reruns measured 34.91 ms and 34.43 ms
-  against PR 29's 33.89 ms and 33.36 ms.
-- Optimized WASM moved from 1,768,589 to 1,772,492 bytes (+3,903, +0.22%), with
-  SHA-256 `5efbde0bad17da8e83846c532bdcebd1d95d0f7c989aafcd0a39c2becf2055c7`.
-  The benchmark records clean committed subject `14b5806`.
+  against PR 29's 33.89 ms and 33.36 ms, a repeatable +3.0%/+3.2% focused cost.
+  A shallow/deep split would add a threshold and two formatter algorithms; the
+  measured cost is accepted for one allocation-free, semantics-preserving walk.
+- The original walker benchmark recorded +3,903 optimized WASM bytes (+0.22%).
+  Folding its non-panic invariant handling into this PR does not change the
+  measured ordinary traversal.
 
 ## Decision Log
 
