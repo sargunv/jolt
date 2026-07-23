@@ -187,7 +187,10 @@ pub(crate) fn format_type_reference<'source>(
 }
 
 fn format_type<'source>(doc: &mut DocBuilder<'source>, ty: &TypeSyntax<'source>) -> Doc<'source> {
-    let outer = ty.syntax_node().expect("type has a node");
+    let Some(outer) = ty.syntax_node() else {
+        doc.block_on_invariant("Kotlin type has no syntax node");
+        return Doc::nil();
+    };
     let mut current = *ty;
 
     loop {
@@ -212,7 +215,10 @@ fn format_type<'source>(doc: &mut DocBuilder<'source>, ty: &TypeSyntax<'source>)
         current = inner;
     }
 
-    let mut current_node = current.syntax_node().expect("type has a node");
+    let Some(mut current_node) = current.syntax_node() else {
+        doc.block_on_invariant("Kotlin type base has no syntax node");
+        return Doc::nil();
+    };
     let mut formatted = format_type_base(doc, &current);
     while current_node != outer {
         let Some((suffix, parent)) = format_parent_type_suffix(doc, formatted, current_node) else {
