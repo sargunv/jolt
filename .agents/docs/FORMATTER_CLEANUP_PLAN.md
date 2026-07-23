@@ -642,6 +642,43 @@ Gates:
 - realistic and adversarial parser time/allocation improve or remain neutral;
 - the resulting grammar is shorter and locally traceable.
 
+Audit findings and working scope (2026-07-23):
+
+- nested ordinary parenthesized expressions are `Theta(n^2)`: every `(` scans to
+  its matching close to reject a lambda, and cast classification currently
+  repeats that scan. A depth-`D` generated family performs approximately
+  `4D^2 + 6D` balanced-token advances;
+- malformed top-level annotation suffixes are also `Theta(n^2)`: recovery asks
+  package, module, and type predicates to rescan the remaining annotation run at
+  successive `@` tokens;
+- one nested generic type probe is linear in tokens but recursively uses input
+  depth. The consuming type grammar is recursive too, so changing only the
+  parallel scanner would not close the stack-depth risk;
+- add Java-private, test-only speculative-step counting at actual lookahead and
+  balanced-scan advances. Generated tests assert explicit linear bounds and
+  source identity; timing alone is not acceptance evidence;
+- prototype only a current-parser-position parenthesis summary. One uncached
+  scan records its root and every nested `(` in source order, fills matching
+  closes through predecessor links encoded in placeholders, and finalizes
+  unmatched opens to EOF. Monotonic parser positions reuse or skip entries;
+  forked lookahead cursors never touch the summary;
+- keep the summary Java-private and lazy. Reject it if it needs arbitrary-index
+  lookup, sorting, hashing, shared parser APIs, more than roughly 80 production
+  lines, or material allocation/RSS growth. Pair it with enough predicate
+  deletion that PR 12 remains net-small;
+- delete immediate repeated work first: the second typed-lambda probe, the cast
+  lambda pre-scan, duplicate top/local type-declaration predicates, the
+  resource-variable alias, module cursor replay, duplicated primitive/literal
+  kind matches, and repeated pattern-prefix classification where the result can
+  be passed directly;
+- do not fast-forward failed annotation runs. Unterminated annotation arguments
+  can contain semicolon or later program boundaries that tokenwise recovery must
+  preserve. Any annotation memo must reproduce suffix boundaries exactly; a
+  safe-subset policy is rejected as a leaky second grammar;
+- reject speculative parser transactions, Kotlin-style fixed token caps, generic
+  query caches, and a member-classification framework unless a smaller local
+  prototype preserves the exact existing precedence and recovery trees.
+
 ### PR 13 — Final reconciliation, docs, and API deletions
 
 Scope:
