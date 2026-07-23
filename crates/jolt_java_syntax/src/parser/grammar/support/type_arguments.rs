@@ -178,7 +178,7 @@ mod tests {
     }
 
     #[test]
-    fn annotation_cast_reentry_cannot_reset_the_active_depth() {
+    fn shared_syntax_budget_bounds_generic_annotation_cast_reentry() {
         let source = format!(
             "class C {{ {} value; int following; }} class D {{}}",
             alternating_annotation_type(4096)
@@ -193,7 +193,7 @@ mod tests {
                 .diagnostics()
                 .iter()
                 .filter(|diagnostic| {
-                    diagnostic.code == JavaParseDiagnosticCode::ExcessiveTypeNesting.id()
+                    diagnostic.code == JavaParseDiagnosticCode::ExcessiveSyntaxNesting.id()
                 })
                 .count(),
             1

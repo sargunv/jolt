@@ -160,7 +160,7 @@ mod tests {
 
     #[test]
     fn full_parse_handles_deep_parentheses_and_malformed_annotations() {
-        let depth = 128;
+        let depth = 64;
         let nested = format!(
             "class C {{ Object value = {}input{}; }} class D {{}}",
             "(".repeat(depth),
