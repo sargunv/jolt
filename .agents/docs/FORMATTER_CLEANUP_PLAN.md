@@ -2333,6 +2333,37 @@ slices remove Java nodes and allocations or leave topology unchanged.
   rewritten PR 28 parent. The exact benchmark records clean committed subject
   `4fa53398`.
 
+### PR 30 evidence
+
+- One Kotlin-local suffix walk now descends through call, navigation, index,
+  postfix, and expression-valued callable-reference receivers, formats one local
+  base, then ascends only to its captured outer node. No work stack, generic
+  visitor, source replay, syntax clone, formatter depth limit, or valid syntax
+  fallback was introduced.
+- The old recursive member-chain collector was deleted. The existing
+  `MemberChainBuilder` now receives maximal consecutive suffixes from the parent
+  walk, preserving navigation/call fusion, field-run grouping, forced breaks,
+  tight suffix boundaries, and leading comments exactly once. Missing or
+  malformed recursive fields stop descent and use their existing local
+  structured formatter.
+- Production is +249/-126 lines (+123 net) and the generated integration slice
+  is +25 lines. The final review added an explicit captured-outer boundary and
+  removed transitional comment state and repeated dispatch boilerplate before
+  approving layout, recovery, trivia, topology, and allocation behavior.
+- Six clean depth-4,096 pure/alternating suffix adversaries completed natively,
+  reconstructed losslessly, retained following declarations, and formatted
+  idempotently. A combined actual dprint-WASM stdin smoke retained mixed,
+  bare-call, and callable-reference sentinels. `mise run fix` passed strict
+  native and WASM checks; the complete non-update suite passed all 225 tests
+  with zero skips and unchanged snapshots.
+- Realistic Java/Kotlin syntax topology, document topology, allocation counts,
+  and allocation bytes are exactly unchanged. The aggregate Kotlin-format run
+  remained noisy; immediate focused reruns measured 34.91 ms and 34.43 ms
+  against PR 29's 33.89 ms and 33.36 ms.
+- Optimized WASM moved from 1,768,589 to 1,772,492 bytes (+3,903, +0.22%), with
+  SHA-256 `5efbde0bad17da8e83846c532bdcebd1d95d0f7c989aafcd0a39c2becf2055c7`.
+  The benchmark records clean committed subject `14b5806`.
+
 ## Decision Log
 
 | Date       | Decision                                                         | Reason                                                                                                                                                                                                                   |
