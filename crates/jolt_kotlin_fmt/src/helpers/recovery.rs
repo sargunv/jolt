@@ -5,7 +5,8 @@
 //! against typed CST enums, including invisible list parts.
 
 use jolt_fmt_ir::{
-    Doc, DocBuilder, FormatField, FormatListPart, LayoutDoc, assemble_malformed_fragment,
+    Doc, DocBuilder, FormatDelimiter, FormatField, FormatListPart, LayoutDoc,
+    assemble_malformed_fragment,
 };
 use jolt_kotlin_syntax::{
     KotlinMissingSyntax, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken,
@@ -46,28 +47,8 @@ pub(crate) fn format_malformed<'source>(
 pub(crate) type KotlinFormatListPart<'source, T> =
     FormatListPart<'source, T, KotlinSyntaxToken<'source>>;
 
-/// A delimiter slot resolved without losing its exact source position.
-#[derive(Clone, Copy)]
-pub(crate) enum KotlinFormatDelimiter<'source> {
-    Source(KotlinSyntaxToken<'source>),
-    Recovery(Doc<'source>),
-}
-
-impl<'source> KotlinFormatDelimiter<'source> {
-    pub(crate) fn source(&self) -> Option<&KotlinSyntaxToken<'source>> {
-        match self {
-            Self::Source(token) => Some(token),
-            Self::Recovery(_) => None,
-        }
-    }
-
-    const fn recovery(&self) -> Doc<'source> {
-        match self {
-            Self::Source(_) => Doc::nil(),
-            Self::Recovery(recovery) => *recovery,
-        }
-    }
-}
+pub(crate) type KotlinFormatDelimiter<'source> =
+    FormatDelimiter<'source, KotlinSyntaxToken<'source>>;
 
 pub(crate) fn format_delimiter_with_preserved_trailing<'source>(
     doc: &mut DocBuilder<'source>,

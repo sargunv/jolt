@@ -15,6 +15,32 @@ pub enum FormatField<'source, T> {
     Malformed(Doc<'source>),
 }
 
+/// A resolved delimiter slot, preserving either its source token or recovery
+/// document.
+#[derive(Clone, Copy)]
+pub enum FormatDelimiter<'source, Token> {
+    Source(Token),
+    Recovery(Doc<'source>),
+}
+
+impl<'source, Token> FormatDelimiter<'source, Token> {
+    #[must_use]
+    pub const fn source(&self) -> Option<&Token> {
+        match self {
+            Self::Source(token) => Some(token),
+            Self::Recovery(_) => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn recovery(&self) -> Doc<'source> {
+        match self {
+            Self::Source(_) => Doc::nil(),
+            Self::Recovery(recovery) => *recovery,
+        }
+    }
+}
+
 /// A formatted document's contribution to surrounding layout.
 #[derive(Clone, Copy)]
 pub enum LayoutDoc<'source> {
