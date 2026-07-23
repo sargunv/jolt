@@ -1006,7 +1006,7 @@ ready for review.
 | 21  | `cleanup/21-java-delimiter-summaries`    | draft open | PR 20  | [#23](https://github.com/sargunv/jolt/pull/23) | full + benchmark           | Bound lambda and annotation parenthesis scans.   |
 | 22  | `cleanup/22-java-generic-depth`          | draft open | PR 21  | [#24](https://github.com/sargunv/jolt/pull/24) | full + benchmark           | Bound recursive generic-type parsing.            |
 | 23  | `cleanup/23-layout-doc-consolidation`    | draft open | PR 22  | [#25](https://github.com/sargunv/jolt/pull/25) | full + benchmark           | Delete duplicate recovery visibility carriers.   |
-| 24  | `cleanup/24-java-annotation-cost`        | ready      | PR 23  | —                                              | full + release + benchmark | Bound flat malformed-annotation lookahead.       |
+| 24  | `cleanup/24-java-annotation-cost`        | draft open | PR 23  | [#26](https://github.com/sargunv/jolt/pull/26) | full + release + benchmark | Bound flat malformed-annotation lookahead.       |
 | 25  | `cleanup/25-java-recursion-budget`       | planned    | PR 24  | —                                              | —                          | Bound recursive Java syntax families.            |
 | 26  | `cleanup/26-kotlin-recursion-audit`      | planned    | PR 25  | —                                              | —                          | Audit and bound Kotlin parser recursion.         |
 | 27  | `cleanup/27-residue-reconciliation`      | planned    | PR 26  | —                                              | —                          | Final evidence and debt-ledger closure.          |
