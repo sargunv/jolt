@@ -46,19 +46,8 @@ pub(super) fn missing_constructor_header_action(
 }
 
 pub(super) const fn is_type_argument_value_start(kind: JavaSyntaxKind) -> bool {
-    matches!(
-        kind,
-        JavaSyntaxKind::Question
-            | JavaSyntaxKind::Identifier
-            | JavaSyntaxKind::BooleanKw
-            | JavaSyntaxKind::ByteKw
-            | JavaSyntaxKind::CharKw
-            | JavaSyntaxKind::DoubleKw
-            | JavaSyntaxKind::FloatKw
-            | JavaSyntaxKind::IntKw
-            | JavaSyntaxKind::LongKw
-            | JavaSyntaxKind::ShortKw
-    )
+    matches!(kind, JavaSyntaxKind::Question | JavaSyntaxKind::Identifier)
+        || is_primitive_type_start(kind)
 }
 
 pub(super) const fn is_type_argument_recovery_boundary(kind: JavaSyntaxKind) -> bool {
@@ -77,6 +66,33 @@ pub(super) const fn is_type_argument_recovery_boundary(kind: JavaSyntaxKind) -> 
             | JavaSyntaxKind::RBracket
             | JavaSyntaxKind::Colon
             | JavaSyntaxKind::Arrow
+    )
+}
+
+pub(super) const fn is_primitive_type_start(kind: JavaSyntaxKind) -> bool {
+    matches!(
+        kind,
+        JavaSyntaxKind::BooleanKw
+            | JavaSyntaxKind::ByteKw
+            | JavaSyntaxKind::CharKw
+            | JavaSyntaxKind::DoubleKw
+            | JavaSyntaxKind::FloatKw
+            | JavaSyntaxKind::IntKw
+            | JavaSyntaxKind::LongKw
+            | JavaSyntaxKind::ShortKw
+    )
+}
+
+pub(super) const fn is_literal_expression_start(kind: JavaSyntaxKind) -> bool {
+    matches!(
+        kind,
+        JavaSyntaxKind::IntegerLiteral
+            | JavaSyntaxKind::FloatingPointLiteral
+            | JavaSyntaxKind::BooleanLiteral
+            | JavaSyntaxKind::CharacterLiteral
+            | JavaSyntaxKind::StringLiteral
+            | JavaSyntaxKind::TextBlockLiteral
+            | JavaSyntaxKind::NullLiteral
     )
 }
 

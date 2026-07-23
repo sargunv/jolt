@@ -268,14 +268,17 @@ impl Parser<'_> {
             self.parse_binary_operator(operator_info.len);
 
             if operator == JavaSyntaxKind::InstanceofKw {
-                if self.starts_pattern() {
-                    self.parse_pattern_until(&[
-                        JavaSyntaxKind::Semicolon,
-                        JavaSyntaxKind::RParen,
-                        JavaSyntaxKind::RBracket,
-                        JavaSyntaxKind::Comma,
-                        JavaSyntaxKind::Colon,
-                    ]);
+                if let Some(pattern_start) = self.pattern_start() {
+                    self.parse_pattern_until(
+                        pattern_start,
+                        &[
+                            JavaSyntaxKind::Semicolon,
+                            JavaSyntaxKind::RParen,
+                            JavaSyntaxKind::RBracket,
+                            JavaSyntaxKind::Comma,
+                            JavaSyntaxKind::Colon,
+                        ],
+                    );
                 } else {
                     self.parse_reference_type();
                 }
@@ -811,10 +814,10 @@ impl Parser<'_> {
         let starts_typed_parameter = self.starts_typed_lambda_parameter();
         let style = if has_var_modifier {
             LambdaParameterStyle::Var
-        } else if has_modifiers && !starts_typed_parameter {
+        } else if has_modifiers || starts_typed_parameter {
             LambdaParameterStyle::Explicit
         } else {
-            self.current_lambda_parameter_style()
+            LambdaParameterStyle::Implicit
         };
         let mut varargs = false;
         let mut missing_type = None;
@@ -902,18 +905,6 @@ impl Parser<'_> {
         }
         self.complete(modifiers, JavaSyntaxKind::LambdaModifierList);
         (saw_modifier, saw_var)
-    }
-
-    pub(super) fn current_lambda_parameter_style(&mut self) -> LambdaParameterStyle {
-        if !self.starts_typed_lambda_parameter() {
-            return LambdaParameterStyle::Implicit;
-        }
-
-        if self.at_contextual("var") && self.nth_kind(1) != JavaSyntaxKind::Dot {
-            LambdaParameterStyle::Var
-        } else {
-            LambdaParameterStyle::Explicit
-        }
     }
 
     pub(super) fn parse_new_expression_fragment(&mut self) -> jolt_syntax::CompletedMarker {

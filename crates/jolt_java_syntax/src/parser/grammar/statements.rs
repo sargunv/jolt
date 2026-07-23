@@ -76,7 +76,7 @@ impl Parser<'_> {
     pub(super) fn parse_block_statement(&mut self) {
         let block_statement = self.start();
 
-        if self.starts_local_class_or_interface_declaration() {
+        if self.starts_type_declaration() {
             self.parse_local_class_or_interface_declaration();
         } else if self.starts_local_variable_declaration() {
             self.parse_local_variable_declaration_statement(
@@ -701,7 +701,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_resource(&mut self) {
         let resource = self.start();
-        if self.starts_resource_local_variable_declaration() {
+        if self.starts_local_variable_declaration() {
             self.parse_resource_variable_declaration_until(&[
                 JavaSyntaxKind::Semicolon,
                 JavaSyntaxKind::RParen,
@@ -1032,13 +1032,16 @@ impl Parser<'_> {
                 previous_was_pattern = false;
             } else if self.at_contextual("when") && saw_case_item {
                 break;
-            } else if self.starts_pattern() {
+            } else if let Some(pattern_start) = self.pattern_start() {
                 let case_pattern = self.start();
-                self.parse_pattern_until(&[
-                    JavaSyntaxKind::Comma,
-                    JavaSyntaxKind::Colon,
-                    JavaSyntaxKind::Arrow,
-                ]);
+                self.parse_pattern_until(
+                    pattern_start,
+                    &[
+                        JavaSyntaxKind::Comma,
+                        JavaSyntaxKind::Colon,
+                        JavaSyntaxKind::Arrow,
+                    ],
+                );
                 self.complete(case_pattern, JavaSyntaxKind::CasePattern);
                 saw_case_item = true;
                 previous_was_pattern = true;

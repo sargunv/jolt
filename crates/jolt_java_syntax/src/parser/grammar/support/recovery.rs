@@ -35,7 +35,7 @@ impl Parser<'_> {
         self.starts_package_declaration()
             || self.at(JavaSyntaxKind::ImportKw)
             || self.starts_module_declaration()
-            || self.starts_top_level_type_declaration()
+            || self.starts_type_declaration()
     }
 
     pub(in crate::parser::grammar) fn recover_module_directive(&mut self) {

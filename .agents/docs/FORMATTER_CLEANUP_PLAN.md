@@ -621,13 +621,15 @@ pretranslation, final-SUB handling, non-nested block comments, and CR-or-LF
 line-comment termination. A common trivia loop therefore needs semantic hooks or
 policy flags and weakens the language boundary.
 
-### PR 12 — Bounded Java lookahead
+### PR 12 — Java lookahead audit and local deletion
 
 Scope:
 
 - measure adversarial work in the Java lookahead parallel grammar;
-- memoize, explicitly bound, shrink, or replace productions using existing
-  parser mechanisms;
+- shrink repeated productions and pass completed classifications directly into
+  their consuming grammar where this needs no cache or extra ownership model;
+- prototype bounded replacements for the proven superlinear paths, but keep them
+  only when they remain locally understandable and allocation-neutral;
 - delete parallel productions as soon as the owning parse decision migrates.
 
 Expected deletions: repeated lookahead work and parallel grammar code.
@@ -637,10 +639,68 @@ grammar complexity behind a generic API.
 
 Gates:
 
-- adversarial tests assert counted finite work, not wall-clock alone;
+- counted prototypes identify the retained adversarial costs and prove any
+  claimed improvement; PR 12 must not add a new unmeasured repeated scan;
 - Java parser fixtures and recovery snapshots remain stable;
 - realistic and adversarial parser time/allocation improve or remain neutral;
 - the resulting grammar is shorter and locally traceable.
+
+Audit findings and working scope (2026-07-23):
+
+- in the PR 11 parent, nested ordinary parenthesized expressions are
+  `Theta(n^2)`: every `(` scans to its matching close to reject a lambda, and
+  cast classification repeats that scan. A depth-`D` generated family performs
+  approximately `4D^2 + 6D` balanced-token advances. PR 12 deletes the cast
+  pre-scan but retains the fundamental lambda-rejection scan;
+- malformed top-level annotation suffixes are also `Theta(n^2)`: recovery asks
+  package, module, and type predicates to rescan the remaining annotation run at
+  successive `@` tokens;
+- one nested generic type probe is linear in tokens but recursively uses input
+  depth. The consuming type grammar is recursive too, so changing only the
+  parallel scanner would not close the stack-depth risk;
+- Java-private speculative-step counting at actual lookahead and balanced-scan
+  advances measured the prototypes below. It was reverted with them because the
+  accepted implementation does not claim a new asymptotic bound;
+- the retained implementation deletes the second typed-lambda probe, cast lambda
+  pre-scan, duplicate top/local type-declaration predicates, the
+  resource-variable alias, module cursor replay, duplicated primitive/literal
+  kind matches, and repeated pattern-prefix classification where the result is
+  passed directly;
+- do not fast-forward failed annotation runs. Unterminated annotation arguments
+  can contain semicolon or later program boundaries that tokenwise recovery must
+  preserve. Any annotation memo must reproduce suffix boundaries exactly; a
+  safe-subset policy is rejected as a leaky second grammar;
+- reject speculative parser transactions, Kotlin-style fixed token caps, generic
+  query caches, and a member-classification framework unless a smaller local
+  prototype preserves the exact existing precedence and recovery trees.
+
+Rejected parenthesis-summary prototype (2026-07-23): a Java-private lazy cache
+made the generated depth-1,600 ordinary-parenthesis family effectively linear
+and reduced its debug parse time from about 0.37 seconds to 0.02 seconds. It
+also added 80 production lines and 65 test lines, increased realistic Java parse
+allocations from 109,539 to 113,644 (+4,105, +3.75%), and allocated 293,888 more
+bytes. A flat/spill representation would add another state model. The cache was
+fully reverted; retain the remaining repeated lambda rejection scan until its
+grammar decision can be made without a material side structure.
+
+Rejected annotation-start memo prototype (2026-07-23): remembering failed
+top-level annotation starts plus their run end made flat malformed runs exactly
+`16N` speculative advances, malformed import suffixes `8N`, and repeated
+balanced top-level `@A(value=@B)` items `70N`. It did not bound a single deeply
+nested annotation: depth 256 still performed 600,581 advances because every
+interior `@` must run the ordinary boundary predicates, each of which scans the
+remaining nested suffix. Broader memoization would introduce the generic cache
+and invalidation model rejected by this PR; fast-forwarding is recovery-inexact
+because malformed annotation arguments can contain later declaration boundaries,
+as in `import a @A(value; class C {}`, `@A( class C {}`, and `@module 0`. The
+prototype was fully reverted.
+
+Rejected member-header classifier (2026-07-23): annotation elements, malformed
+constructors, methods, fields, and compact members intentionally use different
+precedence and recovery gates. With no rewindable lookahead, an exact classifier
+must restart those same probes and merely hide them behind an enum, growing by
+an estimated 0-15 lines without reducing work. Keep the decisions local until a
+smaller owner-specific deletion is proven.
 
 ### PR 13 — Final reconciliation, docs, and API deletions
 
@@ -739,7 +799,7 @@ ready for review.
 | 09  | `cleanup/09-kotlin-rules`                | draft open | PR 08a | [#11](https://github.com/sargunv/jolt/pull/11) | full + release + benchmark | Rule state and helper indirection deleted.       |
 | 10  | `cleanup/10-java-rules`                  | draft open | PR 09  | [#12](https://github.com/sargunv/jolt/pull/12) | full + release + benchmark | Total rules and native module parts.             |
 | 11  | `cleanup/11-lexer-substrate`             | draft open | PR 10  | [#13](https://github.com/sargunv/jolt/pull/13) | full + release + benchmark | Shared cursor rejected; local scans are bounded. |
-| 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                              | —                          | Counted bounded lookahead work.                  |
+| 12  | `cleanup/12-java-lookahead`              | draft open | PR 11  | [#14](https://github.com/sargunv/jolt/pull/14) | full + release + benchmark | Local deletion; cache frameworks rejected.       |
 | 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                              | —                          | Actual docs, metrics, and API deletions only.    |
 
 ### PR 01 evidence
@@ -1262,6 +1322,40 @@ ready for review.
   optimized WASM plugin shrank from 1,759,618 to 1,758,605 bytes (-0.06%), with
   SHA-256 `88e74840fd1cc89bfe575d86281026ec8471ae58f7231f6945672da4cbbe525a`.
 
+### PR 12 evidence
+
+- Duplicate typed-lambda and cast probes, top/local type-declaration predicates,
+  the resource-variable alias, module cursor replay, five wrapper-only offset
+  helpers, and repeated primitive/literal token taxonomies are deleted. One
+  private `PatternStart` decision replaces up to three pattern-prefix probes and
+  is passed directly into its consuming grammar.
+- Production Rust is +112/-220 lines (-108 net). Tests add no source, state, or
+  fixture. Including the durable audit and decision ledger, the whole PR is
+  +214/-225 lines (-11 net). No public API, CST schema, parser cache, or
+  compatibility path is added.
+- Measured parenthesis-summary, annotation-start-memo, and member-header
+  classifier prototypes were rejected and fully reverted. The first added 80
+  production lines and 3.75% realistic parse allocations; the second did not
+  bound a single deeply nested annotation; the third had to restart the same
+  precedence-sensitive probes it purported to classify.
+- The retained grammar still has known `Theta(n^2)` nested ordinary-parenthesis
+  lambda rejection and malformed nested-annotation recovery. Generic-type
+  lookahead and its consuming grammar both retain recursive input depth. PR 12
+  records these costs explicitly rather than hiding them behind a generic cache
+  or claiming an asymptotic improvement it did not achieve.
+- Repository-defined Ona automation passed all 184 workspace tests with zero
+  skips. `mise run fix`, complete Java syntax/formatter release suites, strict
+  workspace Clippy, dependency and WASM checks, the architecture benchmark, and
+  the 9,899-file PGO build passed with no output or snapshot delta.
+- Against PR 11 on the same machine and 9,206-file Java corpus, realistic parse
+  median moved 1,020.168 to 1,033.988 ms (+1.35%, treated as run noise). Parse
+  allocations are exactly unchanged at 109,539 and 1,288,505,194 bytes; peak RSS
+  moved 64,253,952 to 64,303,104 bytes (+48 KiB). Syntax/document structure is
+  unchanged.
+- The non-PGO native CLI shrank from 5,919,472 to 5,917,176 bytes (-0.04%). The
+  optimized WASM plugin shrank from 1,758,605 to 1,757,814 bytes (-0.04%), with
+  SHA-256 `32fa2028a827adc33b606ac8a08c116c8951e91cae4189697a01c1d225832b16`.
+
 ## Decision Log
 
 | Date       | Decision                                                       | Reason                                                                                                                                                                                                     |
@@ -1303,6 +1397,9 @@ ready for review.
 | 2026-07-22 | Keep Java program join policies separate.                      | Ordinary and ignored section joining differ around invisible entries between ignored runs; reconciling them may change output and does not belong in structural PR 10.                                     |
 | 2026-07-22 | Reject the shared lexer cursor prototype.                      | Explicit composition grew production by 163 lines and made every token rule noisier; traits, macros, implicit dereferencing, or cryptic names only hide that cost.                                         |
 | 2026-07-22 | Cache only the end of failed Kotlin dollar runs.               | A locally linear prefix helper still rescanned malformed suffixes quadratically; one forward-only boundary preserves token ownership with one scan per maximal run.                                        |
+| 2026-07-23 | Reject the Java parenthesis-summary cache.                     | It fixes quadratic lambda rejection, but adds 80 production lines and 3.75% realistic parse allocations; a second representation would further weaken local reasoning.                                     |
+| 2026-07-23 | Reject the top-level annotation-start memo.                    | It makes flat and repeated top-level runs linear but cannot bound one deeply nested annotation without broadening into a generic cache or changing exact recovery boundaries.                              |
+| 2026-07-23 | Reject a general Java member-header classifier.                | Exact declaration precedence still requires independent restarts, so the enum would hide rather than remove repeated grammar work and would not shrink the parser.                                         |
 
 ## Resume Protocol
 

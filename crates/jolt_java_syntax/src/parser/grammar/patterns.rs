@@ -1,8 +1,14 @@
 use super::{JavaParserExt, JavaSyntaxKind, Parser};
 
+#[derive(Clone, Copy)]
+pub(in crate::parser::grammar) enum PatternStart {
+    Type,
+    Record,
+}
+
 impl Parser<'_> {
-    pub(super) fn parse_pattern_until(&mut self, stops: &[JavaSyntaxKind]) {
-        if self.starts_record_pattern() {
+    pub(super) fn parse_pattern_until(&mut self, start: PatternStart, stops: &[JavaSyntaxKind]) {
+        if matches!(start, PatternStart::Record) {
             self.parse_record_pattern();
         } else {
             self.parse_type_pattern_until(stops, false);
@@ -92,7 +98,7 @@ impl Parser<'_> {
             let match_all = self.start();
             self.bump();
             self.complete(match_all, JavaSyntaxKind::MatchAllPattern);
-        } else if self.starts_record_pattern() {
+        } else if matches!(self.pattern_start(), Some(PatternStart::Record)) {
             self.parse_record_pattern();
         } else {
             self.parse_type_pattern_until(&[JavaSyntaxKind::Comma, JavaSyntaxKind::RParen], true);
