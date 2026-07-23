@@ -1331,7 +1331,7 @@ ready for review.
   is passed directly into its consuming grammar.
 - Production Rust is +112/-220 lines (-108 net). Tests add no source, state, or
   fixture. Including the durable audit and decision ledger, the whole PR is
-  +196/-241 lines (-45 net). No public API, CST schema, parser cache, or
+  +214/-225 lines (-11 net). No public API, CST schema, parser cache, or
   compatibility path is added.
 - Measured parenthesis-summary, annotation-start-memo, and member-header
   classifier prototypes were rejected and fully reverted. The first added 80
