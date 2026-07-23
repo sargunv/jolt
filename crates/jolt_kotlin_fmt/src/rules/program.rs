@@ -31,13 +31,6 @@ pub(crate) fn format_file<'source>(
     file: &KotlinFile<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_structured_file(file, doc)
-}
-
-fn format_structured_file<'source>(
-    file: &KotlinFile<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
     let (annotations, annotations_visible) = format_file_annotations(doc, file);
     let mut entries = Vec::new();
 

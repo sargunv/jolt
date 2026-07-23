@@ -79,7 +79,7 @@ impl<'source> FormatterIgnoreRun<'source> {
 /// own absolute interval and direct item ranges. The plan is immutable and can
 /// be shared by every nested formatter rule in one run.
 #[derive(Default)]
-pub struct FormatterIgnorePlan<'source> {
+pub(crate) struct FormatterIgnorePlan<'source> {
     ranges: Vec<FormatterIgnoreRange<'source>>,
     #[cfg(test)]
     discovery_tokens: usize,
@@ -299,7 +299,7 @@ fn range_containing_start(
     .then_some(index)
 }
 
-pub fn formatter_ignore_plan_with_safety<'source, L: Language>(
+pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
     source: &'source str,
     tokens: impl IntoIterator<Item = SyntaxToken<'source, L>>,
     safety: &mut impl LexicalSafety<L>,

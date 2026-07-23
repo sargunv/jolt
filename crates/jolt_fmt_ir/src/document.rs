@@ -147,6 +147,18 @@ impl<'source> DocBuilder<'source> {
         Self::default()
     }
 
+    /// Creates the root document builder with its immutable formatter-ignore
+    /// plan and a linear arena reservation derived from the source.
+    #[must_use]
+    pub(crate) fn for_root(
+        source_len: usize,
+        formatter_ignore: FormatterIgnorePlan<'source>,
+    ) -> Self {
+        let mut builder = Self::with_source_capacity(source_len);
+        builder.formatter_ignore = Some(formatter_ignore);
+        builder
+    }
+
     /// Creates one document arena with a linear reservation derived from the
     /// source it will format.
     ///
@@ -155,8 +167,7 @@ impl<'source> DocBuilder<'source> {
     /// bytes is a conservative estimate. These fixed ratios avoid geometric
     /// arena growth without inspecting syntax twice or introducing per-rule
     /// allocation pools.
-    #[must_use]
-    pub fn with_source_capacity(source_len: usize) -> Self {
+    fn with_source_capacity(source_len: usize) -> Self {
         // Allocator size-class rounding dominates these estimates for small
         // files. Let the ordinary arena grow inline there; reserve once only
         // when the source is large enough for the estimate to be meaningful.
@@ -173,15 +184,6 @@ impl<'source> DocBuilder<'source> {
             },
             list_scratch: Vec::new(),
             formatter_ignore: None,
-        }
-    }
-
-    /// Installs the root-discovered formatter-ignore plan for this run.
-    pub fn set_formatter_ignore_plan(&mut self, plan: FormatterIgnorePlan<'source>) {
-        if self.formatter_ignore.is_some() {
-            self.block_on_invariant("formatter-ignore plan was installed more than once");
-        } else {
-            self.formatter_ignore = Some(plan);
         }
     }
 
@@ -872,17 +874,8 @@ mod tests {
     }
 
     #[test]
-    fn double_formatter_ignore_plan_install_records_an_invariant() {
-        let mut builder = DocBuilder::new();
-        builder.set_formatter_ignore_plan(FormatterIgnorePlan::default());
-        builder.set_formatter_ignore_plan(FormatterIgnorePlan::default());
-        assert!(builder.into_arena().invariant_error().is_some());
-    }
-
-    #[test]
     fn empty_formatter_ignore_plan_never_applies() {
-        let mut builder = DocBuilder::new();
-        builder.set_formatter_ignore_plan(FormatterIgnorePlan::default());
+        let mut builder = DocBuilder::for_root(0, FormatterIgnorePlan::default());
         assert!(!builder.formatter_ignore_may_apply(range()));
         let mut called = false;
         assert!(

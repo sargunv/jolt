@@ -703,7 +703,7 @@ ready for review.
 | 02  | `cleanup/02-formatter-ignore-plan`       | draft open | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4) | debug/release + benchmark  | Root plan with bounded immutable queries.     |
 | 03  | `cleanup/03-infallible-generated-fields` | draft open | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5) | debug/release + benchmark  | Generated physical slots only.                |
 | 04  | `cleanup/04-syntax-recovery-visibility`  | draft open | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6) | full + release + benchmark | Syntax-owned malformed lexical boundaries.    |
-| 05  | `cleanup/05-root-coordination`           | planned    | PR 04  | —                                            | —                          | Narrow root ownership, no god context.        |
+| 05  | `cleanup/05-root-coordination`           | draft open | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7) | full + release + benchmark | Narrow root ownership, no god context.        |
 | 06  | `cleanup/06-source-audit-reporting`      | planned    | PR 05  | —                                            | —                          | Structured normalization facts.               |
 | 07  | `cleanup/07-core-module-boundaries`      | planned    | PR 06  | —                                            | —                          | Conditional crate extraction gate.            |
 | 08a | `cleanup/08a-renderer-boundaries`        | planned    | PR 07  | —                                            | —                          | Separate contracts without output changes.    |
@@ -875,25 +875,60 @@ ready for review.
   against the same 9,206-file Java and 485-file Kotlin corpora in isolated
   parent/child builds; no test or measurement was silently skipped.
 
+### PR 05 evidence
+
+- One 59-line shared root function now owns formatter-ignore discovery,
+  root-builder construction, layout handoff, arena metrics, source-conserving
+  render, and sink/error outcome mapping. Parsing and stable diagnostic policy
+  remain language-owned.
+- `FormatterIgnorePlan`, its discovery function, root builder construction,
+  source rendering, and its internal outcome are crate-private. The public
+  install-after-construction setter and its double-install state/test are gone;
+  a source-format run receives its immutable plan atomically.
+- All 682 Java/Kotlin leaf `DocBuilder` parameters and all nine ignore-aware
+  container queries are unchanged. No context object, language trait, extra plan
+  parameter, token scan, source clone, or new crate was introduced.
+- The copied Java/Kotlin root lifecycles and their one-use ignore-plan wrappers
+  are deleted, as is one Kotlin forwarding layer. Rust source is +118/-137 lines
+  (-19 net), including the new root module and test-state cleanup.
+- Repository-defined Ona automation passed all 182 workspace tests with no
+  skips. The count declined by one because atomic root construction makes the
+  former double-plan-install test state unrepresentable. Java exercised 1,019
+  fixture iterations and 289 snapshots; Kotlin exercised 557 imported files, 265
+  corpus files, 53 recovery fixtures, and 212 snapshots without output changes.
+- `mise run fix`, `mise run check`, default and benchmark-feature package
+  checks, both full release formatter suites, the PGO native build, and the
+  optimized dprint plugin build passed.
+- Syntax/document topology and every allocation metric are identical to PR 04.
+  Alternating isolated parent/child timing runs had pooled median movement of
+  -1.46% for Java and -0.16% for Kotlin; dispersion and host drift make these
+  non-regression signals, not causal speedup claims. Peak RSS remains
+  unavailable because this environment lacks `/usr/bin/time`. The non-PGO CLI
+  shrank from 5,955,096 to 5,950,968 bytes (-0.07%); optimized WASM shrank from
+  1,768,947 to 1,767,501 bytes (-0.08%), with SHA-256
+  `5eb348e99f1f4fc84ad98a2e933fe21226b88e6671d05078e0279c902f6561de`.
+
 ## Decision Log
 
-| Date       | Decision                                                       | Reason                                                                                                                                                  |
-| ---------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-07-22 | Use a stack of small draft PRs rather than a rewrite.          | Preserves review and rollback boundaries while allowing ambitious end-state changes.                                                                    |
-| 2026-07-22 | Centralize branches, commits, rebases, and publication.        | Subagents share a filesystem; central integration avoids hidden branch state and conflicting commits.                                                   |
-| 2026-07-22 | Make crate extraction conditional.                             | Purity is about dependency direction, not maximizing crate count.                                                                                       |
-| 2026-07-22 | Treat growth without deleted complexity as a stop condition.   | The cleanup exists to reduce reasoning load, not install a new framework.                                                                               |
-| 2026-07-22 | Keep leaf rules free of a general formatting context.          | Narrow dependencies prevent a service locator and preserve local reasoning.                                                                             |
-| 2026-07-22 | Split CST, recovery, renderer, language, and lexer risks.      | Each now has an independent correctness model, benchmark gate, and rollback boundary.                                                                   |
-| 2026-07-22 | Accept PR 01's bounded release document-node cost.             | Stable topology costs 1.5–2.2% more nodes but keeps allocations/max-live memory effectively flat.                                                       |
-| 2026-07-22 | Use immutable bounded ignore-plan queries.                     | Independent nested rules stay order-independent; counted binary search replaces hidden mutable cursors.                                                 |
-| 2026-07-22 | Reject partial and cross-partition ignore ranges.              | Structured syntax ownership must never overlap a raw source claim; rejected markers remain structured.                                                  |
-| 2026-07-22 | Temporarily transport the ignore plan on `DocBuilder`.         | The field is private, immutable, install-once, and absent from `DocArena`; PR 05 must revisit it.                                                       |
-| 2026-07-22 | Scope PR 03 to production-factory physical projections.        | Runtime validation or a second proof model would add more architecture than deleting outer results.                                                     |
-| 2026-07-22 | Split PR 03 codegen policy by native versus WASM.              | Native accessor inlining preserves measured throughput; a narrow WASM field boundary reverses aggregate-return code duplication.                        |
-| 2026-07-22 | Let exceptional fragments own malformed lexical joins.         | Existing boundary atoms already make empty fragments inert, so Java/Kotlin pre-filter policies duplicate the same fact.                                 |
-| 2026-07-22 | Keep physical recovery parts in variable-list iteration.       | Real interior empty and tokenless malformed parts are positional sorting/normalization barriers; some zero-width recovery docs also own comment claims. |
-| 2026-07-22 | Defer list visibility staging to a barrier-aware layout slice. | A global sparse projection lost trivia and segmented normalization, while a second recovery-run API would increase rather than reduce local reasoning.  |
+| Date       | Decision                                                       | Reason                                                                                                                                                   |
+| ---------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-07-22 | Use a stack of small draft PRs rather than a rewrite.          | Preserves review and rollback boundaries while allowing ambitious end-state changes.                                                                     |
+| 2026-07-22 | Centralize branches, commits, rebases, and publication.        | Subagents share a filesystem; central integration avoids hidden branch state and conflicting commits.                                                    |
+| 2026-07-22 | Make crate extraction conditional.                             | Purity is about dependency direction, not maximizing crate count.                                                                                        |
+| 2026-07-22 | Treat growth without deleted complexity as a stop condition.   | The cleanup exists to reduce reasoning load, not install a new framework.                                                                                |
+| 2026-07-22 | Keep leaf rules free of a general formatting context.          | Narrow dependencies prevent a service locator and preserve local reasoning.                                                                              |
+| 2026-07-22 | Split CST, recovery, renderer, language, and lexer risks.      | Each now has an independent correctness model, benchmark gate, and rollback boundary.                                                                    |
+| 2026-07-22 | Accept PR 01's bounded release document-node cost.             | Stable topology costs 1.5–2.2% more nodes but keeps allocations/max-live memory effectively flat.                                                        |
+| 2026-07-22 | Use immutable bounded ignore-plan queries.                     | Independent nested rules stay order-independent; counted binary search replaces hidden mutable cursors.                                                  |
+| 2026-07-22 | Reject partial and cross-partition ignore ranges.              | Structured syntax ownership must never overlap a raw source claim; rejected markers remain structured.                                                   |
+| 2026-07-22 | Temporarily transport the ignore plan on `DocBuilder`.         | The field is private, immutable, install-once, and absent from `DocArena`; PR 05 must revisit it.                                                        |
+| 2026-07-22 | Scope PR 03 to production-factory physical projections.        | Runtime validation or a second proof model would add more architecture than deleting outer results.                                                      |
+| 2026-07-22 | Split PR 03 codegen policy by native versus WASM.              | Native accessor inlining preserves measured throughput; a narrow WASM field boundary reverses aggregate-return code duplication.                         |
+| 2026-07-22 | Let exceptional fragments own malformed lexical joins.         | Existing boundary atoms already make empty fragments inert, so Java/Kotlin pre-filter policies duplicate the same fact.                                  |
+| 2026-07-22 | Keep physical recovery parts in variable-list iteration.       | Real interior empty and tokenless malformed parts are positional sorting/normalization barriers; some zero-width recovery docs also own comment claims.  |
+| 2026-07-22 | Defer list visibility staging to a barrier-aware layout slice. | A global sparse projection lost trivia and segmented normalization, while a second recovery-run API would increase rather than reduce local reasoning.   |
+| 2026-07-22 | Make PR 05 root coordination a one-shot shared function.       | One lifecycle function can delete duplicated setup/audit code and narrow APIs without creating a persistent context or changing any leaf-rule signature. |
+| 2026-07-22 | Defer the root EOF ignore-range leak.                          | Replacing two raw range vectors is worthwhile only when one ignore-owned capability deletes more plumbing than it adds; PR 05 does not yet prove that.   |
 
 ## Resume Protocol
 

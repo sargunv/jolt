@@ -1,10 +1,10 @@
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
 use jolt_fmt_ir::{
-    DocBuilder, FormatOptions, FormatSinkResult, RenderOptions, RenderSink, render_source_to,
+    FormatOptions, FormatRootMetrics, FormatSinkResult, RenderSink, format_root_to_sink,
 };
 use jolt_java_syntax::{CompilationUnit, JavaSyntaxView, parse_compilation_unit};
 
-use crate::helpers::formatter_ignore::formatter_ignore_plan;
+use crate::helpers::lexical_safety::JavaLexicalSafety;
 use crate::rules::program::format_compilation_unit;
 
 /// Stable Java formatter diagnostic codes.
@@ -47,48 +47,24 @@ fn format_syntax_to_sink<S: RenderSink + ?Sized>(
     syntax: &CompilationUnit<'_>,
     options: FormatOptions,
     sink: &mut S,
-) -> (FormatSinkResult, DocBuilderMetrics) {
+) -> (FormatSinkResult, FormatRootMetrics) {
     let Some(root) = syntax.syntax_node() else {
         return (
             FormatSinkResult::Blocked {
                 diagnostics: vec![no_syntax_tree_diagnostic()],
             },
-            DocBuilderMetrics::default(),
+            FormatRootMetrics::default(),
         );
     };
-    let ignores = formatter_ignore_plan(syntax.source_text(), root.tokens());
-    let mut builder = DocBuilder::with_source_capacity(syntax.source_text().len());
-    builder.set_formatter_ignore_plan(ignores);
-    let doc = format_compilation_unit(syntax, &mut builder);
-    let render_options = RenderOptions::from(options);
-    let arena = builder.into_arena();
-    #[cfg(feature = "bench")]
-    let metrics = arena.benchmark_metrics();
-    let result = match render_source_to(&arena, doc, render_options, sink, &root) {
-        Ok(outcome) if outcome.halted() => FormatSinkResult::Halted,
-        Ok(outcome) => {
-            #[cfg(debug_assertions)]
-            assert!(
-                !root.is_recovery_free() || !outcome.used_malformed_verbatim(),
-                "recovery-free Java syntax rendered a malformed-verbatim fragment"
-            );
-            #[cfg(not(debug_assertions))]
-            let _ = outcome;
-            FormatSinkResult::Complete
-        }
-        Err(error) => FormatSinkResult::Blocked {
-            diagnostics: vec![render_error_diagnostic(&error)],
-        },
-    };
-    #[cfg(not(feature = "bench"))]
-    let metrics = ();
-    (result, metrics)
+    format_root_to_sink(
+        &root,
+        options,
+        sink,
+        JavaLexicalSafety,
+        |doc| format_compilation_unit(syntax, doc),
+        render_error_diagnostic,
+    )
 }
-
-#[cfg(feature = "bench")]
-type DocBuilderMetrics = jolt_fmt_ir::DocArenaMetrics;
-#[cfg(not(feature = "bench"))]
-type DocBuilderMetrics = ();
 
 /// Formats an already-parsed root and returns its document arena measurements.
 #[cfg(feature = "bench")]
