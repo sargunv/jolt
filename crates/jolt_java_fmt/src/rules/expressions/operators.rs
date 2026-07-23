@@ -4,7 +4,6 @@ use super::{
 };
 use crate::helpers::comments::token_has_comments;
 use crate::helpers::recovery::format_required_field;
-use crate::helpers::syntax_tokens::inserted_syntax_token;
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{
     AssignmentTargetSyntax, ExpressionParentRole, JavaOperator, JavaOperatorKind, JavaSyntaxField,
@@ -81,9 +80,9 @@ pub(super) fn format_binary_expression<'source>(
         && let Some(operator) = binary_operator(expression)
     {
         let parent_operator = operator.kind();
-        let (first, rest, has_rest) = flatten_binary_expression(expression, operator, doc);
+        let (first, rest) = flatten_binary_expression(expression, operator, doc);
         let first = format_binary_operand(expression, &first, parent_operator, doc);
-        return binary_chain(doc, first, rest, has_rest);
+        return binary_chain(doc, first, rest);
     }
     let left = format_required_field(expression.left(), doc, |left, doc| {
         format_expression(&left, doc)
@@ -141,7 +140,7 @@ fn flatten_binary_expression<'source>(
     expression: &BinaryExpression<'source>,
     operator: JavaOperator<'source>,
     doc: &mut DocBuilder<'source>,
-) -> (Expression<'source>, Doc<'source>, bool) {
+) -> (Expression<'source>, Doc<'source>) {
     let root = Expression::from(*expression);
     let mut operands = Vec::new();
     let mut operators = Vec::new();
@@ -158,7 +157,6 @@ fn flatten_binary_expression<'source>(
         return unflattened_binary_expression(expression, doc, &operator);
     }
 
-    let has_rest = !operators.is_empty();
     let mut operands = operands.into_iter();
     let first = operands.next().unwrap_or(root);
     let rest = doc.concat_list(|rest| {
@@ -181,7 +179,7 @@ fn flatten_binary_expression<'source>(
         }
     });
 
-    (first, rest, has_rest)
+    (first, rest)
 }
 
 fn format_binary_operand<'source>(
@@ -195,11 +193,11 @@ fn format_binary_operand<'source>(
         let Some(claims) = owner.precedence_parenthesis_claims(expression) else {
             return formatted;
         };
-        let open = inserted_syntax_token(doc, claims.open);
+        let open = doc.synthesized_source(claims.open);
         let line = doc.soft_line();
         let indented = doc_indent!(doc, doc_concat!(doc, [line, formatted]));
         let line = doc.soft_line();
-        let close = inserted_syntax_token(doc, claims.close);
+        let close = doc.synthesized_source(claims.close);
         doc_group!(
             doc,
             doc_concat!(
@@ -223,7 +221,7 @@ fn unflattened_binary_expression<'source>(
     expression: &BinaryExpression<'source>,
     doc: &mut DocBuilder<'source>,
     operator: &JavaOperator<'source>,
-) -> (Expression<'source>, Doc<'source>, bool) {
+) -> (Expression<'source>, Doc<'source>) {
     let operator = format_operator_with_comments(operator, doc);
     let right =
         present(expression.right()).map_or_else(Doc::nil, |right| format_expression(&right, doc));
@@ -235,7 +233,6 @@ fn unflattened_binary_expression<'source>(
     (
         present(expression.left()).unwrap_or_else(|| Expression::from(*expression)),
         rest,
-        true,
     )
 }
 
@@ -373,12 +370,7 @@ fn binary_chain<'source>(
     doc: &mut DocBuilder<'source>,
     first: Doc<'source>,
     rest: Doc<'source>,
-    has_rest: bool,
 ) -> Doc<'source> {
-    if !has_rest {
-        return first;
-    }
-
     doc_group!(doc, doc_concat!(doc, [first, doc_indent!(doc, rest),]))
 }
 

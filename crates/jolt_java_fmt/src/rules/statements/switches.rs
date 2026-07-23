@@ -148,18 +148,18 @@ fn format_switch_statement_group<'source>(
 
     let items = statement_parts
         .iter()
-        .filter_map(|part| match part {
+        .map(|part| match part {
             JavaSyntaxListPart::Item(statement) => format_block_statement_item(statement, doc),
             JavaSyntaxListPart::Malformed(malformed) => {
-                Some(BodyItem::new(format_malformed(malformed, doc), false))
+                BodyItem::new(format_malformed(malformed, doc), false)
             }
-            JavaSyntaxListPart::Missing(missing) => Some(BodyItem::new(
+            JavaSyntaxListPart::Missing(missing) => BodyItem::new(
                 crate::helpers::recovery::format_missing(missing, doc),
                 false,
-            )),
+            ),
             JavaSyntaxListPart::Separator(token) => {
                 doc.block_on_invariant("unseparated switch statement list had a separator");
-                Some(BodyItem::new(format_token_with_comments(doc, token), false))
+                BodyItem::new(format_token_with_comments(doc, token), false)
             }
         })
         .collect::<Vec<_>>();

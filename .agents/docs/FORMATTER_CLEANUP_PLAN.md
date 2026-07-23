@@ -708,7 +708,7 @@ ready for review.
 | 08a | `cleanup/08a-renderer-boundaries`        | draft open | PR 07  | [#10](https://github.com/sargunv/jolt/pull/10) | full + release + benchmark | Kept hot loop concrete; deleted duplicate state. |
 | 08b | `cleanup/08b-renderer-audit-pass`        | rejected   | PR 08a | —                                              | design audit complete      | Exact single pass requires an output trace.      |
 | 09  | `cleanup/09-kotlin-rules`                | draft open | PR 08a | [#11](https://github.com/sargunv/jolt/pull/11) | full + release + benchmark | Rule state and helper indirection deleted.       |
-| 10  | `cleanup/10-java-rules`                  | planned    | PR 09  | —                                              | —                          | Java hotspot purification.                       |
+| 10  | `cleanup/10-java-rules`                  | draft open | PR 09  | [#12](https://github.com/sargunv/jolt/pull/12) | full + release + benchmark | Total rules and native module parts.             |
 | 11  | `cleanup/11-lexer-substrate`             | planned    | PR 10  | —                                              | —                          | Share cursor mechanics only.                     |
 | 12  | `cleanup/12-java-lookahead`              | planned    | PR 11  | —                                              | —                          | Counted bounded lookahead work.                  |
 | 13  | `cleanup/13-final-reconciliation`        | planned    | PR 12  | —                                              | —                          | Actual docs, metrics, and API deletions only.    |
@@ -1146,6 +1146,57 @@ ready for review.
   This deterministic 819-byte cost is accepted against the rule-state deletion;
   no runtime or allocation regression accompanied it.
 
+### PR 10 working scope
+
+- Begin with owner-local totality and wrapper deletion: remove stale optional
+  list/node inputs, impossible expression re-casts, total `Option<BodyItem>` and
+  `Option<FormattedMember>` results, duplicated recovery-field wrappers, and the
+  one-client normalized/synthesized-token module.
+- Purify member chains, binary chains, throws clauses, and module directives
+  only where each field is classified once and the replacement deletes states or
+  mirror representations. Preserve formatter-ignore category planning,
+  sortable-run barriers, and every malformed/missing physical list part.
+- Keep `BodyContent`'s absent, present-invisible, and visible states. Keep the
+  standard-member-body macro unless a concrete replacement shrinks its three
+  syntax-specific expansions without a trait, context, or dynamic role cast.
+- Preserve byte-for-byte output. Program-section joining has a policy difference
+  around invisible entries between ignored runs; treat any reconciliation as a
+  separate behavior change, not structural cleanup.
+- Do not generalize Java/Kotlin lists, imports, body pipelines, delimiters, or
+  operator sequences. Their recovery, normalization, comment, and separator
+  policies are materially different.
+
+### PR 10 evidence
+
+- Eleven production commits remove stale optional rule inputs, impossible
+  member/binary chain states, always-present body/member results, duplicated
+  field recovery, one-use token/comment/list helpers, and the module directive
+  mirror. Java production Rust is +482/-727 lines (-245 net).
+- Module formatting consumes native `JavaSyntaxListPart` values. The common
+  no-ignore path streams two fresh bounded iterators instead of allocating a
+  mirror plus ignore-index staging; the ignore path retains one-to-one syntax
+  indices. Missing, malformed, separator, comment, and non-sortable nodes remain
+  explicit sorting and normalization barriers.
+- Three independent adversarial reviews found no correctness, recovery, trivia,
+  source-claim, ordering, topology, or bounded-work regression. All removed
+  options were always `Some`; member and binary chain fallbacks were
+  unreachable; and the narrowed type-clause match is exhaustive after its
+  present/present arm.
+- The repository-defined Ona task passed all 183 tests with zero skips.
+  `mise
+  run fix`, strict production Clippy, dependency and WASM checks, both
+  complete release formatter suites, the 9,899-file PGO build, and the optimized
+  dprint build passed with no output or snapshot delta. The known all-target
+  Clippy warning remains the pre-existing oversized Java imported-fixture test.
+- Against PR 09 on the same 9,206-file Java corpus, format median moved
+  1,609.294 -> 1,597.447 ms (-0.74%), document nodes 20,930,870 -> 20,928,024,
+  allocation count 1,502,952 -> 1,502,824, allocation bytes 1,984,578,290 ->
+  1,984,384,210, and peak RSS 720,424,960 -> 720,302,080 bytes. Kotlin topology
+  and allocation metrics are identical; its timing movement is noise-level.
+- The non-PGO native CLI shrank from 5,942,576 to 5,923,408 bytes (-0.32%). The
+  optimized WASM plugin shrank from 1,764,334 to 1,759,618 bytes (-0.27%), with
+  SHA-256 `f9131f96fe1cc5c8d90ab1a4c093f01bd61421975138daf24d037f5098599307`.
+
 ## Decision Log
 
 | Date       | Decision                                                       | Reason                                                                                                                                                                                                     |
@@ -1182,6 +1233,9 @@ ready for review.
 | 2026-07-22 | Reject a boolean-valued Kotlin recovery-list merger.           | It preserved the same two layout states, grew policy-sensitive matches, and reduced no behavioral concept.                                                                                                 |
 | 2026-07-22 | Keep distinct physical comma assembly loops.                   | Delegation and destructuring differ in both attachment search and orphan rendering; exact sharing requires a two-policy mini-framework that weakens local reasoning.                                       |
 | 2026-07-22 | Accept one extra document node per ordinary Kotlin `while`.    | Resolving each field once deletes seven repeated probes and 39 lines; the measured +0.075% node cost does not increase allocation count, reserved memory, peak RSS, or format time.                        |
+| 2026-07-22 | Keep Java borrow-order macros with multiple clients.           | The concat/group/indent macros prevent repeated mutable-borrow temporaries at hundreds of sites; wholesale replacement would grow rules. Only the one-use `if_break` macro was deleted.                    |
+| 2026-07-22 | Use native syntax parts for Java module directives.            | The mirror copied all four physical variants and forced allocation; native parts preserve ignore indices, recovery barriers, and reorder ownership while shrinking the owner.                              |
+| 2026-07-22 | Keep Java program join policies separate.                      | Ordinary and ignored section joining differ around invisible entries between ignored runs; reconciling them may change output and does not belong in structural PR 10.                                     |
 
 ## Resume Protocol
 

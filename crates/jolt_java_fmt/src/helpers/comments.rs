@@ -19,12 +19,6 @@ pub(crate) fn token_has_comments(token: &JavaSyntaxToken<'_>) -> bool {
     !token.leading_comments().is_empty() || !token.trailing_comments().is_empty()
 }
 
-pub(crate) fn token_iter_has_comments<'source>(
-    tokens: impl IntoIterator<Item = JavaSyntaxToken<'source>>,
-) -> bool {
-    tokens.into_iter().any(|token| token_has_comments(&token))
-}
-
 pub(crate) fn comments_from_tokens<'source>(
     tokens: impl IntoIterator<Item = JavaSyntaxToken<'source>>,
 ) -> impl Iterator<Item = JavaComment<'source>> {
@@ -127,7 +121,7 @@ pub(crate) fn format_leading_comments<'source>(
     })
 }
 
-pub(crate) fn format_trailing_comments<'source>(
+fn format_trailing_comments<'source>(
     doc: &mut DocBuilder<'source>,
     token: &JavaSyntaxToken<'source>,
 ) -> Doc<'source> {

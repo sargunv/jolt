@@ -6,30 +6,6 @@ use crate::helpers::comments::{
     format_token_before_relocated_trailing_comments,
 };
 use crate::helpers::recovery::JavaFormatDelimiter;
-use crate::helpers::syntax_tokens::inserted_syntax_token;
-
-#[derive(Clone, Copy)]
-pub(crate) enum BodyItemSeparator {
-    Line,
-    EmptyLine,
-}
-
-impl BodyItemSeparator {
-    pub(crate) const fn from_blank_line(starts_after_blank_line: bool) -> Self {
-        if starts_after_blank_line {
-            Self::EmptyLine
-        } else {
-            Self::Line
-        }
-    }
-
-    fn doc<'source>(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
-        match self {
-            Self::Line => doc.hard_line(),
-            Self::EmptyLine => doc.empty_line(),
-        }
-    }
-}
 
 #[derive(Clone, Copy)]
 pub(crate) struct BodyContent<'source> {
@@ -59,7 +35,7 @@ impl<'source> From<Option<Doc<'source>>> for BodyContent<'source> {
 
 pub(crate) struct BodyItem<'source> {
     doc: Doc<'source>,
-    separator: BodyItemSeparator,
+    starts_after_blank_line: bool,
     pub(crate) visible: bool,
 }
 
@@ -67,7 +43,7 @@ impl<'source> BodyItem<'source> {
     pub(crate) fn new(doc: Doc<'source>, starts_after_blank_line: bool) -> Self {
         Self {
             doc,
-            separator: BodyItemSeparator::from_blank_line(starts_after_blank_line),
+            starts_after_blank_line,
             visible: true,
         }
     }
@@ -75,14 +51,14 @@ impl<'source> BodyItem<'source> {
     pub(crate) fn invisible(doc: Doc<'source>) -> Self {
         Self {
             doc,
-            separator: BodyItemSeparator::Line,
+            starts_after_blank_line: false,
             visible: false,
         }
     }
 
     pub(crate) fn without_blank_line_before(self) -> Self {
         Self {
-            separator: BodyItemSeparator::Line,
+            starts_after_blank_line: false,
             ..self
         }
     }
@@ -98,7 +74,7 @@ pub(crate) fn inserted_braced_body<'source>(
         [
             // Intentional synthesized token: normalized braced bodies add braces
             // around source statements that did not have a block.
-            inserted_syntax_token(doc, claims.open),
+            doc.synthesized_source(claims.open),
             inserted_braced_body_tail(doc, body, claims.close),
         ]
     )
@@ -145,7 +121,7 @@ fn inserted_braced_body_tail<'source>(
         }
         None => doc.hard_line(),
     };
-    let close = inserted_syntax_token(doc, close);
+    let close = doc.synthesized_source(close);
     doc_concat!(doc, [body, close])
 }
 
@@ -182,7 +158,11 @@ pub(crate) fn join_body_items<'source>(
         let mut saw_visible = false;
         for item in items {
             if item.visible && saw_visible {
-                let separator = item.separator.doc(joined);
+                let separator = if item.starts_after_blank_line {
+                    joined.empty_line()
+                } else {
+                    joined.hard_line()
+                };
                 joined.push(separator);
             }
             joined.push(item.doc);

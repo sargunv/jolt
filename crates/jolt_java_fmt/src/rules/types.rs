@@ -68,35 +68,12 @@ enum LeadingComments {
 }
 
 pub(crate) fn format_type_parameter_list<'source>(
-    parameters: Option<TypeParameterList<'source>>,
+    parameters: TypeParameterList<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    match parameters {
-        Some(parameters) => {
-            let open = resolve_required_delimiter(parameters.open_angle(), doc);
-            let close = resolve_required_delimiter(parameters.close_angle(), doc);
-            let items = type_parameter_list_items(&parameters, doc);
-            delimited_comma_list(doc, open, close, items)
-        }
-        None => Doc::nil(),
-    }
-}
-
-pub(crate) fn format_type_argument_list<'source>(
-    arguments: &TypeArgumentList<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let open = resolve_required_delimiter(arguments.open_angle(), doc);
-    let close = resolve_required_delimiter(arguments.close_angle(), doc);
-    let items = type_argument_list_items(arguments, doc);
-    delimited_comma_list(doc, open, close, items)
-}
-
-fn type_parameter_list_items<'source, 'fmt>(
-    parameters: &'fmt TypeParameterList<'source>,
-    doc: &'fmt mut DocBuilder<'source>,
-) -> Vec<CommaListItem<'source>> {
-    match resolve_required_field(parameters.parameters(), doc) {
+    let open = resolve_required_delimiter(parameters.open_angle(), doc);
+    let close = resolve_required_delimiter(parameters.close_angle(), doc);
+    let items = match resolve_required_field(parameters.parameters(), doc) {
         JavaFormatField::Present(parameters) => {
             syntax_comma_list_items(doc, parameters.parts(), |parameter, doc| {
                 format_type_parameter(&parameter, doc)
@@ -106,14 +83,17 @@ fn type_parameter_list_items<'source, 'fmt>(
             doc: recovery,
             comma: None,
         }],
-    }
+    };
+    delimited_comma_list(doc, open, close, items)
 }
 
-fn type_argument_list_items<'source, 'fmt>(
-    arguments: &'fmt TypeArgumentList<'source>,
-    doc: &'fmt mut DocBuilder<'source>,
-) -> Vec<CommaListItem<'source>> {
-    match resolve_required_field(arguments.arguments(), doc) {
+pub(crate) fn format_type_argument_list<'source>(
+    arguments: &TypeArgumentList<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let open = resolve_required_delimiter(arguments.open_angle(), doc);
+    let close = resolve_required_delimiter(arguments.close_angle(), doc);
+    let items = match resolve_required_field(arguments.arguments(), doc) {
         JavaFormatField::Present(arguments) => {
             syntax_comma_list_items(doc, arguments.parts(), |argument, doc| {
                 format_type_argument(&argument, doc)
@@ -123,7 +103,8 @@ fn type_argument_list_items<'source, 'fmt>(
             doc: recovery,
             comma: None,
         }],
-    }
+    };
+    delimited_comma_list(doc, open, close, items)
 }
 
 pub(crate) fn format_array_dimensions<'source>(

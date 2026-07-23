@@ -9,7 +9,6 @@ use crate::helpers::comments::{
     has_delimiter_dangling_comments, trailing_comments_force_line,
 };
 use crate::helpers::recovery::{JavaFormatDelimiter, JavaFormatListPart, resolve_list_part};
-use crate::helpers::syntax_tokens::inserted_syntax_token;
 
 pub(crate) struct CommaListItem<'source> {
     pub(crate) doc: Doc<'source>,
@@ -101,7 +100,8 @@ pub(crate) fn braced_comma_list_with_trailing_separator<'source>(
         [
             format_open_delimiter(doc, open),
             doc_indent!(doc, doc_concat!(doc, [open_spacing, items_doc])),
-            format_braced_close_with_spacing(doc, close),
+            doc.line(),
+            format_close_delimiter(doc, close),
         ]
     );
 
@@ -258,13 +258,11 @@ fn comma_list_with_trailing_separator<'source>(
                 docs.push(line);
             } else {
                 let trailing_comma = trailing_comma.take().map_or_else(Doc::nil, |claim| {
-                    doc_if_break!(
-                        docs,
-                        // Intentional synthesized token: trailing comma policy adds a
-                        // comma only when the list breaks across lines.
-                        inserted_syntax_token(docs, claim),
-                        Doc::nil(),
-                    )
+                    // Intentional synthesized token: trailing comma policy adds a
+                    // comma only when the list breaks across lines.
+                    let breaks = docs.synthesized_source(claim);
+                    let flat = Doc::nil();
+                    docs.if_break(breaks, flat)
                 });
                 docs.push(trailing_comma);
             }
@@ -330,13 +328,6 @@ fn format_braced_open_spacing<'source>(
             doc.hard_line(),
         ]
     )
-}
-
-fn format_braced_close_with_spacing<'source>(
-    doc: &mut DocBuilder<'source>,
-    close: JavaFormatDelimiter<'source>,
-) -> Doc<'source> {
-    doc_concat!(doc, [doc.line(), format_close_delimiter(doc, close)])
 }
 
 fn format_close_with_spacing<'source>(

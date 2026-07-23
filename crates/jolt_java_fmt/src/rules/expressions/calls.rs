@@ -21,15 +21,12 @@ pub(super) fn format_method_invocation_expression_with_leading_comments<'source>
     leading_comments: LeadingComments,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let expression = Expression::from(*expression);
-    if !is_member_chain_child(&expression)
-        && let Some(chain) = format_member_chain(expression, doc)
+    let expression_family = Expression::from(*expression);
+    if !is_member_chain_child(&expression_family)
+        && let Some(chain) = format_member_chain(expression_family, doc)
     {
         return chain;
     }
-    let Expression::MethodInvocationExpression(expression) = expression else {
-        return Doc::nil();
-    };
 
     doc_group!(
         doc,
@@ -58,15 +55,12 @@ pub(super) fn format_field_access_expression<'source>(
     expression: &FieldAccessExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let expression = Expression::from(*expression);
-    if !is_member_chain_child(&expression)
-        && let Some(chain) = format_member_chain(expression, doc)
+    let expression_family = Expression::from(*expression);
+    if !is_member_chain_child(&expression_family)
+        && let Some(chain) = format_member_chain(expression_family, doc)
     {
         return chain;
     }
-    let Expression::FieldAccessExpression(expression) = expression else {
-        return Doc::nil();
-    };
     doc_group!(
         doc,
         doc_concat!(
@@ -76,7 +70,7 @@ pub(super) fn format_field_access_expression<'source>(
                     format_expression(&receiver, doc)
                 }),
                 format_required_field(expression.dot(), doc, |dot, doc| {
-                    format_member_dot(Some(&dot), doc)
+                    format_member_dot(&dot, doc)
                 }),
                 format_required_field(expression.name(), doc, |name, doc| {
                     format_token_with_comments(doc, &name)
@@ -101,7 +95,7 @@ fn format_qualified_method_invocation<'source>(
                 format_expression(&receiver, doc)
             }),
             format_required_field(expression.dot(), doc, |dot, doc| {
-                format_member_dot(Some(&dot), doc)
+                format_member_dot(&dot, doc)
             }),
             format_optional_field(expression.type_arguments(), doc, |arguments, doc| {
                 format_type_argument_list(&arguments, doc)
@@ -110,7 +104,7 @@ fn format_qualified_method_invocation<'source>(
                 format_qualified_invocation_name(name, leading_comments, doc)
             }),
             format_required_field(expression.arguments(), doc, |arguments, doc| {
-                format_argument_list(Some(arguments), doc)
+                format_argument_list(arguments, doc)
             }),
         ]
     )
@@ -131,7 +125,7 @@ fn format_unqualified_method_invocation<'source>(
                 format_unqualified_invocation_name(name, leading_comments, doc)
             }),
             format_required_field(expression.arguments(), doc, |arguments, doc| {
-                format_argument_list(Some(arguments), doc)
+                format_argument_list(arguments, doc)
             }),
         ]
     )
@@ -173,23 +167,12 @@ fn format_invocation_name<'source>(
 }
 
 pub(crate) fn format_argument_list<'source>(
-    arguments: Option<ArgumentList<'source>>,
+    arguments: ArgumentList<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let Some(arguments) = arguments else {
-        return Doc::nil();
-    };
     let open = resolve_required_delimiter(arguments.open_paren(), doc);
     let close = resolve_required_delimiter(arguments.close_paren(), doc);
-    let items = argument_list_items(&arguments, doc);
-    delimited_comma_list(doc, open, close, items)
-}
-
-fn argument_list_items<'source, 'fmt>(
-    arguments: &'fmt ArgumentList<'source>,
-    doc: &'fmt mut DocBuilder<'source>,
-) -> Vec<CommaListItem<'source>> {
-    match resolve_required_field(arguments.arguments(), doc) {
+    let items = match resolve_required_field(arguments.arguments(), doc) {
         JavaFormatField::Present(arguments) => {
             syntax_comma_list_items(doc, arguments.parts(), |argument, doc| {
                 format_expression(&argument, doc)
@@ -199,5 +182,6 @@ fn argument_list_items<'source, 'fmt>(
             doc: recovery,
             comma: None,
         }],
-    }
+    };
+    delimited_comma_list(doc, open, close, items)
 }

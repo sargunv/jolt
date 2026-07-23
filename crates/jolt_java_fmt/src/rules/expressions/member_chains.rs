@@ -15,7 +15,7 @@ type ChainSuffix<'source> = (Doc<'source>, bool);
 struct MemberChainBuilder<'source> {
     root: Option<Expression<'source>>,
     first_suffix: Option<ChainSuffix<'source>>,
-    suffix_count: u32,
+    has_rest_suffixes: bool,
     field_run: Option<ChainSuffix<'source>>,
 }
 
@@ -49,12 +49,11 @@ impl<'source> MemberChainBuilder<'source> {
 
     fn push_method_invocation(
         &mut self,
-        invocation: &MethodInvocationExpression<'source>,
+        invocation: &QualifiedMethodInvocation<'source>,
         rest_suffixes: &mut ConcatBuilder<'_, 'source>,
     ) {
         self.flush_field_run(rest_suffixes);
-        let has_leading_comments = qualified_invocation(invocation)
-            .is_some_and(|invocation| required_dot_has_leading_comments(invocation.dot()));
+        let has_leading_comments = required_dot_has_leading_comments(invocation.dot());
         let suffix = format_method_invocation_suffix(invocation, rest_suffixes);
         self.push_suffix((suffix, has_leading_comments), rest_suffixes);
     }
@@ -70,9 +69,10 @@ impl<'source> MemberChainBuilder<'source> {
         suffix: ChainSuffix<'source>,
         rest_suffixes: &mut ConcatBuilder<'_, 'source>,
     ) {
-        if self.suffix_count == 0 {
+        if self.first_suffix.is_none() {
             self.first_suffix = Some(suffix);
         } else {
+            self.has_rest_suffixes = true;
             let (suffix, has_leading_comments) = suffix;
             let line = if has_leading_comments {
                 rest_suffixes.line()
@@ -82,7 +82,6 @@ impl<'source> MemberChainBuilder<'source> {
             rest_suffixes.push(line);
             rest_suffixes.push(suffix);
         }
-        self.suffix_count += 1;
     }
 }
 
@@ -95,15 +94,19 @@ pub(super) fn format_member_chain<'source>(
         let mut builder = MemberChainBuilder {
             root: None,
             first_suffix: None,
-            suffix_count: 0,
+            has_rest_suffixes: false,
             field_run: None,
         };
         if append_chain_expression(&mut builder, expression, rest_suffixes).is_some() {
             builder.flush_field_run(rest_suffixes);
-            chain = Some((builder.root, builder.first_suffix, builder.suffix_count));
+            chain = Some((
+                builder.root,
+                builder.first_suffix,
+                builder.has_rest_suffixes,
+            ));
         }
     });
-    let (root, first_suffix, suffix_count) = chain?;
+    let (root, first_suffix, has_rest_suffixes) = chain?;
     let root = root?;
     let (first_suffix, first_suffix_has_leading_comments) = first_suffix?;
     let keep_first_suffix_with_root =
@@ -127,7 +130,7 @@ pub(super) fn format_member_chain<'source>(
         root_doc,
         first_suffix,
         rest_suffixes,
-        suffix_count,
+        has_rest_suffixes,
         keep_first_suffix_with_root,
     );
 
@@ -154,7 +157,7 @@ fn append_chain_expression<'source>(
             let qualified = qualified_invocation(&invocation)?;
             let receiver = present(qualified.receiver())?;
             append_chain_receiver(builder, receiver, rest_suffixes);
-            builder.push_method_invocation(&invocation, rest_suffixes);
+            builder.push_method_invocation(&qualified, rest_suffixes);
             Some(())
         }
         _ => None,
@@ -193,13 +196,9 @@ fn member_chain<'source>(
     root: Doc<'source>,
     first_suffix: Doc<'source>,
     rest_suffixes: Doc<'source>,
-    suffix_count: u32,
+    has_rest_suffixes: bool,
     keep_first_suffix_with_root: bool,
 ) -> Doc<'source> {
-    if suffix_count == 0 {
-        return root;
-    }
-
     let head = if keep_first_suffix_with_root {
         doc_concat!(doc, [root, first_suffix])
     } else {
@@ -211,7 +210,7 @@ fn member_chain<'source>(
         doc_concat!(doc, [doc.soft_line(), first_suffix, rest_suffixes])
     };
 
-    if keep_first_suffix_with_root && suffix_count == 1 {
+    if keep_first_suffix_with_root && !has_rest_suffixes {
         return doc_group!(doc, head);
     }
 
@@ -235,7 +234,7 @@ fn format_field_access_suffix<'source>(
         doc,
         [
             format_required_field(access.dot(), doc, |dot, doc| {
-                format_member_dot(Some(&dot), doc)
+                format_member_dot(&dot, doc)
             }),
             format_required_field(access.name(), doc, |name, doc| {
                 format_token_with_comments(doc, &name)
@@ -248,18 +247,14 @@ fn format_field_access_suffix<'source>(
 }
 
 fn format_method_invocation_suffix<'source>(
-    invocation: &MethodInvocationExpression<'source>,
+    invocation: &QualifiedMethodInvocation<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let Some(invocation) = qualified_invocation(invocation) else {
-        doc.block_on_invariant("member-chain invocation was not qualified");
-        return Doc::nil();
-    };
     doc_concat!(
         doc,
         [
             format_required_field(invocation.dot(), doc, |dot, doc| {
-                format_member_dot(Some(&dot), doc)
+                format_member_dot(&dot, doc)
             }),
             format_optional_field(invocation.type_arguments(), doc, |arguments, doc| {
                 format_type_argument_list(&arguments, doc)
@@ -268,36 +263,34 @@ fn format_method_invocation_suffix<'source>(
                 format_qualified_invocation_name(name, LeadingComments::Preserve, doc)
             }),
             format_required_field(invocation.arguments(), doc, |arguments, doc| {
-                format_argument_list(Some(arguments), doc)
+                format_argument_list(arguments, doc)
             }),
         ]
     )
 }
 
 pub(super) fn format_member_dot<'source>(
-    dot: Option<&JavaSyntaxToken<'source>>,
+    dot: &JavaSyntaxToken<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    dot.map_or_else(Doc::nil, |dot| {
-        doc_concat!(
-            doc,
-            [
-                format_token(
-                    doc,
-                    dot,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::BeforeLineBreak,
-                ),
-                if trailing_comments_force_line(dot) {
-                    doc.hard_line()
-                } else if dot.trailing_comments().is_empty() {
-                    Doc::nil()
-                } else {
-                    doc.space()
-                },
-            ]
-        )
-    })
+    doc_concat!(
+        doc,
+        [
+            format_token(
+                doc,
+                dot,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::BeforeLineBreak,
+            ),
+            if trailing_comments_force_line(dot) {
+                doc.hard_line()
+            } else if dot.trailing_comments().is_empty() {
+                Doc::nil()
+            } else {
+                doc.space()
+            },
+        ]
+    )
 }
 
 const fn is_simple_member_chain_root(expression: &Expression) -> bool {

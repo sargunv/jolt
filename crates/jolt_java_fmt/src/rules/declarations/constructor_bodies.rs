@@ -53,7 +53,7 @@ pub(super) fn format_constructor_body<'source>(
         items.extend(
             elements
                 .iter()
-                .filter_map(|element| format_constructor_body_element(element, doc)),
+                .map(|element| format_constructor_body_element(element, doc)),
         );
         items.extend(format_constructor_body_close_dangling_comments(doc, close));
         return (!items.is_empty()).then(|| join_body_items(doc, items));
@@ -73,9 +73,7 @@ pub(super) fn format_constructor_body<'source>(
             index,
             clear_blank_line_before,
         } => {
-            let Some(mut item) = format_constructor_body_element(&elements[index], doc) else {
-                return;
-            };
+            let mut item = format_constructor_body_element(&elements[index], doc);
             if clear_blank_line_before {
                 item = item.without_blank_line_before();
             }
@@ -107,7 +105,7 @@ fn format_constructor_body_close_dangling_comments<'source>(
     doc: &mut jolt_fmt_ir::DocBuilder<'source>,
     close: Option<JavaSyntaxToken<'source>>,
 ) -> Option<BodyItem<'source>> {
-    let comments = close?.leading_comments().collect::<Vec<_>>();
+    let comments = close?.leading_comments();
     (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(doc, comments), false))
 }
 
@@ -186,16 +184,16 @@ fn constructor_body_element_ignore_range(
 fn format_constructor_body_element<'source>(
     element: &ConstructorBodyElement<'source>,
     doc: &mut DocBuilder<'source>,
-) -> Option<BodyItem<'source>> {
+) -> BodyItem<'source> {
     match element {
-        ConstructorBodyElement::Invocation(invocation) => Some(BodyItem::new(
+        ConstructorBodyElement::Invocation(invocation) => BodyItem::new(
             format_constructor_invocation(invocation, doc),
             invocation
                 .first_token()
                 .is_some_and(|token| token.has_leading_blank_line()),
-        )),
-        ConstructorBodyElement::Statement(statement) => format_block_statement_item(statement, doc),
-        ConstructorBodyElement::Recovery { doc, .. } => Some(BodyItem::new(*doc, false)),
+        ),
+        ConstructorBodyElement::Statement(item) => format_block_statement_item(item, doc),
+        ConstructorBodyElement::Recovery { doc, .. } => BodyItem::new(*doc, false),
     }
 }
 
@@ -215,7 +213,7 @@ fn format_constructor_invocation<'source>(
         )
     });
     let arguments = format_required_field(invocation.arguments(), doc, |arguments, doc| {
-        format_argument_list(Some(arguments), doc)
+        format_argument_list(arguments, doc)
     });
     let semicolon = invocation.semicolon();
     let invocation_first_token = invocation.first_token();

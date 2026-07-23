@@ -36,14 +36,6 @@ macro_rules! doc_join {
     }};
 }
 
-macro_rules! doc_if_break {
-    ($doc:expr, $breaks:expr, $flat:expr $(,)?) => {{
-        let breaks = $breaks;
-        let flat = $flat;
-        $doc.if_break(breaks, flat)
-    }};
-}
-
 mod format;
 mod helpers;
 mod rules;
