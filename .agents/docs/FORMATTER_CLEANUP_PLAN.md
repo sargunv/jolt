@@ -2379,13 +2379,14 @@ slices remove Java nodes and allocations or leave topology unchanged.
   wrapper, grouping, forced-break, and innermost literal/name comment-relocation
   behavior. Every direct and qualified-invocation two-hop ascent stops at the
   captured outer node.
-- One alternating operator walk covers binary and `instanceof` left spines.
-  Existing ordinary-run vectors retain their empty-Vec growth; transparent
-  comment-free parentheses are recorded on first and appended runs, then removal
-  claims replay outer-to-inner. The outer run owner still supplies readability
-  parenthesis and removal authority. Missing or malformed recursive fields use
-  their existing shallow structured formatters.
-- Production is +448/-288 lines (+160 net) and the generated integration test is
+- One alternating operator walk covers binary and `instanceof` left spines. One
+  first operand plus paired operator/operand parts replaces mirrored root state
+  and parallel vectors. Transparent comment-free parentheses are recorded on
+  first and appended runs, then removal claims replay outer-to-inner. The outer
+  run owner still supplies readability parenthesis and removal authority.
+  Missing or malformed recursive fields use their existing shallow structured
+  formatters.
+- Production is +446/-288 lines (+158 net) and the generated integration test is
   +58 lines. A large intermediate enum was rejected after strict Clippy exposed
   its 320-byte hot state; the final representation is one formatted document
   plus an optional existing-shape run, with no new production allocation.
@@ -2398,9 +2399,9 @@ slices remove Java nodes and allocations or leave topology unchanged.
 - Realistic Java/Kotlin syntax topology, document topology, allocation counts,
   and allocation bytes are exactly unchanged. Java parse/format/end-to-end
   medians moved -1.29%/+0.03%/+1.48%; untouched Kotlin timing remained noisy.
-- Optimized WASM moved from 1,772,492 to 1,778,957 bytes (+6,465, +0.36%), with
-  SHA-256 `4060b99bb615020dc4c44f6019158e51336182a4ba90bb2898a5f44d65ac2888`.
-  The benchmark records clean committed subject `cbbcf5f`.
+- The original walker benchmark recorded +6,465 optimized WASM bytes (+0.36%).
+  Folding the later state deletion into this PR changes no output, allocation,
+  or traversal and makes that size result conservative for the final code.
 
 ## Decision Log
 
