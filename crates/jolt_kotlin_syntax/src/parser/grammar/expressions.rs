@@ -61,6 +61,16 @@ impl Parser<'_> {
     }
 
     fn parse_assignment_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+        if let Some(expression) =
+            self.with_syntax_nesting(|parser| parser.parse_assignment_expression_inner(stops))
+        {
+            return expression;
+        }
+
+        self.parse_excessive_expression(stops)
+    }
+
+    fn parse_assignment_expression_inner(&mut self, stops: StopSet<'_>) -> CompletedMarker {
         let lhs = self.parse_binary_expression(stops, 0);
         if self.at_expression_boundary(stops) || !is_assignment_operator(self.current_kind()) {
             return lhs;
@@ -144,6 +154,16 @@ impl Parser<'_> {
     }
 
     fn parse_unary_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+        if let Some(expression) =
+            self.with_syntax_nesting(|parser| parser.parse_unary_expression_inner(stops))
+        {
+            return expression;
+        }
+
+        self.parse_excessive_expression(stops)
+    }
+
+    fn parse_unary_expression_inner(&mut self, stops: StopSet<'_>) -> CompletedMarker {
         if is_unary_operator(self.current_kind()) {
             let unary = self.start();
             self.bump();
@@ -152,6 +172,50 @@ impl Parser<'_> {
         }
 
         self.parse_postfix_expression(stops)
+    }
+
+    fn parse_excessive_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+        let expression = self.start();
+        let diagnostic = self.pending_excessive_syntax_nesting();
+        let (mut parens, mut brackets, mut braces, mut long_templates) =
+            (0usize, 0usize, 0usize, 0usize);
+        let mut consumed_outside = false;
+
+        loop {
+            let current = self.current_kind();
+            let outside = parens == 0 && brackets == 0 && braces == 0 && long_templates == 0;
+            if current == K::Eof
+                || current == K::RParen && parens == 0
+                || current == K::RBracket && brackets == 0
+                || current == K::RBrace && braces == 0
+                || current == K::LongTemplateEntryEnd && long_templates == 0
+                || outside
+                    && (stops.contains(current, self.position())
+                        || matches!(current, K::Semicolon | K::DoubleSemicolon)
+                        || consumed_outside
+                            && self.newline_before_current()
+                            && !is_expression_continuation(current)
+                        || self.at_expression_rhs_declaration_boundary())
+            {
+                break;
+            }
+
+            consumed_outside |= outside;
+            match current {
+                K::LParen => parens += 1,
+                K::RParen => parens -= 1,
+                K::LBracket => brackets += 1,
+                K::RBracket => brackets -= 1,
+                K::LBrace => braces += 1,
+                K::RBrace => braces -= 1,
+                K::LongTemplateEntryStart => long_templates += 1,
+                K::LongTemplateEntryEnd => long_templates -= 1,
+                _ => {}
+            }
+            self.bump();
+        }
+
+        self.complete_recovery(expression, K::BogusExpression, [diagnostic])
     }
 
     fn parse_postfix_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {

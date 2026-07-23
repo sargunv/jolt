@@ -958,20 +958,43 @@ remains separate so the formatter behavior PR has a narrow rollback boundary.
 - prove all five body categories, braced/unbraced control flow, cross-family
   re-entry, following body/declaration recovery, and actual dprint-WASM bounds.
 
-### PR 27 — Bounded recursive Kotlin syntax
+### PR 27 — Bounded recursive Kotlin value syntax
 
 - audit the complete Kotlin parser call graph across types, annotation
-  arguments, expressions, lambdas, blocks, class bodies, declarations, and their
-  cross-grammar cycles;
-- intersect every input-depth cycle with one shared active nesting budget at the
-  smallest owner boundaries, rather than resettable per-family counters;
-- preserve an over-limit type, expression, block, or class body as one
-  syntax-owned recovered subtree using allocation-free iterative scanners;
+  arguments, expressions, lambdas, declarations, and their cross-grammar cycles;
+- introduce one shared 128-entry active-owner budget and guard the type,
+  assignment, and unary value cycles with their existing caller stops;
+- preserve an over-limit type or expression as one syntax-owned recovered
+  subtree using distinct allocation-free type/expression scanners;
 - prove native and actual dprint-WASM bounds, source conservation,
   following-syntax recovery, formatter idempotence, and zero realistic
   allocation/topology/output change.
 
-### PR 28 — Residue reconciliation
+### PR 28 — Bounded recursive Kotlin structure
+
+- extend PR 27's active-owner budget to physical blocks and class bodies,
+  completing the cut set for every Kotlin parser call-graph recursion cycle;
+- preserve real braces and the required `BlockItemList`/`ClassMemberList` around
+  one diagnostic-owned bogus child with one shared allocation-free brace scan;
+- prove nested declarations, objects, lambdas, blocks, class/interface/object/
+  enum-entry bodies, cross-family re-entry, and actual dprint-WASM depth bounds;
+- retain the deliberate distinction between parser-call bounds and deep CST
+  spines built by iterative loops, which PR 29 owns.
+
+### PR 29 — Bounded formatter CST traversal
+
+- audit both language formatters for recursive traversal of input-depth CST
+  spines that iterative parser loops can still construct, including postfix,
+  nullable/definitely-non-null, and left-associative binary chains;
+- replace every reachable input-depth formatter call cycle with an iterative
+  borrowed-node walk or another explicitly bounded structured traversal;
+- do not replay source, clone syntax nodes/tokens, introduce a generic visitor,
+  or use verbatim output for valid deep syntax;
+- split Java and Kotlin descendants if the measured implementation crosses the
+  production growth gate; require depth-4,096 native and actual dprint-WASM
+  formatting, idempotence, output parity, and neutral realistic allocations.
+
+### PR 30 — Residue reconciliation
 
 - update formatter/parser architecture and finite-cost documentation to match
   the implemented extension;
@@ -1069,8 +1092,10 @@ ready for review.
 | 24  | `cleanup/24-java-annotation-cost`        | draft open | PR 23  | [#26](https://github.com/sargunv/jolt/pull/26) | full + release + benchmark | Bound flat malformed-annotation lookahead.       |
 | 25  | `cleanup/25-java-value-recursion`        | draft open | PR 24  | [#27](https://github.com/sargunv/jolt/pull/27) | full + WASM + benchmark    | Bound recursive Java value families.             |
 | 26  | `cleanup/26-java-structural-recursion`   | draft open | PR 25  | [#28](https://github.com/sargunv/jolt/pull/28) | full + WASM + benchmark    | Bound recursive Java bodies and statements.      |
-| 27  | `cleanup/27-kotlin-recursion-budget`     | planned    | PR 26  | —                                              | —                          | Bound recursive Kotlin syntax families.          |
-| 28  | `cleanup/28-residue-reconciliation`      | planned    | PR 27  | —                                              | —                          | Final evidence and debt-ledger closure.          |
+| 27  | `cleanup/27-kotlin-value-recursion`      | draft open | PR 26  | [#29](https://github.com/sargunv/jolt/pull/29) | full + WASM + benchmark    | Bound recursive Kotlin type/expression syntax.   |
+| 28  | `cleanup/28-kotlin-structural-recursion` | planned    | PR 27  | —                                              | —                          | Bound recursive Kotlin blocks and class bodies.  |
+| 29  | `cleanup/29-formatter-cst-depth`         | planned    | PR 28  | —                                              | —                          | Bound deep structured formatter traversal.       |
+| 30  | `cleanup/30-residue-reconciliation`      | planned    | PR 29  | —                                              | —                          | Final evidence and debt-ledger closure.          |
 
 ### PR 01 evidence
 
@@ -2166,11 +2191,47 @@ slices remove Java nodes and allocations or leave topology unchanged.
   topology is exactly unchanged.
 - Java parse/format/end-to-end medians moved +0.28%/-1.48%/+0.53%, all below
   their run MAD. The untouched Kotlin path moved faster relative to its noisy
-  parent run and is not attributed to this PR. Optimized WASM moved from by
-  +3,030 bytes (+0.17%) in the recorded parent/child build.
+  parent run and is not attributed to this PR. Optimized WASM moved by +3,030
+  bytes (+0.17%) in the recorded parent/child build.
 - `mise run fix` passed strict formatting, workspace Clippy, dependency, native,
   and WASM checks. The complete non-update suite passed all 211 tests with zero
   skips. The benchmark records clean committed subject `23fd33f`.
+
+### PR 27 evidence
+
+- One 128-owner counter now cuts every recursive Kotlin value cycle at the
+  existing type, assignment, or unary owner. Parentheses spend both expression
+  owners while right assignment and prefix unary recursion retain only their
+  recursive owner; the exact clean/overflow edges are therefore 127/128 types,
+  63/64 parentheses, and 126/127 unary or assignment operators.
+- Ordinary overflow produces one diagnostic-owned `BogusType` or
+  `BogusExpression`. The required child after `suspend` or `context(...)` keeps
+  the schema's exact `FunctionType` kind and is directly malformed by the same
+  diagnostic, avoiding a schema variant, synthesized slot, or untyped fallback.
+- Type and expression recovery remain distinct allocation-free scans. Each
+  consumes balanced borrowed tokens while respecting only its own caller stops,
+  newline/declaration policy, and unmatched outer delimiters; nested lambda
+  semicolons, templates, arrows, and exact-position heuristics do not leak
+  across ownership boundaries.
+- Production is +181 lines and focused tests are +256 lines, below the +190
+  production stop. Tests cover all exact edges, depth-4,096 type/unary/
+  assignment/parenthesis inputs, alternating type -> annotation -> expression ->
+  cast -> type re-entry, exact malformed ownership, lossless following syntax,
+  and formatter completion/idempotence across seven recovery shapes.
+- Actual dprint-WASM stdin smokes completed for depth-4,096 alternating-type and
+  unary inputs and preserved their following declarations. The diagnostic calls
+  this a parser-safety limit rather than claiming that 128 owners equal 128
+  syntax levels. `mise run fix` passed strict native and WASM checks; the
+  complete non-update suite passed all 218 tests with zero skips.
+- Realistic Java and Kotlin allocation totals, syntax topology, and formatter
+  document topology are exactly unchanged. Kotlin parse/format/end-to-end
+  medians moved +0.91%/-0.27%/+4.19%; the latter run's 2.8% median absolute
+  deviation was materially noisier than its parent. Java moved
+  +1.05%/-1.36%/-1.61% on untouched paths.
+- Optimized WASM moved by +4,254 bytes (+0.24%) in the recorded parent/child
+  build, with SHA-256
+  `ac4c06af6b7de09639f7f3840e6250eaed8e95ede0342c789f9699a27ae82a53`. The
+  benchmark records clean committed subject `51653f2`.
 
 ## Decision Log
 

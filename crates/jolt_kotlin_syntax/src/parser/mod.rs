@@ -23,6 +23,7 @@ pub(crate) enum KotlinParseDiagnosticCode {
     MalformedTypeArgumentList,
     InvalidWhenGuard,
     ReservedCallableReferenceCall,
+    ExcessiveSyntaxNesting,
     InvalidEventStream,
 }
 
@@ -40,6 +41,9 @@ impl KotlinParseDiagnosticCode {
             Self::InvalidWhenGuard => DiagnosticCodeId::new("kotlin.parse.invalid_when_guard"),
             Self::ReservedCallableReferenceCall => {
                 DiagnosticCodeId::new("kotlin.parse.reserved_callable_reference_call")
+            }
+            Self::ExcessiveSyntaxNesting => {
+                DiagnosticCodeId::new("kotlin.parse.excessive_syntax_nesting")
             }
             Self::InvalidEventStream => {
                 DiagnosticCodeId::new("internal.syntax.invalid_event_stream")
@@ -362,5 +366,195 @@ mod tests {
                 parse.diagnostics(),
             );
         }
+    }
+
+    fn excessive_syntax_diagnostic_count(source: &str) -> usize {
+        parse_kotlin_file(source)
+            .diagnostics()
+            .iter()
+            .filter(|diagnostic| {
+                diagnostic.code == KotlinParseDiagnosticCode::ExcessiveSyntaxNesting.id()
+            })
+            .count()
+    }
+
+    fn nested_type(depth: usize, leaf: &str) -> String {
+        format!("{}{}{}", "Box<".repeat(depth), leaf, ">".repeat(depth))
+    }
+
+    fn count_nodes(source: &str, kind: KotlinSyntaxKind) -> usize {
+        let parse = parse_kotlin_file(source);
+        let root = parse.syntax().expect("represented Kotlin file");
+        let mut nodes = vec![root.syntax_node().expect("physical Kotlin root")];
+        let mut count = 0;
+        while let Some(node) = nodes.pop() {
+            nodes.extend(node.children());
+            count += usize::from(node.kind() == kind);
+        }
+        count
+    }
+
+    #[test]
+    fn type_nesting_has_an_exact_edge_and_required_function_recovery() {
+        let clean = format!("typealias Deep = {}\n", nested_type(127, "Leaf"));
+        assert_eq!(excessive_syntax_diagnostic_count(&clean), 0);
+
+        let edge = format!(
+            "typealias Deep = {}\nclass Following\n",
+            nested_type(128, "Leaf")
+        );
+        check_code(
+            &edge,
+            "syntax is too deeply nested to parse safely",
+            KotlinParseDiagnosticCode::ExcessiveSyntaxNesting,
+            KotlinSyntaxKind::BogusType,
+            None,
+        );
+        assert_eq!(excessive_syntax_diagnostic_count(&edge), 1);
+        assert_eq!(count_nodes(&edge, KotlinSyntaxKind::ClassDeclaration), 1);
+
+        for leaf in ["suspend () -> Unit", "context() () -> Unit"] {
+            let source = format!("typealias Deep = {}\n", nested_type(127, leaf));
+            check_code(
+                &source,
+                "syntax is too deeply nested to parse safely",
+                KotlinParseDiagnosticCode::ExcessiveSyntaxNesting,
+                KotlinSyntaxKind::FunctionType,
+                None,
+            );
+            assert_eq!(excessive_syntax_diagnostic_count(&source), 1);
+        }
+    }
+
+    #[test]
+    fn expression_nesting_has_an_exact_edge_and_bounded_deep_recovery() {
+        let parenthesized = |depth| {
+            format!(
+                "fun value() = {}input{}\n",
+                "(".repeat(depth),
+                ")".repeat(depth)
+            )
+        };
+        assert_eq!(excessive_syntax_diagnostic_count(&parenthesized(63)), 0);
+        let edge = parenthesized(64);
+        check_code(
+            &edge,
+            "syntax is too deeply nested to parse safely",
+            KotlinParseDiagnosticCode::ExcessiveSyntaxNesting,
+            KotlinSyntaxKind::BogusExpression,
+            None,
+        );
+
+        for expression in [
+            format!("{}true", "! ".repeat(4096)),
+            format!("{}leaf", "value = ".repeat(4096)),
+            format!("{}input{}", "(".repeat(4096), ")".repeat(4096)),
+        ] {
+            let source =
+                format!("fun value() = {expression}\nval following = 1\nclass Following\n");
+            let parse = parse_kotlin_file(&source);
+            assert_eq!(
+                parse
+                    .syntax()
+                    .expect("represented expression")
+                    .source_text(),
+                source
+            );
+            assert_eq!(excessive_syntax_diagnostic_count(&source), 1);
+            assert_eq!(
+                count_nodes(&source, KotlinSyntaxKind::PropertyDeclaration),
+                1
+            );
+            assert_eq!(count_nodes(&source, KotlinSyntaxKind::ClassDeclaration), 1);
+        }
+    }
+
+    #[test]
+    fn unary_and_assignment_nesting_have_an_exact_edge() {
+        let unary = |depth| format!("fun value() = {}input\n", "! ".repeat(depth));
+        let assignment = |depth| format!("fun value() = {}input\n", "target = ".repeat(depth));
+
+        for clean in [unary(126), assignment(126)] {
+            assert_eq!(excessive_syntax_diagnostic_count(&clean), 0, "{clean}");
+        }
+        for edge in [unary(127), assignment(127)] {
+            assert_eq!(excessive_syntax_diagnostic_count(&edge), 1, "{edge}");
+            assert_eq!(count_nodes(&edge, KotlinSyntaxKind::BogusExpression), 1);
+        }
+    }
+
+    #[test]
+    fn alternating_type_annotation_expression_recursion_is_bounded_and_lossless() {
+        let depth = 4096;
+        let source = format!(
+            "typealias Deep = {}Leaf{}\nclass Following\n",
+            "Box<@A(value = input as ".repeat(depth),
+            ") Annotated>".repeat(depth),
+        );
+        let parse = parse_kotlin_file(&source);
+        assert_eq!(
+            parse
+                .syntax()
+                .expect("represented alternating input")
+                .source_text(),
+            source
+        );
+        assert_eq!(excessive_syntax_diagnostic_count(&source), 1);
+        assert_eq!(count_nodes(&source, KotlinSyntaxKind::ClassDeclaration), 1);
+    }
+
+    #[test]
+    fn excessive_expression_keeps_nested_lambda_semicolons_inside_recovery() {
+        let source = format!(
+            "fun value() = {}call {{ a; b }}\nval following = 1\n",
+            "! ".repeat(127)
+        );
+        let parse = parse_kotlin_file(&source);
+        assert_eq!(
+            parse
+                .syntax()
+                .expect("represented lambda recovery")
+                .source_text(),
+            source
+        );
+        assert_eq!(excessive_syntax_diagnostic_count(&source), 1);
+        assert_eq!(count_nodes(&source, KotlinSyntaxKind::BogusExpression), 1);
+        assert_eq!(count_nodes(&source, KotlinSyntaxKind::NameExpression), 0);
+        assert_eq!(
+            count_nodes(&source, KotlinSyntaxKind::PropertyDeclaration),
+            1
+        );
+    }
+
+    #[test]
+    fn excessive_expression_preserves_balanced_and_caller_boundaries() {
+        let balanced = format!(
+            r#"fun value() = {}call({{ item -> "${{if (item) "${{nested}}" else "fallback"}}"; item }}, [first, second])
+val following = 1
+"#,
+            "! ".repeat(127),
+        );
+        let parse = parse_kotlin_file(&balanced);
+        assert_eq!(
+            parse
+                .syntax()
+                .expect("represented balanced recovery")
+                .source_text(),
+            balanced
+        );
+        assert_eq!(excessive_syntax_diagnostic_count(&balanced), 1);
+        assert_eq!(count_nodes(&balanced, KotlinSyntaxKind::BogusExpression), 1);
+        assert_eq!(
+            count_nodes(&balanced, KotlinSyntaxKind::PropertyDeclaration),
+            1
+        );
+
+        let arrow = format!(
+            "fun choose(value: Int) = when (value) {{ in {}candidate -> 1; else -> 0 }}\nclass Following\n",
+            "! ".repeat(127),
+        );
+        assert_eq!(excessive_syntax_diagnostic_count(&arrow), 1);
+        assert_eq!(count_nodes(&arrow, KotlinSyntaxKind::WhenEntry), 2);
+        assert_eq!(count_nodes(&arrow, KotlinSyntaxKind::ClassDeclaration), 1);
     }
 }
