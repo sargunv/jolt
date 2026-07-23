@@ -32,6 +32,37 @@ impl Parser<'_> {
     }
 
     fn parse_type_until(&mut self, stops: &[K], stop_position: Option<usize>) -> CompletedMarker {
+        self.parse_type_until_with_recovery(stops, stop_position, K::BogusType)
+    }
+
+    fn parse_required_function_type_until(
+        &mut self,
+        stops: &[K],
+        stop_position: Option<usize>,
+    ) -> CompletedMarker {
+        self.parse_type_until_with_recovery(stops, stop_position, K::FunctionType)
+    }
+
+    fn parse_type_until_with_recovery(
+        &mut self,
+        stops: &[K],
+        stop_position: Option<usize>,
+        recovery_kind: K,
+    ) -> CompletedMarker {
+        if let Some(ty) =
+            self.with_syntax_nesting(|parser| parser.parse_type_until_inner(stops, stop_position))
+        {
+            return ty;
+        }
+
+        self.parse_excessive_type(stops, stop_position, recovery_kind)
+    }
+
+    fn parse_type_until_inner(
+        &mut self,
+        stops: &[K],
+        stop_position: Option<usize>,
+    ) -> CompletedMarker {
         let mut ty = self.parse_type_atom(stops, stop_position);
 
         loop {
@@ -101,7 +132,7 @@ impl Parser<'_> {
                 self.finish_optional_type_annotations(prefix, prefix_start);
                 let form = self.start();
                 self.bump();
-                self.parse_type_until(stops, stop_position);
+                self.parse_required_function_type_until(stops, stop_position);
                 self.complete(form, K::SuspendedFunctionType);
                 self.complete(marker, K::FunctionType)
             }
@@ -114,7 +145,7 @@ impl Parser<'_> {
                     crate::shape::context_function_type::Slot::close_paren as u16,
                 );
                 if !self.at_type_stop(stops, stop_position) && !self.at_eof() {
-                    self.parse_type_until(stops, stop_position);
+                    self.parse_required_function_type_until(stops, stop_position);
                 }
                 self.complete(marker, K::ContextFunctionType)
             }
@@ -334,6 +365,55 @@ impl Parser<'_> {
         self.newline_before_current()
             && (self.at_declaration_start(false)
                 || matches!(self.current_kind(), K::PackageKw | K::ImportKw))
+    }
+
+    fn parse_excessive_type(
+        &mut self,
+        stops: &[K],
+        stop_position: Option<usize>,
+        kind: K,
+    ) -> CompletedMarker {
+        let ty = self.start();
+        let diagnostic = self.pending_excessive_syntax_nesting();
+        let (mut angles, mut parens, mut brackets, mut braces) = (0usize, 0usize, 0usize, 0usize);
+        let mut consumed_outside = false;
+
+        loop {
+            let current = self.current_kind();
+            let outside_delimiters = parens == 0 && brackets == 0 && braces == 0;
+            let outside = outside_delimiters && angles == 0;
+            if current == K::Eof
+                || outside && self.at_position_stop(stop_position)
+                || current == K::RParen && parens == 0
+                || current == K::RBracket && brackets == 0
+                || current == K::RBrace && braces == 0
+                || current == K::Gt && outside_delimiters && angles == 0
+                || outside
+                    && (self.at_type_stop(stops, None)
+                        || self.at_type_recovery_declaration_boundary()
+                        || consumed_outside
+                            && self.newline_before_current()
+                            && !matches!(current, K::Question | K::BangBang | K::Amp))
+            {
+                break;
+            }
+
+            consumed_outside |= outside;
+            match current {
+                K::Lt if outside_delimiters => angles += 1,
+                K::Gt if outside_delimiters => angles -= 1,
+                K::LParen => parens += 1,
+                K::RParen => parens -= 1,
+                K::LBracket => brackets += 1,
+                K::RBracket => brackets -= 1,
+                K::LBrace => braces += 1,
+                K::RBrace => braces -= 1,
+                _ => {}
+            }
+            self.bump();
+        }
+
+        self.complete_recovery(ty, kind, [diagnostic])
     }
 
     pub(super) fn parse_type_argument_list(&mut self) {
