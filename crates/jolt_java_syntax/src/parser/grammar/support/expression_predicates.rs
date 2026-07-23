@@ -19,7 +19,7 @@ impl Parser<'_> {
 
         let cursor = self.inner.fork_cursor();
         let after_parameters = self
-            .parentheses
+            .lookahead_summary
             .after(&mut self.inner.buffer, cursor, cursor);
         self.kind_at(after_parameters) == JavaSyntaxKind::Arrow
     }

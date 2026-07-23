@@ -1006,7 +1006,7 @@ ready for review.
 | 21  | `cleanup/21-java-delimiter-summaries`    | draft open | PR 20  | [#23](https://github.com/sargunv/jolt/pull/23) | full + benchmark           | Bound lambda and annotation parenthesis scans.   |
 | 22  | `cleanup/22-java-generic-depth`          | draft open | PR 21  | [#24](https://github.com/sargunv/jolt/pull/24) | full + benchmark           | Bound recursive generic-type parsing.            |
 | 23  | `cleanup/23-layout-doc-consolidation`    | draft open | PR 22  | [#25](https://github.com/sargunv/jolt/pull/25) | full + benchmark           | Delete duplicate recovery visibility carriers.   |
-| 24  | `cleanup/24-java-annotation-cost`        | planned    | PR 23  | —                                              | —                          | Bound flat malformed-annotation lookahead.       |
+| 24  | `cleanup/24-java-annotation-cost`        | draft open | PR 23  | [#26](https://github.com/sargunv/jolt/pull/26) | full + release + benchmark | Bound flat malformed-annotation lookahead.       |
 | 25  | `cleanup/25-java-recursion-budget`       | planned    | PR 24  | —                                              | —                          | Bound recursive Java syntax families.            |
 | 26  | `cleanup/26-kotlin-recursion-audit`      | planned    | PR 25  | —                                              | —                          | Audit and bound Kotlin parser recursion.         |
 | 27  | `cleanup/27-residue-reconciliation`      | planned    | PR 26  | —                                              | —                          | Final evidence and debt-ledger closure.          |
@@ -1953,6 +1953,70 @@ slices remove Java nodes and allocations or leave topology unchanged.
   skips. The benchmark records committed subject `581211c`; its dirty bit
   reflects only the already-written ledger row.
 
+### PR 23 evidence
+
+- Java's PR 15 `VisibleDoc { doc, visible }` and
+  `ModifierEntry::Malformed(Doc, bool)` duplicated PR 16's
+  `LayoutDoc::{Visible, ClaimOnly}` exactly. Modifier prefixes, varargs
+  annotations, ellipses, and malformed modifiers now use the shared carrier;
+  separator, sorting, comments, and joining policy remain Java-owned.
+- One shared boolean-to-variant constructor replaces duplicate Java/Kotlin
+  branches and Kotlin's local constructor. Two one-use Java forwarding wrappers
+  were inlined and deleted. `ProgramSection`, `FileSection`, and `ImportSection`
+  remain local because they carry distinct compactness and comment-barrier
+  policy.
+- Rust production is +87/-110 lines (-23 net). No test or snapshot was needed:
+  the change is a representation-preserving migration over existing recovery
+  fixtures. Syntax and document topology and every realistic Java/Kotlin
+  allocation sample are exactly unchanged.
+- Java parse/format medians moved +3.39%/+2.10% with end-to-end -0.03%; Kotlin
+  parse/format moved +5.18%/-3.67% with end-to-end +1.19%. The untouched parser,
+  identical allocation/topology results, and run variance make these neutral.
+  Optimized WASM moved from 1,750,968 to 1,751,710 bytes (+742, +0.04%).
+- `mise run fix` passed strict formatting, workspace Clippy, dependency, native,
+  and WASM checks. The complete non-update suite passed all 198 tests with zero
+  skips. The benchmark records clean committed subject `4ce7096`.
+
+### PR 24 evidence
+
+- Flat malformed annotation runs at compilation-unit, import, body-member, and
+  rejected-constructor recovery boundaries previously repeated package/module/
+  type/member predicates from each successive `@`, retaining quadratic suffix
+  work after PR 21 fixed only parenthesized arguments.
+- PR 21's lazy one-word-per-token table now stores two token-disjoint facts: `(`
+  entries hold exact after-close positions, while queried `@` entries are
+  path-compressed to the exact end of their maximal annotation run. The first
+  parenthesis or annotation query builds the remaining-file table. The parser
+  retains one `skip_annotation` grammar, one optional vector, and no activation
+  budget, cumulative counter, direct-scan mode, or new production field.
+- One table build visits at most `N` tokens. Each annotation start enters and
+  leaves the pending chain once, and every later suffix query is one lookup, so
+  total summary work and storage are `O(N)`. A focused 256-annotation,
+  eight-segment qualified-name test proves that every suffix receives the same
+  exact cached endpoint; corpus fixtures cannot observe that complexity
+  invariant.
+- Focused cases cover first use inside a run, speculative cursor rewind, bare
+  and qualified annotations, nested/unmatched arguments, `@interface`
+  termination, and all four recovery owners. The constructor-specific bounded
+  annotation scanner remains separate because it intentionally stops at
+  semicolon/brace boundaries.
+- Production is +64/-30 lines (+34 net) and focused tests are +93/-6 (+87 net).
+  The rejected top-level memo would have added a second lifecycle and could not
+  bound nested arguments; extending the existing exact table closes both shapes
+  with the same storage.
+- Relative to PR 21's parenthesis-only lazy table on the same 9,206-file corpus,
+  annotation activation increases parse allocations from 150,934 to 169,576
+  (+12.35%) and allocated bytes from 1,377,783,498 to 1,408,441,226 (+2.23%),
+  about 2.0 allocations and 3.3 KB per file. Peak RSS moves -0.08%; parse median
+  moves -1.04%; whole native/dprint CLI medians move -0.08%/-0.05%. The
+  allocation traffic has no demonstrated throughput or peak-memory cost.
+  Optimized WASM for the revised cumulative tree is 1,752,034 bytes, 198 bytes
+  smaller than the previously recorded thresholded PR 24 tree.
+- `mise run fix` passed strict formatting, workspace Clippy, dependency, native,
+  and WASM checks. Debug and release focused suites passed; the complete
+  non-update suite passed all 202 tests with zero skips. The exact lazy-table
+  benchmark records subject `a8f7589a` with its dirty worktree hash.
+
 ## Decision Log
 
 | Date       | Decision                                                         | Reason                                                                                                                                                                                                                   |
@@ -2008,6 +2072,7 @@ slices remove Java nodes and allocations or leave topology unchanged.
 | 2026-07-23 | Normalize the whole over-depth type argument.                    | Preserving wildcard and malformed subshape beyond the limit added about 65 lines of duplicated parser/lookahead policy; one bogus value is lossless, bounded, and easier to reason about locally.                        |
 | 2026-07-23 | Consolidate transition recovery visibility in PR 23.             | PR 15's Java carrier duplicated PR 16's final shared state exactly; replacing it deletes 23 Rust lines while language-local joining sections retain their real policy.                                                   |
 | 2026-07-23 | Extend the stack through parser recursion before reconciliation. | Flat annotations still had quadratic suffix scans, and native probes proved reachable Java/Kotlin stack exhaustion; these are correctness and finite-cost debts, not defensible documentation exceptions.                |
+| 2026-07-23 | Extend the lazy lookahead summary for flat annotations.          | Token-disjoint, path-compressed `@` endpoints close the remaining quadratic suffixes with one linear algorithm; measured allocation growth has no throughput or peak-memory consequence.                                 |
 
 ## Resume Protocol
 
