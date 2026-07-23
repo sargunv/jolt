@@ -979,33 +979,33 @@ This table is the source of truth after a context compaction. Update it whenever
 a branch is created, a PR is opened, scope changes, a gate fails, or a PR is
 ready for review.
 
-| PR  | Branch                                   | Status      | Parent | Draft PR                                       | Verification               | Notes                                            |
-| --- | ---------------------------------------- | ----------- | ------ | ---------------------------------------------- | -------------------------- | ------------------------------------------------ |
-| 00  | `cleanup/00-plan-and-gates`              | draft open  | `main` | [#2](https://github.com/sargunv/jolt/pull/2)   | baseline audit complete    | Durable plan and gates only.                     |
-| 01  | `cleanup/01-doc-semantics`               | draft open  | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3)   | debug/release + benchmark  | Profile-independent topology/presence.           |
-| 02  | `cleanup/02-formatter-ignore-plan`       | draft open  | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4)   | debug/release + benchmark  | Root plan with bounded immutable queries.        |
-| 03  | `cleanup/03-infallible-generated-fields` | draft open  | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5)   | debug/release + benchmark  | Generated physical slots only.                   |
-| 04  | `cleanup/04-syntax-recovery-visibility`  | draft open  | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6)   | full + release + benchmark | Syntax-owned malformed lexical boundaries.       |
-| 05  | `cleanup/05-root-coordination`           | draft open  | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7)   | full + release + benchmark | Narrow root ownership, no god context.           |
-| 06  | `cleanup/06-source-audit-reporting`      | draft open  | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8)   | full + release + benchmark | Syntax claims replace filename/count policy.     |
-| 07  | `cleanup/07-core-module-boundaries`      | draft open  | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9)   | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.     |
-| 08a | `cleanup/08a-renderer-boundaries`        | draft open  | PR 07  | [#10](https://github.com/sargunv/jolt/pull/10) | full + release + benchmark | Kept hot loop concrete; deleted duplicate state. |
-| 08b | `cleanup/08b-renderer-audit-pass`        | rejected    | PR 08a | —                                              | design audit complete      | Exact single pass requires an output trace.      |
-| 09  | `cleanup/09-kotlin-rules`                | draft open  | PR 08a | [#11](https://github.com/sargunv/jolt/pull/11) | full + release + benchmark | Rule state and helper indirection deleted.       |
-| 10  | `cleanup/10-java-rules`                  | draft open  | PR 09  | [#12](https://github.com/sargunv/jolt/pull/12) | full + release + benchmark | Total rules and native module parts.             |
-| 11  | `cleanup/11-lexer-substrate`             | draft open  | PR 10  | [#13](https://github.com/sargunv/jolt/pull/13) | full + release + benchmark | Shared cursor rejected; local scans are bounded. |
-| 12  | `cleanup/12-java-lookahead`              | draft open  | PR 11  | [#14](https://github.com/sargunv/jolt/pull/14) | full + release + benchmark | Local deletion; cache frameworks rejected.       |
-| 13  | `cleanup/13-java-comment-conservation`   | draft open  | PR 12  | [#15](https://github.com/sargunv/jolt/pull/15) | full + release + benchmark | Localize Java comment and separator ownership.   |
-| 14  | `cleanup/14-final-reconciliation`        | draft open  | PR 13  | [#16](https://github.com/sargunv/jolt/pull/16) | full + static checks       | Actual docs, metrics, and API deletions only.    |
-| 15  | `cleanup/15-modifier-presence`           | draft open  | PR 14  | [#17](https://github.com/sargunv/jolt/pull/17) | full + benchmark           | Syntax-owned modifier layout presence.           |
-| 16  | `cleanup/16-recovery-layout-parts`       | draft open  | PR 15  | [#18](https://github.com/sargunv/jolt/pull/18) | full + benchmark           | Barrier-aware visible/claim-only layout.         |
-| 17  | `cleanup/17-ignore-boundary-ownership`   | draft open  | PR 16  | [#19](https://github.com/sargunv/jolt/pull/19) | full + benchmark           | Delete raw EOF ignore-range projections.         |
-| 18  | `cleanup/18-java-program-joining`        | draft open  | PR 17  | [#20](https://github.com/sargunv/jolt/pull/20) | full + benchmark           | Reconcile root joining and marker ownership.     |
-| 19  | `cleanup/19-kotlin-recovery-layout`      | in progress | PR 18  | —                                              | diagnosis                  | Isolate Kotlin recovery behavior corrections.    |
-| 20  | `cleanup/20-kotlin-marker-recovery`      | planned     | PR 19  | —                                              | —                          | Fix malformed-when parser marker panic.          |
-| 21  | `cleanup/21-java-delimiter-summaries`    | planned     | PR 20  | —                                              | —                          | Bound lambda and annotation parenthesis scans.   |
-| 22  | `cleanup/22-java-generic-depth`          | planned     | PR 21  | —                                              | —                          | Bound recursive generic-type parsing.            |
-| 23  | `cleanup/23-residue-reconciliation`      | planned     | PR 22  | —                                              | —                          | Final evidence and transition deletion.          |
+| PR  | Branch                                   | Status     | Parent | Draft PR                                       | Verification               | Notes                                            |
+| --- | ---------------------------------------- | ---------- | ------ | ---------------------------------------------- | -------------------------- | ------------------------------------------------ |
+| 00  | `cleanup/00-plan-and-gates`              | draft open | `main` | [#2](https://github.com/sargunv/jolt/pull/2)   | baseline audit complete    | Durable plan and gates only.                     |
+| 01  | `cleanup/01-doc-semantics`               | draft open | PR 00  | [#3](https://github.com/sargunv/jolt/pull/3)   | debug/release + benchmark  | Profile-independent topology/presence.           |
+| 02  | `cleanup/02-formatter-ignore-plan`       | draft open | PR 01  | [#4](https://github.com/sargunv/jolt/pull/4)   | debug/release + benchmark  | Root plan with bounded immutable queries.        |
+| 03  | `cleanup/03-infallible-generated-fields` | draft open | PR 02  | [#5](https://github.com/sargunv/jolt/pull/5)   | debug/release + benchmark  | Generated physical slots only.                   |
+| 04  | `cleanup/04-syntax-recovery-visibility`  | draft open | PR 03  | [#6](https://github.com/sargunv/jolt/pull/6)   | full + release + benchmark | Syntax-owned malformed lexical boundaries.       |
+| 05  | `cleanup/05-root-coordination`           | draft open | PR 04  | [#7](https://github.com/sargunv/jolt/pull/7)   | full + release + benchmark | Narrow root ownership, no god context.           |
+| 06  | `cleanup/06-source-audit-reporting`      | draft open | PR 05  | [#8](https://github.com/sargunv/jolt/pull/8)   | full + release + benchmark | Syntax claims replace filename/count policy.     |
+| 07  | `cleanup/07-core-module-boundaries`      | draft open | PR 06  | [#9](https://github.com/sargunv/jolt/pull/9)   | full + release + benchmark | Kept one crate; narrowed lifecycle and APIs.     |
+| 08a | `cleanup/08a-renderer-boundaries`        | draft open | PR 07  | [#10](https://github.com/sargunv/jolt/pull/10) | full + release + benchmark | Kept hot loop concrete; deleted duplicate state. |
+| 08b | `cleanup/08b-renderer-audit-pass`        | rejected   | PR 08a | —                                              | design audit complete      | Exact single pass requires an output trace.      |
+| 09  | `cleanup/09-kotlin-rules`                | draft open | PR 08a | [#11](https://github.com/sargunv/jolt/pull/11) | full + release + benchmark | Rule state and helper indirection deleted.       |
+| 10  | `cleanup/10-java-rules`                  | draft open | PR 09  | [#12](https://github.com/sargunv/jolt/pull/12) | full + release + benchmark | Total rules and native module parts.             |
+| 11  | `cleanup/11-lexer-substrate`             | draft open | PR 10  | [#13](https://github.com/sargunv/jolt/pull/13) | full + release + benchmark | Shared cursor rejected; local scans are bounded. |
+| 12  | `cleanup/12-java-lookahead`              | draft open | PR 11  | [#14](https://github.com/sargunv/jolt/pull/14) | full + release + benchmark | Local deletion; cache frameworks rejected.       |
+| 13  | `cleanup/13-java-comment-conservation`   | draft open | PR 12  | [#15](https://github.com/sargunv/jolt/pull/15) | full + release + benchmark | Localize Java comment and separator ownership.   |
+| 14  | `cleanup/14-final-reconciliation`        | draft open | PR 13  | [#16](https://github.com/sargunv/jolt/pull/16) | full + static checks       | Actual docs, metrics, and API deletions only.    |
+| 15  | `cleanup/15-modifier-presence`           | draft open | PR 14  | [#17](https://github.com/sargunv/jolt/pull/17) | full + benchmark           | Syntax-owned modifier layout presence.           |
+| 16  | `cleanup/16-recovery-layout-parts`       | draft open | PR 15  | [#18](https://github.com/sargunv/jolt/pull/18) | full + benchmark           | Barrier-aware visible/claim-only layout.         |
+| 17  | `cleanup/17-ignore-boundary-ownership`   | draft open | PR 16  | [#19](https://github.com/sargunv/jolt/pull/19) | full + benchmark           | Delete raw EOF ignore-range projections.         |
+| 18  | `cleanup/18-java-program-joining`        | draft open | PR 17  | [#20](https://github.com/sargunv/jolt/pull/20) | full + benchmark           | Reconcile root joining and marker ownership.     |
+| 19  | `cleanup/19-kotlin-recovery-layout`      | ready      | PR 18  | —                                              | full + benchmark           | Isolate Kotlin recovery behavior corrections.    |
+| 20  | `cleanup/20-kotlin-marker-recovery`      | planned    | PR 19  | —                                              | —                          | Fix malformed-when parser marker panic.          |
+| 21  | `cleanup/21-java-delimiter-summaries`    | planned    | PR 20  | —                                              | —                          | Bound lambda and annotation parenthesis scans.   |
+| 22  | `cleanup/22-java-generic-depth`          | planned    | PR 21  | —                                              | —                          | Bound recursive generic-type parsing.            |
+| 23  | `cleanup/23-residue-reconciliation`      | planned    | PR 22  | —                                              | —                          | Final evidence and transition deletion.          |
 
 ### PR 01 evidence
 
@@ -1785,6 +1785,44 @@ slices remove Java nodes and allocations or leave topology unchanged.
   and WASM checks. Snapshot update and the subsequent non-update run both passed
   all 185 tests with zero skips. The benchmark records committed subject
   `9d142fd`; only the new intended Java syntax/formatter snapshots were added.
+
+### PR 19 evidence
+
+- Kotlin import and file-root joining now derives visible versus claim-only
+  state from represented tokens/comments and the actual separator removal claim.
+  Missing and tokenless malformed parts remain emitted as physical barriers
+  without selecting separators or resetting the preceding visible section's
+  compact state.
+- `LayoutDoc` carries aggregate import visibility from the import owner to the
+  file root. Inner import sections retain their comment-barrier policy; outer
+  formatter-ignore chunks retain their hard-line policy. Unifying those joins
+  was rejected because it changed a genuine language-local boundary rule.
+- A reachable leading top-level semicolon previously formatted `;class A`; it is
+  now a visible compact section and formats `;\nclass A`. Tokenless body items
+  still emit claims in source order but do not become separator endpoints.
+  Annotation-to-content spacing now depends on aggregate syntax visibility.
+- Kotlin removed separators now render owned formatter-control comments. The
+  exact ignore / on-owned-by-semicolon / ignore fixture preserves all four
+  markers once, removes the semicolon, keeps ignored class text byte-for-byte,
+  remains compact, and formats the following class structurally. The shared
+  comment-inventory and second-pass checks prove conservation and idempotence.
+- Formatter production is +99/-78 lines (+21 net). This is accepted explicit
+  state rather than a new framework: existing `LayoutDoc` is reused, existing
+  `FileSection` is made compositional, `ImportSection` gains one local presence
+  bit, and no collection or generic join policy is added. Adversarial review
+  found no smaller representation that preserved both import join policies.
+- The deferred malformed-`when` spacing branch is formatter-unreachable in the
+  current parser corpus. Probing it exposed a parser panic on a non-latest type
+  marker; the new PR 20 owns that parser fix and will land the spacing
+  correction with an exact reachable recovery snapshot rather than an untestable
+  branch.
+- Realistic Java/Kotlin document topology, allocation counts, and allocation
+  bytes are exactly unchanged. Format medians moved -0.83%/-0.82%; peak RSS
+  moved -315,392/-32,768 bytes, all neutral. Optimized WASM moved from 1,746,572
+  to 1,746,930 bytes (+358, +0.02%), also neutral.
+- `mise run fix`, snapshot update, and the subsequent non-update suite passed
+  all 185 tests with zero skips. The benchmark records committed subject
+  `24bc209`; only the new intended Kotlin syntax/formatter snapshots changed.
 
 ## Decision Log
 
