@@ -71,8 +71,7 @@ pub(super) fn format_callable_reference_expression<'source>(
                         LeadingTrivia::Preserve,
                         TrailingTrivia::Preserve,
                     ),
-                    KotlinFormatListPart::Malformed(recovery)
-                    | KotlinFormatListPart::Invisible(recovery) => recovery,
+                    KotlinFormatListPart::Recovery(recovery) => recovery.doc(),
                 };
                 docs.push(part);
             }

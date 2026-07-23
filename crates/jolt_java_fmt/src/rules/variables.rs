@@ -15,8 +15,7 @@ use crate::helpers::lists::{CommaListItem, comma_list, syntax_comma_list_items};
 use crate::helpers::modifiers::{VisibleDoc, inline_modifier_prefix_from_docs};
 use crate::helpers::recovery::{
     JavaFormatField, JavaFormatListPart, format_malformed, format_missing, format_optional_field,
-    format_required_field, resolve_list_part_with_visibility, resolve_optional_field,
-    resolve_required_field,
+    format_required_field, resolve_list_part, resolve_optional_field, resolve_required_field,
 };
 use crate::rules::annotations::{format_annotation, format_annotation_without_leading_comments};
 use crate::rules::expressions::format_variable_initializer_value;
@@ -296,10 +295,9 @@ fn format_annotation_parts<'source>(
     let mut visible = false;
     let docs = doc.concat_list(|docs| {
         for part in parts {
-            let (part, part_is_visible) =
-                resolve_list_part_with_visibility(part, docs, |annotation| {
-                    annotation.first_token().is_some()
-                });
+            let part = resolve_list_part(part, docs);
+            let part_is_visible =
+                part.is_visible(|annotation| annotation.first_token().is_some(), |_| true);
             if visible && part_is_visible {
                 let space = docs.space();
                 docs.push(space);
@@ -317,7 +315,7 @@ fn format_annotation_parts<'source>(
                 JavaFormatListPart::Separator(separator) => {
                     format_token_with_comments(docs, &separator)
                 }
-                JavaFormatListPart::Malformed(recovery) => recovery,
+                JavaFormatListPart::Recovery(recovery) => recovery.doc(),
             };
             docs.push(part);
             visible |= part_is_visible;

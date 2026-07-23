@@ -821,8 +821,9 @@ hypothetical client. This PR closes the unfulfilled PR 01 -> PR 04 promise.
 
 ### PR 16 — Barrier-aware recovery layout parts
 
-- prototype one private layout carrier that distinguishes visible content from
-  claim-only recovery while preserving every physical syntax-list position;
+- introduce one narrow formatter-IR layout carrier that distinguishes visible
+  content from claim-only recovery while preserving every physical syntax-list
+  position;
 - use it to replace Kotlin `Invisible(Doc)`/`layout_visible` and Java's parallel
   `(part, visible)` resolution only where separator behavior remains local;
 - do not add a generic list visitor or move comma, sorting, normalization, or
@@ -976,7 +977,7 @@ ready for review.
 | 13  | `cleanup/13-java-comment-conservation`   | draft open | PR 12  | [#15](https://github.com/sargunv/jolt/pull/15) | full + release + benchmark | Localize Java comment and separator ownership.   |
 | 14  | `cleanup/14-final-reconciliation`        | draft open | PR 13  | [#16](https://github.com/sargunv/jolt/pull/16) | full + static checks       | Actual docs, metrics, and API deletions only.    |
 | 15  | `cleanup/15-modifier-presence`           | draft open | PR 14  | [#17](https://github.com/sargunv/jolt/pull/17) | full + benchmark           | Syntax-owned modifier layout presence.           |
-| 16  | `cleanup/16-recovery-layout-parts`       | planned    | PR 15  | —                                              | —                          | Barrier-aware visible/claim-only layout.         |
+| 16  | `cleanup/16-recovery-layout-parts`       | draft open | PR 15  | [#18](https://github.com/sargunv/jolt/pull/18) | full + benchmark           | Barrier-aware visible/claim-only layout.         |
 | 17  | `cleanup/17-ignore-boundary-ownership`   | planned    | PR 16  | —                                              | —                          | Delete raw EOF ignore-range projections.         |
 | 18  | `cleanup/18-java-program-joining`        | planned    | PR 17  | —                                              | —                          | Reconcile root joining and marker ownership.     |
 | 19  | `cleanup/19-kotlin-recovery-layout`      | planned    | PR 18  | —                                              | —                          | Isolate Kotlin recovery behavior corrections.    |
@@ -1670,6 +1671,36 @@ slices remove Java nodes and allocations or leave topology unchanged.
   conservation, layout, trivia, CLI, and dprint integration tests. Formatter
   snapshots are unchanged.
 
+### PR 16 evidence
+
+- `LayoutDoc::{Visible, ClaimOnly}` and generic `FormatListPart` replace Java's
+  language-local list-part enum and `(part, visible)` result plus Kotlin's
+  parallel malformed/invisible variants. Item and separator visibility remains
+  explicit at Java call sites; comma attachment, sorting, normalization, and
+  orphan-separator behavior remain language-owned.
+- Kotlin `CommaListItem` now owns the same layout contribution plus its optional
+  comma. Its duplicate `layout_visible` field and `push_recovery_item` helper
+  are deleted. Claim-only documents remain emitted in physical order but do not
+  become comma targets, affect visible counts, or select delimiter layout.
+- Formatter production Rust is +306/-362 lines (-56 net). No tests or snapshots
+  changed. Independent call-site and adversarial reviews found every recovery
+  document still emitted and every former barrier, grouping, and separator
+  policy preserved.
+- Representative native sizes are neutral: `Doc` is 4 bytes, `LayoutDoc` is 8,
+  the old and new Java list-part representations are both 40 bytes, and the old
+  and new Kotlin comma-item representations are both 40 bytes.
+- On both realistic corpora, document nodes, children, reserved bytes,
+  allocation count, and allocation bytes are exactly unchanged. Format peak RSS
+  moved -16,384 bytes for Java and +176,128 bytes for Kotlin. Timing and
+  whole-CLI samples moved inconsistently within a noisy run and are treated as
+  neutral. Optimized WASM shrank from 1,755,396 to 1,751,838 bytes (-3,558,
+  -0.20%).
+- `mise run fix` passed strict workspace formatting, Clippy, dependency, native,
+  and WASM checks. All 184 repository tests passed with zero skips, including
+  both corpora, imported-fixture idempotence/conservation, recovery, layout,
+  trivia, CLI, and dprint integration tests. The architecture benchmark report
+  records committed subject `0a3543a`; formatter snapshots are unchanged.
+
 ## Decision Log
 
 | Date       | Decision                                                       | Reason                                                                                                                                                                                                     |
@@ -1717,6 +1748,7 @@ slices remove Java nodes and allocations or leave topology unchanged.
 | 2026-07-23 | Extend the stack rather than rewrite PRs 01-14.                | Residue now crosses structural layout, output policy, and parser cost models; new descendants preserve reviewed rollback boundaries.                                                                       |
 | 2026-07-23 | Make modifier layout presence syntax-owned end to end.         | A preformatted claim document cannot reveal whether it owns visible syntax; one narrow carrier closes builder, collection, first/last, varargs, and ellipsis presence leaks.                               |
 | 2026-07-23 | Share one thresholded parenthesis summary in PR 20.            | Lambda rejection and nested annotation recovery repeat the same balanced-parenthesis scan; one dormant Java-local summary can bound both without an independent annotation memo.                           |
+| 2026-07-23 | Share resolved recovery layout contribution in formatter IR.   | One visible/claim-only carrier deletes both language-local list states and Kotlin's duplicate comma-item boolean while leaving all joining and separator policy with each language.                        |
 
 ## Resume Protocol
 

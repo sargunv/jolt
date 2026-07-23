@@ -111,7 +111,7 @@ pub(super) fn format_array_creation_expression<'source>(
                         JavaFormatListPart::Separator(separator) => {
                             format_token_with_comments(docs, &separator)
                         }
-                        JavaFormatListPart::Malformed(recovery) => recovery,
+                        JavaFormatListPart::Recovery(recovery) => recovery.doc(),
                     };
                     docs.push(part);
                 }
@@ -202,7 +202,7 @@ fn format_dimension_annotations<'source>(
                 JavaFormatListPart::Separator(separator) => {
                     format_token_with_comments(docs, &separator)
                 }
-                JavaFormatListPart::Malformed(recovery) => recovery,
+                JavaFormatListPart::Recovery(recovery) => recovery.doc(),
             };
             docs.push(part);
         }

@@ -10,9 +10,7 @@ use jolt_kotlin_syntax::{
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_leading_comments, format_token,
 };
-use crate::helpers::lists::{
-    CommaListItem, delimited_comma_list, force_parenthesized_list, push_recovery_item,
-};
+use crate::helpers::lists::{CommaListItem, delimited_comma_list, force_parenthesized_list};
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_optional_field, format_required_field,
     join_delimited_recovery, resolve_list_part, resolve_required_delimiter, resolve_required_field,
@@ -317,8 +315,7 @@ fn format_call_arguments<'source>(
                         "unexpected type-argument-list separator: {:?}",
                         separator.kind()
                     )),
-                    KotlinFormatListPart::Malformed(recovery)
-                    | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
+                    KotlinFormatListPart::Recovery(recovery) => docs.push(recovery.doc()),
                 }
             }
         })
@@ -341,8 +338,7 @@ fn format_call_arguments<'source>(
                         "unexpected lambda-list separator: {:?}",
                         separator.kind()
                     )),
-                    KotlinFormatListPart::Malformed(recovery)
-                    | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
+                    KotlinFormatListPart::Recovery(recovery) => docs.push(recovery.doc()),
                 }
             }
         })
@@ -457,11 +453,7 @@ fn format_square_argument_list<'source>(
             value_argument_list_entry_items(doc, entries.parts())
         }
         KotlinFormatField::Malformed(recovery) => {
-            vec![CommaListItem {
-                doc: recovery,
-                comma: None,
-                layout_visible: true,
-            }]
+            vec![CommaListItem::visible(recovery)]
         }
     };
     let list = delimited_comma_list(doc, open.source(), close.source(), items);
@@ -501,14 +493,10 @@ pub(crate) fn format_value_argument_list<'source>(
             value_argument_list_entry_items(doc, entries.parts())
         }
         KotlinFormatField::Malformed(recovery) => {
-            vec![CommaListItem {
-                doc: recovery,
-                comma: None,
-                layout_visible: true,
-            }]
+            vec![CommaListItem::visible(recovery)]
         }
     };
-    let has_comments = items.iter().any(|item| item.layout_visible)
+    let has_comments = items.iter().any(CommaListItem::is_visible)
         && value_argument_list_has_leading_comments(arguments);
     let list = if has_comments {
         force_parenthesized_list(doc, open.source(), close.source(), items)
@@ -534,30 +522,19 @@ fn value_argument_list_entry_items<'source>(
                         crate::helpers::recovery::format_malformed(&bogus, doc)
                     }
                 };
-                items.push(CommaListItem {
-                    doc: formatted,
-                    comma: None,
-                    layout_visible: true,
-                });
+                items.push(CommaListItem::visible(formatted));
             }
             KotlinFormatListPart::Separator(comma) => {
-                if let Some(item) = items.iter_mut().rev().find(|item| item.layout_visible)
+                if let Some(item) = items.iter_mut().rev().find(|item| item.is_visible())
                     && item.comma.is_none()
                 {
                     item.comma = Some(comma);
                 } else {
-                    items.push(CommaListItem {
-                        doc: Doc::nil(),
-                        comma: Some(comma),
-                        layout_visible: true,
-                    });
+                    items.push(CommaListItem::visible_with_comma(Doc::nil(), comma));
                 }
             }
-            KotlinFormatListPart::Malformed(recovery) => {
-                push_recovery_item(&mut items, recovery, true);
-            }
-            KotlinFormatListPart::Invisible(recovery) => {
-                push_recovery_item(&mut items, recovery, false);
+            KotlinFormatListPart::Recovery(recovery) => {
+                items.push(CommaListItem::recovery(recovery));
             }
         }
     }
@@ -607,8 +584,7 @@ pub(crate) fn format_value_argument<'source>(
                             separator.kind()
                         ));
                     }
-                    KotlinFormatListPart::Malformed(recovery)
-                    | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
+                    KotlinFormatListPart::Recovery(recovery) => docs.push(recovery.doc()),
                 }
             }
         })

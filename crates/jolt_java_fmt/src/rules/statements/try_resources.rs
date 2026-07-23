@@ -252,12 +252,12 @@ fn format_resource_lines<'source>(
                     joined.push(separator);
                     needs_line = true;
                 }
-                JavaFormatListPart::Malformed(malformed) => {
+                JavaFormatListPart::Recovery(malformed) => {
                     if needs_line {
                         let line = joined.hard_line();
                         joined.push(line);
                     }
-                    joined.push(malformed);
+                    joined.push(malformed.doc());
                     needs_line = true;
                 }
             }
@@ -312,7 +312,7 @@ fn format_catch_clauses<'source>(
         for clause in clauses {
             let clause = match resolve_list_part(clause, docs) {
                 JavaFormatListPart::Item(clause) => format_catch_clause(&clause, docs),
-                JavaFormatListPart::Malformed(malformed) => malformed,
+                JavaFormatListPart::Recovery(malformed) => malformed.doc(),
                 JavaFormatListPart::Separator(separator) => {
                     docs.block_on_invariant("unseparated catch list had a separator");
                     format_token_with_comments(docs, &separator)

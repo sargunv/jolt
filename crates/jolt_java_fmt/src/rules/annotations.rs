@@ -14,7 +14,7 @@ use crate::helpers::lists::{
 };
 use crate::helpers::recovery::{
     JavaFormatField, JavaFormatListPart, format_malformed, format_missing, format_optional_field,
-    format_required_field, resolve_list_part_with_visibility, resolve_required_delimiter,
+    format_required_field, resolve_list_part, resolve_required_delimiter,
 };
 use crate::rules::expressions::format_expression;
 use crate::rules::names::format_name;
@@ -55,8 +55,8 @@ pub(crate) fn format_required_annotation_lines<'source>(
     let mut visible = false;
     let annotations = doc.concat_list(|docs| {
         for part in annotations.parts() {
-            let (part, part_is_visible) =
-                resolve_list_part_with_visibility(part, docs, |item| item.first_token().is_some());
+            let part = resolve_list_part(part, docs);
+            let part_is_visible = part.is_visible(|item| item.first_token().is_some(), |_| true);
             match part {
                 JavaFormatListPart::Item(annotation) => {
                     if visible {
@@ -70,8 +70,8 @@ pub(crate) fn format_required_annotation_lines<'source>(
                     let separator = format_token_with_comments(docs, &separator);
                     docs.push(separator);
                 }
-                JavaFormatListPart::Malformed(malformed) => {
-                    docs.push(malformed);
+                JavaFormatListPart::Recovery(malformed) => {
+                    docs.push(malformed.doc());
                 }
             }
             visible |= part_is_visible;

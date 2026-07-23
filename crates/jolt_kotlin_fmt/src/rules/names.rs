@@ -71,8 +71,7 @@ fn format_qualified_name_parts<'source>(
                         let dot = format_name_dot(docs, &separator);
                         docs.push(dot);
                     }
-                    KotlinFormatListPart::Malformed(recovery)
-                    | KotlinFormatListPart::Invisible(recovery) => docs.push(recovery),
+                    KotlinFormatListPart::Recovery(recovery) => docs.push(recovery.doc()),
                 }
             }
         }),

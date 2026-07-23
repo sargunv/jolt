@@ -178,7 +178,7 @@ fn format_name_parts<'source>(
                             JavaFormatListPart::Separator(dot) => {
                                 push_dot_token_doc(&dot, multiline, docs);
                             }
-                            JavaFormatListPart::Malformed(recovery) => docs.push(recovery),
+                            JavaFormatListPart::Recovery(recovery) => docs.push(recovery.doc()),
                         }
                     }
                 }

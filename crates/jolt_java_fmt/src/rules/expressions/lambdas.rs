@@ -214,7 +214,7 @@ fn format_lambda_modifiers<'source>(
                 JavaFormatListPart::Separator(separator) => {
                     format_token_with_comments(docs, &separator)
                 }
-                JavaFormatListPart::Malformed(recovery) => recovery,
+                JavaFormatListPart::Recovery(recovery) => recovery.doc(),
             };
             docs.push(part);
         }
@@ -243,7 +243,7 @@ fn format_annotation_parts<'source>(
                 JavaFormatListPart::Separator(separator) => {
                     format_token_with_comments(docs, &separator)
                 }
-                JavaFormatListPart::Malformed(recovery) => recovery,
+                JavaFormatListPart::Recovery(recovery) => recovery.doc(),
             };
             docs.push(part);
         }

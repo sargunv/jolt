@@ -7,7 +7,7 @@ use super::{
 };
 use crate::helpers::recovery::{
     JavaFormatListPart, format_malformed, format_optional_field, format_required_field,
-    resolve_list_part_with_visibility,
+    resolve_list_part,
 };
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{
@@ -55,14 +55,14 @@ fn format_annotation_parts<'source>(
     let mut has_parts = false;
     let result = doc.concat_list(|docs| {
         for part in parts {
-            let (part, visible) =
-                resolve_list_part_with_visibility(part, docs, |item| item.first_token().is_some());
+            let part = resolve_list_part(part, docs);
+            let visible = part.is_visible(|item| item.first_token().is_some(), |_| true);
             let part = match part {
                 JavaFormatListPart::Item(annotation) => format_annotation(&annotation, docs),
                 JavaFormatListPart::Separator(separator) => {
                     crate::helpers::comments::format_token_with_comments(docs, &separator)
                 }
-                JavaFormatListPart::Malformed(malformed) => malformed,
+                JavaFormatListPart::Recovery(malformed) => malformed.doc(),
             };
             if visible && has_parts {
                 let space = docs.space();

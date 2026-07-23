@@ -4,7 +4,9 @@
 //! in `jolt_fmt_ir::recovery`. This module owns Kotlin field/list resolution
 //! against typed CST enums, including invisible list parts.
 
-use jolt_fmt_ir::{Doc, DocBuilder, FormatField, assemble_malformed_fragment};
+use jolt_fmt_ir::{
+    Doc, DocBuilder, FormatField, FormatListPart, LayoutDoc, assemble_malformed_fragment,
+};
 use jolt_kotlin_syntax::{
     KotlinMissingSyntax, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken,
     KotlinSyntaxView,
@@ -41,12 +43,8 @@ pub(crate) fn format_malformed<'source>(
     )
 }
 
-pub(crate) enum KotlinFormatListPart<'source, T> {
-    Item(T),
-    Separator(KotlinSyntaxToken<'source>),
-    Malformed(Doc<'source>),
-    Invisible(Doc<'source>),
-}
+pub(crate) type KotlinFormatListPart<'source, T> =
+    FormatListPart<'source, T, KotlinSyntaxToken<'source>>;
 
 /// A delimiter slot resolved without losing its exact source position.
 #[derive(Clone, Copy)]
@@ -111,14 +109,14 @@ pub(crate) fn resolve_list_part<'source, T>(
         KotlinSyntaxListPart::Item(item) => KotlinFormatListPart::Item(item),
         KotlinSyntaxListPart::Separator(separator) => KotlinFormatListPart::Separator(separator),
         KotlinSyntaxListPart::Missing(missing) => {
-            KotlinFormatListPart::Invisible(format_missing(&missing, doc))
+            KotlinFormatListPart::Recovery(LayoutDoc::ClaimOnly(format_missing(&missing, doc)))
         }
         KotlinSyntaxListPart::Malformed(malformed) => {
             let recovery = format_malformed(&malformed, doc);
             if malformed.first_token().is_some() {
-                KotlinFormatListPart::Malformed(recovery)
+                KotlinFormatListPart::Recovery(LayoutDoc::Visible(recovery))
             } else {
-                KotlinFormatListPart::Invisible(recovery)
+                KotlinFormatListPart::Recovery(LayoutDoc::ClaimOnly(recovery))
             }
         }
     }
