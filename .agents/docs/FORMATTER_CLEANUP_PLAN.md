@@ -764,6 +764,29 @@ Gates:
 - final metrics compare main, immediate parent, and completed stack;
 - every ledger row has verification evidence and no temporary dual API remains.
 
+Final reconciliation scope (2026-07-23):
+
+- compare the PR 00-12 implementation stack from `main` commit `a82ab675` to PR
+  12 commit `8437c8a`, then record PR 13's code-only delta separately; exclude
+  PR 13 documentation from the implementation delta and do not manufacture a
+  main-relative artifact comparison that was not measured;
+- document the architecture that exists: language-owned typed layout and
+  recovery decisions, one shared root lifetime, syntax-owned normalization,
+  selected-render source conservation, root-scoped formatter-ignore planning,
+  exceptional lexical joins, arena document topology, and bounded iterative fit
+  probing;
+- audit every remaining public/hidden facade item and delete only convenience or
+  transition surface with no current caller. Do not rename retained APIs merely
+  to make this final PR contain code;
+- record intentional residue rather than reopening it here: modifier-prefix
+  visibility inferred from builder emptiness, two language-owned root EOF
+  ignore-range collections, Java quadratic lookahead and recursive generic
+  depth, the debug audit traversal, physical recovery list states, and
+  language-specific lexer cursor/trivia mechanics;
+- keep deferred output-policy questions out of this structural stack: Kotlin
+  zero-width import/program visibility and `when` recovery spacing, plus Java
+  ordinary/ignored program joining around invisible entries.
+
 ## Pull Request Contract
 
 Every pull request description records:
@@ -839,7 +862,7 @@ ready for review.
 | 11  | `cleanup/11-lexer-substrate`             | draft open | PR 10  | [#13](https://github.com/sargunv/jolt/pull/13) | full + release + benchmark | Shared cursor rejected; local scans are bounded. |
 | 12  | `cleanup/12-java-lookahead`              | draft open | PR 11  | [#14](https://github.com/sargunv/jolt/pull/14) | full + release + benchmark | Local deletion; cache frameworks rejected.       |
 | 13  | `cleanup/13-java-comment-conservation`   | draft open | PR 12  | [#15](https://github.com/sargunv/jolt/pull/15) | full + release + benchmark | Localize Java comment and separator ownership.   |
-| 14  | `cleanup/14-final-reconciliation`        | planned    | PR 13  | —                                              | —                          | Actual docs, metrics, and API deletions only.    |
+| 14  | `cleanup/14-final-reconciliation`        | draft open | PR 13  | [#16](https://github.com/sargunv/jolt/pull/16) | full + static checks       | Actual docs, metrics, and API deletions only.    |
 
 ### PR 01 evidence
 
@@ -1431,6 +1454,69 @@ ready for review.
   bytes are exactly unchanged at 109,539 and 1,288,505,194. The final Java
   format median is 1,571.916 ms, end-to-end median is 2,753.066 ms, and native
   and dprint whole-corpus medians are 1,963.889 and 4,136.840 ms.
+
+### Whole-stack reconciliation through PR 14
+
+The implementation comparison is `main` commit `a82ab675` through this final
+reconciliation branch, a 74-commit stack. Durable planning and architecture
+documentation are excluded from production source metrics.
+
+| Measure                        |   Main |  PR 14 |         Delta |
+| ------------------------------ | -----: | -----: | ------------: |
+| All Rust                       | 60,978 | 60,262 | -716 (-1.17%) |
+| Rust under crate `src/` trees  | 57,887 | 57,297 | -590 (-1.02%) |
+| Java + Kotlin formatter source | 21,961 | 21,165 | -796 (-3.62%) |
+| Java formatter source          | 13,315 | 12,908 | -407 (-3.06%) |
+| Kotlin formatter source        |  8,646 |  8,257 | -389 (-4.50%) |
+
+The central `jolt_fmt_ir` source grows by 447 lines because it now owns root
+ignore planning, exact source-conservation failures, and the shared run
+lifecycle. That growth deletes outer policy and machinery: Java/Kotlin formatter
+source falls by 796 lines, `jolt_test_support` falls by 208, the two language
+syntax sources fall by a net 116, and four language helper files disappear.
+
+Concepts and parallel authorities removed across the stack include:
+
+- ten semantic `Doc == nil` decisions, eleven nested ignore-discovery paths, 28
+  generated invariant-forwarding branches, `MalformedBoundaryPolicy`, and
+  duplicated Java/Kotlin root lifecycles;
+- token spelling/count inventories, two loss reporters, duplicate conservation
+  builders, 17 Java filename policies, unlimited recovery exceptions, and the
+  exceptional normalization/join path;
+- 18 compiler-reachable `jolt_fmt_ir` root names, four Java/Kotlin formatter
+  root exports, two `NormalizedToken` variants, and three direct integration
+  dependencies on the IR crate;
+- duplicate renderer state and scratch, vector-valued fatal diagnostics,
+  impossible Kotlin/Java rule states, Java's `DirectiveEntry` mirror, duplicate
+  lexer end-position state, repeated Java lookahead probes/classifiers, and
+  declaration-level modifier comment ownership.
+
+The only exact multi-PR artifact anchor is PR 02: optimized WASM shrinks from
+1,862,892 bytes there to 1,756,843 at PR 13 (-106,049, -5.69%). No main artifact
+was recorded, so this ledger does not invent a main-relative binary delta.
+Likewise, noisy adjacent timing medians are treated only as repeated
+non-regression evidence. The material topology costs remain the explicitly
+accepted PR 01 profile-independent nodes and PR 09's 346 Kotlin nodes; later
+slices remove Java nodes and allocations or leave topology unchanged.
+
+### PR 14 evidence
+
+- The unused `Language::from_extension` convenience seam is deleted; its only
+  behavior remains directly in the sole `from_path` client. Production Rust is
+  +1/-8 lines (-7 net), with no replacement API or compatibility layer.
+- `docs/internals/formatter.md` now describes the actual run coordinator, syntax
+  and rule boundary, source-conservation proof, normalization authority,
+  malformed verbatim cores, root formatter-ignore plan, exceptional lexical
+  joins, arena topology, and bounded fit algorithm. It does not describe a
+  desired architecture as though it already existed.
+- The final reconciliation records exact main-to-stack source deltas and the
+  earliest honest artifact anchor without inventing a main-relative binary or
+  treating noisy timing medians as improvements.
+- `mise run fix` passed strict workspace formatting, Clippy, dependency, native,
+  and WASM checks. Repository-defined Ona automation passed all 184 tests with
+  zero skips on the final branch. PR 13 already supplies the immediately prior
+  release, benchmark, debug-WASM Spring, optimized WASM, and PGO evidence; PR 14
+  changes no formatting or rendering behavior.
 
 ## Decision Log
 

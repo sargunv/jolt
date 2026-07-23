@@ -1,6 +1,5 @@
 //! Shared formatter facade for Jolt's CLI and dprint plugin.
 
-use std::ffi::OsStr;
 use std::path::Path;
 
 pub use jolt_fmt_ir::{FormatOptions, FormatSinkResult, RenderControl, RenderSink};
@@ -18,13 +17,7 @@ impl Language {
     /// Detects a supported language from a file path's extension.
     #[must_use]
     pub fn from_path(path: &Path) -> Option<Self> {
-        Self::from_extension(path.extension())
-    }
-
-    /// Detects a supported language from a file extension.
-    #[must_use]
-    pub fn from_extension(extension: Option<&OsStr>) -> Option<Self> {
-        match extension.and_then(OsStr::to_str) {
+        match path.extension().and_then(|extension| extension.to_str()) {
             Some("java") => Some(Self::Java),
             Some("kt" | "kts") => Some(Self::Kotlin),
             _ => None,
