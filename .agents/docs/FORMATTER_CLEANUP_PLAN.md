@@ -1068,7 +1068,7 @@ ready for review.
 | 23  | `cleanup/23-layout-doc-consolidation`    | draft open | PR 22  | [#25](https://github.com/sargunv/jolt/pull/25) | full + benchmark           | Delete duplicate recovery visibility carriers.   |
 | 24  | `cleanup/24-java-annotation-cost`        | draft open | PR 23  | [#26](https://github.com/sargunv/jolt/pull/26) | full + release + benchmark | Bound flat malformed-annotation lookahead.       |
 | 25  | `cleanup/25-java-value-recursion`        | draft open | PR 24  | [#27](https://github.com/sargunv/jolt/pull/27) | full + WASM + benchmark    | Bound recursive Java value families.             |
-| 26  | `cleanup/26-java-structural-recursion`   | ready      | PR 25  | —                                              | full + WASM + benchmark    | Bound recursive Java bodies and statements.      |
+| 26  | `cleanup/26-java-structural-recursion`   | draft open | PR 25  | [#28](https://github.com/sargunv/jolt/pull/28) | full + WASM + benchmark    | Bound recursive Java bodies and statements.      |
 | 27  | `cleanup/27-kotlin-recursion-budget`     | planned    | PR 26  | —                                              | —                          | Bound recursive Kotlin syntax families.          |
 | 28  | `cleanup/28-residue-reconciliation`      | planned    | PR 27  | —                                              | —                          | Final evidence and debt-ledger closure.          |
 
