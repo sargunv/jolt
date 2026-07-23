@@ -105,6 +105,30 @@ enum ProgramEntry<'source> {
     Missing(JavaMissingSyntax<'source>),
 }
 
+struct ProgramSection<'source> {
+    doc: Doc<'source>,
+    visible: bool,
+    compact_after: bool,
+}
+
+impl<'source> ProgramSection<'source> {
+    fn claim_only(doc: Doc<'source>) -> Self {
+        Self {
+            doc,
+            visible: false,
+            compact_after: false,
+        }
+    }
+
+    fn visible(doc: Doc<'source>, compact_after: bool) -> Self {
+        Self {
+            doc,
+            visible: true,
+            compact_after,
+        }
+    }
+}
+
 impl ProgramEntry<'_> {
     fn ignore_range(&self) -> Option<FormatterIgnoreItemRange> {
         match self {
@@ -132,6 +156,14 @@ fn format_program_entries<'source>(
     entries: Vec<ProgramEntry<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    let sections = format_program_sections(entries, doc);
+    join_program_sections(doc, sections)
+}
+
+fn format_program_sections<'source>(
+    entries: Vec<ProgramEntry<'source>>,
+    doc: &mut DocBuilder<'source>,
+) -> Vec<ProgramSection<'source>> {
     let mut sections = Vec::with_capacity(entries.len());
     let mut imports = Vec::new();
     for entry in entries {
@@ -147,114 +179,99 @@ fn format_program_entries<'source>(
                 // it is transparent to the surrounding import sorting run.
                 // Keep its removed-source claim without making layout depend
                 // on a token that produces no output.
-                sections.push((
-                    format_program_item(CompilationUnitItem::EmptyDeclaration(empty), doc),
-                    false,
-                    false,
-                ));
+                let removed =
+                    format_program_item(CompilationUnitItem::EmptyDeclaration(empty), doc);
+                sections.push(ProgramSection::claim_only(removed));
                 continue;
             }
             ProgramEntry::Item(CompilationUnitItem::BogusCompilationUnitItem(bogus)) => {
                 flush_imports(&mut imports, &mut sections, doc);
+                let visible = bogus.first_token().is_some();
                 let recovery = format_malformed(&bogus, doc);
-                append_program_recovery(&mut sections, recovery, doc);
+                append_program_recovery(&mut sections, recovery, visible, doc);
                 continue;
             }
             ProgramEntry::Item(item) => {
                 flush_imports(&mut imports, &mut sections, doc);
-                let visible = program_item_is_visible(&item);
-                let comment_only = program_item_is_comment_only(&item);
-                (format_program_item(item, doc), visible, comment_only)
+                let compact_after = matches!(item, CompilationUnitItem::EmptyDeclaration(_));
+                ProgramSection::visible(format_program_item(item, doc), compact_after)
             }
             ProgramEntry::Token(token) => {
                 flush_imports(&mut imports, &mut sections, doc);
                 let recovery = format_token_with_comments(doc, &token);
-                append_program_recovery(&mut sections, recovery, doc);
+                append_program_recovery(&mut sections, recovery, true, doc);
                 continue;
             }
             ProgramEntry::Malformed(malformed) => {
                 flush_imports(&mut imports, &mut sections, doc);
+                let visible = malformed.first_token().is_some();
                 let recovery = format_malformed(&malformed, doc);
-                append_program_recovery(&mut sections, recovery, doc);
+                append_program_recovery(&mut sections, recovery, visible, doc);
                 continue;
             }
             ProgramEntry::Missing(missing) => {
                 flush_imports(&mut imports, &mut sections, doc);
-                (format_missing(&missing, doc), false, false)
+                ProgramSection::claim_only(format_missing(&missing, doc))
             }
         };
         sections.push(section);
     }
     flush_imports(&mut imports, &mut sections, doc);
-    join_program_sections(doc, sections)
+    sections
 }
 
 fn append_program_recovery<'source>(
-    sections: &mut Vec<(Doc<'source>, bool, bool)>,
+    sections: &mut Vec<ProgramSection<'source>>,
     recovery: Doc<'source>,
+    visible: bool,
     doc: &mut DocBuilder<'source>,
 ) {
-    if let Some((previous, visible, comment_only)) = sections.last_mut() {
-        *previous = doc.concat([*previous, recovery]);
-        *visible = true;
-        *comment_only = false;
-    } else {
-        sections.push((recovery, true, false));
-    }
-}
-
-fn program_item_is_visible(item: &CompilationUnitItem<'_>) -> bool {
-    match item {
-        CompilationUnitItem::EmptyDeclaration(empty) => {
-            has_removed_comments(comments_from_tokens(empty.token_iter()))
+    if let Some(previous) = sections.last_mut() {
+        previous.doc = doc.concat([previous.doc, recovery]);
+        if visible {
+            previous.visible = true;
+            previous.compact_after = false;
         }
-        _ => true,
+    } else {
+        sections.push(if visible {
+            ProgramSection::visible(recovery, false)
+        } else {
+            ProgramSection::claim_only(recovery)
+        });
     }
-}
-
-fn program_item_is_comment_only(item: &CompilationUnitItem<'_>) -> bool {
-    matches!(item, CompilationUnitItem::EmptyDeclaration(empty) if has_removed_comments(comments_from_tokens(empty.token_iter())))
-}
-
-fn program_entries_are_visible(entries: &[ProgramEntry<'_>]) -> bool {
-    entries.iter().any(|entry| match entry {
-        ProgramEntry::Item(item) => program_item_is_visible(item),
-        ProgramEntry::Token(_) | ProgramEntry::Malformed(_) => true,
-        ProgramEntry::Missing(_) => false,
-    })
 }
 
 fn flush_imports<'source>(
     imports: &mut Vec<ImportDeclaration<'source>>,
-    sections: &mut Vec<(Doc<'source>, bool, bool)>,
+    sections: &mut Vec<ProgramSection<'source>>,
     doc: &mut DocBuilder<'source>,
 ) {
     if let Some(formatted) = format_imports(imports, doc) {
-        sections.push((formatted, true, false));
+        sections.push(ProgramSection::visible(formatted, false));
     }
     imports.clear();
 }
 
 fn join_program_sections<'source>(
     doc: &mut DocBuilder<'source>,
-    sections: Vec<(Doc<'source>, bool, bool)>,
+    sections: Vec<ProgramSection<'source>>,
 ) -> Doc<'source> {
     let mut saw_visible = false;
-    let mut previous_was_comment = false;
+    let mut compact_after = false;
     doc.concat_list(|joined| {
-        for (section, visible, comment_only) in sections {
-            if visible && saw_visible {
-                let separator = if previous_was_comment {
+        for section in sections {
+            if section.visible && saw_visible {
+                let separator = if compact_after {
                     joined.hard_line()
                 } else {
                     joined.empty_line()
                 };
                 joined.push(separator);
             }
-            joined.push(section);
-            saw_visible |= visible;
-            if visible {
-                previous_was_comment = comment_only;
+            joined.push(section.doc);
+            if section.visible {
+                saw_visible = true;
+                compact_after = section.compact_after;
             }
         }
     })
@@ -265,20 +282,16 @@ fn format_program_entries_with_ignored<'source>(
     runs: &[FormatterIgnoreRun<'source>],
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut sections: Vec<(Doc<'source>, bool, bool)> = Vec::new();
+    let mut sections = Vec::new();
     let mut retained = Vec::new();
     let mut entries = entries.into_iter().map(Some).collect::<Vec<_>>();
     for_each_formatter_ignore_splice(entries.len(), runs, |event| match event {
         FormatterIgnoreSplice::Ignore(run) => {
-            if !retained.is_empty() {
-                let visible = program_entries_are_visible(&retained);
-                sections.push((
-                    format_program_entries(std::mem::take(&mut retained), doc),
-                    visible,
-                    false,
-                ));
-            }
-            sections.push((formatter_ignore_run_doc(run, doc), true, true));
+            flush_retained_program_sections(&mut retained, &mut sections, doc);
+            sections.push(ProgramSection::visible(
+                formatter_ignore_run_doc(run, doc),
+                true,
+            ));
         }
         FormatterIgnoreSplice::Item { index, .. } => {
             if let Some(entry) = entries[index].take() {
@@ -286,27 +299,18 @@ fn format_program_entries_with_ignored<'source>(
             }
         }
     });
+    flush_retained_program_sections(&mut retained, &mut sections, doc);
+    join_program_sections(doc, sections)
+}
+
+fn flush_retained_program_sections<'source>(
+    retained: &mut Vec<ProgramEntry<'source>>,
+    sections: &mut Vec<ProgramSection<'source>>,
+    doc: &mut DocBuilder<'source>,
+) {
     if !retained.is_empty() {
-        let visible = program_entries_are_visible(&retained);
-        sections.push((format_program_entries(retained, doc), visible, false));
+        sections.extend(format_program_sections(std::mem::take(retained), doc));
     }
-    let mut saw_visible = false;
-    let mut previous_was_ignored = false;
-    doc.concat_list(|joined| {
-        for (section, visible, ignored) in sections {
-            if visible && saw_visible {
-                let separator = if previous_was_ignored {
-                    joined.hard_line()
-                } else {
-                    joined.empty_line()
-                };
-                joined.push(separator);
-            }
-            joined.push(section);
-            saw_visible |= visible;
-            previous_was_ignored = ignored;
-        }
-    })
 }
 
 fn format_program_item<'source>(

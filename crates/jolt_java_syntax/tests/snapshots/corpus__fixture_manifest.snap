@@ -84,6 +84,7 @@ style/program/empty-file.java
 style/program/final-newline.java
 style/program/formatter-ignore-top-level-next-item.java
 style/program/formatter-ignore-top-level.java
+style/program/formatter-ignore-transparent-semicolon.java
 style/program/package-import-spacing.java
 style/program/qualified-name-comments.java
 style/program/qualified-names.java
