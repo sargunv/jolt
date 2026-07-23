@@ -2324,14 +2324,14 @@ slices remove Java nodes and allocations or leave topology unchanged.
   `mise run
   fix` passed strict native and WASM checks; the complete non-update
   suite passed all 224 tests with zero skips.
-- Realistic Java/Kotlin syntax topology, document topology, allocation counts,
-  and allocation bytes are exactly unchanged. The aggregate Kotlin-format run
-  was noisy at 43.65 ms with 6.58 ms MAD; two immediate focused reruns measured
-  33.89 ms and 33.36 ms against the 33.76 ms parent. Other aggregate medians
-  moved by at most 1.65% except the likewise noisy Kotlin parse path.
-- The original walker benchmark recorded +469 optimized WASM bytes (+0.03%).
-  Folding the later state deletion into this PR changes no output, allocation,
-  or traversal and makes that benchmark conservative for the final code.
+- Realistic Java/Kotlin syntax and document topology are exactly unchanged.
+  Deleting Kotlin's parallel binary-chain scratch lowers formatter allocations
+  from 38,076 to 35,364 (-2,712, -7.12%) and allocated bytes from 49,068,984 to
+  48,996,504 (-72,480). The refreshed Kotlin-format median is 34.19 ms; the
+  parent's timing sample was noisy, so no causal speedup is claimed.
+- The refreshed optimized WASM is 1,766,396 bytes, seven bytes larger than the
+  rewritten PR 28 parent. The exact benchmark records clean committed subject
+  `f5df0c6d`.
 
 ## Decision Log
 
