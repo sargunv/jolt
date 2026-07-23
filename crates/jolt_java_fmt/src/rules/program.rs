@@ -1,5 +1,3 @@
-use std::ops::Range;
-
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
     CompilationUnit, CompilationUnitItem, ImportDeclaration, JavaMalformedSyntax,
@@ -23,6 +21,7 @@ use crate::rules::variables::format_field_declaration;
 use jolt_fmt_ir::formatter_ignore::{
     FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
     for_each_formatter_ignore_splice, formatter_ignore_run_doc,
+    formatter_ignore_runs_claim_boundary_comment,
 };
 
 pub(crate) fn format_compilation_unit<'source>(
@@ -59,17 +58,10 @@ pub(crate) fn format_compilation_unit<'source>(
 
     let container = unit.text_range();
     let runs = doc.formatter_ignore_runs(container, entries.iter().map(ProgramEntry::ignore_range));
-    let (contents, ignored_eof_comments) = if runs.is_empty() {
-        (format_program_entries(entries, doc), Vec::new())
+    let contents = if runs.is_empty() {
+        format_program_entries(entries, doc)
     } else {
-        let ignored_eof_comments = runs
-            .iter()
-            .filter_map(FormatterIgnoreRun::claimed_on_marker_range)
-            .collect();
-        (
-            format_program_entries_with_ignored(entries, &runs, doc),
-            ignored_eof_comments,
-        )
+        format_program_entries_with_ignored(entries, &runs, doc)
     };
     let has_source_contents = unit.token_iter().any(|token| !token.text().is_empty());
     let last_source_token_forces_line = unit
@@ -81,11 +73,7 @@ pub(crate) fn format_compilation_unit<'source>(
         let comments = doc.concat_list(|comments| {
             let mut emitted_comment = false;
             for comment in token.leading_comments().chain(token.trailing_comments()) {
-                let range = comment.text_range();
-                let range = range.start().get()..range.end().get();
-                if ignored_eof_comments.iter().any(|ignored: &Range<usize>| {
-                    ignored.start <= range.start && range.end <= ignored.end
-                }) {
+                if formatter_ignore_runs_claim_boundary_comment(&runs, &comment) {
                     continue;
                 }
                 if emitted_comment || has_source_contents {

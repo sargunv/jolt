@@ -1,5 +1,3 @@
-use std::ops::Range;
-
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     KotlinFamily, KotlinFile, KotlinFileItem, KotlinMalformedSyntax, KotlinMissingSyntax,
@@ -25,6 +23,7 @@ use crate::rules::statements::format_statement_syntax_with_leading;
 use jolt_fmt_ir::formatter_ignore::{
     FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
     for_each_formatter_ignore_splice, formatter_ignore_run_doc,
+    formatter_ignore_runs_claim_boundary_comment,
 };
 
 pub(crate) fn format_file<'source>(
@@ -36,17 +35,17 @@ pub(crate) fn format_file<'source>(
 
     collect_items(file, doc, &mut entries);
 
-    let (contents, ignored_eof_comments) = format_entries_with_ignored(file, doc, entries);
+    let runs = doc.formatter_ignore_runs(
+        file.text_range(),
+        entries.iter().map(FileEntry::ignore_range),
+    );
+    let contents = format_entries_with_ignored(doc, entries, &runs);
     let has_source_contents = file.token_iter().any(|token| !token.text().is_empty());
     let eof = format_required_field(file.eof(), doc, |token, doc| {
         doc.concat_list(|comments| {
             let mut emitted_comment = false;
             for comment in token.leading_comments().chain(token.trailing_comments()) {
-                let range = comment.text_range();
-                let range = range.start().get()..range.end().get();
-                if ignored_eof_comments.iter().any(|ignored: &Range<usize>| {
-                    ignored.start <= range.start && range.end <= ignored.end
-                }) {
+                if formatter_ignore_runs_claim_boundary_comment(&runs, &comment) {
                     continue;
                 }
                 if emitted_comment || has_source_contents {
@@ -156,27 +155,18 @@ impl FileEntry<'_> {
 }
 
 fn format_entries_with_ignored<'source>(
-    file: &KotlinFile<'source>,
     doc: &mut DocBuilder<'source>,
     entries: Vec<FileEntry<'source>>,
-) -> (Option<Doc<'source>>, Vec<Range<usize>>) {
-    let container = file.text_range();
-    let runs = doc.formatter_ignore_runs(container, entries.iter().map(FileEntry::ignore_range));
+    runs: &[FormatterIgnoreRun<'source>],
+) -> Option<Doc<'source>> {
     if runs.is_empty() {
-        return (
-            format_entry_segment(doc, entries).map(|section| section.doc),
-            Vec::new(),
-        );
+        return format_entry_segment(doc, entries).map(|section| section.doc);
     }
-    let ignored_eof_comments = runs
-        .iter()
-        .filter_map(FormatterIgnoreRun::claimed_on_marker_range)
-        .collect();
 
     let mut sections = Vec::new();
     let mut segment = Vec::new();
     let mut entries = entries.into_iter().map(Some).collect::<Vec<_>>();
-    for_each_formatter_ignore_splice(entries.len(), &runs, |event| match event {
+    for_each_formatter_ignore_splice(entries.len(), runs, |event| match event {
         FormatterIgnoreSplice::Ignore(run) => {
             push_entry_segment(doc, &mut sections, &mut segment);
             sections.push(FileSection::ignored(formatter_ignore_run_doc(run, doc)));
@@ -188,10 +178,7 @@ fn format_entries_with_ignored<'source>(
         }
     });
     push_entry_segment(doc, &mut sections, &mut segment);
-    (
-        (!sections.is_empty()).then(|| join_sections(doc, sections)),
-        ignored_eof_comments,
-    )
+    (!sections.is_empty()).then(|| join_sections(doc, sections))
 }
 
 fn push_entry_segment<'source>(

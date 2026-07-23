@@ -7,7 +7,6 @@
 use std::borrow::Cow;
 #[cfg(test)]
 use std::cell::Cell;
-use std::ops::Range;
 
 use jolt_syntax::{Comment, Language, SourceRangeClaim, SyntaxToken};
 use jolt_text::{TextRange, TextSize};
@@ -60,14 +59,6 @@ impl<'source> FormatterIgnoreRun<'source> {
         self.on_marker_owner == OnMarkerOwner::IgnoreRun
     }
 
-    #[must_use]
-    pub fn claimed_on_marker_range(&self) -> Option<Range<usize>> {
-        self.ends_with_on_marker().then(|| {
-            let start = self.range.interior.start().get();
-            start..start + self.range.raw_text_with_on.len()
-        })
-    }
-
     fn raw_text(&self) -> &'source str {
         if self.ends_with_on_marker() {
             self.range.raw_text_with_on
@@ -75,6 +66,37 @@ impl<'source> FormatterIgnoreRun<'source> {
             self.range.raw_text
         }
     }
+}
+
+fn latest_at_or_before<T>(
+    values: &[T],
+    target: usize,
+    mut start: impl FnMut(&T) -> usize,
+) -> Option<&T> {
+    values
+        .partition_point(|value| start(value) <= target)
+        .checked_sub(1)
+        .and_then(|index| values.get(index))
+}
+
+/// Returns whether an ordered ignore run owns a container-boundary comment.
+///
+/// The lookup takes `O(log runs)` per boundary comment.
+#[must_use]
+pub fn formatter_ignore_runs_claim_boundary_comment<'source>(
+    runs: &[FormatterIgnoreRun<'source>],
+    comment: &Comment<'source>,
+) -> bool {
+    let comment_range = comment.text_range();
+    latest_at_or_before(runs, comment_range.start().get(), |run| {
+        run.range.interior.start().get()
+    })
+    .is_some_and(|run| {
+        let claim_start = run.range.interior.start().get();
+        run.ends_with_on_marker()
+            && claim_start <= comment_range.start().get()
+            && comment_range.end().get() <= claim_start + run.range.raw_text_with_on.len()
+    })
 }
 
 /// One formatting run's root-discovered formatter-ignore ranges.
@@ -802,8 +824,10 @@ pub fn is_formatter_control_marker(comment: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::Cell;
+
     use jolt_java_syntax::{JavaLanguage, JavaSyntaxView, parse_compilation_unit};
-    use jolt_syntax::{SyntaxNode, SyntaxToken};
+    use jolt_syntax::{Comment, SyntaxNode, SyntaxToken};
     use jolt_text::TextRange;
 
     use crate::{ExceptionalSeparator, LexicalAtom, LexicalAtomKind, LexicalSafety};
@@ -811,7 +835,8 @@ mod tests {
     use super::{
         CommentLine, FormatterIgnoreItemRange, FormatterIgnoreSplice, SourceLineCursor,
         for_each_formatter_ignore_splice, formatter_ignore_content_range,
-        formatter_ignore_plan_with_safety, formatter_ignore_runs, is_formatter_on_marker,
+        formatter_ignore_plan_with_safety, formatter_ignore_runs,
+        formatter_ignore_runs_claim_boundary_comment, is_formatter_on_marker, latest_at_or_before,
     };
 
     #[derive(Default)]
@@ -844,6 +869,13 @@ mod tests {
             .find(|token| token.text() == text)
             .unwrap_or_else(|| panic!("missing token {text:?}"));
         FormatterIgnoreItemRange::between(&token, &token)
+    }
+
+    fn comment<'source>(root: &SyntaxNode<'source, JavaLanguage>, text: &str) -> Comment<'source> {
+        root.tokens()
+            .flat_map(|token| token.leading_comments().chain(token.trailing_comments()))
+            .find(|comment| comment.text() == text)
+            .unwrap_or_else(|| panic!("missing comment {text:?}"))
     }
 
     #[test]
@@ -1105,7 +1137,12 @@ mod tests {
         assert_eq!(runs.len(), 2);
         assert!(runs[0].ends_with_on_marker());
         assert!(!runs[1].ends_with_on_marker());
-        assert!(runs[0].claimed_on_marker_range().is_some());
+        let on = comment(&root, "// @formatter:on");
+        assert!(formatter_ignore_runs_claim_boundary_comment(&runs, &on));
+        assert!(!formatter_ignore_runs_claim_boundary_comment(
+            &runs[1..],
+            &on
+        ));
     }
 
     #[test]
@@ -1119,7 +1156,24 @@ mod tests {
             formatter_ignore_runs(&plan, root.text_range(), &[Some(item_range(&root, "raw"))]);
         assert_eq!(runs.len(), 1);
         assert!(!runs[0].ends_with_on_marker());
-        assert!(runs[0].claimed_on_marker_range().is_none());
+        let on = comment(&root, "// @formatter:on");
+        assert!(!formatter_ignore_runs_claim_boundary_comment(&runs, &on));
+    }
+
+    #[test]
+    fn latest_candidate_lookup_is_logarithmic() {
+        let starts = (0..1_024).collect::<Vec<_>>();
+        let comparisons = Cell::new(0);
+        let candidate = latest_at_or_before(&starts, 511, |start| {
+            comparisons.set(comparisons.get() + 1);
+            *start
+        });
+
+        assert_eq!(candidate, Some(&511));
+        assert!(
+            comparisons.get() <= 11,
+            "binary search made too many comparisons"
+        );
     }
 
     #[test]
