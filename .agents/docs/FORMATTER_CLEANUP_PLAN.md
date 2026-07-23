@@ -2006,6 +2006,8 @@ slices remove Java nodes and allocations or leave topology unchanged.
 | 2026-07-23 | Reject malformed-`when` formatter visibility state.            | The recovered keyword is a present `is` token and already spaces correctly; the malformed-keyword field remains unreachable, so an API or token probe would encode no representable behavior.                            |
 | 2026-07-23 | Use one Java recursive-owner policy value of 128.              | The 1 MiB plugin fails at 414 layers on the worst measured generic re-entry path; 128 keeps 3.2x headroom, removes an unexplained 64/128 split, and preserves twice as much valid generic structure.                     |
 | 2026-07-23 | Normalize the whole over-depth type argument.                  | Preserving wildcard and malformed subshape beyond the limit added about 65 lines of duplicated parser/lookahead policy; one bogus value is lossless, bounded, and easier to reason about locally.                        |
+| 2026-07-23 | Consolidate transition recovery visibility in PR 23.           | PR 15's Java carrier duplicated PR 16's final shared state exactly; replacing it deletes 23 Rust lines while language-local joining sections retain their real policy.                                                   |
+| 2026-07-23 | Extend the stack through parser recursion before reconciliation. | Flat annotations still had quadratic suffix scans, and native probes proved reachable Java/Kotlin stack exhaustion; these are correctness and finite-cost debts, not defensible documentation exceptions.                |
 
 ## Resume Protocol
 
