@@ -2302,6 +2302,35 @@ slices remove Java nodes and allocations or leave topology unchanged.
   +175-line design. The exact benchmark records subject `c86bd69a` with its
   dirty worktree hash.
 
+### PR 29 evidence
+
+- Kotlin type suffixes and alternating ordinary/type-binary left spines now use
+  two-way borrowed CST walks: descend through typed recursive fields, format one
+  base, then ascend through syntax parents and replay the existing layout. No
+  syntax/source clone, token parsing, depth limit, valid-syntax verbatim
+  fallback, or generic traversal framework was introduced.
+- Ordinary binary runs retain their existing vectors and capacity growth, while
+  type-operator-only runs and type suffixes remain allocation-free. Production
+  is +233/-119 lines (+114 net); one generated integration test is +59 lines.
+  The separate Kotlin suffix walk moved to PR 30 after the combined prototype
+  crossed the production growth gate.
+- The complete Kotlin formatter suite passed with unchanged snapshots, recovery,
+  trivia conservation, and imported-fixture output. Seven clean depth-4,096
+  pure/alternating infix and type adversaries completed natively, reconstructed
+  losslessly, retained following declarations, and formatted idempotently. A
+  combined actual dprint-WASM stdin smoke retained both sentinels.
+  `mise run
+  fix` passed strict native and WASM checks; the complete non-update
+  suite passed all 224 tests with zero skips.
+- Realistic Java/Kotlin syntax topology, document topology, allocation counts,
+  and allocation bytes are exactly unchanged. The aggregate Kotlin-format run
+  was noisy at 43.65 ms with 6.58 ms MAD; two immediate focused reruns measured
+  33.89 ms and 33.36 ms against the 33.76 ms parent. Other aggregate medians
+  moved by at most 1.65% except the likewise noisy Kotlin parse path.
+- Optimized WASM moved from 1,768,120 to 1,768,589 bytes (+469, +0.03%), with
+  SHA-256 `047efe9b3173203893605fe122099b9176505609c423bf05372b2b58b4accc6c`.
+  The benchmark records clean committed subject `dd8af75`.
+
 ## Decision Log
 
 | Date       | Decision                                                         | Reason                                                                                                                                                                                                                   |
