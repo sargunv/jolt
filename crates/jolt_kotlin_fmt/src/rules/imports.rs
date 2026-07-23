@@ -101,7 +101,7 @@ fn format_import_entries_with_ignored<'source>(
             has_visible |= section.is_visible();
         }
     });
-    layout_doc(joined, has_visible)
+    LayoutDoc::from_visibility(joined, has_visible)
 }
 
 fn format_import_entries<'source>(
@@ -188,15 +188,7 @@ fn format_import_entries<'source>(
             has_visible |= section.visible;
         }
     });
-    layout_doc(joined, visible)
-}
-
-fn layout_doc(doc: Doc<'_>, visible: bool) -> LayoutDoc<'_> {
-    if visible {
-        LayoutDoc::Visible(doc)
-    } else {
-        LayoutDoc::ClaimOnly(doc)
-    }
+    LayoutDoc::from_visibility(joined, visible)
 }
 
 struct ImportSection<'source> {

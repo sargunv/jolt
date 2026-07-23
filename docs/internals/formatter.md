@@ -39,8 +39,10 @@ language constructs: programs, declarations, expressions, statements, types, and
 language-specific forms. These modules decide grouping, indentation, separators,
 comment placement, and other layout policy. Their `helpers` modules own
 language-specific token/comment formatting, typed field and list recovery, and
-lexical classification. In particular, Kotlin's invisible recovery list parts
-remain Kotlin-owned rather than becoming a shared list abstraction.
+lexical classification. Shared recovery types carry only resolved physical
+shape: item, separator, or a malformed/missing document whose layout
+contribution is visible or claim-only. Each language still owns separator,
+joining, normalization, and comment policy for those parts.
 
 `jolt_fmt_ir` shares mechanics with identical semantics: document construction,
 token/trivia assembly, malformed-fragment assembly, formatter-ignore planning,
@@ -86,9 +88,10 @@ debug assertions are disabled, including the release and distribution profiles.
 A malformed typed field supplies a `SyntaxVerbatimCore`: the exact syntax-owned
 source interval eligible for verbatim output, together with the tokens, source
 claim, and neighboring-token facts needed at its boundaries. The Java and Kotlin
-recovery helpers resolve their typed field and list enums, format comments
-outside that core structurally, and decide language-specific list states. Shared
-recovery code only assembles those pieces and resolves the exceptional joins.
+recovery helpers resolve their typed field and list enums and format comments
+outside that core structurally. Shared recovery code assembles those pieces,
+resolves exceptional joins, and carries the syntax-derived visible-versus-
+claim-only fact to the list owner. It does not choose separators or spacing.
 
 A required missing role emits no text after the language helper confirms that
 syntax owns an empty verbatim core. A malformed role emits its borrowed core and

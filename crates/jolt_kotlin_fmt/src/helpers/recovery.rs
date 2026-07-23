@@ -113,11 +113,10 @@ pub(crate) fn resolve_list_part<'source, T>(
         }
         KotlinSyntaxListPart::Malformed(malformed) => {
             let recovery = format_malformed(&malformed, doc);
-            if malformed.first_token().is_some() {
-                KotlinFormatListPart::Recovery(LayoutDoc::Visible(recovery))
-            } else {
-                KotlinFormatListPart::Recovery(LayoutDoc::ClaimOnly(recovery))
-            }
+            KotlinFormatListPart::Recovery(LayoutDoc::from_visibility(
+                recovery,
+                malformed.first_token().is_some(),
+            ))
         }
     }
 }

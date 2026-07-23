@@ -1,11 +1,11 @@
-use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_fmt_ir::{Doc, DocBuilder, LayoutDoc};
 use jolt_java_syntax::{
     Annotation, JavaSyntaxView, ModifierList, ParameterModifierList, PartitionedModifierItem,
 };
 
 use crate::helpers::comments::{comment_forces_line, format_construct_leading_comments};
 use crate::helpers::modifiers::{
-    ModifierEntry, VisibleDoc, inline_modifier_prefix_from_docs, modifier_prefix_from_docs,
+    ModifierEntry, inline_modifier_prefix_from_docs, modifier_prefix_from_docs,
 };
 use crate::helpers::recovery::format_malformed;
 use crate::rules::annotations::{format_annotation, format_annotation_without_leading_comments};
@@ -337,30 +337,35 @@ fn partition_items<'source>(
             Ok(PartitionedModifierItem::Bogus(bogus)) => {
                 let visible = bogus.first_token().is_some();
                 result.record_first_visible(visible, false);
-                result.entries.push(ModifierEntry::Malformed(
-                    format_malformed(&bogus, doc),
-                    visible,
-                ));
+                let malformed = format_malformed(&bogus, doc);
+                result
+                    .entries
+                    .push(ModifierEntry::Malformed(LayoutDoc::from_visibility(
+                        malformed, visible,
+                    )));
             }
             Ok(PartitionedModifierItem::Malformed(malformed)) => {
                 let visible = malformed.first_token().is_some();
                 result.record_first_visible(visible, false);
-                result.entries.push(ModifierEntry::Malformed(
-                    format_malformed(&malformed, doc),
-                    visible,
-                ));
+                let malformed = format_malformed(&malformed, doc);
+                result
+                    .entries
+                    .push(ModifierEntry::Malformed(LayoutDoc::from_visibility(
+                        malformed, visible,
+                    )));
             }
             Ok(PartitionedModifierItem::Missing(missing)) => {
-                result.entries.push(ModifierEntry::Malformed(
-                    crate::helpers::recovery::format_missing(&missing, doc),
-                    false,
-                ));
+                result
+                    .entries
+                    .push(ModifierEntry::Malformed(LayoutDoc::ClaimOnly(
+                        crate::helpers::recovery::format_missing(&missing, doc),
+                    )));
             }
             Err(error) => {
                 doc.block_on_invariant(error.to_string());
                 result
                     .entries
-                    .push(ModifierEntry::Malformed(Doc::nil(), false));
+                    .push(ModifierEntry::Malformed(LayoutDoc::ClaimOnly(Doc::nil())));
             }
         }
     }
@@ -373,8 +378,11 @@ fn format_typed_modifier_prefix_from_split_parts<'source>(
     modifier_entries: Vec<ModifierEntry<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> TypedModifierPrefix<'source> {
-    let declaration_prefix =
-        format_modifier_prefix_from_parts(declaration_annotations, modifier_entries, doc);
+    let modifiers_own_leading = !declaration_annotations.iter().any(annotation_is_visible);
+    let annotations =
+        format_declaration_annotations(declaration_annotations, !modifiers_own_leading, doc);
+    let modifiers = modifier_prefix_from_docs(doc, modifier_entries, modifiers_own_leading);
+    let declaration_prefix = doc_concat!(doc, [annotations, modifiers]);
     let (terminal_forces_line, terminal_needs_line) =
         last_annotation_line_state(&type_use_annotations);
     let type_use_annotations = format_inline_annotations(type_use_annotations, false, doc);
@@ -416,22 +424,11 @@ fn last_annotation_line_state(annotations: &[Annotation<'_>]) -> (bool, bool) {
     )
 }
 
-pub(crate) fn format_modifier_prefix_from_parts<'source>(
-    annotations: Vec<Annotation<'source>>,
-    modifier_entries: Vec<ModifierEntry<'source>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let modifiers_own_leading = !annotations.iter().any(annotation_is_visible);
-    let annotations = format_declaration_annotations(annotations, !modifiers_own_leading, doc);
-    let modifiers = modifier_prefix_from_docs(doc, modifier_entries, modifiers_own_leading);
-    doc_concat!(doc, [annotations, modifiers])
-}
-
 fn format_inline_annotations<'source>(
     annotations: Vec<Annotation<'source>>,
     suppress_first_leading: bool,
     doc: &mut DocBuilder<'source>,
-) -> VisibleDoc<'source> {
+) -> LayoutDoc<'source> {
     let mut visible = false;
     let annotations = doc.concat_list(|docs| {
         for annotation in annotations {
@@ -449,10 +446,7 @@ fn format_inline_annotations<'source>(
             visible |= annotation_visible;
         }
     });
-    VisibleDoc {
-        doc: annotations,
-        visible,
-    }
+    LayoutDoc::from_visibility(annotations, visible)
 }
 
 fn format_declaration_annotations<'source>(

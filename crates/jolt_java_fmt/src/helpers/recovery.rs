@@ -82,11 +82,10 @@ pub(crate) fn resolve_list_part<'source, T>(
         }
         JavaSyntaxListPart::Malformed(malformed) => {
             let recovery = format_malformed(&malformed, doc);
-            if malformed.first_token().is_some() {
-                JavaFormatListPart::Recovery(LayoutDoc::Visible(recovery))
-            } else {
-                JavaFormatListPart::Recovery(LayoutDoc::ClaimOnly(recovery))
-            }
+            JavaFormatListPart::Recovery(LayoutDoc::from_visibility(
+                recovery,
+                malformed.first_token().is_some(),
+            ))
         }
     }
 }

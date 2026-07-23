@@ -24,6 +24,15 @@ pub enum LayoutDoc<'source> {
 
 impl<'source> LayoutDoc<'source> {
     #[must_use]
+    pub const fn from_visibility(doc: Doc<'source>, visible: bool) -> Self {
+        if visible {
+            Self::Visible(doc)
+        } else {
+            Self::ClaimOnly(doc)
+        }
+    }
+
+    #[must_use]
     pub const fn doc(self) -> Doc<'source> {
         match self {
             Self::Visible(doc) | Self::ClaimOnly(doc) => doc,
