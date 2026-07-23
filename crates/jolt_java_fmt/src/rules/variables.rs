@@ -1,9 +1,9 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
     Annotation, EnhancedForVariable, FieldDeclaration, FormalParameter, JavaSyntaxField,
-    JavaSyntaxInvariantError, LocalVariableDeclaration, ParameterModifierList, ReceiverParameter,
-    RecordComponent, ResourceVariableDeclaration, VariableDeclarator, VariableDeclaratorList,
-    VariableTypeSyntax,
+    JavaSyntaxInvariantError, JavaSyntaxToken, JavaSyntaxView, LocalVariableDeclaration,
+    ParameterModifierList, ReceiverParameter, RecordComponent, ResourceVariableDeclaration,
+    VariableDeclarator, VariableDeclaratorList, VariableTypeSyntax,
 };
 
 use crate::helpers::comments::{
@@ -12,10 +12,11 @@ use crate::helpers::comments::{
     format_token_with_inline_leading_comments,
 };
 use crate::helpers::lists::{CommaListItem, comma_list, syntax_comma_list_items};
-use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
+use crate::helpers::modifiers::{VisibleDoc, inline_modifier_prefix_from_docs};
 use crate::helpers::recovery::{
-    JavaFormatField, JavaFormatListPart, format_optional_field, format_required_field,
-    resolve_list_part, resolve_optional_field, resolve_required_field,
+    JavaFormatField, JavaFormatListPart, format_malformed, format_missing, format_optional_field,
+    format_required_field, resolve_list_part_with_visibility, resolve_optional_field,
+    resolve_required_field,
 };
 use crate::rules::annotations::{format_annotation, format_annotation_without_leading_comments};
 use crate::rules::expressions::format_variable_initializer_value;
@@ -193,9 +194,7 @@ pub(crate) fn format_formal_parameter<'source>(
     let dimensions = format_optional_field(parameter.dimensions(), doc, |dimensions, doc| {
         format_array_dimensions(&dimensions, doc)
     });
-    let ellipsis = resolve_optional_doc(parameter.ellipsis(), doc, |ellipsis, doc| {
-        format_token_with_comments(doc, &ellipsis)
-    });
+    let ellipsis = resolve_ellipsis_doc(parameter.ellipsis(), doc);
     format_named_typed_declaration(
         declaration_prefix,
         ty,
@@ -227,9 +226,7 @@ pub(crate) fn format_record_component<'source>(
     let name = format_required_field(component.name(), doc, |name, doc| {
         format_name_after_type_token(doc, &name)
     });
-    let ellipsis = resolve_optional_doc(component.ellipsis(), doc, |ellipsis, doc| {
-        format_token_with_comments(doc, &ellipsis)
-    });
+    let ellipsis = resolve_ellipsis_doc(component.ellipsis(), doc);
     format_named_typed_declaration(
         declaration_prefix,
         ty,
@@ -248,10 +245,16 @@ pub(crate) fn format_receiver_parameter<'source>(
     let parameter_first = parameter.first_token();
     let leading_comments = format_construct_leading_comments(doc, parameter_first.as_ref());
     let modifiers = format_required_field(parameter.annotations(), doc, |annotations, doc| {
-        format_annotation_parts(annotations.parts(), true, doc)
-            .map_or_else(Doc::nil, |annotations| {
-                doc_concat!(doc, [annotations, doc.space()])
-            })
+        format_annotation_parts(annotations.parts(), true, doc).map_or_else(
+            Doc::nil,
+            |annotations| {
+                if annotations.visible {
+                    doc_concat!(doc, [annotations.doc, doc.space()])
+                } else {
+                    annotations.doc
+                }
+            },
+        )
     });
     let ty = format_required_field(parameter.r#type(), doc, |ty, doc| {
         if ty.first_token() == parameter_first {
@@ -288,19 +291,24 @@ fn format_annotation_parts<'source>(
     parts: impl IntoIterator<Item = jolt_java_syntax::JavaSyntaxListPart<'source, Annotation<'source>>>,
     suppress_first_leading: bool,
     doc: &mut DocBuilder<'source>,
-) -> Option<Doc<'source>> {
-    let mut has_annotations = false;
+) -> Option<VisibleDoc<'source>> {
+    let mut has_parts = false;
+    let mut visible = false;
     let docs = doc.concat_list(|docs| {
         for part in parts {
-            if has_annotations {
+            let (part, part_is_visible) =
+                resolve_list_part_with_visibility(part, docs, |annotation| {
+                    annotation.first_token().is_some()
+                });
+            if visible && part_is_visible {
                 let space = docs.space();
                 docs.push(space);
             }
-            let first = !has_annotations;
-            has_annotations = true;
-            let part = match resolve_list_part(part, docs) {
+            let first_visible = !visible && part_is_visible;
+            has_parts = true;
+            let part = match part {
                 JavaFormatListPart::Item(annotation) => {
-                    if first && suppress_first_leading {
+                    if first_visible && suppress_first_leading {
                         format_annotation_without_leading_comments(&annotation, docs)
                     } else {
                         format_annotation(&annotation, docs)
@@ -312,60 +320,74 @@ fn format_annotation_parts<'source>(
                 JavaFormatListPart::Malformed(recovery) => recovery,
             };
             docs.push(part);
+            visible |= part_is_visible;
         }
     });
 
-    has_annotations.then_some(docs)
+    has_parts.then_some(VisibleDoc { doc: docs, visible })
 }
 
 fn resolve_annotation_list_docs<'source>(
     field: jolt_java_syntax::JavaSyntaxField<'source, jolt_java_syntax::AnnotationList<'source>>,
     doc: &mut DocBuilder<'source>,
-) -> Option<Doc<'source>> {
-    match resolve_required_field(field, doc) {
-        JavaFormatField::Present(annotations) => {
+) -> Option<VisibleDoc<'source>> {
+    match field {
+        JavaSyntaxField::Present(annotations) => {
             format_annotation_parts(annotations.parts(), false, doc)
         }
-        JavaFormatField::Malformed(recovery) => Some(recovery),
+        JavaSyntaxField::Malformed(malformed) => Some(VisibleDoc {
+            visible: malformed.first_token().is_some(),
+            doc: format_malformed(&malformed, doc),
+        }),
+        JavaSyntaxField::Missing(missing) => Some(VisibleDoc {
+            doc: format_missing(&missing, doc),
+            visible: false,
+        }),
     }
 }
 
-fn resolve_optional_doc<'source, T>(
-    field: jolt_java_syntax::JavaSyntaxField<'source, T>,
+fn resolve_ellipsis_doc<'source>(
+    field: JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
-    format: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
-) -> Option<Doc<'source>> {
-    match resolve_optional_field(field, doc) {
-        JavaFormatField::Present(Some(value)) => Some(format(value, doc)),
-        JavaFormatField::Present(None) => None,
-        JavaFormatField::Malformed(recovery) => Some(recovery),
+) -> Option<VisibleDoc<'source>> {
+    match field {
+        JavaSyntaxField::Present(ellipsis) => Some(VisibleDoc {
+            doc: format_token_with_comments(doc, &ellipsis),
+            visible: true,
+        }),
+        JavaSyntaxField::Malformed(malformed) => Some(VisibleDoc {
+            visible: malformed.first_token().is_some(),
+            doc: format_malformed(&malformed, doc),
+        }),
+        JavaSyntaxField::Missing(_) => None,
     }
 }
 
 fn format_named_typed_declaration<'source>(
     modifiers: Doc<'source>,
     ty: Doc<'source>,
-    varargs_annotations: Option<Doc<'source>>,
+    varargs_annotations: Option<VisibleDoc<'source>>,
     name: Doc<'source>,
     dimensions: Doc<'source>,
-    ellipsis: Option<Doc<'source>>,
+    ellipsis: Option<VisibleDoc<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let has_varargs_annotations = varargs_annotations.is_some();
-    let has_ellipsis = ellipsis.is_some();
+    let has_varargs_annotations =
+        varargs_annotations.is_some_and(|annotations| annotations.visible);
+    let has_ellipsis = ellipsis.is_some_and(|ellipsis| ellipsis.visible);
     let ellipsis = if let Some(ellipsis) = ellipsis {
         if let Some(varargs_annotations) = varargs_annotations {
             let annotations = inline_modifier_prefix_from_docs(
                 doc,
-                [varargs_annotations],
+                Some(varargs_annotations),
                 Vec::new(),
                 false,
                 false,
                 false,
             );
-            doc_concat!(doc, [annotations, ellipsis])
+            doc_concat!(doc, [annotations, ellipsis.doc])
         } else {
-            ellipsis
+            ellipsis.doc
         }
     } else {
         Doc::nil()
