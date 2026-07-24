@@ -433,6 +433,11 @@ impl<'source> Scanner<'source> {
             KotlinLexDiagnosticCode::UnterminatedBlockComment,
             TextRange::new(start, TextSize::new(self.pos)),
         ));
+        let kind = match kind {
+            SyntaxTriviaKind::BlockComment => SyntaxTriviaKind::UnterminatedBlockComment,
+            SyntaxTriviaKind::DocComment => SyntaxTriviaKind::UnterminatedDocComment,
+            _ => unreachable!("block comment lexer produced a non-block trivia kind"),
+        };
         SyntaxTrivia::new(kind, TextRange::new(start, TextSize::new(self.pos)).len())
     }
 

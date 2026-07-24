@@ -275,7 +275,7 @@ fn format_braced_body<'source>(
     close: KotlinFormatDelimiter<'source>,
     contents: BlockContents<'source>,
 ) -> Doc<'source> {
-    let has_close = close.source().is_some();
+    let has_close = close.is_visible();
     let open = format_delimiter(
         doc,
         open,
@@ -321,6 +321,6 @@ fn format_delimiter<'source>(
 ) -> Doc<'source> {
     match delimiter {
         KotlinFormatDelimiter::Source(token) => format_token(doc, &token, leading, trailing),
-        KotlinFormatDelimiter::Recovery(recovery) => recovery,
+        KotlinFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }

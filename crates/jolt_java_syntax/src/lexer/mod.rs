@@ -278,6 +278,11 @@ impl<'source> Scanner<'source> {
             JavaLexDiagnosticCode::UnterminatedBlockComment,
             TextRange::new(start, self.raw_end_for_pos(start_pos)),
         ));
+        let kind = match kind {
+            SyntaxTriviaKind::BlockComment => SyntaxTriviaKind::UnterminatedBlockComment,
+            SyntaxTriviaKind::DocComment => SyntaxTriviaKind::UnterminatedDocComment,
+            _ => unreachable!("block comment lexer produced a non-block trivia kind"),
+        };
         SyntaxTrivia::new(kind, TextRange::new(start, TextSize::new(self.pos)).len())
     }
 

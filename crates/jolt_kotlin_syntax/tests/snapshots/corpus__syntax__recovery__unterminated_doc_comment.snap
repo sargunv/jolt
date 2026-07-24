@@ -1,0 +1,44 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class LruCache<K,V>{/**
+    private val capacity: Int
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "LruCache" @ 6..14
+      TypeParameterList
+        Lt "<" @ 14..15
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierList
+            Name
+              Identifier "K" @ 15..16
+          Comma "," @ 16..17
+          TypeParameter
+            ModifierList
+            Name
+              Identifier "V" @ 17..18
+        Gt ">" @ 18..19
+      ClassBody
+        LBrace "{" @ 19..20
+        ClassMemberList
+  Eof "" @ 54..54 leading=[UnterminatedDocComment "/**\n    private val capacity: Int\n"]
+
+diagnostics:
+  code=kotlin.lex.unterminated_block_comment severity=Error stage=Lexer range=20..54 message="unterminated block comment"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=54..54 message="expected '}' after class body"
+
+diagnostics:
+code=kotlin.lex.unterminated_block_comment severity=Error stage=Lexer range=Some(TextRange { start: TextSize(20), end: TextSize(54) }) message=unterminated block comment
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(54), end: TextSize(54) }) message=expected '}' after class body

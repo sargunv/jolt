@@ -130,14 +130,20 @@ fn source_braced_body_tail<'source>(
     close: JavaFormatDelimiter<'source>,
     body: BodyContent<'source>,
 ) -> Doc<'source> {
+    let close_is_visible = close.is_visible();
     let layout = if body.visible {
         let hard_line_before = doc.hard_line();
         let contents = doc_concat!(doc, [hard_line_before, body.doc]);
         let contents = doc_indent!(doc, contents);
-        let hard_line_after = doc.hard_line();
-        doc_concat!(doc, [contents, hard_line_after])
-    } else {
+        if close_is_visible {
+            doc_concat!(doc, [contents, doc.hard_line()])
+        } else {
+            contents
+        }
+    } else if close_is_visible {
         doc_concat!(doc, [body.doc, doc.hard_line()])
+    } else {
+        body.doc
     };
     let close = format_source_close_brace(doc, close);
     doc_concat!(doc, [layout, close])
@@ -179,7 +185,7 @@ fn format_source_open_brace<'source>(
         JavaFormatDelimiter::Source(open) => {
             format_token_before_relocated_trailing_comments(doc, &open, LeadingTrivia::Preserve)
         }
-        JavaFormatDelimiter::Recovery(recovery) => recovery,
+        JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }
 
@@ -191,6 +197,6 @@ fn format_source_close_brace<'source>(
         JavaFormatDelimiter::Source(close) => {
             format_token_after_relocated_leading_comments(doc, &close, TrailingTrivia::Preserve)
         }
-        JavaFormatDelimiter::Recovery(recovery) => recovery,
+        JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }

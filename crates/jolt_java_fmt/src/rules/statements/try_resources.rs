@@ -187,7 +187,7 @@ fn format_resource_close_paren<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     match close {
-        JavaFormatDelimiter::Recovery(recovery) => recovery,
+        JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
         JavaFormatDelimiter::Source(close) => {
             let leading = close.leading_comments();
             doc_concat!(
@@ -360,11 +360,11 @@ fn format_parenthesized_catch_parameter<'source>(
     let inner = format_catch_parameter(parameter, doc);
     let open = match open {
         JavaFormatDelimiter::Source(open) => format_token_with_comments(doc, &open),
-        JavaFormatDelimiter::Recovery(recovery) => recovery,
+        JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
     };
     let close = match close {
         JavaFormatDelimiter::Source(close) => format_token_with_comments(doc, &close),
-        JavaFormatDelimiter::Recovery(recovery) => recovery,
+        JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
     };
     let inner = doc_indent!(doc, doc_concat!(doc, [doc.soft_line(), inner]));
     doc_group!(doc, doc_concat!(doc, [open, inner, doc.soft_line(), close]))

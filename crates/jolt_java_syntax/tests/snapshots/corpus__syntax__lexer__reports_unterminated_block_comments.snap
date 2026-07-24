@@ -9,7 +9,7 @@ syntax:
 syntax:
 CompilationUnit
   CompilationUnitItemList
-  Eof "" @ 4..4 leading=[BlockComment "/* c"]
+  Eof "" @ 4..4 leading=[UnterminatedBlockComment "/* c"]
 
 diagnostics:
   code=java.lex.unterminated_block_comment severity=Error stage=Lexer range=0..1 message="unterminated block comment"

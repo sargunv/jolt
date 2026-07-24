@@ -27,18 +27,11 @@ pub(super) fn format_class_body<'source>(
     doc: &mut DocBuilder<'source>,
     body: ClassBody<'source>,
 ) -> Doc<'source> {
-    let has_close = match body.close_brace() {
-        jolt_kotlin_syntax::KotlinSyntaxField::Present(_) => true,
-        jolt_kotlin_syntax::KotlinSyntaxField::Malformed(malformed) => {
-            malformed.first_token().is_some()
-        }
-        jolt_kotlin_syntax::KotlinSyntaxField::Missing(_) => false,
-    };
     let open = resolve_required_delimiter(body.open_brace(), doc);
     let close = resolve_required_delimiter(body.close_brace(), doc);
     let contents = format_class_body_contents(doc, &body, open.source(), close.source());
     let space = doc.space();
-    let body = format_class_braced_body(doc, open, close, contents, has_close);
+    let body = format_class_braced_body(doc, open, close, contents);
     doc.concat([space, body])
 }
 
@@ -351,8 +344,8 @@ fn format_class_braced_body<'source>(
     open: KotlinFormatDelimiter<'source>,
     close: KotlinFormatDelimiter<'source>,
     body: Option<Doc<'source>>,
-    has_close: bool,
 ) -> Doc<'source> {
+    let has_close = close.is_visible();
     let open = format_delimiter_with_preserved_trailing(doc, open, LeadingTrivia::Preserve);
     let contents = if let Some(body) = body {
         let line = doc.hard_line();
@@ -364,8 +357,10 @@ fn format_class_braced_body<'source>(
         } else {
             body
         }
-    } else {
+    } else if has_close {
         doc.hard_line()
+    } else {
+        Doc::nil()
     };
     let close =
         format_delimiter_with_preserved_trailing(doc, close, LeadingTrivia::SuppressAlreadyHandled);

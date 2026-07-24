@@ -4,11 +4,10 @@ expression: "snapshot(&output,\n&[temp.path().join(\"Bad.java\"), temp.path().jo
 ---
 status: 1
 stdout:
-Bad.java
 Changed.java
 stderr:
 Checked 2 files in $TIME
-2 files need formatting
+1 file needs formatting
 files:
 -- Bad.java --
 class {

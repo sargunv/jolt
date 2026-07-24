@@ -49,9 +49,18 @@ pub(crate) fn resolve_required_delimiter<'source>(
     field: JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> JavaFormatDelimiter<'source> {
-    match resolve_required_field(field, doc) {
-        FormatField::Present(token) => JavaFormatDelimiter::Source(token),
-        FormatField::Malformed(recovery) => JavaFormatDelimiter::Recovery(recovery),
+    match field {
+        JavaSyntaxField::Present(token) => JavaFormatDelimiter::Source(token),
+        JavaSyntaxField::Missing(missing) => {
+            JavaFormatDelimiter::Recovery(LayoutDoc::ClaimOnly(format_missing(&missing, doc)))
+        }
+        JavaSyntaxField::Malformed(malformed) => {
+            let recovery = format_malformed(&malformed, doc);
+            JavaFormatDelimiter::Recovery(LayoutDoc::from_visibility(
+                recovery,
+                malformed.first_token().is_some(),
+            ))
+        }
     }
 }
 

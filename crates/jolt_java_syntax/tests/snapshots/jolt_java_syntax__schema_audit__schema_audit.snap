@@ -108,4 +108,5 @@ syntax__recovery__statements: TryWithResourcesStatement occurrence 8 (TryKw("try
 syntax__recovery__switch_and_module_lists: SwitchLabelItemList occurrence 1 (CaseConstant Comma(",") Comma(",") CaseConstant)
 syntax__recovery__switch_and_module_lists: ModuleNameList occurrence 1 (Name Comma(",") Comma(",") Name)
 syntax__recovery__type_annotation_and_parameter_lists: TypeParameter occurrence 2 (AnnotationList)
+syntax__recovery__unterminated_doc_comment: ClassBody occurrence 1 (LBrace("{") ClassBodyMemberList)
 syntax__recovery__variable_declarators: VariableDeclarator occurrence 2 ()

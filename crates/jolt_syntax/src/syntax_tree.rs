@@ -139,6 +139,8 @@ pub enum TriviaKind {
     ShebangComment,
     BlockComment,
     DocComment,
+    UnterminatedBlockComment,
+    UnterminatedDocComment,
     Ignored,
 }
 

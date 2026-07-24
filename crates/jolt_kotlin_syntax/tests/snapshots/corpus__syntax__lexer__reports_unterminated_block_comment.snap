@@ -21,7 +21,7 @@ KotlinFile
         LiteralExpression
           IntegerLiteral "1" @ 8..9 trailing=[Whitespace " "]
       PropertyBodyMemberList
-  Eof "" @ 18..18 leading=[BlockComment "/* nope\n"]
+  Eof "" @ 18..18 leading=[UnterminatedBlockComment "/* nope\n"]
 
 diagnostics:
   code=kotlin.lex.unterminated_block_comment severity=Error stage=Lexer range=10..18 message="unterminated block comment"

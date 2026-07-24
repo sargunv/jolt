@@ -59,7 +59,7 @@ pub(crate) fn format_delimiter_with_preserved_trailing<'source>(
         KotlinFormatDelimiter::Source(token) => {
             format_token(doc, &token, leading, TrailingTrivia::Preserve)
         }
-        KotlinFormatDelimiter::Recovery(recovery) => recovery,
+        KotlinFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }
 
@@ -76,9 +76,18 @@ pub(crate) fn resolve_required_delimiter<'source>(
     field: KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> KotlinFormatDelimiter<'source> {
-    match resolve_required_field(field, doc) {
-        FormatField::Present(token) => KotlinFormatDelimiter::Source(token),
-        FormatField::Malformed(recovery) => KotlinFormatDelimiter::Recovery(recovery),
+    match field {
+        KotlinSyntaxField::Present(token) => KotlinFormatDelimiter::Source(token),
+        KotlinSyntaxField::Missing(missing) => {
+            KotlinFormatDelimiter::Recovery(LayoutDoc::ClaimOnly(format_missing(&missing, doc)))
+        }
+        KotlinSyntaxField::Malformed(malformed) => {
+            let recovery = format_malformed(&malformed, doc);
+            KotlinFormatDelimiter::Recovery(LayoutDoc::from_visibility(
+                recovery,
+                malformed.first_token().is_some(),
+            ))
+        }
     }
 }
 

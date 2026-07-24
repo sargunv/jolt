@@ -32,6 +32,7 @@ pub enum CommentKind {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Comment<'source> {
     kind: CommentKind,
+    terminated: bool,
     source: &'source str,
     #[cfg(not(debug_assertions))]
     text_range: TextRange,
@@ -46,6 +47,12 @@ impl<'source> Comment<'source> {
     #[must_use]
     pub const fn kind(&self) -> CommentKind {
         self.kind
+    }
+
+    /// Returns whether the lexer recognized this comment as terminated.
+    #[must_use]
+    pub const fn is_terminated(&self) -> bool {
+        self.terminated
     }
 
     /// Returns the raw comment text.
@@ -89,12 +96,14 @@ impl<'source> Comment<'source> {
     #[cfg(debug_assertions)]
     pub(crate) const fn new(
         kind: CommentKind,
+        terminated: bool,
         source: &'source str,
         piece: SourceTriviaPiece<'source>,
         line_terminator: Option<SourceTriviaPiece<'source>>,
     ) -> Self {
         Self {
             kind,
+            terminated,
             source,
             piece,
             line_terminator,
@@ -104,11 +113,13 @@ impl<'source> Comment<'source> {
     #[cfg(not(debug_assertions))]
     pub(crate) const fn new(
         kind: CommentKind,
+        terminated: bool,
         source: &'source str,
         text_range: TextRange,
     ) -> Self {
         Self {
             kind,
+            terminated,
             source,
             text_range,
         }
@@ -175,6 +186,8 @@ impl<'source> Comments<'source> {
                     | TriviaKind::ShebangComment
                     | TriviaKind::BlockComment
                     | TriviaKind::DocComment
+                    | TriviaKind::UnterminatedBlockComment
+                    | TriviaKind::UnterminatedDocComment
             )
         })
     }
@@ -193,10 +206,12 @@ impl<'source> Iterator for Comments<'source> {
             {
                 self.ordinal += 1;
             }
-            let kind = match trivia.kind() {
-                TriviaKind::LineComment | TriviaKind::ShebangComment => CommentKind::Line,
-                TriviaKind::BlockComment => CommentKind::Block,
-                TriviaKind::DocComment => CommentKind::Doc,
+            let (kind, terminated) = match trivia.kind() {
+                TriviaKind::LineComment | TriviaKind::ShebangComment => (CommentKind::Line, true),
+                TriviaKind::BlockComment => (CommentKind::Block, true),
+                TriviaKind::DocComment => (CommentKind::Doc, true),
+                TriviaKind::UnterminatedBlockComment => (CommentKind::Block, false),
+                TriviaKind::UnterminatedDocComment => (CommentKind::Doc, false),
                 TriviaKind::Whitespace | TriviaKind::Newline | TriviaKind::Ignored => continue,
             };
             #[cfg(debug_assertions)]
@@ -225,12 +240,13 @@ impl<'source> Iterator for Comments<'source> {
             #[cfg(debug_assertions)]
             return Some(Comment::new(
                 kind,
+                terminated,
                 self.source,
                 SourceTriviaPiece::new(id, *trivia, text_range),
                 line_terminator,
             ));
             #[cfg(not(debug_assertions))]
-            return Some(Comment::new(kind, self.source, text_range));
+            return Some(Comment::new(kind, terminated, self.source, text_range));
         }
 
         None
@@ -263,7 +279,9 @@ pub(crate) fn trivia_iter_has_blank_line<'a>(
             TriviaKind::LineComment
             | TriviaKind::ShebangComment
             | TriviaKind::BlockComment
-            | TriviaKind::DocComment => {
+            | TriviaKind::DocComment
+            | TriviaKind::UnterminatedBlockComment
+            | TriviaKind::UnterminatedDocComment => {
                 line_breaks_since_content = 0;
             }
         }
