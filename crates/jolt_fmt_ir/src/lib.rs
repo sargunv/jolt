@@ -18,7 +18,7 @@ pub use comment_text::{
 #[cfg(feature = "bench")]
 pub use document::DocArenaMetrics;
 pub use document::{ConcatBuilder, Doc, DocBuilder};
-pub use options::{FormatOptions, FormatSinkResult};
+pub use options::{FormatOptions, FormatSinkResult, SyntaxErrorPolicy};
 pub use recovery::{
     FormatDelimiter, FormatField, FormatListPart, LayoutDoc, assemble_malformed_fragment,
     format_optional_field, format_required_field,

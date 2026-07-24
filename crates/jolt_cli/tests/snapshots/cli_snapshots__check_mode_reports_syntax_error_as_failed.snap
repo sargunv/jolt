@@ -2,11 +2,13 @@
 source: crates/jolt_cli/tests/cli_snapshots.rs
 expression: "snapshot(&output, &[temp.path().join(\"A.java\")])"
 ---
-status: 0
+status: 1
 stdout:
 <empty>
 stderr:
+A.java:1:7: java.parse.expected_syntax: expected type name
 Checked 1 file in $TIME
+format check failed: 1 file could not be formatted
 files:
 -- A.java --
 class {

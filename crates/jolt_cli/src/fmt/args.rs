@@ -23,6 +23,10 @@ pub(crate) struct Args {
     #[arg(long)]
     pub(crate) use_tabs: Option<bool>,
 
+    /// Format files even when they contain syntax errors.
+    #[arg(long)]
+    pub(crate) format_with_errors: bool,
+
     /// Include source files matching this glob.
     #[arg(long)]
     pub(crate) include: Vec<String>,

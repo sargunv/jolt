@@ -5,7 +5,9 @@ use std::{
     sync::OnceLock,
 };
 
-use jolt_formatter::{FormatOptions, FormatSinkResult, Language, format_source_to_sink};
+use jolt_formatter::{
+    FormatOptions, FormatSinkResult, Language, SyntaxErrorPolicy, format_source_to_sink,
+};
 use jolt_test_support::StringSink;
 use tempfile::TempDir;
 
@@ -67,6 +69,19 @@ fn dprint_check_loads_local_wasm_plugin_and_fails_on_unformatted_java() {
     project.run_dprint(["check", "A.java"]).assert_failure();
 
     assert_eq!(project.read_file("A.java"), "class A {}");
+}
+
+#[test]
+fn dprint_fmt_rejects_syntax_errors_without_writing() {
+    let project = DprintProject::new();
+    project.write_config("");
+    project.write_file("A.java", "class {\n");
+
+    let output = project.run_dprint(["fmt", "A.java"]);
+    output.assert_failure();
+
+    assert!(String::from_utf8_lossy(&output.output.stderr).contains("java.parse.expected_syntax"));
+    assert_eq!(project.read_file("A.java"), "class {\n");
 }
 
 #[test]
@@ -178,7 +193,13 @@ struct CommandOutput {
 
 fn direct_java_format(source: &str) -> String {
     let mut sink = StringSink::default();
-    match format_source_to_sink(source, Language::Java, &FormatOptions::default(), &mut sink) {
+    match format_source_to_sink(
+        source,
+        Language::Java,
+        &FormatOptions::default(),
+        SyntaxErrorPolicy::Reject,
+        &mut sink,
+    ) {
         FormatSinkResult::Complete => sink.into_string(),
         FormatSinkResult::Halted => panic!("direct Java formatting unexpectedly halted"),
         FormatSinkResult::Blocked { diagnostic } => {
@@ -193,6 +214,7 @@ fn direct_kotlin_format(source: &str) -> String {
         source,
         Language::Kotlin,
         &FormatOptions::default(),
+        SyntaxErrorPolicy::Reject,
         &mut sink,
     ) {
         FormatSinkResult::Complete => sink.into_string(),

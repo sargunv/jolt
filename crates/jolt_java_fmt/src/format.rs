@@ -1,6 +1,7 @@
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
 use jolt_fmt_ir::{
-    FormatOptions, FormatRootMetrics, FormatSinkResult, RenderSink, format_root_to_sink,
+    FormatOptions, FormatRootMetrics, FormatSinkResult, RenderSink, SyntaxErrorPolicy,
+    format_root_to_sink,
 };
 use jolt_java_syntax::{CompilationUnit, JavaSyntaxView, parse_compilation_unit};
 
@@ -30,9 +31,18 @@ impl JavaFormatDiagnosticCode {
 pub fn format_source_to_sink<S: RenderSink + ?Sized>(
     source: &str,
     options: &FormatOptions,
+    syntax_errors: SyntaxErrorPolicy,
     sink: &mut S,
 ) -> FormatSinkResult {
     let parse = parse_compilation_unit(source);
+
+    if syntax_errors == SyntaxErrorPolicy::Reject
+        && let Some(diagnostic) = parse.diagnostics().first()
+    {
+        return FormatSinkResult::Blocked {
+            diagnostic: diagnostic.clone(),
+        };
+    }
 
     let Some(syntax) = parse.syntax() else {
         return FormatSinkResult::Blocked {
@@ -98,17 +108,32 @@ fn render_error_diagnostic(error: &jolt_fmt_ir::RenderError) -> Diagnostic {
 
 #[cfg(test)]
 mod tests {
-    use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
+    use jolt_fmt_ir::{FormatOptions, FormatSinkResult, SyntaxErrorPolicy};
     use jolt_test_support::StringSink;
 
     use super::format_source_to_sink;
 
     #[test]
-    fn formats_represented_tree_with_parse_diagnostics() {
+    fn syntax_error_policy_controls_represented_recovery_tree() {
+        let source = "class C { void m() { value + ; } }\n";
+        let mut rejected_sink = StringSink::default();
+        let rejected = format_source_to_sink(
+            source,
+            &FormatOptions::default(),
+            SyntaxErrorPolicy::Reject,
+            &mut rejected_sink,
+        );
+        assert!(
+            matches!(rejected, FormatSinkResult::Blocked { .. }),
+            "{rejected:?}"
+        );
+        assert_eq!(rejected_sink.into_string(), "");
+
         let mut sink = StringSink::default();
         let result = format_source_to_sink(
-            "class C { void m() { value + ; } }\n",
+            source,
             &FormatOptions::default(),
+            SyntaxErrorPolicy::Format,
             &mut sink,
         );
 
@@ -127,6 +152,7 @@ mod tests {
         let result = format_source_to_sink(
             "class C { void () {} }\n",
             &FormatOptions::default(),
+            SyntaxErrorPolicy::Format,
             &mut sink,
         );
 
@@ -149,6 +175,7 @@ mod tests {
         let result = format_source_to_sink(
             "class C { void m() { value >>= ; } }\n",
             &FormatOptions::default(),
+            SyntaxErrorPolicy::Format,
             &mut sink,
         );
 

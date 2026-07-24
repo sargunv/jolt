@@ -20,6 +20,8 @@ Options:
           Number of spaces per indentation level when using spaces
       --use-tabs <USE_TABS>
           Whether to use tabs for indentation [possible values: true, false]
+      --format-with-errors
+          Format files even when they contain syntax errors
       --include <INCLUDE>
           Include source files matching this glob
       --exclude <EXCLUDE>

@@ -1,4 +1,4 @@
-use jolt_fmt_ir::FormatOptions;
+use jolt_fmt_ir::{FormatOptions, SyntaxErrorPolicy};
 use jolt_kotlin_fmt::format_source_to_sink;
 use jolt_kotlin_syntax::parse_kotlin_file;
 use jolt_test_support::{
@@ -23,7 +23,9 @@ impl CorpusLanguage for KotlinCorpus {
 
     fn format(&self, source: &str, label: &str) -> String {
         format_source_or_panic(
-            format_source_to_sink,
+            |source, options, sink| {
+                format_source_to_sink(source, options, SyntaxErrorPolicy::Format, sink)
+            },
             source,
             &FormatOptions::default(),
             label,

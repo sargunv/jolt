@@ -280,7 +280,7 @@ _jolt() {
             return 0
             ;;
         jolt__subcmd__format)
-            opts="-h --check --line-width --indent-width --use-tabs --include --exclude --config --no-config --stdin-filename --threads --help"
+            opts="-h --check --line-width --indent-width --use-tabs --format-with-errors --include --exclude --config --no-config --stdin-filename --threads --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

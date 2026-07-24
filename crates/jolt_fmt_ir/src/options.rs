@@ -18,6 +18,15 @@ pub struct FormatOptions {
     pub use_tabs: bool,
 }
 
+/// Policy for source that produces lexer or parser diagnostics.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum SyntaxErrorPolicy {
+    /// Refuse to format source with syntax diagnostics.
+    Reject,
+    /// Format the parser's represented recovery tree.
+    Format,
+}
+
 impl Default for FormatOptions {
     fn default() -> Self {
         Self {

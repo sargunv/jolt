@@ -2,7 +2,9 @@
 
 use std::path::Path;
 
-pub use jolt_fmt_ir::{FormatOptions, FormatSinkResult, RenderControl, RenderSink};
+pub use jolt_fmt_ir::{
+    FormatOptions, FormatSinkResult, RenderControl, RenderSink, SyntaxErrorPolicy,
+};
 
 /// Source language to format.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -30,10 +32,15 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
     source: &str,
     language: Language,
     options: &FormatOptions,
+    syntax_errors: SyntaxErrorPolicy,
     sink: &mut S,
 ) -> FormatSinkResult {
     match language {
-        Language::Java => jolt_java_fmt::format_source_to_sink(source, options, sink),
-        Language::Kotlin => jolt_kotlin_fmt::format_source_to_sink(source, options, sink),
+        Language::Java => {
+            jolt_java_fmt::format_source_to_sink(source, options, syntax_errors, sink)
+        }
+        Language::Kotlin => {
+            jolt_kotlin_fmt::format_source_to_sink(source, options, syntax_errors, sink)
+        }
     }
 }
