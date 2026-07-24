@@ -223,7 +223,6 @@ fn make_operation(
                 ensure_complete(jolt_java_fmt::format_source_to_sink(
                     &item.text,
                     &FormatOptions::default(),
-                    jolt_fmt_ir::SyntaxErrorPolicy::Reject,
                     &mut sink,
                 ))?;
             }
@@ -235,7 +234,6 @@ fn make_operation(
                 ensure_complete(jolt_kotlin_fmt::format_source_to_sink(
                     &item.text,
                     &FormatOptions::default(),
-                    jolt_fmt_ir::SyntaxErrorPolicy::Reject,
                     &mut sink,
                 ))?;
             }

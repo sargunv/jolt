@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use jolt_fmt_ir::{FormatOptions, FormatSinkResult, SyntaxErrorPolicy};
+use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
 use jolt_kotlin_fmt::format_source_to_sink;
 use jolt_test_support::{StringSink, read_to_string, workspace_root};
 
@@ -60,7 +60,7 @@ fn format_or_panic(source: &str, line_width: u16) -> String {
     };
     let mut sink = StringSink::default();
 
-    match format_source_to_sink(source, &options, SyntaxErrorPolicy::Format, &mut sink) {
+    match format_source_to_sink(source, &options, &mut sink) {
         FormatSinkResult::Complete => sink.into_string(),
         FormatSinkResult::Halted => panic!("formatter unexpectedly halted with StringSink"),
         FormatSinkResult::Blocked { diagnostic } => {

@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{FormatOptions, SyntaxErrorPolicy};
+use jolt_fmt_ir::FormatOptions;
 use jolt_java_fmt::format_source_to_sink;
 use jolt_java_syntax::parse_compilation_unit;
 use jolt_test_support::{
@@ -23,9 +23,7 @@ impl CorpusLanguage for JavaCorpus {
 
     fn format(&self, source: &str, label: &str) -> String {
         format_source_or_panic(
-            |source, options, sink| {
-                format_source_to_sink(source, options, SyntaxErrorPolicy::Format, sink)
-            },
+            format_source_to_sink,
             source,
             &FormatOptions::default(),
             label,

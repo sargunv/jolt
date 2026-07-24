@@ -177,7 +177,7 @@ fn docs_manpages_generate_cohesive_set() {
 
     insta::assert_snapshot!(
         "docs_manpages_generate_cohesive_set",
-        snapshot(&output, &files)
+        snapshot_without_trailing_whitespace(&output, &files)
     );
 }
 
@@ -438,6 +438,14 @@ fn snapshot_normalized(output: &Output, files: &[PathBuf], temp: &Path) -> Strin
     rendered.replace(&temp.display().to_string(), "$TEMP")
 }
 
+fn snapshot_without_trailing_whitespace(output: &Output, files: &[PathBuf]) -> String {
+    let mut normalized = String::new();
+    for line in snapshot(output, files).lines() {
+        writeln!(normalized, "{}", line.trim_end()).expect("writing to a String should not fail");
+    }
+    normalized
+}
+
 fn push_stream(rendered: &mut String, label: &str, bytes: &[u8]) {
     rendered.push_str(label);
     rendered.push_str(":\n");
@@ -476,13 +484,13 @@ fn normalize_commit_hashes(text: &str) -> String {
     while let Some(start) = rest.find('(') {
         normalized.push_str(&rest[..start]);
         let after_open = &rest[start + 1..];
-        if after_open.len() >= 8 {
-            let candidate = &after_open[..7];
-            if candidate.bytes().all(|byte| byte.is_ascii_hexdigit())
-                && after_open.as_bytes()[7] == b')'
+        if let Some(end) = after_open.find(')') {
+            let candidate = &after_open[..end];
+            if (7..=40).contains(&candidate.len())
+                && candidate.bytes().all(|byte| byte.is_ascii_hexdigit())
             {
                 normalized.push_str("($COMMIT)");
-                rest = &after_open[8..];
+                rest = &after_open[end + 1..];
                 continue;
             }
         }

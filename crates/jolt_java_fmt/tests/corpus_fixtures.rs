@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use jolt_fmt_ir::{FormatOptions, FormatSinkResult, SyntaxErrorPolicy};
+use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
 use jolt_java_fmt::format_source_to_sink;
 use jolt_java_syntax::{
     CompilationUnit, CompilationUnitItem, JavaSyntaxField, JavaSyntaxKind, JavaSyntaxListPart,
@@ -469,7 +469,7 @@ fn format_source(
     options: FormatOptions,
 ) -> Result<String, Vec<jolt_diagnostics::Diagnostic>> {
     let mut sink = StringSink::default();
-    match format_source_to_sink(source, &options, SyntaxErrorPolicy::Format, &mut sink) {
+    match format_source_to_sink(source, &options, &mut sink) {
         FormatSinkResult::Complete => Ok(sink.into_string()),
         FormatSinkResult::Halted => panic!("formatter unexpectedly halted with StringSink"),
         FormatSinkResult::Blocked { diagnostic } => Err(vec![diagnostic]),

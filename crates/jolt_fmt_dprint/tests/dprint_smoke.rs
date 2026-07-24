@@ -5,9 +5,7 @@ use std::{
     sync::OnceLock,
 };
 
-use jolt_formatter::{
-    FormatOptions, FormatSinkResult, Language, SyntaxErrorPolicy, format_source_to_sink,
-};
+use jolt_formatter::{FormatOptions, FormatSinkResult, Language, format_source_to_sink};
 use jolt_test_support::StringSink;
 use tempfile::TempDir;
 
@@ -193,13 +191,7 @@ struct CommandOutput {
 
 fn direct_java_format(source: &str) -> String {
     let mut sink = StringSink::default();
-    match format_source_to_sink(
-        source,
-        Language::Java,
-        &FormatOptions::default(),
-        SyntaxErrorPolicy::Reject,
-        &mut sink,
-    ) {
+    match format_source_to_sink(source, Language::Java, &FormatOptions::default(), &mut sink) {
         FormatSinkResult::Complete => sink.into_string(),
         FormatSinkResult::Halted => panic!("direct Java formatting unexpectedly halted"),
         FormatSinkResult::Blocked { diagnostic } => {
@@ -214,7 +206,6 @@ fn direct_kotlin_format(source: &str) -> String {
         source,
         Language::Kotlin,
         &FormatOptions::default(),
-        SyntaxErrorPolicy::Reject,
         &mut sink,
     ) {
         FormatSinkResult::Complete => sink.into_string(),

@@ -13,8 +13,8 @@ use std::{
 use humanize_duration::{Truncate, prelude::DurationExt as _};
 use jolt_diagnostics::Diagnostic;
 use jolt_formatter::{
-    FormatOptions, FormatSinkResult, Language, RenderControl, RenderSink, SyntaxErrorPolicy,
-    format_source_to_sink,
+    FormatOptions, FormatSinkResult, Language, RenderControl, RenderSink,
+    format_parsed_source_to_sink, parse_source,
 };
 use jolt_text::{LineIndex, TextSize};
 use rayon::prelude::*;
@@ -195,12 +195,15 @@ fn run_stdin(cwd: &Path, args: &Args) -> Result<(), CliError> {
         .stdin_filename
         .as_deref()
         .map_or_else(|| "<stdin>".to_owned(), |path| path.display().to_string());
-    let syntax_errors = syntax_error_policy(args);
-
     if args.check {
         let mut sink = CompareSink::new(&source);
-        let result =
-            format_source_to_sink(&source, language, &config.options, syntax_errors, &mut sink);
+        let result = format_for_cli_to_sink(
+            &source,
+            language,
+            config.options,
+            args.format_with_errors,
+            &mut sink,
+        );
         emit_diagnostics(&label, &source, result_diagnostics(&result))?;
 
         if matches!(result, FormatSinkResult::Blocked { .. }) {
@@ -215,8 +218,13 @@ fn run_stdin(cwd: &Path, args: &Args) -> Result<(), CliError> {
     }
 
     let mut sink = BufferedIoSink::new(io::stdout().lock());
-    let result =
-        format_source_to_sink(&source, language, &config.options, syntax_errors, &mut sink);
+    let result = format_for_cli_to_sink(
+        &source,
+        language,
+        config.options,
+        args.format_with_errors,
+        &mut sink,
+    );
     emit_diagnostics(&label, &source, result_diagnostics(&result))?;
     match result {
         FormatSinkResult::Complete => {}
@@ -272,17 +280,25 @@ fn format_candidate(cwd: &Path, candidate: &CandidateFile, args: &Args) -> FileF
         &candidate.path,
         candidate.language,
         candidate.options,
-        syntax_error_policy(args),
+        args.format_with_errors,
         args.check,
     )
 }
 
-const fn syntax_error_policy(args: &Args) -> SyntaxErrorPolicy {
-    if args.format_with_errors {
-        SyntaxErrorPolicy::Format
-    } else {
-        SyntaxErrorPolicy::Reject
+fn format_for_cli_to_sink<S: RenderSink + ?Sized>(
+    source: &str,
+    language: Language,
+    options: FormatOptions,
+    format_with_errors: bool,
+    sink: &mut S,
+) -> FormatSinkResult {
+    let parsed = parse_source(source, language);
+    if !format_with_errors && let Some(diagnostic) = parsed.diagnostics().first() {
+        return FormatSinkResult::Blocked {
+            diagnostic: diagnostic.clone(),
+        };
     }
+    format_parsed_source_to_sink(&parsed, &options, sink)
 }
 
 fn format_file(
@@ -290,7 +306,7 @@ fn format_file(
     path: &Path,
     language: Language,
     options: FormatOptions,
-    syntax_errors: SyntaxErrorPolicy,
+    format_with_errors: bool,
     check: bool,
 ) -> FileFormatResult {
     let label = display_path(cwd, path);
@@ -304,10 +320,18 @@ fn format_file(
         }
     };
     if check {
-        return format_file_check(&label, &source, language, options, syntax_errors);
+        return format_file_check(&label, &source, language, options, format_with_errors);
     }
 
-    format_file_write(cwd, path, &label, &source, language, options, syntax_errors)
+    format_file_write(
+        cwd,
+        path,
+        &label,
+        &source,
+        language,
+        options,
+        format_with_errors,
+    )
 }
 
 fn format_file_check(
@@ -315,10 +339,10 @@ fn format_file_check(
     source: &str,
     language: Language,
     options: FormatOptions,
-    syntax_errors: SyntaxErrorPolicy,
+    format_with_errors: bool,
 ) -> FileFormatResult {
     let mut sink = CompareSink::new(source);
-    let result = format_source_to_sink(source, language, &options, syntax_errors, &mut sink);
+    let result = format_for_cli_to_sink(source, language, options, format_with_errors, &mut sink);
     let diagnostics = diagnostics_text(label, source, result_diagnostics(&result));
 
     if matches!(result, FormatSinkResult::Blocked { .. }) {
@@ -360,10 +384,10 @@ fn format_file_write(
     source: &str,
     language: Language,
     options: FormatOptions,
-    syntax_errors: SyntaxErrorPolicy,
+    format_with_errors: bool,
 ) -> FileFormatResult {
     let mut sink = BufferedFileSink::new(path, source);
-    let result = format_source_to_sink(source, language, &options, syntax_errors, &mut sink);
+    let result = format_for_cli_to_sink(source, language, options, format_with_errors, &mut sink);
     let diagnostics = diagnostics_text(label, source, result_diagnostics(&result));
 
     finish_file_write(cwd, path, diagnostics, &result, sink)

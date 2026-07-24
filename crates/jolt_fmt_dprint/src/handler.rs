@@ -12,8 +12,8 @@ use dprint_core::{
 };
 use jolt_diagnostics::{Diagnostic, DiagnosticStage, Severity};
 use jolt_formatter::{
-    FormatOptions, FormatSinkResult, Language, RenderControl, RenderSink, SyntaxErrorPolicy,
-    format_source_to_sink,
+    FormatOptions, FormatSinkResult, Language, RenderControl, RenderSink,
+    format_parsed_source_to_sink, parse_source,
 };
 use jolt_text::LineIndex;
 
@@ -42,15 +42,18 @@ impl JoltDprintPlugin {
             FormatError::from(format!("Jolt formatter requires UTF-8 input: {error}"))
         })?;
         let language = language_for_path(file_path)?;
+        let parsed = parse_source(source, language);
+        if let Some(diagnostic) = parsed.diagnostics().first() {
+            let line_index = LineIndex::new(source);
+            return Err(FormatError::from(format_diagnostic(
+                source,
+                &line_index,
+                diagnostic,
+            )));
+        }
 
         let mut sink = DprintFormatSink::default();
-        let result = format_source_to_sink(
-            source,
-            language,
-            &options,
-            SyntaxErrorPolicy::Reject,
-            &mut sink,
-        );
+        let result = format_parsed_source_to_sink(&parsed, &options, &mut sink);
         match result {
             FormatSinkResult::Complete => {}
             FormatSinkResult::Halted => {
