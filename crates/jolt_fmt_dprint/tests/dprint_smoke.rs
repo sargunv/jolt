@@ -70,6 +70,19 @@ fn dprint_check_loads_local_wasm_plugin_and_fails_on_unformatted_java() {
 }
 
 #[test]
+fn dprint_fmt_rejects_syntax_errors_without_writing() {
+    let project = DprintProject::new();
+    project.write_config("");
+    project.write_file("A.java", "class {\n");
+
+    let output = project.run_dprint(["fmt", "A.java"]);
+    output.assert_failure();
+
+    assert!(String::from_utf8_lossy(&output.output.stderr).contains("java.parse.expected_syntax"));
+    assert_eq!(project.read_file("A.java"), "class {\n");
+}
+
+#[test]
 fn dprint_configuration_influences_line_width_indent_width_and_tabs() {
     let project = DprintProject::new();
     project.write_config(r#""jolt": { "lineWidth": 35, "indentWidth": 4, "useTabs": false }"#);

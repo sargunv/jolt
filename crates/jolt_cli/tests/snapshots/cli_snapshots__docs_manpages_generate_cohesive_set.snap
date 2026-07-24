@@ -1,6 +1,6 @@
 ---
 source: crates/jolt_cli/tests/cli_snapshots.rs
-expression: "snapshot(&output, &files)"
+expression: "snapshot_without_trailing_whitespace(&output, &files)"
 ---
 status: 0
 stdout:
@@ -11,11 +11,11 @@ files:
 -- jolt-completions.1 --
 .ie \n(.g .ds Aq \(aq
 .el .ds Aq '
-.TH jolt-completions 1  "jolt 0.20260705.0 ($COMMIT)" "Jolt Manual"
+.TH jolt-completions 1  "jolt 0.20260721.0 ($COMMIT)" "Jolt Manual"
 .SH NAME
 jolt\-completions \- Generate shell completions
 .SH SYNOPSIS
-\fBjolt completions\fR [\fB\-h\fR|\fB\-\-help\fR] <\fISHELL\fR> 
+\fBjolt completions\fR [\fB\-h\fR|\fB\-\-help\fR] <\fISHELL\fR>
 .SH DESCRIPTION
 Generate shell completions
 .SH OPTIONS
@@ -44,11 +44,11 @@ zsh
 -- jolt-config-init.1 --
 .ie \n(.g .ds Aq \(aq
 .el .ds Aq '
-.TH jolt-config-init 1  "jolt 0.20260705.0 ($COMMIT)" "Jolt Manual"
+.TH jolt-config-init 1  "jolt 0.20260721.0 ($COMMIT)" "Jolt Manual"
 .SH NAME
 jolt\-config\-init \- Create a root Jolt config in the working directory
 .SH SYNOPSIS
-\fBjolt config init\fR [\fB\-h\fR|\fB\-\-help\fR] 
+\fBjolt config init\fR [\fB\-h\fR|\fB\-\-help\fR]
 .SH DESCRIPTION
 Create a root Jolt config in the working directory
 .SH OPTIONS
@@ -58,11 +58,11 @@ Print help
 -- jolt-config-list.1 --
 .ie \n(.g .ds Aq \(aq
 .el .ds Aq '
-.TH jolt-config-list 1  "jolt 0.20260705.0 ($COMMIT)" "Jolt Manual"
+.TH jolt-config-list 1  "jolt 0.20260721.0 ($COMMIT)" "Jolt Manual"
 .SH NAME
 jolt\-config\-list \- List config files that apply to a path
 .SH SYNOPSIS
-\fBjolt config list\fR [\fB\-h\fR|\fB\-\-help\fR] [\fIPATH\fR] 
+\fBjolt config list\fR [\fB\-h\fR|\fB\-\-help\fR] [\fIPATH\fR]
 .SH DESCRIPTION
 List config files that apply to a path
 .SH OPTIONS
@@ -75,11 +75,11 @@ File or directory to inspect
 -- jolt-config-resolve.1 --
 .ie \n(.g .ds Aq \(aq
 .el .ds Aq '
-.TH jolt-config-resolve 1  "jolt 0.20260705.0 ($COMMIT)" "Jolt Manual"
+.TH jolt-config-resolve 1  "jolt 0.20260721.0 ($COMMIT)" "Jolt Manual"
 .SH NAME
 jolt\-config\-resolve \- Print the effective config for a path
 .SH SYNOPSIS
-\fBjolt config resolve\fR [\fB\-h\fR|\fB\-\-help\fR] [\fIPATH\fR] 
+\fBjolt config resolve\fR [\fB\-h\fR|\fB\-\-help\fR] [\fIPATH\fR]
 .SH DESCRIPTION
 Print the effective config for a path
 .SH OPTIONS
@@ -92,11 +92,11 @@ File or directory to inspect
 -- jolt-config-schema.1 --
 .ie \n(.g .ds Aq \(aq
 .el .ds Aq '
-.TH jolt-config-schema 1  "jolt 0.20260705.0 ($COMMIT)" "Jolt Manual"
+.TH jolt-config-schema 1  "jolt 0.20260721.0 ($COMMIT)" "Jolt Manual"
 .SH NAME
 jolt\-config\-schema \- Print a JSON schema for configuration files
 .SH SYNOPSIS
-\fBjolt config schema\fR [\fB\-\-dprint\fR] [\fB\-h\fR|\fB\-\-help\fR] 
+\fBjolt config schema\fR [\fB\-\-dprint\fR] [\fB\-h\fR|\fB\-\-help\fR]
 .SH DESCRIPTION
 Print a JSON schema for configuration files
 .SH OPTIONS
@@ -109,7 +109,7 @@ Print help
 -- jolt-config.1 --
 .ie \n(.g .ds Aq \(aq
 .el .ds Aq '
-.TH jolt-config 1  "jolt 0.20260705.0 ($COMMIT)" "Jolt Manual"
+.TH jolt-config 1  "jolt 0.20260721.0 ($COMMIT)" "Jolt Manual"
 .SH NAME
 jolt\-config \- Inspect Jolt configuration
 .SH SYNOPSIS
@@ -136,11 +136,11 @@ Print a JSON schema for configuration files
 -- jolt-format.1 --
 .ie \n(.g .ds Aq \(aq
 .el .ds Aq '
-.TH jolt-format 1  "jolt 0.20260705.0 ($COMMIT)" "Jolt Manual"
+.TH jolt-format 1  "jolt 0.20260721.0 ($COMMIT)" "Jolt Manual"
 .SH NAME
 jolt\-format \- Format source files
 .SH SYNOPSIS
-\fBjolt format\fR [\fB\-\-check\fR] [\fB\-\-line\-width\fR] [\fB\-\-indent\-width\fR] [\fB\-\-use\-tabs\fR] [\fB\-\-include\fR] [\fB\-\-exclude\fR] [\fB\-\-config\fR] [\fB\-\-no\-config\fR] [\fB\-\-stdin\-filename\fR] [\fB\-\-threads\fR] [\fB\-h\fR|\fB\-\-help\fR] [\fIPATHS\fR] 
+\fBjolt format\fR [\fB\-\-check\fR] [\fB\-\-line\-width\fR] [\fB\-\-indent\-width\fR] [\fB\-\-use\-tabs\fR] [\fB\-\-format\-with\-errors\fR] [\fB\-\-include\fR] [\fB\-\-exclude\fR] [\fB\-\-config\fR] [\fB\-\-no\-config\fR] [\fB\-\-stdin\-filename\fR] [\fB\-\-threads\fR] [\fB\-h\fR|\fB\-\-help\fR] [\fIPATHS\fR]
 .SH DESCRIPTION
 Format source files
 .SH OPTIONS
@@ -166,6 +166,9 @@ true
 .IP \(bu 2
 false
 .RE
+.TP
+\fB\-\-format\-with\-errors\fR
+Format files even when they contain syntax errors
 .TP
 \fB\-\-include\fR \fI<INCLUDE>\fR
 Include source files matching this glob
@@ -193,7 +196,7 @@ Files or directories to format. Use \*(Aq\-\*(Aq to read stdin
 -- jolt.1 --
 .ie \n(.g .ds Aq \(aq
 .el .ds Aq '
-.TH jolt 1  "jolt 0.20260705.0 ($COMMIT)" "Jolt Manual"
+.TH jolt 1  "jolt 0.20260721.0 ($COMMIT)" "Jolt Manual"
 .SH NAME
 jolt \- Fast, opinionated JVM and Kotlin Multiplatform project tooling.
 .SH SYNOPSIS
@@ -218,4 +221,4 @@ Inspect Jolt configuration
 jolt\-completions(1)
 Generate shell completions
 .SH VERSION
-v0.20260705.0 ($COMMIT)
+v0.20260721.0 ($COMMIT)

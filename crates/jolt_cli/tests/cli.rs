@@ -130,14 +130,15 @@ fn check_mode_with_threads_prints_changed_paths_in_order_without_writing() {
 }
 
 #[test]
-fn recovered_parse_with_threads_formats_other_files() {
+fn syntax_error_with_threads_fails_without_blocking_other_files() {
     let temp = TempDir::new().expect("tempdir should be created");
     write(temp.path().join("Bad.java"), "class {\n");
     write(temp.path().join("Good.java"), SIMPLE_INPUT);
 
     let output = jolt(temp.path(), ["fmt", "--threads", "2", "."], "");
 
-    assert_success(&output);
+    assert_failure(&output);
+    assert!(stderr(&output).contains("java.parse.expected_syntax"));
     assert_eq!(read(temp.path().join("Bad.java")), "class {\n");
     assert_simple_formatted(&read(temp.path().join("Good.java")));
 }

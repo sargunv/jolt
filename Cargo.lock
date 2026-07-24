@@ -451,9 +451,12 @@ dependencies = [
 name = "jolt_formatter"
 version = "0.0.0"
 dependencies = [
+ "jolt_diagnostics",
  "jolt_fmt_ir",
  "jolt_java_fmt",
+ "jolt_java_syntax",
  "jolt_kotlin_fmt",
+ "jolt_kotlin_syntax",
 ]
 
 [[package]]

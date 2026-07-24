@@ -12,7 +12,8 @@ use dprint_core::{
 };
 use jolt_diagnostics::{Diagnostic, DiagnosticStage, Severity};
 use jolt_formatter::{
-    FormatOptions, FormatSinkResult, Language, RenderControl, RenderSink, format_source_to_sink,
+    FormatOptions, FormatSinkResult, Language, RenderControl, RenderSink,
+    format_parsed_source_to_sink, parse_source,
 };
 use jolt_text::LineIndex;
 
@@ -41,9 +42,18 @@ impl JoltDprintPlugin {
             FormatError::from(format!("Jolt formatter requires UTF-8 input: {error}"))
         })?;
         let language = language_for_path(file_path)?;
+        let parsed = parse_source(source, language);
+        if let Some(diagnostic) = parsed.diagnostics().first() {
+            let line_index = LineIndex::new(source);
+            return Err(FormatError::from(format_diagnostic(
+                source,
+                &line_index,
+                diagnostic,
+            )));
+        }
 
         let mut sink = DprintFormatSink::default();
-        let result = format_source_to_sink(source, language, &options, &mut sink);
+        let result = format_parsed_source_to_sink(&parsed, &options, &mut sink);
         match result {
             FormatSinkResult::Complete => {}
             FormatSinkResult::Halted => {
@@ -201,11 +211,11 @@ mod tests {
     use super::JoltDprintPlugin;
 
     #[test]
-    fn recovered_parse_returns_formatted_bytes() {
-        let formatted =
-            format_java("class Foo{", FormatOptions::default()).expect("format should complete");
+    fn recovered_parse_returns_an_error() {
+        let error = format_java("class Foo{", FormatOptions::default())
+            .expect_err("format should reject syntax errors");
 
-        assert_eq!(formatted, Some(b"class Foo {".to_vec()));
+        assert!(error.to_string().contains("java.parse.expected_syntax"));
     }
 
     #[test]

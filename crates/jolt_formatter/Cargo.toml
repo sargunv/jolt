@@ -7,9 +7,12 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+jolt_diagnostics = { path = "../jolt_diagnostics" }
 jolt_fmt_ir = { version = "0.0.0", path = "../jolt_fmt_ir" }
 jolt_java_fmt = { path = "../jolt_java_fmt" }
+jolt_java_syntax = { path = "../jolt_java_syntax" }
 jolt_kotlin_fmt = { path = "../jolt_kotlin_fmt" }
+jolt_kotlin_syntax = { path = "../jolt_kotlin_syntax" }
 
 [features]
 serde = ["jolt_fmt_ir/serde"]

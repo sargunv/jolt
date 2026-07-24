@@ -177,7 +177,7 @@ fn docs_manpages_generate_cohesive_set() {
 
     insta::assert_snapshot!(
         "docs_manpages_generate_cohesive_set",
-        snapshot(&output, &files)
+        snapshot_without_trailing_whitespace(&output, &files)
     );
 }
 
@@ -259,7 +259,7 @@ fn check_mode_reports_all_changed_files_with_summary_count() {
 }
 
 #[test]
-fn check_mode_reports_mixed_changed_and_recovered_files() {
+fn check_mode_reports_mixed_changed_and_invalid_files() {
     let temp = TempDir::new().expect("tempdir should be created");
     write(temp.path().join("Changed.java"), "class Changed {}\n");
     write(temp.path().join("Bad.java"), "class {\n");
@@ -267,7 +267,7 @@ fn check_mode_reports_mixed_changed_and_recovered_files() {
     let output = jolt(temp.path(), ["fmt", "--check", "."], "");
 
     insta::assert_snapshot!(
-        "check_mode_reports_mixed_changed_and_recovered_files",
+        "check_mode_reports_mixed_changed_and_invalid_files",
         snapshot(
             &output,
             &[
@@ -317,33 +317,46 @@ fn config_errors_report_diagnostics() {
 }
 
 #[test]
-fn recovered_parse_formats_and_writes_file() {
+fn syntax_error_is_rejected_without_writing_file() {
     let temp = TempDir::new().expect("tempdir should be created");
     write(temp.path().join("A.java"), "class {\n");
 
     let output = jolt(temp.path(), ["fmt", "A.java"], "");
 
     insta::assert_snapshot!(
-        "recovered_parse_formats_and_writes_file",
+        "syntax_error_is_rejected_without_writing_file",
         snapshot(&output, &[temp.path().join("A.java")])
     );
 }
 
 #[test]
-fn check_mode_reports_recovered_parse_as_changed() {
+fn format_with_errors_formats_and_writes_recovered_parse() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    write(temp.path().join("A.java"), "class {\n");
+
+    let output = jolt(temp.path(), ["fmt", "--format-with-errors", "A.java"], "");
+
+    insta::assert_snapshot!(
+        "format_with_errors_formats_and_writes_recovered_parse",
+        snapshot(&output, &[temp.path().join("A.java")])
+    );
+}
+
+#[test]
+fn check_mode_reports_syntax_error_as_failed() {
     let temp = TempDir::new().expect("tempdir should be created");
     write(temp.path().join("A.java"), "class {\n");
 
     let output = jolt(temp.path(), ["fmt", "--check", "A.java"], "");
 
     insta::assert_snapshot!(
-        "check_mode_reports_recovered_parse_as_changed",
+        "check_mode_reports_syntax_error_as_failed",
         snapshot(&output, &[temp.path().join("A.java")])
     );
 }
 
 #[test]
-fn stdin_recovered_parse_formats_to_stdout() {
+fn stdin_syntax_error_is_rejected_without_stdout() {
     let temp = TempDir::new().expect("tempdir should be created");
 
     let output = jolt(
@@ -353,7 +366,7 @@ fn stdin_recovered_parse_formats_to_stdout() {
     );
 
     insta::assert_snapshot!(
-        "stdin_recovered_parse_formats_to_stdout",
+        "stdin_syntax_error_is_rejected_without_stdout",
         snapshot(&output, &[])
     );
 }
@@ -425,6 +438,14 @@ fn snapshot_normalized(output: &Output, files: &[PathBuf], temp: &Path) -> Strin
     rendered.replace(&temp.display().to_string(), "$TEMP")
 }
 
+fn snapshot_without_trailing_whitespace(output: &Output, files: &[PathBuf]) -> String {
+    let mut normalized = String::new();
+    for line in snapshot(output, files).lines() {
+        writeln!(normalized, "{}", line.trim_end()).expect("writing to a String should not fail");
+    }
+    normalized
+}
+
 fn push_stream(rendered: &mut String, label: &str, bytes: &[u8]) {
     rendered.push_str(label);
     rendered.push_str(":\n");
@@ -463,13 +484,13 @@ fn normalize_commit_hashes(text: &str) -> String {
     while let Some(start) = rest.find('(') {
         normalized.push_str(&rest[..start]);
         let after_open = &rest[start + 1..];
-        if after_open.len() >= 8 {
-            let candidate = &after_open[..7];
-            if candidate.bytes().all(|byte| byte.is_ascii_hexdigit())
-                && after_open.as_bytes()[7] == b')'
+        if let Some(end) = after_open.find(')') {
+            let candidate = &after_open[..end];
+            if (7..=40).contains(&candidate.len())
+                && candidate.bytes().all(|byte| byte.is_ascii_hexdigit())
             {
                 normalized.push_str("($COMMIT)");
-                rest = &after_open[8..];
+                rest = &after_open[end + 1..];
                 continue;
             }
         }

@@ -6,8 +6,11 @@ status: 1
 stdout:
 Changed.java
 stderr:
+Bad.java:1:7: java.parse.expected_syntax: expected type name
 Checked 2 files in $TIME
+format check failed:
 1 file needs formatting
+1 file could not be formatted
 files:
 -- Bad.java --
 class {

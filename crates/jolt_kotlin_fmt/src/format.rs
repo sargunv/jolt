@@ -2,7 +2,7 @@ use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
 use jolt_fmt_ir::{
     FormatOptions, FormatRootMetrics, FormatSinkResult, RenderSink, format_root_to_sink,
 };
-use jolt_kotlin_syntax::{KotlinFile, KotlinSyntaxView, parse_kotlin_file};
+use jolt_kotlin_syntax::{KotlinFile, KotlinParse, KotlinSyntaxView, parse_kotlin_file};
 
 use crate::helpers::lexical_safety::KotlinLexicalSafety;
 use crate::rules::program::format_file;
@@ -33,7 +33,16 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
     sink: &mut S,
 ) -> FormatSinkResult {
     let parse = parse_kotlin_file(source);
+    format_parse_to_sink(&parse, options, sink)
+}
 
+/// Formats a previously parsed Kotlin source without inspecting its diagnostics.
+#[doc(hidden)]
+pub fn format_parse_to_sink<S: RenderSink + ?Sized>(
+    parse: &KotlinParse<'_>,
+    options: &FormatOptions,
+    sink: &mut S,
+) -> FormatSinkResult {
     let Some(syntax) = parse.syntax() else {
         return FormatSinkResult::Blocked {
             diagnostic: no_syntax_tree_diagnostic(),
