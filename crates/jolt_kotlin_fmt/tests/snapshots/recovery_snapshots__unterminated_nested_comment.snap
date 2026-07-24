@@ -17,8 +17,8 @@ class UnterminatedNestedComment {
   }
 }
 /* outer unterminated
-* before nested /* nested closes */
-* outer remains open
+ * before nested /* nested closes */
+ * outer remains open
 
 diagnostics:
 code=kotlin.lex.unterminated_block_comment severity=Error stage=Lexer range=Some(TextRange { start: TextSize(67), end: TextSize(148) }) message=unterminated block comment

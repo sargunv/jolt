@@ -133,7 +133,7 @@ pub(super) fn format_condition_open_paren<'source>(
             LeadingTrivia::Preserve,
             TrailingTrivia::RelocatedToEnclosingContext,
         ),
-        JavaFormatDelimiter::Recovery(recovery) => recovery,
+        JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }
 
@@ -184,7 +184,7 @@ fn format_condition_close_paren<'source>(
                 },
             ]
         ),
-        JavaFormatDelimiter::Recovery(recovery) => recovery,
+        JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
     };
     doc_concat!(
         doc,
@@ -402,7 +402,7 @@ fn format_inline_close_paren<'source>(
             );
             doc_concat!(doc, [leading, close, trailing])
         }
-        JavaFormatDelimiter::Recovery(recovery) => recovery,
+        JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }
 

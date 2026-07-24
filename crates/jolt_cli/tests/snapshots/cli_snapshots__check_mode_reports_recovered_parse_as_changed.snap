@@ -2,12 +2,11 @@
 source: crates/jolt_cli/tests/cli_snapshots.rs
 expression: "snapshot(&output, &[temp.path().join(\"A.java\")])"
 ---
-status: 1
+status: 0
 stdout:
-A.java
+<empty>
 stderr:
 Checked 1 file in $TIME
-1 file needs formatting
 files:
 -- A.java --
 class {

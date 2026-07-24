@@ -53,7 +53,7 @@ KotlinFile
                       PropertyBodyMemberList
                   RBrace "}" @ 63..64
         RBrace "}" @ 65..66 leading=[Newline "\n"]
-  Eof "" @ 148..148 leading=[Newline "\n", BlockComment "/* outer unterminated\n * before nested /* nested closes */\n * outer remains open\n"]
+  Eof "" @ 148..148 leading=[Newline "\n", UnterminatedBlockComment "/* outer unterminated\n * before nested /* nested closes */\n * outer remains open\n"]
 
 diagnostics:
   code=kotlin.lex.unterminated_block_comment severity=Error stage=Lexer range=67..148 message="unterminated block comment"

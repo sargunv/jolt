@@ -253,7 +253,7 @@ fn format_open_bracket<'source>(
             LeadingTrivia::Preserve,
             TrailingTrivia::RelocatedToEnclosingContext,
         ),
-        JavaFormatDelimiter::Recovery(recovery) => *recovery,
+        JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }
 
@@ -296,7 +296,7 @@ fn format_close_bracket_with_spacing<'source>(
             InlineLeadingTrivia::AfterPreviousToken,
             TrailingTrivia::Preserve,
         ),
-        JavaFormatDelimiter::Recovery(recovery) => *recovery,
+        JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }
 

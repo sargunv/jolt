@@ -772,6 +772,8 @@ fn mark_conserved_trivia(tree: &SyntaxTree, states: &mut [ClaimState]) {
                 | TriviaKind::ShebangComment
                 | TriviaKind::BlockComment
                 | TriviaKind::DocComment
+                | TriviaKind::UnterminatedBlockComment
+                | TriviaKind::UnterminatedDocComment
                 | TriviaKind::Ignored
         ) || (kind == TriviaKind::Newline && line_comment_needs_terminator);
         if conserved {
@@ -783,6 +785,8 @@ fn mark_conserved_trivia(tree: &SyntaxTree, states: &mut [ClaimState]) {
             | TriviaKind::Newline
             | TriviaKind::BlockComment
             | TriviaKind::DocComment
+            | TriviaKind::UnterminatedBlockComment
+            | TriviaKind::UnterminatedDocComment
             | TriviaKind::Ignored => false,
         };
     }
@@ -911,6 +915,8 @@ impl<'tree, L: Language> SyntaxVerbatimCore<'tree, L> {
                     TriviaKind::Newline
                     | TriviaKind::BlockComment
                     | TriviaKind::DocComment
+                    | TriviaKind::UnterminatedBlockComment
+                    | TriviaKind::UnterminatedDocComment
                     | TriviaKind::Ignored => false,
                 };
             }
@@ -927,6 +933,8 @@ impl<'tree, L: Language> SyntaxVerbatimCore<'tree, L> {
                     TriviaKind::Newline
                     | TriviaKind::BlockComment
                     | TriviaKind::DocComment
+                    | TriviaKind::UnterminatedBlockComment
+                    | TriviaKind::UnterminatedDocComment
                     | TriviaKind::Ignored => false,
                 };
             }
@@ -970,6 +978,8 @@ fn is_conserved_trivia(identity: SourceTriviaId<'_>) -> bool {
             | TriviaKind::ShebangComment
             | TriviaKind::BlockComment
             | TriviaKind::DocComment
+            | TriviaKind::UnterminatedBlockComment
+            | TriviaKind::UnterminatedDocComment
             | TriviaKind::Ignored
     ) || (kind == TriviaKind::Newline
         && index.checked_sub(1).is_some_and(|previous| {

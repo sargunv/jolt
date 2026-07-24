@@ -246,7 +246,7 @@ fn format_open_delimiter_before_items<'source>(
             format_source_open_delimiter(doc, &open, leading, TrailingTrivia::BeforeSoftLine)
         }
         JavaFormatDelimiter::Recovery(recovery) => {
-            doc_concat!(doc, [recovery, doc.soft_line()])
+            doc_concat!(doc, [recovery.doc(), doc.soft_line()])
         }
     }
 }
@@ -261,7 +261,7 @@ fn format_open_delimiter_with_trailing<'source>(
         JavaFormatDelimiter::Source(open) => {
             format_source_open_delimiter(doc, &open, leading, trailing)
         }
-        JavaFormatDelimiter::Recovery(recovery) => recovery,
+        JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }
 
@@ -401,7 +401,7 @@ fn format_close_with_spacing<'source>(
                         TrailingTrivia::RelocatedToEnclosingContext,
                     )
                 }
-                JavaFormatDelimiter::Recovery(recovery) => recovery,
+                JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
             },
         ]
     )
@@ -449,7 +449,7 @@ fn format_close_delimiter<'source>(
                 ),
             ]
         ),
-        JavaFormatDelimiter::Recovery(recovery) => recovery,
+        JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }
 
@@ -461,6 +461,6 @@ fn format_close_delimiter_without_leading<'source>(
         JavaFormatDelimiter::Source(close) => {
             format_token_after_relocated_leading_comments(doc, &close, TrailingTrivia::Preserve)
         }
-        JavaFormatDelimiter::Recovery(recovery) => recovery,
+        JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }

@@ -138,7 +138,7 @@ fn recovered_parse_with_threads_formats_other_files() {
     let output = jolt(temp.path(), ["fmt", "--threads", "2", "."], "");
 
     assert_success(&output);
-    assert_eq!(read(temp.path().join("Bad.java")), "class {\n\n");
+    assert_eq!(read(temp.path().join("Bad.java")), "class {\n");
     assert_simple_formatted(&read(temp.path().join("Good.java")));
 }
 

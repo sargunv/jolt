@@ -245,6 +245,7 @@ syntax/recovery/type-constraints.kt
 syntax/recovery/type-parameter-list.kt
 syntax/recovery/type-prefix-annotation-recovery.kt
 syntax/recovery/types-and-parameters.kt
+syntax/recovery/unterminated-doc-comment.kt
 syntax/recovery/unterminated-nested-comment.kt
 syntax/recovery/value-parameter-list.kt
 syntax/recovery/when-condition-list.kt

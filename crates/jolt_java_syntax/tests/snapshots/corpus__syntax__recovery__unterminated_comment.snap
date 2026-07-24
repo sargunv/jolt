@@ -44,7 +44,7 @@ CompilationUnit
                   Semicolon ";" @ 57..58 trailing=[Whitespace " "]
               RBrace "}" @ 59..60
         RBrace "}" @ 61..62 leading=[Newline "\n"]
-  Eof "" @ 105..105 leading=[Newline "\n", BlockComment "/* unterminated block\n * with a star body\n"]
+  Eof "" @ 105..105 leading=[Newline "\n", UnterminatedBlockComment "/* unterminated block\n * with a star body\n"]
 
 diagnostics:
   code=java.lex.unterminated_block_comment severity=Error stage=Lexer range=63..64 message="unterminated block comment"

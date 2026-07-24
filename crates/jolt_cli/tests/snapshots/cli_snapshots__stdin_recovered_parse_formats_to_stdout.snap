@@ -5,7 +5,6 @@ expression: "snapshot(&output, &[])"
 status: 0
 stdout:
 class {
-
 stderr:
 <empty>
 files:

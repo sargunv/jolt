@@ -351,6 +351,10 @@ pub(crate) fn format_comment<'source>(
     comment: &JavaComment<'source>,
 ) -> Doc<'source> {
     doc.source_trivia(comment.source_pieces(), |doc| {
+        if !comment.is_terminated() {
+            return doc.literal_text(comment.text());
+        }
+
         if is_empty_single_line_block_comment(comment.text()) {
             return format_block_comment(doc, comment.text());
         }

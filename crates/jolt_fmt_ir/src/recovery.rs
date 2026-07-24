@@ -20,7 +20,7 @@ pub enum FormatField<'source, T> {
 #[derive(Clone, Copy)]
 pub enum FormatDelimiter<'source, Token> {
     Source(Token),
-    Recovery(Doc<'source>),
+    Recovery(LayoutDoc<'source>),
 }
 
 impl<'source, Token> FormatDelimiter<'source, Token> {
@@ -36,7 +36,15 @@ impl<'source, Token> FormatDelimiter<'source, Token> {
     pub const fn recovery(&self) -> Doc<'source> {
         match self {
             Self::Source(_) => Doc::nil(),
-            Self::Recovery(recovery) => *recovery,
+            Self::Recovery(recovery) => recovery.doc(),
+        }
+    }
+
+    #[must_use]
+    pub const fn is_visible(&self) -> bool {
+        match self {
+            Self::Source(_) => true,
+            Self::Recovery(recovery) => recovery.is_visible(),
         }
     }
 }
