@@ -2,8 +2,9 @@
   "private": true,
   "packageManager": "pnpm@11.9.0",
   "scripts": {
-    "predocs:dev": "node scripts/generate-docs.mjs && node scripts/ensure-docs-wasm.mjs",
-    "predocs:build": "node scripts/generate-docs.mjs && node scripts/ensure-docs-wasm.mjs",
+    "predocs:dev": "node scripts/generate-docs.mjs && node scripts/ensure-docs-wasm.mjs debug",
+    "predocs:build": "node scripts/generate-docs.mjs && node scripts/ensure-docs-wasm.mjs release",
+    "predocs:preview": "node scripts/ensure-docs-wasm.mjs release",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"

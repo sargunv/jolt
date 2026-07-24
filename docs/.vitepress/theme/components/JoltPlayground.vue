@@ -143,7 +143,6 @@ async function runFormat(
     }
   } catch (error) {
     if (generation === targetSession.formatGeneration) {
-      targetSession.output = "";
       targetSession.formatError =
         error instanceof Error ? error.message : String(error);
       targetSession.formatOk = false;

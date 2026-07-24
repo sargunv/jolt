@@ -6,9 +6,18 @@ const root = join(fileURLToPath(import.meta.url), "..", "..");
 const dest = join(root, "docs/.vitepress/theme/assets/jolt-plugin.wasm");
 const oldDest = join(root, "docs/public/jolt-plugin.wasm");
 
+const mode = process.argv[2];
+if (mode !== "release" && mode !== "debug") {
+  throw new Error(
+    "Usage: node scripts/ensure-docs-wasm.mjs <release|debug>",
+  );
+}
+
 const localCandidates = [
-  join(root, "target/wasm32-unknown-unknown/release/jolt_fmt_dprint.wasm"),
-  join(root, "target/wasm32-unknown-unknown/debug/jolt_fmt_dprint.wasm"),
+  join(
+    root,
+    `target/wasm32-unknown-unknown/${mode}/jolt_fmt_dprint.wasm`,
+  ),
   join(root, "plugin.wasm"),
 ];
 
@@ -42,5 +51,5 @@ if (await exists(dest)) {
 }
 
 throw new Error(
-  "No local Jolt WASM artifact found. Run `mise run build:dprint-plugin` before building the docs.",
+  `No local Jolt WASM artifact found for mode ${mode}. Run \`mise run build:dprint-plugin --mode ${mode}\` before building the docs.`,
 );

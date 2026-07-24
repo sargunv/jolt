@@ -49,12 +49,15 @@ run = "cargo machete"
 depends = ["build:jolt", "build:dprint-plugin"]
 
 [tasks."docs:dev"]
+depends = ["build:dprint-plugin --mode debug"]
 run = "pnpm docs:dev"
 
 [tasks."docs:build"]
+depends = ["build:dprint-plugin --mode release"]
 run = "pnpm docs:build"
 
 [tasks."docs:preview"]
+depends = ["build:dprint-plugin --mode release"]
 run = "pnpm docs:preview"
 
 [tasks."build:jolt"]
