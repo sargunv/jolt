@@ -136,12 +136,14 @@ fn source_braced_body_tail<'source>(
         let contents = doc_concat!(doc, [hard_line_before, body.doc]);
         let contents = doc_indent!(doc, contents);
         if close_is_visible {
-            doc_concat!(doc, [contents, doc.hard_line()])
+            let boundary = doc.hard_line_boundary();
+            doc_concat!(doc, [contents, boundary])
         } else {
             contents
         }
     } else if close_is_visible {
-        doc_concat!(doc, [body.doc, doc.hard_line()])
+        let boundary = doc.hard_line_boundary();
+        doc_concat!(doc, [body.doc, boundary])
     } else {
         body.doc
     };

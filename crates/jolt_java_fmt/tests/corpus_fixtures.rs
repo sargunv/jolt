@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
 use jolt_java_fmt::format_source_to_sink;
 use jolt_java_syntax::{
-    CompilationUnit, CompilationUnitItem, JavaSyntaxField, JavaSyntaxListPart,
-    parse_compilation_unit,
+    CompilationUnit, CompilationUnitItem, JavaSyntaxField, JavaSyntaxKind, JavaSyntaxListPart,
+    JavaSyntaxView, parse_compilation_unit,
 };
 use jolt_test_support::{
     StringSink, collect_java_files, diagnostic_inventory, read_to_string,
@@ -144,21 +144,40 @@ fn deeply_nested_generic_recovery_formats_without_panicking_or_losing_following_
     let malformed_leaf = format!("+ @A(({ty}) value) Leaf");
     let malformed = nested_type(129, &malformed_leaf);
 
-    for (ty, diagnostics) in [
-        (nested_type(128, "Leaf"), Some(0)),
-        (nested_type(129, "? extends Leaf"), Some(1)),
-        (ty, Some(1)),
-        (alternating, Some(1)),
+    for (ty, expected_diagnostics) in [
+        (nested_type(128, "Leaf"), Some((0, None))),
+        (
+            nested_type(129, "? extends Leaf"),
+            Some((1, Some("java.parse.excessive_type_nesting"))),
+        ),
+        (ty, Some((1, Some("java.parse.excessive_type_nesting")))),
+        (
+            alternating,
+            Some((1, Some("java.parse.excessive_syntax_nesting"))),
+        ),
         (malformed, None),
     ] {
         let source = format!("class C {{ {ty} value; int following; }} class D {{}}");
         let parse = parse_compilation_unit(&source);
-        if let Some(diagnostics) = diagnostics {
-            assert_eq!(parse.diagnostics().len(), diagnostics);
+        if let Some((count, code)) = expected_diagnostics {
+            assert_eq!(parse.diagnostics().len(), count);
+            if let Some(code) = code {
+                assert!(
+                    parse.diagnostics().iter().all(|diagnostic| diagnostic.code
+                        == jolt_diagnostics::DiagnosticCodeId::new(code)),
+                    "unexpected generic-depth diagnostics: {:#?}",
+                    parse.diagnostics()
+                );
+            }
         }
         let syntax = parse.syntax().expect("represented input");
         assert_eq!(syntax.source_text(), source);
         assert_structured_top_level_class(syntax, "D");
+        assert_structured_node_containing(
+            syntax,
+            JavaSyntaxKind::FieldDeclaration,
+            "int following;",
+        );
         let formatted = format_source(&source, FormatOptions::default())
             .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
         assert!(formatted.contains("int following;"));
@@ -167,6 +186,16 @@ fn deeply_nested_generic_recovery_formats_without_panicking_or_losing_following_
         let formatted_syntax = reparsed.syntax().expect("represented formatted output");
         assert_eq!(formatted_syntax.source_text(), formatted);
         assert_structured_top_level_class(formatted_syntax, "D");
+        assert_structured_node_containing(
+            formatted_syntax,
+            JavaSyntaxKind::FieldDeclaration,
+            "int following;",
+        );
+        assert_eq!(
+            format_source(&formatted, FormatOptions::default())
+                .expect("second format must complete"),
+            formatted
+        );
     }
 }
 
@@ -231,10 +260,23 @@ fn deeply_nested_value_recovery_formats_without_panicking_or_losing_following_sy
         let parse = parse_compilation_unit(&source);
         if let Some(diagnostics) = diagnostics {
             assert_eq!(parse.diagnostics().len(), diagnostics);
+            assert!(
+                parse.diagnostics().iter().all(|diagnostic| diagnostic.code
+                    == jolt_diagnostics::DiagnosticCodeId::new(
+                        "java.parse.excessive_syntax_nesting"
+                    )),
+                "unexpected value-depth diagnostics: {:#?}",
+                parse.diagnostics()
+            );
         }
         let syntax = parse.syntax().expect("represented input");
         assert_eq!(syntax.source_text(), source);
         assert_structured_top_level_class(syntax, "D");
+        assert_structured_node_containing(
+            syntax,
+            JavaSyntaxKind::FieldDeclaration,
+            "int following;",
+        );
         let formatted = format_source(&source, FormatOptions::default())
             .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
         assert!(formatted.contains("int following;"));
@@ -243,6 +285,16 @@ fn deeply_nested_value_recovery_formats_without_panicking_or_losing_following_sy
         let formatted_syntax = reparsed.syntax().expect("represented formatted output");
         assert_eq!(formatted_syntax.source_text(), formatted);
         assert_structured_top_level_class(formatted_syntax, "D");
+        assert_structured_node_containing(
+            formatted_syntax,
+            JavaSyntaxKind::FieldDeclaration,
+            "int following;",
+        );
+        assert_eq!(
+            format_source(&formatted, FormatOptions::default())
+                .expect("second format must complete"),
+            formatted
+        );
     }
 }
 
@@ -335,6 +387,11 @@ fn deeply_nested_structural_recovery_formats_without_panicking_or_losing_followi
         let syntax = parse.syntax().expect("represented input");
         assert_eq!(syntax.source_text(), source);
         assert_structured_top_level_class(syntax, "D");
+        assert_structured_node_containing(
+            syntax,
+            JavaSyntaxKind::FieldDeclaration,
+            "int following;",
+        );
         let formatted = format_source(&source, FormatOptions::default())
             .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
         assert!(formatted.contains("int following;"));
@@ -344,6 +401,11 @@ fn deeply_nested_structural_recovery_formats_without_panicking_or_losing_followi
         let formatted_syntax = reparsed.syntax().expect("represented formatted output");
         assert_eq!(formatted_syntax.source_text(), formatted);
         assert_structured_top_level_class(formatted_syntax, "D");
+        assert_structured_node_containing(
+            formatted_syntax,
+            JavaSyntaxKind::FieldDeclaration,
+            "int following;",
+        );
         assert_eq!(
             format_source(&formatted, FormatOptions::default())
                 .expect("second format must complete"),
@@ -428,6 +490,27 @@ fn assert_structured_top_level_class(unit: CompilationUnit<'_>, expected_name: &
                 )
         )
     }));
+}
+
+fn assert_structured_node_containing(
+    unit: CompilationUnit<'_>,
+    expected_kind: JavaSyntaxKind,
+    expected_source: &str,
+) {
+    let root = unit.syntax_node().expect("compilation unit has a root");
+    let mut nodes = vec![root];
+    while let Some(node) = nodes.pop() {
+        let range = node.text_range();
+        let node_source = &node.source()[range.start().get()..range.end().get()];
+        if node.kind() == expected_kind
+            && !node.is_directly_malformed()
+            && node_source.contains(expected_source)
+        {
+            return;
+        }
+        nodes.extend(node.children());
+    }
+    panic!("missing structured {expected_kind:?} containing {expected_source:?}");
 }
 
 fn fixture_root(suite: &str) -> PathBuf {

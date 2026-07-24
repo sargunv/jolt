@@ -120,5 +120,10 @@ enum Values {
   B,
 }
 
+public
+// Between two modifier tokens.
+static class LeadingModifierComment {
+}
+
 diagnostics:
 (none)

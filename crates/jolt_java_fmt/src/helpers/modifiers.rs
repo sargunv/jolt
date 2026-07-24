@@ -2,8 +2,9 @@ use jolt_fmt_ir::{Doc, DocBuilder, LayoutDoc};
 use jolt_java_syntax::{JavaSyntaxKind, JavaSyntaxToken, NonSealedModifier};
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_token, format_token_after_relocated_leading_comments,
-    token_has_comments, trailing_comments_force_line,
+    LeadingTrivia, TrailingTrivia, comment_forces_line, format_token,
+    format_token_after_relocated_leading_comments, token_has_comments,
+    trailing_comments_force_line,
 };
 use crate::helpers::recovery::format_required_field;
 
@@ -34,6 +35,20 @@ impl ModifierEntry<'_> {
             Self::NonSealed(modifier) => modifier
                 .last_token()
                 .is_some_and(|token| trailing_comments_force_line(&token)),
+            Self::Malformed(..) => false,
+        }
+    }
+
+    fn leading_comments_force_line(&self) -> bool {
+        match self {
+            Self::Token(token) | Self::Sealed(token) => token
+                .leading_comments()
+                .any(|comment| comment_forces_line(&comment)),
+            Self::NonSealed(modifier) => modifier.first_token().is_some_and(|token| {
+                token
+                    .leading_comments()
+                    .any(|comment| comment_forces_line(&comment))
+            }),
             Self::Malformed(..) => false,
         }
     }
@@ -101,12 +116,13 @@ fn modifier_docs<'source>(
             let entry_is_structured = entry.is_structured();
             let entry_is_visible = entry.is_visible();
             let entry_forces_line = entry.trailing_comments_force_line();
+            let entry_leading_forces_line = entry.leading_comments_force_line();
             if entry_is_visible
                 && visible
                 && previous_is_structured
                 && (entry_is_structured || previous_forces_line)
             {
-                let separator = if previous_forces_line {
+                let separator = if previous_forces_line || entry_leading_forces_line {
                     docs.hard_line()
                 } else {
                     docs.space()

@@ -77,3 +77,7 @@ enum Values {
   @Deprecated A,
   B,
 }
+
+public
+// Between two modifier tokens.
+static class LeadingModifierComment {}

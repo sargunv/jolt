@@ -509,6 +509,27 @@ impl<'source> DocBuilder<'source> {
         }))
     }
 
+    /// Uses normal group line spacing unless preceding content already ended
+    /// the line.
+    #[must_use]
+    pub fn line_boundary(&mut self) -> Doc<'source> {
+        self.push_node(DocNode::Line(Line {
+            mode: LineMode::Boundary,
+            flat: FlatLine::Space,
+            indent_delta: 0,
+        }))
+    }
+
+    /// Ensures a hard line break unless preceding content already ended one.
+    #[must_use]
+    pub fn hard_line_boundary(&mut self) -> Doc<'source> {
+        self.push_node(DocNode::Line(Line {
+            mode: LineMode::HardBoundary,
+            flat: FlatLine::Empty,
+            indent_delta: 0,
+        }))
+    }
+
     #[must_use]
     pub fn empty_line(&mut self) -> Doc<'source> {
         self.push_node(DocNode::Line(Line {
@@ -822,6 +843,8 @@ pub(crate) enum LineMode {
     Soft,
     SoftOrSpace,
     Hard,
+    Boundary,
+    HardBoundary,
     Empty,
 }
 

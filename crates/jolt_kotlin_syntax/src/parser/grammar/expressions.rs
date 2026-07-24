@@ -1,6 +1,7 @@
 use jolt_syntax::CompletedMarker;
 
 use crate::KotlinSyntaxKind as K;
+use crate::parser::source::{TokenBuffer, TokenCursor};
 
 use super::{Parser, StopSet};
 
@@ -17,6 +18,51 @@ use self::predicates::{
     expression_start_kind, is_assignment_operator, is_binary_operator, is_expression_continuation,
     is_literal_kind, is_unary_operator,
 };
+
+fn deferred_expression_stop(
+    buffer: &mut TokenBuffer<'_>,
+    mut cursor: TokenCursor,
+    stops: StopSet<'_>,
+) -> Option<usize> {
+    let (mut parens, mut brackets, mut braces, mut long_templates) =
+        (0usize, 0usize, 0usize, 0usize);
+    let mut deferred = None;
+    loop {
+        let current = cursor.kind(buffer);
+        let outside = parens == 0 && brackets == 0 && braces == 0 && long_templates == 0;
+        if current == K::Eof
+            || current == K::RParen && parens == 0
+            || current == K::RBracket && brackets == 0
+            || current == K::RBrace && braces == 0
+            || current == K::LongTemplateEntryEnd && long_templates == 0
+            || matches!(current, K::Semicolon | K::DoubleSemicolon)
+        {
+            return deferred;
+        }
+        if outside && stops.contains(current, cursor.position()) {
+            return None;
+        }
+        if !outside && stops.contains(current, cursor.position()) && deferred.is_none() {
+            deferred = Some(cursor.position());
+        }
+
+        match current {
+            K::LParen => parens += 1,
+            K::RParen => parens -= 1,
+            K::LBracket => brackets += 1,
+            K::RBracket => brackets -= 1,
+            K::LBrace => braces += 1,
+            K::RBrace => braces -= 1,
+            K::LongTemplateEntryStart => long_templates += 1,
+            K::LongTemplateEntryEnd => long_templates -= 1,
+            _ => {}
+        }
+        cursor.bump(buffer);
+        if parens == 0 && brackets == 0 && braces == 0 && long_templates == 0 {
+            deferred = None;
+        }
+    }
+}
 
 impl Parser<'_> {
     pub(super) fn parse_expression_until<'a>(&mut self, stops: impl Into<StopSet<'a>>) {
@@ -175,6 +221,8 @@ impl Parser<'_> {
     }
 
     fn parse_excessive_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+        let cursor = self.fork_cursor();
+        let deferred_stop = deferred_expression_stop(&mut self.buffer, cursor, stops);
         let expression = self.start();
         let diagnostic = self.pending_excessive_syntax_nesting();
         let (mut parens, mut brackets, mut braces, mut long_templates) =
@@ -184,7 +232,8 @@ impl Parser<'_> {
         loop {
             let current = self.current_kind();
             let outside = parens == 0 && brackets == 0 && braces == 0 && long_templates == 0;
-            if current == K::Eof
+            if deferred_stop == Some(self.position())
+                || current == K::Eof
                 || current == K::RParen && parens == 0
                 || current == K::RBracket && brackets == 0
                 || current == K::RBrace && braces == 0

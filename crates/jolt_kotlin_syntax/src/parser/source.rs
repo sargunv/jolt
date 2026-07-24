@@ -40,14 +40,25 @@ impl<'source> Parser<'source> {
         &mut self,
         parse: impl FnOnce(&mut Self) -> T,
     ) -> Option<T> {
-        if self.syntax_nesting_depth >= MAX_RECURSIVE_PARSE_OWNERS {
+        if !self.enter_syntax_nesting() {
             return None;
         }
-
-        self.syntax_nesting_depth += 1;
         let parsed = parse(self);
-        self.syntax_nesting_depth -= 1;
+        self.leave_syntax_nesting();
         Some(parsed)
+    }
+
+    pub(super) fn enter_syntax_nesting(&mut self) -> bool {
+        if self.syntax_nesting_depth >= MAX_RECURSIVE_PARSE_OWNERS {
+            return false;
+        }
+        self.syntax_nesting_depth += 1;
+        true
+    }
+
+    pub(super) fn leave_syntax_nesting(&mut self) {
+        debug_assert!(self.syntax_nesting_depth > 0);
+        self.syntax_nesting_depth -= 1;
     }
 
     pub(super) fn pending_excessive_syntax_nesting(&mut self) -> PendingDiagnostic {
