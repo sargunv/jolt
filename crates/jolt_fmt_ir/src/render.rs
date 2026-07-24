@@ -206,6 +206,7 @@ struct Renderer<'arena, 'proof, 'source, S> {
     column: TextWidth,
     indent_levels: i32,
     pending_indent: u32,
+    line_pending: bool,
     horizontal_whitespace: HorizontalWhitespace,
     group_stack: Vec<Mode>,
     fit_group_stack: Vec<Mode>,
@@ -229,6 +230,7 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
             column: TextWidth::ZERO,
             indent_levels: 0,
             pending_indent: 0,
+            line_pending: false,
             horizontal_whitespace: HorizontalWhitespace::None,
             group_stack: Vec::new(),
             fit_group_stack: Vec::new(),
@@ -250,6 +252,11 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
                 }
                 RenderCommand::EndIndent(levels) => {
                     self.indent_levels -= i32::from(levels);
+                    if self.pending_indent > 0 {
+                        let (indent, width) = self.pending_newline_indent(0);
+                        self.pending_indent = indent;
+                        self.column = width;
+                    }
                 }
                 RenderCommand::EndGroup => {
                     self.group_stack.pop();
@@ -377,11 +384,17 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
 
     fn render_line(&mut self, line: &Line, mode: Mode) {
         match (mode, line.mode) {
-            (Mode::Flat, LineMode::Soft | LineMode::SoftOrSpace) => {
+            (_, LineMode::Boundary | LineMode::HardBoundary) if self.line_pending => {
+                self.horizontal_whitespace = HorizontalWhitespace::None;
+                let (indent, width) = self.pending_newline_indent(line.indent_delta);
+                self.pending_indent = indent;
+                self.column = width;
+            }
+            (Mode::Flat, LineMode::Soft | LineMode::SoftOrSpace | LineMode::Boundary) => {
                 self.write_flat_line(&line.flat);
             }
-            (_, LineMode::Hard | LineMode::Empty)
-            | (Mode::Break, LineMode::Soft | LineMode::SoftOrSpace) => {
+            (_, LineMode::Hard | LineMode::HardBoundary | LineMode::Empty)
+            | (Mode::Break, LineMode::Soft | LineMode::SoftOrSpace | LineMode::Boundary) => {
                 let count = if line.mode == LineMode::Empty { 2 } else { 1 };
                 self.write_newlines(line.indent_delta, count);
             }
@@ -404,7 +417,8 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
     fn write_multiline_literal(&mut self, literal: &DocumentText<'_>) {
         self.write_str(&literal.text);
         self.column = literal.final_width();
-        if matches!(literal.text.as_bytes().last(), Some(b'\n' | b'\r')) {
+        self.line_pending = matches!(literal.text.as_bytes().last(), Some(b'\n' | b'\r'));
+        if self.line_pending {
             self.horizontal_whitespace = HorizontalWhitespace::LiteralLineEnding;
         }
     }
@@ -422,6 +436,7 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
 
     fn write_newlines(&mut self, indent_delta: i16, count: u32) {
         self.pending_indent = 0;
+        self.line_pending = true;
         let literal_ended_line =
             self.horizontal_whitespace == HorizontalWhitespace::LiteralLineEnding;
         self.horizontal_whitespace = HorizontalWhitespace::None;
@@ -464,6 +479,7 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         self.flush_pending_indent();
         self.flush_pending_spaces();
         self.write_sink_str(text);
+        self.line_pending = false;
     }
 
     fn write_sink_str(&mut self, text: &str) {
@@ -718,8 +734,12 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
 
     fn fit_line(&mut self, line: &Line, mode: Mode) -> FitResult {
         match (mode, line.mode) {
-            (Mode::Flat, LineMode::Soft | LineMode::SoftOrSpace) => self.fit_flat_line(&line.flat),
-            (Mode::Flat, LineMode::Hard | LineMode::Empty) => FitResult::No,
+            (Mode::Flat, LineMode::Soft | LineMode::SoftOrSpace | LineMode::Boundary) => {
+                self.fit_flat_line(&line.flat)
+            }
+            (Mode::Flat, LineMode::Hard | LineMode::HardBoundary | LineMode::Empty) => {
+                FitResult::No
+            }
             (Mode::Break, _) => {
                 if self.column <= self.line_width {
                     FitResult::Done
@@ -760,6 +780,9 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
     }
 
     fn text_width_result(&mut self, text: &str, width: TextWidth) -> FitResult {
+        if text.is_empty() {
+            return FitResult::Continue;
+        }
         if self.pending_indent {
             self.horizontal_whitespace = HorizontalWhitespace::None;
             self.pending_indent = false;
@@ -1816,6 +1839,24 @@ mod tests {
 
             assert_eq!(sink.0, expected);
         }
+    }
+
+    // A language fixture cannot isolate lazy renderer indentation after a
+    // source literal supplies the line ending itself.
+    #[test]
+    fn line_boundary_restores_indent_after_literal_line_ending() {
+        let mut builder = DocBuilder::new();
+        let literal = builder.literal_text("raw\n");
+        let boundary = builder.hard_line_boundary();
+        let next = builder.text("next");
+        let contents = builder.concat([literal, boundary, next]);
+        let doc = builder.indent(contents);
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        render_to(&arena, doc, options(), &mut sink).expect("document renders");
+
+        assert_eq!(sink.0, "raw\n    next");
     }
 
     #[test]

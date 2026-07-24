@@ -100,7 +100,7 @@ pub(crate) fn braced_comma_list_with_trailing_separator<'source>(
         [
             format_open_delimiter(doc, open, LeadingTrivia::Preserve),
             doc_indent!(doc, doc_concat!(doc, [open_spacing, items_doc])),
-            doc.line(),
+            doc.line_boundary(),
             format_close_delimiter(doc, close),
         ]
     );
@@ -338,7 +338,9 @@ fn trailing_comma_separator<'source>(
                 TrailingTrivia::BeforeLineBreak,
             ),
             if is_last {
-                if has_trailing_comments && !force_line {
+                if force_line {
+                    doc.hard_line()
+                } else if has_trailing_comments {
                     doc.space()
                 } else {
                     Doc::nil()

@@ -144,23 +144,27 @@ fn deeply_nested_generic_recovery_formats_without_panicking_or_losing_following_
     let malformed_leaf = format!("+ @A(({ty}) value) Leaf");
     let malformed = nested_type(129, &malformed_leaf);
 
-    for (ty, diagnostics) in [
-        (nested_type(128, "Leaf"), Some(0)),
-        (nested_type(129, "? extends Leaf"), Some(1)),
-        (ty, Some(1)),
-        (alternating, Some(1)),
+    for (ty, expected_diagnostics) in [
+        (nested_type(128, "Leaf"), Some((0, None))),
+        (
+            nested_type(129, "? extends Leaf"),
+            Some((1, Some("java.parse.excessive_type_nesting"))),
+        ),
+        (ty, Some((1, Some("java.parse.excessive_type_nesting")))),
+        (
+            alternating,
+            Some((1, Some("java.parse.excessive_syntax_nesting"))),
+        ),
         (malformed, None),
     ] {
         let source = format!("class C {{ {ty} value; int following; }} class D {{}}");
         let parse = parse_compilation_unit(&source);
-        if let Some(diagnostics) = diagnostics {
-            assert_eq!(parse.diagnostics().len(), diagnostics);
-            if diagnostics > 0 {
+        if let Some((count, code)) = expected_diagnostics {
+            assert_eq!(parse.diagnostics().len(), count);
+            if let Some(code) = code {
                 assert!(
                     parse.diagnostics().iter().all(|diagnostic| diagnostic.code
-                        == jolt_diagnostics::DiagnosticCodeId::new(
-                            "java.parse.excessive_type_nesting"
-                        )),
+                        == jolt_diagnostics::DiagnosticCodeId::new(code)),
                     "unexpected generic-depth diagnostics: {:#?}",
                     parse.diagnostics()
                 );

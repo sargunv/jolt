@@ -7,6 +7,7 @@ pub(in crate::parser::grammar) fn over_depth_type_end(
     mut cursor: TokenCursor,
 ) -> usize {
     let (mut angles, mut parens, mut braces, mut brackets) = (0usize, 0usize, 0usize, 0usize);
+    let mut deferred_boundary = None;
     loop {
         let kind = cursor.kind(buffer);
         let outside_delimiters = parens == 0 && braces == 0 && brackets == 0;
@@ -30,7 +31,14 @@ pub(in crate::parser::grammar) fn over_depth_type_end(
                             | JavaSyntaxKind::Bar
                     ))))
         {
-            return cursor.position();
+            return deferred_boundary.unwrap_or_else(|| cursor.position());
+        }
+        if angles == 0
+            && !outside_delimiters
+            && matches!(kind, JavaSyntaxKind::Comma | JavaSyntaxKind::Gt)
+            && deferred_boundary.is_none()
+        {
+            deferred_boundary = Some(cursor.position());
         }
 
         match kind {
@@ -45,6 +53,9 @@ pub(in crate::parser::grammar) fn over_depth_type_end(
             _ => {}
         }
         cursor.bump(buffer);
+        if angles == 0 && parens == 0 && braces == 0 && brackets == 0 {
+            deferred_boundary = None;
+        }
     }
 }
 
