@@ -42,6 +42,7 @@ def main() -> None:
     run(
         instrumented_jolt,
         "fmt",
+        "--format-with-errors",
         *training_paths,
         env={"LLVM_PROFILE_FILE": (PROFILES / "jolt-%m-%p.profraw").as_posix()},
     )
