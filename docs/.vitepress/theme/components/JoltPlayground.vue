@@ -1,26 +1,94 @@
 <script setup lang="ts">
+import { java } from "@codemirror/lang-java";
+import { LanguageSupport } from "@codemirror/language";
 import type { Diagnostic as LintDiagnostic } from "@codemirror/lint";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import SourceEditor from "./SourceEditor.vue";
 import { useJoltFormatter } from "../composables/useJoltFormatter";
+import { kotlinLanguage } from "../kotlinLanguage";
 import {
   PLAYGROUND_DEFAULT_CONFIG,
   type PlaygroundFormatConfig,
 } from "../playgroundConfig";
-import { PLAYGROUND_SAMPLE_JAVA } from "../playgroundSample";
+import {
+  PLAYGROUND_SAMPLE_JAVA,
+  PLAYGROUND_SAMPLE_KOTLIN,
+} from "../playgroundSample";
 import {
   formatErrorSummary,
   parseFormatError,
   toLintDiagnostics,
 } from "../parseFormatError";
 
-const input = ref(PLAYGROUND_SAMPLE_JAVA);
-const output = ref("");
-const formatError = ref<string | null>(null);
-const formatOk = ref(false);
+type PlaygroundLanguage = "java" | "kotlin";
+
+type PlaygroundLanguageOption = {
+  id: PlaygroundLanguage;
+  label: string;
+  filePath: string;
+  editorLanguage: LanguageSupport;
+};
+
+type PlaygroundSession = {
+  input: string;
+  output: string;
+  formatError: string | null;
+  formatOk: boolean;
+  formatGeneration: number;
+};
+
+const PLAYGROUND_LANGUAGES: readonly PlaygroundLanguageOption[] = [
+  {
+    id: "java",
+    label: "Java",
+    filePath: "Example.java",
+    editorLanguage: java(),
+  },
+  {
+    id: "kotlin",
+    label: "Kotlin",
+    filePath: "Example.kt",
+    editorLanguage: new LanguageSupport(kotlinLanguage),
+  },
+];
+
+const languageById = Object.fromEntries(
+  PLAYGROUND_LANGUAGES.map((language) => [language.id, language]),
+) as Record<PlaygroundLanguage, PlaygroundLanguageOption>;
+
+const sessions = reactive<Record<PlaygroundLanguage, PlaygroundSession>>({
+  java: {
+    input: PLAYGROUND_SAMPLE_JAVA,
+    output: "",
+    formatError: null,
+    formatOk: false,
+    formatGeneration: 0,
+  },
+  kotlin: {
+    input: PLAYGROUND_SAMPLE_KOTLIN,
+    output: "",
+    formatError: null,
+    formatOk: false,
+    formatGeneration: 0,
+  },
+});
+
+const activeLanguage = ref<PlaygroundLanguage>("java");
 const config = ref<PlaygroundFormatConfig>({ ...PLAYGROUND_DEFAULT_CONFIG });
 
 const { loading, loadError, ensureReady, formatSource } = useJoltFormatter();
+
+const language = computed(() => languageById[activeLanguage.value]);
+const session = computed(() => sessions[activeLanguage.value]);
+const input = computed({
+  get: () => session.value.input,
+  set: (value: string) => {
+    session.value.input = value;
+  },
+});
+const output = computed(() => session.value.output);
+const formatError = computed(() => session.value.formatError);
+const formatOk = computed(() => session.value.formatOk);
 
 const inputLintDiagnostics = computed<LintDiagnostic[]>(() => {
   if (!formatError.value) {
@@ -53,34 +121,42 @@ const formatStatusTitle = computed(() => {
   return undefined;
 });
 
-let formatGeneration = 0;
-
-async function runFormat(source: string, formatConfig: PlaygroundFormatConfig) {
-  const generation = ++formatGeneration;
-  formatError.value = null;
+async function runFormat(
+  languageId: PlaygroundLanguage,
+  source: string,
+  formatConfig: PlaygroundFormatConfig,
+) {
+  const targetSession = sessions[languageId];
+  const generation = ++targetSession.formatGeneration;
+  targetSession.formatError = null;
+  targetSession.formatOk = false;
 
   try {
-    const result = await formatSource("Example.java", source, formatConfig);
-    if (generation === formatGeneration) {
-      output.value = result;
-      formatOk.value = true;
+    const result = await formatSource(
+      languageById[languageId].filePath,
+      source,
+      formatConfig,
+    );
+    if (generation === targetSession.formatGeneration) {
+      targetSession.output = result;
+      targetSession.formatOk = true;
     }
   } catch (error) {
-    if (generation === formatGeneration) {
-      formatError.value =
+    if (generation === targetSession.formatGeneration) {
+      targetSession.formatError =
         error instanceof Error ? error.message : String(error);
-      formatOk.value = false;
+      targetSession.formatOk = false;
     }
   }
 }
 
 watch(
-  [input, config],
-  ([value, formatConfig]) => {
+  [activeLanguage, input, config],
+  ([languageId, value, formatConfig]) => {
     if (loading.value || loadError.value) {
       return;
     }
-    void runFormat(value, formatConfig);
+    void runFormat(languageId, value, formatConfig);
   },
   { deep: true },
 );
@@ -88,7 +164,7 @@ watch(
 onMounted(async () => {
   try {
     await ensureReady();
-    await runFormat(input.value, config.value);
+    await runFormat(activeLanguage.value, input.value, config.value);
   } catch {
     // loadError is surfaced in the template
   }
@@ -114,13 +190,36 @@ onMounted(async () => {
               aria-hidden="true"
             />
           </span>
+
+          <div
+            class="jolt-playground-languages"
+            role="group"
+            aria-label="Playground language"
+          >
+            <button
+              v-for="option in PLAYGROUND_LANGUAGES"
+              :key="option.id"
+              type="button"
+              class="jolt-playground-language"
+              :class="{
+                'jolt-playground-language--active':
+                  option.id === activeLanguage,
+              }"
+              :aria-pressed="option.id === activeLanguage"
+              @click="activeLanguage = option.id"
+            >
+              {{ option.label }}
+            </button>
+          </div>
         </div>
         <div class="jolt-playground-editor">
           <div v-if="loading" class="jolt-playground-loading">Loading…</div>
           <SourceEditor
             v-else
+            :key="`input-${activeLanguage}`"
             v-model="input"
-            accessible-name="Source input"
+            :accessible-name="`${language.label} source input`"
+            :language="language.editorLanguage"
             :line-width="config.lineWidth"
             :show-ruler="false"
             :lint-diagnostics="inputLintDiagnostics"
@@ -159,7 +258,9 @@ onMounted(async () => {
               </select>
             </label>
 
-            <label class="jolt-playground-control jolt-playground-control--checkbox">
+            <label
+              class="jolt-playground-control jolt-playground-control--checkbox"
+            >
               <input v-model="config.useTabs" type="checkbox" />
               <span class="jolt-playground-control-label">Tabs</span>
             </label>
@@ -169,8 +270,10 @@ onMounted(async () => {
           <div v-if="loading" class="jolt-playground-loading">Loading…</div>
           <SourceEditor
             v-else
+            :key="`output-${activeLanguage}`"
             :model-value="output"
-            accessible-name="Formatted output"
+            :accessible-name="`Formatted ${language.label} output`"
+            :language="language.editorLanguage"
             :line-width="config.lineWidth"
             show-ruler
             readonly
@@ -190,6 +293,45 @@ onMounted(async () => {
   min-height: 0;
   overflow: hidden;
   width: 100%;
+}
+
+.jolt-playground-languages {
+  display: inline-flex;
+  border: 1px solid var(--jz-line);
+}
+
+.jolt-playground-language {
+  height: 22px;
+  border: 0;
+  border-left: 1px solid var(--jz-line);
+  padding: 0 10px;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--jz-ink-2);
+  background: var(--jz-paper);
+  cursor: pointer;
+}
+
+.jolt-playground-language:first-child {
+  border-left: 0;
+}
+
+.jolt-playground-language:hover {
+  color: var(--jz-ink);
+}
+
+.jolt-playground-language:focus-visible {
+  position: relative;
+  outline: 2px solid var(--jz-amber);
+  outline-offset: 1px;
+  z-index: 1;
+}
+
+.jolt-playground-language--active,
+.jolt-playground-language--active:hover {
+  color: var(--jz-paper);
+  background: var(--jz-ink);
 }
 
 .jolt-playground-controls {
