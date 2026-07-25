@@ -2,7 +2,7 @@
 //!
 //! The corpus only ever compares a fixture against real formatter output, so it can
 //! show that today's output is accepted but never that an unauthorized tree edit would
-//! be caught. These cases exercise the fingerplate contract directly: authorized
+//! be caught. These cases exercise the fingerprint contract directly: authorized
 //! normalizations must compare equal, and edits outside that vocabulary must not.
 
 use jolt_java_syntax::{JavaSyntaxView, parse_compilation_unit};
@@ -131,5 +131,16 @@ fn relocating_method_reference_type_arguments_is_rejected() {
     assert_ne!(
         fingerprint(&in_method("var r = ArrayList<String>::new;")),
         fingerprint(&in_method("var r = ArrayList::<String>new;")),
+    );
+}
+
+#[test]
+fn reordering_parameter_modifiers_is_rejected() {
+    // Unlike a declaration `ModifierList`, a `ParameterModifierList` admits only `final`
+    // plus annotations, so there is no keyword order to canonicalize and the formatter
+    // preserves the source spelling. Both orders appear in the corpus.
+    assert_ne!(
+        fingerprint("class T { void n(final @A int x) {} }"),
+        fingerprint("class T { void n(@A final int x) {} }"),
     );
 }

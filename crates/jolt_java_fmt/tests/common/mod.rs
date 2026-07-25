@@ -24,10 +24,10 @@ pub(crate) const STRUCTURE_POLICY: StructurePolicy<JavaSyntaxKind> = StructurePo
         JavaSyntaxKind::ModuleDirectiveList,
         JavaSyntaxKind::RequiresModifierList,
     ],
-    unordered_keywords: &[
-        JavaSyntaxKind::ModifierList,
-        JavaSyntaxKind::ParameterModifierList,
-    ],
+    // Only declaration modifiers are canonicalized. A `ParameterModifierList` admits
+    // just `final` plus annotations, so it has no keyword order to canonicalize, and the
+    // formatter preserves whichever spelling the source used.
+    unordered_keywords: &[JavaSyntaxKind::ModifierList],
     reorderable_children: &[JavaSyntaxKind::ImportDeclaration],
     // `BlockStatementList` and `BlockStatement` are the list plumbing that brace
     // promotion interposes; neither owns a brace, so eliding them cannot hide a lost
