@@ -1,0 +1,68 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class A {} // trailing
+class B {}
+
+class C {} // trailing
+
+class D {}
+
+class E {} /* block does not end the line */
+class F {}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "A" @ 6..7 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 8..9
+        ClassBodyMemberList
+        RBrace "}" @ 9..10 trailing=[Whitespace " ", LineComment "// trailing"]
+    ClassDeclaration
+      ClassKw "class" @ 23..28 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "B" @ 29..30 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 31..32
+        ClassBodyMemberList
+        RBrace "}" @ 32..33
+    ClassDeclaration
+      ClassKw "class" @ 35..40 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "C" @ 41..42 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 43..44
+        ClassBodyMemberList
+        RBrace "}" @ 44..45 trailing=[Whitespace " ", LineComment "// trailing"]
+    ClassDeclaration
+      ClassKw "class" @ 59..64 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "D" @ 65..66 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 67..68
+        ClassBodyMemberList
+        RBrace "}" @ 68..69
+    ClassDeclaration
+      ClassKw "class" @ 71..76 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "E" @ 77..78 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 79..80
+        ClassBodyMemberList
+        RBrace "}" @ 80..81 trailing=[Whitespace " ", BlockComment "/* block does not end the line */"]
+    ClassDeclaration
+      ClassKw "class" @ 116..121 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "F" @ 122..123 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 124..125
+        ClassBodyMemberList
+        RBrace "}" @ 125..126
+  Eof "" @ 127..127 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

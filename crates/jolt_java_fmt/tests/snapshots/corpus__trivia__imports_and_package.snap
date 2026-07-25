@@ -6,7 +6,6 @@ formatted:
 /* JOLT-TRIVIA:file-header */
 package com /* JOLT-TRIVIA:package-mid */.example.trivia; // JOLT-TRIVIA:package-tail
 
-
 // JOLT-TRIVIA:before-imports
 import java.util.List; /* JOLT-TRIVIA:list-import */
 
