@@ -116,6 +116,7 @@ KotlinFile
                         LambdaParameterList
                           LambdaParameterSeparatedList
                             LambdaParameter
+                              ModifierList
                               LambdaParameterBinding
                                 Name
                                   Identifier "value" @ 109..114
@@ -257,6 +258,7 @@ KotlinFile
                               LambdaParameterList
                                 LambdaParameterSeparatedList
                                   LambdaParameter
+                                    ModifierList
                                     LambdaParameterBinding
                                       Name
                                         Identifier "text" @ 306..310 trailing=[Whitespace " "]
@@ -345,6 +347,7 @@ KotlinFile
                         LambdaParameterList
                           LambdaParameterSeparatedList
                             LambdaParameter
+                              ModifierList
                               LambdaParameterBinding
                                 Name
                                   Identifier "transform" @ 507..516

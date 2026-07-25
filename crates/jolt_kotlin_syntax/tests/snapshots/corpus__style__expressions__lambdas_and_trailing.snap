@@ -106,6 +106,7 @@ KotlinFile
                         LambdaParameterList
                           LambdaParameterSeparatedList
                             LambdaParameter
+                              ModifierList
                               LambdaParameterBinding
                                 Name
                                   Identifier "item" @ 111..115 trailing=[Whitespace " "]

@@ -33,6 +33,7 @@ KotlinFile
                     LambdaParameterList
                       LambdaParameterSeparatedList
                         LambdaParameter
+                          ModifierList
                           LambdaParameterBinding
                             Name
                               Identifier "first" @ 15..20
@@ -40,6 +41,7 @@ KotlinFile
                         BogusLambdaParameter
                         Comma "," @ 35..36 trailing=[Whitespace " "]
                         LambdaParameter
+                          ModifierList
                           LambdaParameterBinding
                             Name
                               Identifier "second" @ 37..43 trailing=[Whitespace " "]
