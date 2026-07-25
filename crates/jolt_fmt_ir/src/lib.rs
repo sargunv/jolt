@@ -33,7 +33,7 @@ pub use lists::{CommaListItem, attach_comma_separator, comma_list, comma_list_pa
 pub use options::{FormatOptions, FormatSinkResult};
 pub use recovery::{
     FormatDelimiter, FormatField, FormatListPart, LayoutDoc, assemble_malformed_fragment,
-    format_optional_field, format_required_field,
+    format_malformed_core, format_optional_field, format_required_field,
 };
 pub use render::{RenderControl, RenderError, RenderSink};
 #[doc(hidden)]
