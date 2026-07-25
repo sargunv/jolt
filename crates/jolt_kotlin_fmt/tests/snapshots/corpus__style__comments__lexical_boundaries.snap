@@ -31,8 +31,12 @@ class CommentLexicalBoundaries {
     /**
      * **
      */
-    /* **/
-    /* ***/
+    /*
+     * *
+     */
+    /*
+     * **
+     */
     /* outer /* nested /** deeper */ nested */ outer */
   }
 

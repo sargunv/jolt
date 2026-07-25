@@ -1,21 +1,22 @@
-use jolt_fmt_ir::{
-    Doc, DocBuilder, format_comment_lines, format_star_block_comment,
-    format_token_doc as assemble_token_doc, is_empty_single_line_block_comment,
-    is_star_block_comment, preserved_block_comment_lines, preserved_comment_lines,
+//! Java-specific comment placement.
+//!
+//! Comment rendering and placement are shared in `jolt_fmt_ir::comments`. This
+//! module owns only the Java-specific placements: construct-relocated leading
+//! comments, removed-token salvage, and lexically ignored trivia.
+
+use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_java_syntax::{JavaComment, JavaSyntaxToken, RemovalClaim};
+
+pub(crate) use jolt_fmt_ir::{
+    InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line, comment_is_star_block,
+    delimiter_dangling_comments, format_comment, format_dangling_comments,
+    format_inline_trailing_comment_list, format_leading_comment_list, format_leading_comments,
+    format_removed_comments, format_separator_with_comments, format_token,
+    format_token_after_relocated_leading_comments, format_token_body as format_token_doc,
+    format_token_with_inline_leading_comments, format_trailing_comment,
+    format_trailing_comments_before_line_break, has_delimiter_dangling_comments,
+    token_has_comments, trailing_comments_force_line,
 };
-use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxToken, RemovalClaim};
-
-pub(crate) use jolt_fmt_ir::{LeadingTrivia, TrailingTrivia};
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum InlineLeadingTrivia {
-    AfterPreviousToken,
-    BeforeToken,
-}
-
-pub(crate) fn token_has_comments(token: &JavaSyntaxToken<'_>) -> bool {
-    !token.leading_comments().is_empty() || !token.trailing_comments().is_empty()
-}
 
 pub(crate) fn comments_from_tokens<'source>(
     tokens: impl IntoIterator<Item = JavaSyntaxToken<'source>>,
@@ -43,40 +44,6 @@ pub(crate) fn format_construct_leading_comments<'source>(
     )
 }
 
-pub(crate) fn format_leading_comment_list<'source>(
-    doc: &mut DocBuilder<'source>,
-    comments: impl IntoIterator<Item = JavaComment<'source>>,
-) -> Doc<'source> {
-    doc.concat_list(|docs| {
-        for comment in comments {
-            let comment = format_comment(docs, &comment);
-            docs.push(comment);
-            let hard_line = docs.hard_line();
-            docs.push(hard_line);
-        }
-    })
-}
-
-pub(crate) fn format_removed_comments<'source>(
-    doc: &mut DocBuilder<'source>,
-    comments: impl IntoIterator<Item = JavaComment<'source>>,
-) -> Option<Doc<'source>> {
-    let mut has_comments = false;
-    let docs = doc.concat_list(|docs| {
-        for comment in comments {
-            if has_comments {
-                let hard_line = docs.hard_line();
-                docs.push(hard_line);
-            }
-            let comment = format_comment(docs, &comment);
-            docs.push(comment);
-            has_comments = true;
-        }
-    });
-
-    has_comments.then_some(docs)
-}
-
 /// Removes a source token only when syntax issued the exact claim.
 ///
 /// A denied claim is expected for malformed syntax and preserves the original
@@ -93,137 +60,6 @@ pub(crate) fn format_token_removal<'source>(
     let comments =
         format_removed_comments(doc, comments_from_tokens([*token])).unwrap_or_else(Doc::nil);
     (doc.concat([removed, comments]), true)
-}
-
-pub(crate) fn format_leading_comments<'source>(
-    doc: &mut DocBuilder<'source>,
-    token: &JavaSyntaxToken<'source>,
-) -> Doc<'source> {
-    doc.concat_list(|docs| {
-        for comment in token.leading_comments() {
-            let comment = format_comment(docs, &comment);
-            docs.push(comment);
-            let hard_line = docs.hard_line();
-            docs.push(hard_line);
-        }
-    })
-}
-
-fn format_trailing_comments<'source>(
-    doc: &mut DocBuilder<'source>,
-    token: &JavaSyntaxToken<'source>,
-) -> Doc<'source> {
-    doc.concat_list(|docs| {
-        for comment in token.trailing_comments() {
-            let space = docs.space();
-            docs.push(space);
-            let comment_doc = format_trailing_comment(docs, &comment);
-            docs.push(comment_doc);
-            if comment_forces_line(&comment) {
-                let hard_line = docs.hard_line();
-                docs.push(hard_line);
-            }
-        }
-    })
-}
-
-pub(crate) fn format_trailing_comments_before_line_break<'source>(
-    doc: &mut DocBuilder<'source>,
-    token: &JavaSyntaxToken<'source>,
-) -> Doc<'source> {
-    let mut comments = token.trailing_comments().peekable();
-    doc.concat_list(|docs| {
-        while let Some(comment) = comments.next() {
-            let space = docs.space();
-            docs.push(space);
-            let comment_doc = format_trailing_comment(docs, &comment);
-            docs.push(comment_doc);
-            if comments.peek().is_some() && comment_forces_line(&comment) {
-                let hard_line = docs.hard_line();
-                docs.push(hard_line);
-            }
-        }
-    })
-}
-
-pub(crate) fn format_inline_trailing_comment_list<'source>(
-    doc: &mut DocBuilder<'source>,
-    comments: impl IntoIterator<Item = JavaComment<'source>>,
-) -> Doc<'source> {
-    doc.concat_list(|docs| {
-        for comment in comments {
-            let space = docs.space();
-            docs.push(space);
-            let comment = format_trailing_comment(docs, &comment);
-            docs.push(comment);
-        }
-    })
-}
-
-pub(crate) fn format_separator_with_comments<'source>(
-    doc: &mut DocBuilder<'source>,
-    token: &JavaSyntaxToken<'source>,
-    unforced_break: Doc<'source>,
-) -> Doc<'source> {
-    doc_concat!(
-        doc,
-        [
-            format_token(
-                doc,
-                token,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::BeforeLineBreak,
-            ),
-            if trailing_comments_force_line(token) {
-                doc.hard_line()
-            } else {
-                unforced_break
-            },
-        ]
-    )
-}
-
-pub(crate) fn format_dangling_comments<'source>(
-    doc: &mut DocBuilder<'source>,
-    comments: impl IntoIterator<Item = JavaComment<'source>>,
-) -> Doc<'source> {
-    doc.concat_list(|docs| {
-        for comment in comments {
-            if !docs.is_empty() {
-                let hard_line = docs.hard_line();
-                docs.push(hard_line);
-            }
-            let comment = format_comment(docs, &comment);
-            docs.push(comment);
-        }
-    })
-}
-
-pub(crate) fn has_delimiter_dangling_comments<'source>(
-    open: Option<&JavaSyntaxToken<'source>>,
-    close: Option<&JavaSyntaxToken<'source>>,
-) -> bool {
-    open.is_some_and(|token| !token.trailing_comments().is_empty())
-        || close.is_some_and(|token| !token.leading_comments().is_empty())
-}
-
-pub(crate) fn delimiter_dangling_comments<'source>(
-    open: Option<&JavaSyntaxToken<'source>>,
-    close: Option<&JavaSyntaxToken<'source>>,
-) -> impl Iterator<Item = JavaComment<'source>> {
-    open.into_iter()
-        .flat_map(JavaSyntaxToken::trailing_comments)
-        .chain(
-            close
-                .into_iter()
-                .flat_map(JavaSyntaxToken::leading_comments),
-        )
-}
-
-pub(crate) fn trailing_comments_force_line(token: &JavaSyntaxToken<'_>) -> bool {
-    token
-        .trailing_comments()
-        .any(|comment| comment_forces_line(&comment))
 }
 
 pub(crate) fn format_token_with_comments<'source>(
@@ -253,14 +89,6 @@ pub(crate) fn format_ignored_trivia<'source>(
     })
 }
 
-pub(crate) fn format_token_after_relocated_leading_comments<'source>(
-    doc: &mut DocBuilder<'source>,
-    token: &JavaSyntaxToken<'source>,
-    trailing: TrailingTrivia,
-) -> Doc<'source> {
-    format_token(doc, token, LeadingTrivia::SuppressAlreadyHandled, trailing)
-}
-
 pub(crate) fn format_token_before_relocated_trailing_comments<'source>(
     doc: &mut DocBuilder<'source>,
     token: &JavaSyntaxToken<'source>,
@@ -274,66 +102,6 @@ pub(crate) fn format_token_before_relocated_trailing_comments<'source>(
     )
 }
 
-pub(crate) fn format_token<'source>(
-    doc: &mut DocBuilder<'source>,
-    token: &JavaSyntaxToken<'source>,
-    leading: LeadingTrivia,
-    trailing: TrailingTrivia,
-) -> Doc<'source> {
-    let token_text = doc.source_token(token);
-    format_token_doc(doc, token, token_text, leading, trailing)
-}
-
-pub(crate) fn format_token_doc<'source>(
-    doc: &mut DocBuilder<'source>,
-    token: &JavaSyntaxToken<'source>,
-    token_doc: Doc<'source>,
-    leading: LeadingTrivia,
-    trailing: TrailingTrivia,
-) -> Doc<'source> {
-    assemble_token_doc(
-        doc,
-        token_doc,
-        leading,
-        trailing,
-        |doc| format_leading_comments(doc, token),
-        |doc| format_trailing_comments(doc, token),
-        |doc| format_trailing_comments_before_line_break(doc, token),
-        trailing_comments_force_line(token),
-        !token.trailing_comments().is_empty(),
-    )
-}
-
-pub(crate) fn format_token_with_inline_leading_comments<'source>(
-    doc: &mut DocBuilder<'source>,
-    token: &JavaSyntaxToken<'source>,
-    placement: InlineLeadingTrivia,
-    trailing: TrailingTrivia,
-) -> Doc<'source> {
-    let leading = token.leading_comments();
-    let leading = if leading.is_empty() {
-        Doc::nil()
-    } else {
-        let comments = doc.concat_list(|comments| {
-            for comment in leading {
-                if !comments.is_empty() {
-                    let space = comments.space();
-                    comments.push(space);
-                }
-                let comment = format_comment(comments, &comment);
-                comments.push(comment);
-            }
-        });
-        let space = doc.space();
-        match placement {
-            InlineLeadingTrivia::AfterPreviousToken => doc_concat!(doc, [space, comments]),
-            InlineLeadingTrivia::BeforeToken => doc_concat!(doc, [comments, space]),
-        }
-    };
-    let token = format_token_after_relocated_leading_comments(doc, token, trailing);
-    doc_concat!(doc, [leading, token])
-}
-
 pub(crate) fn format_token_after_construct_leading_comments<'source>(
     doc: &mut DocBuilder<'source>,
     token: &JavaSyntaxToken<'source>,
@@ -344,63 +112,4 @@ pub(crate) fn format_token_after_construct_leading_comments<'source>(
     } else {
         format_token_with_comments(doc, token)
     }
-}
-
-pub(crate) fn format_comment<'source>(
-    doc: &mut DocBuilder<'source>,
-    comment: &JavaComment<'source>,
-) -> Doc<'source> {
-    doc.source_trivia(comment.source_pieces(), |doc| {
-        if !comment.is_terminated() {
-            return doc.literal_text(comment.text());
-        }
-
-        if is_empty_single_line_block_comment(comment.text()) {
-            return format_block_comment(doc, comment.text());
-        }
-
-        match comment.kind() {
-            JavaCommentKind::Line => format_line_comment(doc, comment.text()),
-            JavaCommentKind::Block if is_star_block_comment(comment.text()) => {
-                format_star_block_comment(doc, comment.text(), "/*")
-            }
-            JavaCommentKind::Block => format_block_comment(doc, comment.text()),
-            JavaCommentKind::Doc => format_star_block_comment(doc, comment.text(), "/**"),
-        }
-    })
-}
-
-pub(crate) fn format_trailing_comment<'source>(
-    doc: &mut DocBuilder<'source>,
-    comment: &JavaComment<'source>,
-) -> Doc<'source> {
-    if comment_is_star_block(comment) && !comment.text().contains(['\n', '\r']) {
-        doc.source_trivia(comment.source_pieces(), |doc| {
-            format_block_comment(doc, comment.text())
-        })
-    } else {
-        format_comment(doc, comment)
-    }
-}
-
-pub(crate) fn comment_forces_line(comment: &JavaComment<'_>) -> bool {
-    comment.kind() == JavaCommentKind::Line || comment.text().contains(['\n', '\r'])
-}
-
-pub(crate) fn comment_is_star_block(comment: &JavaComment<'_>) -> bool {
-    comment.kind() == JavaCommentKind::Doc || is_star_block_comment(comment.text())
-}
-
-fn format_line_comment<'source>(
-    doc: &mut DocBuilder<'source>,
-    comment: &'source str,
-) -> Doc<'source> {
-    format_comment_lines(doc, preserved_comment_lines(comment))
-}
-
-fn format_block_comment<'source>(
-    doc: &mut DocBuilder<'source>,
-    comment: &'source str,
-) -> Doc<'source> {
-    format_comment_lines(doc, preserved_block_comment_lines(comment))
 }
