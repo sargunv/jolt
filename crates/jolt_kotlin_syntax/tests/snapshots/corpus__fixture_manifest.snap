@@ -31,6 +31,7 @@ style/expressions/labeled-nested-lambdas.kt
 style/expressions/lambda-formatting.kt
 style/expressions/lambdas-and-trailing.kt
 style/expressions/member-chain-expression-body.kt
+style/expressions/operator-line-comments.kt
 style/expressions/simple-expression-bodies.kt
 style/expressions/string-templates.kt
 style/expressions/when-expression.kt
