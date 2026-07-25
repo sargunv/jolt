@@ -133,12 +133,7 @@ pub(crate) fn format_object_expression<'source>(
     leading: LeadingTrivia,
 ) -> Doc<'source> {
     let keyword = format_required_field(expression.object_token(), doc, |token, doc| {
-        format_token(
-            doc,
-            &token,
-            leading,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        )
+        format_token(doc, &token, leading, TrailingTrivia::Preserve)
     });
     let delegation = format_optional_field(expression.delegation(), doc, |delegation, doc| {
         let delegation = format_delegation_clause(doc, &delegation);

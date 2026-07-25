@@ -88,7 +88,7 @@ fn format_type_parameter<'source>(
         format_modifier_sequence(doc, &modifiers)
     });
     let variance = format_optional_field(parameter.variance(), doc, |role, doc| {
-        let token = format_role_token(doc, role, TrailingTrivia::RelocatedToEnclosingContext);
+        let token = format_role_token(doc, role, TrailingTrivia::Preserve);
         let space = doc.space();
         doc.concat([token, space])
     });
@@ -383,7 +383,7 @@ fn format_type_projection<'source>(
         KotlinSyntaxField::Present(ty) if ty.first_token().is_some()
     );
     let variance = format_required_field(projection.variance(), doc, |role, doc| {
-        let variance = format_role_token(doc, role, TrailingTrivia::RelocatedToEnclosingContext);
+        let variance = format_role_token(doc, role, TrailingTrivia::Preserve);
         if has_type {
             let space = doc.space();
             doc.concat([variance, space])
@@ -477,7 +477,7 @@ fn format_function_type_parameter<'source>(
             doc,
             &colon,
             LeadingTrivia::Preserve,
-            TrailingTrivia::RelocatedToEnclosingContext,
+            TrailingTrivia::Preserve,
         );
         if has_type {
             let space = doc.space();
@@ -535,7 +535,7 @@ fn format_suspended_function_type<'source>(
             doc,
             &token,
             LeadingTrivia::Preserve,
-            TrailingTrivia::RelocatedToEnclosingContext,
+            TrailingTrivia::Preserve,
         )
     });
     let nested = format_required_field(ty.function_type(), doc, |nested, doc| {
@@ -578,7 +578,7 @@ fn format_context_function_type<'source>(
             doc,
             &token,
             LeadingTrivia::Preserve,
-            TrailingTrivia::RelocatedToEnclosingContext,
+            TrailingTrivia::Preserve,
         )
     });
     let open = resolve_required_delimiter(ty.open_paren(), doc);
@@ -648,12 +648,7 @@ fn format_intersection_dnn<'source>(
         format_required_field(ty.left(), doc, |left, doc| format_type(doc, &left))
     });
     let amp = format_required_field(ty.amp(), doc, |amp, doc| {
-        format_token(
-            doc,
-            &amp,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        )
+        format_token(doc, &amp, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
     });
     let right = format_required_field(ty.right(), doc, |right, doc| format_type(doc, &right));
     let before = doc.space();
