@@ -94,24 +94,33 @@ struct FormattedImport<'source> {
 
 impl<'source> FormattedImport<'source> {
     fn new(import: ImportDeclaration<'source>) -> Option<Self> {
-        use jolt_java_syntax::JavaSyntaxField::{Malformed, Missing, Present};
+        use jolt_java_syntax::JavaSyntaxField as Field;
 
-        if !matches!(import.import_keyword(), Present(_))
-            || !matches!(import.module_keyword(), Present(_) | Missing(_))
-            || !matches!(import.static_keyword(), Present(_) | Missing(_))
-            || !matches!(import.on_demand_dot(), Present(_) | Missing(_))
-            || !matches!(import.star(), Present(_) | Missing(_))
-            || !matches!(import.semicolon(), Present(_))
+        if !matches!(import.import_keyword(), Field::Present(_))
+            || !matches!(
+                import.module_keyword(),
+                Field::Present(_) | Field::Missing(_)
+            )
+            || !matches!(
+                import.static_keyword(),
+                Field::Present(_) | Field::Missing(_)
+            )
+            || !matches!(
+                import.on_demand_dot(),
+                Field::Present(_) | Field::Missing(_)
+            )
+            || !matches!(import.star(), Field::Present(_) | Field::Missing(_))
+            || !matches!(import.semicolon(), Field::Present(_))
         {
             return None;
         }
         let name = match import.name() {
-            Present(name) if name.is_recovery_free() => name,
-            Present(_) | Missing(_) | Malformed(_) => return None,
+            Field::Present(name) if name.is_recovery_free() => name,
+            Field::Present(_) | Field::Missing(_) | Field::Malformed(_) => return None,
         };
-        let on_demand = matches!(import.star(), Present(_));
+        let on_demand = matches!(import.star(), Field::Present(_));
         let key = NameSortKey::new(&name, on_demand)?;
-        let is_static = matches!(import.static_keyword(), Present(_));
+        let is_static = matches!(import.static_keyword(), Field::Present(_));
         let reorder = import.canonical_reorder_claim()?;
         Some(Self {
             import,

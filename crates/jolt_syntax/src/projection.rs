@@ -16,78 +16,17 @@ macro_rules! define_typed_cst_fields {
         missing_syntax: $missing_syntax:ident,
         fixed_syntax: $fixed_syntax:ident,
     ) => {
-        #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-        pub struct $invariant_error {
-            pub node: $syntax_kind,
-            pub slot: usize,
-        }
-
-        impl fmt::Display for $invariant_error {
-            fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(
-                    formatter,
-                    "{:?} has an invalid element in slot {}",
-                    self.node, self.slot
-                )
-            }
-        }
-
-        impl std::error::Error for $invariant_error {}
-
+        pub type $invariant_error = $crate::SyntaxInvariantError<$language>;
         type $syntax_result<T> = Result<T, $invariant_error>;
 
         /// A declared grammar role, including represented malformed alternatives.
-        #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-        pub enum $syntax_field<'source, T> {
-            Present(T),
-            Missing($missing_syntax<'source>),
-            Malformed($malformed_syntax<'source>),
-        }
-
-        impl<'source, T> $syntax_field<'source, T> {
-            pub fn as_ref(&self) -> $syntax_field<'source, &T> {
-                match self {
-                    Self::Present(value) => $syntax_field::Present(value),
-                    Self::Missing(missing) => $syntax_field::Missing(*missing),
-                    Self::Malformed(node) => $syntax_field::Malformed(*node),
-                }
-            }
-
-            pub fn map<U>(self, map: impl FnOnce(T) -> U) -> $syntax_field<'source, U> {
-                match self {
-                    Self::Present(value) => $syntax_field::Present(map(value)),
-                    Self::Missing(missing) => $syntax_field::Missing(missing),
-                    Self::Malformed(node) => $syntax_field::Malformed(node),
-                }
-            }
-        }
+        pub type $syntax_field<'source, T> = $crate::SyntaxField<'source, $language, T>;
 
         /// A syntax-owned malformed node occupying a declared role.
-        #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-        pub struct $malformed_syntax<'source> {
-            syntax: $syntax_node<'source>,
-        }
+        pub type $malformed_syntax<'source> = $crate::MalformedSyntax<'source, $language>;
 
         /// Syntax-owned evidence for one represented empty required or optional slot.
-        #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-        pub struct $missing_syntax<'source> {
-            owner: $syntax_node<'source>,
-            slot: usize,
-        }
-
-        impl<'source> $missing_syntax<'source> {
-            /// Returns the exact zero-width source boundary represented by this missing slot.
-            pub fn verbatim_core(
-                self,
-            ) -> Result<SyntaxVerbatimCore<'source, $language>, $invariant_error> {
-                self.owner
-                    .missing_verbatim_core(self.slot)
-                    .ok_or($invariant_error {
-                        node: self.owner.kind(),
-                        slot: self.slot,
-                    })
-            }
-        }
+        pub type $missing_syntax<'source> = $crate::MissingSyntax<'source, $language>;
 
         #[derive(Clone, Copy)]
         struct $fixed_syntax<'source>($syntax_node<'source>);
@@ -126,7 +65,7 @@ macro_rules! define_typed_cst_fields {
         ) -> $syntax_field<'_, SyntaxElement<'_, $language>> {
             match syntax.slot_at(slot) {
                 Some(SyntaxSlot::Node(node)) if node.is_directly_malformed() => {
-                    $syntax_field::Malformed($malformed_syntax { syntax: node })
+                    $syntax_field::Malformed($malformed_syntax::new(node))
                 }
                 Some(SyntaxSlot::Node(node)) => {
                     $syntax_field::Present(SyntaxElement::Node(node))
@@ -134,10 +73,10 @@ macro_rules! define_typed_cst_fields {
                 Some(SyntaxSlot::Token(token)) => {
                     $syntax_field::Present(SyntaxElement::Token(token))
                 }
-                Some(SyntaxSlot::Empty) => $syntax_field::Missing($missing_syntax {
-                    owner: syntax.missing_owner(),
+                Some(SyntaxSlot::Empty) => $syntax_field::Missing($missing_syntax::new(
+                    syntax.missing_owner(),
                     slot,
-                }),
+                )),
                 None => invalid_physical_projection(syntax, slot),
             }
         }
@@ -222,7 +161,7 @@ macro_rules! define_typed_cst_access {
 
         impl<'source> $syntax_view<'source> for $malformed_syntax<'source> {
             fn syntax_node(&self) -> Option<$syntax_node<'source>> {
-                Some(self.syntax)
+                Some(self.syntax())
             }
         }
 
@@ -287,13 +226,7 @@ macro_rules! define_typed_cst_access {
         }
 
         /// One represented part of a variable-length syntax-list node.
-        #[derive(Clone, Copy, Debug)]
-        pub enum $list_part<'source, T> {
-            Item(T),
-            Separator($syntax_token<'source>),
-            Missing($missing_syntax<'source>),
-            Malformed($malformed_syntax<'source>),
-        }
+        pub type $list_part<'source, T> = $crate::SyntaxListPart<'source, $language, T>;
 
         fn list_parts<'source, T: $list_item<'source>>(
             syntax: $syntax_node<'source>,
@@ -312,7 +245,7 @@ macro_rules! define_typed_cst_access {
                         .map($list_part::Item)
                         .unwrap_or_else(|| {
                             if node.is_directly_malformed() {
-                                $list_part::Malformed($malformed_syntax { syntax: node })
+                                $list_part::Malformed($malformed_syntax::new(node))
                             } else {
                                 invalid_physical_projection($fixed_syntax(syntax), index)
                             }
@@ -322,10 +255,7 @@ macro_rules! define_typed_cst_access {
                         .unwrap_or_else(|| {
                             invalid_physical_projection($fixed_syntax(syntax), index)
                         }),
-                    SyntaxSlot::Empty => $list_part::Missing($missing_syntax {
-                        owner: syntax,
-                        slot: index,
-                    }),
+                    SyntaxSlot::Empty => $list_part::Missing($missing_syntax::new(syntax, index)),
                 }
             })
         }
@@ -409,16 +339,15 @@ macro_rules! define_typed_cst_access {
                     {
                         $syntax_field::Present(value)
                     }
-                    Some(_) => $syntax_field::Malformed($malformed_syntax { syntax: node }),
+                    Some(_) => $syntax_field::Malformed($malformed_syntax::new(node)),
                     None if node.is_directly_malformed() => {
-                        $syntax_field::Malformed($malformed_syntax { syntax: node })
+                        $syntax_field::Malformed($malformed_syntax::new(node))
                     }
                     None => invalid_physical_projection(syntax, slot),
                 },
-                Some(SyntaxSlot::Empty) => $syntax_field::Missing($missing_syntax {
-                    owner: syntax.missing_owner(),
-                    slot,
-                }),
+                Some(SyntaxSlot::Empty) => {
+                    $syntax_field::Missing($missing_syntax::new(syntax.missing_owner(), slot))
+                }
                 Some(SyntaxSlot::Token(_)) | None => invalid_physical_projection(syntax, slot),
             }
         }

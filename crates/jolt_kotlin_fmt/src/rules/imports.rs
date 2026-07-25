@@ -1,8 +1,7 @@
 use jolt_fmt_ir::{Doc, DocBuilder, LayoutDoc};
 use jolt_kotlin_syntax::{
     ImportAlias, ImportDirective, ImportDirectiveList, ImportOnDemandSuffix, KotlinMalformedSyntax,
-    KotlinMissingSyntax, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken,
-    KotlinSyntaxView, ReorderClaim,
+    KotlinMissingSyntax, KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView, ReorderClaim,
 };
 
 use crate::helpers::comments::{
@@ -227,21 +226,21 @@ struct FormattedImport<'source> {
 
 impl<'source> FormattedImport<'source> {
     fn new(import: ImportDirective<'source>) -> Option<Self> {
-        use KotlinSyntaxField::{Missing, Present};
+        use jolt_kotlin_syntax::KotlinSyntaxField as Field;
 
         let reorder = import.canonical_reorder_claim()?;
-        if !matches!(import.import_token(), Present(_))
-            || !matches!(import.on_demand(), Present(_) | Missing(_))
-            || !matches!(import.alias(), Present(_) | Missing(_))
-            || !matches!(import.suffix(), Missing(_))
-            || !matches!(import.terminators(), Present(_))
+        if !matches!(import.import_token(), Field::Present(_))
+            || !matches!(import.on_demand(), Field::Present(_) | Field::Missing(_))
+            || !matches!(import.alias(), Field::Present(_) | Field::Missing(_))
+            || !matches!(import.suffix(), Field::Missing(_))
+            || !matches!(import.terminators(), Field::Present(_))
         {
             return None;
         }
-        let Present(name) = import.name() else {
+        let Field::Present(name) = import.name() else {
             return None;
         };
-        let on_demand = matches!(import.on_demand(), Present(_));
+        let on_demand = matches!(import.on_demand(), Field::Present(_));
         let path = NameSortKey::new(&name, on_demand)?;
         Some(Self {
             import,

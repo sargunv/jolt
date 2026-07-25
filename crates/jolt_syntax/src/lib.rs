@@ -4,6 +4,7 @@ mod accessors;
 mod comment;
 mod conservation;
 mod event;
+mod field;
 mod kind;
 mod language;
 mod normalization;
@@ -25,6 +26,9 @@ pub use conservation::{
     SyntaxVerbatimCore,
 };
 pub use event::{CompletedMarker, Event, Marker, NodeAnchor};
+pub use field::{
+    MalformedSyntax, MissingSyntax, SyntaxField, SyntaxInvariantError, SyntaxListPart,
+};
 pub use kind::RawSyntaxKind;
 pub use language::Language;
 pub use normalization::{

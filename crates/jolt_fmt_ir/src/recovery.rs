@@ -3,7 +3,10 @@
 //! Language crates own resolution against their typed CST enums. This module
 //! holds the shared resolved field/list shapes and malformed-fragment assembly.
 
-use jolt_syntax::{Language, SyntaxToken, SyntaxVerbatimCore};
+use jolt_syntax::{
+    Language, MalformedSyntax, MissingSyntax, SyntaxField, SyntaxListPart, SyntaxToken,
+    SyntaxVerbatimCore,
+};
 
 use crate::comments::{comment_forces_line, format_comment, format_leading_comment_list};
 
@@ -206,5 +209,110 @@ pub fn format_optional_field<'source, T>(
         FormatField::Present(Some(value)) => structured(value, doc),
         FormatField::Present(None) => Doc::nil(),
         FormatField::Malformed(malformed) => malformed,
+    }
+}
+
+/// Formats one syntax-owned malformed node, claiming its exact source.
+pub fn format_malformed<'source, L: Language>(
+    doc: &mut DocBuilder<'source>,
+    malformed: &MalformedSyntax<'source, L>,
+    safety: &mut impl LexicalSafety<L>,
+) -> Doc<'source> {
+    format_malformed_core(
+        doc,
+        malformed.syntax().malformed_verbatim_core(),
+        safety,
+        "malformed syntax did not own a verbatim core",
+    )
+}
+
+/// Claims the zero-width boundary a missing slot represents.
+pub fn format_missing<'source, L: Language>(
+    doc: &mut DocBuilder<'source>,
+    missing: &MissingSyntax<'source, L>,
+) -> Doc<'source> {
+    if missing.verbatim_core().is_err() {
+        doc.block_on_invariant("missing role did not own an empty verbatim core");
+    }
+    Doc::nil()
+}
+
+/// Resolves a required delimiter slot, keeping its source token or recovery doc.
+pub fn resolve_required_delimiter<'source, L: Language>(
+    field: SyntaxField<'source, L, SyntaxToken<'source, L>>,
+    doc: &mut DocBuilder<'source>,
+    safety: &mut impl LexicalSafety<L>,
+) -> FormatDelimiter<'source, SyntaxToken<'source, L>> {
+    match field {
+        SyntaxField::Present(token) => FormatDelimiter::Source(token),
+        SyntaxField::Missing(missing) => {
+            FormatDelimiter::Recovery(LayoutDoc::ClaimOnly(format_missing(doc, &missing)))
+        }
+        SyntaxField::Malformed(malformed) => {
+            let recovery = format_malformed(doc, &malformed, safety);
+            FormatDelimiter::Recovery(LayoutDoc::from_visibility(
+                recovery,
+                malformed.syntax().first_token().is_some(),
+            ))
+        }
+    }
+}
+
+/// Resolves one physical syntax-list part.
+pub fn resolve_list_part<'source, L: Language, T>(
+    part: SyntaxListPart<'source, L, T>,
+    doc: &mut DocBuilder<'source>,
+    safety: &mut impl LexicalSafety<L>,
+) -> FormatListPart<'source, T, SyntaxToken<'source, L>> {
+    match part {
+        SyntaxListPart::Item(item) => FormatListPart::Item(item),
+        SyntaxListPart::Separator(separator) => FormatListPart::Separator(separator),
+        SyntaxListPart::Missing(missing) => {
+            FormatListPart::Recovery(LayoutDoc::ClaimOnly(format_missing(doc, &missing)))
+        }
+        SyntaxListPart::Malformed(malformed) => {
+            let recovery = format_malformed(doc, &malformed, safety);
+            FormatListPart::Recovery(LayoutDoc::from_visibility(
+                recovery,
+                malformed.syntax().first_token().is_some(),
+            ))
+        }
+    }
+}
+
+// On WASM, these generic field resolvers are deliberate codegen boundaries.
+// They run for present as well as malformed syntax; `inline(never)` is not a
+// cold-path hint. Native inlining remains optimizer-controlled. Re-measure
+// formatter throughput and optimized WASM size before changing this policy.
+/// Resolves one generated field without letting missing or malformed syntax
+/// leak into a structured layout rule.
+#[cfg_attr(target_arch = "wasm32", inline(never))]
+pub fn resolve_required_field<'source, L: Language, T>(
+    field: SyntaxField<'source, L, T>,
+    doc: &mut DocBuilder<'source>,
+    safety: &mut impl LexicalSafety<L>,
+) -> FormatField<'source, T> {
+    match field {
+        SyntaxField::Present(value) => FormatField::Present(value),
+        SyntaxField::Malformed(malformed) => {
+            FormatField::Malformed(format_malformed(doc, &malformed, safety))
+        }
+        SyntaxField::Missing(missing) => FormatField::Malformed(format_missing(doc, &missing)),
+    }
+}
+
+/// Resolves an optional generated field; its empty slot is ordinary absence.
+#[cfg_attr(target_arch = "wasm32", inline(never))]
+pub fn resolve_optional_field<'source, L: Language, T>(
+    field: SyntaxField<'source, L, T>,
+    doc: &mut DocBuilder<'source>,
+    safety: &mut impl LexicalSafety<L>,
+) -> FormatField<'source, Option<T>> {
+    match field {
+        SyntaxField::Present(value) => FormatField::Present(Some(value)),
+        SyntaxField::Missing(_) => FormatField::Present(None),
+        SyntaxField::Malformed(malformed) => {
+            FormatField::Malformed(format_malformed(doc, &malformed, safety))
+        }
     }
 }

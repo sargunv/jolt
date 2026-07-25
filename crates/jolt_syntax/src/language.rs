@@ -6,7 +6,7 @@ use crate::RawSyntaxKind;
 /// A language binding for shared syntax tree infrastructure.
 pub trait Language: 'static {
     /// The language-specific syntax kind enum.
-    type Kind: Copy + Eq;
+    type Kind: Copy + Eq + std::fmt::Debug;
 
     /// The lexer type that produces tokens for this language.
     type Lexer<'source>: crate::LanguageLexer<'source, Language = Self>;
