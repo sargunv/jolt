@@ -145,15 +145,17 @@ fn modifier_docs<'source>(
         if !visible {
             return;
         }
+        // Boundaries, not plain breaks: the modifier the prefix ends with may
+        // already have ended its own line for a trailing comment.
         let separator = match terminal {
             ModifierTerminal::Prefix if previous_is_structured => Some(if previous_forces_line {
-                docs.hard_line()
+                docs.hard_line_boundary()
             } else {
                 docs.space()
             }),
             ModifierTerminal::Inline {
                 append_line: true, ..
-            } => Some(docs.hard_line()),
+            } => Some(docs.hard_line_boundary()),
             ModifierTerminal::Inline {
                 forces_line: false,
                 append_line: false,

@@ -7,6 +7,7 @@ use jolt_java_syntax::{
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, format_comment, format_token,
+    trailing_comments_force_line,
 };
 use crate::helpers::recovery::{
     JavaFormatListPart, format_malformed, format_missing, resolve_list_part,
@@ -207,7 +208,7 @@ fn push_identifier_doc<'source>(
 ) {
     let formatted = match field {
         JavaSyntaxField::Present(identifier) if multiline => {
-            format_name_segment_identifier(docs, &identifier)
+            format_name_segment_identifier(docs, &identifier, followed_by_dot)
         }
         JavaSyntaxField::Present(identifier) => {
             format_inline_name_segment_identifier(docs, &identifier, followed_by_dot)
@@ -271,13 +272,24 @@ fn format_name_dot<'source>(
 fn format_name_segment_identifier<'source>(
     doc: &mut DocBuilder<'source>,
     identifier: &JavaSyntaxToken<'source>,
+    followed_by_dot: bool,
 ) -> Doc<'source> {
-    format_token(
+    let token = format_token(
         doc,
         identifier,
         LeadingTrivia::Preserve,
         TrailingTrivia::BeforeLineBreak,
-    )
+    );
+    // A following dot brings its own break. The last segment has nothing after
+    // it inside the name, so a line comment there would swallow whatever the
+    // enclosing construct renders next -- typically a `;`. The boundary
+    // collapses into the enclosing construct's own break when it has one.
+    if !followed_by_dot && trailing_comments_force_line(identifier) {
+        let line = doc.hard_line_boundary();
+        doc.concat([token, line])
+    } else {
+        token
+    }
 }
 
 fn format_inline_name_segment_identifier<'source>(
