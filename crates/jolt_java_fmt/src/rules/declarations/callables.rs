@@ -1,12 +1,12 @@
 use super::{
     AnnotationElementDeclaration, CommaListItem, Doc, FormalParameterList, JavaSyntaxToken,
     LeadingTrivia, MethodDeclaration, ThrowsClause, TrailingTrivia, TypeLeadingComments,
-    comment_forces_line, delimited_comma_list, format_annotation_element_value,
-    format_array_dimensions, format_block, format_construct_leading_comments,
-    format_constructor_body, format_formal_parameter, format_modifier_prefix,
-    format_receiver_parameter, format_separator_with_comments, format_statement_semicolon,
-    format_token, format_token_with_comments, format_type, format_type_parameter_list,
-    format_typed_modifier_prefix, source_braced_body,
+    attach_comma_separator, comment_forces_line, delimited_comma_list,
+    format_annotation_element_value, format_array_dimensions, format_block,
+    format_construct_leading_comments, format_constructor_body, format_formal_parameter,
+    format_modifier_prefix, format_receiver_parameter, format_separator_with_comments,
+    format_statement_semicolon, format_token, format_token_with_comments, format_type,
+    format_type_parameter_list, format_typed_modifier_prefix, source_braced_body,
 };
 use jolt_fmt_ir::DocBuilder;
 
@@ -333,10 +333,7 @@ fn format_parameters<'source>(
     let parameters = match parameters {
         JavaFormatField::Present(Some(parameters)) => parameter_list_items(&parameters, doc),
         JavaFormatField::Present(None) => Vec::new(),
-        JavaFormatField::Malformed(malformed) => vec![CommaListItem {
-            doc: malformed,
-            comma: None,
-        }],
+        JavaFormatField::Malformed(malformed) => vec![CommaListItem::visible(malformed)],
     };
     delimited_comma_list(doc, open, close, parameters)
 }
@@ -362,22 +359,14 @@ fn parameter_list_items<'source, 'fmt>(
                         crate::helpers::recovery::format_malformed(&bogus, doc)
                     }
                 };
-                items.push(CommaListItem {
-                    doc: item_doc,
-                    comma: None,
-                });
+                items.push(CommaListItem::visible(item_doc));
             }
             JavaFormatListPart::Separator(comma) => {
-                if let Some(item) = items.last_mut() {
-                    item.comma = Some(comma);
-                } else {
-                    doc.block_on_invariant("formal parameter separator had no preceding item");
-                }
+                attach_comma_separator(doc, &mut items, comma);
             }
-            JavaFormatListPart::Recovery(malformed) => items.push(CommaListItem {
-                doc: malformed.doc(),
-                comma: None,
-            }),
+            JavaFormatListPart::Recovery(malformed) => {
+                items.push(CommaListItem::recovery(malformed));
+            }
         }
     }
     items

@@ -15,7 +15,9 @@ use crate::helpers::comments::{
     format_token, format_token_after_construct_leading_comments, format_token_with_comments,
     has_removed_comments,
 };
-use crate::helpers::lists::{CommaListItem, comma_list, delimited_comma_list};
+use crate::helpers::lists::{
+    CommaListItem, attach_comma_separator, comma_list, delimited_comma_list,
+};
 use crate::helpers::member_body::{
     MemberBodyCategory as MemberCategory, MemberBodyItem as FormattedMember,
     join_member_body as join_member_docs,

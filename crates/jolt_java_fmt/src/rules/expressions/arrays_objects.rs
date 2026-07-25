@@ -326,10 +326,7 @@ fn array_initializer_items<'source, 'fmt>(
                 format_variable_initializer_value(value, doc)
             })
         }
-        JavaFormatField::Malformed(recovery) => vec![CommaListItem {
-            doc: recovery,
-            comma: None,
-        }],
+        JavaFormatField::Malformed(recovery) => vec![CommaListItem::visible(recovery)],
     }
 }
 

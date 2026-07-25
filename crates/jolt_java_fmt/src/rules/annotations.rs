@@ -142,17 +142,11 @@ fn annotation_argument_list_items<'source, 'fmt>(
                         format_annotation_argument(&argument, doc)
                     })
                 }
-                JavaFormatField::Malformed(malformed) => vec![CommaListItem {
-                    doc: malformed,
-                    comma: None,
-                }],
+                JavaFormatField::Malformed(malformed) => vec![CommaListItem::visible(malformed)],
             }
         }
         JavaFormatField::Present(None) => Vec::new(),
-        JavaFormatField::Malformed(malformed) => vec![CommaListItem {
-            doc: malformed,
-            comma: None,
-        }],
+        JavaFormatField::Malformed(malformed) => vec![CommaListItem::visible(malformed)],
     }
 }
 
@@ -215,9 +209,6 @@ fn annotation_array_initializer_items<'source, 'fmt>(
                 format_annotation_element_value(&value, doc)
             })
         }
-        JavaFormatField::Malformed(malformed) => vec![CommaListItem {
-            doc: malformed,
-            comma: None,
-        }],
+        JavaFormatField::Malformed(malformed) => vec![CommaListItem::visible(malformed)],
     }
 }
