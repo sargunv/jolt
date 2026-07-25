@@ -5,8 +5,9 @@ use super::{
     comma_list, comment_forces_line, delimited_comma_list, format_annotation_interface_body,
     format_class_body, format_construct_leading_comments, format_enum_body_contents,
     format_interface_body, format_modifier_prefix, format_name, format_record_body,
-    format_record_component, format_token, format_token_with_comments, format_type_parameter_list,
-    format_type_without_leading_comments, source_braced_body,
+    format_record_component, format_token, format_token_after_construct_leading_comments,
+    format_token_with_comments, format_type_parameter_list, format_type_without_leading_comments,
+    source_braced_body,
 };
 use crate::helpers::recovery::{
     JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_optional_field,
@@ -14,16 +15,22 @@ use crate::helpers::recovery::{
     resolve_required_field,
 };
 use jolt_fmt_ir::DocBuilder;
+use jolt_java_syntax::JavaSyntaxField;
 
 pub(super) fn format_class_declaration<'source>(
     class: &ClassDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    let hoisted = hoisted_header_keyword(&class.modifiers(), class.class_keyword());
     let modifiers = format_optional_field(class.modifiers(), doc, |modifiers, doc| {
         format_modifier_prefix(Some(modifiers), doc)
     });
+    let modifiers = {
+        let leading = format_construct_leading_comments(doc, hoisted.as_ref());
+        doc_concat!(doc, [leading, modifiers])
+    };
     let keyword = format_required_field(class.class_keyword(), doc, |keyword, doc| {
-        keyword_without_space(keyword, doc)
+        format_token_after_construct_leading_comments(doc, &keyword, hoisted.as_ref())
     });
     let (name, name_is_structured) = required_doc_with_presence(class.name(), doc, |name, doc| {
         format_token_with_comments(doc, &name)
@@ -76,11 +83,16 @@ pub(super) fn format_interface_declaration<'source>(
     interface: &InterfaceDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    let hoisted = hoisted_header_keyword(&interface.modifiers(), interface.interface_keyword());
     let modifiers = format_optional_field(interface.modifiers(), doc, |modifiers, doc| {
         format_modifier_prefix(Some(modifiers), doc)
     });
+    let modifiers = {
+        let leading = format_construct_leading_comments(doc, hoisted.as_ref());
+        doc_concat!(doc, [leading, modifiers])
+    };
     let keyword = format_required_field(interface.interface_keyword(), doc, |keyword, doc| {
-        keyword_without_space(keyword, doc)
+        format_token_after_construct_leading_comments(doc, &keyword, hoisted.as_ref())
     });
     let (name, name_is_structured) =
         required_doc_with_presence(interface.name(), doc, |name, doc| {
@@ -124,11 +136,16 @@ pub(super) fn format_record_declaration<'source>(
     record: &RecordDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    let hoisted = hoisted_header_keyword(&record.modifiers(), record.record_keyword());
     let modifiers = format_optional_field(record.modifiers(), doc, |modifiers, doc| {
         format_modifier_prefix(Some(modifiers), doc)
     });
+    let modifiers = {
+        let leading = format_construct_leading_comments(doc, hoisted.as_ref());
+        doc_concat!(doc, [leading, modifiers])
+    };
     let keyword = format_required_field(record.record_keyword(), doc, |keyword, doc| {
-        keyword_without_space(keyword, doc)
+        format_token_after_construct_leading_comments(doc, &keyword, hoisted.as_ref())
     });
     let (name, name_is_structured) = required_doc_with_presence(record.name(), doc, |name, doc| {
         format_token_with_comments(doc, &name)
@@ -181,11 +198,16 @@ pub(super) fn format_enum_declaration<'source>(
     node: &EnumDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    let hoisted = hoisted_header_keyword(&node.modifiers(), node.enum_keyword());
     let modifiers = format_optional_field(node.modifiers(), doc, |modifiers, doc| {
         format_modifier_prefix(Some(modifiers), doc)
     });
+    let modifiers = {
+        let leading = format_construct_leading_comments(doc, hoisted.as_ref());
+        doc_concat!(doc, [leading, modifiers])
+    };
     let keyword = format_required_field(node.enum_keyword(), doc, |keyword, doc| {
-        keyword_without_space(keyword, doc)
+        format_token_after_construct_leading_comments(doc, &keyword, hoisted.as_ref())
     });
     let (name, name_is_structured) = required_doc_with_presence(node.name(), doc, |name, doc| {
         format_token_with_comments(doc, &name)
@@ -296,6 +318,27 @@ fn optional_doc_with_presence<'source, T>(
         JavaFormatField::Present(Some(value)) => (present(value, doc), true),
         JavaFormatField::Present(None) => (Doc::nil(), false),
         JavaFormatField::Malformed(malformed) => (malformed, true),
+    }
+}
+
+/// Returns the header keyword whose leading comments must be hoisted out of the
+/// header group.
+///
+/// A leading comment ends its own line. Left inside the header group, that hard
+/// line forces every clause in the header -- `extends`, `implements`, `throws`
+/// -- to break with it, so a comment above a declaration silently changes its
+/// layout. A modifier list already hoists its own leading comments, so the
+/// keyword only needs to when no modifier list precedes it.
+fn hoisted_header_keyword<'source, T>(
+    modifiers: &JavaSyntaxField<'source, T>,
+    keyword: JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
+) -> Option<JavaSyntaxToken<'source>> {
+    if matches!(modifiers, JavaSyntaxField::Present(_)) {
+        return None;
+    }
+    match keyword {
+        JavaSyntaxField::Present(keyword) => Some(keyword),
+        JavaSyntaxField::Missing(_) | JavaSyntaxField::Malformed(_) => None,
     }
 }
 

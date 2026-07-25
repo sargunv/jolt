@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_fmt_ir::{BodyItemSeparator, Doc, DocBuilder};
 use jolt_java_syntax::{JavaDelimiterSynthesis, SynthesisClaim};
 
 use crate::helpers::comments::{
@@ -36,14 +36,23 @@ impl<'source> From<Option<Doc<'source>>> for BodyContent<'source> {
 pub(crate) struct BodyItem<'source> {
     doc: Doc<'source>,
     starts_after_blank_line: bool,
+    ends_line: bool,
     pub(crate) visible: bool,
 }
 
 impl<'source> BodyItem<'source> {
+    /// Records that this item already ended its own line, typically because a
+    /// trailing line comment forced a break, so the next separator steps down.
+    pub(crate) const fn ending_line(mut self, ends_line: bool) -> Self {
+        self.ends_line = ends_line;
+        self
+    }
+
     pub(crate) fn new(doc: Doc<'source>, starts_after_blank_line: bool) -> Self {
         Self {
             doc,
             starts_after_blank_line,
+            ends_line: false,
             visible: true,
         }
     }
@@ -52,6 +61,7 @@ impl<'source> BodyItem<'source> {
         Self {
             doc,
             starts_after_blank_line: false,
+            ends_line: false,
             visible: false,
         }
     }
@@ -164,16 +174,22 @@ pub(crate) fn join_body_items<'source>(
 ) -> Doc<'source> {
     doc.concat_list(|joined| {
         let mut saw_visible = false;
+        let mut previous_ended_line = false;
         for item in items {
             if item.visible && saw_visible {
-                let separator = if item.starts_after_blank_line {
-                    joined.empty_line()
-                } else {
-                    joined.hard_line()
-                };
+                // Never drops to `None`: a removed statement can contribute
+                // salvaged comments whose document does not end its own line.
+                let separator = BodyItemSeparator::between(
+                    item.starts_after_blank_line && !previous_ended_line,
+                    false,
+                )
+                .doc(joined);
                 joined.push(separator);
             }
             joined.push(item.doc);
+            if item.visible {
+                previous_ended_line = item.ends_line;
+            }
             saw_visible |= item.visible;
         }
     })

@@ -1,4 +1,4 @@
-use super::simple::format_statement_keyword;
+use super::simple::{format_statement_keyword, format_statement_keyword_hoisting_leading};
 use super::{
     BasicForStatement, DoStatement, EnhancedForStatement, ForStatement, IfStatement,
     JavaSyntaxToken, LeadingTrivia, Statement, SynchronizedStatement, TrailingTrivia,
@@ -296,12 +296,14 @@ fn format_basic_for_statement<'source>(
     let open = resolve_required_delimiter(statement.open_paren(), doc);
     let close = resolve_required_delimiter(statement.close_paren(), doc);
     let separator = format_statement_header_body_separator(close.source(), doc);
+    let (keyword_leading, for_keyword) =
+        format_statement_keyword_hoisting_leading(statement.for_keyword(), doc);
     let header = if is_empty_header {
         let open_spacing = format_inline_open_paren_spacing(open.source(), doc);
         doc_concat!(
             doc,
             [
-                format_statement_keyword(statement.for_keyword(), doc),
+                for_keyword,
                 doc.space(),
                 format_condition_open_paren(open, doc),
                 open_spacing,
@@ -333,21 +335,13 @@ fn format_basic_for_statement<'source>(
         let close = format_condition_close_paren(close, doc);
         doc_group!(
             doc,
-            doc_concat!(
-                doc,
-                [
-                    format_statement_keyword(statement.for_keyword(), doc),
-                    doc.space(),
-                    open,
-                    contents,
-                    close,
-                ]
-            )
+            doc_concat!(doc, [for_keyword, doc.space(), open, contents, close,])
         )
     };
     doc_concat!(
         doc,
         [
+            keyword_leading,
             header,
             separator,
             statement_body_as_block(statement.body(), statement.body_block_brace_claims(), doc)
