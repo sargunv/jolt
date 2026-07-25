@@ -1,0 +1,53 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class ExtendsNoTypes extends //x
+{}
+
+class ImplementsNoTypes implements //x
+{}
+
+sealed class PermitsNoNames permits //x
+{}
+
+class SwitchDefaultLabel {
+  int m(String s) {
+    return switch (s) {
+      case null, default //x
+      -> 1;
+    };
+  }
+}
+
+formatted:
+class ExtendsNoTypes
+  extends //x
+ {
+}
+
+class ImplementsNoTypes
+  implements //x
+ {
+}
+
+sealed class PermitsNoNames
+  permits //x
+ {
+}
+
+class SwitchDefaultLabel {
+  int m(String s) {
+    return switch (s) {
+      case null,
+        default //x
+      -> 1;
+    };
+  }
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(33), end: TextSize(34) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(76), end: TextSize(77) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(120), end: TextSize(121) }) message=expected name

@@ -121,18 +121,22 @@ fn format_resource_specification<'source>(
                         None => (None, removed),
                     }
                 } else {
-                    (
-                        Some((
-                            format_token(
-                                doc,
-                                &separator,
-                                LeadingTrivia::Preserve,
-                                TrailingTrivia::BeforeLineBreak,
-                            ),
-                            false,
-                        )),
-                        Doc::nil(),
-                    )
+                    // A missing `)` supplies no break, so a line comment on
+                    // this separator would swallow the try body's `{`.
+                    let ends_line = trailing_comments_force_line(&separator);
+                    let separator = format_token(
+                        doc,
+                        &separator,
+                        LeadingTrivia::Preserve,
+                        TrailingTrivia::BeforeLineBreak,
+                    );
+                    let separator = if ends_line {
+                        let line = doc.hard_line_boundary();
+                        doc.concat([separator, line])
+                    } else {
+                        separator
+                    };
+                    (Some((separator, false)), Doc::nil())
                 }
             }
             JavaFormatField::Present(None) => (None, Doc::nil()),
@@ -175,10 +179,10 @@ fn format_resource_open_spacing<'source>(
             doc,
             [
                 format_trailing_comments_before_line_break(doc, open),
-                doc.hard_line()
+                doc.hard_line_boundary()
             ]
         ),
-        _ => doc.hard_line(),
+        _ => doc.hard_line_boundary(),
     }
 }
 
@@ -194,13 +198,16 @@ fn format_resource_close_paren<'source>(
                 doc,
                 [
                     if leading.is_empty() {
-                        doc.hard_line()
+                        doc.hard_line_boundary()
                     } else {
                         let comments = doc_concat!(
                             doc,
-                            [doc.hard_line(), format_dangling_comments(doc, leading)]
+                            [
+                                doc.hard_line_boundary(),
+                                format_dangling_comments(doc, leading)
+                            ]
                         );
-                        doc_concat!(doc, [doc_indent!(doc, comments), doc.hard_line()])
+                        doc_concat!(doc, [doc_indent!(doc, comments), doc.hard_line_boundary()])
                     },
                     format_token(
                         doc,
@@ -209,7 +216,7 @@ fn format_resource_close_paren<'source>(
                         TrailingTrivia::BeforeLineBreak
                     ),
                     if trailing_comments_force_line(&close) {
-                        doc.hard_line()
+                        doc.hard_line_boundary()
                     } else {
                         Doc::nil()
                     },

@@ -1,0 +1,123 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class ExtendsNoTypes extends //x
+{}
+
+class ImplementsNoTypes implements //x
+{}
+
+sealed class PermitsNoNames permits //x
+{}
+
+class SwitchDefaultLabel {
+  int m(String s) {
+    return switch (s) {
+      case null, default //x
+      -> 1;
+    };
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "ExtendsNoTypes" @ 6..20 trailing=[Whitespace " "]
+      ExtendsClause
+        ExtendsKw "extends" @ 21..28 trailing=[Whitespace " ", LineComment "//x"]
+      ClassBody
+        LBrace "{" @ 33..34 leading=[Newline "\n"]
+        ClassBodyMemberList
+        RBrace "}" @ 34..35
+    ClassDeclaration
+      ClassKw "class" @ 37..42 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "ImplementsNoTypes" @ 43..60 trailing=[Whitespace " "]
+      ImplementsClause
+        ImplementsKw "implements" @ 61..71 trailing=[Whitespace " ", LineComment "//x"]
+      ClassBody
+        LBrace "{" @ 76..77 leading=[Newline "\n"]
+        ClassBodyMemberList
+        RBrace "}" @ 77..78
+    ClassDeclaration
+      ModifierList
+        Identifier "sealed" @ 80..86 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ClassKw "class" @ 87..92 trailing=[Whitespace " "]
+      Identifier "PermitsNoNames" @ 93..107 trailing=[Whitespace " "]
+      PermitsClause
+        Identifier "permits" @ 108..115 trailing=[Whitespace " ", LineComment "//x"]
+      ClassBody
+        LBrace "{" @ 120..121 leading=[Newline "\n"]
+        ClassBodyMemberList
+        RBrace "}" @ 121..122
+    ClassDeclaration
+      ClassKw "class" @ 124..129 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "SwitchDefaultLabel" @ 130..148 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 149..150
+        ClassBodyMemberList
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 153..156 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "m" @ 157..158
+            LParen "(" @ 158..159
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 159..165 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "s" @ 166..167
+            RParen ")" @ 167..168 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 169..170
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 175..181 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    SwitchExpression
+                      SwitchKw "switch" @ 182..188 trailing=[Whitespace " "]
+                      LParen "(" @ 189..190
+                      NameExpression
+                        Identifier "s" @ 190..191
+                      RParen ")" @ 191..192 trailing=[Whitespace " "]
+                      SwitchBlock
+                        LBrace "{" @ 193..194
+                        SwitchEntryList
+                          SwitchRule
+                            SwitchLabel
+                              CaseKw "case" @ 201..205 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                                CaseConstant
+                                  LiteralExpression
+                                    NullLiteral "null" @ 206..210
+                                Comma "," @ 210..211 trailing=[Whitespace " "]
+                                DefaultKw "default" @ 212..219 trailing=[Whitespace " ", LineComment "//x"]
+                            Arrow "->" @ 230..232 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "1" @ 233..234
+                            Semicolon ";" @ 234..235
+                        RBrace "}" @ 240..241 leading=[Newline "\n", Whitespace "    "]
+                    Semicolon ";" @ 241..242
+              RBrace "}" @ 245..246 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 247..248 leading=[Newline "\n"]
+  Eof "" @ 249..249 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=33..34 message="expected type"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=76..77 message="expected type"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=120..121 message="expected name"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(33), end: TextSize(34) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(76), end: TextSize(77) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(120), end: TextSize(121) }) message=expected name

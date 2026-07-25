@@ -79,7 +79,6 @@ class RecoveredStatements {
     ) {
     }
     try ( /* resource-missing-access */
-
     ) {
     }
     try (
