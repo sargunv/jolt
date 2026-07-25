@@ -13,7 +13,7 @@ class AnnotatedExpressionTypeUses {
     java.util.List<?> xs = new ArrayList<@A(0x48) String>();
     xs = ImmutableList.<@A(0x49) String>of();
     java.util.function.Supplier<java.util.List<?>> c =
-      ArrayList::<@A(0x4A) String>new;
+      ArrayList<@A(0x4A) String>::new;
     java.util.function.Supplier<java.util.List<?>> d =
       ImmutableList::<@A(0x4B) String>of;
   }

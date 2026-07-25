@@ -527,23 +527,192 @@ pub struct CorpusParseFacts {
     pub has_tree: bool,
     pub diagnostics: Vec<Diagnostic>,
     pub comment_inventory: BTreeMap<String, usize>,
+    pub structure: String,
 }
 
 /// Builds owned corpus facts from a language parse while its buffers are live.
 #[must_use]
-pub fn corpus_parse_facts<'source, L>(
-    has_tree: bool,
+pub fn corpus_parse_facts<L>(
+    root: Option<SyntaxNode<'_, L>>,
     diagnostics: &[Diagnostic],
-    tokens: impl IntoIterator<Item = SyntaxToken<'source, L>>,
+    policy: &StructurePolicy<L::Kind>,
 ) -> CorpusParseFacts
 where
     L: Language,
+    L::Kind: Debug,
 {
     CorpusParseFacts {
-        has_tree,
+        has_tree: root.is_some(),
         diagnostics: diagnostics.to_vec(),
-        comment_inventory: represented_comment_inventory(tokens),
+        comment_inventory: root
+            .map(|root| represented_comment_inventory(root.tokens()))
+            .unwrap_or_default(),
+        structure: root
+            .map(|root| structure_fingerprint(root, policy))
+            .unwrap_or_default(),
     }
+}
+
+/// Which formatter-authorized normalizations a language's structure fingerprint
+/// must tolerate.
+///
+/// The formatter is allowed to change a parse tree only through the closed
+/// normalization vocabulary in `jolt_syntax` (`NormalizedToken`, `RemovalReason`,
+/// `ReorderReason`). Everything a language actually normalizes is declared here so
+/// the fingerprint stays blind to exactly those edits and sensitive to every other
+/// tree change.
+pub struct StructurePolicy<K: 'static> {
+    /// Punctuation the formatter may insert or drop outright, mirroring
+    /// `NormalizedToken::text` and `RemovalReason::Redundant*`. Structure still
+    /// comes from the enclosing nodes, so eliding these tokens costs no coverage.
+    pub normalizable_punctuation: &'static [K],
+    /// Nodes whose entire child sequence is order-insensitive, covering
+    /// `ReorderReason::Modifiers` and Kotlin's sorted import list.
+    pub unordered_nodes: &'static [K],
+    /// Child kinds the formatter may reorder among their own positions inside an
+    /// otherwise order-sensitive parent, covering `ReorderReason::Imports` where
+    /// imports share a list with other declarations.
+    pub reorderable_children: &'static [K],
+    /// Single-child wrappers the formatter may introduce, covering
+    /// `NormalizedToken::OpenBlockBrace` promoting a bare statement to a block.
+    pub elidable_wrappers: &'static [K],
+    /// Nodes that carry no meaning and may be dropped, covering
+    /// `RemovalReason::RedundantSeparator` for empty statements.
+    pub elidable_nodes: &'static [K],
+}
+
+/// Reports where two structure fingerprints first diverge.
+///
+/// Whole fingerprints are far too large to read, so this trims the shared prefix
+/// and suffix and shows a window around the first difference.
+fn describe_structure_divergence(expected: &str, actual: &str) -> String {
+    const WINDOW: usize = 160;
+
+    let prefix = expected
+        .char_indices()
+        .zip(actual.chars())
+        .find(|((_, left), right)| left != right)
+        .map_or_else(|| expected.len().min(actual.len()), |((index, _), _)| index);
+    let window = |text: &str| {
+        let start = text
+            .char_indices()
+            .map(|(index, _)| index)
+            .take_while(|&index| index <= prefix.saturating_sub(WINDOW / 2))
+            .last()
+            .unwrap_or(0);
+        let end = text
+            .char_indices()
+            .map(|(index, _)| index)
+            .find(|&index| index >= prefix + WINDOW)
+            .unwrap_or(text.len());
+        format!(
+            "{}{}{}",
+            if start > 0 { "..." } else { "" },
+            &text[start..end],
+            if end < text.len() { "..." } else { "" }
+        )
+    };
+    format!(
+        "first divergence at byte {prefix}\nexpected: {}\nactual:   {}",
+        window(expected),
+        window(actual)
+    )
+}
+
+/// Renders a canonical, trivia-insensitive fingerprint of one parse tree.
+///
+/// Two parses share a fingerprint exactly when they have the same node kinds,
+/// nesting, significant tokens, and empty slots, up to the normalizations `policy`
+/// declares. Comparing a fixture's fingerprint against its formatted output's
+/// fingerprint asserts that formatting never changed what the program means.
+#[must_use]
+pub fn structure_fingerprint<L>(
+    root: SyntaxNode<'_, L>,
+    policy: &StructurePolicy<L::Kind>,
+) -> String
+where
+    L: Language,
+    L::Kind: Debug,
+{
+    let mut out = String::new();
+    write_node_structure(&mut out, root, policy);
+    out
+}
+
+fn write_node_structure<L>(
+    out: &mut String,
+    node: SyntaxNode<'_, L>,
+    policy: &StructurePolicy<L::Kind>,
+) where
+    L: Language,
+    L::Kind: Debug,
+{
+    let mut slots: Vec<String> = Vec::new();
+    let mut reorderable: Vec<usize> = Vec::new();
+    for index in 0..node.slot_count() {
+        match node.slot_at(index) {
+            Some(SyntaxSlot::Node(child)) => {
+                if policy.elidable_nodes.contains(&child.kind()) {
+                    continue;
+                }
+                if policy.reorderable_children.contains(&child.kind()) {
+                    reorderable.push(slots.len());
+                }
+                let mut rendered = String::new();
+                write_node_structure(&mut rendered, child, policy);
+                // An elidable wrapper left holding nothing is what a dropped redundant
+                // separator looks like, so it carries no structure either.
+                if rendered.is_empty() {
+                    if policy.reorderable_children.contains(&child.kind()) {
+                        reorderable.pop();
+                    }
+                    continue;
+                }
+                slots.push(rendered);
+            }
+            Some(SyntaxSlot::Token(token)) => {
+                if policy.normalizable_punctuation.contains(&token.kind()) {
+                    continue;
+                }
+                slots.push(format!("{:?}={}", token.kind(), token.text()));
+            }
+            // An empty slot is indistinguishable from a slot holding punctuation the
+            // policy elides, so recording it would make the two spellings disagree.
+            // Dropping every empty slot keeps the fingerprint slot-count insensitive;
+            // a subtree the formatter loses still disappears from its parent.
+            Some(SyntaxSlot::Empty) => {}
+            None => break,
+        }
+    }
+
+    if policy.unordered_nodes.contains(&node.kind()) {
+        slots.sort_unstable();
+    } else if reorderable.len() > 1 {
+        let mut moved = reorderable
+            .iter()
+            .map(|&index| slots[index].clone())
+            .collect::<Vec<_>>();
+        moved.sort_unstable();
+        for (&index, rendered) in reorderable.iter().zip(moved) {
+            slots[index] = rendered;
+        }
+    }
+
+    // A wrapper the formatter may synthesize around a lone child is transparent:
+    // render the child so braced and unbraced spellings agree, and render nothing at
+    // all when the wrapper is empty so the caller can drop it.
+    if policy.elidable_wrappers.contains(&node.kind()) && slots.len() <= 1 {
+        out.push_str(slots.first().map_or("", String::as_str));
+        return;
+    }
+
+    out.push('(');
+    write!(out, "{:?}", node.kind()).expect("write node kind");
+    for slot in slots {
+        out.push(' ');
+        out.push_str(&slot);
+    }
+    out.push(')');
 }
 
 /// Language bindings for the shared formatter corpus / recovery harness.
@@ -640,6 +809,12 @@ pub fn run_formatter_corpus<L: CorpusLanguage>(
                 input.comment_inventory, formatted_facts.comment_inventory
             ));
         }
+        if input.structure != formatted_facts.structure {
+            conservation_failures.push(format!(
+                "{relative}:\nformatting changed the parse tree beyond authorized normalizations\n{}\n",
+                describe_structure_divergence(&input.structure, &formatted_facts.structure)
+            ));
+        }
         let expected_markers = trivia_markers(&source);
         let actual_markers = trivia_markers(&formatted);
         if actual_markers != expected_markers {
@@ -649,12 +824,11 @@ pub fn run_formatter_corpus<L: CorpusLanguage>(
         }
 
         let repeated = lang.format(&formatted, &label);
-        assert_eq!(
-            repeated,
-            formatted,
-            "formatter output was not idempotent for {}",
-            path.display()
-        );
+        if repeated != formatted {
+            conservation_failures.push(format!(
+                "{relative}:\nformatter output was not idempotent\nfirst format:  {formatted:?}\nsecond format: {repeated:?}\n"
+            ));
+        }
 
         let snapshot_body = SnapshotBuilder::new()
             .section("formatted", &formatted)
@@ -670,7 +844,7 @@ pub fn run_formatter_corpus<L: CorpusLanguage>(
     );
     assert!(
         conservation_failures.is_empty(),
-        "formatter lost represented {} source:\n{}",
+        "{} formatter conservation failures:\n{}",
         lang.language_name(),
         conservation_failures.join("\n")
     );
