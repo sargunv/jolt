@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_fmt_ir::{BodyItemSeparator, Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     ClassBody, ClassMember, ClassMemberDeclaration, ClassMemberList, Declaration,
     KotlinRoleElement, KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView, StatementSyntax,
@@ -380,11 +380,7 @@ fn join_class_body_sections<'source>(
     doc.concat_list(|joined| {
         for section in sections {
             if !joined.is_empty() {
-                let separator = if previous_hard_line_after {
-                    joined.hard_line()
-                } else {
-                    joined.empty_line()
-                };
+                let separator = BodyItemSeparator::spaced(previous_hard_line_after).doc(joined);
                 joined.push(separator);
             }
             joined.push(section.doc);

@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_fmt_ir::{BodyItemSeparator, Doc, DocBuilder};
 use jolt_java_syntax::{
     CompilationUnit, CompilationUnitItem, ImportDeclaration, JavaMalformedSyntax,
     JavaMissingSyntax, JavaSyntaxListPart, JavaSyntaxToken, JavaSyntaxView, PackageDeclaration,
@@ -260,11 +260,7 @@ fn join_program_sections<'source>(
     doc.concat_list(|joined| {
         for section in sections {
             if section.visible && saw_visible {
-                let separator = if compact_after {
-                    joined.hard_line()
-                } else {
-                    joined.empty_line()
-                };
+                let separator = BodyItemSeparator::spaced(compact_after).doc(joined);
                 joined.push(separator);
             }
             joined.push(section.doc);

@@ -9,7 +9,7 @@ use jolt_syntax::tokens_have_blank_line_between;
 use crate::helpers::blocks::{BodyItemSeparator, join_hard_lines};
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_comment, format_removed_separator,
-    format_terminator_list, format_token, token_has_comments,
+    format_terminator_list, format_token, token_has_comments, trailing_comments_force_line,
 };
 use crate::helpers::recovery::{
     KotlinFormatListPart, format_malformed, format_missing, format_optional_field,
@@ -389,17 +389,12 @@ fn source_item_separator(
     current: &KotlinFileItem<'_>,
     preserve_source_blank_line: bool,
 ) -> BodyItemSeparator {
-    let blank = !preserve_source_blank_line || items_have_blank_line_between(previous, current);
-    let previous_forces_line = previous.last_token().is_some_and(|token| {
-        token
-            .trailing_comments()
-            .any(|comment| comment.kind() == jolt_kotlin_syntax::KotlinCommentKind::Line)
-    });
-    match (blank, previous_forces_line) {
-        (false, true) => BodyItemSeparator::None,
-        (true, true) | (false, false) => BodyItemSeparator::Line,
-        (true, false) => BodyItemSeparator::EmptyLine,
-    }
+    BodyItemSeparator::between(
+        !preserve_source_blank_line || items_have_blank_line_between(previous, current),
+        previous
+            .last_token()
+            .is_some_and(|token| trailing_comments_force_line(&token)),
+    )
 }
 
 fn items_have_blank_line_between(left: &KotlinFileItem<'_>, right: &KotlinFileItem<'_>) -> bool {

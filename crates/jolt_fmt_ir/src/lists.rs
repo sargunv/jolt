@@ -129,3 +129,47 @@ pub fn comma_list_parts<'source, L: Language>(
 
     (docs, has_source_trailing_separator)
 }
+
+/// How two adjacent items in a body or file are separated.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BodyItemSeparator {
+    /// Nothing: the previous item already ended its line.
+    None,
+    /// A single line break.
+    Line,
+    /// A blank line.
+    EmptyLine,
+}
+
+impl BodyItemSeparator {
+    /// Chooses the separator between two adjacent items.
+    ///
+    /// `previous_ended_line` means the previous item already ended its own line,
+    /// typically because a trailing line comment forced a break. Opening another
+    /// break on top of that would leave a spurious blank line, so the separator
+    /// steps down: a blank line becomes one break, and one break becomes
+    /// nothing.
+    #[must_use]
+    pub const fn between(source_had_blank_line: bool, previous_ended_line: bool) -> Self {
+        match (source_had_blank_line, previous_ended_line) {
+            (false, true) => Self::None,
+            (true, true) | (false, false) => Self::Line,
+            (true, false) => Self::EmptyLine,
+        }
+    }
+
+    /// Chooses the separator for a body that always spaces its items apart.
+    #[must_use]
+    pub const fn spaced(previous_ended_line: bool) -> Self {
+        Self::between(true, previous_ended_line)
+    }
+
+    #[must_use]
+    pub fn doc<'source>(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
+        match self {
+            Self::None => Doc::nil(),
+            Self::Line => doc.hard_line(),
+            Self::EmptyLine => doc.empty_line(),
+        }
+    }
+}
