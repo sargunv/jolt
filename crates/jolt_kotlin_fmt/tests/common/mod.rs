@@ -13,8 +13,9 @@ use jolt_test_support::{
 pub(crate) const STRUCTURE_POLICY: StructurePolicy<KotlinSyntaxKind> = StructurePolicy {
     normalizable_punctuation: &[
         KotlinSyntaxKind::Comma,
+        // `;;` is not in the syntax layer's separator-removal vocabulary, so the
+        // formatter must keep it and the fingerprint must stay sensitive to it.
         KotlinSyntaxKind::Semicolon,
-        KotlinSyntaxKind::DoubleSemicolon,
         KotlinSyntaxKind::EolOrSemicolon,
         KotlinSyntaxKind::LParen,
         KotlinSyntaxKind::RParen,

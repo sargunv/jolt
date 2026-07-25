@@ -23,6 +23,21 @@ fn fingerprint(source: &str) -> String {
     structure_fingerprint(root, &common::STRUCTURE_POLICY)
 }
 
+/// Fingerprints a source the parser recovered in, which the corpus audit path also
+/// compares.
+fn recovered_fingerprint(source: &str) -> String {
+    let parse = parse_kotlin_file(source);
+    assert!(
+        !parse.diagnostics().is_empty(),
+        "expected recovery input to carry diagnostics: {source}"
+    );
+    let root = parse
+        .syntax()
+        .and_then(|file| file.syntax_node())
+        .expect("kotlin file");
+    structure_fingerprint(root, &common::STRUCTURE_POLICY)
+}
+
 #[test]
 fn breaking_before_an_indexing_suffix_is_rejected() {
     // The defect this guard exists for: a newline before `[` ends the postfix chain,
@@ -63,6 +78,27 @@ fn sorting_imports_is_tolerated_but_dropping_one_is_not() {
     assert_ne!(
         fingerprint("import a.A\nimport b.B\n"),
         fingerprint("import a.A\n"),
+    );
+}
+
+#[test]
+fn moving_an_import_the_parser_recovered_in_is_rejected() {
+    // The syntax layer authorizes reordering only for a recovery-free import, and the
+    // formatter's sort runs stop at one it cannot claim. An import that keeps its place
+    // in the output must therefore keep its place in the fingerprint.
+    assert_ne!(
+        recovered_fingerprint("import z.B unexpected\nimport a.A\n"),
+        recovered_fingerprint("import a.A\nimport z.B unexpected\n"),
+    );
+}
+
+#[test]
+fn dropping_a_double_semicolon_is_rejected() {
+    // `;;` is outside the syntax layer's separator-removal vocabulary, so the formatter
+    // has to keep it.
+    assert_ne!(
+        fingerprint("fun f() {\n    value;;\n}\n"),
+        fingerprint("fun f() {\n    value\n}\n"),
     );
 }
 

@@ -566,8 +566,11 @@ pub struct StructurePolicy<K: 'static> {
     /// `NormalizedToken::text` and `RemovalReason::Redundant*`. Structure still
     /// comes from the enclosing nodes, so eliding these tokens costs no coverage.
     pub normalizable_punctuation: &'static [K],
-    /// Nodes whose entire child sequence is order-insensitive, covering
-    /// `ReorderReason::ModuleDirectives` and Kotlin's sorted import list.
+    /// Nodes whose child sequence is order-insensitive, covering
+    /// `ReorderReason::ModuleDirectives` and Kotlin's sorted import list. Only
+    /// recovery-free children are canonicalized, mirroring the authorization
+    /// `NormalizationOwner` grants; a child carrying recovery keeps its position, so
+    /// moving it past a sortable neighbour still fails.
     pub unordered_nodes: &'static [K],
     /// Nodes whose keyword tokens are order-insensitive while their child nodes keep
     /// their relative order, covering `ReorderReason::Modifiers`. Sorted keywords are
@@ -577,7 +580,8 @@ pub struct StructurePolicy<K: 'static> {
     pub unordered_keywords: &'static [K],
     /// Child kinds the formatter may reorder among their own positions inside an
     /// otherwise order-sensitive parent, covering `ReorderReason::Imports` where
-    /// imports share a list with other declarations.
+    /// imports share a list with other declarations. As with `unordered_nodes`, a
+    /// child carrying recovery is never canonicalized.
     pub reorderable_children: &'static [K],
     /// Single-child wrappers that are pure plumbing: they carry no source delimiter of
     /// their own, so eliding them cannot hide a lost boundary.
@@ -665,15 +669,27 @@ fn is_transparent_wrapper<K: Copy + PartialEq>(
 }
 
 /// True when any direct child is a kind the formatter may reorder. Only inspects child
-/// kinds, so it never walks a subtree.
+/// kinds and recovery ownership, so it never walks a subtree.
 fn has_reorderable_child<L>(node: SyntaxNode<'_, L>, policy: &StructurePolicy<L::Kind>) -> bool
 where
     L: Language,
 {
     (0..node.slot_count()).any(|index| {
         matches!(node.slot_at(index), Some(SyntaxSlot::Node(child))
-            if policy.reorderable_children.contains(&child.kind()))
+            if is_canonicalizable_child(child, policy.reorderable_children))
     })
+}
+
+/// True when `child` is one of `kinds` and carries no recovery.
+///
+/// A reorder claim is authorized only for a recovery-free owner, so an entry the parser
+/// recovered inside stays where the source put it. Canonicalizing it too would let the
+/// fingerprint tolerate moving a malformed entry past the sortable ones around it.
+fn is_canonicalizable_child<L>(child: SyntaxNode<'_, L>, kinds: &[L::Kind]) -> bool
+where
+    L: Language,
+{
+    kinds.contains(&child.kind()) && child.is_recovery_free()
 }
 
 /// True when a node cannot be emitted until all of its children are known, because it
@@ -815,7 +831,12 @@ where
                 if rendered.is_empty() {
                     continue;
                 }
-                if policy.reorderable_children.contains(&child.kind()) {
+                let canonicalizable = if unordered {
+                    child.is_recovery_free()
+                } else {
+                    is_canonicalizable_child(child, policy.reorderable_children)
+                };
+                if canonicalizable {
                     reorderable.push(slots.len());
                 }
                 slots.push(rendered);
@@ -828,6 +849,11 @@ where
                 if unordered_keywords {
                     keywords.push(rendered);
                 } else {
+                    // A token carries no recovery of its own, so an unordered list
+                    // canonicalizes it alongside its recovery-free node children.
+                    if unordered {
+                        reorderable.push(slots.len());
+                    }
                     slots.push(rendered);
                 }
             }
@@ -836,13 +862,15 @@ where
         }
     }
 
-    if unordered {
-        slots.sort_unstable();
-    } else if unordered_keywords {
+    if unordered_keywords {
         keywords.sort_unstable();
         keywords.append(&mut slots);
         slots = keywords;
     } else if reorderable.len() > 1 {
+        // Canonicalize the reorderable entries among the positions they already
+        // occupy. Every other slot -- punctuation, an unrelated declaration, or an
+        // entry the parser recovered inside -- keeps its index, so a formatter that
+        // moved one of those still changes the fingerprint.
         let mut moved = reorderable
             .iter()
             .map(|&index| slots[index].clone())
@@ -959,31 +987,18 @@ pub fn run_formatter_corpus<L: CorpusLanguage>(
             "formatted output produced no syntax tree for {}",
             path.display()
         );
-        if input.comment_inventory != formatted_facts.comment_inventory {
-            conservation_failures.push(format!(
-                "{relative}:\nrepresented comment inventory changed\nexpected: {:#?}\nactual: {:#?}\n",
-                input.comment_inventory, formatted_facts.comment_inventory
-            ));
-        }
-        if input.structure != formatted_facts.structure {
-            conservation_failures.push(format!(
-                "{relative}:\nformatting changed the parse tree beyond authorized normalizations\n{}\n",
-                describe_structure_divergence(&input.structure, &formatted_facts.structure)
-            ));
-        }
-        let expected_markers = trivia_markers(&source);
-        let actual_markers = trivia_markers(&formatted);
-        if actual_markers != expected_markers {
-            conservation_failures.push(format!(
-                "{relative}:\ntrivia markers changed\nexpected: {expected_markers:#?}\nactual: {actual_markers:#?}\n"
-            ));
-        }
-
         let repeated = lang.format(&formatted, &label);
-        if repeated != formatted {
-            conservation_failures.push(format!(
-                "{relative}:\nformatter output was not idempotent\nfirst format:  {formatted:?}\nsecond format: {repeated:?}\n"
-            ));
+        let mut failure = String::new();
+        append_stability_failures(
+            &mut failure,
+            &source,
+            &formatted,
+            &repeated,
+            &input,
+            &formatted_facts,
+        );
+        if !failure.is_empty() {
+            conservation_failures.push(format!("{relative}:\n{failure}"));
         }
 
         let snapshot_body = SnapshotBuilder::new()
@@ -1099,7 +1114,20 @@ fn append_stability_failures(
     formatted_facts: &CorpusParseFacts,
 ) {
     if input.comment_inventory != formatted_facts.comment_inventory {
-        failures.push_str("represented comment inventory changed\n");
+        write!(
+            failures,
+            "represented comment inventory changed\nexpected: {:#?}\nactual: {:#?}\n",
+            input.comment_inventory, formatted_facts.comment_inventory
+        )
+        .expect("writing to a String cannot fail");
+    }
+    if input.structure != formatted_facts.structure {
+        write!(
+            failures,
+            "formatting changed the parse tree beyond authorized normalizations\n{}\n",
+            describe_structure_divergence(&input.structure, &formatted_facts.structure)
+        )
+        .expect("writing to a String cannot fail");
     }
     let expected_markers = trivia_markers(source);
     let actual_markers = trivia_markers(formatted);
