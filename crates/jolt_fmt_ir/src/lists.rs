@@ -133,7 +133,7 @@ pub fn comma_list_parts<'source, L: Language>(
 /// How two adjacent items in a body or file are separated.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BodyItemSeparator {
-    /// Nothing: the previous item already ended its line.
+    /// Nothing beyond the line the previous item already ended.
     None,
     /// A single line break.
     Line,
@@ -167,7 +167,12 @@ impl BodyItemSeparator {
     #[must_use]
     pub fn doc<'source>(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
         match self {
-            Self::None => Doc::nil(),
+            // A boundary rather than nothing at all. Whether the previous item
+            // ended its line is a prediction made from that item's last source
+            // token, and an item may emit more layout after its last token — a
+            // synthesized closing parenthesis, say. Emitting nothing on a wrong
+            // prediction runs the next item straight onto the previous one.
+            Self::None => doc.hard_line_boundary(),
             Self::Line => doc.hard_line(),
             Self::EmptyLine => doc.empty_line(),
         }
