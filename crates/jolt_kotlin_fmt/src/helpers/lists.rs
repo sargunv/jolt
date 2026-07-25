@@ -1,6 +1,8 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{KotlinSyntaxListPart, KotlinSyntaxToken};
 
+use crate::helpers::recovery::KotlinFormatDelimiter;
+
 use crate::helpers::comments::{
     TrailingTrivia, delimiter_dangling_comments, format_dangling_comments, format_leading_comments,
     format_separator_with_comments, format_token_after_relocated_leading_comments,
@@ -16,8 +18,8 @@ pub(crate) use jolt_fmt_ir::{attach_comma_separator, comma_list};
 
 pub(crate) fn delimited_comma_list<'source>(
     doc: &mut DocBuilder<'source>,
-    open: Option<&KotlinSyntaxToken<'source>>,
-    close: Option<&KotlinSyntaxToken<'source>>,
+    open: KotlinFormatDelimiter<'source>,
+    close: KotlinFormatDelimiter<'source>,
     items: Vec<CommaListItem<'source>>,
 ) -> Doc<'source> {
     delimited_comma_list_with(doc, open, close, items, false, TrailingTrivia::Preserve)
@@ -25,8 +27,8 @@ pub(crate) fn delimited_comma_list<'source>(
 
 pub(crate) fn annotation_parenthesized_list<'source>(
     doc: &mut DocBuilder<'source>,
-    open: Option<&KotlinSyntaxToken<'source>>,
-    close: Option<&KotlinSyntaxToken<'source>>,
+    open: KotlinFormatDelimiter<'source>,
+    close: KotlinFormatDelimiter<'source>,
     items: Vec<CommaListItem<'source>>,
 ) -> Doc<'source> {
     delimited_comma_list_with(
@@ -41,8 +43,8 @@ pub(crate) fn annotation_parenthesized_list<'source>(
 
 pub(crate) fn force_parenthesized_list<'source>(
     doc: &mut DocBuilder<'source>,
-    open: Option<&KotlinSyntaxToken<'source>>,
-    close: Option<&KotlinSyntaxToken<'source>>,
+    open: KotlinFormatDelimiter<'source>,
+    close: KotlinFormatDelimiter<'source>,
     items: Vec<CommaListItem<'source>>,
 ) -> Doc<'source> {
     delimited_comma_list_with(doc, open, close, items, true, TrailingTrivia::Preserve)
@@ -50,8 +52,8 @@ pub(crate) fn force_parenthesized_list<'source>(
 
 fn delimited_comma_list_with<'source>(
     doc: &mut DocBuilder<'source>,
-    open: Option<&KotlinSyntaxToken<'source>>,
-    close: Option<&KotlinSyntaxToken<'source>>,
+    open: KotlinFormatDelimiter<'source>,
+    close: KotlinFormatDelimiter<'source>,
     items: Vec<CommaListItem<'source>>,
     force_multiline: bool,
     close_trailing: TrailingTrivia,
@@ -70,13 +72,16 @@ fn delimited_comma_list_with<'source>(
         .is_some_and(|item| item.comma().is_some());
     let open_doc = format_open_delimiter_with_trailing(doc, open, TrailingTrivia::BeforeSoftLine);
     let list = comma_list(doc, items);
-    let close_comments = format_close_leading_comments(doc, close);
+    let close_comments = format_close_leading_comments(doc, close.source());
     let indented_contents = doc.concat([open_doc, list, close_comments]);
     let indented_contents = doc.indent(indented_contents);
     let close_doc = format_close_with_spacing(doc, close, close_trailing);
     let contents = doc.concat([indented_contents, close_doc]);
 
-    if force_multiline || has_trailing_comma || has_delimiter_dangling_comments(open, close) {
+    if force_multiline
+        || has_trailing_comma
+        || has_delimiter_dangling_comments(open.source(), close.source())
+    {
         doc.force_group(contents)
     } else {
         doc.group(contents)
@@ -110,11 +115,11 @@ pub(crate) fn physical_comma_list_items<'source, Entry>(
 
 fn empty_delimited_list<'source>(
     doc: &mut DocBuilder<'source>,
-    open: Option<&KotlinSyntaxToken<'source>>,
-    close: Option<&KotlinSyntaxToken<'source>>,
+    open: KotlinFormatDelimiter<'source>,
+    close: KotlinFormatDelimiter<'source>,
     close_trailing: TrailingTrivia,
 ) -> Doc<'source> {
-    if !has_delimiter_dangling_comments(open, close) {
+    if !has_delimiter_dangling_comments(open.source(), close.source()) {
         let open = format_open_delimiter_with_trailing(
             doc,
             open,
@@ -127,7 +132,10 @@ fn empty_delimited_list<'source>(
     let open_doc =
         format_open_delimiter_with_trailing(doc, open, TrailingTrivia::RelocatedToEnclosingContext);
     let line = doc.hard_line();
-    let comments = format_dangling_comments(doc, delimiter_dangling_comments(open, close));
+    let comments = format_dangling_comments(
+        doc,
+        delimiter_dangling_comments(open.source(), close.source()),
+    );
     let body = doc.concat([line, comments]);
     let body = doc.indent(body);
     let close_line = doc.hard_line();
@@ -138,23 +146,25 @@ fn empty_delimited_list<'source>(
 
 fn format_open_delimiter_with_trailing<'source>(
     doc: &mut DocBuilder<'source>,
-    token: Option<&KotlinSyntaxToken<'source>>,
+    open: KotlinFormatDelimiter<'source>,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
-    if let Some(token) = token {
-        format_token_with_inline_leading_comments(doc, token, trailing)
-    } else {
-        doc.nil()
+    match open {
+        KotlinFormatDelimiter::Source(open) => {
+            format_token_with_inline_leading_comments(doc, &open, trailing)
+        }
+        KotlinFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }
 
 fn format_close_with_spacing<'source>(
     doc: &mut DocBuilder<'source>,
-    close: Option<&KotlinSyntaxToken<'source>>,
+    close: KotlinFormatDelimiter<'source>,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
-    let close_has_leading_comments =
-        close.is_some_and(|token| !token.leading_comments().is_empty());
+    let close_has_leading_comments = close
+        .source()
+        .is_some_and(|token| !token.leading_comments().is_empty());
 
     let line = if close_has_leading_comments {
         doc.hard_line()
@@ -184,31 +194,32 @@ fn format_close_leading_comments<'source>(
 
 fn format_close_delimiter<'source>(
     doc: &mut DocBuilder<'source>,
-    token: Option<&KotlinSyntaxToken<'source>>,
+    close: KotlinFormatDelimiter<'source>,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
-    if let Some(token) = token {
-        let close_has_leading_comments = !token.leading_comments().is_empty();
-        let leading = if close_has_leading_comments {
-            format_leading_comments(doc, token)
-        } else {
-            doc.nil()
-        };
-        let token = format_token_after_relocated_leading_comments(doc, token, trailing);
-        doc.concat([leading, token])
-    } else {
-        doc.nil()
+    match close {
+        KotlinFormatDelimiter::Source(close) => {
+            let leading = if close.leading_comments().is_empty() {
+                doc.nil()
+            } else {
+                format_leading_comments(doc, &close)
+            };
+            let close = format_token_after_relocated_leading_comments(doc, &close, trailing);
+            doc.concat([leading, close])
+        }
+        KotlinFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }
 
 fn format_close_delimiter_without_leading<'source>(
     doc: &mut DocBuilder<'source>,
-    token: Option<&KotlinSyntaxToken<'source>>,
+    close: KotlinFormatDelimiter<'source>,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
-    if let Some(token) = token {
-        format_token_after_relocated_leading_comments(doc, token, trailing)
-    } else {
-        doc.nil()
+    match close {
+        KotlinFormatDelimiter::Source(close) => {
+            format_token_after_relocated_leading_comments(doc, &close, trailing)
+        }
+        KotlinFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }

@@ -18,8 +18,8 @@ use crate::helpers::lists::{
 };
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_malformed, format_optional_field,
-    format_required_field, join_delimited_recovery, resolve_list_part, resolve_optional_field,
-    resolve_required_delimiter, resolve_required_field,
+    format_required_field, resolve_list_part, resolve_optional_field, resolve_required_delimiter,
+    resolve_required_field,
 };
 use crate::rules::annotations::format_annotation_with_leading;
 use crate::rules::expressions::{format_expression, format_value_argument_list};
@@ -534,8 +534,7 @@ pub(crate) fn format_destructuring_declaration<'source>(
         }
         KotlinFormatField::Malformed(recovery) => vec![CommaListItem::visible(recovery)],
     };
-    let list = delimited_comma_list(doc, open.source(), close.source(), items);
-    join_delimited_recovery(doc, &open, list, &close)
+    delimited_comma_list(doc, open, close, items)
 }
 
 fn format_destructuring_entry<'source>(
@@ -682,8 +681,7 @@ fn format_context_parameter_clause<'source>(
         }
         KotlinFormatField::Malformed(recovery) => vec![CommaListItem::visible(recovery)],
     };
-    let parameters = delimited_comma_list(doc, open.source(), close.source(), items);
-    let parameters = join_delimited_recovery(doc, &open, parameters, &close);
+    let parameters = delimited_comma_list(doc, open, close, items);
     doc.concat([context, parameters])
 }
 

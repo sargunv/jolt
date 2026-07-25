@@ -7,8 +7,8 @@ use jolt_kotlin_syntax::{
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
 use crate::helpers::lists::{CommaListItem, delimited_comma_list, physical_comma_list_items};
 use crate::helpers::recovery::{
-    KotlinFormatField, format_optional_field, format_required_field, join_delimited_recovery,
-    resolve_required_delimiter, resolve_required_field,
+    KotlinFormatField, format_optional_field, format_required_field, resolve_required_delimiter,
+    resolve_required_field,
 };
 use crate::rules::declarations::format_destructuring_declaration;
 use crate::rules::expressions::format_expression;
@@ -38,8 +38,7 @@ pub(crate) fn format_value_parameter_list<'source>(
         }
         KotlinFormatField::Malformed(recovery) => vec![CommaListItem::visible(recovery)],
     };
-    let list = delimited_comma_list(doc, open.source(), close.source(), items);
-    join_delimited_recovery(doc, &open, list, &close)
+    delimited_comma_list(doc, open, close, items)
 }
 
 fn format_value_parameter<'source>(

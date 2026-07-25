@@ -17,7 +17,7 @@ use crate::helpers::lists::{
 };
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_optional_field, format_required_field,
-    join_delimited_recovery, resolve_list_part, resolve_required_delimiter, resolve_required_field,
+    resolve_list_part, resolve_required_delimiter, resolve_required_field,
 };
 use crate::rules::annotations::format_annotation;
 use crate::rules::names::format_name;
@@ -627,8 +627,7 @@ fn format_square_argument_list<'source>(
             vec![CommaListItem::visible(recovery)]
         }
     };
-    let list = delimited_comma_list(doc, open.source(), close.source(), items);
-    join_delimited_recovery(doc, &open, list, &close)
+    delimited_comma_list(doc, open, close, items)
 }
 const fn is_simple_member_chain_root(expression: &Expression<'_>) -> bool {
     matches!(
@@ -669,12 +668,11 @@ pub(crate) fn format_value_argument_list<'source>(
     };
     let has_comments = items.iter().any(CommaListItem::is_visible)
         && value_argument_list_has_leading_comments(arguments);
-    let list = if has_comments {
-        force_parenthesized_list(doc, open.source(), close.source(), items)
+    if has_comments {
+        force_parenthesized_list(doc, open, close, items)
     } else {
-        delimited_comma_list(doc, open.source(), close.source(), items)
-    };
-    join_delimited_recovery(doc, &open, list, &close)
+        delimited_comma_list(doc, open, close, items)
+    }
 }
 
 fn value_argument_list_entry_items<'source>(
