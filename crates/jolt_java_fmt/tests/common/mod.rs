@@ -1,3 +1,6 @@
+// Shared by several test binaries, each of which uses a different part.
+#![allow(dead_code)]
+
 use jolt_fmt_ir::FormatOptions;
 use jolt_java_fmt::format_source_to_sink;
 use jolt_java_syntax::{JavaSyntaxKind, JavaSyntaxView, parse_compilation_unit};
@@ -8,7 +11,7 @@ use jolt_test_support::{
 /// The only tree edits the Java formatter is allowed to make: it sorts imports and
 /// modifiers, promotes a bare statement to a block, drops redundant separators, and
 /// may normalize separator punctuation.
-const STRUCTURE_POLICY: StructurePolicy<JavaSyntaxKind> = StructurePolicy {
+pub(crate) const STRUCTURE_POLICY: StructurePolicy<JavaSyntaxKind> = StructurePolicy {
     normalizable_punctuation: &[
         JavaSyntaxKind::Comma,
         JavaSyntaxKind::Semicolon,
@@ -18,21 +21,35 @@ const STRUCTURE_POLICY: StructurePolicy<JavaSyntaxKind> = StructurePolicy {
         JavaSyntaxKind::RParen,
     ],
     unordered_nodes: &[
-        JavaSyntaxKind::ModifierList,
         JavaSyntaxKind::ModuleDirectiveList,
         JavaSyntaxKind::RequiresModifierList,
     ],
+    unordered_keywords: &[
+        JavaSyntaxKind::ModifierList,
+        JavaSyntaxKind::ParameterModifierList,
+    ],
     reorderable_children: &[JavaSyntaxKind::ImportDeclaration],
-    // Promoting `if (c) stmt;` to `if (c) { stmt; }` interposes this whole wrapper
-    // chain, so each link is transparent when it holds a lone child. Eliding
-    // `ParenthesizedExpression` costs no precedence coverage: operator nesting lives
-    // in the `BinaryExpression` spine, so dropping a paren that actually mattered
-    // still reshapes that spine and still fails.
+    // `BlockStatementList` and `BlockStatement` are the list plumbing that brace
+    // promotion interposes; neither owns a brace, so eliding them cannot hide a lost
+    // boundary. Eliding `ParenthesizedExpression` costs no precedence coverage either:
+    // operator nesting lives in the `BinaryExpression` spine, so dropping a paren that
+    // actually mattered still reshapes that spine and still fails.
     elidable_wrappers: &[
-        JavaSyntaxKind::Block,
         JavaSyntaxKind::BlockStatementList,
         JavaSyntaxKind::BlockStatement,
         JavaSyntaxKind::ParenthesizedExpression,
+    ],
+    // A `Block` owns real braces, so it is transparent only where the formatter may
+    // have synthesized it. A block written anywhere else stays in the fingerprint, and
+    // flattening it -- which would change what a declaration inside it scopes over --
+    // still fails.
+    promoted_body_wrapper: Some(JavaSyntaxKind::Block),
+    brace_promoting_parents: &[
+        JavaSyntaxKind::IfStatement,
+        JavaSyntaxKind::WhileStatement,
+        JavaSyntaxKind::DoStatement,
+        JavaSyntaxKind::BasicForStatement,
+        JavaSyntaxKind::EnhancedForStatement,
     ],
     elidable_nodes: &[
         JavaSyntaxKind::EmptyStatement,

@@ -567,15 +567,28 @@ pub struct StructurePolicy<K: 'static> {
     /// comes from the enclosing nodes, so eliding these tokens costs no coverage.
     pub normalizable_punctuation: &'static [K],
     /// Nodes whose entire child sequence is order-insensitive, covering
-    /// `ReorderReason::Modifiers` and Kotlin's sorted import list.
+    /// `ReorderReason::ModuleDirectives` and Kotlin's sorted import list.
     pub unordered_nodes: &'static [K],
+    /// Nodes whose keyword tokens are order-insensitive while their child nodes keep
+    /// their relative order, covering `ReorderReason::Modifiers`. Sorted keywords are
+    /// emitted ahead of the nodes so that moving a keyword across an annotation is
+    /// tolerated, but a swap of two repeated annotations still fails: reflection
+    /// exposes repeatable annotations in declaration order.
+    pub unordered_keywords: &'static [K],
     /// Child kinds the formatter may reorder among their own positions inside an
     /// otherwise order-sensitive parent, covering `ReorderReason::Imports` where
     /// imports share a list with other declarations.
     pub reorderable_children: &'static [K],
-    /// Single-child wrappers the formatter may introduce, covering
-    /// `NormalizedToken::OpenBlockBrace` promoting a bare statement to a block.
+    /// Single-child wrappers that are pure plumbing: they carry no source delimiter of
+    /// their own, so eliding them cannot hide a lost boundary.
     pub elidable_wrappers: &'static [K],
+    /// The wrapper a promoted statement body is placed in, covering
+    /// `NormalizedToken::OpenBlockBrace`. Transparent *only* directly under
+    /// `brace_promoting_parents`, so a block represented anywhere else stays visible
+    /// and dropping its real braces still fails.
+    pub promoted_body_wrapper: Option<K>,
+    /// Parents whose body the formatter may promote from a bare statement to a block.
+    pub brace_promoting_parents: &'static [K],
     /// Nodes that carry no meaning and may be dropped, covering
     /// `RemovalReason::RedundantSeparator` for empty statements.
     pub elidable_nodes: &'static [K],
@@ -635,18 +648,160 @@ where
     L::Kind: Debug,
 {
     let mut out = String::new();
-    write_node_structure(&mut out, root, policy);
+    write_node_structure(&mut out, root, None, false, policy);
     out
 }
 
+/// True when `node` stands for no source delimiter of its own, so collapsing it to a
+/// lone child cannot hide a boundary the formatter dropped.
+fn is_transparent_wrapper<K: Copy + PartialEq>(
+    kind: K,
+    parent: Option<K>,
+    policy: &StructurePolicy<K>,
+) -> bool {
+    policy.elidable_wrappers.contains(&kind)
+        || policy.promoted_body_wrapper == Some(kind)
+            && parent.is_some_and(|parent| policy.brace_promoting_parents.contains(&parent))
+}
+
+/// True when any direct child is a kind the formatter may reorder. Only inspects child
+/// kinds, so it never walks a subtree.
+fn has_reorderable_child<L>(node: SyntaxNode<'_, L>, policy: &StructurePolicy<L::Kind>) -> bool
+where
+    L: Language,
+{
+    (0..node.slot_count()).any(|index| {
+        matches!(node.slot_at(index), Some(SyntaxSlot::Node(child))
+            if policy.reorderable_children.contains(&child.kind()))
+    })
+}
+
+/// True when a node cannot be emitted until all of its children are known, because it
+/// reorders them or may collapse to a lone child.
+fn needs_child_buffer<L>(
+    node: SyntaxNode<'_, L>,
+    parent: Option<L::Kind>,
+    policy: &StructurePolicy<L::Kind>,
+) -> bool
+where
+    L: Language,
+{
+    let kind = node.kind();
+    is_transparent_wrapper(kind, parent, policy)
+        || policy.unordered_nodes.contains(&kind)
+        || policy.unordered_keywords.contains(&kind)
+        || has_reorderable_child(node, policy)
+}
+
+enum StructureStep<'tree, L: Language> {
+    Enter {
+        node: SyntaxNode<'tree, L>,
+        parent: Option<L::Kind>,
+        separated: bool,
+    },
+    Token(SyntaxToken<'tree, L>),
+    Close,
+}
+
+/// Streams `node` into `out` with an explicit work stack.
+///
+/// Postfix chains and operator chains are built by parser loops, so their trees nest as
+/// deeply as the source is long and a recursive walk overflows the stack. Only nodes
+/// that reorder or collapse their children recurse, via `render_buffered_node`, and the
+/// parser bounds how deeply those nest with `excessive_syntax_nesting`.
 fn write_node_structure<L>(
     out: &mut String,
     node: SyntaxNode<'_, L>,
+    parent: Option<L::Kind>,
+    separated: bool,
     policy: &StructurePolicy<L::Kind>,
 ) where
     L: Language,
     L::Kind: Debug,
 {
+    let mut steps = vec![StructureStep::Enter {
+        node,
+        parent,
+        separated,
+    }];
+    while let Some(step) = steps.pop() {
+        match step {
+            StructureStep::Close => out.push(')'),
+            StructureStep::Token(token) => {
+                write!(out, " {:?}={}", token.kind(), token.text()).expect("write token kind");
+            }
+            StructureStep::Enter {
+                node,
+                parent,
+                separated,
+            } => {
+                let mark = out.len();
+                if separated {
+                    out.push(' ');
+                }
+                if needs_child_buffer(node, parent, policy) {
+                    let rendered = render_buffered_node(node, parent, policy);
+                    // A transparent wrapper left holding nothing is what a dropped
+                    // redundant separator looks like, so drop its separator too.
+                    if rendered.is_empty() {
+                        out.truncate(mark);
+                    } else {
+                        out.push_str(&rendered);
+                    }
+                    continue;
+                }
+
+                let kind = node.kind();
+                out.push('(');
+                write!(out, "{kind:?}").expect("write node kind");
+                steps.push(StructureStep::Close);
+                for index in (0..node.slot_count()).rev() {
+                    match node.slot_at(index) {
+                        Some(SyntaxSlot::Node(child)) => {
+                            if policy.elidable_nodes.contains(&child.kind()) {
+                                continue;
+                            }
+                            steps.push(StructureStep::Enter {
+                                node: child,
+                                parent: Some(kind),
+                                separated: true,
+                            });
+                        }
+                        Some(SyntaxSlot::Token(token)) => {
+                            if policy.normalizable_punctuation.contains(&token.kind()) {
+                                continue;
+                            }
+                            steps.push(StructureStep::Token(token));
+                        }
+                        // An empty slot is indistinguishable from a slot holding
+                        // punctuation the policy elides, so recording it would make the
+                        // two spellings disagree. Dropping every empty slot keeps the
+                        // fingerprint slot-count insensitive; a subtree the formatter
+                        // loses still disappears from its parent.
+                        Some(SyntaxSlot::Empty) | None => {}
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Renders one node whose children must be reordered or collapsed.
+fn render_buffered_node<L>(
+    node: SyntaxNode<'_, L>,
+    parent: Option<L::Kind>,
+    policy: &StructurePolicy<L::Kind>,
+) -> String
+where
+    L: Language,
+    L::Kind: Debug,
+{
+    let kind = node.kind();
+    let transparent = is_transparent_wrapper(kind, parent, policy);
+    let unordered = policy.unordered_nodes.contains(&kind);
+    let unordered_keywords = policy.unordered_keywords.contains(&kind);
+
+    let mut keywords: Vec<String> = Vec::new();
     let mut slots: Vec<String> = Vec::new();
     let mut reorderable: Vec<usize> = Vec::new();
     for index in 0..node.slot_count() {
@@ -655,18 +810,13 @@ fn write_node_structure<L>(
                 if policy.elidable_nodes.contains(&child.kind()) {
                     continue;
                 }
+                let mut rendered = String::new();
+                write_node_structure(&mut rendered, child, Some(kind), false, policy);
+                if rendered.is_empty() {
+                    continue;
+                }
                 if policy.reorderable_children.contains(&child.kind()) {
                     reorderable.push(slots.len());
-                }
-                let mut rendered = String::new();
-                write_node_structure(&mut rendered, child, policy);
-                // An elidable wrapper left holding nothing is what a dropped redundant
-                // separator looks like, so it carries no structure either.
-                if rendered.is_empty() {
-                    if policy.reorderable_children.contains(&child.kind()) {
-                        reorderable.pop();
-                    }
-                    continue;
                 }
                 slots.push(rendered);
             }
@@ -674,19 +824,24 @@ fn write_node_structure<L>(
                 if policy.normalizable_punctuation.contains(&token.kind()) {
                     continue;
                 }
-                slots.push(format!("{:?}={}", token.kind(), token.text()));
+                let rendered = format!("{:?}={}", token.kind(), token.text());
+                if unordered_keywords {
+                    keywords.push(rendered);
+                } else {
+                    slots.push(rendered);
+                }
             }
-            // An empty slot is indistinguishable from a slot holding punctuation the
-            // policy elides, so recording it would make the two spellings disagree.
-            // Dropping every empty slot keeps the fingerprint slot-count insensitive;
-            // a subtree the formatter loses still disappears from its parent.
             Some(SyntaxSlot::Empty) => {}
             None => break,
         }
     }
 
-    if policy.unordered_nodes.contains(&node.kind()) {
+    if unordered {
         slots.sort_unstable();
+    } else if unordered_keywords {
+        keywords.sort_unstable();
+        keywords.append(&mut slots);
+        slots = keywords;
     } else if reorderable.len() > 1 {
         let mut moved = reorderable
             .iter()
@@ -698,21 +853,22 @@ fn write_node_structure<L>(
         }
     }
 
-    // A wrapper the formatter may synthesize around a lone child is transparent:
-    // render the child so braced and unbraced spellings agree, and render nothing at
-    // all when the wrapper is empty so the caller can drop it.
-    if policy.elidable_wrappers.contains(&node.kind()) && slots.len() <= 1 {
-        out.push_str(slots.first().map_or("", String::as_str));
-        return;
+    // A wrapper the formatter may synthesize around a lone child renders as that child,
+    // so braced and unbraced spellings agree, and renders as nothing at all when it is
+    // empty so the caller can drop it.
+    if transparent && slots.len() <= 1 {
+        return slots.into_iter().next().unwrap_or_default();
     }
 
+    let mut out = String::new();
     out.push('(');
-    write!(out, "{:?}", node.kind()).expect("write node kind");
+    write!(&mut out, "{kind:?}").expect("write node kind");
     for slot in slots {
         out.push(' ');
         out.push_str(&slot);
     }
     out.push(')');
+    out
 }
 
 /// Language bindings for the shared formatter corpus / recovery harness.

@@ -1,3 +1,6 @@
+// Shared by several test binaries, each of which uses a different part.
+#![allow(dead_code)]
+
 use jolt_fmt_ir::FormatOptions;
 use jolt_kotlin_fmt::format_source_to_sink;
 use jolt_kotlin_syntax::{KotlinSyntaxKind, KotlinSyntaxView, parse_kotlin_file};
@@ -7,7 +10,7 @@ use jolt_test_support::{
 
 /// The only tree edits the Kotlin formatter is allowed to make: it sorts the import
 /// list, adds clarifying precedence parentheses, and may normalize separators.
-const STRUCTURE_POLICY: StructurePolicy<KotlinSyntaxKind> = StructurePolicy {
+pub(crate) const STRUCTURE_POLICY: StructurePolicy<KotlinSyntaxKind> = StructurePolicy {
     normalizable_punctuation: &[
         KotlinSyntaxKind::Comma,
         KotlinSyntaxKind::Semicolon,
@@ -17,11 +20,14 @@ const STRUCTURE_POLICY: StructurePolicy<KotlinSyntaxKind> = StructurePolicy {
         KotlinSyntaxKind::RParen,
     ],
     unordered_nodes: &[KotlinSyntaxKind::ImportDirectiveList],
+    unordered_keywords: &[],
     reorderable_children: &[],
     // Eliding `ParenthesizedExpression` costs no precedence coverage: operator nesting
     // lives in the `BinaryExpression` spine, so a paren that actually mattered still
     // reshapes that spine and still fails.
     elidable_wrappers: &[KotlinSyntaxKind::ParenthesizedExpression],
+    promoted_body_wrapper: None,
+    brace_promoting_parents: &[],
     elidable_nodes: &[],
 };
 
