@@ -1,0 +1,343 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class FormatterIgnoreMembers {
+val before=1
+  // @formatter:off
+  val raw=1+2
+  val label="x"
+  // @formatter:on
+val after=2
+
+  // @formatter:off
+  fun   raw( ) { }
+
+  // @formatter:on
+  fun formatted() {}
+
+fun nested() {
+if (true) {
+// @formatter:off
+val rawLocal=3+4
+call( a,b )
+// @formatter:on
+val afterLocal=5
+}
+}
+}
+
+interface FormatterIgnoreInterfaceMembers {
+// @formatter:off
+fun   raw( ): Int
+// @formatter:on
+fun formatted(): Int
+}
+
+enum class FormatterIgnoreEnumEntries {
+// @formatter:off
+  RAW  ,
+// @formatter:on
+  FORMATTED,
+}
+
+object FormatterIgnoreObject {
+// @formatter:off
+val raw=1
+// @formatter:on
+val formatted=2
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "FormatterIgnoreMembers" @ 6..28 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 29..30
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 31..34 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "before" @ 35..41
+              PropertyInitializer
+                Assign "=" @ 41..42
+                LiteralExpression
+                  IntegerLiteral "1" @ 42..43
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 66..69 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "raw" @ 70..73
+              PropertyInitializer
+                Assign "=" @ 73..74
+                BinaryExpression
+                  LiteralExpression
+                    IntegerLiteral "1" @ 74..75
+                  Plus "+" @ 75..76
+                  LiteralExpression
+                    IntegerLiteral "2" @ 76..77
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 80..83 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "label" @ 84..89
+              PropertyInitializer
+                Assign "=" @ 89..90
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 90..91
+                    StringTemplateEntry
+                      RegularStringPart "x" @ 91..92
+                  ClosingQuote "\"" @ 92..93
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 113..116 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "after" @ 117..122
+              PropertyInitializer
+                Assign "=" @ 122..123
+                LiteralExpression
+                  IntegerLiteral "2" @ 123..124
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 148..151 leading=[Newline "\n", Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+              ModifierList
+              Name
+                Identifier "raw" @ 154..157
+              ValueParameterList
+                LParen "(" @ 157..158 trailing=[Whitespace " "]
+                ValueParameterSeparatedList
+                RParen ")" @ 159..160 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 161..162 trailing=[Whitespace " "]
+                  BlockItemList
+                  RBrace "}" @ 163..164
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 187..190 leading=[Newline "\n", Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "formatted" @ 191..200
+              ValueParameterList
+                LParen "(" @ 200..201
+                ValueParameterSeparatedList
+                RParen ")" @ 201..202 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 203..204
+                  BlockItemList
+                  RBrace "}" @ 204..205
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 207..210 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "nested" @ 211..217
+              ValueParameterList
+                LParen "(" @ 217..218
+                ValueParameterSeparatedList
+                RParen ")" @ 218..219 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 220..221
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        IfExpression
+                          IfKw "if" @ 222..224 leading=[Newline "\n"] trailing=[Whitespace " "]
+                          ParenthesizedExpression
+                            LParen "(" @ 225..226
+                            LiteralExpression
+                              TrueKw "true" @ 226..230
+                            RParen ")" @ 230..231 trailing=[Whitespace " "]
+                          Block
+                            LBrace "{" @ 232..233
+                            BlockItemList
+                              PropertyDeclaration
+                                ModifierList
+                                ModifierList
+                                ValKw "val" @ 252..255 leading=[Newline "\n", LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace " "]
+                                Name
+                                  Identifier "rawLocal" @ 256..264
+                                PropertyInitializer
+                                  Assign "=" @ 264..265
+                                  BinaryExpression
+                                    LiteralExpression
+                                      IntegerLiteral "3" @ 265..266
+                                    Plus "+" @ 266..267
+                                    LiteralExpression
+                                      IntegerLiteral "4" @ 267..268
+                                PropertyBodyMemberList
+                              Statement
+                                ExpressionStatement
+                                  CallExpression
+                                    NameExpression
+                                      Identifier "call" @ 269..273 leading=[Newline "\n"]
+                                    TypeArgumentListList
+                                    ValueArgumentList
+                                      LParen "(" @ 273..274 trailing=[Whitespace " "]
+                                      ValueArgumentEntryList
+                                        ValueArgument
+                                          ValueArgumentPrefixList
+                                          NameExpression
+                                            Identifier "a" @ 275..276
+                                        Comma "," @ 276..277
+                                        ValueArgument
+                                          ValueArgumentPrefixList
+                                          NameExpression
+                                            Identifier "b" @ 277..278 trailing=[Whitespace " "]
+                                      RParen ")" @ 279..280
+                                    LambdaExpressionList
+                                TerminatorList
+                              PropertyDeclaration
+                                ModifierList
+                                ModifierList
+                                ValKw "val" @ 298..301 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+                                Name
+                                  Identifier "afterLocal" @ 302..312
+                                PropertyInitializer
+                                  Assign "=" @ 312..313
+                                  LiteralExpression
+                                    IntegerLiteral "5" @ 313..314
+                                PropertyBodyMemberList
+                            RBrace "}" @ 315..316 leading=[Newline "\n"]
+                      TerminatorList
+                  RBrace "}" @ 317..318 leading=[Newline "\n"]
+        RBrace "}" @ 319..320 leading=[Newline "\n"]
+    InterfaceDeclaration
+      ModifierList
+      ModifierList
+      InterfaceKw "interface" @ 322..331 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "FormatterIgnoreInterfaceMembers" @ 332..363 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 364..365
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 384..387 leading=[Newline "\n", LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace "   "]
+              ModifierList
+              Name
+                Identifier "raw" @ 390..393
+              ValueParameterList
+                LParen "(" @ 393..394 trailing=[Whitespace " "]
+                ValueParameterSeparatedList
+                RParen ")" @ 395..396
+              Colon ":" @ 396..397 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "Int" @ 398..401
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 419..422 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "formatted" @ 423..432
+              ValueParameterList
+                LParen "(" @ 432..433
+                ValueParameterSeparatedList
+                RParen ")" @ 433..434
+              Colon ":" @ 434..435 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "Int" @ 436..439
+        RBrace "}" @ 440..441 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+        Identifier "enum" @ 443..447 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 448..453 trailing=[Whitespace " "]
+      Name
+        Identifier "FormatterIgnoreEnumEntries" @ 454..480 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 481..482
+        ClassMemberList
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "RAW" @ 503..506 leading=[Newline "\n", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "  "]
+            Comma "," @ 508..509
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "FORMATTED" @ 529..538 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n", Whitespace "  "]
+            Comma "," @ 538..539
+        RBrace "}" @ 540..541 leading=[Newline "\n"]
+    ObjectDeclaration
+      ModifierList
+      ModifierList
+      ObjectKw "object" @ 543..549 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "FormatterIgnoreObject" @ 550..571 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 572..573
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 592..595 leading=[Newline "\n", LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "raw" @ 596..599
+              PropertyInitializer
+                Assign "=" @ 599..600
+                LiteralExpression
+                  IntegerLiteral "1" @ 600..601
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 619..622 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "formatted" @ 623..632
+              PropertyInitializer
+                Assign "=" @ 632..633
+                LiteralExpression
+                  IntegerLiteral "2" @ 633..634
+              PropertyBodyMemberList
+        RBrace "}" @ 635..636 leading=[Newline "\n"]
+  Eof "" @ 637..637 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -15,6 +15,7 @@ style/declarations/class-header-clauses.kt
 style/declarations/delegation.kt
 style/declarations/enum-entries.kt
 style/declarations/explicit-backing-fields.kt
+style/declarations/formatter-ignore-members.kt
 style/declarations/objects-and-companions.kt
 style/declarations/primary-constructor-comments.kt
 style/declarations/properties-accessors.kt
