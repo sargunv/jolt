@@ -81,10 +81,7 @@ pub(crate) fn format_type_parameter_list<'source>(
                 format_type_parameter(&parameter, doc)
             })
         }
-        JavaFormatField::Malformed(recovery) => vec![CommaListItem {
-            doc: recovery,
-            comma: None,
-        }],
+        JavaFormatField::Malformed(recovery) => vec![CommaListItem::visible(recovery)],
     };
     match leading_comments {
         LeadingComments::Preserve => delimited_comma_list(doc, open, close, items),
@@ -106,10 +103,7 @@ pub(crate) fn format_type_argument_list<'source>(
                 format_type_argument(&argument, doc)
             })
         }
-        JavaFormatField::Malformed(recovery) => vec![CommaListItem {
-            doc: recovery,
-            comma: None,
-        }],
+        JavaFormatField::Malformed(recovery) => vec![CommaListItem::visible(recovery)],
     };
     delimited_comma_list(doc, open, close, items)
 }

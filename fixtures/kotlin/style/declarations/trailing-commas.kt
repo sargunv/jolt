@@ -1,0 +1,14 @@
+class TrailingCommas<T,>(val first: Int, val second: String,) {
+fun parameters(a: Int, b: Int,) {}
+fun arguments() { consume(1, 2,) }
+fun typeArguments() { val values = listOf<String,>() }
+fun collections() { val items = listOf(1, 2,) }
+fun consume(vararg values: Any?) {}
+}
+
+fun <T,> genericFunction(value: T,): T = value
+
+annotation class Marker(val names: Array<String>,)
+
+@Marker(names = ["a", "b",],)
+class Annotated

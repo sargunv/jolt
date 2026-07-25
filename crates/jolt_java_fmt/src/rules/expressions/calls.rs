@@ -165,10 +165,7 @@ pub(crate) fn format_argument_list<'source>(
                 format_expression(&argument, doc)
             })
         }
-        JavaFormatField::Malformed(recovery) => vec![CommaListItem {
-            doc: recovery,
-            comma: None,
-        }],
+        JavaFormatField::Malformed(recovery) => vec![CommaListItem::visible(recovery)],
     };
     delimited_comma_list(doc, open, close, items)
 }
