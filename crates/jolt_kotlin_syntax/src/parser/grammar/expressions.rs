@@ -274,11 +274,12 @@ impl Parser<'_> {
             if self.at_expression_boundary(stops) {
                 break;
             }
+            // Only `memberAccessOperator` admits a preceding newline: the grammar spells
+            // it `{NL} '.'` and `{NL} safeNav`. Every other postfix suffix -- an
+            // indexing suffix, a call suffix (including a trailing lambda), `::`, and the
+            // postfix operators -- binds tightly, so a newline ends the postfix chain.
             if self.newline_before_current()
-                && !matches!(
-                    self.current_kind(),
-                    K::LBrace | K::LBracket | K::Dot | K::SafeAccess | K::ColonColon | K::Elvis
-                )
+                && !matches!(self.current_kind(), K::Dot | K::SafeAccess)
                 && !self.at_split_safe_access()
             {
                 break;

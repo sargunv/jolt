@@ -1,8 +1,35 @@
+// Shared by several test binaries, each of which uses a different part.
+#![allow(dead_code)]
+
 use jolt_fmt_ir::FormatOptions;
 use jolt_kotlin_fmt::format_source_to_sink;
-use jolt_kotlin_syntax::parse_kotlin_file;
+use jolt_kotlin_syntax::{KotlinSyntaxKind, KotlinSyntaxView, parse_kotlin_file};
 use jolt_test_support::{
-    CorpusLanguage, CorpusParseFacts, corpus_parse_facts, format_source_or_panic,
+    CorpusLanguage, CorpusParseFacts, StructurePolicy, corpus_parse_facts, format_source_or_panic,
+};
+
+/// The only tree edits the Kotlin formatter is allowed to make: it sorts the import
+/// list, adds clarifying precedence parentheses, and may normalize separators.
+pub(crate) const STRUCTURE_POLICY: StructurePolicy<KotlinSyntaxKind> = StructurePolicy {
+    normalizable_punctuation: &[
+        KotlinSyntaxKind::Comma,
+        // `;;` is not in the syntax layer's separator-removal vocabulary, so the
+        // formatter must keep it and the fingerprint must stay sensitive to it.
+        KotlinSyntaxKind::Semicolon,
+        KotlinSyntaxKind::EolOrSemicolon,
+        KotlinSyntaxKind::LParen,
+        KotlinSyntaxKind::RParen,
+    ],
+    unordered_nodes: &[KotlinSyntaxKind::ImportDirectiveList],
+    unordered_keywords: &[],
+    reorderable_children: &[],
+    // Eliding `ParenthesizedExpression` costs no precedence coverage: operator nesting
+    // lives in the `BinaryExpression` spine, so a paren that actually mattered still
+    // reshapes that spine and still fails.
+    elidable_wrappers: &[KotlinSyntaxKind::ParenthesizedExpression],
+    promoted_body_wrapper: None,
+    brace_promoting_parents: &[],
+    elidable_nodes: &[],
 };
 
 pub(crate) struct KotlinCorpus;
@@ -14,11 +41,8 @@ impl CorpusLanguage for KotlinCorpus {
 
     fn parse_facts(&self, source: &str) -> CorpusParseFacts {
         let parse = parse_kotlin_file(source);
-        let tokens = parse
-            .syntax()
-            .map(|syntax| syntax.token_iter().collect::<Vec<_>>())
-            .unwrap_or_default();
-        corpus_parse_facts(parse.syntax().is_some(), parse.diagnostics(), tokens)
+        let root = parse.syntax().and_then(|file| file.syntax_node());
+        corpus_parse_facts(root, parse.diagnostics(), &STRUCTURE_POLICY)
     }
 
     fn format(&self, source: &str, label: &str) -> String {

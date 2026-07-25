@@ -238,9 +238,16 @@ pub(super) fn format_collection_literal_expression<'source>(
     )
 }
 
+struct FirstSuffix<'source> {
+    doc: Doc<'source>,
+    forces_break: bool,
+    /// Set when the suffix cannot legally be preceded by a line break, so it has to
+    /// stay on the root's line whatever the chain heuristics would otherwise pick.
+    must_keep_with_root: bool,
+}
+
 struct MemberChainBuilder<'source> {
-    first_suffix: Option<Doc<'source>>,
-    first_suffix_forces_break: bool,
+    first_suffix: Option<FirstSuffix<'source>>,
     has_rest_suffixes: bool,
     force_multiline: bool,
     field_run: Option<Doc<'source>>,
@@ -255,12 +262,13 @@ impl<'source> MemberChainBuilder<'source> {
         rest_suffixes: Doc<'source>,
     ) -> Option<Doc<'source>> {
         let first_suffix = self.first_suffix?;
-        let keep_first_suffix_with_root = is_simple_member_chain_root(root)
-            && (!self.first_suffix_forces_break || matches!(root, Expression::CallExpression(_)));
+        let keep_first_suffix_with_root = first_suffix.must_keep_with_root
+            || is_simple_member_chain_root(root)
+                && (!first_suffix.forces_break || matches!(root, Expression::CallExpression(_)));
         Some(member_chain(
             doc,
             root_doc,
-            first_suffix,
+            first_suffix.doc,
             rest_suffixes,
             self.has_rest_suffixes,
             self.force_multiline,
@@ -294,6 +302,35 @@ impl<'source> MemberChainBuilder<'source> {
         }
     }
 
+    /// Kotlin's `indexingSuffix` has no leading `{NL}`, so a line break before `[`
+    /// reparses as a separate collection literal. Index suffixes must stay glued to
+    /// whatever precedes them in the chain.
+    fn push_index_suffix(&mut self, rest: &mut ConcatBuilder<'_, 'source>, suffix: Doc<'source>) {
+        if let Some(run) = self.field_run.take() {
+            self.field_run = Some(rest.concat([run, suffix]));
+            return;
+        }
+        match self.first_suffix.take() {
+            None => {
+                self.first_suffix = Some(FirstSuffix {
+                    doc: suffix,
+                    forces_break: false,
+                    must_keep_with_root: true,
+                });
+            }
+            Some(first) if self.has_rest_suffixes => {
+                self.first_suffix = Some(first);
+                rest.push(suffix);
+            }
+            Some(first) => {
+                self.first_suffix = Some(FirstSuffix {
+                    doc: rest.concat([first.doc, suffix]),
+                    ..first
+                });
+            }
+        }
+    }
+
     fn flush_field_run(&mut self, rest: &mut ConcatBuilder<'_, 'source>) {
         if let Some(run) = self.field_run.take() {
             self.append_suffix(rest, run, false);
@@ -308,8 +345,11 @@ impl<'source> MemberChainBuilder<'source> {
     ) {
         self.force_multiline |= forces_break;
         if self.first_suffix.is_none() {
-            self.first_suffix = Some(suffix);
-            self.first_suffix_forces_break = forces_break;
+            self.first_suffix = Some(FirstSuffix {
+                doc: suffix,
+                forces_break,
+                must_keep_with_root: false,
+            });
         } else {
             self.has_rest_suffixes = true;
             let line = rest.soft_line();
@@ -328,7 +368,6 @@ fn format_member_chain<'source>(
 ) -> Option<(Doc<'source>, Expression<'source>, KotlinSyntaxNode<'source>)> {
     let mut builder = MemberChainBuilder {
         first_suffix: None,
-        first_suffix_forces_break: false,
         has_rest_suffixes: false,
         force_multiline: false,
         field_run: None,
@@ -369,7 +408,7 @@ fn format_member_chain<'source>(
                 }
                 Expression::IndexExpression(index) => {
                     let suffix = format_index_suffix(rest, &index);
-                    builder.push_suffix(rest, suffix, false);
+                    builder.push_index_suffix(rest, suffix);
                     current = Expression::IndexExpression(index);
                     current_node = parent_node;
                 }

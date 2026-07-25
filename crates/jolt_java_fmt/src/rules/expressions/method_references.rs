@@ -17,12 +17,16 @@ pub(super) fn format_method_reference_expression<'source>(
             doc,
             [
                 format_method_reference_receiver(expression, doc),
-                format_method_reference_separator(expression, doc),
+                // Receiver type arguments bind to the receiver type and belong before
+                // the separator: `List<String>::new` parameterizes the receiver, while
+                // `List::<String>new` supplies constructor type arguments and does not
+                // compile for a raw constructor reference.
                 format_optional_field(
                     expression.receiver_type_arguments(),
                     doc,
                     |arguments, doc| format_type_argument_list(&arguments, doc),
                 ),
+                format_method_reference_separator(expression, doc),
                 format_optional_field(expression.target_type_arguments(), doc, |arguments, doc| {
                     format_type_argument_list(&arguments, doc)
                 }),

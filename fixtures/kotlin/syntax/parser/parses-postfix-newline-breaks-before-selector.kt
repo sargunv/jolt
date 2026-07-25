@@ -8,3 +8,14 @@ fun newlineSelectors(receiver: Receiver) {
 
     consume(selected)
 }
+
+fun newlineEndsTightSuffixes(receiver: Receiver) {
+    receiver
+    ["key"]
+
+    receiver.child
+    { it.active }
+
+    receiver
+    ::child
+}

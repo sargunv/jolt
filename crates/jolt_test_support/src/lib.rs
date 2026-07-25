@@ -527,23 +527,376 @@ pub struct CorpusParseFacts {
     pub has_tree: bool,
     pub diagnostics: Vec<Diagnostic>,
     pub comment_inventory: BTreeMap<String, usize>,
+    pub structure: String,
 }
 
 /// Builds owned corpus facts from a language parse while its buffers are live.
 #[must_use]
-pub fn corpus_parse_facts<'source, L>(
-    has_tree: bool,
+pub fn corpus_parse_facts<L>(
+    root: Option<SyntaxNode<'_, L>>,
     diagnostics: &[Diagnostic],
-    tokens: impl IntoIterator<Item = SyntaxToken<'source, L>>,
+    policy: &StructurePolicy<L::Kind>,
 ) -> CorpusParseFacts
 where
     L: Language,
+    L::Kind: Debug,
 {
     CorpusParseFacts {
-        has_tree,
+        has_tree: root.is_some(),
         diagnostics: diagnostics.to_vec(),
-        comment_inventory: represented_comment_inventory(tokens),
+        comment_inventory: root
+            .map(|root| represented_comment_inventory(root.tokens()))
+            .unwrap_or_default(),
+        structure: root
+            .map(|root| structure_fingerprint(root, policy))
+            .unwrap_or_default(),
     }
+}
+
+/// Which formatter-authorized normalizations a language's structure fingerprint
+/// must tolerate.
+///
+/// The formatter is allowed to change a parse tree only through the closed
+/// normalization vocabulary in `jolt_syntax` (`NormalizedToken`, `RemovalReason`,
+/// `ReorderReason`). Everything a language actually normalizes is declared here so
+/// the fingerprint stays blind to exactly those edits and sensitive to every other
+/// tree change.
+pub struct StructurePolicy<K: 'static> {
+    /// Punctuation the formatter may insert or drop outright, mirroring
+    /// `NormalizedToken::text` and `RemovalReason::Redundant*`. Structure still
+    /// comes from the enclosing nodes, so eliding these tokens costs no coverage.
+    pub normalizable_punctuation: &'static [K],
+    /// Nodes whose child sequence is order-insensitive, covering
+    /// `ReorderReason::ModuleDirectives` and Kotlin's sorted import list. Only
+    /// recovery-free children are canonicalized, mirroring the authorization
+    /// `NormalizationOwner` grants; a child carrying recovery keeps its position, so
+    /// moving it past a sortable neighbour still fails.
+    pub unordered_nodes: &'static [K],
+    /// Nodes whose keyword tokens are order-insensitive while their child nodes keep
+    /// their relative order, covering `ReorderReason::Modifiers`. Sorted keywords are
+    /// emitted ahead of the nodes so that moving a keyword across an annotation is
+    /// tolerated, but a swap of two repeated annotations still fails: reflection
+    /// exposes repeatable annotations in declaration order.
+    pub unordered_keywords: &'static [K],
+    /// Child kinds the formatter may reorder among their own positions inside an
+    /// otherwise order-sensitive parent, covering `ReorderReason::Imports` where
+    /// imports share a list with other declarations. As with `unordered_nodes`, a
+    /// child carrying recovery is never canonicalized.
+    pub reorderable_children: &'static [K],
+    /// Single-child wrappers that are pure plumbing: they carry no source delimiter of
+    /// their own, so eliding them cannot hide a lost boundary.
+    pub elidable_wrappers: &'static [K],
+    /// The wrapper a promoted statement body is placed in, covering
+    /// `NormalizedToken::OpenBlockBrace`. Transparent *only* directly under
+    /// `brace_promoting_parents`, so a block represented anywhere else stays visible
+    /// and dropping its real braces still fails.
+    pub promoted_body_wrapper: Option<K>,
+    /// Parents whose body the formatter may promote from a bare statement to a block.
+    pub brace_promoting_parents: &'static [K],
+    /// Nodes that carry no meaning and may be dropped, covering
+    /// `RemovalReason::RedundantSeparator` for empty statements.
+    pub elidable_nodes: &'static [K],
+}
+
+/// Reports where two structure fingerprints first diverge.
+///
+/// Whole fingerprints are far too large to read, so this trims the shared prefix
+/// and suffix and shows a window around the first difference.
+fn describe_structure_divergence(expected: &str, actual: &str) -> String {
+    const WINDOW: usize = 160;
+
+    let prefix = expected
+        .char_indices()
+        .zip(actual.chars())
+        .find(|((_, left), right)| left != right)
+        .map_or_else(|| expected.len().min(actual.len()), |((index, _), _)| index);
+    let window = |text: &str| {
+        let start = text
+            .char_indices()
+            .map(|(index, _)| index)
+            .take_while(|&index| index <= prefix.saturating_sub(WINDOW / 2))
+            .last()
+            .unwrap_or(0);
+        let end = text
+            .char_indices()
+            .map(|(index, _)| index)
+            .find(|&index| index >= prefix + WINDOW)
+            .unwrap_or(text.len());
+        format!(
+            "{}{}{}",
+            if start > 0 { "..." } else { "" },
+            &text[start..end],
+            if end < text.len() { "..." } else { "" }
+        )
+    };
+    format!(
+        "first divergence at byte {prefix}\nexpected: {}\nactual:   {}",
+        window(expected),
+        window(actual)
+    )
+}
+
+/// Renders a canonical, trivia-insensitive fingerprint of one parse tree.
+///
+/// Two parses share a fingerprint exactly when they have the same node kinds,
+/// nesting, significant tokens, and empty slots, up to the normalizations `policy`
+/// declares. Comparing a fixture's fingerprint against its formatted output's
+/// fingerprint asserts that formatting never changed what the program means.
+#[must_use]
+pub fn structure_fingerprint<L>(
+    root: SyntaxNode<'_, L>,
+    policy: &StructurePolicy<L::Kind>,
+) -> String
+where
+    L: Language,
+    L::Kind: Debug,
+{
+    let mut out = String::new();
+    write_node_structure(&mut out, root, None, false, policy);
+    out
+}
+
+/// True when `node` stands for no source delimiter of its own, so collapsing it to a
+/// lone child cannot hide a boundary the formatter dropped.
+fn is_transparent_wrapper<K: Copy + PartialEq>(
+    kind: K,
+    parent: Option<K>,
+    policy: &StructurePolicy<K>,
+) -> bool {
+    policy.elidable_wrappers.contains(&kind)
+        || policy.promoted_body_wrapper == Some(kind)
+            && parent.is_some_and(|parent| policy.brace_promoting_parents.contains(&parent))
+}
+
+/// True when any direct child is a kind the formatter may reorder. Only inspects child
+/// kinds and recovery ownership, so it never walks a subtree.
+fn has_reorderable_child<L>(node: SyntaxNode<'_, L>, policy: &StructurePolicy<L::Kind>) -> bool
+where
+    L: Language,
+{
+    (0..node.slot_count()).any(|index| {
+        matches!(node.slot_at(index), Some(SyntaxSlot::Node(child))
+            if is_canonicalizable_child(child, policy.reorderable_children))
+    })
+}
+
+/// True when `child` is one of `kinds` and carries no recovery.
+///
+/// A reorder claim is authorized only for a recovery-free owner, so an entry the parser
+/// recovered inside stays where the source put it. Canonicalizing it too would let the
+/// fingerprint tolerate moving a malformed entry past the sortable ones around it.
+fn is_canonicalizable_child<L>(child: SyntaxNode<'_, L>, kinds: &[L::Kind]) -> bool
+where
+    L: Language,
+{
+    kinds.contains(&child.kind()) && child.is_recovery_free()
+}
+
+/// True when a node cannot be emitted until all of its children are known, because it
+/// reorders them or may collapse to a lone child.
+fn needs_child_buffer<L>(
+    node: SyntaxNode<'_, L>,
+    parent: Option<L::Kind>,
+    policy: &StructurePolicy<L::Kind>,
+) -> bool
+where
+    L: Language,
+{
+    let kind = node.kind();
+    is_transparent_wrapper(kind, parent, policy)
+        || policy.unordered_nodes.contains(&kind)
+        || policy.unordered_keywords.contains(&kind)
+        || has_reorderable_child(node, policy)
+}
+
+enum StructureStep<'tree, L: Language> {
+    Enter {
+        node: SyntaxNode<'tree, L>,
+        parent: Option<L::Kind>,
+        separated: bool,
+    },
+    Token(SyntaxToken<'tree, L>),
+    Close,
+}
+
+/// Streams `node` into `out` with an explicit work stack.
+///
+/// Postfix chains and operator chains are built by parser loops, so their trees nest as
+/// deeply as the source is long and a recursive walk overflows the stack. Only nodes
+/// that reorder or collapse their children recurse, via `render_buffered_node`, and the
+/// parser bounds how deeply those nest with `excessive_syntax_nesting`.
+fn write_node_structure<L>(
+    out: &mut String,
+    node: SyntaxNode<'_, L>,
+    parent: Option<L::Kind>,
+    separated: bool,
+    policy: &StructurePolicy<L::Kind>,
+) where
+    L: Language,
+    L::Kind: Debug,
+{
+    let mut steps = vec![StructureStep::Enter {
+        node,
+        parent,
+        separated,
+    }];
+    while let Some(step) = steps.pop() {
+        match step {
+            StructureStep::Close => out.push(')'),
+            StructureStep::Token(token) => {
+                write!(out, " {:?}={}", token.kind(), token.text()).expect("write token kind");
+            }
+            StructureStep::Enter {
+                node,
+                parent,
+                separated,
+            } => {
+                let mark = out.len();
+                if separated {
+                    out.push(' ');
+                }
+                if needs_child_buffer(node, parent, policy) {
+                    let rendered = render_buffered_node(node, parent, policy);
+                    // A transparent wrapper left holding nothing is what a dropped
+                    // redundant separator looks like, so drop its separator too.
+                    if rendered.is_empty() {
+                        out.truncate(mark);
+                    } else {
+                        out.push_str(&rendered);
+                    }
+                    continue;
+                }
+
+                let kind = node.kind();
+                out.push('(');
+                write!(out, "{kind:?}").expect("write node kind");
+                steps.push(StructureStep::Close);
+                for index in (0..node.slot_count()).rev() {
+                    match node.slot_at(index) {
+                        Some(SyntaxSlot::Node(child)) => {
+                            if policy.elidable_nodes.contains(&child.kind()) {
+                                continue;
+                            }
+                            steps.push(StructureStep::Enter {
+                                node: child,
+                                parent: Some(kind),
+                                separated: true,
+                            });
+                        }
+                        Some(SyntaxSlot::Token(token)) => {
+                            if policy.normalizable_punctuation.contains(&token.kind()) {
+                                continue;
+                            }
+                            steps.push(StructureStep::Token(token));
+                        }
+                        // An empty slot is indistinguishable from a slot holding
+                        // punctuation the policy elides, so recording it would make the
+                        // two spellings disagree. Dropping every empty slot keeps the
+                        // fingerprint slot-count insensitive; a subtree the formatter
+                        // loses still disappears from its parent.
+                        Some(SyntaxSlot::Empty) | None => {}
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Renders one node whose children must be reordered or collapsed.
+fn render_buffered_node<L>(
+    node: SyntaxNode<'_, L>,
+    parent: Option<L::Kind>,
+    policy: &StructurePolicy<L::Kind>,
+) -> String
+where
+    L: Language,
+    L::Kind: Debug,
+{
+    let kind = node.kind();
+    let transparent = is_transparent_wrapper(kind, parent, policy);
+    let unordered = policy.unordered_nodes.contains(&kind);
+    let unordered_keywords = policy.unordered_keywords.contains(&kind);
+
+    let mut keywords: Vec<String> = Vec::new();
+    let mut slots: Vec<String> = Vec::new();
+    let mut reorderable: Vec<usize> = Vec::new();
+    for index in 0..node.slot_count() {
+        match node.slot_at(index) {
+            Some(SyntaxSlot::Node(child)) => {
+                if policy.elidable_nodes.contains(&child.kind()) {
+                    continue;
+                }
+                let mut rendered = String::new();
+                write_node_structure(&mut rendered, child, Some(kind), false, policy);
+                if rendered.is_empty() {
+                    continue;
+                }
+                let canonicalizable = if unordered {
+                    child.is_recovery_free()
+                } else {
+                    is_canonicalizable_child(child, policy.reorderable_children)
+                };
+                if canonicalizable {
+                    reorderable.push(slots.len());
+                }
+                slots.push(rendered);
+            }
+            Some(SyntaxSlot::Token(token)) => {
+                if policy.normalizable_punctuation.contains(&token.kind()) {
+                    continue;
+                }
+                let rendered = format!("{:?}={}", token.kind(), token.text());
+                if unordered_keywords {
+                    keywords.push(rendered);
+                } else {
+                    // A token carries no recovery of its own, so an unordered list
+                    // canonicalizes it alongside its recovery-free node children.
+                    if unordered {
+                        reorderable.push(slots.len());
+                    }
+                    slots.push(rendered);
+                }
+            }
+            Some(SyntaxSlot::Empty) => {}
+            None => break,
+        }
+    }
+
+    if unordered_keywords {
+        keywords.sort_unstable();
+        keywords.append(&mut slots);
+        slots = keywords;
+    } else if reorderable.len() > 1 {
+        // Canonicalize the reorderable entries among the positions they already
+        // occupy. Every other slot -- punctuation, an unrelated declaration, or an
+        // entry the parser recovered inside -- keeps its index, so a formatter that
+        // moved one of those still changes the fingerprint.
+        let mut moved = reorderable
+            .iter()
+            .map(|&index| slots[index].clone())
+            .collect::<Vec<_>>();
+        moved.sort_unstable();
+        for (&index, rendered) in reorderable.iter().zip(moved) {
+            slots[index] = rendered;
+        }
+    }
+
+    // A wrapper the formatter may synthesize around a lone child renders as that child,
+    // so braced and unbraced spellings agree, and renders as nothing at all when it is
+    // empty so the caller can drop it.
+    if transparent && slots.len() <= 1 {
+        return slots.into_iter().next().unwrap_or_default();
+    }
+
+    let mut out = String::new();
+    out.push('(');
+    write!(&mut out, "{kind:?}").expect("write node kind");
+    for slot in slots {
+        out.push(' ');
+        out.push_str(&slot);
+    }
+    out.push(')');
+    out
 }
 
 /// Language bindings for the shared formatter corpus / recovery harness.
@@ -634,27 +987,19 @@ pub fn run_formatter_corpus<L: CorpusLanguage>(
             "formatted output produced no syntax tree for {}",
             path.display()
         );
-        if input.comment_inventory != formatted_facts.comment_inventory {
-            conservation_failures.push(format!(
-                "{relative}:\nrepresented comment inventory changed\nexpected: {:#?}\nactual: {:#?}\n",
-                input.comment_inventory, formatted_facts.comment_inventory
-            ));
-        }
-        let expected_markers = trivia_markers(&source);
-        let actual_markers = trivia_markers(&formatted);
-        if actual_markers != expected_markers {
-            conservation_failures.push(format!(
-                "{relative}:\ntrivia markers changed\nexpected: {expected_markers:#?}\nactual: {actual_markers:#?}\n"
-            ));
-        }
-
         let repeated = lang.format(&formatted, &label);
-        assert_eq!(
-            repeated,
-            formatted,
-            "formatter output was not idempotent for {}",
-            path.display()
+        let mut failure = String::new();
+        append_stability_failures(
+            &mut failure,
+            &source,
+            &formatted,
+            &repeated,
+            &input,
+            &formatted_facts,
         );
+        if !failure.is_empty() {
+            conservation_failures.push(format!("{relative}:\n{failure}"));
+        }
 
         let snapshot_body = SnapshotBuilder::new()
             .section("formatted", &formatted)
@@ -670,7 +1015,7 @@ pub fn run_formatter_corpus<L: CorpusLanguage>(
     );
     assert!(
         conservation_failures.is_empty(),
-        "formatter lost represented {} source:\n{}",
+        "{} formatter conservation failures:\n{}",
         lang.language_name(),
         conservation_failures.join("\n")
     );
@@ -769,7 +1114,20 @@ fn append_stability_failures(
     formatted_facts: &CorpusParseFacts,
 ) {
     if input.comment_inventory != formatted_facts.comment_inventory {
-        failures.push_str("represented comment inventory changed\n");
+        write!(
+            failures,
+            "represented comment inventory changed\nexpected: {:#?}\nactual: {:#?}\n",
+            input.comment_inventory, formatted_facts.comment_inventory
+        )
+        .expect("writing to a String cannot fail");
+    }
+    if input.structure != formatted_facts.structure {
+        write!(
+            failures,
+            "formatting changed the parse tree beyond authorized normalizations\n{}\n",
+            describe_structure_divergence(&input.structure, &formatted_facts.structure)
+        )
+        .expect("writing to a String cannot fail");
     }
     let expected_markers = trivia_markers(source);
     let actual_markers = trivia_markers(formatted);
