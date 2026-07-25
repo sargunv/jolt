@@ -1,112 +1,37 @@
-use jolt_fmt_ir::{Doc, DocBuilder, LayoutDoc};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{JavaSyntaxListPart, JavaSyntaxToken, SynthesisClaim};
 
 use crate::helpers::comments::{
     InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, delimiter_dangling_comments,
-    format_dangling_comments, format_leading_comments, format_separator_with_comments,
-    format_token, format_token_after_relocated_leading_comments,
-    format_token_with_inline_leading_comments, format_trailing_comments_before_line_break,
-    has_delimiter_dangling_comments, trailing_comments_force_line,
+    format_dangling_comments, format_leading_comments, format_token,
+    format_token_after_relocated_leading_comments, format_token_with_inline_leading_comments,
+    format_trailing_comments_before_line_break, has_delimiter_dangling_comments,
+    trailing_comments_force_line,
 };
 use crate::helpers::recovery::{JavaFormatDelimiter, JavaFormatListPart, resolve_list_part};
 
-pub(crate) struct CommaListItem<'source> {
-    layout: LayoutDoc<'source>,
-    pub(crate) comma: Option<JavaSyntaxToken<'source>>,
-}
+/// Java stages list elements with the shared representation; only the orphan
+/// separator placement below is Java's own.
+pub(crate) type CommaListItem<'source> =
+    jolt_fmt_ir::CommaListItem<'source, jolt_java_syntax::JavaLanguage>;
 
-impl<'source> CommaListItem<'source> {
-    pub(crate) const fn visible(doc: Doc<'source>) -> Self {
-        Self {
-            layout: LayoutDoc::Visible(doc),
-            comma: None,
-        }
-    }
+pub(crate) use jolt_fmt_ir::{comma_list, comma_list_parts};
 
-    /// A recovery item that may claim source without occupying layout.
-    pub(crate) const fn recovery(layout: LayoutDoc<'source>) -> Self {
-        Self {
-            layout,
-            comma: None,
-        }
-    }
-
-    pub(crate) const fn is_visible(&self) -> bool {
-        self.layout.is_visible()
-    }
-
-    pub(crate) const fn doc(&self) -> Doc<'source> {
-        self.layout.doc()
-    }
-}
-
-/// Attaches a separator to the last visible item, or keeps it as its own item.
-///
-/// A separator never attaches to a claim-only recovery item: that item occupies
-/// no layout, so a separator held there would never be emitted.
+/// Stages a separator that has no element to attach to, preserving its trivia.
 pub(crate) fn attach_comma_separator<'source>(
     doc: &mut DocBuilder<'source>,
     items: &mut Vec<CommaListItem<'source>>,
     separator: JavaSyntaxToken<'source>,
 ) {
-    if let Some(item) = items.iter_mut().rev().find(|item| item.is_visible())
-        && item.comma.is_none()
-    {
-        item.comma = Some(separator);
-    } else {
+    jolt_fmt_ir::attach_comma_separator(items, separator, |separator| {
         let separator = format_token(
             doc,
             &separator,
             LeadingTrivia::Preserve,
             TrailingTrivia::Preserve,
         );
-        items.push(CommaListItem::visible(separator));
-    }
-}
-
-pub(crate) fn comma_list<'source>(
-    doc: &mut DocBuilder<'source>,
-    items: impl IntoIterator<Item = CommaListItem<'source>>,
-) -> Doc<'source> {
-    comma_list_parts(doc, items).0
-}
-
-/// Formats comma-separated items, reporting whether the source ended with a
-/// trailing separator.
-///
-/// Claim-only recovery items occupy no layout, so separators and breaks are
-/// placed between *visible* items only. A trailing separator emits no break
-/// after itself; the enclosing list decides how to lay out its close delimiter.
-fn comma_list_parts<'source>(
-    doc: &mut DocBuilder<'source>,
-    items: impl IntoIterator<Item = CommaListItem<'source>>,
-) -> (Doc<'source>, bool) {
-    let items: Vec<_> = items.into_iter().collect();
-    let visible_count = items.iter().filter(|item| item.is_visible()).count();
-    let mut has_source_trailing_separator = false;
-    let docs = doc.concat_list(|docs| {
-        let mut visible_index = 0;
-        for item in items {
-            docs.push(item.doc());
-            if !item.is_visible() {
-                continue;
-            }
-
-            let is_last = visible_index + 1 == visible_count;
-            if let Some(comma) = item.comma {
-                has_source_trailing_separator |= is_last;
-                let unforced_break = if is_last { Doc::nil() } else { docs.line() };
-                let separator = format_separator_with_comments(docs, &comma, unforced_break);
-                docs.push(separator);
-            } else if !is_last {
-                let line = docs.line();
-                docs.push(line);
-            }
-            visible_index += 1;
-        }
+        CommaListItem::visible(separator)
     });
-
-    (docs, has_source_trailing_separator)
 }
 
 pub(crate) fn syntax_comma_list_items<'source, Entry>(
@@ -353,8 +278,8 @@ fn comma_list_with_trailing_separator<'source>(
 
             let is_last = visible_index + 1 == visible_count;
             visible_index += 1;
-            has_source_trailing_separator |= is_last && item.comma.is_some();
-            if let Some(comma) = item.comma {
+            has_source_trailing_separator |= is_last && item.comma().is_some();
+            if let Some(comma) = item.comma() {
                 let separator = trailing_comma_separator(docs, &comma, is_last);
                 docs.push(separator);
             } else if !is_last {

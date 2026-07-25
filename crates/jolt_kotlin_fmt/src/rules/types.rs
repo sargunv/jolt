@@ -754,7 +754,7 @@ fn format_indented_comma_items<'source>(
         return doc.nil();
     };
     let first_doc = first.doc();
-    let mut previous_comma = first.comma;
+    let mut previous_comma = first.comma();
     let rest = doc.concat_list(|rest| {
         for entry in items {
             if let Some(comma) = previous_comma.take() {
@@ -767,7 +767,7 @@ fn format_indented_comma_items<'source>(
                 rest.push(line);
             }
             rest.push(entry.doc());
-            previous_comma = entry.comma;
+            previous_comma = entry.comma();
         }
     });
     let rest = doc.indent(rest);

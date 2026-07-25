@@ -13,7 +13,9 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_removed_separator, format_token,
     trailing_comments_force_line,
 };
-use crate::helpers::lists::{CommaListItem, delimited_comma_list, physical_comma_list_items};
+use crate::helpers::lists::{
+    CommaListItem, attach_comma_separator, delimited_comma_list, physical_comma_list_items,
+};
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_malformed, format_optional_field,
     format_required_field, join_delimited_recovery, resolve_list_part, resolve_optional_field,
@@ -951,13 +953,9 @@ fn syntax_comma_items<'source, T>(
                 items.push(CommaListItem::visible(format_item(item, doc)));
             }
             KotlinFormatListPart::Separator(comma) => {
-                if let Some(item) = items.iter_mut().rev().find(|item| item.is_visible())
-                    && item.comma.is_none()
-                {
-                    item.comma = Some(comma);
-                } else {
-                    items.push(CommaListItem::visible(keyword_token(doc, comma)));
-                }
+                attach_comma_separator(&mut items, comma, |comma| {
+                    CommaListItem::visible(keyword_token(doc, comma))
+                });
             }
             KotlinFormatListPart::Recovery(recovery) => {
                 items.push(CommaListItem::recovery(recovery));
