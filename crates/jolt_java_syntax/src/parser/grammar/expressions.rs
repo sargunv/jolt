@@ -1,4 +1,4 @@
-use super::{JavaParserExt, JavaSyntaxKind, Parser, StopSet};
+use super::{JavaParserExt, JavaSyntaxKind, Parser, StopSet, support::SeparatedElement};
 use jolt_syntax::{Marker, NodeAnchor, PendingDiagnostic};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -841,35 +841,30 @@ impl Parser<'_> {
             crate::shape::lambda_expression::Slot::open_paren as u16,
         );
         let list = self.start();
-        let list_owner = list.anchor();
         let mut style = None;
-        let mut next_item_slot = 0;
-        let mut trailing_comma = false;
-        while !self.at_eof() && !self.at(JavaSyntaxKind::RParen) {
-            let parameter = self.parse_lambda_parameter(style);
-            trailing_comma = false;
-            if style.is_none() {
-                style = Some(parameter.style);
-            }
-
-            if parameter.varargs && !self.at(JavaSyntaxKind::RParen) && !self.at_eof() {
-                let consumed_comma = self.eat(JavaSyntaxKind::Comma);
-                if consumed_comma {
-                    continue;
+        self.parse_comma_separated(
+            list.anchor(),
+            "expected lambda parameter name",
+            |parser| parser.at(JavaSyntaxKind::RParen),
+            |parser, _| {
+                let parameter = parser.parse_lambda_parameter(style);
+                if style.is_none() {
+                    style = Some(parameter.style);
                 }
-                break;
-            }
 
-            if !self.eat(JavaSyntaxKind::Comma) {
-                break;
-            }
-            next_item_slot += 2;
-            trailing_comma = true;
-        }
-        if trailing_comma {
-            let diagnostic = self.pending_expected("expected lambda parameter name");
-            self.missing_required_slot(list_owner, next_item_slot, [diagnostic]);
-        }
+                // A varargs parameter must be last, so it decides for itself
+                // whether a separator may follow.
+                if parameter.varargs && !parser.at(JavaSyntaxKind::RParen) && !parser.at_eof() {
+                    return if parser.eat(JavaSyntaxKind::Comma) {
+                        SeparatedElement::ConsumedSeparator
+                    } else {
+                        SeparatedElement::Stop
+                    };
+                }
+
+                SeparatedElement::Parsed
+            },
+        );
         self.complete(list, JavaSyntaxKind::LambdaParameterList);
         self.expect_required(
             JavaSyntaxKind::RParen,
