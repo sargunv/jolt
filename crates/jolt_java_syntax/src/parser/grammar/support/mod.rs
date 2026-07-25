@@ -7,6 +7,7 @@ mod identifiers;
 mod lookahead;
 mod pattern_predicates;
 mod recovery;
+mod separated_lists;
 mod statement_predicates;
 mod token_predicates;
 mod type_arguments;

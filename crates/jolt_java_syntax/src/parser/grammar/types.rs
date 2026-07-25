@@ -214,12 +214,12 @@ impl Parser<'_> {
         self.bump();
         self.generic_depth += 1;
         let arguments = self.start();
-        while !self.at_eof() && !self.at_type_argument_close() {
-            self.parse_type_argument();
-            if !self.eat(JavaSyntaxKind::Comma) {
-                break;
-            }
-        }
+        self.parse_comma_separated(
+            arguments.anchor(),
+            "expected type argument",
+            Self::at_type_argument_close,
+            |parser, _| parser.parse_type_argument(),
+        );
         self.complete(arguments, JavaSyntaxKind::TypeArgumentSeparatedList);
         if !self.eat_type_argument_close() {
             let diagnostic = self.pending_expected("expected `>` after type arguments");
@@ -344,22 +344,24 @@ impl Parser<'_> {
     pub(super) fn parse_annotation_element_values(&mut self, stop: JavaSyntaxKind) {
         let list = self.start();
         let arguments = self.start();
-        while !self.at_eof() && !self.at(stop) {
-            if self.at(JavaSyntaxKind::Comma) {
-                let bogus = self.start();
-                let diagnostic = self.pending_expected("expected annotation argument");
-                self.complete_recovery(
-                    bogus,
-                    JavaSyntaxKind::BogusAnnotationArgument,
-                    [diagnostic],
-                );
-            } else {
-                self.parse_annotation_element_value_or_pair(stop);
-            }
-            if !self.eat(JavaSyntaxKind::Comma) {
-                break;
-            }
-        }
+        self.parse_comma_separated(
+            arguments.anchor(),
+            "expected annotation argument",
+            move |parser| parser.at(stop),
+            move |parser, _| {
+                if parser.at(JavaSyntaxKind::Comma) {
+                    let bogus = parser.start();
+                    let diagnostic = parser.pending_expected("expected annotation argument");
+                    parser.complete_recovery(
+                        bogus,
+                        JavaSyntaxKind::BogusAnnotationArgument,
+                        [diagnostic],
+                    );
+                } else {
+                    parser.parse_annotation_element_value_or_pair(stop);
+                }
+            },
+        );
         self.complete(arguments, JavaSyntaxKind::AnnotationElementArgumentList);
         self.complete(list, JavaSyntaxKind::AnnotationElementList);
     }

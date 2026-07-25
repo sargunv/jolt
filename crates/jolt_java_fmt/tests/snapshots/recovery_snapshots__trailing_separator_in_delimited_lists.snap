@@ -1,0 +1,139 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class TrailingSeparatorInDelimitedLists<T,> {
+java.util.List<String,> typeArguments;
+void parameters(int a,) {}
+void varargsParameters(int... values,) {}
+void arguments() { consume(1,); }
+void throwsClause() throws E, {}
+void forUpdate() { for (int i = 0;; i++,) {} }
+void recordPattern(Object o) { if (o instanceof R(int a,)) {} }
+void lambdaParameters() { consume((a,) -> a); }
+@A(value = 1,) int annotationArguments;
+void consume(Object... values) {}
+}
+
+interface ExtendsList extends A, {}
+
+class ImplementsList implements A, {}
+
+sealed class PermitsList permits A, {}
+
+record RecordHeader(int a,) {}
+
+enum ValidTrailingSeparators { A, }
+
+class ValidTrailingSeparatorInArrayInitializer { int[] values = {1,}; }
+
+class TrailingSeparatorAtEof { void m() { consume(1,
+
+formatted:
+class TrailingSeparatorInDelimitedLists<
+  T,
+> {
+  java.util.List<
+    String,
+  > typeArguments;
+
+  void parameters(
+    int a,
+  ) {
+  }
+
+  void varargsParameters(
+    int... values,
+  ) {
+  }
+
+  void arguments() {
+    consume(
+      1,
+    );
+  }
+
+  void throwsClause() throws E, {
+  }
+
+  void forUpdate() {
+    for (int i = 0; ; i++, ) {
+    }
+  }
+
+  void recordPattern(Object o) {
+    if (
+      o instanceof R(
+        int a,
+      )
+    ) {
+    }
+  }
+
+  void lambdaParameters() {
+    consume((a,) -> a);
+  }
+
+  @A(
+    value = 1,
+  )
+  int annotationArguments;
+
+  void consume(Object... values) {
+  }
+}
+
+interface ExtendsList extends A, {
+}
+
+class ImplementsList implements A, {
+}
+
+sealed class PermitsList permits A, {
+}
+
+record RecordHeader(
+  int a,
+) {
+}
+
+enum ValidTrailingSeparators {
+  A,
+}
+
+class ValidTrailingSeparatorInArrayInitializer {
+  int[] values =
+    {
+      1,
+    };
+}
+
+class TrailingSeparatorAtEof {
+  void m() {
+    consume(
+      1,
+
+
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(42), end: TextSize(43) }) message=expected type parameter
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(68), end: TextSize(69) }) message=expected type argument
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(107), end: TextSize(108) }) message=expected parameter
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(148), end: TextSize(149) }) message=varargs parameter must be last
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(149), end: TextSize(150) }) message=expected parameter
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(183), end: TextSize(184) }) message=expected argument
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(218), end: TextSize(219) }) message=expected exception type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(261), end: TextSize(262) }) message=expected statement expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(324), end: TextSize(325) }) message=expected component pattern
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(369), end: TextSize(370) }) message=expected lambda parameter name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(393), end: TextSize(394) }) message=expected annotation argument
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(490), end: TextSize(491) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(529), end: TextSize(530) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(569), end: TextSize(570) }) message=expected name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(599), end: TextSize(600) }) message=expected record component
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(768), end: TextSize(768) }) message=expected argument
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(768), end: TextSize(768) }) message=expected `)` after arguments
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(768), end: TextSize(768) }) message=expected `;` after expression statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(768), end: TextSize(768) }) message=expected `}` after block
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(768), end: TextSize(768) }) message=expected `}` after type body
