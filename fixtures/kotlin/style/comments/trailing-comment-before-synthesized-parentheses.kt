@@ -1,0 +1,5 @@
+fun infixPrecedence(bits: Bits, mask: Bits): Bits {
+  val rightOperand = bits context mask + Bits.Enabled // keeps its own line
+  val leftOperand = bits + mask context Bits.Enabled
+  return leftOperand
+}
