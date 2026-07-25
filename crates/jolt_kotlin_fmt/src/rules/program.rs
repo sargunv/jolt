@@ -8,7 +8,7 @@ use jolt_syntax::tokens_have_blank_line_between;
 
 use crate::helpers::blocks::{BodyItemSeparator, join_hard_lines};
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_comment, format_removed_separator,
+    LeadingTrivia, TrailingTrivia, format_comment, format_ignored_trivia, format_removed_separator,
     format_terminator_list, format_token, token_has_comments, trailing_comments_force_line,
 };
 use crate::helpers::recovery::{
@@ -30,6 +30,12 @@ pub(crate) fn format_file<'source>(
     file: &KotlinFile<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    // A byte order mark is lexically inert but part of the source, so it is
+    // claimed from the file's first token before any layout begins.
+    let byte_order_mark = file
+        .token_iter()
+        .next()
+        .map_or_else(Doc::nil, |token| format_ignored_trivia(doc, &token));
     let (annotations, annotations_visible) = format_file_annotations(doc, file);
     let mut entries = Vec::new();
 
@@ -67,7 +73,7 @@ pub(crate) fn format_file<'source>(
         (_, Some(contents)) => doc.concat([annotations, contents.doc]),
     };
     let line = doc.hard_line();
-    doc.concat([contents, eof, line])
+    doc.concat([byte_order_mark, contents, eof, line])
 }
 
 fn collect_items<'source>(

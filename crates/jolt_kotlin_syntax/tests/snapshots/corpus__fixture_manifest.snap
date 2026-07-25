@@ -61,6 +61,7 @@ syntax/lexer/block-comments-can-contain-newlines.kt
 syntax/lexer/block-comments-nest.kt
 syntax/lexer/comment-markers-inside-character-literals-are-literal-content.kt
 syntax/lexer/comments-separate-adjacent-tokens.kt
+syntax/lexer/ignores-a-byte-order-mark-before-a-shebang-line.kt
 syntax/lexer/keeps-range-dots-out-of-number-literals.kt
 syntax/lexer/line-comments-can-end-at-eof.kt
 syntax/lexer/line-comments-ignore-block-comment-markers.kt
@@ -72,6 +73,7 @@ syntax/lexer/recognizes-backtick-identifiers.kt
 syntax/lexer/recognizes-backtick-short-string-template.kt
 syntax/lexer/recognizes-character-literals.kt
 syntax/lexer/recognizes-collection-literal-punctuation.kt
+syntax/lexer/recognizes-cr-and-crlf-line-comment-terminators.kt
 syntax/lexer/recognizes-decimal-floating-point-literals.kt
 syntax/lexer/recognizes-decimal-integer-literals.kt
 syntax/lexer/recognizes-delimiters-and-punctuation.kt

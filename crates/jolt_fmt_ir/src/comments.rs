@@ -25,6 +25,26 @@ pub enum InlineLeadingTrivia {
     BeforeToken,
 }
 
+/// Emits lexically ignored but source-significant trivia exactly once.
+///
+/// Ignored trivia carries no layout meaning but is part of the source, so a
+/// formatter must emit and claim it verbatim rather than dropping it as
+/// whitespace. Java's permitted final SUB and Kotlin's leading byte order mark
+/// are both of this shape.
+pub fn format_ignored_trivia<'source, L: Language>(
+    doc: &mut DocBuilder<'source>,
+    token: &SyntaxToken<'source, L>,
+) -> Doc<'source> {
+    doc.concat_list(|docs| {
+        for piece in token.ignored_trivia() {
+            let range = piece.text_range();
+            let text = &token.source()[range.start().get()..range.end().get()];
+            let exact = docs.source_trivia([piece], |docs| docs.literal_text(text));
+            docs.push(exact);
+        }
+    })
+}
+
 /// Renders one comment's own text, claiming its source pieces.
 pub fn format_comment<'source>(
     doc: &mut DocBuilder<'source>,

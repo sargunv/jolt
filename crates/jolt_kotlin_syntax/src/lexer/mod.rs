@@ -332,7 +332,8 @@ impl<'source> Scanner<'source> {
 
     fn trivia_piece(&mut self) -> Option<SyntaxTrivia> {
         match (self.current_char(), self.peek_char(1)) {
-            (Some('#'), Some('!')) if self.pos == 0 => Some(self.shebang_comment()),
+            (Some(BYTE_ORDER_MARK), _) if self.pos == 0 => Some(self.byte_order_mark()),
+            (Some('#'), Some('!')) if self.is_at_file_start() => Some(self.shebang_comment()),
             (Some(ch), _) if is_horizontal_whitespace(ch) => Some(self.horizontal_whitespace()),
             (Some('\r'), Some('\n')) => Some(self.newline(2)),
             (Some('\r' | '\n'), _) => Some(self.newline(1)),
@@ -340,6 +341,20 @@ impl<'source> Scanner<'source> {
             (Some('/'), Some('*')) => Some(self.block_comment()),
             _ => None,
         }
+    }
+
+    /// Whether nothing but an optional byte order mark precedes the cursor.
+    fn is_at_file_start(&self) -> bool {
+        self.pos == 0
+            || (self.pos == BYTE_ORDER_MARK.len_utf8() && self.source.starts_with(BYTE_ORDER_MARK))
+    }
+
+    fn byte_order_mark(&mut self) -> SyntaxTrivia {
+        let range = self.current_range().expect("BOM starts before EOF");
+        self.bump();
+        // Kotlin ignores a byte order mark at the start of a file. Keep its raw
+        // range as trivia so formatting remains lossless.
+        SyntaxTrivia::new(SyntaxTriviaKind::Ignored, range.len())
     }
 
     fn shebang_comment(&mut self) -> SyntaxTrivia {
@@ -385,7 +400,12 @@ impl<'source> Scanner<'source> {
             .start();
         self.bump();
         self.bump();
-        while self.current_char().is_some_and(|ch| ch != '\n') {
+        // A lone CR terminates a line just as LF and CRLF do, so a comment that
+        // ran past it would swallow the code on the next line.
+        while self
+            .current_char()
+            .is_some_and(|ch| ch != '\r' && ch != '\n')
+        {
             self.bump();
         }
         SyntaxTrivia::new(kind, TextRange::new(start, TextSize::new(self.pos)).len())
@@ -1175,6 +1195,9 @@ fn utf8_char_width(byte: u8) -> usize {
         _ => 4,
     }
 }
+
+/// A byte order mark, which Kotlin ignores at the start of a file.
+const BYTE_ORDER_MARK: char = '\u{feff}';
 
 fn is_horizontal_whitespace(ch: char) -> bool {
     matches!(ch, ' ' | '\t' | '\u{000C}')
