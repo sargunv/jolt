@@ -116,7 +116,7 @@ pub(super) fn format_initializer_block<'source>(
             doc,
             &token,
             LeadingTrivia::Preserve,
-            TrailingTrivia::RelocatedToEnclosingContext,
+            TrailingTrivia::Preserve,
         )
     });
     let body = format_required_field(block.block(), doc, |body, doc| {
@@ -326,11 +326,13 @@ fn format_property_initializer<'source>(
                 TrailingTrivia::BeforeLineBreak,
             )
         } else {
+            // No forced line means nothing downstream re-emits these comments,
+            // so the operator keeps them.
             format_token(
                 doc,
                 &operator,
                 LeadingTrivia::Preserve,
-                TrailingTrivia::RelocatedToEnclosingContext,
+                TrailingTrivia::Preserve,
             )
         }
     });
@@ -463,7 +465,7 @@ pub(super) fn format_explicit_backing_field<'source>(
             doc,
             &field,
             LeadingTrivia::Preserve,
-            TrailingTrivia::RelocatedToEnclosingContext,
+            TrailingTrivia::Preserve,
         )
     });
     let assign = format_required_field(field.assign(), doc, |assign, doc| {
@@ -916,7 +918,7 @@ fn keyword_token<'source>(
         doc,
         &token,
         LeadingTrivia::Preserve,
-        TrailingTrivia::RelocatedToEnclosingContext,
+        TrailingTrivia::Preserve,
     )
 }
 

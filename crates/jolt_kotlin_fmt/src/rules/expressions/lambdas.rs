@@ -41,12 +41,7 @@ fn format_labeled_lambda_expression<'source>(
     leading: LeadingTrivia,
 ) -> Doc<'source> {
     let label = format_required_field(labeled.label(), doc, |label, doc| {
-        format_token(
-            doc,
-            &label,
-            leading,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        )
+        format_token(doc, &label, leading, TrailingTrivia::Preserve)
     });
     let at_has_comments = match labeled.at() {
         jolt_kotlin_syntax::KotlinSyntaxField::Present(at) => token_has_comments(&at),
@@ -187,7 +182,7 @@ fn format_lambda_parameter_prefix<'source>(
             doc,
             &arrow,
             LeadingTrivia::SuppressAlreadyHandled,
-            TrailingTrivia::RelocatedToEnclosingContext,
+            TrailingTrivia::Preserve,
         )
     });
     let visible_item_count = items.iter().filter(|item| item.is_visible()).count();
@@ -246,7 +241,7 @@ fn format_lambda_parameter<'source>(
             doc,
             &colon,
             LeadingTrivia::Preserve,
-            TrailingTrivia::RelocatedToEnclosingContext,
+            TrailingTrivia::Preserve,
         );
         let space = doc.space();
         doc.concat([colon, space])

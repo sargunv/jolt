@@ -264,7 +264,7 @@ fn format_import<'source>(
             doc,
             &token,
             LeadingTrivia::Preserve,
-            TrailingTrivia::RelocatedToEnclosingContext,
+            TrailingTrivia::Preserve,
         )
     });
     let name = format_required_field(import.name(), doc, |name, doc| {
@@ -314,7 +314,7 @@ fn format_import_alias<'source>(
             doc,
             &token,
             LeadingTrivia::SuppressAlreadyHandled,
-            TrailingTrivia::RelocatedToEnclosingContext,
+            TrailingTrivia::Preserve,
         )
     });
     let name = format_required_field(alias.name(), doc, |name, doc| {

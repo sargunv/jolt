@@ -18,12 +18,7 @@ pub(super) fn format_parenthesized_expression<'source>(
     leading: LeadingTrivia,
 ) -> Doc<'source> {
     let open = format_required_field(expression.open_paren(), doc, |token, doc| {
-        format_token(
-            doc,
-            &token,
-            leading,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        )
+        format_token(doc, &token, leading, TrailingTrivia::Preserve)
     });
     let inner = format_required_field(expression.expression(), doc, |inner, doc| {
         format_expression(doc, &inner)
