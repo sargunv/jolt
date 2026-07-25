@@ -84,11 +84,8 @@ fun MissingDot member() {}
 fun missingBody() =
 
 val = 1
-
 val delegated by provider
-
 val initialized = value
-
 val (recoveredInitializer) value
 
 val recoveredProperty: Int

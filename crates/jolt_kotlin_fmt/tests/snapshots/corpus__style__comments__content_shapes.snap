@@ -31,9 +31,7 @@ class CommentContentShapes {
   fun plainMultiline() {}
 
   val markers = "/* not a comment */ // /**/"
-
   val rawMarkers = """/* still not a comment */ // /**/"""
-
   val unicode = "Καλημέρα 世界"
 }
 

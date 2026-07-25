@@ -361,8 +361,7 @@ fn format_source_body<'source>(
         for item in items {
             if item.first_token().is_some() {
                 if let Some(previous) = previous_visible {
-                    let preserve = is_statement_item(previous) || is_statement_item(item);
-                    let separator = source_item_separator(previous, item, preserve).doc(body);
+                    let separator = source_item_separator(previous, item).doc(body);
                     body.push(separator);
                 }
                 previous_visible = Some(item);
@@ -393,14 +392,30 @@ fn format_body_item<'source>(
 fn source_item_separator(
     previous: &KotlinFileItem<'_>,
     current: &KotlinFileItem<'_>,
-    preserve_source_blank_line: bool,
 ) -> BodyItemSeparator {
     BodyItemSeparator::between(
-        !preserve_source_blank_line || items_have_blank_line_between(previous, current),
+        !items_stay_adjacent(previous, current) || items_have_blank_line_between(previous, current),
         previous
             .last_token()
             .is_some_and(|token| trailing_comments_force_line(&token)),
     )
+}
+
+/// Whether two file items may sit on adjacent lines when the source had them
+/// adjacent.
+///
+/// Properties read as a group, and a script's statements are ordinary code.
+/// Everything else at file scope — classes, functions, type aliases — is spaced
+/// apart.
+fn items_stay_adjacent(previous: &KotlinFileItem<'_>, current: &KotlinFileItem<'_>) -> bool {
+    if is_statement_item(previous) || is_statement_item(current) {
+        return true;
+    }
+    is_property_item(previous) && is_property_item(current)
+}
+
+fn is_property_item(item: &KotlinFileItem<'_>) -> bool {
+    matches!(item, KotlinFileItem::PropertyDeclaration(_))
 }
 
 fn items_have_blank_line_between(left: &KotlinFileItem<'_>, right: &KotlinFileItem<'_>) -> bool {

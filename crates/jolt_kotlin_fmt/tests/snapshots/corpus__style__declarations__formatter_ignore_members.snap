@@ -5,13 +5,11 @@ expression: snapshot
 formatted:
 class FormatterIgnoreMembers {
   val before = 1
-
   // @formatter:off
   val raw=1+2
   val label="x"
   // @formatter:on
   val after = 2
-
   // @formatter:off
   fun   raw( ) { }
 

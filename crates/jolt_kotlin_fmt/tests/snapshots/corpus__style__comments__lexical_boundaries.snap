@@ -5,7 +5,6 @@ expression: snapshot
 formatted:
 class CommentLexicalBoundaries {
   val field /**/ = 0
-
   val names: List /**/<String /**/> = emptyList()
 
   fun operators(left: Int, right: Int): Int {
