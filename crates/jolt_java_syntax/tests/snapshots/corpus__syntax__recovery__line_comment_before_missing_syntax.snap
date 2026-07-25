@@ -21,6 +21,13 @@ class SwitchDefaultLabel {
   }
 }
 
+class TryResourceSeparator {
+  void m() throws Exception {
+    try (; //x
+    { }
+  }
+}
+
 syntax:
 syntax:
 CompilationUnit
@@ -110,14 +117,58 @@ CompilationUnit
                     Semicolon ";" @ 241..242
               RBrace "}" @ 245..246 leading=[Newline "\n", Whitespace "  "]
         RBrace "}" @ 247..248 leading=[Newline "\n"]
-  Eof "" @ 249..249 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 250..255 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "TryResourceSeparator" @ 256..276 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 277..278
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 281..285 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "m" @ 286..287
+            LParen "(" @ 287..288
+            RParen ")" @ 288..289 trailing=[Whitespace " "]
+            ThrowsClause
+              ThrowsKw "throws" @ 290..296 trailing=[Whitespace " "]
+              TypeList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Exception" @ 297..306 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 307..308
+              BlockStatementList
+                BlockStatement
+                  TryWithResourcesStatement
+                    TryKw "try" @ 313..316 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ResourceSpecification
+                      LParen "(" @ 317..318
+                      ResourceList
+                        Resource
+                          BogusResourceValue
+                      Semicolon ";" @ 318..319 trailing=[Whitespace " ", LineComment "//x"]
+                    Block
+                      LBrace "{" @ 328..329 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      BlockStatementList
+                      RBrace "}" @ 330..331
+                    CatchClauseList
+              RBrace "}" @ 334..335 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 336..337 leading=[Newline "\n"]
+  Eof "" @ 338..338 leading=[Newline "\n"]
 
 diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=33..34 message="expected type"
   code=java.parse.expected_syntax severity=Error stage=Parser range=76..77 message="expected type"
   code=java.parse.expected_syntax severity=Error stage=Parser range=120..121 message="expected name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=318..319 message="expected resource"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=328..329 message="expected `)` after resources"
 
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(33), end: TextSize(34) }) message=expected type
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(76), end: TextSize(77) }) message=expected type
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(120), end: TextSize(121) }) message=expected name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(318), end: TextSize(319) }) message=expected resource
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(328), end: TextSize(329) }) message=expected `)` after resources
