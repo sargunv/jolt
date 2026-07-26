@@ -1,7 +1,8 @@
 use super::{
     AssignmentExpression, BinaryExpression, ConditionalExpression, Doc, Expression,
-    PostfixExpression, UnaryExpression, casts_patterns::format_instanceof_expression,
-    format_expression, format_token_with_comments,
+    LeadingComments, PostfixExpression, UnaryExpression,
+    casts_patterns::format_instanceof_expression, format_expression,
+    format_expression_with_leading_comments, format_leading_comments, format_token_with_comments,
 };
 use crate::helpers::comments::token_has_comments;
 use crate::helpers::recovery::format_required_field;
@@ -17,10 +18,26 @@ pub(super) fn format_assignment_expression<'source>(
     expression: &AssignmentExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    // The group below decides whether the right-hand side moves to its own
+    // line. Comments leading the target end in a hard line, so measuring them
+    // inside that group would break every commented assignment. Emit them
+    // ahead of the group and suppress them on the target's first token.
+    let hoisted = assignment_target_leading_comments(expression, doc);
+    let target_leading = if hoisted.is_some() {
+        LeadingComments::SuppressFirstToken
+    } else {
+        LeadingComments::Preserve
+    };
     let left = format_required_field(expression.left(), doc, |left, doc| match left {
-        AssignmentTargetSyntax::NameExpression(left) => format_expression(&left.into(), doc),
-        AssignmentTargetSyntax::FieldAccessExpression(left) => format_expression(&left.into(), doc),
-        AssignmentTargetSyntax::ArrayAccessExpression(left) => format_expression(&left.into(), doc),
+        AssignmentTargetSyntax::NameExpression(left) => {
+            format_expression_with_leading_comments(&left.into(), target_leading, doc)
+        }
+        AssignmentTargetSyntax::FieldAccessExpression(left) => {
+            format_expression_with_leading_comments(&left.into(), target_leading, doc)
+        }
+        AssignmentTargetSyntax::ArrayAccessExpression(left) => {
+            format_expression_with_leading_comments(&left.into(), target_leading, doc)
+        }
         AssignmentTargetSyntax::BogusExpression(left) => format_expression(&left.into(), doc),
         AssignmentTargetSyntax::BogusAssignmentTarget(left) => {
             crate::helpers::recovery::format_malformed(&left, doc)
@@ -40,7 +57,33 @@ pub(super) fn format_assignment_expression<'source>(
         format_expression(&right, doc)
     });
 
-    assignment_expression(doc, left, operator, right)
+    let assignment = assignment_expression(doc, left, operator, right);
+    match hoisted {
+        Some(hoisted) => doc_concat!(doc, [hoisted, assignment]),
+        None => assignment,
+    }
+}
+
+/// Emits the comments leading an assignment target, or `None` when the target
+/// keeps them itself.
+///
+/// A bogus target is emitted verbatim with its own trivia, so hoisting would
+/// duplicate its comments.
+fn assignment_target_leading_comments<'source>(
+    expression: &AssignmentExpression<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Option<Doc<'source>> {
+    let JavaSyntaxField::Present(left) = expression.left() else {
+        return None;
+    };
+    let first = match left {
+        AssignmentTargetSyntax::NameExpression(left) => left.first_token(),
+        AssignmentTargetSyntax::FieldAccessExpression(left) => left.first_token(),
+        AssignmentTargetSyntax::ArrayAccessExpression(left) => left.first_token(),
+        AssignmentTargetSyntax::BogusExpression(_)
+        | AssignmentTargetSyntax::BogusAssignmentTarget(_) => return None,
+    }?;
+    Some(format_leading_comments(doc, &first))
 }
 
 pub(super) fn format_conditional_expression<'source>(

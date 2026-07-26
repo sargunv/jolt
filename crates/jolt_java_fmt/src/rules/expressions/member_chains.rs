@@ -38,11 +38,14 @@ pub(super) fn format_postfix_family_expression<'source>(
         doc.block_on_invariant("Java postfix base has no syntax node");
         return Doc::nil();
     };
-    let relocate_comments = matches!(
-        current,
-        Expression::LiteralExpression(_) | Expression::NameExpression(_)
-    ) && postfix_parent(current_node)
-        .is_some_and(|(parent, _)| is_member_expression(parent));
+    // An enclosing construct that already hoisted these comments passes
+    // `SuppressFirstToken`; relocating them here as well would emit them twice.
+    let relocate_comments = leading_comments == LeadingComments::Preserve
+        && matches!(
+            current,
+            Expression::LiteralExpression(_) | Expression::NameExpression(_)
+        )
+        && postfix_parent(current_node).is_some_and(|(parent, _)| is_member_expression(parent));
     let mut comments = relocate_comments.then(|| format_expression_leading_comments(&current, doc));
     let base_leading = if relocate_comments {
         LeadingComments::SuppressFirstToken

@@ -6,7 +6,9 @@ use jolt_kotlin_syntax::{
     PostfixExpression, UnaryExpression,
 };
 
-use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, comment_forces_line, format_token};
+use crate::helpers::comments::{
+    LeadingTrivia, TrailingTrivia, comment_forces_line, format_leading_comments, format_token,
+};
 use crate::helpers::recovery::format_required_field;
 use crate::rules::types::format_type_reference;
 
@@ -39,8 +41,18 @@ pub(super) fn format_assignment_expression<'source>(
     expression: &AssignmentExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
+    // The group below decides whether the right-hand side moves to its own
+    // line. Comments leading the target end in a hard line, so measuring them
+    // inside that group would break every commented assignment. Emit them
+    // ahead of the group and suppress them on the target's first token.
+    let hoisted = assignment_target_leading_comments(doc, expression, leading);
+    let target_leading = if hoisted.is_some() {
+        LeadingTrivia::SuppressAlreadyHandled
+    } else {
+        leading
+    };
     let left = format_required_field(expression.left(), doc, |left, doc| {
-        format_expression_with_leading(doc, &left, leading)
+        format_expression_with_leading(doc, &left, target_leading)
     });
     let operator = format_required_field(expression.operator(), doc, |operator, doc| {
         format_token(
@@ -59,7 +71,34 @@ pub(super) fn format_assignment_expression<'source>(
     let right = doc.concat([line, right]);
     let right = doc.indent(right);
     let contents = doc.concat([left, space, operator, right]);
-    doc.group(contents)
+    let assignment = doc.group(contents);
+    match hoisted {
+        Some(hoisted) => doc.concat([hoisted, assignment]),
+        None => assignment,
+    }
+}
+
+/// Emits the comments leading an assignment target, or `None` when the target
+/// keeps them itself.
+///
+/// A bogus target is emitted verbatim with its own trivia, so hoisting would
+/// duplicate its comments.
+fn assignment_target_leading_comments<'source>(
+    doc: &mut DocBuilder<'source>,
+    expression: &AssignmentExpression<'source>,
+    leading: LeadingTrivia,
+) -> Option<Doc<'source>> {
+    if leading == LeadingTrivia::SuppressAlreadyHandled {
+        return None;
+    }
+    let KotlinSyntaxField::Present(left) = expression.left() else {
+        return None;
+    };
+    if matches!(left, Expression::BogusExpression(_)) {
+        return None;
+    }
+    let first = left.first_token()?;
+    Some(format_leading_comments(doc, &first))
 }
 
 pub(super) fn format_binary_expression<'source>(
