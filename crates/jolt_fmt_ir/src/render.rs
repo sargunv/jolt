@@ -479,6 +479,13 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         (indent_count, TextWidth::new(width))
     }
 
+    /// Whether the next text starts a line, so indentation owns its leading
+    /// whitespace. Pending indentation is only half the signal: at indent level
+    /// zero a fresh line has none.
+    fn at_line_start(&self) -> bool {
+        self.pending_indent > 0 || self.pending_line_ends > 0
+    }
+
     fn write_str(&mut self, text: &str) {
         if text.is_empty() || self.halted {
             return;
@@ -489,7 +496,9 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         } else if matches!(text.as_bytes().first(), Some(b' ' | b'\t')) {
             self.horizontal_whitespace = HorizontalWhitespace::None;
         }
-        if self.pending_indent > 0 {
+        // Indentation owns the leading whitespace of a line, so a layout space
+        // that lands at the start of one is discarded.
+        if self.at_line_start() {
             self.horizontal_whitespace = HorizontalWhitespace::None;
         }
         self.flush_pending_indent();
@@ -582,7 +591,7 @@ struct FitChecker<'base, 'scratch, 'source> {
     line_width: TextWidth,
     column: TextWidth,
     horizontal_whitespace: HorizontalWhitespace,
-    pending_indent: bool,
+    at_line_start: bool,
     base_group_stack: &'base [Mode],
     base_group_len: usize,
     group_stack: &'scratch mut Vec<Mode>,
@@ -594,7 +603,7 @@ struct FitChecker<'base, 'scratch, 'source> {
 }
 
 impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
-    fn from_renderer<S>(
+    fn from_renderer<S: RenderSink>(
         renderer: &'base Renderer<'_, '_, 'source, S>,
         group_stack: &'scratch mut Vec<Mode>,
     ) -> Self {
@@ -603,7 +612,7 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
             line_width: TextWidth::from(renderer.options.line_width),
             column: renderer.column,
             horizontal_whitespace: renderer.horizontal_whitespace,
-            pending_indent: renderer.pending_indent > 0,
+            at_line_start: renderer.at_line_start(),
             base_group_stack: &renderer.group_stack,
             base_group_len: renderer.group_stack.len(),
             group_stack,
@@ -848,9 +857,9 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
         if text.is_empty() {
             return FitResult::Continue;
         }
-        if self.pending_indent {
+        if self.at_line_start {
             self.horizontal_whitespace = HorizontalWhitespace::None;
-            self.pending_indent = false;
+            self.at_line_start = false;
         }
         if matches!(text.as_bytes().first(), Some(b' ' | b'\t')) {
             self.horizontal_whitespace = HorizontalWhitespace::None;
@@ -1879,6 +1888,55 @@ mod tests {
         render_to(&arena, doc, options(), &mut sink).expect("document renders");
 
         assert_eq!(sink.0, "text\n");
+    }
+
+    // Indentation owns leading whitespace, so the discard has to hold at indent
+    // level zero too, where a fresh line has no pending indentation to hide the
+    // space behind. A language fixture reaches this only through whichever rule
+    // happens to emit a space after a forced line break.
+    #[test]
+    fn layout_spaces_are_discarded_after_line_breaks() {
+        let mut builder = DocBuilder::new();
+        let doc = builder.concat_list(|contents| {
+            let text = contents.text("text");
+            contents.push(text);
+            let line = contents.hard_line();
+            contents.push(line);
+            let space = contents.space();
+            contents.push(space);
+            let next = contents.text("next");
+            contents.push(next);
+        });
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        render_to(&arena, doc, options(), &mut sink).expect("document renders");
+
+        assert_eq!(sink.0, "text\nnext");
+    }
+
+    // Fit checking has to make the same decision the renderer does, or a group
+    // measured from the start of a line is charged for the space that is about
+    // to be discarded and breaks a column early. The group here is exactly the
+    // line width once that space is gone.
+    #[test]
+    fn layout_spaces_discarded_after_line_breaks_are_not_measured() {
+        let mut builder = DocBuilder::new();
+        let text = builder.text("text");
+        let hard_line = builder.hard_line();
+        let space = builder.space();
+        let prefix = builder.text("a".repeat(78));
+        let line = builder.line();
+        let suffix = builder.text("b");
+        let contents = builder.concat([prefix, line, suffix]);
+        let group = builder.group(contents);
+        let doc = builder.concat([text, hard_line, space, group]);
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        render_to(&arena, doc, options(), &mut sink).expect("document renders");
+
+        assert_eq!(sink.0, format!("text\n{} b", "a".repeat(78)));
     }
 
     #[test]

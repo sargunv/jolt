@@ -1,0 +1,111 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+// a comment that ends the header line must not leave a space before the brace
+class TopLevelSupertypeComment : Base() // trailing
+{
+  val x = 1
+}
+
+class Outer {
+  class NestedSupertypeComment : Base() // trailing
+  {
+    val z = 3
+  }
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 79..84 leading=[LineComment "// a comment that ends the header line must not leave a space before the brace", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "TopLevelSupertypeComment" @ 85..109 trailing=[Whitespace " "]
+      DelegationClause
+        Colon ":" @ 110..111 trailing=[Whitespace " "]
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Base" @ 112..116
+            ValueArgumentList
+              LParen "(" @ 116..117
+              ValueArgumentEntryList
+              RParen ")" @ 117..118 trailing=[Whitespace " ", LineComment "// trailing"]
+      ClassBody
+        LBrace "{" @ 131..132 leading=[Newline "\n"]
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 135..138 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "x" @ 139..140 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 141..142 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "1" @ 143..144
+              PropertyBodyMemberList
+        RBrace "}" @ 145..146 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 148..153 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Outer" @ 154..159 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 160..161
+        ClassMemberList
+          ClassMemberDeclaration
+            ClassDeclaration
+              ModifierList
+              ModifierList
+              ClassKw "class" @ 164..169 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "NestedSupertypeComment" @ 170..192 trailing=[Whitespace " "]
+              DelegationClause
+                Colon ":" @ 193..194 trailing=[Whitespace " "]
+                DelegationSpecifierSeparatedList
+                  DelegationSpecifier
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "Base" @ 195..199
+                    ValueArgumentList
+                      LParen "(" @ 199..200
+                      ValueArgumentEntryList
+                      RParen ")" @ 200..201 trailing=[Whitespace " ", LineComment "// trailing"]
+              ClassBody
+                LBrace "{" @ 216..217 leading=[Newline "\n", Whitespace "  "]
+                ClassMemberList
+                  ClassMemberDeclaration
+                    PropertyDeclaration
+                      ModifierList
+                      ModifierList
+                      ValKw "val" @ 222..225 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      Name
+                        Identifier "z" @ 226..227 trailing=[Whitespace " "]
+                      PropertyInitializer
+                        Assign "=" @ 228..229 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "3" @ 230..231
+                      PropertyBodyMemberList
+                RBrace "}" @ 234..235 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 236..237 leading=[Newline "\n"]
+  Eof "" @ 238..238 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
