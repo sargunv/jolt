@@ -8,4 +8,22 @@ String name(){ return "Ada"; }
  * Runs the task.
 */
 void run(){}
+/* Runs first.
+ * Then continues.
+ *
+ * After a blank.
+ */
+void openerText(){}
+/* * starred opener
+ * body
+ */
+void starredOpener(){}
+/* opener holds /* an inner marker
+ * body holds /* one too
+ */
+void innerMarkers(){}
+/* opener
+plain body
+*/
+void plainBody(){}
 }

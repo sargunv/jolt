@@ -13,6 +13,24 @@ String name(){ return "Ada"; }
  * Runs the task.
 */
 void run(){}
+/* Runs first.
+ * Then continues.
+ *
+ * After a blank.
+ */
+void openerText(){}
+/* * starred opener
+ * body
+ */
+void starredOpener(){}
+/* opener holds /* an inner marker
+ * body holds /* one too
+ */
+void innerMarkers(){}
+/* opener
+plain body
+*/
+void plainBody(){}
 }
 
 syntax:
@@ -55,8 +73,48 @@ CompilationUnit
               LBrace "{" @ 124..125
               BlockStatementList
               RBrace "}" @ 125..126
-        RBrace "}" @ 127..128 leading=[Newline "\n"]
-  Eof "" @ 129..129 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 186..190 leading=[Newline "\n", BlockComment "/* Runs first.\n * Then continues.\n *\n * After a blank.\n */", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "openerText" @ 191..201
+            LParen "(" @ 201..202
+            RParen ")" @ 202..203
+            Block
+              LBrace "{" @ 203..204
+              BlockStatementList
+              RBrace "}" @ 204..205
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 238..242 leading=[Newline "\n", BlockComment "/* * starred opener\n * body\n */", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "starredOpener" @ 243..256
+            LParen "(" @ 256..257
+            RParen ")" @ 257..258
+            Block
+              LBrace "{" @ 258..259
+              BlockStatementList
+              RBrace "}" @ 259..260
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 325..329 leading=[Newline "\n", BlockComment "/* opener holds /* an inner marker\n * body holds /* one too\n */", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "innerMarkers" @ 330..342
+            LParen "(" @ 342..343
+            RParen ")" @ 343..344
+            Block
+              LBrace "{" @ 344..345
+              BlockStatementList
+              RBrace "}" @ 345..346
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 371..375 leading=[Newline "\n", BlockComment "/* opener\nplain body\n*/", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "plainBody" @ 376..385
+            LParen "(" @ 385..386
+            RParen ")" @ 386..387
+            Block
+              LBrace "{" @ 387..388
+              BlockStatementList
+              RBrace "}" @ 388..389
+        RBrace "}" @ 390..391 leading=[Newline "\n"]
+  Eof "" @ 392..392 leading=[Newline "\n"]
 
 diagnostics:
   (none)

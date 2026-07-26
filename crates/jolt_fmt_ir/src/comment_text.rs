@@ -49,14 +49,27 @@ fn normalize_star_block_body_line(line: &str) -> &str {
         .map_or_else(|| line.trim(), str::trim_start)
 }
 
-/// True when the first non-empty body line starts with `*`, or the body is an
-/// empty multiline block (Javadoc-style layout).
+/// True when a body line carries the aligning `*` of a star block.
+#[must_use]
+fn starts_with_star(line: &str) -> bool {
+    line.trim_start().starts_with('*')
+}
+
+/// True when a block comment uses star-aligned layout, or its body is an empty
+/// multiline block (Javadoc-style layout).
+///
+/// Text trailing the opening delimiter shares that delimiter's line, so it can
+/// never carry the aligning `*`. The first non-empty continuation line decides
+/// the layout too, which is what makes `/* opener` + ` * body` a star block.
 #[must_use]
 pub fn is_star_block_comment(comment: &str) -> bool {
     let content = strip_block_comment_delimiters(comment);
-    let first_content_line = universal_comment_lines(content).find(|line| !line.trim().is_empty());
-    first_content_line.is_some_and(|line| line.trim_start().starts_with('*'))
-        || first_content_line.is_none() && content.contains(['\n', '\r'])
+    let mut lines = universal_comment_lines(content);
+    let opener_line = lines.next().unwrap_or("");
+    let continuation = lines.find(|line| !line.trim().is_empty());
+    starts_with_star(opener_line)
+        || continuation.is_some_and(starts_with_star)
+        || (content.contains(['\n', '\r']) && content.trim().is_empty())
 }
 
 /// Emits trimmed comment lines separated by hard lines.
@@ -76,11 +89,21 @@ pub fn format_comment_lines<'source>(
     })
 }
 
+/// Whether text trailing the opening delimiter keeps its own line.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum StarBlockOpener {
+    /// `/** text` — doc comments reflow that text onto its own star line.
+    Reflow,
+    /// `/* text` — plain star blocks keep it on the opening line.
+    Keep,
+}
+
 /// Formats a Javadoc-style `/** … */` or `/* … */` star-block body.
 pub fn format_star_block_comment<'source>(
     doc: &mut DocBuilder<'source>,
     comment: &'source str,
     opening_delimiter: &'static str,
+    opener: StarBlockOpener,
 ) -> Doc<'source> {
     let content = strip_block_comment_delimiters(comment);
     let multiline = content.contains(['\n', '\r']);
@@ -90,7 +113,21 @@ pub fn format_star_block_comment<'source>(
 
         let mut has_content = false;
         let mut pending_blank_lines = 0;
-        for line in universal_comment_lines(content).map(|line| {
+        let mut lines = universal_comment_lines(content);
+        if opener == StarBlockOpener::Keep && multiline {
+            // The opener line shares the delimiter's line, so it holds no
+            // aligning `*` to strip: only trim it, or a body that starts with a
+            // literal `*` would lose that character.
+            let opener_text = lines.next().unwrap_or("").trim();
+            if !opener_text.is_empty() {
+                has_content = true;
+                let space = docs.literal_text(" ");
+                let text = docs.text(opener_text);
+                let opener_line = docs.concat([space, text]);
+                docs.push(opener_line);
+            }
+        }
+        for line in lines.map(|line| {
             if multiline {
                 normalize_star_block_body_line(line)
             } else {

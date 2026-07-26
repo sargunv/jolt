@@ -27,10 +27,10 @@ class MixedCommentLineEndings {
   // lf line comment
   int lf = 3;
   /* block
-  * crlf
-  * cr
-  * lf
-  */
+   * crlf
+   * cr
+   * lf
+   */
   int block = 4;
 }
 

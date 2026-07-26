@@ -14,8 +14,9 @@ mod token_trivia;
 mod width;
 
 pub use comment_text::{
-    format_comment_lines, format_star_block_comment, is_empty_single_line_block_comment,
-    is_star_block_comment, preserved_block_comment_lines, preserved_comment_lines,
+    StarBlockOpener, format_comment_lines, format_star_block_comment,
+    is_empty_single_line_block_comment, is_star_block_comment, preserved_block_comment_lines,
+    preserved_comment_lines,
 };
 pub use comments::{
     InlineLeadingTrivia, comment_forces_line, comment_is_star_block, format_comment,

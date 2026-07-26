@@ -18,6 +18,24 @@ fun run() {}
    *   body with inner spacing
   */
 fun ragged() {}
+/* Runs first.
+ * Then continues.
+ *
+ * After a blank.
+ */
+fun openerText() {}
+/* * starred opener
+ * body
+ */
+fun starredOpener() {}
+/* outer /* inner */ still outer
+ * body with /* inner */ too
+ */
+fun nestedBlocks() {}
+/* opener
+plain body
+*/
+fun plainBody() {}
 fun trailingDoc() {} /** stays on its line */
 val trailingStar = 1 /* stays on its line */
 }
@@ -109,33 +127,101 @@ KotlinFile
             FunctionDeclaration
               ModifierList
               ModifierList
-              FunKw "fun" @ 227..230 leading=[Newline "\n"] trailing=[Whitespace " "]
+              FunKw "fun" @ 286..289 leading=[Newline "\n", BlockComment "/* Runs first.\n * Then continues.\n *\n * After a blank.\n */", Newline "\n"] trailing=[Whitespace " "]
               ModifierList
               Name
-                Identifier "trailingDoc" @ 231..242
+                Identifier "openerText" @ 290..300
               ValueParameterList
-                LParen "(" @ 242..243
+                LParen "(" @ 300..301
                 ValueParameterSeparatedList
-                RParen ")" @ 243..244 trailing=[Whitespace " "]
+                RParen ")" @ 301..302 trailing=[Whitespace " "]
               BlockBody
                 Block
-                  LBrace "{" @ 245..246
+                  LBrace "{" @ 303..304
                   BlockItemList
-                  RBrace "}" @ 246..247 trailing=[Whitespace " ", DocComment "/** stays on its line */"]
+                  RBrace "}" @ 304..305
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 338..341 leading=[Newline "\n", BlockComment "/* * starred opener\n * body\n */", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "starredOpener" @ 342..355
+              ValueParameterList
+                LParen "(" @ 355..356
+                ValueParameterSeparatedList
+                RParen ")" @ 356..357 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 358..359
+                  BlockItemList
+                  RBrace "}" @ 359..360
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 427..430 leading=[Newline "\n", BlockComment "/* outer /* inner */ still outer\n * body with /* inner */ too\n */", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "nestedBlocks" @ 431..443
+              ValueParameterList
+                LParen "(" @ 443..444
+                ValueParameterSeparatedList
+                RParen ")" @ 444..445 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 446..447
+                  BlockItemList
+                  RBrace "}" @ 447..448
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 473..476 leading=[Newline "\n", BlockComment "/* opener\nplain body\n*/", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "plainBody" @ 477..486
+              ValueParameterList
+                LParen "(" @ 486..487
+                ValueParameterSeparatedList
+                RParen ")" @ 487..488 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 489..490
+                  BlockItemList
+                  RBrace "}" @ 490..491
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 492..495 leading=[Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "trailingDoc" @ 496..507
+              ValueParameterList
+                LParen "(" @ 507..508
+                ValueParameterSeparatedList
+                RParen ")" @ 508..509 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 510..511
+                  BlockItemList
+                  RBrace "}" @ 511..512 trailing=[Whitespace " ", DocComment "/** stays on its line */"]
           ClassMemberDeclaration
             PropertyDeclaration
               ModifierList
               ModifierList
-              ValKw "val" @ 273..276 leading=[Newline "\n"] trailing=[Whitespace " "]
+              ValKw "val" @ 538..541 leading=[Newline "\n"] trailing=[Whitespace " "]
               Name
-                Identifier "trailingStar" @ 277..289 trailing=[Whitespace " "]
+                Identifier "trailingStar" @ 542..554 trailing=[Whitespace " "]
               PropertyInitializer
-                Assign "=" @ 290..291 trailing=[Whitespace " "]
+                Assign "=" @ 555..556 trailing=[Whitespace " "]
                 LiteralExpression
-                  IntegerLiteral "1" @ 292..293 trailing=[Whitespace " ", BlockComment "/* stays on its line */"]
+                  IntegerLiteral "1" @ 557..558 trailing=[Whitespace " ", BlockComment "/* stays on its line */"]
               PropertyBodyMemberList
-        RBrace "}" @ 318..319 leading=[Newline "\n"]
-  Eof "" @ 320..320 leading=[Newline "\n"]
+        RBrace "}" @ 583..584 leading=[Newline "\n"]
+  Eof "" @ 585..585 leading=[Newline "\n"]
 
 diagnostics:
   (none)
