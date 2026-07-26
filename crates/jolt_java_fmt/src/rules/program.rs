@@ -186,7 +186,13 @@ fn format_program_sections<'source>(
             }
             ProgramEntry::Item(item) => {
                 flush_imports(&mut imports, &mut sections, doc);
-                let compact_after = matches!(item, CompilationUnitItem::EmptyDeclaration(_));
+                // A trailing line comment already ended this item's line, so the
+                // separator must not open a second one on top of it.
+                let trailing_ended_line = item
+                    .last_token()
+                    .is_some_and(|token| trailing_comments_force_line(&token));
+                let compact_after =
+                    trailing_ended_line || matches!(item, CompilationUnitItem::EmptyDeclaration(_));
                 ProgramSection::visible(format_program_item(item, doc), compact_after)
             }
             ProgramEntry::Token(token) => {

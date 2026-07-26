@@ -1,0 +1,211 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class TrailingCommentSpacing {
+  val a = 1 // trailing
+  val b = 2
+
+  val c = 3 // trailing
+
+  val d = 4
+  fun e() {} // trailing
+  fun f() {}
+  val g = 5 /* block does not end the line */
+  val h = 6
+}
+
+interface I {
+  fun a() // trailing
+  fun b()
+}
+
+enum class E {
+  A, // trailing
+  B,
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "TrailingCommentSpacing" @ 6..28 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 29..30
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 33..36 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "a" @ 37..38 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 39..40 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "1" @ 41..42 trailing=[Whitespace " ", LineComment "// trailing"]
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 57..60 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "b" @ 61..62 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 63..64 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "2" @ 65..66
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 70..73 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "c" @ 74..75 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 76..77 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "3" @ 78..79 trailing=[Whitespace " ", LineComment "// trailing"]
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 95..98 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "d" @ 99..100 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 101..102 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "4" @ 103..104
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 107..110 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "e" @ 111..112
+              ValueParameterList
+                LParen "(" @ 112..113
+                ValueParameterSeparatedList
+                RParen ")" @ 113..114 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 115..116
+                  BlockItemList
+                  RBrace "}" @ 116..117 trailing=[Whitespace " ", LineComment "// trailing"]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 132..135 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "f" @ 136..137
+              ValueParameterList
+                LParen "(" @ 137..138
+                ValueParameterSeparatedList
+                RParen ")" @ 138..139 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 140..141
+                  BlockItemList
+                  RBrace "}" @ 141..142
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 145..148 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "g" @ 149..150 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 151..152 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "5" @ 153..154 trailing=[Whitespace " ", BlockComment "/* block does not end the line */"]
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 191..194 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "h" @ 195..196 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 197..198 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "6" @ 199..200
+              PropertyBodyMemberList
+        RBrace "}" @ 201..202 leading=[Newline "\n"]
+    InterfaceDeclaration
+      ModifierList
+      ModifierList
+      InterfaceKw "interface" @ 204..213 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "I" @ 214..215 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 216..217
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 220..223 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "a" @ 224..225
+              ValueParameterList
+                LParen "(" @ 225..226
+                ValueParameterSeparatedList
+                RParen ")" @ 226..227 trailing=[Whitespace " ", LineComment "// trailing"]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 242..245 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "b" @ 246..247
+              ValueParameterList
+                LParen "(" @ 247..248
+                ValueParameterSeparatedList
+                RParen ")" @ 248..249
+        RBrace "}" @ 250..251 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+        Identifier "enum" @ 253..257 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 258..263 trailing=[Whitespace " "]
+      Name
+        Identifier "E" @ 264..265 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 266..267
+        ClassMemberList
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "A" @ 270..271 leading=[Newline "\n", Whitespace "  "]
+            Comma "," @ 271..272 trailing=[Whitespace " ", LineComment "// trailing"]
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "B" @ 287..288 leading=[Newline "\n", Whitespace "  "]
+            Comma "," @ 288..289
+        RBrace "}" @ 290..291 leading=[Newline "\n"]
+  Eof "" @ 292..292 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

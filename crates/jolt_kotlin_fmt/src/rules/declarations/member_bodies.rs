@@ -6,6 +6,7 @@ use jolt_kotlin_syntax::{
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_dangling_comments, format_token,
+    trailing_comments_force_line,
 };
 use crate::helpers::recovery::{
     KotlinFormatDelimiter, KotlinFormatField, format_delimiter_with_preserved_trailing,
@@ -161,12 +162,16 @@ fn push_class_body_part<'source>(
 ) {
     let physical = match part {
         ClassBodyPart::Member(member) => {
-            *previous_had_comments = member
-                .last_token()
-                .is_some_and(|token| !token.trailing_comments().is_empty());
+            let last_token = member.last_token();
+            *previous_had_comments =
+                last_token.is_some_and(|token| !token.trailing_comments().is_empty());
+            // A trailing line comment already ended this member's line, so the
+            // separator must not open a second one on top of it.
+            let trailing_ended_line =
+                last_token.is_some_and(|token| trailing_comments_force_line(&token));
             sections.push(ClassBodySection {
                 doc: format_class_member(doc, member),
-                hard_line_after: enum_entry_continues(member),
+                hard_line_after: enum_entry_continues(member) || trailing_ended_line,
             });
             return;
         }
