@@ -96,12 +96,3 @@ pub(crate) fn format_delimiter_with_preserved_trailing<'source>(
         KotlinFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }
-
-pub(crate) fn join_delimited_recovery<'source>(
-    doc: &mut DocBuilder<'source>,
-    open: &KotlinFormatDelimiter<'source>,
-    contents: Doc<'source>,
-    close: &KotlinFormatDelimiter<'source>,
-) -> Doc<'source> {
-    doc.concat([open.recovery(), contents, close.recovery()])
-}
