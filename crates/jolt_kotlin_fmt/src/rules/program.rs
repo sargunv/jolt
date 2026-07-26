@@ -264,10 +264,13 @@ fn join_sections<'source>(
         let mut has_visible_section = false;
         for section in sections {
             if section.visible && has_visible_section {
+                // Boundaries, not breaks: the gap names the line state the next
+                // section starts from, so a section that already ended its own
+                // line — a trailing comment forces one — is not stacked on.
                 let line = if compact_after {
-                    docs.hard_line()
+                    docs.hard_line_boundary()
                 } else {
-                    docs.empty_line()
+                    docs.empty_line_boundary()
                 };
                 docs.push(line);
             }
