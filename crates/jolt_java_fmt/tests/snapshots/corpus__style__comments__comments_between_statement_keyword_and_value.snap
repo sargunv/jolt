@@ -1,0 +1,111 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class CommentsBetweenStatementKeywordAndValue {
+  int returns(int y) {
+    return // a comment ends the line after the keyword
+      y + 1;
+  }
+
+  int returnsInline(int y) {
+    return /* a block comment stays inline */ y + 1;
+  }
+
+  int returnsLong(int y) {
+    return // a long value still wraps below the keyword
+      someLongMethodCall(firstArgumentName, secondArgumentName)
+        + anotherLongValue;
+  }
+
+  void returnsNothing() {
+    return; // a comment after the terminator stays there
+  }
+
+  void throws1() {
+    throw // a comment ends the line after the keyword
+      new IllegalStateException();
+  }
+
+  void throwsInline() {
+    throw /* a block comment stays inline */ new IllegalStateException();
+  }
+
+  int yields(int value) {
+    return switch (value) {
+      default -> {
+        yield // a comment ends the line after the keyword
+          value + 1;
+      }
+    };
+  }
+
+  int yieldsInline(int value) {
+    return switch (value) {
+      default -> {
+        yield /* a block comment stays inline */ value + 1;
+      }
+    };
+  }
+
+  void breaksToLabel() {
+    outer:
+    while (ready()) {
+      break // a comment ends the line after the keyword
+        outer;
+    }
+  }
+
+  void breaksToLabelInline() {
+    outer:
+    while (ready()) {
+      break /* a block comment stays inline */ outer;
+    }
+  }
+
+  void continuesToLabel() {
+    outer:
+    while (ready()) {
+      continue // a comment ends the line after the keyword
+        outer;
+    }
+  }
+
+  void continuesToLabelInline() {
+    outer:
+    while (ready()) {
+      continue /* a block comment stays inline */ outer;
+    }
+  }
+
+  void breaksWithoutLabel() {
+    while (ready()) {
+      break; // a comment after the terminator stays there
+    }
+  }
+
+  void asserts(int y) {
+    assert // a comment ends the line after the keyword
+      y > 1 : "message";
+  }
+
+  void assertsInline(int y) {
+    assert /* a block comment stays inline */ y > 1;
+  }
+
+  boolean ready() {
+    return true;
+  }
+
+  int someLongMethodCall(int first, int second) {
+    return first + second;
+  }
+
+  int anotherLongValue = 2;
+  int firstArgumentName = 3;
+  int secondArgumentName = 4;
+}
+
+diagnostics:
+(none)

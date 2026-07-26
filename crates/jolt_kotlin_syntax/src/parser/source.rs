@@ -76,11 +76,17 @@ impl<'source> Parser<'source> {
         self.inner.buffer.newline_between(left, right)
     }
 
-    pub(super) fn at_semicolon_boundary(&mut self) -> bool {
+    /// Reports whether the current token ends a statement on its own, without a
+    /// newline being needed to end it.
+    pub(super) fn at_statement_terminator(&mut self) -> bool {
         matches!(
             self.current_kind(),
             K::Semicolon | K::DoubleSemicolon | K::RBrace | K::Eof,
-        ) || self.newline_before_current()
+        )
+    }
+
+    pub(super) fn at_semicolon_boundary(&mut self) -> bool {
+        self.at_statement_terminator() || self.newline_before_current()
     }
 
     pub(super) fn eat_semicolon_boundary(&mut self) -> bool {
