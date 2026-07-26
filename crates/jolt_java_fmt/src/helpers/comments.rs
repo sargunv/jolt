@@ -9,7 +9,7 @@ use jolt_java_syntax::{JavaComment, JavaSyntaxToken, RemovalClaim};
 
 pub(crate) use jolt_fmt_ir::{
     InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line, comment_is_star_block,
-    delimiter_dangling_comments, format_comment, format_dangling_comments,
+    delimiter_dangling_comments, format_comment, format_dangling_comments, format_ignored_trivia,
     format_inline_trailing_comment_list, format_leading_comment_list, format_leading_comments,
     format_removed_comments, format_separator_with_comments, format_token,
     format_token_after_relocated_leading_comments, format_token_body as format_token_doc,
@@ -72,21 +72,6 @@ pub(crate) fn format_token_with_comments<'source>(
         LeadingTrivia::Preserve,
         TrailingTrivia::Preserve,
     )
-}
-
-/// Emits lexically ignored but source-significant trivia exactly once.
-pub(crate) fn format_ignored_trivia<'source>(
-    doc: &mut DocBuilder<'source>,
-    token: &JavaSyntaxToken<'source>,
-) -> Doc<'source> {
-    doc.concat_list(|docs| {
-        for piece in token.ignored_trivia() {
-            let range = piece.text_range();
-            let text = &token.source()[range.start().get()..range.end().get()];
-            let exact = docs.source_trivia([piece], |docs| docs.literal_text(text));
-            docs.push(exact);
-        }
-    })
 }
 
 pub(crate) fn format_token_before_relocated_trailing_comments<'source>(

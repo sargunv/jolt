@@ -1,0 +1,53 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val a = 1 // crval b = 2 // crlf
+val c = 3
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      Name
+        Identifier "a" @ 4..5 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 6..7 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "1" @ 8..9 trailing=[Whitespace " ", LineComment "// cr"]
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 16..19 leading=[Newline "\r"] trailing=[Whitespace " "]
+      Name
+        Identifier "b" @ 20..21 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 22..23 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "2" @ 24..25 trailing=[Whitespace " ", LineComment "// crlf"]
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 35..38 leading=[Newline "\r\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "c" @ 39..40 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 41..42 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "3" @ 43..44
+      PropertyBodyMemberList
+  Eof "" @ 44..44
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

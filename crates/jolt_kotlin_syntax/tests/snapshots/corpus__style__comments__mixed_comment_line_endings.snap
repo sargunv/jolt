@@ -33,7 +33,7 @@ KotlinFile
             PropertyDeclaration
               ModifierList
               ModifierList
-              ValKw "val" @ 55..58 leading=[Newline "\r\n", LineComment "// crlf line comment\r", Newline "\n"] trailing=[Whitespace " "]
+              ValKw "val" @ 55..58 leading=[Newline "\r\n", LineComment "// crlf line comment", Newline "\r\n"] trailing=[Whitespace " "]
               Name
                 Identifier "crlf" @ 59..63
               PropertyInitializer
