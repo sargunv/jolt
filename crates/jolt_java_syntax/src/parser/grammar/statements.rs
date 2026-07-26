@@ -670,7 +670,10 @@ impl Parser<'_> {
             crate::shape::resource_specification::Slot::open_paren as u16,
         );
         let resources = self.start();
-        if self.at(JavaSyntaxKind::RParen) {
+        // The list declares `minimum 1`, so an empty one needs a represented
+        // resource that owns the diagnostic. A leading `;` reaches this with no
+        // resource just as `)` does.
+        if self.at(JavaSyntaxKind::RParen) || self.at(JavaSyntaxKind::Semicolon) {
             let resource = self.start();
             let value = self.start();
             let diagnostic = self.pending_expected("expected resource");

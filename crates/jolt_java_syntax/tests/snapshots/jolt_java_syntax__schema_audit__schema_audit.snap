@@ -84,6 +84,7 @@ syntax__recovery__incomplete_module_directive: RequiresDirective occurrence 1 (I
 syntax__recovery__line_comment_before_missing_syntax: ExtendsClause occurrence 1 (ExtendsKw("extends"))
 syntax__recovery__line_comment_before_missing_syntax: ImplementsClause occurrence 1 (ImplementsKw("implements"))
 syntax__recovery__line_comment_before_missing_syntax: PermitsClause occurrence 1 (Identifier("permits"))
+syntax__recovery__line_comment_before_missing_syntax: ResourceSpecification occurrence 1 (LParen("(") ResourceList Semicolon(";"))
 syntax__recovery__malformed_import_pieces: ImportDeclaration occurrence 1 (ImportKw("import") Semicolon(";"))
 syntax__recovery__malformed_import_without_semicolon: ImportDeclaration occurrence 1 (ImportKw("import"))
 syntax__recovery__method_invocation_without_name: QualifiedMethodInvocation occurrence 1 (NameExpression Dot(".") ArgumentList)

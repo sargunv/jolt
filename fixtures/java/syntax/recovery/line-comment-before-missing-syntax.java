@@ -15,3 +15,10 @@ class SwitchDefaultLabel {
     };
   }
 }
+
+class TryResourceSeparator {
+  void m() throws Exception {
+    try (; //x
+    { }
+  }
+}

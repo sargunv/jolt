@@ -519,24 +519,3 @@ fn fixture_root(suite: &str) -> PathBuf {
         .join(suite)
         .join("input")
 }
-
-/// A line comment on a resource separator must not swallow the try body's `{`.
-///
-/// This cannot move to the shared corpus yet: `try (; )` leaves the
-/// `ResourceList`'s empty slot without an exact diagnostic owner, so adding it
-/// there fails `schema_audit::declared_schema_matches_represented_corpus`. That
-/// gap is in the parser and predates this rule.
-#[test]
-fn line_comment_on_resource_separator_keeps_the_try_body() {
-    let source = "class C { void m() throws Exception { try (; //x\n{ } } }\n";
-    let formatted = format_source(source, FormatOptions::default())
-        .expect("resource separator comment must format");
-    assert!(
-        !formatted.contains("//x {"),
-        "the try body's brace was swallowed into the comment:\n{formatted}"
-    );
-    assert_eq!(
-        format_source(&formatted, FormatOptions::default()).expect("second format must complete"),
-        formatted
-    );
-}

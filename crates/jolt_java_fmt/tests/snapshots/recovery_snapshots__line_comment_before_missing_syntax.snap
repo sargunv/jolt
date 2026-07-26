@@ -21,6 +21,13 @@ class SwitchDefaultLabel {
   }
 }
 
+class TryResourceSeparator {
+  void m() throws Exception {
+    try (; //x
+    { }
+  }
+}
+
 formatted:
 class ExtendsNoTypes
   extends //x
@@ -47,7 +54,18 @@ class SwitchDefaultLabel {
   }
 }
 
+class TryResourceSeparator {
+  void m() throws Exception {
+    try (
+      ; //x
+    {
+    }
+  }
+}
+
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(33), end: TextSize(34) }) message=expected type
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(76), end: TextSize(77) }) message=expected type
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(120), end: TextSize(121) }) message=expected name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(318), end: TextSize(319) }) message=expected resource
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(328), end: TextSize(329) }) message=expected `)` after resources
