@@ -33,6 +33,7 @@ style/declarations/formatter-ignore-enum-member-boundaries.java
 style/declarations/formatter-ignore-interface-members.java
 style/declarations/formatter-ignore-members.java
 style/declarations/formatter-ignore-nested-member-body.java
+style/declarations/formatter-ignore-trailing-line-comment.java
 style/declarations/item-trailing-comment-spacing.java
 style/declarations/leading-comment-header-layout.java
 style/declarations/leading-comment-ownership.java

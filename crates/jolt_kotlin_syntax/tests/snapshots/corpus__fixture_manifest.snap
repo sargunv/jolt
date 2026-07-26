@@ -18,6 +18,7 @@ style/declarations/delegation.kt
 style/declarations/enum-entries.kt
 style/declarations/explicit-backing-fields.kt
 style/declarations/formatter-ignore-members.kt
+style/declarations/formatter-ignore-trailing-line-comment.kt
 style/declarations/member-trailing-comment-spacing.kt
 style/declarations/objects-and-companions.kt
 style/declarations/primary-constructor-comments.kt

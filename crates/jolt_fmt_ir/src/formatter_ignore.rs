@@ -366,26 +366,19 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
                             &source[start..end_line.raw_end],
                         ),
                         interior: TextRange::new(TextSize::new(start), TextSize::new(end)),
+                        // The claim runs through the line ending the region's
+                        // last line, even though the emitted text does not:
+                        // a line comment's terminating newline belongs to that
+                        // comment, and the region owns every comment it covers.
                         claim_with_on: claim_anchor.source_range_claim(
                             TextRange::new(
                                 TextSize::new(start),
-                                TextSize::new(
-                                    start
-                                        + strip_trailing_line_ending(
-                                            &source[start..end_line.raw_end],
-                                        )
-                                        .len(),
-                                ),
+                                TextSize::new(end_line.next_start),
                             ),
                             true,
                         ),
                         claim_without_on: claim_anchor.source_range_claim(
-                            TextRange::new(
-                                TextSize::new(start),
-                                TextSize::new(
-                                    start + strip_trailing_line_ending(&source[start..end]).len(),
-                                ),
-                            ),
+                            TextRange::new(TextSize::new(start), TextSize::new(end)),
                             false,
                         ),
                         separators_with_on: ExceptionalSeparators {
@@ -733,6 +726,7 @@ struct SourceLine {
 struct CommentLine {
     start: usize,
     raw_end: usize,
+    next_start: usize,
     comment_starts_own_line: bool,
 }
 
@@ -779,6 +773,7 @@ impl<'source> SourceLineCursor<'source> {
         CommentLine {
             start: line.start,
             raw_end: line.raw_end,
+            next_start: line.next_start,
             comment_starts_own_line,
         }
     }
@@ -879,6 +874,7 @@ mod tests {
             CommentLine {
                 start: 0,
                 raw_end: 27,
+                next_start: 28,
                 comment_starts_own_line: true,
             }
         );
