@@ -4,7 +4,6 @@ use jolt_kotlin_syntax::{
     KotlinRoleElement, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxView, PackageHeader,
     StatementSyntax, boundary_separator_removal_claim,
 };
-use jolt_syntax::tokens_have_blank_line_between;
 
 use crate::helpers::blocks::{BodyItemSeparator, join_hard_lines};
 use crate::helpers::comments::{
@@ -394,7 +393,7 @@ fn source_item_separator(
     current: &KotlinFileItem<'_>,
 ) -> BodyItemSeparator {
     BodyItemSeparator::between(
-        !items_stay_adjacent(previous, current) || items_have_blank_line_between(previous, current),
+        !items_stay_adjacent(previous, current) || current.starts_after_blank_line(),
         previous
             .last_token()
             .is_some_and(|token| trailing_comments_force_line(&token)),
@@ -416,12 +415,6 @@ fn items_stay_adjacent(previous: &KotlinFileItem<'_>, current: &KotlinFileItem<'
 
 fn is_property_item(item: &KotlinFileItem<'_>) -> bool {
     matches!(item, KotlinFileItem::PropertyDeclaration(_))
-}
-
-fn items_have_blank_line_between(left: &KotlinFileItem<'_>, right: &KotlinFileItem<'_>) -> bool {
-    left.last_token()
-        .zip(right.first_token())
-        .is_some_and(|(left, right)| tokens_have_blank_line_between(&left, &right))
 }
 
 fn format_package_header<'source>(

@@ -1,0 +1,216 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+// file header comment
+
+// second header comment after a blank line
+
+package com.example.leading
+
+// comment run leading the class
+
+class LeadingCommentBlankLines {
+// first comment of the run
+
+// second comment of the run
+val spacedRun = 1
+
+// comment separated from the property it leads
+
+val spacedItem = 2
+
+// collapsed blank lines between comments
+
+
+
+// collapsed blank lines before the property
+
+
+
+val collapsed = 3
+
+val adjacent = 4
+// no blank line before this comment
+
+val afterComment = 5
+
+/** Doc comment separated from its function. */
+
+fun documented() {
+// comment separated from the statement it leads
+
+val local = 1
+call(local)
+}
+
+fun call(value: Int) {}
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PackageHeader
+      PackageKw "package" @ 69..76 leading=[LineComment "// file header comment", Newline "\n", Newline "\n", LineComment "// second header comment after a blank line", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "com" @ 77..80
+          Dot "." @ 80..81
+          Name
+            Identifier "example" @ 81..88
+          Dot "." @ 88..89
+          Name
+            Identifier "leading" @ 89..96
+      TerminatorList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 132..137 leading=[Newline "\n", Newline "\n", LineComment "// comment run leading the class", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "LeadingCommentBlankLines" @ 138..162 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 163..164
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 223..226 leading=[Newline "\n", LineComment "// first comment of the run", Newline "\n", Newline "\n", LineComment "// second comment of the run", Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "spacedRun" @ 227..236 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 237..238 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "1" @ 239..240
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 291..294 leading=[Newline "\n", Newline "\n", LineComment "// comment separated from the property it leads", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "spacedItem" @ 295..305 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 306..307 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "2" @ 308..309
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 404..407 leading=[Newline "\n", Newline "\n", LineComment "// collapsed blank lines between comments", Newline "\n", Newline "\n", Newline "\n", Newline "\n", LineComment "// collapsed blank lines before the property", Newline "\n", Newline "\n", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "collapsed" @ 408..417 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 418..419 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "3" @ 420..421
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 423..426 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "adjacent" @ 427..435 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 436..437 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "4" @ 438..439
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 478..481 leading=[Newline "\n", LineComment "// no blank line before this comment", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Name
+                Identifier "afterComment" @ 482..494 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 495..496 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "5" @ 497..498
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 549..552 leading=[Newline "\n", Newline "\n", DocComment "/** Doc comment separated from its function. */", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "documented" @ 553..563
+              ValueParameterList
+                LParen "(" @ 563..564
+                ValueParameterSeparatedList
+                RParen ")" @ 564..565 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 566..567
+                  BlockItemList
+                    PropertyDeclaration
+                      ModifierList
+                      ModifierList
+                      ValKw "val" @ 618..621 leading=[Newline "\n", LineComment "// comment separated from the statement it leads", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+                      Name
+                        Identifier "local" @ 622..627 trailing=[Whitespace " "]
+                      PropertyInitializer
+                        Assign "=" @ 628..629 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "1" @ 630..631
+                      PropertyBodyMemberList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "call" @ 632..636 leading=[Newline "\n"]
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 636..637
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "local" @ 637..642
+                            RParen ")" @ 642..643
+                          LambdaExpressionList
+                      TerminatorList
+                  RBrace "}" @ 644..645 leading=[Newline "\n"]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 647..650 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "call" @ 651..655
+              ValueParameterList
+                LParen "(" @ 655..656
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierList
+                    Name
+                      Identifier "value" @ 656..661
+                    Colon ":" @ 661..662 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "Int" @ 663..666
+                RParen ")" @ 666..667 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 668..669
+                  BlockItemList
+                  RBrace "}" @ 669..670
+        RBrace "}" @ 671..672 leading=[Newline "\n"]
+  Eof "" @ 673..673 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

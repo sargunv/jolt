@@ -17,6 +17,7 @@ import com.example /* JOLT-TRIVIA:star-prefix */.tools.*
 import kotlin.io.println /* JOLT-TRIVIA:import-alias-source */ as say
 
 // JOLT-TRIVIA:after-imports
+
 fun importedNames(names: List<String>) {
   say(names.joinToString())
 }

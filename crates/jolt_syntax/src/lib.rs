@@ -40,7 +40,7 @@ pub use parser::{
     CursorCheckpoint, LanguageLexer, LexedToken, ParseEvents, Parser, PendingDiagnostic,
     TokenBuffer, TokenCursor, UnresolvedDiagnosticOwner,
 };
-pub use red::{SyntaxElement, SyntaxNode, SyntaxSlot, SyntaxToken, tokens_have_blank_line_between};
+pub use red::{SyntaxElement, SyntaxNode, SyntaxSlot, SyntaxToken};
 #[cfg(feature = "bench")]
 pub use syntax_tree::SyntaxTreeMetrics;
 pub use syntax_tree::{

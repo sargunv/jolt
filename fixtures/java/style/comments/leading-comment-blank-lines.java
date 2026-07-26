@@ -1,0 +1,44 @@
+// file header comment
+
+// second header comment after a blank line
+
+package com.example.leading;
+
+// comment run leading the type
+
+class LeadingCommentBlankLines {
+// first comment of the run
+
+// second comment of the run
+int spacedRun = 1;
+
+// comment separated from the field it leads
+
+int spacedItem = 2;
+
+// collapsed blank lines between comments
+
+
+
+// collapsed blank lines before the field
+
+
+
+int collapsed = 3;
+
+int adjacent = 4;
+// no blank line before this comment
+
+int afterComment = 5;
+
+/** Doc comment separated from its method. */
+
+void documented() {
+// comment separated from the statement it leads
+
+int local = 1;
+call(local);
+}
+
+void call(int value) {}
+}

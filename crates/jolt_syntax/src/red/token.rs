@@ -6,7 +6,7 @@ use crate::TriviaKind;
 use crate::{
     Comments, Language, RawSyntaxKind, SourceRangeClaim, SourceTokenId, SourceTriviaPiece,
     SourceTriviaSide, SyntaxTrivia,
-    comment::{trivia_has_blank_line, trivia_iter_has_blank_line},
+    comment::trivia_opens_with_blank_line,
     conservation::source_trivia_pieces,
     syntax_tree::{SyntaxTree, TokenId},
 };
@@ -17,16 +17,6 @@ pub struct SyntaxToken<'tree, L: Language> {
     tree: &'tree SyntaxTree,
     id: TokenId,
     language: PhantomData<L>,
-}
-
-/// Returns true when the represented trivia between two adjacent tokens
-/// contains an intentional blank line.
-#[must_use]
-pub fn tokens_have_blank_line_between<L: Language>(
-    left: &SyntaxToken<'_, L>,
-    right: &SyntaxToken<'_, L>,
-) -> bool {
-    trivia_iter_has_blank_line(left.trailing().iter().chain(right.leading()))
 }
 
 impl<'tree, L: Language> SyntaxToken<'tree, L> {
@@ -211,11 +201,14 @@ impl<'tree, L: Language> SyntaxToken<'tree, L> {
         }
     }
 
-    /// Returns true when the token's leading trivia contains an intentional
-    /// blank line (two or more consecutive newlines not separated by a comment).
+    /// Returns true when a blank line opens this token's leading trivia.
+    ///
+    /// The run stops at the token's first leading comment: a gap after a
+    /// comment belongs to that comment, so it is reported by
+    /// [`crate::Comment::is_followed_by_blank_line`] instead.
     #[must_use]
     pub fn has_leading_blank_line(&self) -> bool {
-        trivia_has_blank_line(self.leading())
+        trivia_opens_with_blank_line(self.leading())
     }
 }
 

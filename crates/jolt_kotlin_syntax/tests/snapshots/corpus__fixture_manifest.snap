@@ -7,6 +7,7 @@ properties/layout-fit-boundaries/long-when-result.kt
 properties/layout-fit-boundaries/property-delegate.kt
 style/comments/comment-shapes.kt
 style/comments/content-shapes.kt
+style/comments/leading-comment-blank-lines.kt
 style/comments/lexical-boundaries.kt
 style/comments/mixed-comment-line-endings.kt
 style/comments/star-blocks.kt

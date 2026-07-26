@@ -114,16 +114,26 @@ pub fn token_has_comments<L: Language>(token: &SyntaxToken<'_, L>) -> bool {
 }
 
 /// Formats leading comments, each on its own line.
+///
+/// A blank line the source put after a comment is kept, whether the next line
+/// holds another comment of the run or the item the run leads. Any longer run
+/// of blank lines collapses to one, and a blank line is never invented where
+/// the source had none.
 pub fn format_leading_comment_list<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = Comment<'source>>,
 ) -> Doc<'source> {
     doc.concat_list(|docs| {
         for comment in comments {
+            let blank_line_after = comment.is_followed_by_blank_line();
             let comment = format_comment(docs, &comment);
             docs.push(comment);
-            let hard_line = docs.hard_line();
-            docs.push(hard_line);
+            let line = if blank_line_after {
+                docs.empty_line()
+            } else {
+                docs.hard_line()
+            };
+            docs.push(line);
         }
     })
 }
