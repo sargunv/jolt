@@ -1,0 +1,507 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class LeadingCommentsOnParenthesizedExpressions {
+  int[] values = new int[4];
+
+  class Base {
+    Base(int value) {}
+
+    <T> Base(T value, int marker) {}
+  }
+
+  class Inner extends Base {
+    Inner(LeadingCommentsOnParenthesizedExpressions outer) {
+      // leads a parenthesized qualifier
+      (outer).super(0);
+    }
+
+    Inner(LeadingCommentsOnParenthesizedExpressions outer, String name) {
+      /* block comment leads a parenthesized qualifier */
+      (outer).<String>super(name, 0);
+    }
+
+    Inner(LeadingCommentsOnParenthesizedExpressions outer, int marker) {
+      // leads a parenthesized qualifier holding an object creation
+      (new LeadingCommentsOnParenthesizedExpressions()).super(marker);
+    }
+  }
+
+  int parenthesizedOperands(int first, int second) {
+    int sum =
+      // leads a parenthesized operand
+      (first + second);
+    call(
+      /* block comment leads a parenthesized argument */
+      (first * second));
+    int total =
+      // a parenthesized operand that does not fit still breaks apart
+      (first * second + values.length + sum + someLongMethodName(first, second) + someLongMethodName(second, first));
+    return total;
+  }
+
+  void call(int value) {}
+
+  int someLongMethodName(int first, int second) {
+    return first + second;
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "LeadingCommentsOnParenthesizedExpressions" @ 6..47 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 48..49
+        ClassBodyMemberList
+          FieldDeclaration
+            ArrayType
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 52..55 leading=[Newline "\n", Whitespace "  "]
+              ArrayDimensions
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 55..56
+                  RBracket "]" @ 56..57 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "values" @ 58..64 trailing=[Whitespace " "]
+                Assign "=" @ 65..66 trailing=[Whitespace " "]
+                VariableInitializer
+                  ArrayCreationExpression
+                    NewKw "new" @ 67..70 trailing=[Whitespace " "]
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 71..74
+                    DimExpressionList
+                      DimExpression
+                        AnnotationList
+                        LBracket "[" @ 74..75
+                        LiteralExpression
+                          IntegerLiteral "4" @ 75..76
+                        RBracket "]" @ 76..77
+            Semicolon ";" @ 77..78
+          ClassDeclaration
+            ClassKw "class" @ 82..87 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "Base" @ 88..92 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 93..94
+              ClassBodyMemberList
+                ConstructorDeclaration
+                  Identifier "Base" @ 99..103 leading=[Newline "\n", Whitespace "    "]
+                  LParen "(" @ 103..104
+                  FormalParameterList
+                    FormalParameter
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 104..107 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "value" @ 108..113
+                  RParen ")" @ 113..114 trailing=[Whitespace " "]
+                  ConstructorBody
+                    LBrace "{" @ 115..116
+                    ConstructorBodyEntryList
+                    RBrace "}" @ 116..117
+                ConstructorDeclaration
+                  TypeParameterList
+                    Lt "<" @ 123..124 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+                    TypeParameterSeparatedList
+                      TypeParameter
+                        AnnotationList
+                        Identifier "T" @ 124..125
+                    Gt ">" @ 125..126 trailing=[Whitespace " "]
+                  Identifier "Base" @ 127..131
+                  LParen "(" @ 131..132
+                  FormalParameterList
+                    FormalParameter
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "T" @ 132..133 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "value" @ 134..139
+                    Comma "," @ 139..140 trailing=[Whitespace " "]
+                    FormalParameter
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 141..144 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "marker" @ 145..151
+                  RParen ")" @ 151..152 trailing=[Whitespace " "]
+                  ConstructorBody
+                    LBrace "{" @ 153..154
+                    ConstructorBodyEntryList
+                    RBrace "}" @ 154..155
+              RBrace "}" @ 158..159 leading=[Newline "\n", Whitespace "  "]
+          ClassDeclaration
+            ClassKw "class" @ 163..168 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "Inner" @ 169..174 trailing=[Whitespace " "]
+            ExtendsClause
+              ExtendsKw "extends" @ 175..182 trailing=[Whitespace " "]
+              TypeList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Base" @ 183..187 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 188..189
+              ClassBodyMemberList
+                ConstructorDeclaration
+                  Identifier "Inner" @ 194..199 leading=[Newline "\n", Whitespace "    "]
+                  LParen "(" @ 199..200
+                  FormalParameterList
+                    FormalParameter
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "LeadingCommentsOnParenthesizedExpressions" @ 200..241 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "outer" @ 242..247
+                  RParen ")" @ 247..248 trailing=[Whitespace " "]
+                  ConstructorBody
+                    LBrace "{" @ 249..250
+                    ConstructorBodyEntryList
+                      ConstructorInvocation
+                        ParenthesizedExpression
+                          LParen "(" @ 298..299 leading=[Newline "\n", Whitespace "      ", LineComment "// leads a parenthesized qualifier", Newline "\n", Whitespace "      "]
+                          NameExpression
+                            Identifier "outer" @ 299..304
+                          RParen ")" @ 304..305
+                        Dot "." @ 305..306
+                        SuperKw "super" @ 306..311
+                        ArgumentList
+                          LParen "(" @ 311..312
+                          ExpressionList
+                            LiteralExpression
+                              IntegerLiteral "0" @ 312..313
+                          RParen ")" @ 313..314
+                        Semicolon ";" @ 314..315
+                    RBrace "}" @ 320..321 leading=[Newline "\n", Whitespace "    "]
+                ConstructorDeclaration
+                  Identifier "Inner" @ 327..332 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+                  LParen "(" @ 332..333
+                  FormalParameterList
+                    FormalParameter
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "LeadingCommentsOnParenthesizedExpressions" @ 333..374 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "outer" @ 375..380
+                    Comma "," @ 380..381 trailing=[Whitespace " "]
+                    FormalParameter
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 382..388 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "name" @ 389..393
+                  RParen ")" @ 393..394 trailing=[Whitespace " "]
+                  ConstructorBody
+                    LBrace "{" @ 395..396
+                    ConstructorBodyEntryList
+                      ConstructorInvocation
+                        ParenthesizedExpression
+                          LParen "(" @ 461..462 leading=[Newline "\n", Whitespace "      ", BlockComment "/* block comment leads a parenthesized qualifier */", Newline "\n", Whitespace "      "]
+                          NameExpression
+                            Identifier "outer" @ 462..467
+                          RParen ")" @ 467..468
+                        Dot "." @ 468..469
+                        TypeArgumentList
+                          Lt "<" @ 469..470
+                          TypeArgumentSeparatedList
+                            TypeArgument
+                              AnnotationList
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "String" @ 470..476
+                          Gt ">" @ 476..477
+                        SuperKw "super" @ 477..482
+                        ArgumentList
+                          LParen "(" @ 482..483
+                          ExpressionList
+                            NameExpression
+                              Identifier "name" @ 483..487
+                            Comma "," @ 487..488 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "0" @ 489..490
+                          RParen ")" @ 490..491
+                        Semicolon ";" @ 491..492
+                    RBrace "}" @ 497..498 leading=[Newline "\n", Whitespace "    "]
+                ConstructorDeclaration
+                  Identifier "Inner" @ 504..509 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+                  LParen "(" @ 509..510
+                  FormalParameterList
+                    FormalParameter
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "LeadingCommentsOnParenthesizedExpressions" @ 510..551 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "outer" @ 552..557
+                    Comma "," @ 557..558 trailing=[Whitespace " "]
+                    FormalParameter
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 559..562 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "marker" @ 563..569
+                  RParen ")" @ 569..570 trailing=[Whitespace " "]
+                  ConstructorBody
+                    LBrace "{" @ 571..572
+                    ConstructorBodyEntryList
+                      ConstructorInvocation
+                        ParenthesizedExpression
+                          LParen "(" @ 647..648 leading=[Newline "\n", Whitespace "      ", LineComment "// leads a parenthesized qualifier holding an object creation", Newline "\n", Whitespace "      "]
+                          ObjectCreationExpression
+                            NewKw "new" @ 648..651 trailing=[Whitespace " "]
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "LeadingCommentsOnParenthesizedExpressions" @ 652..693
+                            ArgumentList
+                              LParen "(" @ 693..694
+                              ExpressionList
+                              RParen ")" @ 694..695
+                          RParen ")" @ 695..696
+                        Dot "." @ 696..697
+                        SuperKw "super" @ 697..702
+                        ArgumentList
+                          LParen "(" @ 702..703
+                          ExpressionList
+                            NameExpression
+                              Identifier "marker" @ 703..709
+                          RParen ")" @ 709..710
+                        Semicolon ";" @ 710..711
+                    RBrace "}" @ 716..717 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 720..721 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 725..728 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "parenthesizedOperands" @ 729..750
+            LParen "(" @ 750..751
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 751..754 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "first" @ 755..760
+              Comma "," @ 760..761 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 762..765 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "second" @ 766..772
+            RParen ")" @ 772..773 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 774..775
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 780..783 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "sum" @ 784..787 trailing=[Whitespace " "]
+                        Assign "=" @ 788..789
+                        VariableInitializer
+                          ParenthesizedExpression
+                            LParen "(" @ 835..836 leading=[Newline "\n", Whitespace "      ", LineComment "// leads a parenthesized operand", Newline "\n", Whitespace "      "]
+                            BinaryExpression
+                              NameExpression
+                                Identifier "first" @ 836..841 trailing=[Whitespace " "]
+                              Plus "+" @ 842..843 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "second" @ 844..850
+                            RParen ")" @ 850..851
+                  Semicolon ";" @ 851..852
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "call" @ 857..861 leading=[Newline "\n", Whitespace "    "]
+                        ArgumentList
+                          LParen "(" @ 861..862
+                          ExpressionList
+                            ParenthesizedExpression
+                              LParen "(" @ 926..927 leading=[Newline "\n", Whitespace "      ", BlockComment "/* block comment leads a parenthesized argument */", Newline "\n", Whitespace "      "]
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "first" @ 927..932 trailing=[Whitespace " "]
+                                Star "*" @ 933..934 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "second" @ 935..941
+                              RParen ")" @ 941..942
+                          RParen ")" @ 942..943
+                    Semicolon ";" @ 943..944
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 949..952 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "total" @ 953..958 trailing=[Whitespace " "]
+                        Assign "=" @ 959..960
+                        VariableInitializer
+                          ParenthesizedExpression
+                            LParen "(" @ 1037..1038 leading=[Newline "\n", Whitespace "      ", LineComment "// a parenthesized operand that does not fit still breaks apart", Newline "\n", Whitespace "      "]
+                            BinaryExpression
+                              BinaryExpression
+                                BinaryExpression
+                                  BinaryExpression
+                                    BinaryExpression
+                                      NameExpression
+                                        Identifier "first" @ 1038..1043 trailing=[Whitespace " "]
+                                      Star "*" @ 1044..1045 trailing=[Whitespace " "]
+                                      NameExpression
+                                        Identifier "second" @ 1046..1052 trailing=[Whitespace " "]
+                                    Plus "+" @ 1053..1054 trailing=[Whitespace " "]
+                                    FieldAccessExpression
+                                      NameExpression
+                                        Identifier "values" @ 1055..1061
+                                      Dot "." @ 1061..1062
+                                      Identifier "length" @ 1062..1068 trailing=[Whitespace " "]
+                                  Plus "+" @ 1069..1070 trailing=[Whitespace " "]
+                                  NameExpression
+                                    Identifier "sum" @ 1071..1074 trailing=[Whitespace " "]
+                                Plus "+" @ 1075..1076 trailing=[Whitespace " "]
+                                MethodInvocationExpression
+                                  UnqualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "someLongMethodName" @ 1077..1095
+                                    ArgumentList
+                                      LParen "(" @ 1095..1096
+                                      ExpressionList
+                                        NameExpression
+                                          Identifier "first" @ 1096..1101
+                                        Comma "," @ 1101..1102 trailing=[Whitespace " "]
+                                        NameExpression
+                                          Identifier "second" @ 1103..1109
+                                      RParen ")" @ 1109..1110 trailing=[Whitespace " "]
+                              Plus "+" @ 1111..1112 trailing=[Whitespace " "]
+                              MethodInvocationExpression
+                                UnqualifiedMethodInvocation
+                                  NameExpression
+                                    Identifier "someLongMethodName" @ 1113..1131
+                                  ArgumentList
+                                    LParen "(" @ 1131..1132
+                                    ExpressionList
+                                      NameExpression
+                                        Identifier "second" @ 1132..1138
+                                      Comma "," @ 1138..1139 trailing=[Whitespace " "]
+                                      NameExpression
+                                        Identifier "first" @ 1140..1145
+                                    RParen ")" @ 1145..1146
+                            RParen ")" @ 1146..1147
+                  Semicolon ";" @ 1147..1148
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 1153..1159 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "total" @ 1160..1165
+                    Semicolon ";" @ 1165..1166
+              RBrace "}" @ 1169..1170 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 1174..1178 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "call" @ 1179..1183
+            LParen "(" @ 1183..1184
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 1184..1187 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 1188..1193
+            RParen ")" @ 1193..1194 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1195..1196
+              BlockStatementList
+              RBrace "}" @ 1196..1197
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 1201..1204 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "someLongMethodName" @ 1205..1223
+            LParen "(" @ 1223..1224
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 1224..1227 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "first" @ 1228..1233
+              Comma "," @ 1233..1234 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 1235..1238 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "second" @ 1239..1245
+            RParen ")" @ 1245..1246 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1247..1248
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 1253..1259 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    BinaryExpression
+                      NameExpression
+                        Identifier "first" @ 1260..1265 trailing=[Whitespace " "]
+                      Plus "+" @ 1266..1267 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "second" @ 1268..1274
+                    Semicolon ";" @ 1274..1275
+              RBrace "}" @ 1278..1279 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 1280..1281 leading=[Newline "\n"]
+  Eof "" @ 1282..1282 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
