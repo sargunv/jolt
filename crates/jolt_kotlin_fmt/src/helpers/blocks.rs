@@ -1,25 +1,10 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
+
+pub(crate) use jolt_fmt_ir::BodyItemSeparator;
 pub(crate) struct BodyItem<'source> {
     doc: Doc<'source>,
     separator: BodyItemSeparator,
     visible: bool,
-}
-
-#[derive(Clone, Copy)]
-pub(crate) enum BodyItemSeparator {
-    None,
-    Line,
-    EmptyLine,
-}
-
-impl BodyItemSeparator {
-    pub(crate) fn doc<'source>(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
-        match self {
-            Self::None => doc.nil(),
-            Self::Line => doc.hard_line(),
-            Self::EmptyLine => doc.empty_line(),
-        }
-    }
 }
 
 impl<'source> BodyItem<'source> {

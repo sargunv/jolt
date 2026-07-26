@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_fmt_ir::{BodyItemSeparator, Doc, DocBuilder};
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub(crate) enum MemberBodyCategory {
@@ -101,16 +101,23 @@ fn member_separator<'source>(
     previous_was_neutral: bool,
 ) -> Doc<'source> {
     if previous_was_neutral || hard_line_before {
-        return doc.hard_line();
-    }
-    if starts_after_blank_line {
-        return doc.empty_line();
+        return BodyItemSeparator::Line.doc(doc);
     }
 
-    match (previous_category, current_category) {
-        (Some(MemberBodyCategory::Field), Some(MemberBodyCategory::Field))
-        | (None, Some(_))
-        | (_, None) => doc.hard_line(),
-        _ => doc.empty_line(),
-    }
+    // Which member kinds sit adjacent is Java's own policy; the separator
+    // vocabulary is shared.
+    let categories_stay_adjacent = matches!(
+        (previous_category, current_category),
+        (
+            Some(MemberBodyCategory::Field),
+            Some(MemberBodyCategory::Field)
+        ) | (None, Some(_))
+            | (_, None)
+    );
+    let separator = if starts_after_blank_line || !categories_stay_adjacent {
+        BodyItemSeparator::EmptyLine
+    } else {
+        BodyItemSeparator::Line
+    };
+    separator.doc(doc)
 }

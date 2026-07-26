@@ -1,14 +1,14 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     Block, BlockItem, BlockItemList, BlockItemListElement, BlockItemListElementSyntax,
-    KotlinCommentKind, KotlinSyntaxListPart, KotlinSyntaxToken, boundary_separator_removal_claim,
+    KotlinSyntaxListPart, KotlinSyntaxToken, boundary_separator_removal_claim,
 };
 use jolt_syntax::tokens_have_blank_line_between;
 
 use crate::helpers::blocks::{BodyItem, BodyItemSeparator, join_body_items};
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_dangling_comments, format_removed_separator,
-    format_token, token_has_comments,
+    format_token, token_has_comments, trailing_comments_force_line,
 };
 use crate::helpers::recovery::{
     KotlinFormatDelimiter, KotlinFormatField, resolve_required_delimiter, resolve_required_field,
@@ -251,15 +251,10 @@ fn block_item_separator<'source>(
     let Some((previous, current)) = previous.zip(current) else {
         return BodyItemSeparator::Line;
     };
-    let has_blank_line = tokens_have_blank_line_between(&previous, &current);
-    let previous_forces_line = previous
-        .trailing_comments()
-        .any(|comment| comment.kind() == KotlinCommentKind::Line);
-    match (has_blank_line, previous_forces_line) {
-        (false, true) => BodyItemSeparator::None,
-        (true, true) | (false, false) => BodyItemSeparator::Line,
-        (true, false) => BodyItemSeparator::EmptyLine,
-    }
+    BodyItemSeparator::between(
+        tokens_have_blank_line_between(&previous, &current),
+        trailing_comments_force_line(&previous),
+    )
 }
 
 fn block_part_ignore_range(part: &BlockPart<'_>) -> Option<FormatterIgnoreItemRange> {

@@ -29,7 +29,9 @@ pub use comments::{
 #[cfg(feature = "bench")]
 pub use document::DocArenaMetrics;
 pub use document::{ConcatBuilder, Doc, DocBuilder};
-pub use lists::{CommaListItem, attach_comma_separator, comma_list, comma_list_parts};
+pub use lists::{
+    BodyItemSeparator, CommaListItem, attach_comma_separator, comma_list, comma_list_parts,
+};
 pub use options::{FormatOptions, FormatSinkResult};
 pub use recovery::{
     FormatDelimiter, FormatField, FormatListPart, LayoutDoc, assemble_malformed_fragment,
