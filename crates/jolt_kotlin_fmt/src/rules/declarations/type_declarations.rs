@@ -333,10 +333,12 @@ fn format_keyword_token<'source>(
     doc: &mut DocBuilder<'source>,
     token: KotlinSyntaxToken<'source>,
 ) -> Doc<'source> {
+    // Every caller concatenates this document directly, so the keyword owns its
+    // trailing comments; relocating them here would drop them.
     format_token(
         doc,
         &token,
         LeadingTrivia::Preserve,
-        TrailingTrivia::RelocatedToEnclosingContext,
+        TrailingTrivia::Preserve,
     )
 }

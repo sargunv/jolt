@@ -1162,3 +1162,69 @@ pub fn assert_no_line_exceeds_width(formatted: &str, label: &str, line_width: u1
         "formatted line exceeded width {line_width} in {label}:\n{formatted}\nfirst offending line: {offending:?}",
     );
 }
+
+/// Formats `sources` with a block comment inserted after every token boundary,
+/// asserting the formatter never blocks.
+///
+/// A trailing comment is only emitted if some rule takes responsibility for it.
+/// `TrailingTrivia::RelocatedToEnclosingContext` moves that responsibility to
+/// the enclosing rule, and nothing checks that the enclosing rule accepts it, so
+/// a rule can silently drop the comments of a token it formats. The renderer
+/// catches the loss, but only for source that actually places a comment there,
+/// which no fixture had done for most token positions.
+///
+/// # Panics
+///
+/// Panics listing every position whose formatted output was blocked.
+pub fn assert_comments_format_at_every_token_position<L: CorpusLanguage>(
+    lang: &L,
+    format: impl Fn(&str) -> Result<String, Diagnostic>,
+    sources: &[&str],
+) {
+    let mut blocked = Vec::new();
+    for source in sources {
+        assert!(
+            format(source).is_ok(),
+            "{} baseline source did not format: {source}",
+            lang.language_name()
+        );
+
+        let mut boundary = 0;
+        while boundary < source.len() {
+            let token_end = next_token_end(source, boundary);
+            let Some(token_end) = token_end else { break };
+            boundary = token_end;
+            let mut probe = String::with_capacity(source.len() + 8);
+            probe.push_str(&source[..token_end]);
+            probe.push_str(" /*c*/");
+            probe.push_str(&source[token_end..]);
+            if let Err(diagnostic) = format(&probe) {
+                blocked.push(format!("  {probe}\n    -> {}", diagnostic.message));
+            }
+        }
+    }
+
+    assert!(
+        blocked.is_empty(),
+        "{} formatter dropped a comment at {} token position(s):\n{}",
+        lang.language_name(),
+        blocked.len(),
+        blocked.join("\n")
+    );
+}
+
+/// Returns the end offset of the next whitespace-delimited token after `from`.
+fn next_token_end(source: &str, from: usize) -> Option<usize> {
+    let bytes = source.as_bytes();
+    let mut index = from;
+    while index < bytes.len() && bytes[index].is_ascii_whitespace() {
+        index += 1;
+    }
+    if index >= bytes.len() {
+        return None;
+    }
+    while index < bytes.len() && !bytes[index].is_ascii_whitespace() {
+        index += 1;
+    }
+    Some(index)
+}

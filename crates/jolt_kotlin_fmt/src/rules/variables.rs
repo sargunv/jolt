@@ -151,6 +151,6 @@ fn format_parameter_keyword<'source>(
         doc,
         token,
         LeadingTrivia::Preserve,
-        TrailingTrivia::RelocatedToEnclosingContext,
+        TrailingTrivia::Preserve,
     )
 }
