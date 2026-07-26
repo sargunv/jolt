@@ -1,0 +1,62 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class FormatterIgnoreTrailingLineComment {
+  // @formatter:off
+  val raw   =1+2 // trailing the last ignored member
+  // @formatter:on
+  val after = 2
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "FormatterIgnoreTrailingLineComment" @ 6..40 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 41..42
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 65..68 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "raw" @ 69..72 trailing=[Whitespace "   "]
+              PropertyInitializer
+                Assign "=" @ 75..76
+                BinaryExpression
+                  LiteralExpression
+                    IntegerLiteral "1" @ 76..77
+                  Plus "+" @ 77..78
+                  LiteralExpression
+                    IntegerLiteral "2" @ 78..79 trailing=[Whitespace " ", LineComment "// trailing the last ignored member"]
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 137..140 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "after" @ 141..146 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 147..148 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "2" @ 149..150
+              PropertyBodyMemberList
+        RBrace "}" @ 151..152 leading=[Newline "\n"]
+  Eof "" @ 153..153 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
