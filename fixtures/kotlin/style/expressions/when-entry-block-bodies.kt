@@ -1,0 +1,30 @@
+package com.example.expressions
+
+fun classify(k: Int): Int =
+    when (k) {
+        0 -> 0
+        1 -> {
+            fallback(k)
+        }
+        2 -> {}
+        3 -> if (k > 0) 1 else -1
+        4 -> run { k * 2 }
+        5 ->
+            when (k) {
+                6 -> 6
+                else -> 7
+            }
+        else -> {
+            val doubled = k * 2
+            doubled + 1
+        }
+    }
+
+fun dispatch(k: Int) {
+    when (k) {
+        0 -> {
+            reportTheFirstReason(k, k) + reportTheSecondReason(k, k) + reportTheThirdReason(k, k)
+        }
+        else -> report(-1)
+    }
+}

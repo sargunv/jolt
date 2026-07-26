@@ -47,6 +47,7 @@ style/expressions/member-chain-expression-body.kt
 style/expressions/operator-line-comments.kt
 style/expressions/simple-expression-bodies.kt
 style/expressions/string-templates.kt
+style/expressions/when-entry-block-bodies.kt
 style/expressions/when-expression.kt
 style/imports/aliases-and-stars.kt
 style/imports/basic-sorting.kt
