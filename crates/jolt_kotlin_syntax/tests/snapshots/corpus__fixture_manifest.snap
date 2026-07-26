@@ -9,6 +9,7 @@ style/comments/comment-shapes.kt
 style/comments/content-shapes.kt
 style/comments/lexical-boundaries.kt
 style/comments/mixed-comment-line-endings.kt
+style/comments/star-blocks.kt
 style/declarations/annotations-and-modifiers.kt
 style/declarations/class-header-clauses.kt
 style/declarations/delegation.kt
