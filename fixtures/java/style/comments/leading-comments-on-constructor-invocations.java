@@ -1,0 +1,35 @@
+class LeadingCommentsOnConstructorInvocations {
+  LeadingCommentsOnConstructorInvocations() {
+    // leads a bare invocation
+    this(0);
+  }
+
+  LeadingCommentsOnConstructorInvocations(int value) {}
+
+  class Base {
+    Base(int value) {}
+
+    <T> Base(T value, int marker) {}
+  }
+
+  class Inner extends Base {
+    Inner(LeadingCommentsOnConstructorInvocations outer) {
+      // leads a qualified invocation
+      outer.super(0);
+    }
+
+    Inner(LeadingCommentsOnConstructorInvocations outer, String name) {
+      // leads a qualified invocation with explicit type arguments
+      outer.<String>super(name, 0);
+    }
+  }
+
+  static class Generic {
+    Generic() {
+      /* block comment leads the type arguments */
+      <String>this("value", 0);
+    }
+
+    <T> Generic(T value, int marker) {}
+  }
+}

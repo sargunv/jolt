@@ -32,7 +32,8 @@ use crate::rules::statements::{
 };
 use crate::rules::types::{
     LeadingComments as TypeLeadingComments, format_array_dimensions, format_type,
-    format_type_argument_list, format_type_parameter_list, format_type_without_leading_comments,
+    format_type_argument_list_without_leading_comments, format_type_parameter_list,
+    format_type_without_leading_comments,
 };
 use crate::rules::variables::{
     format_field_declaration, format_formal_parameter, format_receiver_parameter,

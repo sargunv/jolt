@@ -95,6 +95,23 @@ pub(crate) fn format_type_argument_list<'source>(
     arguments: &TypeArgumentList<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    format_type_argument_list_with_leading(arguments, LeadingComments::Preserve, doc)
+}
+
+/// Formats a type argument list whose enclosing construct already emitted the
+/// leading comments on its opening angle bracket.
+pub(crate) fn format_type_argument_list_without_leading_comments<'source>(
+    arguments: &TypeArgumentList<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    format_type_argument_list_with_leading(arguments, LeadingComments::SuppressFirstToken, doc)
+}
+
+fn format_type_argument_list_with_leading<'source>(
+    arguments: &TypeArgumentList<'source>,
+    leading_comments: LeadingComments,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
     let open = resolve_required_delimiter(arguments.open_angle(), doc);
     let close = resolve_required_delimiter(arguments.close_angle(), doc);
     let items = match resolve_required_field(arguments.arguments(), doc) {
@@ -105,7 +122,12 @@ pub(crate) fn format_type_argument_list<'source>(
         }
         JavaFormatField::Malformed(recovery) => vec![CommaListItem::visible(recovery)],
     };
-    delimited_comma_list(doc, open, close, items)
+    match leading_comments {
+        LeadingComments::Preserve => delimited_comma_list(doc, open, close, items),
+        LeadingComments::SuppressFirstToken => {
+            delimited_comma_list_without_open_leading_comments(doc, open, close, items)
+        }
+    }
 }
 
 pub(crate) fn format_array_dimensions<'source>(

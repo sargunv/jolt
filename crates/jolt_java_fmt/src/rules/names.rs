@@ -109,10 +109,17 @@ impl PartialOrd for NameSortKey<'_> {
 fn name_has_line_comments(name: &NameSyntax<'_>) -> bool {
     let field_has_comments =
         |field| matches!(field, JavaSyntaxField::Present(token) if token_has_line_comments(&token));
+    // A line comment leading the name's first token sits before the whole name
+    // rather than between two of its segments, so it does not split the name.
+    let first_field_has_comments = |field: JavaSyntaxField<'_, JavaSyntaxToken<'_>>| {
+        matches!(field, JavaSyntaxField::Present(token) if token
+            .trailing_comments()
+            .any(|comment| comment_forces_line(&comment)))
+    };
     match name {
-        NameSyntax::Name(name) => field_has_comments(name.identifier()),
+        NameSyntax::Name(name) => first_field_has_comments(name.identifier()),
         NameSyntax::QualifiedName(name) => {
-            matches!(name.first_segment(), JavaSyntaxField::Present(segment) if field_has_comments(segment.identifier()))
+            matches!(name.first_segment(), JavaSyntaxField::Present(segment) if first_field_has_comments(segment.identifier()))
                 || field_has_comments(name.first_dot())
                 || match name.remaining_segments() {
                     JavaSyntaxField::Present(segments) => segments.parts().any(|part| match part {

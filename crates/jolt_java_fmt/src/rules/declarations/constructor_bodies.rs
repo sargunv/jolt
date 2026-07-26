@@ -4,8 +4,8 @@ use super::{
     format_block_statement_item, format_construct_leading_comments, format_dangling_comments,
     format_expression, format_name, format_removed_comments, format_statement_semicolon,
     format_token_after_construct_leading_comments, format_token_with_comments,
-    format_type_argument_list, formatter_ignore_content_range, formatter_ignore_run_doc,
-    join_body_items,
+    format_type_argument_list_without_leading_comments, formatter_ignore_content_range,
+    formatter_ignore_run_doc, join_body_items,
 };
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{ConstructorBodyEntry, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxView};
@@ -201,9 +201,13 @@ fn format_constructor_invocation<'source>(
     invocation: &ConstructorInvocation<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    // The construct hoists the leading comments of its first token, which is
+    // this list's opening angle bracket when nothing precedes it. Left to
+    // itself the list would treat them as inline comments and emit them a
+    // second time.
     let type_arguments =
         format_optional_field(invocation.type_arguments(), doc, |arguments, doc| {
-            format_type_argument_list(&arguments, doc)
+            format_type_argument_list_without_leading_comments(&arguments, doc)
         });
     let target = format_required_field(invocation.target(), doc, |target, doc| {
         format_token_after_construct_leading_comments(
@@ -216,7 +220,12 @@ fn format_constructor_invocation<'source>(
         format_argument_list(arguments, doc)
     });
     let semicolon = invocation.semicolon();
-    let invocation_first_token = invocation.first_token();
+    // A qualifier owns the construct's first token and emits that token's
+    // leading comments itself, so there is nothing left to hoist.
+    let invocation_first_token = match invocation.qualifier() {
+        JavaSyntaxField::Present(_) => None,
+        _ => invocation.first_token(),
+    };
     doc_concat!(
         doc,
         [
