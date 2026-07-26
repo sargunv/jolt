@@ -1,0 +1,117 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun infixPrecedence(bits: Bits, mask: Bits): Bits {
+  val rightOperand = bits context mask + Bits.Enabled // keeps its own line
+  val leftOperand = bits + mask context Bits.Enabled
+  return leftOperand
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "infixPrecedence" @ 4..19
+      ValueParameterList
+        LParen "(" @ 19..20
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "bits" @ 20..24
+            Colon ":" @ 24..25 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Bits" @ 26..30
+          Comma "," @ 30..31 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "mask" @ 32..36
+            Colon ":" @ 36..37 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Bits" @ 38..42
+        RParen ")" @ 42..43
+      Colon ":" @ 43..44 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Bits" @ 45..49 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 50..51
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 54..57 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "rightOperand" @ 58..70 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 71..72 trailing=[Whitespace " "]
+                BinaryExpression
+                  NameExpression
+                    Identifier "bits" @ 73..77 trailing=[Whitespace " "]
+                  Identifier "context" @ 78..85 trailing=[Whitespace " "]
+                  BinaryExpression
+                    NameExpression
+                      Identifier "mask" @ 86..90 trailing=[Whitespace " "]
+                    Plus "+" @ 91..92 trailing=[Whitespace " "]
+                    NavigationExpression
+                      NameExpression
+                        Identifier "Bits" @ 93..97
+                      Dot "." @ 97..98
+                      Identifier "Enabled" @ 98..105 trailing=[Whitespace " ", LineComment "// keeps its own line"]
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 130..133 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "leftOperand" @ 134..145 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 146..147 trailing=[Whitespace " "]
+                BinaryExpression
+                  BinaryExpression
+                    NameExpression
+                      Identifier "bits" @ 148..152 trailing=[Whitespace " "]
+                    Plus "+" @ 153..154 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "mask" @ 155..159 trailing=[Whitespace " "]
+                  Identifier "context" @ 160..167 trailing=[Whitespace " "]
+                  NavigationExpression
+                    NameExpression
+                      Identifier "Bits" @ 168..172
+                    Dot "." @ 172..173
+                    Identifier "Enabled" @ 173..180
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 183..189 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "leftOperand" @ 190..201
+              TerminatorList
+          RBrace "}" @ 202..203 leading=[Newline "\n"]
+  Eof "" @ 204..204 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

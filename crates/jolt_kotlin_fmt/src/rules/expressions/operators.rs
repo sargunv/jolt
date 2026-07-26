@@ -349,14 +349,11 @@ fn format_binary_operand_doc<'source>(
     let Some(claims) = owner.precedence_parenthesis_claims(expression) else {
         return formatted;
     };
+    // Laid out exactly as source parentheses are, so re-formatting the output
+    // (where these parentheses are now source tokens) reaches the same result.
     let open = doc.synthesized_source(claims.open);
-    let line = doc.soft_line();
-    let formatted = doc.concat([line, formatted]);
-    let formatted = doc.indent(formatted);
-    let trailing = doc.soft_line();
     let close = doc.synthesized_source(claims.close);
-    let contents = doc.concat([open, formatted, trailing, close]);
-    doc.group(contents)
+    doc.concat([open, formatted, close])
 }
 
 struct BinaryOperatorDoc<'source> {
