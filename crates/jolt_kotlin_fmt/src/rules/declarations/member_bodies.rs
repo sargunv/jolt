@@ -9,9 +9,8 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_dangling_comments, format_token,
 };
 use crate::helpers::recovery::{
-    KotlinFormatDelimiter, KotlinFormatField, format_delimiter_with_preserved_trailing,
-    format_malformed, format_missing, format_optional_field, resolve_required_delimiter,
-    resolve_required_field,
+    KotlinFormatDelimiter, KotlinFormatField, format_delimiter, format_malformed, format_missing,
+    format_optional_field, resolve_required_delimiter, resolve_required_field,
 };
 use jolt_fmt_ir::formatter_ignore::{
     FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
@@ -41,10 +40,12 @@ fn format_class_body_contents<'source>(
     body: &ClassBody<'source>,
     open: Option<&KotlinSyntaxToken<'source>>,
     close: Option<&KotlinSyntaxToken<'source>>,
-) -> Option<Doc<'source>> {
+) -> Option<ClassBodyContents<'source>> {
     let members = match resolve_required_field(body.members(), doc) {
         KotlinFormatField::Present(members) => members,
-        KotlinFormatField::Malformed(malformed) => return Some(malformed),
+        KotlinFormatField::Malformed(malformed) => {
+            return Some(ClassBodyContents::new(malformed, false));
+        }
     };
     let parts = collect_class_body_parts(doc, &members);
     let container =
@@ -59,12 +60,42 @@ fn format_class_body_contents<'source>(
     if let Some(close) = close
         && !close.leading_comments().is_empty()
     {
+        // The gap that opens the close brace's leading trivia belongs to that
+        // token, so the separator in front of this run reads it from there.
         sections.push(ClassBodySection::neutral(
             format_dangling_comments(doc, close.leading_comments()),
             false,
+            close.has_leading_blank_line(),
         ));
     }
-    (!sections.is_empty()).then(|| join_class_body_sections(doc, sections))
+    let starts_after_blank_line = sections
+        .first()
+        .is_some_and(|section| section.starts_after_blank_line);
+    (!sections.is_empty()).then(|| {
+        ClassBodyContents::new(
+            join_class_body_sections(doc, sections),
+            starts_after_blank_line,
+        )
+    })
+}
+
+/// A class body's laid-out contents plus the gap that opens them.
+///
+/// The opening gap only reaches the output when the open brace's own trailing
+/// comment already put something on that line; a blank line that merely opens a
+/// body is dropped.
+struct ClassBodyContents<'source> {
+    doc: Doc<'source>,
+    starts_after_blank_line: bool,
+}
+
+impl<'source> ClassBodyContents<'source> {
+    const fn new(doc: Doc<'source>, starts_after_blank_line: bool) -> Self {
+        Self {
+            doc,
+            starts_after_blank_line,
+        }
+    }
 }
 
 enum ClassBodyPart<'source> {
@@ -206,6 +237,7 @@ fn class_body_sections_with_ignored<'source>(
             sections.push(ClassBodySection::neutral(
                 formatter_ignore_run_doc(run, doc),
                 !run.ends_with_on_marker(),
+                false,
             ));
         }
         FormatterIgnoreSplice::Item {
@@ -242,16 +274,17 @@ fn push_class_body_physical_doc<'source>(
         sections.push(ClassBodySection::neutral(
             doc.concat([line, physical]),
             false,
+            false,
         ));
     } else if sections
         .last()
         .is_some_and(|previous| previous.hard_line_after)
     {
-        sections.push(ClassBodySection::neutral(physical, false));
+        sections.push(ClassBodySection::neutral(physical, false, false));
     } else if let Some(previous) = sections.last_mut() {
         previous.doc = doc.concat([std::mem::replace(&mut previous.doc, Doc::nil()), physical]);
     } else {
-        sections.push(ClassBodySection::neutral(physical, false));
+        sections.push(ClassBodySection::neutral(physical, false, false));
     }
 }
 
@@ -340,13 +373,30 @@ fn format_class_braced_body<'source>(
     doc: &mut DocBuilder<'source>,
     open: KotlinFormatDelimiter<'source>,
     close: KotlinFormatDelimiter<'source>,
-    body: Option<Doc<'source>>,
+    body: Option<ClassBodyContents<'source>>,
 ) -> Doc<'source> {
     let has_close = close.is_visible();
-    let open = format_delimiter_with_preserved_trailing(doc, open, LeadingTrivia::Preserve);
+    // A body or a close brace always breaks the open brace's line, so its
+    // trailing comment must not append a break of its own; doing so would put a
+    // blank line after the comment that the source never had.
+    let open_trailing = if body.is_some() || has_close {
+        TrailingTrivia::BeforeLineBreak
+    } else {
+        TrailingTrivia::Preserve
+    };
+    let open_has_trailing_comments = open
+        .source()
+        .is_some_and(|token| !token.trailing_comments().is_empty());
+    let open = format_delimiter(doc, open, LeadingTrivia::Preserve, open_trailing);
     let contents = if let Some(body) = body {
-        let line = doc.hard_line();
-        let body = doc.concat([line, body]);
+        // Only a brace-trailing comment leaves content the body can be spaced
+        // away from; otherwise a gap that merely opens the body is dropped.
+        let line = if open_has_trailing_comments && body.starts_after_blank_line {
+            doc.empty_line()
+        } else {
+            doc.hard_line()
+        };
+        let body = doc.concat([line, body.doc]);
         let body = doc.indent(body);
         if has_close {
             let line = doc.hard_line();
@@ -359,8 +409,12 @@ fn format_class_braced_body<'source>(
     } else {
         Doc::nil()
     };
-    let close =
-        format_delimiter_with_preserved_trailing(doc, close, LeadingTrivia::SuppressAlreadyHandled);
+    let close = format_delimiter(
+        doc,
+        close,
+        LeadingTrivia::SuppressAlreadyHandled,
+        TrailingTrivia::Preserve,
+    );
     doc.concat([open, contents, close])
 }
 
@@ -438,12 +492,16 @@ struct ClassBodySection<'source> {
 impl<'source> ClassBodySection<'source> {
     /// A section that is not a member declaration: a stray token, salvaged
     /// comments, or recovery output.
-    const fn neutral(doc: Doc<'source>, hard_line_after: bool) -> Self {
+    const fn neutral(
+        doc: Doc<'source>,
+        hard_line_after: bool,
+        starts_after_blank_line: bool,
+    ) -> Self {
         Self {
             doc,
             hard_line_after,
             category: None,
-            starts_after_blank_line: false,
+            starts_after_blank_line,
         }
     }
 }

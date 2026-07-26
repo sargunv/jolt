@@ -19,10 +19,10 @@ pub(crate) struct MemberBodyItem<'source> {
 }
 
 impl<'source> MemberBodyItem<'source> {
-    pub(crate) fn comment(doc: Doc<'source>) -> Self {
+    pub(crate) fn comment(doc: Doc<'source>, starts_after_blank_line: bool) -> Self {
         Self {
             category: None,
-            starts_after_blank_line: false,
+            starts_after_blank_line,
             ignored_region: false,
             doc,
             visible: true,
@@ -95,10 +95,10 @@ fn member_separator<'source>(
     previous_was_neutral: bool,
     previous_was_ignored_region: bool,
 ) -> Doc<'source> {
-    // A comment or stray token carries no member policy, so the next member
-    // just starts on the next line.
+    // A comment or stray token carries no member policy, so only the gap the
+    // source itself had can widen the boundary after one.
     if previous_was_neutral {
-        return BodyItemSeparator::Line.doc(doc);
+        return BodyItemSeparator::between(starts_after_blank_line).doc(doc);
     }
 
     // An ignored region is the source's own layout. Member spacing policy would

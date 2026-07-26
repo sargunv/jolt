@@ -38,6 +38,7 @@ class NestedRecoveryContexts {
   @A @A 0;
   class FollowingMalformedMember {
   }
+
   NestedRecoveryContexts int value) @A @A 0;
   class FollowingMalformedConstructor {
   }

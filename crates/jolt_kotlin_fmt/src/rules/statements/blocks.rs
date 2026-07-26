@@ -7,10 +7,11 @@ use jolt_kotlin_syntax::{
 use crate::helpers::blocks::{BodyItem, BodyItemSeparator, join_body_items};
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_dangling_comments, format_removed_separator,
-    format_token, token_has_comments,
+    token_has_comments,
 };
 use crate::helpers::recovery::{
-    KotlinFormatDelimiter, KotlinFormatField, resolve_required_delimiter, resolve_required_field,
+    KotlinFormatDelimiter, KotlinFormatField, format_delimiter, resolve_required_delimiter,
+    resolve_required_field,
 };
 use jolt_fmt_ir::formatter_ignore::{
     FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
@@ -62,7 +63,12 @@ fn format_block_contents<'source>(
         body_items.insert(0, BodyItem::new(comments, BodyItemSeparator::Line));
     }
     if let Some(comments) = format_close_dangling_comments(doc, close) {
-        body_items.push(BodyItem::new(comments, BodyItemSeparator::Line));
+        // The gap that opens the close brace's leading trivia belongs to that
+        // token, so the separator in front of this run reads it from there.
+        let separator = BodyItemSeparator::between(
+            close.is_some_and(KotlinSyntaxToken::has_leading_blank_line),
+        );
+        body_items.push(BodyItem::new(comments, separator));
     }
     if body_items.is_empty() {
         BlockContents::Empty
@@ -295,16 +301,4 @@ fn format_braced_body<'source>(
         TrailingTrivia::Preserve,
     );
     doc.concat([open, contents, close])
-}
-
-fn format_delimiter<'source>(
-    doc: &mut DocBuilder<'source>,
-    delimiter: KotlinFormatDelimiter<'source>,
-    leading: LeadingTrivia,
-    trailing: TrailingTrivia,
-) -> Doc<'source> {
-    match delimiter {
-        KotlinFormatDelimiter::Source(token) => format_token(doc, &token, leading, trailing),
-        KotlinFormatDelimiter::Recovery(recovery) => recovery.doc(),
-    }
 }

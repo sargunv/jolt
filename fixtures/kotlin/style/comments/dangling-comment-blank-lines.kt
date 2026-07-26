@@ -26,3 +26,96 @@ class DanglingCommentsInBodies {
 
   fun call() {}
 }
+
+class BraceTrailingCommentBlankLines { // a comment trailing the class body brace
+
+  // a dangling comment after a blank line
+}
+
+class BraceTrailingCommentCollapsedBlankLines { // a comment trailing the class body brace
+
+
+
+
+  // a dangling comment after collapsed blank lines
+}
+
+class BraceTrailingCommentWithoutBlankLine { // a comment trailing the class body brace
+  // a dangling comment with no blank line before it
+}
+
+class BraceTrailingCommentsInBodies {
+  fun emptyBlock() { // a comment trailing the block brace
+
+    // a dangling comment after a blank line
+  }
+
+  fun emptyBlockCollapsed() { // a comment trailing the block brace
+
+
+
+    // a dangling comment after collapsed blank lines
+  }
+
+  fun emptyBlockWithoutBlankLine() { // a comment trailing the block brace
+    // a dangling comment with no blank line before it
+  }
+
+  fun emptyArguments() {
+    call( // a comment trailing the open parenthesis
+
+      // a dangling comment after a blank line
+    )
+  }
+
+  fun emptyArgumentsWithoutBlankLine() {
+    call( // a comment trailing the open parenthesis
+      // a dangling comment with no blank line before it
+    )
+  }
+
+  fun call() {}
+}
+
+class ItemTrailingCommentBeforeCloseComment {
+  fun blankLine() {
+    call(
+      first,
+      second // a comment trailing the last argument
+
+      // a dangling comment after a blank line
+    )
+  }
+
+  fun withoutBlankLine() {
+    call(
+      first,
+      second // a comment trailing the last argument
+      // a dangling comment with no blank line before it
+    )
+  }
+}
+
+class BraceTrailingCommentBeforeMember { // a comment trailing the class body brace
+
+  val propertyAfterBlankLine = 0
+}
+
+class CommentsBeforeCloseBrace {
+  val property = 0
+
+  // a dangling comment after a blank line at the end of the class body
+}
+
+class StatementsBeforeCloseBrace {
+  fun method() {
+    val local = 0
+
+    // a dangling comment after a blank line at the end of the block
+  }
+
+  fun methodWithoutBlankLine() {
+    val local = 0
+    // a dangling comment with no blank line before it
+  }
+}

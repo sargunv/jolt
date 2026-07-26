@@ -16,7 +16,7 @@ use crate::comment_text::{
     is_star_block_comment, preserved_block_comment_lines, preserved_comment_lines,
 };
 use crate::token_trivia::format_token_doc;
-use crate::{Doc, DocBuilder, LeadingTrivia, TrailingTrivia};
+use crate::{ConcatBuilder, Doc, DocBuilder, LeadingTrivia, TrailingTrivia};
 
 /// Where inline leading comments sit relative to their token.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -216,22 +216,62 @@ pub fn format_dangling_comments<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = Comment<'source>>,
 ) -> Doc<'source> {
-    let mut blank_line_before = false;
+    doc.concat_list(|docs| push_dangling_comments(docs, comments, false))
+}
+
+/// Formats the comments a delimited construct holds between its delimiters.
+///
+/// The comments come from two trivia runs: the open delimiter's trailing run
+/// and the close delimiter's leading run. A gap between the two runs opens the
+/// close delimiter's leading trivia, so it is owned by that token rather than
+/// by the comment in front of it, and it is the one gap
+/// [`Comment::is_followed_by_blank_line`] cannot report.
+pub fn format_delimiter_dangling_comments<'source, L: Language>(
+    doc: &mut DocBuilder<'source>,
+    open: Option<&SyntaxToken<'source, L>>,
+    close: Option<&SyntaxToken<'source, L>>,
+) -> Doc<'source> {
+    let blank_line_before_close = close.is_some_and(SyntaxToken::has_leading_blank_line);
+    let open = open.copied();
+    let close = close.copied();
     doc.concat_list(|docs| {
-        for comment in comments {
-            if !docs.is_empty() {
-                let line = if blank_line_before {
-                    docs.empty_line()
-                } else {
-                    docs.hard_line()
-                };
-                docs.push(line);
-            }
-            blank_line_before = comment.is_followed_by_blank_line();
-            let comment = format_comment(docs, &comment);
-            docs.push(comment);
-        }
+        push_dangling_comments(
+            docs,
+            open.iter().flat_map(SyntaxToken::trailing_comments),
+            false,
+        );
+        push_dangling_comments(
+            docs,
+            close.iter().flat_map(SyntaxToken::leading_comments),
+            blank_line_before_close,
+        );
     })
+}
+
+/// Appends one dangling comment run, each comment on its own line.
+///
+/// `blank_line_before` is the gap in front of the run; it only reaches the
+/// output when something already precedes the run on an earlier line, so a
+/// blank line that merely opens a construct is dropped rather than indented
+/// into it.
+fn push_dangling_comments<'source>(
+    docs: &mut ConcatBuilder<'_, 'source>,
+    comments: impl IntoIterator<Item = Comment<'source>>,
+    mut blank_line_before: bool,
+) {
+    for comment in comments {
+        if !docs.is_empty() {
+            let line = if blank_line_before {
+                docs.empty_line()
+            } else {
+                docs.hard_line()
+            };
+            docs.push(line);
+        }
+        blank_line_before = comment.is_followed_by_blank_line();
+        let comment = format_comment(docs, &comment);
+        docs.push(comment);
+    }
 }
 
 /// Formats comments salvaged from a removed token, or `None` when there are
@@ -273,16 +313,6 @@ pub fn has_delimiter_dangling_comments<L: Language>(
 ) -> bool {
     open.is_some_and(|token| !token.trailing_comments().is_empty())
         || close.is_some_and(|token| !token.leading_comments().is_empty())
-}
-
-/// Returns the comments a delimited construct holds between its delimiters.
-pub fn delimiter_dangling_comments<'source, L: Language>(
-    open: Option<&SyntaxToken<'source, L>>,
-    close: Option<&SyntaxToken<'source, L>>,
-) -> impl Iterator<Item = Comment<'source>> {
-    open.into_iter()
-        .flat_map(SyntaxToken::trailing_comments)
-        .chain(close.into_iter().flat_map(SyntaxToken::leading_comments))
 }
 
 /// Formats a list separator, breaking after it when its comments force a line.

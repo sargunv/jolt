@@ -32,6 +32,99 @@ class DanglingCommentsInBodies {
   fun call() {}
 }
 
+class BraceTrailingCommentBlankLines { // a comment trailing the class body brace
+
+  // a dangling comment after a blank line
+}
+
+class BraceTrailingCommentCollapsedBlankLines { // a comment trailing the class body brace
+
+
+
+
+  // a dangling comment after collapsed blank lines
+}
+
+class BraceTrailingCommentWithoutBlankLine { // a comment trailing the class body brace
+  // a dangling comment with no blank line before it
+}
+
+class BraceTrailingCommentsInBodies {
+  fun emptyBlock() { // a comment trailing the block brace
+
+    // a dangling comment after a blank line
+  }
+
+  fun emptyBlockCollapsed() { // a comment trailing the block brace
+
+
+
+    // a dangling comment after collapsed blank lines
+  }
+
+  fun emptyBlockWithoutBlankLine() { // a comment trailing the block brace
+    // a dangling comment with no blank line before it
+  }
+
+  fun emptyArguments() {
+    call( // a comment trailing the open parenthesis
+
+      // a dangling comment after a blank line
+    )
+  }
+
+  fun emptyArgumentsWithoutBlankLine() {
+    call( // a comment trailing the open parenthesis
+      // a dangling comment with no blank line before it
+    )
+  }
+
+  fun call() {}
+}
+
+class ItemTrailingCommentBeforeCloseComment {
+  fun blankLine() {
+    call(
+      first,
+      second // a comment trailing the last argument
+
+      // a dangling comment after a blank line
+    )
+  }
+
+  fun withoutBlankLine() {
+    call(
+      first,
+      second // a comment trailing the last argument
+      // a dangling comment with no blank line before it
+    )
+  }
+}
+
+class BraceTrailingCommentBeforeMember { // a comment trailing the class body brace
+
+  val propertyAfterBlankLine = 0
+}
+
+class CommentsBeforeCloseBrace {
+  val property = 0
+
+  // a dangling comment after a blank line at the end of the class body
+}
+
+class StatementsBeforeCloseBrace {
+  fun method() {
+    val local = 0
+
+    // a dangling comment after a blank line at the end of the block
+  }
+
+  fun methodWithoutBlankLine() {
+    val local = 0
+    // a dangling comment with no blank line before it
+  }
+}
+
 syntax:
 syntax:
 KotlinFile
@@ -120,7 +213,369 @@ KotlinFile
                   BlockItemList
                   RBrace "}" @ 569..570
         RBrace "}" @ 571..572 leading=[Newline "\n"]
-  Eof "" @ 573..573 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 574..579 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "BraceTrailingCommentBlankLines" @ 580..610 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 611..612 trailing=[Whitespace " ", LineComment "// a comment trailing the class body brace"]
+        ClassMemberList
+        RBrace "}" @ 700..701 leading=[Newline "\n", Newline "\n", Whitespace "  ", LineComment "// a dangling comment after a blank line", Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 703..708 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "BraceTrailingCommentCollapsedBlankLines" @ 709..748 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 749..750 trailing=[Whitespace " ", LineComment "// a comment trailing the class body brace"]
+        ClassMemberList
+        RBrace "}" @ 850..851 leading=[Newline "\n", Newline "\n", Newline "\n", Newline "\n", Newline "\n", Whitespace "  ", LineComment "// a dangling comment after collapsed blank lines", Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 853..858 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "BraceTrailingCommentWithoutBlankLine" @ 859..895 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 896..897 trailing=[Whitespace " ", LineComment "// a comment trailing the class body brace"]
+        ClassMemberList
+        RBrace "}" @ 994..995 leading=[Newline "\n", Whitespace "  ", LineComment "// a dangling comment with no blank line before it", Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 997..1002 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "BraceTrailingCommentsInBodies" @ 1003..1032 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 1033..1034
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 1037..1040 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "emptyBlock" @ 1041..1051
+              ValueParameterList
+                LParen "(" @ 1051..1052
+                ValueParameterSeparatedList
+                RParen ")" @ 1052..1053 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 1054..1055 trailing=[Whitespace " ", LineComment "// a comment trailing the block brace"]
+                  BlockItemList
+                  RBrace "}" @ 1142..1143 leading=[Newline "\n", Newline "\n", Whitespace "    ", LineComment "// a dangling comment after a blank line", Newline "\n", Whitespace "  "]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 1147..1150 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "emptyBlockCollapsed" @ 1151..1170
+              ValueParameterList
+                LParen "(" @ 1170..1171
+                ValueParameterSeparatedList
+                RParen ")" @ 1171..1172 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 1173..1174 trailing=[Whitespace " ", LineComment "// a comment trailing the block brace"]
+                  BlockItemList
+                  RBrace "}" @ 1272..1273 leading=[Newline "\n", Newline "\n", Newline "\n", Newline "\n", Whitespace "    ", LineComment "// a dangling comment after collapsed blank lines", Newline "\n", Whitespace "  "]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 1277..1280 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "emptyBlockWithoutBlankLine" @ 1281..1307
+              ValueParameterList
+                LParen "(" @ 1307..1308
+                ValueParameterSeparatedList
+                RParen ")" @ 1308..1309 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 1310..1311 trailing=[Whitespace " ", LineComment "// a comment trailing the block brace"]
+                  BlockItemList
+                  RBrace "}" @ 1407..1408 leading=[Newline "\n", Whitespace "    ", LineComment "// a dangling comment with no blank line before it", Newline "\n", Whitespace "  "]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 1412..1415 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "emptyArguments" @ 1416..1430
+              ValueParameterList
+                LParen "(" @ 1430..1431
+                ValueParameterSeparatedList
+                RParen ")" @ 1431..1432 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 1433..1434
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "call" @ 1439..1443 leading=[Newline "\n", Whitespace "    "]
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 1443..1444 trailing=[Whitespace " ", LineComment "// a comment trailing the open parenthesis"]
+                            ValueArgumentEntryList
+                            RParen ")" @ 1540..1541 leading=[Newline "\n", Newline "\n", Whitespace "      ", LineComment "// a dangling comment after a blank line", Newline "\n", Whitespace "    "]
+                          LambdaExpressionList
+                      TerminatorList
+                  RBrace "}" @ 1544..1545 leading=[Newline "\n", Whitespace "  "]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 1549..1552 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "emptyArgumentsWithoutBlankLine" @ 1553..1583
+              ValueParameterList
+                LParen "(" @ 1583..1584
+                ValueParameterSeparatedList
+                RParen ")" @ 1584..1585 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 1586..1587
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "call" @ 1592..1596 leading=[Newline "\n", Whitespace "    "]
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 1596..1597 trailing=[Whitespace " ", LineComment "// a comment trailing the open parenthesis"]
+                            ValueArgumentEntryList
+                            RParen ")" @ 1702..1703 leading=[Newline "\n", Whitespace "      ", LineComment "// a dangling comment with no blank line before it", Newline "\n", Whitespace "    "]
+                          LambdaExpressionList
+                      TerminatorList
+                  RBrace "}" @ 1706..1707 leading=[Newline "\n", Whitespace "  "]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 1711..1714 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "call" @ 1715..1719
+              ValueParameterList
+                LParen "(" @ 1719..1720
+                ValueParameterSeparatedList
+                RParen ")" @ 1720..1721 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 1722..1723
+                  BlockItemList
+                  RBrace "}" @ 1723..1724
+        RBrace "}" @ 1725..1726 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 1728..1733 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "ItemTrailingCommentBeforeCloseComment" @ 1734..1771 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 1772..1773
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 1776..1779 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "blankLine" @ 1780..1789
+              ValueParameterList
+                LParen "(" @ 1789..1790
+                ValueParameterSeparatedList
+                RParen ")" @ 1790..1791 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 1792..1793
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "call" @ 1798..1802 leading=[Newline "\n", Whitespace "    "]
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 1802..1803
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "first" @ 1810..1815 leading=[Newline "\n", Whitespace "      "]
+                              Comma "," @ 1815..1816
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "second" @ 1823..1829 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", LineComment "// a comment trailing the last argument"]
+                            RParen ")" @ 1922..1923 leading=[Newline "\n", Newline "\n", Whitespace "      ", LineComment "// a dangling comment after a blank line", Newline "\n", Whitespace "    "]
+                          LambdaExpressionList
+                      TerminatorList
+                  RBrace "}" @ 1926..1927 leading=[Newline "\n", Whitespace "  "]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 1931..1934 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "withoutBlankLine" @ 1935..1951
+              ValueParameterList
+                LParen "(" @ 1951..1952
+                ValueParameterSeparatedList
+                RParen ")" @ 1952..1953 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 1954..1955
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "call" @ 1960..1964 leading=[Newline "\n", Whitespace "    "]
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 1964..1965
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "first" @ 1972..1977 leading=[Newline "\n", Whitespace "      "]
+                              Comma "," @ 1977..1978
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "second" @ 1985..1991 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", LineComment "// a comment trailing the last argument"]
+                            RParen ")" @ 2093..2094 leading=[Newline "\n", Whitespace "      ", LineComment "// a dangling comment with no blank line before it", Newline "\n", Whitespace "    "]
+                          LambdaExpressionList
+                      TerminatorList
+                  RBrace "}" @ 2097..2098 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 2099..2100 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 2102..2107 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "BraceTrailingCommentBeforeMember" @ 2108..2140 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 2141..2142 trailing=[Whitespace " ", LineComment "// a comment trailing the class body brace"]
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 2189..2192 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "propertyAfterBlankLine" @ 2193..2215 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 2216..2217 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "0" @ 2218..2219
+              PropertyBodyMemberList
+        RBrace "}" @ 2220..2221 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 2223..2228 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "CommentsBeforeCloseBrace" @ 2229..2253 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 2254..2255
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 2258..2261 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "property" @ 2262..2270 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 2271..2272 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "0" @ 2273..2274
+              PropertyBodyMemberList
+        RBrace "}" @ 2348..2349 leading=[Newline "\n", Newline "\n", Whitespace "  ", LineComment "// a dangling comment after a blank line at the end of the class body", Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 2351..2356 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "StatementsBeforeCloseBrace" @ 2357..2383 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 2384..2385
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 2388..2391 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "method" @ 2392..2398
+              ValueParameterList
+                LParen "(" @ 2398..2399
+                ValueParameterSeparatedList
+                RParen ")" @ 2399..2400 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 2401..2402
+                  BlockItemList
+                    PropertyDeclaration
+                      ModifierList
+                      ModifierList
+                      ValKw "val" @ 2407..2410 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      Name
+                        Identifier "local" @ 2411..2416 trailing=[Whitespace " "]
+                      PropertyInitializer
+                        Assign "=" @ 2417..2418 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "0" @ 2419..2420
+                      PropertyBodyMemberList
+                  RBrace "}" @ 2493..2494 leading=[Newline "\n", Newline "\n", Whitespace "    ", LineComment "// a dangling comment after a blank line at the end of the block", Newline "\n", Whitespace "  "]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 2498..2501 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "methodWithoutBlankLine" @ 2502..2524
+              ValueParameterList
+                LParen "(" @ 2524..2525
+                ValueParameterSeparatedList
+                RParen ")" @ 2525..2526 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 2527..2528
+                  BlockItemList
+                    PropertyDeclaration
+                      ModifierList
+                      ModifierList
+                      ValKw "val" @ 2533..2536 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      Name
+                        Identifier "local" @ 2537..2542 trailing=[Whitespace " "]
+                      PropertyInitializer
+                        Assign "=" @ 2543..2544 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "0" @ 2545..2546
+                      PropertyBodyMemberList
+                  RBrace "}" @ 2604..2605 leading=[Newline "\n", Whitespace "    ", LineComment "// a dangling comment with no blank line before it", Newline "\n", Whitespace "  "]
+        RBrace "}" @ 2606..2607 leading=[Newline "\n"]
+  Eof "" @ 2608..2608 leading=[Newline "\n"]
 
 diagnostics:
   (none)
