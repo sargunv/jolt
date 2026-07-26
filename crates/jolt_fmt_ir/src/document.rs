@@ -539,6 +539,17 @@ impl<'source> DocBuilder<'source> {
         }))
     }
 
+    /// Tops up to a blank line: preceding content that already ended one or two
+    /// lines contributes, so a blank line is never stacked on a blank line.
+    #[must_use]
+    pub fn empty_line_boundary(&mut self) -> Doc<'source> {
+        self.push_node(DocNode::Line(Line {
+            mode: LineMode::EmptyBoundary,
+            flat: FlatLine::Empty,
+            indent_delta: 0,
+        }))
+    }
+
     #[must_use]
     pub fn if_break(&mut self, breaks: Doc<'source>, flat: Doc<'source>) -> Doc<'source> {
         self.push_node(DocNode::IfBreak { breaks, flat })
@@ -846,6 +857,7 @@ pub(crate) enum LineMode {
     Boundary,
     HardBoundary,
     Empty,
+    EmptyBoundary,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]

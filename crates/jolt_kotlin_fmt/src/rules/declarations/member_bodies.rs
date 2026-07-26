@@ -7,7 +7,6 @@ use jolt_kotlin_syntax::{
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_dangling_comments, format_token,
-    trailing_comments_force_line,
 };
 use crate::helpers::recovery::{
     KotlinFormatDelimiter, KotlinFormatField, format_delimiter_with_preserved_trailing,
@@ -166,13 +165,9 @@ fn push_class_body_part<'source>(
             let last_token = member.last_token();
             *previous_had_comments =
                 last_token.is_some_and(|token| !token.trailing_comments().is_empty());
-            // A trailing line comment already ended this member's line, so the
-            // separator must not open a second one on top of it.
-            let trailing_ended_line =
-                last_token.is_some_and(|token| trailing_comments_force_line(&token));
             sections.push(ClassBodySection {
                 doc: format_class_member(doc, member),
-                hard_line_after: enum_entry_continues(member) || trailing_ended_line,
+                hard_line_after: enum_entry_continues(member),
                 category: Some(member_category(member)),
                 starts_after_blank_line: member.starts_after_blank_line(),
             });
@@ -215,12 +210,12 @@ fn class_body_sections_with_ignored<'source>(
         }
         FormatterIgnoreSplice::Item {
             index,
-            clear_blank_line_before,
+            follows_ignore_run,
         } => {
             // Skipped parts still advance the trailing-comment state that the
             // next physical part reads. When this item immediately follows an
             // ignore run, recover that state from the last skipped part.
-            if clear_blank_line_before {
+            if follows_ignore_run {
                 previous_had_comments = parts[index - 1]
                     .last_token()
                     .is_some_and(|token| !token.trailing_comments().is_empty());
@@ -407,8 +402,11 @@ fn class_member_separator<'source>(
     previous_was_neutral: bool,
     previous_hard_line_after: bool,
 ) -> Doc<'source> {
+    // A comment, stray token or ignored region carries no member policy, and a
+    // comma-continued enum entry names its own successor's line. Either way the
+    // only spacing left to decide is the one the source asked for.
     if previous_was_neutral || previous_hard_line_after {
-        return BodyItemSeparator::Line.doc(doc);
+        return BodyItemSeparator::between(starts_after_blank_line).doc(doc);
     }
 
     let categories_stay_adjacent = matches!(

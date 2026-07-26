@@ -5,7 +5,6 @@ expression: snapshot
 formatted:
 class TrailingCommentSpacing {
   val a = 1 // trailing
-
   val b = 2
 
   val c = 3 // trailing
@@ -28,7 +27,6 @@ interface I {
 
 enum class E {
   A, // trailing
-
   B,
 }
 

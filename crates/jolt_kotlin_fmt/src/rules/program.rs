@@ -8,7 +8,7 @@ use jolt_kotlin_syntax::{
 use crate::helpers::blocks::{BodyItemSeparator, join_hard_lines};
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_comment, format_ignored_trivia, format_removed_separator,
-    format_terminator_list, format_token, token_has_comments, trailing_comments_force_line,
+    format_terminator_list, format_token, token_has_comments,
 };
 use crate::helpers::recovery::{
     KotlinFormatListPart, format_malformed, format_missing, format_optional_field,
@@ -394,9 +394,6 @@ fn source_item_separator(
 ) -> BodyItemSeparator {
     BodyItemSeparator::between(
         !items_stay_adjacent(previous, current) || current.starts_after_blank_line(),
-        previous
-            .last_token()
-            .is_some_and(|token| trailing_comments_force_line(&token)),
     )
 }
 

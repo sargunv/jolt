@@ -206,15 +206,8 @@ fn format_member_parts<'source, T: Copy>(
                 category,
             ));
         }
-        FormatterIgnoreSplice::Item {
-            index,
-            clear_blank_line_before,
-        } => {
-            let mut member = format_part(&members[index], &mut format_item, doc);
-            if clear_blank_line_before {
-                member = member.without_blank_line_before();
-            }
-            formatted.push(member);
+        FormatterIgnoreSplice::Item { index, .. } => {
+            formatted.push(format_part(&members[index], &mut format_item, doc));
         }
     });
     formatted.extend(close_dangling_comments);
@@ -577,7 +570,7 @@ impl<'source> FormattedMember<'source> {
         Self {
             category: Some(category),
             starts_after_blank_line,
-            hard_line_before: false,
+            ignored_region: false,
             doc,
             visible: true,
         }
@@ -601,7 +594,7 @@ fn format_empty_member<'source>(
         FormattedMember {
             category: None,
             starts_after_blank_line,
-            hard_line_before: false,
+            ignored_region: false,
             doc: member_doc,
             visible: true,
         }

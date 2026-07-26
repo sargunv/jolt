@@ -206,7 +206,8 @@ struct Renderer<'arena, 'proof, 'source, S> {
     column: TextWidth,
     indent_levels: i32,
     pending_indent: u32,
-    line_pending: bool,
+    /// Line ends already written with nothing after them.
+    pending_line_ends: u32,
     horizontal_whitespace: HorizontalWhitespace,
     group_stack: Vec<Mode>,
     fit_group_stack: Vec<Mode>,
@@ -230,7 +231,7 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
             column: TextWidth::ZERO,
             indent_levels: 0,
             pending_indent: 0,
-            line_pending: false,
+            pending_line_ends: 0,
             horizontal_whitespace: HorizontalWhitespace::None,
             group_stack: Vec::new(),
             fit_group_stack: Vec::new(),
@@ -384,20 +385,34 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
 
     fn render_line(&mut self, line: &Line, mode: Mode) {
         match (mode, line.mode) {
-            (_, LineMode::Boundary | LineMode::HardBoundary) if self.line_pending => {
-                self.horizontal_whitespace = HorizontalWhitespace::None;
-                let (indent, width) = self.pending_newline_indent(line.indent_delta);
-                self.pending_indent = indent;
-                self.column = width;
+            (_, LineMode::Boundary | LineMode::HardBoundary) if self.pending_line_ends > 0 => {
+                self.write_newlines(line.indent_delta, 0);
             }
             (Mode::Flat, LineMode::Soft | LineMode::SoftOrSpace | LineMode::Boundary) => {
                 self.write_flat_line(&line.flat);
             }
-            (_, LineMode::Hard | LineMode::HardBoundary | LineMode::Empty)
+            (
+                _,
+                LineMode::Hard | LineMode::HardBoundary | LineMode::Empty | LineMode::EmptyBoundary,
+            )
             | (Mode::Break, LineMode::Soft | LineMode::SoftOrSpace | LineMode::Boundary) => {
-                let count = if line.mode == LineMode::Empty { 2 } else { 1 };
+                let count = self.owed_line_ends(line.mode);
                 self.write_newlines(line.indent_delta, count);
             }
+        }
+    }
+
+    /// How many line ends a mode still owes given what is already pending.
+    fn owed_line_ends(&self, mode: LineMode) -> u32 {
+        // A multiline literal that ended a line already supplied one line end.
+        let literal_line_end =
+            u32::from(self.horizontal_whitespace == HorizontalWhitespace::LiteralLineEnding);
+        match mode {
+            // Tops up to a blank line rather than stacking one on a line that
+            // is already ended.
+            LineMode::EmptyBoundary => 2u32.saturating_sub(self.pending_line_ends),
+            LineMode::Empty => 2 - literal_line_end,
+            _ => 1 - literal_line_end,
         }
     }
 
@@ -417,8 +432,8 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
     fn write_multiline_literal(&mut self, literal: &DocumentText<'_>) {
         self.write_str(&literal.text);
         self.column = literal.final_width();
-        self.line_pending = matches!(literal.text.as_bytes().last(), Some(b'\n' | b'\r'));
-        if self.line_pending {
+        self.pending_line_ends = trailing_line_ends(&literal.text);
+        if self.pending_line_ends > 0 {
             self.horizontal_whitespace = HorizontalWhitespace::LiteralLineEnding;
         }
     }
@@ -436,15 +451,12 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
 
     fn write_newlines(&mut self, indent_delta: i16, count: u32) {
         self.pending_indent = 0;
-        self.line_pending = true;
-        let literal_ended_line =
-            self.horizontal_whitespace == HorizontalWhitespace::LiteralLineEnding;
         self.horizontal_whitespace = HorizontalWhitespace::None;
-        let count = count - u32::from(literal_ended_line);
         for _ in 0..count {
             self.write_sink_str("\n");
             self.column = TextWidth::ZERO;
         }
+        self.pending_line_ends += count;
         let (indent, width) = self.pending_newline_indent(indent_delta);
         self.pending_indent = indent;
         self.column = width;
@@ -479,7 +491,7 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         self.flush_pending_indent();
         self.flush_pending_spaces();
         self.write_sink_str(text);
-        self.line_pending = false;
+        self.pending_line_ends = 0;
     }
 
     fn write_sink_str(&mut self, text: &str) {
@@ -538,6 +550,26 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
 
     fn add_width(&mut self, width: TextWidth) {
         self.column = add_width(self.column, width);
+    }
+}
+
+/// Counts the line ends a literal ends with, treating CRLF as one.
+fn trailing_line_ends(text: &str) -> u32 {
+    let mut bytes = text.as_bytes();
+    let mut count = 0;
+    loop {
+        let Some((last, rest)) = bytes.split_last() else {
+            return count;
+        };
+        bytes = match last {
+            b'\n' => match rest.split_last() {
+                Some((b'\r', rest)) => rest,
+                _ => rest,
+            },
+            b'\r' => rest,
+            _ => return count,
+        };
+        count += 1;
     }
 }
 
@@ -737,9 +769,10 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
             (Mode::Flat, LineMode::Soft | LineMode::SoftOrSpace | LineMode::Boundary) => {
                 self.fit_flat_line(&line.flat)
             }
-            (Mode::Flat, LineMode::Hard | LineMode::HardBoundary | LineMode::Empty) => {
-                FitResult::No
-            }
+            (
+                Mode::Flat,
+                LineMode::Hard | LineMode::HardBoundary | LineMode::Empty | LineMode::EmptyBoundary,
+            ) => FitResult::No,
             (Mode::Break, _) => {
                 if self.column <= self.line_width {
                     FitResult::Done
