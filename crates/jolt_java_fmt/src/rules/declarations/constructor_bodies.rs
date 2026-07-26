@@ -200,13 +200,28 @@ fn format_constructor_invocation<'source>(
     invocation: &ConstructorInvocation<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    // The construct hoists the leading comments of its first token, which is
-    // this list's opening angle bracket when nothing precedes it. Left to
-    // itself the list would treat them as inline comments and emit them a
-    // second time.
+    // A qualifier owns the construct's first token and emits that token's
+    // leading comments itself, so there is nothing left to hoist.
+    let invocation_first_token = match invocation.qualifier() {
+        JavaSyntaxField::Present(_) => None,
+        _ => invocation.first_token(),
+    };
+    // The list never emits the leading comments on its opening angle bracket:
+    // it would place them inline, where a line comment swallows the code that
+    // follows. The construct hoists them when the bracket is its first token;
+    // behind a qualifier they are hoisted here instead, after the dot.
     let type_arguments =
         format_optional_field(invocation.type_arguments(), doc, |arguments, doc| {
-            format_type_argument_list_without_leading_comments(&arguments, doc)
+            let hoisted = match arguments.open_angle() {
+                JavaSyntaxField::Present(open)
+                    if Some(&open) != invocation_first_token.as_ref() =>
+                {
+                    format_hoisted_leading_comments(doc, &open)
+                }
+                _ => Doc::nil(),
+            };
+            let list = format_type_argument_list_without_leading_comments(&arguments, doc);
+            doc_concat!(doc, [hoisted, list])
         });
     let target = format_required_field(invocation.target(), doc, |target, doc| {
         format_token_after_construct_leading_comments(
@@ -219,12 +234,6 @@ fn format_constructor_invocation<'source>(
         format_argument_list(arguments, doc)
     });
     let semicolon = invocation.semicolon();
-    // A qualifier owns the construct's first token and emits that token's
-    // leading comments itself, so there is nothing left to hoist.
-    let invocation_first_token = match invocation.qualifier() {
-        JavaSyntaxField::Present(_) => None,
-        _ => invocation.first_token(),
-    };
     doc_concat!(
         doc,
         [
@@ -236,6 +245,23 @@ fn format_constructor_invocation<'source>(
             format_statement_semicolon(semicolon, doc),
         ]
     )
+}
+
+/// Emits a token's leading comments on a line of their own.
+///
+/// A leading comment run ends its line but does not start one, so a run emitted
+/// part way through a line trails the code before it and a line comment there
+/// would swallow the code that follows.
+fn format_hoisted_leading_comments<'source>(
+    doc: &mut DocBuilder<'source>,
+    token: &JavaSyntaxToken<'source>,
+) -> Doc<'source> {
+    if token.leading_comments().is_empty() {
+        return Doc::nil();
+    }
+    let line = doc.hard_line_boundary();
+    let comments = format_construct_leading_comments(doc, Some(token));
+    doc_concat!(doc, [line, comments])
 }
 
 fn format_constructor_invocation_qualifier<'source>(
