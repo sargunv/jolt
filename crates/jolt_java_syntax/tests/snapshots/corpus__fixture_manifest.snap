@@ -55,6 +55,7 @@ style/declarations/receiver-parameters.java
 style/declarations/remove-empty-type-body-declarations.java
 style/declarations/throws-continuation.java
 style/declarations/throws-on-empty-method.java
+style/declarations/type-body-brace-after-header-comment.java
 style/declarations/type-header-clauses.java
 style/declarations/type-leading-comments.java
 style/declarations/type-parameter-bounds.java

@@ -1,0 +1,17 @@
+// a comment that ends the header line must not leave a space before the brace
+class TopLevelExtendsComment extends Base // trailing
+{
+  int x = 1;
+}
+
+class TopLevelImplementsComment implements Marker // trailing
+{
+  int y = 2;
+}
+
+class Outer {
+  class NestedExtendsComment extends Base // trailing
+  {
+    int z = 3;
+  }
+}

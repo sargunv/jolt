@@ -489,7 +489,10 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         } else if matches!(text.as_bytes().first(), Some(b' ' | b'\t')) {
             self.horizontal_whitespace = HorizontalWhitespace::None;
         }
-        if self.pending_indent > 0 {
+        // Indentation owns the leading whitespace of a line, so a layout space
+        // that lands at the start of one is discarded. Pending indentation is
+        // only half the signal: at indent level zero a fresh line has none.
+        if self.pending_indent > 0 || self.pending_line_ends > 0 {
             self.horizontal_whitespace = HorizontalWhitespace::None;
         }
         self.flush_pending_indent();
@@ -1879,6 +1882,31 @@ mod tests {
         render_to(&arena, doc, options(), &mut sink).expect("document renders");
 
         assert_eq!(sink.0, "text\n");
+    }
+
+    // Indentation owns leading whitespace, so the discard has to hold at indent
+    // level zero too, where a fresh line has no pending indentation to hide the
+    // space behind. A language fixture reaches this only through whichever rule
+    // happens to emit a space after a forced line break.
+    #[test]
+    fn layout_spaces_are_discarded_after_line_breaks() {
+        let mut builder = DocBuilder::new();
+        let doc = builder.concat_list(|contents| {
+            let text = contents.text("text");
+            contents.push(text);
+            let line = contents.hard_line();
+            contents.push(line);
+            let space = contents.space();
+            contents.push(space);
+            let next = contents.text("next");
+            contents.push(next);
+        });
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        render_to(&arena, doc, options(), &mut sink).expect("document renders");
+
+        assert_eq!(sink.0, "text\nnext");
     }
 
     #[test]

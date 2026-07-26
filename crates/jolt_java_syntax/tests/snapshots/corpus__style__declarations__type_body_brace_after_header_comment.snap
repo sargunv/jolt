@@ -1,0 +1,125 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+// a comment that ends the header line must not leave a space before the brace
+class TopLevelExtendsComment extends Base // trailing
+{
+  int x = 1;
+}
+
+class TopLevelImplementsComment implements Marker // trailing
+{
+  int y = 2;
+}
+
+class Outer {
+  class NestedExtendsComment extends Base // trailing
+  {
+    int z = 3;
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 79..84 leading=[LineComment "// a comment that ends the header line must not leave a space before the brace", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "TopLevelExtendsComment" @ 85..107 trailing=[Whitespace " "]
+      ExtendsClause
+        ExtendsKw "extends" @ 108..115 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Base" @ 116..120 trailing=[Whitespace " ", LineComment "// trailing"]
+      ClassBody
+        LBrace "{" @ 133..134 leading=[Newline "\n"]
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 137..140 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "x" @ 141..142 trailing=[Whitespace " "]
+                Assign "=" @ 143..144 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "1" @ 145..146
+            Semicolon ";" @ 146..147
+        RBrace "}" @ 148..149 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 151..156 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "TopLevelImplementsComment" @ 157..182 trailing=[Whitespace " "]
+      ImplementsClause
+        ImplementsKw "implements" @ 183..193 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Marker" @ 194..200 trailing=[Whitespace " ", LineComment "// trailing"]
+      ClassBody
+        LBrace "{" @ 213..214 leading=[Newline "\n"]
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 217..220 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "y" @ 221..222 trailing=[Whitespace " "]
+                Assign "=" @ 223..224 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "2" @ 225..226
+            Semicolon ";" @ 226..227
+        RBrace "}" @ 228..229 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 231..236 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Outer" @ 237..242 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 243..244
+        ClassBodyMemberList
+          ClassDeclaration
+            ClassKw "class" @ 247..252 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "NestedExtendsComment" @ 253..273 trailing=[Whitespace " "]
+            ExtendsClause
+              ExtendsKw "extends" @ 274..281 trailing=[Whitespace " "]
+              TypeList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Base" @ 282..286 trailing=[Whitespace " ", LineComment "// trailing"]
+            ClassBody
+              LBrace "{" @ 301..302 leading=[Newline "\n", Whitespace "  "]
+              ClassBodyMemberList
+                FieldDeclaration
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 307..310 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  VariableDeclaratorList
+                    VariableDeclarator
+                      Identifier "z" @ 311..312 trailing=[Whitespace " "]
+                      Assign "=" @ 313..314 trailing=[Whitespace " "]
+                      VariableInitializer
+                        LiteralExpression
+                          IntegerLiteral "3" @ 315..316
+                  Semicolon ";" @ 316..317
+              RBrace "}" @ 320..321 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 322..323 leading=[Newline "\n"]
+  Eof "" @ 324..324 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

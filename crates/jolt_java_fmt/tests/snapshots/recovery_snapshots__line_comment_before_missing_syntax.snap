@@ -31,17 +31,17 @@ class TryResourceSeparator {
 formatted:
 class ExtendsNoTypes
   extends //x
- {
+{
 }
 
 class ImplementsNoTypes
   implements //x
- {
+{
 }
 
 sealed class PermitsNoNames
   permits //x
- {
+{
 }
 
 class SwitchDefaultLabel {
