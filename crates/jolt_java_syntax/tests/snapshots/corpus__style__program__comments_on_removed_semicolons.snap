@@ -1,0 +1,39 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class A {} // trailing comment on the last brace
+;
+class B {}
+; // salvaged from a removed semicolon
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "A" @ 6..7 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 8..9
+        ClassBodyMemberList
+        RBrace "}" @ 9..10 trailing=[Whitespace " ", LineComment "// trailing comment on the last brace"]
+    EmptyDeclaration
+      Semicolon ";" @ 49..50 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 51..56 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "B" @ 57..58 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 59..60
+        ClassBodyMemberList
+        RBrace "}" @ 60..61
+    EmptyDeclaration
+      Semicolon ";" @ 62..63 leading=[Newline "\n"] trailing=[Whitespace " ", LineComment "// salvaged from a removed semicolon"]
+  Eof "" @ 101..101 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

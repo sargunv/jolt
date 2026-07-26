@@ -3,13 +3,12 @@ source: crates/jolt_java_fmt/tests/corpus.rs
 expression: snapshot
 ---
 formatted:
-import z.Zed;
-// Used by generated adapters.
-import a.Adapter;
-import m.Middle;
-
 class A {
+} // trailing comment on the last brace
+
+class B {
 }
+// salvaged from a removed semicolon
 
 diagnostics:
 (none)

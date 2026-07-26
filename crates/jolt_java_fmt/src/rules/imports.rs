@@ -1,7 +1,6 @@
-use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_fmt_ir::{BodyItemSeparator, Doc, DocBuilder};
 use jolt_java_syntax::{ImportDeclaration, JavaSyntaxView, NameSyntax, ReorderClaim};
 
-use crate::helpers::blocks::join_empty_lines;
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_comment, format_token_after_relocated_leading_comments,
     format_token_before_relocated_trailing_comments, format_token_with_comments,
@@ -18,54 +17,106 @@ pub(crate) fn format_imports<'source>(
     }
 
     let mut sections = Vec::new();
-    let mut sortable = Vec::new();
+    let mut run = SortableRun::default();
     for declaration in imports.iter().copied() {
+        let blank_before = declaration.starts_after_blank_line();
         let Some(import) = FormattedImport::new(declaration) else {
-            flush_sortable(&mut sortable, &mut sections, doc);
-            sections.push(format_import_in_place(&declaration, doc));
+            run.flush(&mut sections, doc);
+            sections.push(ImportSection {
+                doc: format_import_in_place(&declaration, doc),
+                blank_before,
+            });
             continue;
         };
-        if !sortable.is_empty()
+        if !run.imports.is_empty()
             && import
                 .import
                 .first_token()
                 .is_some_and(|token| !token.leading_comments().is_empty())
         {
-            flush_sortable(&mut sortable, &mut sections, doc);
+            run.flush(&mut sections, doc);
         }
-        sortable.push(import);
+        if run.imports.is_empty() {
+            run.blank_before = blank_before;
+        }
+        run.imports.push(import);
     }
-    flush_sortable(&mut sortable, &mut sections, doc);
-    Some(join_empty_lines(doc, sections))
+    run.flush(&mut sections, doc);
+    Some(join_import_sections(sections, doc))
 }
 
-fn flush_sortable<'source>(
-    imports: &mut Vec<FormattedImport<'source>>,
-    sections: &mut Vec<Doc<'source>>,
+/// One block of imports emitted together, with the gap that precedes it.
+///
+/// `blank_before` says whether a blank line separates this block from the one
+/// before it: either because the source put one there, or because the block is
+/// the static group this formatter split off from the normal group.
+struct ImportSection<'source> {
+    doc: Doc<'source>,
+    blank_before: bool,
+}
+
+fn join_import_sections<'source>(
+    sections: Vec<ImportSection<'source>>,
     doc: &mut DocBuilder<'source>,
-) {
-    if imports.is_empty() {
-        return;
-    }
-    let mut normal = Vec::new();
-    let mut static_ = Vec::new();
-    for import in std::mem::take(imports) {
-        if import.is_static {
-            static_.push(import);
-        } else {
-            normal.push(import);
+) -> Doc<'source> {
+    doc.concat_list(|joined| {
+        for section in sections {
+            if !joined.is_empty() {
+                let separator = BodyItemSeparator::between(section.blank_before).doc(joined);
+                joined.push(separator);
+            }
+            joined.push(section.doc);
         }
-    }
-    // Each recovery- and comment-delimited run has `r <= represented tokens`.
-    // Stable sorting therefore costs O(r log r) time and O(r) scratch, with no
-    // layout search or cloning of parser-owned source or syntax buffers.
-    normal.sort_by(|left, right| left.key.cmp(&right.key));
-    static_.sort_by(|left, right| left.key.cmp(&right.key));
-    if !normal.is_empty() {
-        sections.push(format_import_list(normal, doc));
-    }
-    if !static_.is_empty() {
-        sections.push(format_import_list(static_, doc));
+    })
+}
+
+/// A run of imports that may be sorted among themselves.
+///
+/// A run ends where sorting must not cross: at an import the formatter cannot
+/// prove sortable, and at an import that carries leading comments.
+#[derive(Default)]
+struct SortableRun<'source> {
+    imports: Vec<FormattedImport<'source>>,
+    blank_before: bool,
+}
+
+impl<'source> SortableRun<'source> {
+    fn flush(&mut self, sections: &mut Vec<ImportSection<'source>>, doc: &mut DocBuilder<'source>) {
+        if self.imports.is_empty() {
+            return;
+        }
+        let blank_before = self.blank_before;
+        self.blank_before = false;
+        let mut normal = Vec::new();
+        let mut static_ = Vec::new();
+        for import in std::mem::take(&mut self.imports) {
+            if import.is_static {
+                static_.push(import);
+            } else {
+                normal.push(import);
+            }
+        }
+        // Each recovery- and comment-delimited run has `r <= represented
+        // tokens`. Stable sorting therefore costs O(r log r) time and O(r)
+        // scratch, with no layout search or cloning of parser-owned source or
+        // syntax buffers.
+        normal.sort_by(|left, right| left.key.cmp(&right.key));
+        static_.sort_by(|left, right| left.key.cmp(&right.key));
+        let normal_is_empty = normal.is_empty();
+        if !normal_is_empty {
+            sections.push(ImportSection {
+                doc: format_import_list(normal, doc),
+                blank_before,
+            });
+        }
+        if !static_.is_empty() {
+            sections.push(ImportSection {
+                doc: format_import_list(static_, doc),
+                // Grouping static imports apart is this formatter's own split,
+                // so it owns the blank line that marks it.
+                blank_before: !normal_is_empty || blank_before,
+            });
+        }
     }
 }
 
