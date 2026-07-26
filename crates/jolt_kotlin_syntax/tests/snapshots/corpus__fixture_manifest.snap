@@ -10,7 +10,9 @@ style/comments/comments-between-assignment-operator-and-value.kt
 style/comments/content-shapes.kt
 style/comments/dangling-comment-blank-lines.kt
 style/comments/leading-comment-blank-lines.kt
+style/comments/leading-comments-before-short-constructs.kt
 style/comments/leading-comments-on-assignments.kt
+style/comments/leading-comments-on-binary-operands.kt
 style/comments/lexical-boundaries.kt
 style/comments/mixed-comment-line-endings.kt
 style/comments/star-blocks.kt

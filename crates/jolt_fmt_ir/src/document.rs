@@ -482,6 +482,23 @@ impl<'source> DocBuilder<'source> {
         })
     }
 
+    /// Marks a leading comment run so a group it starts measures only its code.
+    ///
+    /// Every comment on its own line ends in a hard line, and a hard line inside
+    /// a measured group never fits, so a comment leading a construct would break
+    /// the construct's group no matter how short the code is. The render is
+    /// unchanged: the comment and its line still come out first, and the code
+    /// that follows starts the next line at the same indent the group started
+    /// on, which is the column the fit check went on to measure from.
+    #[must_use]
+    pub fn comment_prefix(&mut self, contents: Doc<'source>) -> Doc<'source> {
+        if contents.is_nil() {
+            return contents;
+        }
+
+        self.push_node(DocNode::CommentPrefix { contents })
+    }
+
     #[must_use]
     pub fn line(&mut self) -> Doc<'source> {
         self.push_node(DocNode::Line(Line {
@@ -788,6 +805,11 @@ pub(crate) enum DocNode<'source> {
     Indent {
         contents: Doc<'source>,
         levels: i16,
+    },
+    /// A leading comment run, rendered verbatim but skipped by the fit check
+    /// while it still sits at the very start of the group being measured.
+    CommentPrefix {
+        contents: Doc<'source>,
     },
     Line(Line),
     IfBreak {
