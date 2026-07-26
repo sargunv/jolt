@@ -105,10 +105,18 @@ pub(super) fn format_binary_expression<'source>(
         match (operator, right) {
             (Some(operator), Some(right)) if is_type_binary_operator(&operator) => {
                 let left = finish_pending_binary_run(doc, formatted, run.take());
-                let operator = format_binary_operator(doc, &operator).doc;
+                let operator = format_binary_operator(doc, &operator);
+                let forces_line_after = operator.forces_line_after;
+                let operator = operator.doc;
                 let right = format_binary_right(doc, &right);
                 let space = doc.space();
-                let line = doc.line();
+                // Hard, not soft: a soft line flattens to a space and would put
+                // the operand inside the operator's line comment.
+                let line = if forces_line_after {
+                    doc.hard_line()
+                } else {
+                    doc.line()
+                };
                 let right = doc.concat([line, right]);
                 let right = doc.indent(right);
                 let contents = doc.concat([left, space, operator, right]);
@@ -191,7 +199,12 @@ fn finish_pending_binary_run<'source>(
             let operator = format_binary_operator(docs, &operator);
             let part = if !break_before_operator {
                 let space = docs.space();
-                let line = if keep_infix_chain_flat {
+                // A line comment after the operator runs to end of line, so the
+                // operand must start a new one; a soft line would flatten to a
+                // space and swallow the operand into the comment.
+                let line = if operator.forces_line_after {
+                    docs.hard_line()
+                } else if keep_infix_chain_flat {
                     docs.space()
                 } else {
                     docs.line()
@@ -201,7 +214,9 @@ fn finish_pending_binary_run<'source>(
                 docs.concat([space, operator.doc, operand])
             } else if operator.forces_line_after {
                 let before = docs.line();
-                let after = docs.line();
+                // Hard, not soft: a soft line flattens to a space and would put
+                // the operand inside the operator's line comment.
+                let after = docs.hard_line();
                 docs.concat([before, operator.doc, after, operand])
             } else if spaced {
                 let line = docs.line();

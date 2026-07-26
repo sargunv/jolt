@@ -1,0 +1,35 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+val plus = a
+  + // trailing
+  b
+
+val elvis = a
+  ?: // trailing
+  b
+
+val and = a
+  && // trailing
+  b
+
+val cast = a as // trailing
+  String
+
+val check = a is // trailing
+  B
+
+val nested = (1
+  + // trailing
+  2)
+
+val infix = mapOf(
+  "a" to // trailing
+      1,
+  "b" to 2
+)
+
+diagnostics:
+(none)
