@@ -1,6 +1,8 @@
 use super::{
     JavaParserExt, JavaSyntaxKind, Parser, StopSet,
-    support::{MissingConstructorHeaderAction, missing_constructor_header_action},
+    support::{
+        MissingConstructorHeaderAction, SeparatedElement, missing_constructor_header_action,
+    },
 };
 use crate::parser::JavaParseDiagnosticCode;
 use jolt_syntax::NodeAnchor;
@@ -832,47 +834,42 @@ impl Parser<'_> {
         self.expect_required(JavaSyntaxKind::LParen, "expected `(`", owner, open_slot);
         if !self.at(JavaSyntaxKind::RParen) {
             let list = self.start();
-            let list_owner = list.anchor();
             let mut allow_receiver = true;
-            let mut next_item_slot = 0;
-            let mut trailing_comma = false;
-            while !self.at_eof() && !self.at(JavaSyntaxKind::RParen) {
-                if self.at(JavaSyntaxKind::Comma) {
-                    let bogus = self.start();
-                    let diagnostic = self.pending_expected("expected parameter");
-                    self.complete_recovery(
-                        bogus,
-                        JavaSyntaxKind::BogusFormalParameter,
-                        [diagnostic],
-                    );
-                } else if self.starts_receiver_parameter() {
-                    self.parse_receiver_parameter_entry(!allow_receiver);
-                } else {
-                    let was_varargs = self.parse_formal_parameter();
-                    if was_varargs && !self.at(JavaSyntaxKind::RParen) && !self.at_eof() {
-                        let consumed_comma = self.eat(JavaSyntaxKind::Comma);
-                        if consumed_comma {
-                            allow_receiver = false;
-                            next_item_slot += 2;
-                            trailing_comma = true;
-                            continue;
+            self.parse_comma_separated(
+                list.anchor(),
+                "expected parameter",
+                |parser| parser.at(JavaSyntaxKind::RParen),
+                |parser, _| {
+                    let element = if parser.at(JavaSyntaxKind::Comma) {
+                        let bogus = parser.start();
+                        let diagnostic = parser.pending_expected("expected parameter");
+                        parser.complete_recovery(
+                            bogus,
+                            JavaSyntaxKind::BogusFormalParameter,
+                            [diagnostic],
+                        );
+                        SeparatedElement::Parsed
+                    } else if parser.starts_receiver_parameter() {
+                        parser.parse_receiver_parameter_entry(!allow_receiver);
+                        SeparatedElement::Parsed
+                    } else if parser.parse_formal_parameter()
+                        && !parser.at(JavaSyntaxKind::RParen)
+                        && !parser.at_eof()
+                    {
+                        // A varargs parameter must be last, so it decides for
+                        // itself whether a separator may follow.
+                        if parser.eat(JavaSyntaxKind::Comma) {
+                            SeparatedElement::ConsumedSeparator
+                        } else {
+                            SeparatedElement::Stop
                         }
-                        trailing_comma = false;
-                        break;
-                    }
-                }
-                allow_receiver = false;
-                if !self.eat(JavaSyntaxKind::Comma) {
-                    trailing_comma = false;
-                    break;
-                }
-                next_item_slot += 2;
-                trailing_comma = true;
-            }
-            if trailing_comma {
-                let diagnostic = self.pending_expected("expected parameter");
-                self.missing_required_slot(list_owner, next_item_slot, [diagnostic]);
-            }
+                    } else {
+                        SeparatedElement::Parsed
+                    };
+                    allow_receiver = false;
+                    element
+                },
+            );
             if recover_missing_open_header
                 && missing_open
                 && !self.at(JavaSyntaxKind::RParen)

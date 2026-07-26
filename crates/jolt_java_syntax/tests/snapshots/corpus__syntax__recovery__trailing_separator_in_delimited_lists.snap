@@ -12,6 +12,7 @@ void throwsClause() throws E, {}
 void forUpdate() { for (int i = 0;; i++,) {} }
 void recordPattern(Object o) { if (o instanceof R(int a,)) {} }
 void lambdaParameters() { consume((a,) -> a); }
+void lambdaVarargsParameters() { consume((int... a,) -> a); }
 @A(value = 1,) int annotationArguments;
 void consume(Object... values) {}
 }
@@ -293,36 +294,73 @@ CompilationUnit
                           RParen ")" @ 375..376
                     Semicolon ";" @ 376..377 trailing=[Whitespace " "]
               RBrace "}" @ 378..379
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 380..384 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "lambdaVarargsParameters" @ 385..408
+            LParen "(" @ 408..409
+            RParen ")" @ 409..410 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 411..412 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "consume" @ 413..420
+                        ArgumentList
+                          LParen "(" @ 420..421
+                          ExpressionList
+                            LambdaExpression
+                              LParen "(" @ 421..422
+                              LambdaParameterList
+                                LambdaParameter
+                                  LambdaModifierList
+                                  PrimitiveType
+                                    AnnotationList
+                                    IntKw "int" @ 422..425
+                                  AnnotationList
+                                  Ellipsis "..." @ 425..428 trailing=[Whitespace " "]
+                                  Identifier "a" @ 429..430
+                                Comma "," @ 430..431
+                              RParen ")" @ 431..432 trailing=[Whitespace " "]
+                              Arrow "->" @ 433..435 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "a" @ 436..437
+                          RParen ")" @ 437..438
+                    Semicolon ";" @ 438..439 trailing=[Whitespace " "]
+              RBrace "}" @ 440..441
           FieldDeclaration
             ModifierList
               Annotation
-                At "@" @ 380..381 leading=[Newline "\n"]
+                At "@" @ 442..443 leading=[Newline "\n"]
                 Name
-                  Identifier "A" @ 381..382
+                  Identifier "A" @ 443..444
                 AnnotationArgumentList
-                  LParen "(" @ 382..383
+                  LParen "(" @ 444..445
                   AnnotationElementList
                     AnnotationElementArgumentList
                       AnnotationElementValuePair
-                        Identifier "value" @ 383..388 trailing=[Whitespace " "]
-                        Assign "=" @ 389..390 trailing=[Whitespace " "]
+                        Identifier "value" @ 445..450 trailing=[Whitespace " "]
+                        Assign "=" @ 451..452 trailing=[Whitespace " "]
                         AnnotationElementValue
                           LiteralExpression
-                            IntegerLiteral "1" @ 391..392
-                      Comma "," @ 392..393
-                  RParen ")" @ 393..394 trailing=[Whitespace " "]
+                            IntegerLiteral "1" @ 453..454
+                      Comma "," @ 454..455
+                  RParen ")" @ 455..456 trailing=[Whitespace " "]
             PrimitiveType
               AnnotationList
-              IntKw "int" @ 395..398 trailing=[Whitespace " "]
+              IntKw "int" @ 457..460 trailing=[Whitespace " "]
             VariableDeclaratorList
               VariableDeclarator
-                Identifier "annotationArguments" @ 399..418
-            Semicolon ";" @ 418..419
+                Identifier "annotationArguments" @ 461..480
+            Semicolon ";" @ 480..481
           MethodDeclaration
             VoidType
-              VoidKw "void" @ 420..424 leading=[Newline "\n"] trailing=[Whitespace " "]
-            Identifier "consume" @ 425..432
-            LParen "(" @ 432..433
+              VoidKw "void" @ 482..486 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "consume" @ 487..494
+            LParen "(" @ 494..495
             FormalParameterList
               FormalParameter
                 ParameterModifierList
@@ -331,153 +369,153 @@ CompilationUnit
                     ClassTypeSegmentNode
                       AnnotationList
                       Name
-                        Identifier "Object" @ 433..439
+                        Identifier "Object" @ 495..501
                 AnnotationList
-                Ellipsis "..." @ 439..442 trailing=[Whitespace " "]
-                Identifier "values" @ 443..449
-            RParen ")" @ 449..450 trailing=[Whitespace " "]
+                Ellipsis "..." @ 501..504 trailing=[Whitespace " "]
+                Identifier "values" @ 505..511
+            RParen ")" @ 511..512 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 451..452
+              LBrace "{" @ 513..514
               BlockStatementList
-              RBrace "}" @ 452..453
-        RBrace "}" @ 454..455 leading=[Newline "\n"]
+              RBrace "}" @ 514..515
+        RBrace "}" @ 516..517 leading=[Newline "\n"]
     InterfaceDeclaration
-      InterfaceKw "interface" @ 457..466 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      Identifier "ExtendsList" @ 467..478 trailing=[Whitespace " "]
+      InterfaceKw "interface" @ 519..528 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "ExtendsList" @ 529..540 trailing=[Whitespace " "]
       ExtendsClause
-        ExtendsKw "extends" @ 479..486 trailing=[Whitespace " "]
+        ExtendsKw "extends" @ 541..548 trailing=[Whitespace " "]
         TypeList
           ClassType
             ClassTypeSegmentList
               ClassTypeSegmentNode
                 AnnotationList
                 Name
-                  Identifier "A" @ 487..488
-          Comma "," @ 488..489 trailing=[Whitespace " "]
+                  Identifier "A" @ 549..550
+          Comma "," @ 550..551 trailing=[Whitespace " "]
       InterfaceBody
-        LBrace "{" @ 490..491
+        LBrace "{" @ 552..553
         InterfaceBodyMemberList
-        RBrace "}" @ 491..492
+        RBrace "}" @ 553..554
     ClassDeclaration
-      ClassKw "class" @ 494..499 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      Identifier "ImplementsList" @ 500..514 trailing=[Whitespace " "]
+      ClassKw "class" @ 556..561 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "ImplementsList" @ 562..576 trailing=[Whitespace " "]
       ImplementsClause
-        ImplementsKw "implements" @ 515..525 trailing=[Whitespace " "]
+        ImplementsKw "implements" @ 577..587 trailing=[Whitespace " "]
         TypeList
           ClassType
             ClassTypeSegmentList
               ClassTypeSegmentNode
                 AnnotationList
                 Name
-                  Identifier "A" @ 526..527
-          Comma "," @ 527..528 trailing=[Whitespace " "]
+                  Identifier "A" @ 588..589
+          Comma "," @ 589..590 trailing=[Whitespace " "]
       ClassBody
-        LBrace "{" @ 529..530
+        LBrace "{" @ 591..592
         ClassBodyMemberList
-        RBrace "}" @ 530..531
+        RBrace "}" @ 592..593
     ClassDeclaration
       ModifierList
-        Identifier "sealed" @ 533..539 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      ClassKw "class" @ 540..545 trailing=[Whitespace " "]
-      Identifier "PermitsList" @ 546..557 trailing=[Whitespace " "]
+        Identifier "sealed" @ 595..601 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ClassKw "class" @ 602..607 trailing=[Whitespace " "]
+      Identifier "PermitsList" @ 608..619 trailing=[Whitespace " "]
       PermitsClause
-        Identifier "permits" @ 558..565 trailing=[Whitespace " "]
+        Identifier "permits" @ 620..627 trailing=[Whitespace " "]
         NameList
           Name
-            Identifier "A" @ 566..567
-          Comma "," @ 567..568 trailing=[Whitespace " "]
+            Identifier "A" @ 628..629
+          Comma "," @ 629..630 trailing=[Whitespace " "]
       ClassBody
-        LBrace "{" @ 569..570
+        LBrace "{" @ 631..632
         ClassBodyMemberList
-        RBrace "}" @ 570..571
+        RBrace "}" @ 632..633
     RecordDeclaration
-      Identifier "record" @ 573..579 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      Identifier "RecordHeader" @ 580..592
-      LParen "(" @ 592..593
+      Identifier "record" @ 635..641 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "RecordHeader" @ 642..654
+      LParen "(" @ 654..655
       RecordComponentList
         RecordComponent
           ParameterModifierList
           PrimitiveType
             AnnotationList
-            IntKw "int" @ 593..596 trailing=[Whitespace " "]
+            IntKw "int" @ 655..658 trailing=[Whitespace " "]
           AnnotationList
-          Identifier "a" @ 597..598
-        Comma "," @ 598..599
-      RParen ")" @ 599..600 trailing=[Whitespace " "]
+          Identifier "a" @ 659..660
+        Comma "," @ 660..661
+      RParen ")" @ 661..662 trailing=[Whitespace " "]
       RecordBody
-        LBrace "{" @ 601..602
+        LBrace "{" @ 663..664
         RecordBodyMemberList
-        RBrace "}" @ 602..603
+        RBrace "}" @ 664..665
     EnumDeclaration
-      EnumKw "enum" @ 605..609 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      Identifier "ValidTrailingSeparators" @ 610..633 trailing=[Whitespace " "]
+      EnumKw "enum" @ 667..671 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "ValidTrailingSeparators" @ 672..695 trailing=[Whitespace " "]
       EnumBody
-        LBrace "{" @ 634..635 trailing=[Whitespace " "]
+        LBrace "{" @ 696..697 trailing=[Whitespace " "]
         EnumConstantList
           EnumConstant
             AnnotationList
-            Identifier "A" @ 636..637
-          Comma "," @ 637..638 trailing=[Whitespace " "]
+            Identifier "A" @ 698..699
+          Comma "," @ 699..700 trailing=[Whitespace " "]
         ClassBodyMemberList
-        RBrace "}" @ 639..640
+        RBrace "}" @ 701..702
     ClassDeclaration
-      ClassKw "class" @ 642..647 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      Identifier "ValidTrailingSeparatorInArrayInitializer" @ 648..688 trailing=[Whitespace " "]
+      ClassKw "class" @ 704..709 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "ValidTrailingSeparatorInArrayInitializer" @ 710..750 trailing=[Whitespace " "]
       ClassBody
-        LBrace "{" @ 689..690 trailing=[Whitespace " "]
+        LBrace "{" @ 751..752 trailing=[Whitespace " "]
         ClassBodyMemberList
           FieldDeclaration
             ArrayType
               PrimitiveType
                 AnnotationList
-                IntKw "int" @ 691..694
+                IntKw "int" @ 753..756
               ArrayDimensions
                 ArrayDimension
                   AnnotationList
-                  LBracket "[" @ 694..695
-                  RBracket "]" @ 695..696 trailing=[Whitespace " "]
+                  LBracket "[" @ 756..757
+                  RBracket "]" @ 757..758 trailing=[Whitespace " "]
             VariableDeclaratorList
               VariableDeclarator
-                Identifier "values" @ 697..703 trailing=[Whitespace " "]
-                Assign "=" @ 704..705 trailing=[Whitespace " "]
+                Identifier "values" @ 759..765 trailing=[Whitespace " "]
+                Assign "=" @ 766..767 trailing=[Whitespace " "]
                 VariableInitializer
                   ArrayInitializer
-                    LBrace "{" @ 706..707
+                    LBrace "{" @ 768..769
                     VariableInitializerList
                       LiteralExpression
-                        IntegerLiteral "1" @ 707..708
-                      Comma "," @ 708..709
-                    RBrace "}" @ 709..710
-            Semicolon ";" @ 710..711 trailing=[Whitespace " "]
-        RBrace "}" @ 712..713
+                        IntegerLiteral "1" @ 769..770
+                      Comma "," @ 770..771
+                    RBrace "}" @ 771..772
+            Semicolon ";" @ 772..773 trailing=[Whitespace " "]
+        RBrace "}" @ 774..775
     ClassDeclaration
-      ClassKw "class" @ 715..720 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-      Identifier "TrailingSeparatorAtEof" @ 721..743 trailing=[Whitespace " "]
+      ClassKw "class" @ 777..782 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "TrailingSeparatorAtEof" @ 783..805 trailing=[Whitespace " "]
       ClassBody
-        LBrace "{" @ 744..745 trailing=[Whitespace " "]
+        LBrace "{" @ 806..807 trailing=[Whitespace " "]
         ClassBodyMemberList
           MethodDeclaration
             VoidType
-              VoidKw "void" @ 746..750 trailing=[Whitespace " "]
-            Identifier "m" @ 751..752
-            LParen "(" @ 752..753
-            RParen ")" @ 753..754 trailing=[Whitespace " "]
+              VoidKw "void" @ 808..812 trailing=[Whitespace " "]
+            Identifier "m" @ 813..814
+            LParen "(" @ 814..815
+            RParen ")" @ 815..816 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 755..756 trailing=[Whitespace " "]
+              LBrace "{" @ 817..818 trailing=[Whitespace " "]
               BlockStatementList
                 BlockStatement
                   ExpressionStatement
                     MethodInvocationExpression
                       UnqualifiedMethodInvocation
                         NameExpression
-                          Identifier "consume" @ 757..764
+                          Identifier "consume" @ 819..826
                         ArgumentList
-                          LParen "(" @ 764..765
+                          LParen "(" @ 826..827
                           ExpressionList
                             LiteralExpression
-                              IntegerLiteral "1" @ 765..766
-                            Comma "," @ 766..767
-  Eof "" @ 768..768 leading=[Newline "\n"]
+                              IntegerLiteral "1" @ 827..828
+                            Comma "," @ 828..829
+  Eof "" @ 830..830 leading=[Newline "\n"]
 
 diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=42..43 message="expected type parameter"
@@ -490,16 +528,18 @@ diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=261..262 message="expected statement expression"
   code=java.parse.expected_syntax severity=Error stage=Parser range=324..325 message="expected component pattern"
   code=java.parse.expected_syntax severity=Error stage=Parser range=369..370 message="expected lambda parameter name"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=393..394 message="expected annotation argument"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=490..491 message="expected type"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=529..530 message="expected type"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=569..570 message="expected name"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=599..600 message="expected record component"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=768..768 message="expected argument"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=768..768 message="expected `)` after arguments"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=768..768 message="expected `;` after expression statement"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=768..768 message="expected `}` after block"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=768..768 message="expected `}` after type body"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=430..431 message="varargs lambda parameter must be last"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=431..432 message="expected lambda parameter name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=455..456 message="expected annotation argument"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=552..553 message="expected type"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=591..592 message="expected type"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=631..632 message="expected name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=661..662 message="expected record component"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=830..830 message="expected argument"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=830..830 message="expected `)` after arguments"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=830..830 message="expected `;` after expression statement"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=830..830 message="expected `}` after block"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=830..830 message="expected `}` after type body"
 
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(42), end: TextSize(43) }) message=expected type parameter
@@ -512,13 +552,15 @@ code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(261), end: TextSize(262) }) message=expected statement expression
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(324), end: TextSize(325) }) message=expected component pattern
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(369), end: TextSize(370) }) message=expected lambda parameter name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(393), end: TextSize(394) }) message=expected annotation argument
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(490), end: TextSize(491) }) message=expected type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(529), end: TextSize(530) }) message=expected type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(569), end: TextSize(570) }) message=expected name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(599), end: TextSize(600) }) message=expected record component
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(768), end: TextSize(768) }) message=expected argument
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(768), end: TextSize(768) }) message=expected `)` after arguments
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(768), end: TextSize(768) }) message=expected `;` after expression statement
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(768), end: TextSize(768) }) message=expected `}` after block
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(768), end: TextSize(768) }) message=expected `}` after type body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(430), end: TextSize(431) }) message=varargs lambda parameter must be last
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(431), end: TextSize(432) }) message=expected lambda parameter name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(455), end: TextSize(456) }) message=expected annotation argument
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(552), end: TextSize(553) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(591), end: TextSize(592) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(631), end: TextSize(632) }) message=expected name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(661), end: TextSize(662) }) message=expected record component
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(830), end: TextSize(830) }) message=expected argument
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(830), end: TextSize(830) }) message=expected `)` after arguments
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(830), end: TextSize(830) }) message=expected `;` after expression statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(830), end: TextSize(830) }) message=expected `}` after block
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(830), end: TextSize(830) }) message=expected `}` after type body

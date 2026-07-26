@@ -7,6 +7,7 @@ void throwsClause() throws E, {}
 void forUpdate() { for (int i = 0;; i++,) {} }
 void recordPattern(Object o) { if (o instanceof R(int a,)) {} }
 void lambdaParameters() { consume((a,) -> a); }
+void lambdaVarargsParameters() { consume((int... a,) -> a); }
 @A(value = 1,) int annotationArguments;
 void consume(Object... values) {}
 }

@@ -13,6 +13,7 @@ mod token_predicates;
 mod type_arguments;
 
 pub(in crate::parser::grammar) use lookahead::JavaLookahead;
+pub(in crate::parser::grammar) use separated_lists::SeparatedElement;
 pub(super) use type_arguments::over_depth_type_end;
 
 #[derive(Clone, Copy)]
