@@ -1,0 +1,76 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class KeywordCommentWithoutOperand {
+  void throwsNothing() {
+    throw // a comment ends the line and no operand follows it
+    ;
+  }
+
+  void throwsRecoveredOperand() {
+    throw // a comment ends the line and the operand recovers a token
+    );
+  }
+
+  void assertsNothing() {
+    assert // a comment ends the line and no condition follows it
+    ;
+  }
+
+  void assertsNothingWithMessage() {
+    assert // a comment ends the line and only the message follows it
+    : "message";
+  }
+
+  int yieldsRecoveredOperand(int value) {
+    return switch (value) {
+      default -> {
+        yield // a comment ends the line and the operand recovers a token
+        );
+      }
+    };
+  }
+}
+
+formatted:
+class KeywordCommentWithoutOperand {
+  void throwsNothing() {
+    throw // a comment ends the line and no operand follows it
+      ;
+  }
+
+  void throwsRecoveredOperand() {
+    throw // a comment ends the line and the operand recovers a token
+      );
+  }
+
+  void assertsNothing() {
+    assert // a comment ends the line and no condition follows it
+      ;
+  }
+
+  void assertsNothingWithMessage() {
+    assert // a comment ends the line and only the message follows it
+      : "message";
+  }
+
+  int yieldsRecoveredOperand(int value) {
+    return switch (value) {
+      default -> {
+        yield // a comment ends the line and the operand recovers a token
+          );
+      }
+    };
+  }
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(129), end: TextSize(130) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(244), end: TextSize(245) }) message=expected expression
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(244), end: TextSize(245) }) message=unexpected token in expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(348), end: TextSize(349) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(466), end: TextSize(467) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(655), end: TextSize(656) }) message=expected expression
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(655), end: TextSize(656) }) message=unexpected token in expression

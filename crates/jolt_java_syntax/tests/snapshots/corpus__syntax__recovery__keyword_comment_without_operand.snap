@@ -1,0 +1,180 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class KeywordCommentWithoutOperand {
+  void throwsNothing() {
+    throw // a comment ends the line and no operand follows it
+    ;
+  }
+
+  void throwsRecoveredOperand() {
+    throw // a comment ends the line and the operand recovers a token
+    );
+  }
+
+  void assertsNothing() {
+    assert // a comment ends the line and no condition follows it
+    ;
+  }
+
+  void assertsNothingWithMessage() {
+    assert // a comment ends the line and only the message follows it
+    : "message";
+  }
+
+  int yieldsRecoveredOperand(int value) {
+    return switch (value) {
+      default -> {
+        yield // a comment ends the line and the operand recovers a token
+        );
+      }
+    };
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "KeywordCommentWithoutOperand" @ 6..34 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 35..36
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 39..43 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "throwsNothing" @ 44..57
+            LParen "(" @ 57..58
+            RParen ")" @ 58..59 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 60..61
+              BlockStatementList
+                BlockStatement
+                  ThrowStatement
+                    ThrowKw "throw" @ 66..71 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", LineComment "// a comment ends the line and no operand follows it"]
+                    BogusExpression
+                    Semicolon ";" @ 129..130 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 133..134 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 138..142 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "throwsRecoveredOperand" @ 143..165
+            LParen "(" @ 165..166
+            RParen ")" @ 166..167 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 168..169
+              BlockStatementList
+                BlockStatement
+                  ThrowStatement
+                    ThrowKw "throw" @ 174..179 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", LineComment "// a comment ends the line and the operand recovers a token"]
+                    BogusExpression
+                      BogusExpression
+                      RParen ")" @ 244..245 leading=[Newline "\n", Whitespace "    "]
+                    Semicolon ";" @ 245..246
+              RBrace "}" @ 249..250 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 254..258 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "assertsNothing" @ 259..273
+            LParen "(" @ 273..274
+            RParen ")" @ 274..275 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 276..277
+              BlockStatementList
+                BlockStatement
+                  AssertStatement
+                    AssertKw "assert" @ 282..288 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", LineComment "// a comment ends the line and no condition follows it"]
+                    BogusExpression
+                    Semicolon ";" @ 348..349 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 352..353 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 357..361 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "assertsNothingWithMessage" @ 362..387
+            LParen "(" @ 387..388
+            RParen ")" @ 388..389 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 390..391
+              BlockStatementList
+                BlockStatement
+                  AssertStatement
+                    AssertKw "assert" @ 396..402 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", LineComment "// a comment ends the line and only the message follows it"]
+                    BogusExpression
+                    Colon ":" @ 466..467 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    LiteralExpression
+                      StringLiteral "\"message\"" @ 468..477
+                    Semicolon ";" @ 477..478
+              RBrace "}" @ 481..482 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 486..489 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "yieldsRecoveredOperand" @ 490..512
+            LParen "(" @ 512..513
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 513..516 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 517..522
+            RParen ")" @ 522..523 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 524..525
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 530..536 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    SwitchExpression
+                      SwitchKw "switch" @ 537..543 trailing=[Whitespace " "]
+                      LParen "(" @ 544..545
+                      NameExpression
+                        Identifier "value" @ 545..550
+                      RParen ")" @ 550..551 trailing=[Whitespace " "]
+                      SwitchBlock
+                        LBrace "{" @ 552..553
+                        SwitchEntryList
+                          SwitchRule
+                            SwitchLabel
+                              DefaultKw "default" @ 560..567 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                            Arrow "->" @ 568..570 trailing=[Whitespace " "]
+                            Block
+                              LBrace "{" @ 571..572
+                              BlockStatementList
+                                BlockStatement
+                                  YieldStatement
+                                    Identifier "yield" @ 581..586 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", LineComment "// a comment ends the line and the operand recovers a token"]
+                                    BogusExpression
+                                      BogusExpression
+                                      RParen ")" @ 655..656 leading=[Newline "\n", Whitespace "        "]
+                                    Semicolon ";" @ 656..657
+                              RBrace "}" @ 664..665 leading=[Newline "\n", Whitespace "      "]
+                        RBrace "}" @ 670..671 leading=[Newline "\n", Whitespace "    "]
+                    Semicolon ";" @ 671..672
+              RBrace "}" @ 675..676 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 677..678 leading=[Newline "\n"]
+  Eof "" @ 679..679 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=129..130 message="expected expression"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=244..245 message="expected expression"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=244..245 message="unexpected token in expression"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=348..349 message="expected expression"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=466..467 message="expected expression"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=655..656 message="expected expression"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=655..656 message="unexpected token in expression"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(129), end: TextSize(130) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(244), end: TextSize(245) }) message=expected expression
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(244), end: TextSize(245) }) message=unexpected token in expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(348), end: TextSize(349) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(466), end: TextSize(467) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(655), end: TextSize(656) }) message=expected expression
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(655), end: TextSize(656) }) message=unexpected token in expression
