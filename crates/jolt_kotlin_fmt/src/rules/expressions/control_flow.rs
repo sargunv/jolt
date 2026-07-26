@@ -566,7 +566,7 @@ fn format_when_conditions<'source>(
             doc.concat_list(|docs| {
                 while let Some(item) = items.next() {
                     docs.push(item.doc());
-                    if let Some(comma) = item.comma {
+                    if let Some(comma) = item.comma() {
                         let comma = format_token(
                             docs,
                             &comma,

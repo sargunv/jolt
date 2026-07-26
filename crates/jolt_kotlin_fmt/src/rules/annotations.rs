@@ -7,7 +7,9 @@ use jolt_kotlin_syntax::{
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_token, trailing_comments_force_line,
 };
-use crate::helpers::lists::{CommaListItem, annotation_parenthesized_list, delimited_comma_list};
+use crate::helpers::lists::{
+    CommaListItem, annotation_parenthesized_list, attach_comma_separator, delimited_comma_list,
+};
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_optional_field, format_required_field,
     join_delimited_recovery, resolve_list_part, resolve_required_delimiter, resolve_required_field,
@@ -147,18 +149,14 @@ fn annotation_argument_list_items<'source>(
                 items.push(CommaListItem::visible(formatted));
             }
             KotlinFormatListPart::Separator(comma) => {
-                if let Some(item) = items.iter_mut().rev().find(|item| item.is_visible())
-                    && item.comma.is_none()
-                {
-                    item.comma = Some(comma);
-                } else {
-                    items.push(CommaListItem::visible(format_token(
+                attach_comma_separator(&mut items, comma, |comma| {
+                    CommaListItem::visible(format_token(
                         doc,
                         &comma,
                         LeadingTrivia::Preserve,
                         TrailingTrivia::Preserve,
-                    )));
-                }
+                    ))
+                });
             }
             KotlinFormatListPart::Recovery(recovery) => {
                 items.push(CommaListItem::recovery(recovery));

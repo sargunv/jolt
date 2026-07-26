@@ -6,7 +6,7 @@ use jolt_kotlin_syntax::{
 };
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
-use crate::helpers::lists::{CommaListItem, comma_list};
+use crate::helpers::lists::{CommaListItem, attach_comma_separator, comma_list};
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_optional_field, format_required_field,
     resolve_list_part, resolve_required_field,
@@ -229,15 +229,9 @@ fn physical_delegation_items<'source>(
                 items.push(CommaListItem::visible(specifier));
             }
             KotlinFormatListPart::Separator(comma) => {
-                if let Some(item) = items
-                    .iter_mut()
-                    .rev()
-                    .find(|item| item.is_visible() && item.comma.is_none())
-                {
-                    item.comma = Some(comma);
-                } else {
-                    items.push(CommaListItem::visible_with_comma(Doc::nil(), comma));
-                }
+                attach_comma_separator(&mut items, comma, |comma| {
+                    CommaListItem::visible_with_comma(Doc::nil(), comma)
+                });
             }
             KotlinFormatListPart::Recovery(recovery) => {
                 items.push(CommaListItem::recovery(recovery));

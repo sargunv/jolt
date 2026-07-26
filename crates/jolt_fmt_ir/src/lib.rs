@@ -4,6 +4,7 @@ mod comment_text;
 mod comments;
 mod document;
 pub mod formatter_ignore;
+mod lists;
 mod options;
 mod recovery;
 mod render;
@@ -28,6 +29,7 @@ pub use comments::{
 #[cfg(feature = "bench")]
 pub use document::DocArenaMetrics;
 pub use document::{ConcatBuilder, Doc, DocBuilder};
+pub use lists::{CommaListItem, attach_comma_separator, comma_list, comma_list_parts};
 pub use options::{FormatOptions, FormatSinkResult};
 pub use recovery::{
     FormatDelimiter, FormatField, FormatListPart, LayoutDoc, assemble_malformed_fragment,

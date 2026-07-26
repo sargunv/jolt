@@ -198,7 +198,7 @@ fn format_lambda_parameter_prefix<'source>(
             if !item.is_visible() {
                 continue;
             }
-            if let Some(comma) = item.comma {
+            if let Some(comma) = item.comma() {
                 let space = docs.space();
                 let comma = format_separator_with_comments(docs, &comma, space);
                 docs.push(comma);
