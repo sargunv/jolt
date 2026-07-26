@@ -204,16 +204,25 @@ pub fn format_inline_trailing_comment_list<'source>(
 }
 
 /// Formats comments that belong to a construct rather than to a token.
+///
+/// A blank line the source put between two of these comments is kept, longer
+/// runs collapse to one, and a blank line is never invented.
 pub fn format_dangling_comments<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = Comment<'source>>,
 ) -> Doc<'source> {
+    let mut blank_line_before = false;
     doc.concat_list(|docs| {
         for comment in comments {
             if !docs.is_empty() {
-                let hard_line = docs.hard_line();
-                docs.push(hard_line);
+                let line = if blank_line_before {
+                    docs.empty_line()
+                } else {
+                    docs.hard_line()
+                };
+                docs.push(line);
             }
+            blank_line_before = comment.is_followed_by_blank_line();
             let comment = format_comment(docs, &comment);
             docs.push(comment);
         }
@@ -222,17 +231,26 @@ pub fn format_dangling_comments<'source>(
 
 /// Formats comments salvaged from a removed token, or `None` when there are
 /// none.
+///
+/// A blank line the source put between two of these comments is kept, longer
+/// runs collapse to one, and a blank line is never invented.
 pub fn format_removed_comments<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = Comment<'source>>,
 ) -> Option<Doc<'source>> {
     let mut has_comments = false;
+    let mut blank_line_before = false;
     let docs = doc.concat_list(|docs| {
         for comment in comments {
             if has_comments {
-                let hard_line = docs.hard_line();
-                docs.push(hard_line);
+                let line = if blank_line_before {
+                    docs.empty_line()
+                } else {
+                    docs.hard_line()
+                };
+                docs.push(line);
             }
+            blank_line_before = comment.is_followed_by_blank_line();
             let comment = format_comment(docs, &comment);
             docs.push(comment);
             has_comments = true;

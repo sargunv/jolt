@@ -1,0 +1,119 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class DanglingCommentBlankLines {
+  // first dangling comment of the class body
+
+  // second dangling comment after a blank line
+
+
+
+  // third dangling comment after collapsed blank lines
+  // an adjacent comment with no blank line before it
+}
+
+class DanglingCommentsInBodies {
+  void emptyBlock() {
+    // first dangling comment of the block
+
+    // second dangling comment after a blank line
+  }
+
+  void emptyArguments() {
+    call(
+      // first dangling comment of an empty argument list
+
+      // second dangling comment after a blank line
+    );
+  }
+
+  void call() {}
+}
+
+class RemovedSemicolonComments {
+  ;
+  // a comment salvaged from a removed semicolon
+
+  // a second salvaged comment
+  ;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "DanglingCommentBlankLines" @ 6..31 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 32..33
+        ClassBodyMemberList
+        RBrace "}" @ 242..243 leading=[Newline "\n", Whitespace "  ", LineComment "// first dangling comment of the class body", Newline "\n", Newline "\n", Whitespace "  ", LineComment "// second dangling comment after a blank line", Newline "\n", Newline "\n", Newline "\n", Newline "\n", Whitespace "  ", LineComment "// third dangling comment after collapsed blank lines", Newline "\n", Whitespace "  ", LineComment "// an adjacent comment with no blank line before it", Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 245..250 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "DanglingCommentsInBodies" @ 251..275 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 276..277
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 280..284 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "emptyBlock" @ 285..295
+            LParen "(" @ 295..296
+            RParen ")" @ 296..297 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 298..299
+              BlockStatementList
+              RBrace "}" @ 396..397 leading=[Newline "\n", Whitespace "    ", LineComment "// first dangling comment of the block", Newline "\n", Newline "\n", Whitespace "    ", LineComment "// second dangling comment after a blank line", Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 401..405 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "emptyArguments" @ 406..420
+            LParen "(" @ 420..421
+            RParen ")" @ 421..422 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 423..424
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "call" @ 429..433 leading=[Newline "\n", Whitespace "    "]
+                        ArgumentList
+                          LParen "(" @ 433..434
+                          ExpressionList
+                          RParen ")" @ 550..551 leading=[Newline "\n", Whitespace "      ", LineComment "// first dangling comment of an empty argument list", Newline "\n", Newline "\n", Whitespace "      ", LineComment "// second dangling comment after a blank line", Newline "\n", Whitespace "    "]
+                    Semicolon ";" @ 551..552
+              RBrace "}" @ 555..556 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 560..564 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "call" @ 565..569
+            LParen "(" @ 569..570
+            RParen ")" @ 570..571 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 572..573
+              BlockStatementList
+              RBrace "}" @ 573..574
+        RBrace "}" @ 575..576 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 578..583 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "RemovedSemicolonComments" @ 584..608 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 609..610
+        ClassBodyMemberList
+          EmptyDeclaration
+            Semicolon ";" @ 613..614 leading=[Newline "\n", Whitespace "  "]
+          EmptyDeclaration
+            Semicolon ";" @ 698..699 leading=[Newline "\n", Whitespace "  ", LineComment "// a comment salvaged from a removed semicolon", Newline "\n", Newline "\n", Whitespace "  ", LineComment "// a second salvaged comment", Newline "\n", Whitespace "  "]
+        RBrace "}" @ 700..701 leading=[Newline "\n"]
+  Eof "" @ 702..702 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

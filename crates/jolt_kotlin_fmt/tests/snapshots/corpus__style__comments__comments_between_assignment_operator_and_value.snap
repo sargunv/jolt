@@ -1,0 +1,37 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class CommentsBetweenAssignmentAndValue {
+  var total = // a comment ends the line after the operator
+    1
+
+  val longProperty = // the long value moves to the next line
+    someLongFunctionCall(firstArgumentName, secondArgumentName)
+      + anotherLongValue
+
+  val ownLine =
+    // a comment on its own line before the value
+    1
+
+  var anotherLongValue = 2
+  val firstArgumentName = 3
+  val secondArgumentName = 4
+
+  fun assignments(y: Int) {
+    val local = // a declaration keeps its value on the next line
+      y + 1
+    total = // a short right-hand side moves to the next line
+      y + 1
+    total = // a long right-hand side wraps below the operator
+      someLongFunctionCall(firstArgumentName, secondArgumentName)
+        + anotherLongValue
+    total = /* a block comment stays inline */ y + local
+  }
+
+  fun someLongFunctionCall(first: Int, second: Int): Int = first + second
+}
+
+diagnostics:
+(none)

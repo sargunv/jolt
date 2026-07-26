@@ -6,7 +6,9 @@ properties/layout-fit-boundaries/deep-call-chain.kt
 properties/layout-fit-boundaries/long-when-result.kt
 properties/layout-fit-boundaries/property-delegate.kt
 style/comments/comment-shapes.kt
+style/comments/comments-between-assignment-operator-and-value.kt
 style/comments/content-shapes.kt
+style/comments/dangling-comment-blank-lines.kt
 style/comments/leading-comment-blank-lines.kt
 style/comments/leading-comments-on-assignments.kt
 style/comments/lexical-boundaries.kt

@@ -6,7 +6,9 @@ properties/layout-fit-boundaries/expression-statement-assignment.java
 properties/layout-fit-boundaries/field-initializer.java
 properties/layout-fit-boundaries/return-statement-ternary.java
 style/comments/comment-shapes.java
+style/comments/comments-between-assignment-operator-and-value.java
 style/comments/content-shapes.java
+style/comments/dangling-comment-blank-lines.java
 style/comments/leading-comment-blank-lines.java
 style/comments/leading-comments-on-assignments.java
 style/comments/leading-comments-on-constructor-invocations.java
