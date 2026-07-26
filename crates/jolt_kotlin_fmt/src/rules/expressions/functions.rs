@@ -15,12 +15,7 @@ pub(super) fn format_anonymous_function_expression<'source>(
     leading: LeadingTrivia,
 ) -> Doc<'source> {
     let fun_token = format_required_field(expression.fun_token(), doc, |token, doc| {
-        format_token(
-            doc,
-            &token,
-            leading,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        )
+        format_token(doc, &token, leading, TrailingTrivia::Preserve)
     });
     let receiver = format_anonymous_function_receiver(doc, expression);
     let parameters = format_required_field(expression.parameters(), doc, |parameters, doc| {
@@ -45,12 +40,7 @@ fn format_anonymous_function_receiver<'source>(
     };
     let receiver = format_type_reference(doc, &receiver);
     let dot = format_optional_field(expression.dot(), doc, |dot, doc| {
-        format_token(
-            doc,
-            &dot,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        )
+        format_token(doc, &dot, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
     });
     let space = doc.space();
     doc.concat([space, receiver, dot])

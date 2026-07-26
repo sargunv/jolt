@@ -799,7 +799,7 @@ fn format_value_argument_prefix_item<'source>(
                 doc,
                 &token,
                 LeadingTrivia::Preserve,
-                TrailingTrivia::RelocatedToEnclosingContext,
+                TrailingTrivia::Preserve,
             ),
             Ok(ValueArgumentPrefixSyntax::Annotation(annotation)) => {
                 format_annotation(doc, &annotation)

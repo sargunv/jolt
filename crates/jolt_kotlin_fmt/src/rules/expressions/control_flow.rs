@@ -194,12 +194,7 @@ pub(super) fn format_labeled_expression<'source>(
         KotlinFormatField::Malformed(recovery) => return Some(recovery),
     };
     let label = format_required_token(expression.name(), doc, leading);
-    let at = format_token(
-        doc,
-        &at,
-        LeadingTrivia::Preserve,
-        TrailingTrivia::RelocatedToEnclosingContext,
-    );
+    let at = format_token(doc, &at, LeadingTrivia::Preserve, TrailingTrivia::Preserve);
     let labeled = match resolve_optional_field(expression.labeled_expression(), doc) {
         KotlinFormatField::Present(Some(labeled)) => {
             let space = doc.space();

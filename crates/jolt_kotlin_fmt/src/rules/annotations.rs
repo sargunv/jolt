@@ -30,12 +30,7 @@ pub(crate) fn format_annotation_with_leading<'source>(
     leading: LeadingTrivia,
 ) -> Doc<'source> {
     let sigil = format_required_field(annotation.sigil(), doc, |token, doc| {
-        format_token(
-            doc,
-            &token,
-            leading,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        )
+        format_token(doc, &token, leading, TrailingTrivia::Preserve)
     });
     let target = format_optional_field(annotation.use_site_target(), doc, |target, doc| {
         format_annotation_use_site_target(doc, &target)
@@ -94,7 +89,7 @@ fn format_annotation_use_site_target<'source>(
             doc,
             &token,
             LeadingTrivia::Preserve,
-            TrailingTrivia::RelocatedToEnclosingContext,
+            TrailingTrivia::Preserve,
         )
     });
     let colon = format_required_field(target.colon(), doc, |token, doc| {
@@ -102,7 +97,7 @@ fn format_annotation_use_site_target<'source>(
             doc,
             &token,
             LeadingTrivia::Preserve,
-            TrailingTrivia::RelocatedToEnclosingContext,
+            TrailingTrivia::Preserve,
         )
     });
     doc.concat([target_token, colon])

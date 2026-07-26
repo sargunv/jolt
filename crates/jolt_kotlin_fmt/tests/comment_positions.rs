@@ -31,6 +31,26 @@ const SOURCES: &[&str] = &[
     "class C(val a: Int) { constructor() : this(1) }",
     "fun f(a: Any) { val b = a as String }",
     "fun f(a: Int?) { val b = a ?: 0 }",
+    // Constructs whose tokens are formatted by a rule that relocates their
+    // trailing trivia to an enclosing context that never re-emits it.
+    "@file:JvmName(\"X\")",
+    "@get:JvmName(\"g\") val a = 1",
+    "val a = object : B() { }",
+    "val a: suspend () -> Unit = { }",
+    "val a = fun (x: Int) = x",
+    "val a = fun Int.(): Int = this",
+    "fun f() { l@ { g() } }",
+    "fun f(a: A) { g(*a) }",
+    "class C<in A> { }",
+    "class C<out A> { }",
+    "val a: List<out Any> = f()",
+    "class C : B by d",
+    "class C { companion object { } }",
+    "class C { init { g() } }",
+    "class C<T> where T : Any { }",
+    "inline fun <reified T> f() { }",
+    "infix fun Int.to2(o: Int) = o",
+    "val a: Int get() = 1",
 ];
 
 #[test]
