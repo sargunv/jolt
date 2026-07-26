@@ -12,10 +12,9 @@ use crate::helpers::recovery::{KotlinFormatListPart, resolve_list_part};
 
 pub(crate) use jolt_fmt_ir::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, delimiter_dangling_comments,
-    format_comment, format_dangling_comments, format_leading_comment_list, format_leading_comments,
-    format_removed_comments, format_separator_with_comments, format_token,
-    format_token_after_relocated_leading_comments, has_delimiter_dangling_comments,
-    token_has_comments, trailing_comments_force_line,
+    format_comment, format_dangling_comments, format_leading_comments, format_removed_comments,
+    format_separator_with_comments, format_token, format_token_after_relocated_leading_comments,
+    has_delimiter_dangling_comments, token_has_comments, trailing_comments_force_line,
 };
 
 /// Kotlin keeps inline leading comments immediately before their token.

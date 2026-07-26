@@ -5,18 +5,14 @@
 //! against typed CST enums, including invisible list parts.
 
 use jolt_fmt_ir::{
-    Doc, DocBuilder, FormatDelimiter, FormatField, FormatListPart, LayoutDoc,
-    assemble_malformed_fragment,
+    Doc, DocBuilder, FormatDelimiter, FormatField, FormatListPart, LayoutDoc, format_malformed_core,
 };
 use jolt_kotlin_syntax::{
     KotlinMissingSyntax, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken,
     KotlinSyntaxView,
 };
 
-use super::comments::{
-    LeadingTrivia, TrailingTrivia, comment_forces_line, format_comment,
-    format_leading_comment_list, format_token,
-};
+use super::comments::{LeadingTrivia, TrailingTrivia, format_token};
 use super::lexical_safety::KotlinLexicalSafety;
 
 pub(crate) type KotlinFormatField<'source, T> = FormatField<'source, T>;
@@ -26,21 +22,11 @@ pub(crate) fn format_malformed<'source>(
     malformed: &impl KotlinSyntaxView<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let Some(core) = malformed.malformed_verbatim_core() else {
-        doc.block_on_invariant("malformed Kotlin syntax did not own a verbatim core");
-        return Doc::nil();
-    };
-    let (leading, trailing, has_leading_comments, has_trailing_comments) =
-        malformed_boundary_comments(&core, doc);
-    let mut safety = KotlinLexicalSafety;
-    assemble_malformed_fragment(
+    format_malformed_core(
         doc,
-        &core,
-        &mut safety,
-        leading,
-        trailing,
-        has_leading_comments,
-        has_trailing_comments,
+        malformed.malformed_verbatim_core(),
+        &mut KotlinLexicalSafety,
+        "malformed Kotlin syntax did not own a verbatim core",
     )
 }
 
@@ -169,42 +155,4 @@ pub(crate) fn format_missing<'source>(
         doc.block_on_invariant("missing Kotlin role did not own an empty verbatim core");
     }
     Doc::nil()
-}
-
-fn malformed_boundary_comments<'source>(
-    core: &jolt_kotlin_syntax::KotlinSyntaxVerbatimCore<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> (Doc<'source>, Doc<'source>, bool, bool) {
-    let leading_comments = core
-        .first_token()
-        .into_iter()
-        .flat_map(|token| token.leading_comments())
-        .filter(|comment| !core.contains(comment.text_range()));
-    let has_leading_comments = leading_comments.clone().next().is_some();
-    let leading = format_leading_comment_list(doc, leading_comments);
-    let trailing_comments = core
-        .last_token()
-        .into_iter()
-        .flat_map(|token| token.trailing_comments())
-        .filter(|comment| !core.contains(comment.text_range()));
-    let has_trailing_comments = trailing_comments.clone().next().is_some();
-    let trailing = doc.concat_list(|comments| {
-        for comment in trailing_comments {
-            let space = comments.space();
-            comments.push(space);
-            let forces_line = comment_forces_line(&comment);
-            let comment = format_comment(comments, &comment);
-            comments.push(comment);
-            if forces_line {
-                let line = comments.hard_line();
-                comments.push(line);
-            }
-        }
-    });
-    (
-        leading,
-        trailing,
-        has_leading_comments,
-        has_trailing_comments,
-    )
 }

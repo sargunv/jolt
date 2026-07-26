@@ -5,6 +5,8 @@
 
 use jolt_syntax::{Language, SyntaxToken, SyntaxVerbatimCore};
 
+use crate::comments::{comment_forces_line, format_comment, format_leading_comment_list};
+
 use crate::source_fragment::LexicalSafety;
 use crate::{Doc, DocBuilder};
 
@@ -98,6 +100,60 @@ impl<T, Separator> FormatListPart<'_, T, Separator> {
             Self::Recovery(recovery) => recovery.is_visible(),
         }
     }
+}
+
+/// Formats one syntax-owned malformed boundary, claiming its exact source.
+///
+/// Comments that sit outside the verbatim core are relocated around it, so the
+/// core claims only the source it actually owns.
+pub fn format_malformed_core<'source, L: Language>(
+    doc: &mut DocBuilder<'source>,
+    core: Option<SyntaxVerbatimCore<'source, L>>,
+    safety: &mut impl LexicalSafety<L>,
+    missing_core_invariant: &'static str,
+) -> Doc<'source> {
+    let Some(core) = core else {
+        doc.block_on_invariant(missing_core_invariant);
+        return Doc::nil();
+    };
+
+    let leading_comments = core
+        .first_token()
+        .into_iter()
+        .flat_map(|token| token.leading_comments())
+        .filter(|comment| !core.contains(comment.text_range()));
+    let has_leading_comments = leading_comments.clone().next().is_some();
+    let leading = format_leading_comment_list(doc, leading_comments);
+
+    let trailing_comments = core
+        .last_token()
+        .into_iter()
+        .flat_map(|token| token.trailing_comments())
+        .filter(|comment| !core.contains(comment.text_range()));
+    let has_trailing_comments = trailing_comments.clone().next().is_some();
+    let trailing = doc.concat_list(|comments| {
+        for comment in trailing_comments {
+            let space = comments.space();
+            comments.push(space);
+            let forces_line = comment_forces_line(&comment);
+            let comment = format_comment(comments, &comment);
+            comments.push(comment);
+            if forces_line {
+                let line = comments.hard_line();
+                comments.push(line);
+            }
+        }
+    });
+
+    assemble_malformed_fragment(
+        doc,
+        &core,
+        safety,
+        leading,
+        trailing,
+        has_leading_comments,
+        has_trailing_comments,
+    )
 }
 
 /// Assembles leading comments + malformed verbatim + trailing comments with the
