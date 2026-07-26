@@ -16,6 +16,7 @@ style/comments/leading-comments-on-assignments.kt
 style/comments/leading-comments-on-binary-operands.kt
 style/comments/lexical-boundaries.kt
 style/comments/mixed-comment-line-endings.kt
+style/comments/removed-semicolon-comment-blank-lines.kt
 style/comments/star-blocks.kt
 style/comments/token-trailing-comments.kt
 style/comments/trailing-comment-before-synthesized-parentheses.kt
