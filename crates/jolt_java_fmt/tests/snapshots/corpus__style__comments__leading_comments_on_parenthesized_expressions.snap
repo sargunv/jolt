@@ -1,0 +1,63 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class LeadingCommentsOnParenthesizedExpressions {
+  int[] values = new int[4];
+
+  class Base {
+    Base(int value) {
+    }
+
+    <T> Base(T value, int marker) {
+    }
+  }
+
+  class Inner extends Base {
+    Inner(LeadingCommentsOnParenthesizedExpressions outer) {
+      // leads a parenthesized qualifier
+      (outer).super(0);
+    }
+
+    Inner(LeadingCommentsOnParenthesizedExpressions outer, String name) {
+      /* block comment leads a parenthesized qualifier */
+      (outer).<String>super(name, 0);
+    }
+
+    Inner(LeadingCommentsOnParenthesizedExpressions outer, int marker) {
+      // leads a parenthesized qualifier holding an object creation
+      (new LeadingCommentsOnParenthesizedExpressions()).super(marker);
+    }
+  }
+
+  int parenthesizedOperands(int first, int second) {
+    int sum =
+      // leads a parenthesized operand
+      (first + second);
+    call(
+      /* block comment leads a parenthesized argument */
+      (first * second)
+    );
+    int total =
+      // a parenthesized operand that does not fit still breaks apart
+      (
+        first * second
+          + values.length
+          + sum
+          + someLongMethodName(first, second)
+          + someLongMethodName(second, first)
+      );
+    return total;
+  }
+
+  void call(int value) {
+  }
+
+  int someLongMethodName(int first, int second) {
+    return first + second;
+  }
+}
+
+diagnostics:
+(none)

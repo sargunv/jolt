@@ -10,6 +10,7 @@ style/comments/content-shapes.java
 style/comments/leading-comment-blank-lines.java
 style/comments/leading-comments-on-assignments.java
 style/comments/leading-comments-on-constructor-invocations.java
+style/comments/leading-comments-on-parenthesized-expressions.java
 style/comments/lexical-boundaries.java
 style/comments/mixed-comment-line-endings.java
 style/comments/star-blocks.java
