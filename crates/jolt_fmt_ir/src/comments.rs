@@ -12,8 +12,9 @@
 use jolt_syntax::{Comment, CommentKind, Language, SyntaxToken};
 
 use crate::comment_text::{
-    format_comment_lines, format_star_block_comment, is_empty_single_line_block_comment,
-    is_star_block_comment, preserved_block_comment_lines, preserved_comment_lines,
+    StarBlockOpener, format_comment_lines, format_star_block_comment,
+    is_empty_single_line_block_comment, is_star_block_comment, preserved_block_comment_lines,
+    preserved_comment_lines,
 };
 use crate::token_trivia::format_token_doc;
 use crate::{ConcatBuilder, Doc, DocBuilder, LeadingTrivia, TrailingTrivia};
@@ -62,10 +63,12 @@ pub fn format_comment<'source>(
         match comment.kind() {
             CommentKind::Line => format_line_comment(doc, comment.text()),
             CommentKind::Block if is_star_block_comment(comment.text()) => {
-                format_star_block_comment(doc, comment.text(), "/*")
+                format_star_block_comment(doc, comment.text(), "/*", StarBlockOpener::Keep)
             }
             CommentKind::Block => format_block_comment(doc, comment.text()),
-            CommentKind::Doc => format_star_block_comment(doc, comment.text(), "/**"),
+            CommentKind::Doc => {
+                format_star_block_comment(doc, comment.text(), "/**", StarBlockOpener::Reflow)
+            }
         }
     })
 }

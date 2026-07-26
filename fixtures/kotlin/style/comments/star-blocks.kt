@@ -13,6 +13,27 @@ fun run() {}
    *   body with inner spacing
   */
 fun ragged() {}
+/* Runs first.
+ * Then continues.
+ *
+ * After a blank.
+ */
+fun openerText() {}
+/* * starred opener
+ * body
+ */
+fun starredOpener() {}
+/* outer /* inner */ still outer
+ * body with /* inner */ too
+ */
+fun nestedBlocks() {}
+/* opener
+plain body
+*/
+fun plainBody() {}
+/* opener
+ * closes on this line */
+fun closingOnBody() {}
 fun trailingDoc() {} /** stays on its line */
 val trailingStar = 1 /* stays on its line */
 }
