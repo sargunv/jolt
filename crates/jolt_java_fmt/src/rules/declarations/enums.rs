@@ -78,7 +78,7 @@ pub(super) fn format_enum_body_contents<'source>(
             None => format_token_with_comments(doc, &separator),
         };
         match format_removed_comments(doc, comments_from_tokens([separator])) {
-            Some(comments) => FormattedMember::comment(doc_concat!(doc, [token, comments])),
+            Some(comments) => FormattedMember::comment(doc_concat!(doc, [token, comments]), false),
             None => FormattedMember::invisible(token),
         }
     });

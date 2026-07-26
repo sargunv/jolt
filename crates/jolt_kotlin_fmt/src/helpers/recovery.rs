@@ -84,15 +84,14 @@ pub(crate) fn format_optional_field<'source, T>(
     jolt_fmt_ir::format_optional_field(resolve_optional_field(field, doc), doc, structured)
 }
 
-pub(crate) fn format_delimiter_with_preserved_trailing<'source>(
+pub(crate) fn format_delimiter<'source>(
     doc: &mut DocBuilder<'source>,
     delimiter: KotlinFormatDelimiter<'source>,
     leading: LeadingTrivia,
+    trailing: TrailingTrivia,
 ) -> Doc<'source> {
     match delimiter {
-        KotlinFormatDelimiter::Source(token) => {
-            format_token(doc, &token, leading, TrailingTrivia::Preserve)
-        }
+        KotlinFormatDelimiter::Source(token) => format_token(doc, &token, leading, trailing),
         KotlinFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }

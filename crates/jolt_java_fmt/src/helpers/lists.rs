@@ -2,8 +2,8 @@ use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{JavaSyntaxListPart, JavaSyntaxToken, SynthesisClaim};
 
 use crate::helpers::comments::{
-    InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, delimiter_dangling_comments,
-    format_dangling_comments, format_leading_comments, format_token,
+    InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, format_dangling_comments,
+    format_delimiter_dangling_comments, format_leading_comments, format_token,
     format_token_after_relocated_leading_comments, format_token_with_inline_leading_comments,
     format_trailing_comments_before_line_break, has_delimiter_dangling_comments,
     trailing_comments_force_line,
@@ -179,10 +179,7 @@ fn empty_delimited_list<'source>(
         );
     }
 
-    let dangling = format_dangling_comments(
-        doc,
-        delimiter_dangling_comments(open.source(), close.source()),
-    );
+    let dangling = format_delimiter_dangling_comments(doc, open.source(), close.source());
 
     doc_force_group!(
         doc,
@@ -399,10 +396,17 @@ fn format_close_leading_comments<'source>(
         if close.leading_comments().is_empty() {
             Doc::nil()
         } else {
+            // A line boundary, because the last item's own trailing comment may
+            // already have ended the line: the gap names the state to reach,
+            // not the breaks to append.
             doc_concat!(
                 doc,
                 [
-                    doc.hard_line(),
+                    if close.has_leading_blank_line() {
+                        doc.empty_line_boundary()
+                    } else {
+                        doc.hard_line_boundary()
+                    },
                     format_dangling_comments(doc, close.leading_comments()),
                 ]
             )

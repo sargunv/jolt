@@ -27,6 +27,99 @@ class DanglingCommentsInBodies {
   void call() {}
 }
 
+class BraceTrailingCommentBlankLines { // a comment trailing the class body brace
+
+  // a dangling comment after a blank line
+}
+
+class BraceTrailingCommentCollapsedBlankLines { // a comment trailing the class body brace
+
+
+
+
+  // a dangling comment after collapsed blank lines
+}
+
+class BraceTrailingCommentWithoutBlankLine { // a comment trailing the class body brace
+  // a dangling comment with no blank line before it
+}
+
+class BraceTrailingCommentsInBodies {
+  void emptyBlock() { // a comment trailing the block brace
+
+    // a dangling comment after a blank line
+  }
+
+  void emptyBlockCollapsed() { // a comment trailing the block brace
+
+
+
+    // a dangling comment after collapsed blank lines
+  }
+
+  void emptyBlockWithoutBlankLine() { // a comment trailing the block brace
+    // a dangling comment with no blank line before it
+  }
+
+  void emptyArguments() {
+    call( // a comment trailing the open parenthesis
+
+        // a dangling comment after a blank line
+        );
+  }
+
+  void emptyArgumentsWithoutBlankLine() {
+    call( // a comment trailing the open parenthesis
+        // a dangling comment with no blank line before it
+        );
+  }
+
+  void call() {}
+}
+
+class ItemTrailingCommentBeforeCloseComment {
+  void blankLine() {
+    call(
+      first,
+      second // a comment trailing the last argument
+
+      // a dangling comment after a blank line
+    );
+  }
+
+  void withoutBlankLine() {
+    call(
+      first,
+      second // a comment trailing the last argument
+      // a dangling comment with no blank line before it
+    );
+  }
+}
+
+class BraceTrailingCommentBeforeMember { // a comment trailing the class body brace
+
+  int fieldAfterBlankLine;
+}
+
+class CommentsBeforeCloseBrace {
+  int field;
+
+  // a dangling comment after a blank line at the end of the class body
+}
+
+class StatementsBeforeCloseBrace {
+  void method() {
+    int local = 0;
+
+    // a dangling comment after a blank line at the end of the block
+  }
+
+  void methodWithoutBlankLine() {
+    int local = 0;
+    // a dangling comment with no blank line before it
+  }
+}
+
 class RemovedSemicolonComments {
   ;
   // a comment salvaged from a removed semicolon

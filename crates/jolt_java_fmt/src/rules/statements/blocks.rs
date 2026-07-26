@@ -169,7 +169,14 @@ fn format_block_close_dangling_comments<'source>(
         return None;
     };
     let comments = close.leading_comments();
-    (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(doc, comments), false))
+    // The gap that opens the close brace's leading trivia belongs to that
+    // token, so the separator in front of this run reads it from there.
+    (!comments.is_empty()).then(|| {
+        BodyItem::new(
+            format_dangling_comments(doc, comments),
+            close.has_leading_blank_line(),
+        )
+    })
 }
 
 fn block_statement_part_ignore_range(

@@ -18,8 +18,8 @@ pub use comment_text::{
     is_star_block_comment, preserved_block_comment_lines, preserved_comment_lines,
 };
 pub use comments::{
-    InlineLeadingTrivia, comment_forces_line, comment_is_star_block, delimiter_dangling_comments,
-    format_comment, format_dangling_comments, format_ignored_trivia,
+    InlineLeadingTrivia, comment_forces_line, comment_is_star_block, format_comment,
+    format_dangling_comments, format_delimiter_dangling_comments, format_ignored_trivia,
     format_inline_trailing_comment_list, format_leading_comment_list, format_leading_comments,
     format_removed_comments, format_separator_with_comments, format_token,
     format_token_after_relocated_leading_comments, format_token_body,

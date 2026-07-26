@@ -15,7 +15,7 @@ use crate::helpers::comments::format_token_removal;
 use crate::helpers::recovery::{
     JavaFormatField, format_malformed, resolve_optional_field, resolve_required_field,
 };
-use jolt_fmt_ir::DocBuilder;
+use jolt_fmt_ir::{BodyItemSeparator, DocBuilder};
 use jolt_java_syntax::{AnnotationInterfaceBodyMemberList, JavaSyntaxListPart, JavaSyntaxView};
 use jolt_text::TextRange;
 
@@ -229,14 +229,15 @@ fn format_part<'source, T>(
     match part {
         JavaSyntaxListPart::Item(item) => format_item(item, doc),
         JavaSyntaxListPart::Malformed(malformed) => {
-            FormattedMember::comment(format_malformed(malformed, doc))
+            FormattedMember::comment(format_malformed(malformed, doc), false)
         }
-        JavaSyntaxListPart::Missing(missing) => {
-            FormattedMember::comment(crate::helpers::recovery::format_missing(missing, doc))
-        }
+        JavaSyntaxListPart::Missing(missing) => FormattedMember::comment(
+            crate::helpers::recovery::format_missing(missing, doc),
+            false,
+        ),
         JavaSyntaxListPart::Separator(token) => {
             doc.block_on_invariant("unseparated Java member list contained a separator");
-            FormattedMember::comment(format_token_with_comments(doc, token))
+            FormattedMember::comment(format_token_with_comments(doc, token), false)
         }
     }
 }
@@ -285,16 +286,24 @@ pub(super) fn format_body_open_dangling_comments<'source>(
     open: Option<JavaSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<FormattedMember<'source>> {
-    format_removed_comments(doc, open?.trailing_comments()).map(FormattedMember::comment)
+    format_removed_comments(doc, open?.trailing_comments())
+        .map(|comments| FormattedMember::comment(comments, false))
 }
 
 pub(super) fn format_body_close_dangling_comments<'source>(
     close: Option<JavaSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<FormattedMember<'source>> {
-    let comments = close?.leading_comments();
-    (!comments.is_empty())
-        .then(|| FormattedMember::comment(format_dangling_comments(doc, comments)))
+    let close = close?;
+    let comments = close.leading_comments();
+    // The gap that opens the close brace's leading trivia belongs to that
+    // token, so the separator in front of this run reads it from there.
+    (!comments.is_empty()).then(|| {
+        FormattedMember::comment(
+            format_dangling_comments(doc, comments),
+            close.has_leading_blank_line(),
+        )
+    })
 }
 
 pub(super) fn format_empty_enum_constant_list_comments<'source>(
@@ -306,7 +315,7 @@ pub(super) fn format_empty_enum_constant_list_comments<'source>(
         return None;
     }
     format_removed_comments(doc, comments_from_tokens(constants.token_iter()))
-        .map(FormattedMember::comment)
+        .map(|comments| FormattedMember::comment(comments, false))
 }
 
 pub(super) fn combine_comment_members<'source>(
@@ -315,10 +324,15 @@ pub(super) fn combine_comment_members<'source>(
     second: Option<FormattedMember<'source>>,
 ) -> Option<FormattedMember<'source>> {
     match (first, second) {
-        (Some(first), Some(second)) => Some(FormattedMember::comment(doc_concat!(
-            doc,
-            [first.doc, doc.hard_line(), second.doc,]
-        ))),
+        (Some(first), Some(second)) => {
+            // The combined run keeps the gap in front of the first one; the gap
+            // between them is the one the second run's own trivia carries.
+            let separator = BodyItemSeparator::between(second.starts_after_blank_line).doc(doc);
+            Some(FormattedMember::comment(
+                doc_concat!(doc, [first.doc, separator, second.doc]),
+                first.starts_after_blank_line,
+            ))
+        }
         (Some(member), None) | (None, Some(member)) => Some(member),
         (None, None) => None,
     }
@@ -452,7 +466,7 @@ impl<'source> FormattedMember<'source> {
                 format_empty_member(empty, starts_after_blank_line, doc)
             }
             ClassBodyMember::BogusClassBodyMember(value) => {
-                Self::comment(format_malformed(value, doc))
+                Self::comment(format_malformed(value, doc), starts_after_blank_line)
             }
         }
     }
@@ -500,7 +514,7 @@ impl<'source> FormattedMember<'source> {
             ),
             InterfaceBodyMember::EmptyDeclaration(empty) => format_empty_member(empty, blank, doc),
             InterfaceBodyMember::BogusInterfaceBodyMember(value) => {
-                Self::comment(format_malformed(value, doc))
+                Self::comment(format_malformed(value, doc), blank)
             }
         }
     }
@@ -557,7 +571,7 @@ impl<'source> FormattedMember<'source> {
                 format_empty_member(empty, blank, doc)
             }
             AnnotationInterfaceBodyMember::BogusAnnotationInterfaceBodyMember(value) => {
-                Self::comment(format_malformed(value, doc))
+                Self::comment(format_malformed(value, doc), blank)
             }
         }
     }
@@ -585,7 +599,9 @@ fn format_empty_member<'source>(
     let has_comments = has_removed_comments(comments_from_tokens(empty.token_iter()));
     let semicolon = match resolve_required_field(empty.semicolon(), doc) {
         JavaFormatField::Present(semicolon) => semicolon,
-        JavaFormatField::Malformed(recovery) => return FormattedMember::comment(recovery),
+        JavaFormatField::Malformed(recovery) => {
+            return FormattedMember::comment(recovery, starts_after_blank_line);
+        }
     };
     let (member_doc, removed) =
         format_token_removal(doc, &semicolon, empty.separator_removal_claim());
