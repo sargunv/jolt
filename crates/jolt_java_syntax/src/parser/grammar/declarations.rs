@@ -299,12 +299,12 @@ impl Parser<'_> {
         let owner = list.anchor();
         self.bump();
         let parameters = self.start();
-        while !self.at_eof() && !self.at_type_argument_close() {
-            self.parse_type_parameter();
-            if !self.eat(JavaSyntaxKind::Comma) {
-                break;
-            }
-        }
+        self.parse_comma_separated(
+            parameters.anchor(),
+            "expected type parameter",
+            Self::at_type_argument_close,
+            |parser, _| parser.parse_type_parameter(),
+        );
         self.complete(parameters, JavaSyntaxKind::TypeParameterSeparatedList);
         if !self.eat_type_argument_close() {
             self.record_missing_slot(
@@ -410,12 +410,14 @@ impl Parser<'_> {
             return;
         }
         let types = self.start();
-        while !self.at_eof() && !self.at_header_clause_end() {
-            self.parse_class_type();
-            if !self.eat(JavaSyntaxKind::Comma) {
-                break;
-            }
-        }
+        self.parse_comma_separated(
+            types.anchor(),
+            "expected type",
+            Self::at_header_clause_end,
+            |parser, _| {
+                parser.parse_class_type();
+            },
+        );
         self.complete(types, JavaSyntaxKind::TypeList);
     }
 
@@ -430,16 +432,16 @@ impl Parser<'_> {
         }
         let names = self.start();
         let list_owner = names.anchor();
-        let mut item_slot = 0;
-        while !self.at_eof() && !self.at_header_clause_end() {
-            if let Some(diagnostic) = self.consume_qualified_name_cause() {
-                self.missing_required_slot(list_owner, item_slot, [diagnostic]);
-            }
-            if !self.eat(JavaSyntaxKind::Comma) {
-                break;
-            }
-            item_slot += 2;
-        }
+        self.parse_comma_separated(
+            list_owner,
+            "expected name",
+            Self::at_header_clause_end,
+            |parser, item_slot| {
+                if let Some(diagnostic) = parser.consume_qualified_name_cause() {
+                    parser.missing_required_slot(list_owner, item_slot, [diagnostic]);
+                }
+            },
+        );
         self.complete(names, JavaSyntaxKind::NameList);
     }
 
@@ -455,12 +457,12 @@ impl Parser<'_> {
 
         if !self.at(JavaSyntaxKind::RParen) {
             let list = self.start();
-            while !self.at_eof() && !self.at(JavaSyntaxKind::RParen) {
-                self.parse_record_component();
-                if !self.eat(JavaSyntaxKind::Comma) {
-                    break;
-                }
-            }
+            self.parse_comma_separated(
+                list.anchor(),
+                "expected record component",
+                |parser| parser.at(JavaSyntaxKind::RParen),
+                |parser, _| parser.parse_record_component(),
+            );
             self.complete(list, JavaSyntaxKind::RecordComponentList);
         }
 
@@ -830,7 +832,10 @@ impl Parser<'_> {
         self.expect_required(JavaSyntaxKind::LParen, "expected `(`", owner, open_slot);
         if !self.at(JavaSyntaxKind::RParen) {
             let list = self.start();
+            let list_owner = list.anchor();
             let mut allow_receiver = true;
+            let mut next_item_slot = 0;
+            let mut trailing_comma = false;
             while !self.at_eof() && !self.at(JavaSyntaxKind::RParen) {
                 if self.at(JavaSyntaxKind::Comma) {
                     let bogus = self.start();
@@ -848,15 +853,25 @@ impl Parser<'_> {
                         let consumed_comma = self.eat(JavaSyntaxKind::Comma);
                         if consumed_comma {
                             allow_receiver = false;
+                            next_item_slot += 2;
+                            trailing_comma = true;
                             continue;
                         }
+                        trailing_comma = false;
                         break;
                     }
                 }
                 allow_receiver = false;
                 if !self.eat(JavaSyntaxKind::Comma) {
+                    trailing_comma = false;
                     break;
                 }
+                next_item_slot += 2;
+                trailing_comma = true;
+            }
+            if trailing_comma {
+                let diagnostic = self.pending_expected("expected parameter");
+                self.missing_required_slot(list_owner, next_item_slot, [diagnostic]);
             }
             if recover_missing_open_header
                 && missing_open
@@ -1018,17 +1033,19 @@ impl Parser<'_> {
             return;
         }
         let types = self.start();
-        while !self.at_eof()
-            && !matches!(
-                self.current_kind(),
-                JavaSyntaxKind::LBrace | JavaSyntaxKind::Semicolon
-            )
-        {
-            self.parse_class_type();
-            if !self.eat(JavaSyntaxKind::Comma) {
-                break;
-            }
-        }
+        self.parse_comma_separated(
+            types.anchor(),
+            "expected exception type",
+            |parser| {
+                matches!(
+                    parser.current_kind(),
+                    JavaSyntaxKind::LBrace | JavaSyntaxKind::Semicolon
+                )
+            },
+            |parser, _| {
+                parser.parse_class_type();
+            },
+        );
         self.complete(types, JavaSyntaxKind::TypeList);
         self.complete(clause, JavaSyntaxKind::ThrowsClause);
     }

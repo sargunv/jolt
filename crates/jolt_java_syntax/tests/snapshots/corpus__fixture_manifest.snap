@@ -413,6 +413,7 @@ syntax/recovery/switch-block-unowned-tokens.java
 syntax/recovery/switch-rule-empty-body.java
 syntax/recovery/switch-statement-group.java
 syntax/recovery/top-level-empty-declaration-comments.java
+syntax/recovery/trailing-separator-in-delimited-lists.java
 syntax/recovery/type-annotation-and-parameter-lists.java
 syntax/recovery/unterminated-comment.java
 syntax/recovery/unterminated-doc-comment.java

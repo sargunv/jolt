@@ -474,12 +474,14 @@ impl Parser<'_> {
 
     pub(super) fn parse_statement_expression_list(&mut self, stop: JavaSyntaxKind) {
         let list = self.start();
-        loop {
-            self.consume_statement_expression_until(&[JavaSyntaxKind::Comma, stop]);
-            if !self.eat(JavaSyntaxKind::Comma) || self.at(stop) {
-                break;
-            }
-        }
+        self.parse_comma_separated(
+            list.anchor(),
+            "expected statement expression",
+            move |parser| parser.at(stop),
+            move |parser, _| {
+                parser.consume_statement_expression_until(&[JavaSyntaxKind::Comma, stop]);
+            },
+        );
         self.complete(list, JavaSyntaxKind::StatementExpressionList);
     }
 

@@ -1295,12 +1295,14 @@ impl Parser<'_> {
             crate::shape::argument_list::Slot::open_paren as u16,
         );
         let expressions = self.start();
-        while !self.at_eof() && !self.at(JavaSyntaxKind::RParen) {
-            self.parse_expression_until(&[JavaSyntaxKind::Comma, JavaSyntaxKind::RParen]);
-            if !self.eat(JavaSyntaxKind::Comma) {
-                break;
-            }
-        }
+        self.parse_comma_separated(
+            expressions.anchor(),
+            "expected argument",
+            |parser| parser.at(JavaSyntaxKind::RParen),
+            |parser, _| {
+                parser.parse_expression_until(&[JavaSyntaxKind::Comma, JavaSyntaxKind::RParen]);
+            },
+        );
         self.complete(expressions, JavaSyntaxKind::ExpressionList);
         self.expect_required(
             JavaSyntaxKind::RParen,

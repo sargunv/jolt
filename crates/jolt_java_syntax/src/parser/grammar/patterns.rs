@@ -89,14 +89,12 @@ impl Parser<'_> {
             );
         }
         let components = self.start();
-        if !self.at_eof() && !self.at(JavaSyntaxKind::RParen) {
-            while !self.at_eof() && !self.at(JavaSyntaxKind::RParen) {
-                self.parse_component_pattern();
-                if !self.eat(JavaSyntaxKind::Comma) {
-                    break;
-                }
-            }
-        }
+        self.parse_comma_separated(
+            components.anchor(),
+            "expected component pattern",
+            |parser| parser.at(JavaSyntaxKind::RParen),
+            |parser, _| parser.parse_component_pattern(),
+        );
         self.complete(components, JavaSyntaxKind::ComponentPatternList);
         if !self.eat(JavaSyntaxKind::RParen) {
             let diagnostic = self.pending_expected("expected `)` after record pattern");
