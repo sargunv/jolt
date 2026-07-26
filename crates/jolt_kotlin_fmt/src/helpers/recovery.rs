@@ -1,12 +1,9 @@
-//! Field/list recovery resolution for the Kotlin formatter.
+//! Kotlin field/list recovery resolution.
 //!
-//! Shared present/malformed field results and malformed fragment assembly live
-//! in `jolt_fmt_ir::recovery`. This module owns Kotlin field/list resolution
-//! against typed CST enums, including invisible list parts.
+//! Resolution itself is shared in `jolt_fmt_ir::recovery`; this module binds it
+//! to Kotlin's lexical-safety policy and owns Kotlin's delimiter composition.
 
-use jolt_fmt_ir::{
-    Doc, DocBuilder, FormatDelimiter, FormatField, FormatListPart, LayoutDoc, format_malformed_core,
-};
+use jolt_fmt_ir::{Doc, DocBuilder, FormatDelimiter, FormatField, FormatListPart};
 use jolt_kotlin_syntax::{
     KotlinMissingSyntax, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken,
     KotlinSyntaxView,
@@ -17,24 +14,75 @@ use super::lexical_safety::KotlinLexicalSafety;
 
 pub(crate) type KotlinFormatField<'source, T> = FormatField<'source, T>;
 
-/// Formats one syntax-owned malformed boundary and claims its exact source.
-pub(crate) fn format_malformed<'source>(
-    malformed: &impl KotlinSyntaxView<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    format_malformed_core(
-        doc,
-        malformed.malformed_verbatim_core(),
-        &mut KotlinLexicalSafety,
-        "malformed Kotlin syntax did not own a verbatim core",
-    )
-}
-
 pub(crate) type KotlinFormatListPart<'source, T> =
     FormatListPart<'source, T, KotlinSyntaxToken<'source>>;
 
 pub(crate) type KotlinFormatDelimiter<'source> =
     FormatDelimiter<'source, KotlinSyntaxToken<'source>>;
+
+/// Formats one syntax-owned malformed boundary and claims its exact source.
+pub(crate) fn format_malformed<'source>(
+    malformed: &impl KotlinSyntaxView<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    jolt_fmt_ir::format_malformed_core(
+        doc,
+        malformed.malformed_verbatim_core(),
+        &mut KotlinLexicalSafety,
+        "malformed syntax did not own a verbatim core",
+    )
+}
+
+pub(crate) fn format_missing<'source>(
+    missing: &KotlinMissingSyntax<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    jolt_fmt_ir::format_missing(doc, missing)
+}
+
+pub(crate) fn resolve_required_delimiter<'source>(
+    field: KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
+    doc: &mut DocBuilder<'source>,
+) -> KotlinFormatDelimiter<'source> {
+    jolt_fmt_ir::resolve_required_delimiter(field, doc, &mut KotlinLexicalSafety)
+}
+
+pub(crate) fn resolve_list_part<'source, T>(
+    part: KotlinSyntaxListPart<'source, T>,
+    doc: &mut DocBuilder<'source>,
+) -> KotlinFormatListPart<'source, T> {
+    jolt_fmt_ir::resolve_list_part(part, doc, &mut KotlinLexicalSafety)
+}
+
+pub(crate) fn resolve_required_field<'source, T>(
+    field: KotlinSyntaxField<'source, T>,
+    doc: &mut DocBuilder<'source>,
+) -> KotlinFormatField<'source, T> {
+    jolt_fmt_ir::resolve_required_field(field, doc, &mut KotlinLexicalSafety)
+}
+
+pub(crate) fn resolve_optional_field<'source, T>(
+    field: KotlinSyntaxField<'source, T>,
+    doc: &mut DocBuilder<'source>,
+) -> KotlinFormatField<'source, Option<T>> {
+    jolt_fmt_ir::resolve_optional_field(field, doc, &mut KotlinLexicalSafety)
+}
+
+pub(crate) fn format_required_field<'source, T>(
+    field: KotlinSyntaxField<'source, T>,
+    doc: &mut DocBuilder<'source>,
+    structured: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
+) -> Doc<'source> {
+    jolt_fmt_ir::format_required_field(resolve_required_field(field, doc), doc, structured)
+}
+
+pub(crate) fn format_optional_field<'source, T>(
+    field: KotlinSyntaxField<'source, T>,
+    doc: &mut DocBuilder<'source>,
+    structured: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
+) -> Doc<'source> {
+    jolt_fmt_ir::format_optional_field(resolve_optional_field(field, doc), doc, structured)
+}
 
 pub(crate) fn format_delimiter_with_preserved_trailing<'source>(
     doc: &mut DocBuilder<'source>,
@@ -56,103 +104,4 @@ pub(crate) fn join_delimited_recovery<'source>(
     close: &KotlinFormatDelimiter<'source>,
 ) -> Doc<'source> {
     doc.concat([open.recovery(), contents, close.recovery()])
-}
-
-pub(crate) fn resolve_required_delimiter<'source>(
-    field: KotlinSyntaxField<'source, KotlinSyntaxToken<'source>>,
-    doc: &mut DocBuilder<'source>,
-) -> KotlinFormatDelimiter<'source> {
-    match field {
-        KotlinSyntaxField::Present(token) => KotlinFormatDelimiter::Source(token),
-        KotlinSyntaxField::Missing(missing) => {
-            KotlinFormatDelimiter::Recovery(LayoutDoc::ClaimOnly(format_missing(&missing, doc)))
-        }
-        KotlinSyntaxField::Malformed(malformed) => {
-            let recovery = format_malformed(&malformed, doc);
-            KotlinFormatDelimiter::Recovery(LayoutDoc::from_visibility(
-                recovery,
-                malformed.first_token().is_some(),
-            ))
-        }
-    }
-}
-
-pub(crate) fn resolve_list_part<'source, T>(
-    part: KotlinSyntaxListPart<'source, T>,
-    doc: &mut DocBuilder<'source>,
-) -> KotlinFormatListPart<'source, T> {
-    match part {
-        KotlinSyntaxListPart::Item(item) => KotlinFormatListPart::Item(item),
-        KotlinSyntaxListPart::Separator(separator) => KotlinFormatListPart::Separator(separator),
-        KotlinSyntaxListPart::Missing(missing) => {
-            KotlinFormatListPart::Recovery(LayoutDoc::ClaimOnly(format_missing(&missing, doc)))
-        }
-        KotlinSyntaxListPart::Malformed(malformed) => {
-            let recovery = format_malformed(&malformed, doc);
-            KotlinFormatListPart::Recovery(LayoutDoc::from_visibility(
-                recovery,
-                malformed.first_token().is_some(),
-            ))
-        }
-    }
-}
-
-// On WASM, these generic field resolvers are deliberate codegen boundaries.
-// They run for present as well as malformed syntax; `inline(never)` is not a
-// cold-path hint. Native inlining remains optimizer-controlled. Re-measure
-// formatter throughput and optimized WASM size before changing this policy.
-#[cfg_attr(target_arch = "wasm32", inline(never))]
-pub(crate) fn resolve_required_field<'source, T>(
-    field: KotlinSyntaxField<'source, T>,
-    doc: &mut DocBuilder<'source>,
-) -> KotlinFormatField<'source, T> {
-    match field {
-        KotlinSyntaxField::Present(value) => FormatField::Present(value),
-        KotlinSyntaxField::Malformed(malformed) => {
-            FormatField::Malformed(format_malformed(&malformed, doc))
-        }
-        KotlinSyntaxField::Missing(missing) => {
-            FormatField::Malformed(format_missing(&missing, doc))
-        }
-    }
-}
-
-#[cfg_attr(target_arch = "wasm32", inline(never))]
-pub(crate) fn resolve_optional_field<'source, T>(
-    field: KotlinSyntaxField<'source, T>,
-    doc: &mut DocBuilder<'source>,
-) -> KotlinFormatField<'source, Option<T>> {
-    match field {
-        KotlinSyntaxField::Present(value) => FormatField::Present(Some(value)),
-        KotlinSyntaxField::Missing(_) => FormatField::Present(None),
-        KotlinSyntaxField::Malformed(malformed) => {
-            FormatField::Malformed(format_malformed(&malformed, doc))
-        }
-    }
-}
-
-pub(crate) fn format_required_field<'source, T>(
-    field: KotlinSyntaxField<'source, T>,
-    doc: &mut DocBuilder<'source>,
-    structured: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
-) -> Doc<'source> {
-    jolt_fmt_ir::format_required_field(resolve_required_field(field, doc), doc, structured)
-}
-
-pub(crate) fn format_optional_field<'source, T>(
-    field: KotlinSyntaxField<'source, T>,
-    doc: &mut DocBuilder<'source>,
-    structured: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
-) -> Doc<'source> {
-    jolt_fmt_ir::format_optional_field(resolve_optional_field(field, doc), doc, structured)
-}
-
-pub(crate) fn format_missing<'source>(
-    missing: &KotlinMissingSyntax<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    if missing.verbatim_core().is_err() {
-        doc.block_on_invariant("missing Kotlin role did not own an empty verbatim core");
-    }
-    Doc::nil()
 }
