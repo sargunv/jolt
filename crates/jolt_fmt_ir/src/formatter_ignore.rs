@@ -163,12 +163,13 @@ pub enum FormatterIgnoreSplice<'a, 'source> {
     /// Emit the ignored source run before the item at `insert_index` (or after
     /// the last item when trailing).
     Ignore(&'a FormatterIgnoreRun<'source>),
-    /// Format the represented item at `index`. When `clear_blank_line_before` is
-    /// set, the previous ignore run skipped the prior item and blank-line
-    /// separators should be reset.
+    /// Format the represented item at `index`. When `follows_ignore_run` is
+    /// set, the previous ignore run skipped the items immediately before this
+    /// one, so any state a caller carries across items has to be recovered from
+    /// the last skipped item rather than from the last formatted one.
     Item {
         index: usize,
-        clear_blank_line_before: bool,
+        follows_ignore_run: bool,
     },
 }
 
@@ -194,10 +195,10 @@ pub fn for_each_formatter_ignore_splice<'a, 'source>(
         if skip_index < runs.len() && runs[skip_index].skips(index) {
             continue;
         }
-        let clear_blank_line_before = skip_index > 0 && runs[skip_index - 1].skip_end == index;
+        let follows_ignore_run = skip_index > 0 && runs[skip_index - 1].skip_end == index;
         visit(FormatterIgnoreSplice::Item {
             index,
-            clear_blank_line_before,
+            follows_ignore_run,
         });
     }
     while ignored_index < runs.len() {
@@ -582,6 +583,11 @@ pub fn formatter_ignore_run_doc<'source>(
 ) -> Doc<'source> {
     let raw_text = run.raw_text();
     let stripped = strip_first_line_indent(raw_text);
+    // A region whose last line is blank ends the line itself. Leaving that line
+    // open would make it indistinguishable from an ordinary fresh line, and the
+    // separator that follows would write the next item straight onto the blank
+    // line the source asked for.
+    let owns_trailing_blank_line = stripped.ends_with('\n');
     let contents = match stripped {
         Cow::Borrowed(text) => {
             let lines = text.split('\n');
@@ -593,6 +599,10 @@ pub fn formatter_ignore_run_doc<'source>(
                     }
                     let line = docs.text(line);
                     docs.push(line);
+                }
+                if owns_trailing_blank_line {
+                    let line_break = docs.hard_line();
+                    docs.push(line_break);
                 }
             })
         }
@@ -606,6 +616,10 @@ pub fn formatter_ignore_run_doc<'source>(
                     }
                     let line = docs.text(line.to_owned());
                     docs.push(line);
+                }
+                if owns_trailing_blank_line {
+                    let line_break = docs.hard_line();
+                    docs.push(line_break);
                 }
             })
         }

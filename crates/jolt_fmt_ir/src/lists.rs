@@ -131,50 +131,37 @@ pub fn comma_list_parts<'source, L: Language>(
 }
 
 /// How two adjacent items in a body or file are separated.
+///
+/// Both variants are line *boundaries*: they name the line state the gap must
+/// reach, not the breaks to append. Whether the previous item already ended its
+/// own line is then the renderer's business, so no caller has to predict it
+/// from that item's last source token — a prediction an item defeats whenever
+/// it emits layout after its last token, such as a synthesized closing
+/// parenthesis.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BodyItemSeparator {
-    /// Nothing beyond the line the previous item already ended.
-    None,
-    /// A single line break.
+    /// The next item starts on the next line.
     Line,
-    /// A blank line.
+    /// The next item starts after a blank line.
     EmptyLine,
 }
 
 impl BodyItemSeparator {
     /// Chooses the separator between two adjacent items.
-    ///
-    /// `previous_ended_line` means the previous item already ended its own line,
-    /// typically because a trailing line comment forced a break. Opening another
-    /// break on top of that would leave a spurious blank line, so the separator
-    /// steps down: a blank line becomes one break, and one break becomes
-    /// nothing.
     #[must_use]
-    pub const fn between(source_had_blank_line: bool, previous_ended_line: bool) -> Self {
-        match (source_had_blank_line, previous_ended_line) {
-            (false, true) => Self::None,
-            (true, true) | (false, false) => Self::Line,
-            (true, false) => Self::EmptyLine,
+    pub const fn between(source_had_blank_line: bool) -> Self {
+        if source_had_blank_line {
+            Self::EmptyLine
+        } else {
+            Self::Line
         }
-    }
-
-    /// Chooses the separator for a body that always spaces its items apart.
-    #[must_use]
-    pub const fn spaced(previous_ended_line: bool) -> Self {
-        Self::between(true, previous_ended_line)
     }
 
     #[must_use]
     pub fn doc<'source>(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
         match self {
-            // A boundary rather than nothing at all. Whether the previous item
-            // ended its line is a prediction made from that item's last source
-            // token, and an item may emit more layout after its last token — a
-            // synthesized closing parenthesis, say. Emitting nothing on a wrong
-            // prediction runs the next item straight onto the previous one.
-            Self::None => doc.hard_line_boundary(),
-            Self::Line => doc.hard_line(),
-            Self::EmptyLine => doc.empty_line(),
+            Self::Line => doc.hard_line_boundary(),
+            Self::EmptyLine => doc.empty_line_boundary(),
         }
     }
 }

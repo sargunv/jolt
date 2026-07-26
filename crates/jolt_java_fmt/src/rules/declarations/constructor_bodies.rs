@@ -69,15 +69,8 @@ pub(super) fn format_constructor_body<'source>(
         FormatterIgnoreSplice::Ignore(run) => {
             items.push(BodyItem::new(formatter_ignore_run_doc(run, doc), false));
         }
-        FormatterIgnoreSplice::Item {
-            index,
-            clear_blank_line_before,
-        } => {
-            let mut item = format_constructor_body_element(&elements[index], doc);
-            if clear_blank_line_before {
-                item = item.without_blank_line_before();
-            }
-            items.push(item);
+        FormatterIgnoreSplice::Item { index, .. } => {
+            items.push(format_constructor_body_element(&elements[index], doc));
         }
     });
     items.extend(format_constructor_body_close_dangling_comments(doc, close));

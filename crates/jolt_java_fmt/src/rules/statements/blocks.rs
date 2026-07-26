@@ -120,15 +120,8 @@ fn format_block_statement_items_with_ignored<'source>(
         FormatterIgnoreSplice::Ignore(run) => {
             items.push(BodyItem::new(formatter_ignore_run_doc(run, doc), false));
         }
-        FormatterIgnoreSplice::Item {
-            index,
-            clear_blank_line_before,
-        } => {
-            let mut item = format_block_statement_part(&entries[index], doc);
-            if clear_blank_line_before {
-                item = item.without_blank_line_before();
-            }
-            items.push(item);
+        FormatterIgnoreSplice::Item { index, .. } => {
+            items.push(format_block_statement_part(&entries[index], doc));
         }
     });
     items
@@ -209,22 +202,17 @@ pub(crate) fn format_block_statement_item<'source>(
     // block's canonical one-line boundary around their smallest verbatim core.
     let starts_after_blank_line =
         statement.is_recovery_free() && statement.starts_after_blank_line();
-    // A trailing line comment already ended this statement's line, so the next
-    // separator must not open a second one on top of it.
-    let ends_line = statement
-        .last_token()
-        .is_some_and(|token| crate::helpers::comments::trailing_comments_force_line(&token));
     let item = match resolve_required_field(statement.item(), doc) {
         JavaFormatField::Present(item) => item,
         JavaFormatField::Malformed(malformed) => {
-            return BodyItem::new(malformed, starts_after_blank_line).ending_line(ends_line);
+            return BodyItem::new(malformed, starts_after_blank_line);
         }
     };
     let formatted = match item {
         BlockItem::EmptyStatement(empty) => {
             let (removed, visible) = format_removed_empty_statement(&empty, doc);
             return if visible {
-                BodyItem::new(removed, starts_after_blank_line).ending_line(ends_line)
+                BodyItem::new(removed, starts_after_blank_line)
             } else {
                 BodyItem::invisible(removed)
             };
@@ -285,7 +273,7 @@ pub(crate) fn format_block_statement_item<'source>(
         BlockItem::TryStatement(statement) => format_statement(&statement.into(), doc),
         BlockItem::TryWithResourcesStatement(statement) => format_statement(&statement.into(), doc),
     };
-    BodyItem::new(formatted, starts_after_blank_line).ending_line(ends_line)
+    BodyItem::new(formatted, starts_after_blank_line)
 }
 
 fn format_removed_empty_statement<'source>(

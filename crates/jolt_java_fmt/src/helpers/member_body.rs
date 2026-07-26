@@ -12,7 +12,8 @@ pub(crate) enum MemberBodyCategory {
 pub(crate) struct MemberBodyItem<'source> {
     pub(crate) category: Option<MemberBodyCategory>,
     pub(crate) starts_after_blank_line: bool,
-    pub(crate) hard_line_before: bool,
+    /// Whether this item is a verbatim formatter-ignore region.
+    pub(crate) ignored_region: bool,
     pub(crate) doc: Doc<'source>,
     pub(crate) visible: bool,
 }
@@ -22,7 +23,7 @@ impl<'source> MemberBodyItem<'source> {
         Self {
             category: None,
             starts_after_blank_line: false,
-            hard_line_before: false,
+            ignored_region: false,
             doc,
             visible: true,
         }
@@ -32,7 +33,7 @@ impl<'source> MemberBodyItem<'source> {
         Self {
             category: Some(category),
             starts_after_blank_line: false,
-            hard_line_before: false,
+            ignored_region: true,
             doc,
             visible: true,
         }
@@ -42,17 +43,9 @@ impl<'source> MemberBodyItem<'source> {
         Self {
             category: None,
             starts_after_blank_line: false,
-            hard_line_before: false,
+            ignored_region: false,
             doc,
             visible: false,
-        }
-    }
-
-    pub(crate) fn without_blank_line_before(self) -> Self {
-        Self {
-            starts_after_blank_line: false,
-            hard_line_before: true,
-            ..self
         }
     }
 }
@@ -63,6 +56,7 @@ pub(crate) fn join_member_body<'source>(
 ) -> Doc<'source> {
     let mut previous_category = None;
     let mut previous_was_neutral = false;
+    let mut previous_was_ignored_region = false;
     let mut saw_visible = false;
 
     doc.concat_list(|joined| {
@@ -77,13 +71,14 @@ pub(crate) fn join_member_body<'source>(
                     previous_category,
                     member.category,
                     member.starts_after_blank_line,
-                    member.hard_line_before,
                     previous_was_neutral,
+                    previous_was_ignored_region,
                 );
                 joined.push(separator);
             }
             saw_visible = true;
             previous_was_neutral = member.category.is_none();
+            previous_was_ignored_region = member.ignored_region;
             if let Some(category) = member.category {
                 previous_category = Some(category);
             }
@@ -97,11 +92,20 @@ fn member_separator<'source>(
     previous_category: Option<MemberBodyCategory>,
     current_category: Option<MemberBodyCategory>,
     starts_after_blank_line: bool,
-    hard_line_before: bool,
     previous_was_neutral: bool,
+    previous_was_ignored_region: bool,
 ) -> Doc<'source> {
-    if previous_was_neutral || hard_line_before {
+    // A comment or stray token carries no member policy, so the next member
+    // just starts on the next line.
+    if previous_was_neutral {
         return BodyItemSeparator::Line.doc(doc);
+    }
+
+    // An ignored region is the source's own layout. Member spacing policy would
+    // wedge a blank line between the region and its own `@formatter:on` marker,
+    // so keep exactly the spacing the source had after the region.
+    if previous_was_ignored_region {
+        return BodyItemSeparator::between(starts_after_blank_line).doc(doc);
     }
 
     // Which member kinds sit adjacent is Java's own policy; the separator

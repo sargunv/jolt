@@ -106,6 +106,11 @@ enum ProgramEntry<'source> {
     Missing(JavaMissingSyntax<'source>),
 }
 
+/// One top-level section, with the spacing policy that follows it.
+///
+/// Top-level declarations are spaced apart by default. `compact_after` marks
+/// the two places that policy does not apply: after a verbatim formatter-ignore
+/// run, and after a stray empty declaration.
 struct ProgramSection<'source> {
     doc: Doc<'source>,
     visible: bool,
@@ -186,13 +191,9 @@ fn format_program_sections<'source>(
             }
             ProgramEntry::Item(item) => {
                 flush_imports(&mut imports, &mut sections, doc);
-                // A trailing line comment already ended this item's line, so the
-                // separator must not open a second one on top of it.
-                let trailing_ended_line = item
-                    .last_token()
-                    .is_some_and(|token| trailing_comments_force_line(&token));
-                let compact_after =
-                    trailing_ended_line || matches!(item, CompilationUnitItem::EmptyDeclaration(_));
+                // A stray top-level semicolon that kept comments is not a
+                // declaration worth spacing the next one away from.
+                let compact_after = matches!(item, CompilationUnitItem::EmptyDeclaration(_));
                 ProgramSection::visible(format_program_item(item, doc), compact_after)
             }
             ProgramEntry::Token(token) => {
@@ -260,7 +261,7 @@ fn join_program_sections<'source>(
     doc.concat_list(|joined| {
         for section in sections {
             if section.visible && saw_visible {
-                let separator = BodyItemSeparator::spaced(compact_after).doc(joined);
+                let separator = BodyItemSeparator::between(!compact_after).doc(joined);
                 joined.push(separator);
             }
             joined.push(section.doc);

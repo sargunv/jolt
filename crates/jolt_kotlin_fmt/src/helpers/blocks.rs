@@ -19,15 +19,8 @@ impl<'source> BodyItem<'source> {
     pub(crate) fn invisible(doc: Doc<'source>) -> Self {
         Self {
             doc,
-            separator: BodyItemSeparator::None,
-            visible: false,
-        }
-    }
-
-    pub(crate) fn without_blank_line_before(self) -> Self {
-        Self {
             separator: BodyItemSeparator::Line,
-            ..self
+            visible: false,
         }
     }
 }
