@@ -1,0 +1,17 @@
+class LeadingCommentsOnBinaryOperands {
+  fun compute(first: Int, second: Int, third: Int): Int {
+    var sum =
+      // leads the left operand of a binary chain
+      first + second
+    val product =
+      /* block comment leads the left operand */
+      first * second * third
+    val flag =
+      // leads an operand of a mixed chain
+      first > second && second < third
+    sum =
+      // an operand chain that does not fit still breaks at its operators
+      first + second + third + sum + product + first + second + third + sum + product
+    return if (flag) sum else product
+  }
+}

@@ -1,0 +1,205 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class LeadingCommentsOnBinaryOperands {
+  int compute(int first, int second, int third) {
+    int sum =
+      // leads the left operand of a binary chain
+      first + second;
+    int product =
+      /* block comment leads the left operand */
+      first * second * third;
+    boolean flag =
+      // leads an operand of a mixed chain
+      first > second && second < third;
+    int total =
+      // an operand chain that does not fit still breaks at its operators
+      first + second + third + sum + product + first + second + third + sum + product;
+    return flag ? total : sum;
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "LeadingCommentsOnBinaryOperands" @ 6..37 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 38..39
+        ClassBodyMemberList
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 42..45 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "compute" @ 46..53
+            LParen "(" @ 53..54
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 54..57 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "first" @ 58..63
+              Comma "," @ 63..64 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 65..68 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "second" @ 69..75
+              Comma "," @ 75..76 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 77..80 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "third" @ 81..86
+            RParen ")" @ 86..87 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 88..89
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 94..97 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "sum" @ 98..101 trailing=[Whitespace " "]
+                        Assign "=" @ 102..103
+                        VariableInitializer
+                          BinaryExpression
+                            NameExpression
+                              Identifier "first" @ 160..165 leading=[Newline "\n", Whitespace "      ", LineComment "// leads the left operand of a binary chain", Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                            Plus "+" @ 166..167 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "second" @ 168..174
+                  Semicolon ";" @ 174..175
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 180..183 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "product" @ 184..191 trailing=[Whitespace " "]
+                        Assign "=" @ 192..193
+                        VariableInitializer
+                          BinaryExpression
+                            BinaryExpression
+                              NameExpression
+                                Identifier "first" @ 249..254 leading=[Newline "\n", Whitespace "      ", BlockComment "/* block comment leads the left operand */", Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                              Star "*" @ 255..256 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "second" @ 257..263 trailing=[Whitespace " "]
+                            Star "*" @ 264..265 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "third" @ 266..271
+                  Semicolon ";" @ 271..272
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      BooleanKw "boolean" @ 277..284 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "flag" @ 285..289 trailing=[Whitespace " "]
+                        Assign "=" @ 290..291
+                        VariableInitializer
+                          BinaryExpression
+                            BinaryExpression
+                              NameExpression
+                                Identifier "first" @ 341..346 leading=[Newline "\n", Whitespace "      ", LineComment "// leads an operand of a mixed chain", Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                              Gt ">" @ 347..348 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "second" @ 349..355 trailing=[Whitespace " "]
+                            AndAnd "&&" @ 356..358 trailing=[Whitespace " "]
+                            BinaryExpression
+                              NameExpression
+                                Identifier "second" @ 359..365 trailing=[Whitespace " "]
+                              Lt "<" @ 366..367 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "third" @ 368..373
+                  Semicolon ";" @ 373..374
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 379..382 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "total" @ 383..388 trailing=[Whitespace " "]
+                        Assign "=" @ 389..390
+                        VariableInitializer
+                          BinaryExpression
+                            BinaryExpression
+                              BinaryExpression
+                                BinaryExpression
+                                  BinaryExpression
+                                    BinaryExpression
+                                      BinaryExpression
+                                        BinaryExpression
+                                          BinaryExpression
+                                            NameExpression
+                                              Identifier "first" @ 471..476 leading=[Newline "\n", Whitespace "      ", LineComment "// an operand chain that does not fit still breaks at its operators", Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                                            Plus "+" @ 477..478 trailing=[Whitespace " "]
+                                            NameExpression
+                                              Identifier "second" @ 479..485 trailing=[Whitespace " "]
+                                          Plus "+" @ 486..487 trailing=[Whitespace " "]
+                                          NameExpression
+                                            Identifier "third" @ 488..493 trailing=[Whitespace " "]
+                                        Plus "+" @ 494..495 trailing=[Whitespace " "]
+                                        NameExpression
+                                          Identifier "sum" @ 496..499 trailing=[Whitespace " "]
+                                      Plus "+" @ 500..501 trailing=[Whitespace " "]
+                                      NameExpression
+                                        Identifier "product" @ 502..509 trailing=[Whitespace " "]
+                                    Plus "+" @ 510..511 trailing=[Whitespace " "]
+                                    NameExpression
+                                      Identifier "first" @ 512..517 trailing=[Whitespace " "]
+                                  Plus "+" @ 518..519 trailing=[Whitespace " "]
+                                  NameExpression
+                                    Identifier "second" @ 520..526 trailing=[Whitespace " "]
+                                Plus "+" @ 527..528 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "third" @ 529..534 trailing=[Whitespace " "]
+                              Plus "+" @ 535..536 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "sum" @ 537..540 trailing=[Whitespace " "]
+                            Plus "+" @ 541..542 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "product" @ 543..550
+                  Semicolon ";" @ 550..551
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 556..562 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ConditionalExpression
+                      NameExpression
+                        Identifier "flag" @ 563..567 trailing=[Whitespace " "]
+                      Question "?" @ 568..569 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "total" @ 570..575 trailing=[Whitespace " "]
+                      Colon ":" @ 576..577 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "sum" @ 578..581
+                    Semicolon ";" @ 581..582
+              RBrace "}" @ 585..586 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 587..588 leading=[Newline "\n"]
+  Eof "" @ 589..589 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

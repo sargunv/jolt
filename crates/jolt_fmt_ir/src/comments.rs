@@ -119,11 +119,15 @@ pub fn token_has_comments<L: Language>(token: &SyntaxToken<'_, L>) -> bool {
 /// holds another comment of the run or the item the run leads. Any longer run
 /// of blank lines collapses to one, and a blank line is never invented where
 /// the source had none.
+///
+/// The run is marked as a comment prefix so that a group it leads still gets to
+/// measure its code, rather than being broken by the hard line every comment
+/// ends with.
 pub fn format_leading_comment_list<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = Comment<'source>>,
 ) -> Doc<'source> {
-    doc.concat_list(|docs| {
+    let run = doc.concat_list(|docs| {
         for comment in comments {
             let blank_line_after = comment.is_followed_by_blank_line();
             let comment = format_comment(docs, &comment);
@@ -135,7 +139,8 @@ pub fn format_leading_comment_list<'source>(
             };
             docs.push(line);
         }
-    })
+    });
+    doc.comment_prefix(run)
 }
 
 /// Formats a token's leading comments, each on its own line.

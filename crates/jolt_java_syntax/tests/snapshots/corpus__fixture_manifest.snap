@@ -11,7 +11,9 @@ style/comments/content-shapes.java
 style/comments/dangling-comment-blank-lines.java
 style/comments/leading-comment-blank-lines.java
 style/comments/leading-comments-on-assignments.java
+style/comments/leading-comments-on-binary-operands.java
 style/comments/leading-comments-on-constructor-invocations.java
+style/comments/leading-comments-on-member-chains.java
 style/comments/leading-comments-on-parenthesized-expressions.java
 style/comments/lexical-boundaries.java
 style/comments/mixed-comment-line-endings.java

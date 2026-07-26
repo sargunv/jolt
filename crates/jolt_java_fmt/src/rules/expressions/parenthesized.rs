@@ -1,6 +1,6 @@
 use super::{
     Doc, LeadingTrivia, ParenthesizedExpression, TrailingTrivia, comment_forces_line,
-    format_expression, format_leading_comments, format_token, format_token_with_comments,
+    format_expression, format_token, format_token_with_comments,
     format_trailing_comments_before_line_break,
 };
 use crate::helpers::recovery::{JavaFormatField, format_required_field, resolve_required_field};
@@ -19,14 +19,7 @@ pub(super) fn format_parenthesized_expression<'source>(
         JavaFormatField::Present(token) => (Some(token), Doc::nil()),
         JavaFormatField::Malformed(recovery) => (None, recovery),
     };
-    // Comments leading the open parenthesis sit on their own lines, and a hard
-    // line never fits a measured group. Emitting them inside the group below
-    // would break the parentheses apart no matter how short the expression is,
-    // so they are emitted ahead of the group and suppressed on the token.
-    let leading_comments = open
-        .as_ref()
-        .map_or_else(Doc::nil, |open| format_leading_comments(doc, open));
-    let parenthesized = doc_group!(
+    doc_group!(
         doc,
         doc_concat!(
             doc,
@@ -51,8 +44,7 @@ pub(super) fn format_parenthesized_expression<'source>(
                 close_recovery,
             ]
         )
-    );
-    doc_concat!(doc, [leading_comments, parenthesized])
+    )
 }
 
 fn format_parenthesized_expression_open<'source>(
@@ -63,7 +55,7 @@ fn format_parenthesized_expression_open<'source>(
         format_token(
             doc,
             open,
-            LeadingTrivia::SuppressAlreadyHandled,
+            LeadingTrivia::Preserve,
             TrailingTrivia::RelocatedToEnclosingContext,
         )
     })

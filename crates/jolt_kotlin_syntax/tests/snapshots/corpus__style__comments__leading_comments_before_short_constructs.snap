@@ -1,0 +1,236 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+interface ExpressionValue
+
+interface EquatableValue
+
+interface MatchableValue
+
+interface AnInterfaceWithAVeryLongNameThatCrowdsOutOtherSupertypes
+
+/** Leads a declaration whose supertype list still fits beside its header. */
+sealed interface FormattableValue : ExpressionValue
+
+// Line comment leading a declaration with several supertypes.
+sealed interface ComparableValue<T> : ExpressionValue, EquatableValue, MatchableValue
+
+// A supertype list that does not fit still breaks onto its own line.
+sealed interface InterpolatableValue<T> :
+  ExpressionValue,
+  EquatableValue,
+  MatchableValue,
+  AnInterfaceWithAVeryLongNameThatCrowdsOutOtherSupertypes
+
+fun rank(tag: String): Int = when {
+  // Leads a branch whose body still fits beside its arrow.
+  tag.startsWith("@return") -> 1
+  else -> 2
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    InterfaceDeclaration
+      ModifierList
+      ModifierList
+      InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
+      Name
+        Identifier "ExpressionValue" @ 10..25
+    InterfaceDeclaration
+      ModifierList
+      ModifierList
+      InterfaceKw "interface" @ 27..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "EquatableValue" @ 37..51
+    InterfaceDeclaration
+      ModifierList
+      ModifierList
+      InterfaceKw "interface" @ 53..62 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "MatchableValue" @ 63..77
+    InterfaceDeclaration
+      ModifierList
+      ModifierList
+      InterfaceKw "interface" @ 79..88 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "AnInterfaceWithAVeryLongNameThatCrowdsOutOtherSupertypes" @ 89..145
+    InterfaceDeclaration
+      ModifierList
+        Identifier "sealed" @ 225..231 leading=[Newline "\n", Newline "\n", DocComment "/** Leads a declaration whose supertype list still fits beside its header. */", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      InterfaceKw "interface" @ 232..241 trailing=[Whitespace " "]
+      Name
+        Identifier "FormattableValue" @ 242..258 trailing=[Whitespace " "]
+      DelegationClause
+        Colon ":" @ 259..260 trailing=[Whitespace " "]
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "ExpressionValue" @ 261..276
+    InterfaceDeclaration
+      ModifierList
+        Identifier "sealed" @ 341..347 leading=[Newline "\n", Newline "\n", LineComment "// Line comment leading a declaration with several supertypes.", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      InterfaceKw "interface" @ 348..357 trailing=[Whitespace " "]
+      Name
+        Identifier "ComparableValue" @ 358..373
+      TypeParameterList
+        Lt "<" @ 373..374
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierList
+            Name
+              Identifier "T" @ 374..375
+        Gt ">" @ 375..376 trailing=[Whitespace " "]
+      DelegationClause
+        Colon ":" @ 377..378 trailing=[Whitespace " "]
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "ExpressionValue" @ 379..394
+          Comma "," @ 394..395 trailing=[Whitespace " "]
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "EquatableValue" @ 396..410
+          Comma "," @ 410..411 trailing=[Whitespace " "]
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "MatchableValue" @ 412..426
+    InterfaceDeclaration
+      ModifierList
+        Identifier "sealed" @ 498..504 leading=[Newline "\n", Newline "\n", LineComment "// A supertype list that does not fit still breaks onto its own line.", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      InterfaceKw "interface" @ 505..514 trailing=[Whitespace " "]
+      Name
+        Identifier "InterpolatableValue" @ 515..534
+      TypeParameterList
+        Lt "<" @ 534..535
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierList
+            Name
+              Identifier "T" @ 535..536
+        Gt ">" @ 536..537 trailing=[Whitespace " "]
+      DelegationClause
+        Colon ":" @ 538..539
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "ExpressionValue" @ 542..557 leading=[Newline "\n", Whitespace "  "]
+          Comma "," @ 557..558
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "EquatableValue" @ 561..575 leading=[Newline "\n", Whitespace "  "]
+          Comma "," @ 575..576
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "MatchableValue" @ 579..593 leading=[Newline "\n", Whitespace "  "]
+          Comma "," @ 593..594
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "AnInterfaceWithAVeryLongNameThatCrowdsOutOtherSupertypes" @ 597..653 leading=[Newline "\n", Whitespace "  "]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 655..658 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "rank" @ 659..663
+      ValueParameterList
+        LParen "(" @ 663..664
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "tag" @ 664..667
+            Colon ":" @ 667..668 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "String" @ 669..675
+        RParen ")" @ 675..676
+      Colon ":" @ 676..677 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 678..681 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 682..683 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 684..688 trailing=[Whitespace " "]
+          LBrace "{" @ 689..690
+          WhenEntryList
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  CallExpression
+                    NavigationExpression
+                      NameExpression
+                        Identifier "tag" @ 753..756 leading=[Newline "\n", Whitespace "  ", LineComment "// Leads a branch whose body still fits beside its arrow.", Newline "\n", Whitespace "  "]
+                      Dot "." @ 756..757
+                      Identifier "startsWith" @ 757..767
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 767..768
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                OpenQuote "\"" @ 768..769
+                              StringTemplateEntry
+                                RegularStringPart "@return" @ 769..776
+                            ClosingQuote "\"" @ 776..777
+                      RParen ")" @ 777..778 trailing=[Whitespace " "]
+                    LambdaExpressionList
+              Arrow "->" @ 779..781 trailing=[Whitespace " "]
+              WhenEntryBody
+                LiteralExpression
+                  IntegerLiteral "1" @ 782..783
+            WhenEntry
+              ElseKw "else" @ 786..790 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 791..793 trailing=[Whitespace " "]
+              WhenEntryBody
+                LiteralExpression
+                  IntegerLiteral "2" @ 794..795
+          RBrace "}" @ 796..797 leading=[Newline "\n"]
+  Eof "" @ 798..798 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

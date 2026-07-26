@@ -321,6 +321,10 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
                 stack.push(RenderCommand::Doc(*contents, mode));
                 Ok(())
             }
+            Some(DocNode::CommentPrefix { contents }) => {
+                stack.push(RenderCommand::Doc(*contents, mode));
+                Ok(())
+            }
             Some(DocNode::Line(line)) => {
                 self.render_line(line, mode);
                 Ok(())
@@ -584,6 +588,9 @@ struct FitChecker<'base, 'scratch, 'source> {
     group_stack: &'scratch mut Vec<Mode>,
     remaining_commands: usize,
     measured_group_active: bool,
+    /// Whether nothing that occupies the line has been measured yet, so a
+    /// leading comment run is still a prefix of the group being measured.
+    at_group_start: bool,
 }
 
 impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
@@ -602,6 +609,7 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
             group_stack,
             remaining_commands: FLAT_FIT_COMMAND_BUDGET,
             measured_group_active: true,
+            at_group_start: true,
         }
     }
 
@@ -637,6 +645,7 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
             FitCommand::EndMeasuredGroup => {
                 self.group_stack.pop();
                 self.measured_group_active = false;
+                self.at_group_start = false;
                 FitResult::Continue
             }
             FitCommand::EndGroup => {
@@ -658,12 +667,14 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
         match arena.node(doc) {
             None => FitResult::Continue,
             Some(DocNode::Text(text)) if text.text == " " => {
+                self.at_group_start = false;
                 if self.horizontal_whitespace == HorizontalWhitespace::None {
                     self.horizontal_whitespace = HorizontalWhitespace::Pending;
                 }
                 FitResult::Continue
             }
             Some(DocNode::Text(text)) if text.is_multiline() => {
+                self.at_group_start = false;
                 if self.measured_group_active {
                     return FitResult::No;
                 }
@@ -673,7 +684,12 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
                     FitResult::Done
                 }
             }
-            Some(DocNode::Text(text)) => self.text_width_result(&text.text, text.final_width()),
+            Some(DocNode::Text(text)) => {
+                if !text.text.is_empty() {
+                    self.at_group_start = false;
+                }
+                self.text_width_result(&text.text, text.final_width())
+            }
             Some(DocNode::InlineConcat { docs, len }) => {
                 for child in docs[..usize::from(*len)].iter().rev() {
                     stack.push(FitCommand::Doc(*child, mode));
@@ -699,8 +715,24 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
                 stack.push(FitCommand::Doc(*contents, mode));
                 FitResult::Continue
             }
-            Some(DocNode::Line(line)) => self.fit_line(line, mode),
+            // A comment run that still leads the measured group renders on its
+            // own lines, so it costs the group nothing; the code after it starts
+            // a fresh line at the column the measurement began from. Once any
+            // content has been measured the run is no longer a prefix, and it
+            // has to break the group the way any other hard line does.
+            Some(DocNode::CommentPrefix { contents }) => {
+                if self.at_group_start {
+                    return FitResult::Continue;
+                }
+                stack.push(FitCommand::Doc(*contents, mode));
+                FitResult::Continue
+            }
+            Some(DocNode::Line(line)) => {
+                self.at_group_start = false;
+                self.fit_line(line, mode)
+            }
             Some(DocNode::IfBreak { breaks, flat }) => {
+                self.at_group_start = false;
                 let is_broken = self.group_is_broken();
                 stack.push(FitCommand::Doc(
                     if is_broken { *breaks } else { *flat },

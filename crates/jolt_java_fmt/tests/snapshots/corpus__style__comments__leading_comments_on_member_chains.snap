@@ -1,0 +1,36 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class LeadingCommentsOnMemberChains {
+  int value;
+
+  LeadingCommentsOnMemberChains next() {
+    return this;
+  }
+
+  int measure(int first, int second) {
+    return first + second;
+  }
+
+  void chains(LeadingCommentsOnMemberChains other) {
+    // leads a chain on a parenthesized base
+    (new LeadingCommentsOnMemberChains()).measure(1, 2);
+    /* block comment leads a chain on a parenthesized base */
+    (other).next().value = 3;
+    // leads a chain on a name base
+    other.next().next().value = 4;
+    // a chain that does not fit still breaks onto its own lines
+    (new LeadingCommentsOnMemberChains())
+      .next()
+      .next()
+      .next()
+      .next()
+      .next()
+      .measure(1, 2);
+  }
+}
+
+diagnostics:
+(none)
