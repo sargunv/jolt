@@ -1,0 +1,100 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package a //x
+;
+
+import b.c.D //y
+;
+
+import e.F //z
+;
+
+class NameSegmentLineComments {
+  void method(
+    final @Deprecated // annotation stays put
+    String value
+  ) {
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    PackageDeclaration
+      AnnotationList
+      PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+      Name
+        Identifier "a" @ 8..9 trailing=[Whitespace " ", LineComment "//x"]
+      Semicolon ";" @ 14..15 leading=[Newline "\n"]
+    ImportDeclaration
+      ImportKw "import" @ 17..23 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "b" @ 24..25
+        Dot "." @ 25..26
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "c" @ 26..27
+          Dot "." @ 27..28
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "D" @ 28..29 trailing=[Whitespace " ", LineComment "//y"]
+      Semicolon ";" @ 34..35 leading=[Newline "\n"]
+    ImportDeclaration
+      ImportKw "import" @ 37..43 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "e" @ 44..45
+        Dot "." @ 45..46
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "F" @ 46..47 trailing=[Whitespace " ", LineComment "//z"]
+      Semicolon ";" @ 52..53 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 55..60 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "NameSegmentLineComments" @ 61..84 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 85..86
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 89..93 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "method" @ 94..100
+            LParen "(" @ 100..101
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                  FinalKw "final" @ 106..111 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  Annotation
+                    At "@" @ 112..113
+                    Name
+                      Identifier "Deprecated" @ 113..123 trailing=[Whitespace " ", LineComment "// annotation stays put"]
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 152..158 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 159..164
+            RParen ")" @ 167..168 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 169..170
+              BlockStatementList
+              RBrace "}" @ 173..174 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 175..176 leading=[Newline "\n"]
+  Eof "" @ 177..177 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
