@@ -1,0 +1,31 @@
+// a comment above a declaration must not break its header clauses
+class ExtendsWithComment extends Base {
+}
+
+// comment
+interface InterfaceWithComment extends Base {
+}
+
+// comment
+record RecordWithComment(int a) implements Base {
+}
+
+// comment
+enum EnumWithComment implements Base {
+  A
+}
+
+class Members {
+  // comment
+  void methodThrows() throws Exception {
+  }
+
+  // comment
+  Members() throws Exception {
+  }
+
+  // comment
+  <T> T genericMethodThrows(T value) throws Exception {
+    return value;
+  }
+}

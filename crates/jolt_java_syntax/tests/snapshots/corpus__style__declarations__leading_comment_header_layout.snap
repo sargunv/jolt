@@ -1,0 +1,216 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+// a comment above a declaration must not break its header clauses
+class ExtendsWithComment extends Base {
+}
+
+// comment
+interface InterfaceWithComment extends Base {
+}
+
+// comment
+record RecordWithComment(int a) implements Base {
+}
+
+// comment
+enum EnumWithComment implements Base {
+  A
+}
+
+class Members {
+  // comment
+  void methodThrows() throws Exception {
+  }
+
+  // comment
+  Members() throws Exception {
+  }
+
+  // comment
+  <T> T genericMethodThrows(T value) throws Exception {
+    return value;
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 67..72 leading=[LineComment "// a comment above a declaration must not break its header clauses", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "ExtendsWithComment" @ 73..91 trailing=[Whitespace " "]
+      ExtendsClause
+        ExtendsKw "extends" @ 92..99 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Base" @ 100..104 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 105..106
+        ClassBodyMemberList
+        RBrace "}" @ 107..108 leading=[Newline "\n"]
+    InterfaceDeclaration
+      InterfaceKw "interface" @ 121..130 leading=[Newline "\n", Newline "\n", LineComment "// comment", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "InterfaceWithComment" @ 131..151 trailing=[Whitespace " "]
+      ExtendsClause
+        ExtendsKw "extends" @ 152..159 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Base" @ 160..164 trailing=[Whitespace " "]
+      InterfaceBody
+        LBrace "{" @ 165..166
+        InterfaceBodyMemberList
+        RBrace "}" @ 167..168 leading=[Newline "\n"]
+    RecordDeclaration
+      Identifier "record" @ 181..187 leading=[Newline "\n", Newline "\n", LineComment "// comment", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "RecordWithComment" @ 188..205
+      LParen "(" @ 205..206
+      RecordComponentList
+        RecordComponent
+          ParameterModifierList
+          PrimitiveType
+            AnnotationList
+            IntKw "int" @ 206..209 trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "a" @ 210..211
+      RParen ")" @ 211..212 trailing=[Whitespace " "]
+      ImplementsClause
+        ImplementsKw "implements" @ 213..223 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Base" @ 224..228 trailing=[Whitespace " "]
+      RecordBody
+        LBrace "{" @ 229..230
+        RecordBodyMemberList
+        RBrace "}" @ 231..232 leading=[Newline "\n"]
+    EnumDeclaration
+      EnumKw "enum" @ 245..249 leading=[Newline "\n", Newline "\n", LineComment "// comment", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "EnumWithComment" @ 250..265 trailing=[Whitespace " "]
+      ImplementsClause
+        ImplementsKw "implements" @ 266..276 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Base" @ 277..281 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 282..283
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+            Identifier "A" @ 286..287 leading=[Newline "\n", Whitespace "  "]
+        ClassBodyMemberList
+        RBrace "}" @ 288..289 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 291..296 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Members" @ 297..304 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 305..306
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 322..326 leading=[Newline "\n", Whitespace "  ", LineComment "// comment", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "methodThrows" @ 327..339
+            LParen "(" @ 339..340
+            RParen ")" @ 340..341 trailing=[Whitespace " "]
+            ThrowsClause
+              ThrowsKw "throws" @ 342..348 trailing=[Whitespace " "]
+              TypeList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Exception" @ 349..358 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 359..360
+              BlockStatementList
+              RBrace "}" @ 363..364 leading=[Newline "\n", Whitespace "  "]
+          ConstructorDeclaration
+            Identifier "Members" @ 381..388 leading=[Newline "\n", Newline "\n", Whitespace "  ", LineComment "// comment", Newline "\n", Whitespace "  "]
+            LParen "(" @ 388..389
+            RParen ")" @ 389..390 trailing=[Whitespace " "]
+            ThrowsClause
+              ThrowsKw "throws" @ 391..397 trailing=[Whitespace " "]
+              TypeList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Exception" @ 398..407 trailing=[Whitespace " "]
+            ConstructorBody
+              LBrace "{" @ 408..409
+              ConstructorBodyEntryList
+              RBrace "}" @ 412..413 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            TypeParameterList
+              Lt "<" @ 430..431 leading=[Newline "\n", Newline "\n", Whitespace "  ", LineComment "// comment", Newline "\n", Whitespace "  "]
+              TypeParameterSeparatedList
+                TypeParameter
+                  AnnotationList
+                  Identifier "T" @ 431..432
+              Gt ">" @ 432..433 trailing=[Whitespace " "]
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "T" @ 434..435 trailing=[Whitespace " "]
+            Identifier "genericMethodThrows" @ 436..455
+            LParen "(" @ 455..456
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "T" @ 456..457 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 458..463
+            RParen ")" @ 463..464 trailing=[Whitespace " "]
+            ThrowsClause
+              ThrowsKw "throws" @ 465..471 trailing=[Whitespace " "]
+              TypeList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Exception" @ 472..481 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 482..483
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 488..494 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "value" @ 495..500
+                    Semicolon ";" @ 500..501
+              RBrace "}" @ 504..505 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 506..507 leading=[Newline "\n"]
+  Eof "" @ 508..508 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

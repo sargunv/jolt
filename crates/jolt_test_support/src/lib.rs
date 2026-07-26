@@ -1164,7 +1164,10 @@ pub fn assert_no_line_exceeds_width(formatted: &str, label: &str, line_width: u1
 }
 
 /// Formats `sources` with a block comment inserted after every token boundary,
-/// asserting the formatter never blocks.
+/// asserting the formatter never blocks and stays idempotent.
+///
+/// Line comments are a known gap: sweeping them finds further Kotlin failures
+/// that are not yet fixed, so this stays on block comments until they are.
 ///
 /// A trailing comment is only emitted if some rule takes responsibility for it.
 /// `TrailingTrivia::RelocatedToEnclosingContext` moves that responsibility to
@@ -1194,19 +1197,35 @@ pub fn assert_comments_format_at_every_token_position<L: CorpusLanguage>(
             let token_end = next_token_end(source, boundary);
             let Some(token_end) = token_end else { break };
             boundary = token_end;
-            let mut probe = String::with_capacity(source.len() + 8);
-            probe.push_str(&source[..token_end]);
-            probe.push_str(" /*c*/");
-            probe.push_str(&source[token_end..]);
-            if let Err(diagnostic) = format(&probe) {
-                blocked.push(format!("  {probe}\n    -> {}", diagnostic.message));
+            for insert in [" /*c*/"] {
+                let mut probe = String::with_capacity(source.len() + insert.len());
+                probe.push_str(&source[..token_end]);
+                probe.push_str(insert);
+                probe.push_str(&source[token_end..]);
+                let once = match format(&probe) {
+                    Ok(once) => once,
+                    Err(diagnostic) => {
+                        blocked.push(format!("  {probe:?}\n    refused: {}", diagnostic.message));
+                        continue;
+                    }
+                };
+                match format(&once) {
+                    Err(diagnostic) => blocked.push(format!(
+                        "  {probe:?}\n    refused on reformat: {}",
+                        diagnostic.message
+                    )),
+                    Ok(twice) if twice != once => blocked.push(format!(
+                        "  {probe:?}\n    not idempotent:\n--- once\n{once}--- twice\n{twice}"
+                    )),
+                    Ok(_) => {}
+                }
             }
         }
     }
 
     assert!(
         blocked.is_empty(),
-        "{} formatter dropped a comment at {} token position(s):\n{}",
+        "{} formatter mishandled a comment at {} token position(s):\n{}",
         lang.language_name(),
         blocked.len(),
         blocked.join("\n")
