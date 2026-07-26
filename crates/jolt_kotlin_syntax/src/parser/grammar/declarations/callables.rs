@@ -662,7 +662,16 @@ impl Parser<'_> {
         if let Some(separator_position) = self.callable_receiver_separator_position() {
             let marker = self.start();
             self.parse_type_reference_until_position(separator_position);
-            self.eat_asserted(K::Dot);
+            // The separator position is computed by lookahead, which trivia can
+            // desynchronise, so record a missing separator rather than asserting.
+            if !self.eat(K::Dot) {
+                let diagnostic = self.pending_expected("expected receiver separator");
+                self.missing_required_slot(
+                    marker.anchor(),
+                    crate::shape::callable_name::Slot::dot as u16,
+                    [diagnostic],
+                );
+            }
             self.parse_name();
             self.complete(marker, K::CallableName);
             true

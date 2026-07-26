@@ -888,6 +888,7 @@ macro_rules! kotlin_syntax_schema {
                     arrow: required (token Arrow);
                 }
                 LambdaParameter => LambdaParameter [lambda_parameter valid] {
+                    modifiers: required (list ModifierList);
                     binding: required (node LambdaParameterBinding);
                     colon: optional (token Colon);
                     r#type: optional (node TypeReference);

@@ -170,6 +170,7 @@ KotlinFile
                         LambdaParameterList
                           LambdaParameterSeparatedList
                             LambdaParameter
+                              ModifierList
                               LambdaParameterBinding
                                 Name
                                   Identifier "value" @ 217..222 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lambda-param */", Whitespace " "]

@@ -115,6 +115,7 @@ KotlinFile
             LambdaParameterList
               LambdaParameterSeparatedList
                 LambdaParameter
+                  ModifierList
                   LambdaParameterBinding
                     Name
                       Identifier "value" @ 146..151 trailing=[Whitespace " "]

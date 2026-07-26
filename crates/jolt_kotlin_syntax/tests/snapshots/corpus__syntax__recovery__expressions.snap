@@ -208,6 +208,7 @@ KotlinFile
                 BogusLambdaParameter
                 Comma "," @ 236..237 trailing=[Whitespace " "]
                 LambdaParameter
+                  ModifierList
                   LambdaParameterBinding
                     Name
                       Identifier "value" @ 238..243 trailing=[Whitespace " "]

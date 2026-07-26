@@ -64,6 +64,7 @@ KotlinFile
                         LambdaParameterList
                           LambdaParameterSeparatedList
                             LambdaParameter
+                              ModifierList
                               LambdaParameterBinding
                                 Name
                                   Identifier "value" @ 59..64 trailing=[Whitespace " "]

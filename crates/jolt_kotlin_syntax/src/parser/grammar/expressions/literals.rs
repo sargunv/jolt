@@ -5,6 +5,19 @@ use crate::KotlinSyntaxKind as K;
 use super::super::Parser;
 
 impl Parser<'_> {
+    /// Parses the annotation-only modifier list a lambda parameter admits.
+    fn parse_lambda_parameter_annotations(&mut self) {
+        let modifiers = self.start();
+        while self.at(K::At) || self.at(K::Hash) {
+            let before = self.position();
+            self.parse_annotation();
+            if self.position() == before {
+                break;
+            }
+        }
+        self.complete(modifiers, K::ModifierList);
+    }
+
     pub(super) fn parse_lambda_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
         let body = self.start();
@@ -28,6 +41,10 @@ impl Parser<'_> {
                     continue;
                 }
                 let parameter = self.start();
+                // A lambda parameter admits annotations but no modifier
+                // keywords: `value`, `data` and friends are soft keywords that
+                // are ordinary parameter names here.
+                self.parse_lambda_parameter_annotations();
                 let binding = self.start();
                 self.parse_name_or_destructuring();
                 self.complete(binding, K::LambdaParameterBinding);

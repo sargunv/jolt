@@ -135,6 +135,7 @@ KotlinFile
                                   LambdaParameterList
                                     LambdaParameterSeparatedList
                                       LambdaParameter
+                                        ModifierList
                                         LambdaParameterBinding
                                           Name
                                             Identifier "raw" @ 137..140 trailing=[Whitespace " "]
@@ -230,6 +231,7 @@ KotlinFile
                               LambdaParameterList
                                 LambdaParameterSeparatedList
                                   LambdaParameter
+                                    ModifierList
                                     LambdaParameterBinding
                                       Name
                                         Identifier "length" @ 342..348 trailing=[Whitespace " "]

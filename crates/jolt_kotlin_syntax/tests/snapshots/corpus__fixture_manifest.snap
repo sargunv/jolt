@@ -29,6 +29,7 @@ style/expressions/destructuring.kt
 style/expressions/elvis-and-safe-calls.kt
 style/expressions/labeled-nested-lambdas.kt
 style/expressions/lambda-formatting.kt
+style/expressions/lambda-parameter-modifiers.kt
 style/expressions/lambdas-and-trailing.kt
 style/expressions/member-chain-expression-body.kt
 style/expressions/operator-line-comments.kt

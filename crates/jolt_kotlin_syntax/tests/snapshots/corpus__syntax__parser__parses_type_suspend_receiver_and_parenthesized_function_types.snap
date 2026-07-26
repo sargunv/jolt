@@ -134,6 +134,7 @@ KotlinFile
             LambdaParameterList
               LambdaParameterSeparatedList
                 LambdaParameter
+                  ModifierList
                   LambdaParameterBinding
                     Name
                       Identifier "count" @ 183..188 trailing=[Whitespace " "]

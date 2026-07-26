@@ -17,6 +17,7 @@ use crate::helpers::recovery::{
 use crate::rules::declarations::format_destructuring_declaration;
 use crate::rules::names::format_name_with_leading;
 use crate::rules::statements::format_block_item;
+use crate::rules::types::format_modifier_sequence;
 use crate::rules::types::format_type_reference;
 
 pub(super) fn format_lambda_expression<'source>(
@@ -186,7 +187,9 @@ fn format_lambda_parameter_prefix<'source>(
         )
     });
     let visible_item_count = items.iter().filter(|item| item.is_visible()).count();
-    doc.concat_list(|docs| {
+    // A parameter annotation ends its own line, so the parameters that follow it
+    // must be indented rather than landing back at column zero.
+    let prefix = doc.concat_list(|docs| {
         let mut visible_index = 0;
         for item in items {
             docs.push(item.doc());
@@ -208,13 +211,17 @@ fn format_lambda_parameter_prefix<'source>(
             docs.push(space);
         }
         docs.push(arrow);
-    })
+    });
+    doc.indent(prefix)
 }
 
 fn format_lambda_parameter<'source>(
     doc: &mut DocBuilder<'source>,
     parameter: &LambdaParameter<'source>,
 ) -> Doc<'source> {
+    let modifiers = format_required_field(parameter.modifiers(), doc, |modifiers, doc| {
+        format_modifier_sequence(doc, &modifiers)
+    });
     let binding = format_required_field(parameter.binding(), doc, |binding, doc| {
         format_required_field(binding.binding(), doc, |binding, doc| {
             match binding.classify() {
@@ -249,7 +256,7 @@ fn format_lambda_parameter<'source>(
     let ty = format_optional_field(parameter.r#type(), doc, |ty, doc| {
         format_type_reference(doc, &ty)
     });
-    doc.concat([binding, colon, ty])
+    doc.concat([modifiers, binding, colon, ty])
 }
 
 pub(super) fn lambda_body_doc<'source>(

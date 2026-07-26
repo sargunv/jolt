@@ -195,6 +195,7 @@ KotlinFile
                         LambdaParameterList
                           LambdaParameterSeparatedList
                             LambdaParameter
+                              ModifierList
                               LambdaParameterBinding
                                 Name
                                   Identifier "index" @ 251..256 trailing=[Whitespace " "]

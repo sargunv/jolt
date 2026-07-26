@@ -121,6 +121,7 @@ KotlinFile
                             LambdaParameterList
                               LambdaParameterSeparatedList
                                 LambdaParameter
+                                  ModifierList
                                   LambdaParameterBinding
                                     Name
                                       Identifier "group" @ 124..129 trailing=[Whitespace " "]
@@ -146,6 +147,7 @@ KotlinFile
                                               LambdaParameterList
                                                 LambdaParameterSeparatedList
                                                   LambdaParameter
+                                                    ModifierList
                                                     LambdaParameterBinding
                                                       Name
                                                         Identifier "item" @ 163..167 trailing=[Whitespace " "]

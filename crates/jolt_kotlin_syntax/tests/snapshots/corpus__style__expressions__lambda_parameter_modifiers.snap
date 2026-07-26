@@ -1,0 +1,249 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val annotated = { @Anno x: Int -> x }
+val multiple = { @A @B x: Int, y: Int -> x }
+val noType = { @Anno x -> x }
+val plain = { x: Int -> x }
+val destructured = { (a, b) -> a }
+val softKeywordNames = { value -> value }
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      Name
+        Identifier "annotated" @ 4..13 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 14..15 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 16..17 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  ModifierList
+                    Annotation
+                      At "@" @ 18..19
+                      QualifiedName
+                        QualifiedNameSegmentList
+                          Name
+                            Identifier "Anno" @ 19..23 trailing=[Whitespace " "]
+                  LambdaParameterBinding
+                    Name
+                      Identifier "x" @ 24..25
+                  Colon ":" @ 25..26 trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "Int" @ 27..30 trailing=[Whitespace " "]
+              Arrow "->" @ 31..33 trailing=[Whitespace " "]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  NameExpression
+                    Identifier "x" @ 34..35 trailing=[Whitespace " "]
+                TerminatorList
+            RBrace "}" @ 36..37
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 38..41 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "multiple" @ 42..50 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 51..52 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 53..54 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  ModifierList
+                    Annotation
+                      At "@" @ 55..56
+                      QualifiedName
+                        QualifiedNameSegmentList
+                          Name
+                            Identifier "A" @ 56..57 trailing=[Whitespace " "]
+                    Annotation
+                      At "@" @ 58..59
+                      QualifiedName
+                        QualifiedNameSegmentList
+                          Name
+                            Identifier "B" @ 59..60 trailing=[Whitespace " "]
+                  LambdaParameterBinding
+                    Name
+                      Identifier "x" @ 61..62
+                  Colon ":" @ 62..63 trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "Int" @ 64..67
+                Comma "," @ 67..68 trailing=[Whitespace " "]
+                LambdaParameter
+                  ModifierList
+                  LambdaParameterBinding
+                    Name
+                      Identifier "y" @ 69..70
+                  Colon ":" @ 70..71 trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "Int" @ 72..75 trailing=[Whitespace " "]
+              Arrow "->" @ 76..78 trailing=[Whitespace " "]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  NameExpression
+                    Identifier "x" @ 79..80 trailing=[Whitespace " "]
+                TerminatorList
+            RBrace "}" @ 81..82
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 83..86 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "noType" @ 87..93 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 94..95 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 96..97 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  ModifierList
+                    Annotation
+                      At "@" @ 98..99
+                      QualifiedName
+                        QualifiedNameSegmentList
+                          Name
+                            Identifier "Anno" @ 99..103 trailing=[Whitespace " "]
+                  LambdaParameterBinding
+                    Name
+                      Identifier "x" @ 104..105 trailing=[Whitespace " "]
+              Arrow "->" @ 106..108 trailing=[Whitespace " "]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  NameExpression
+                    Identifier "x" @ 109..110 trailing=[Whitespace " "]
+                TerminatorList
+            RBrace "}" @ 111..112
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 113..116 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "plain" @ 117..122 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 123..124 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 125..126 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  ModifierList
+                  LambdaParameterBinding
+                    Name
+                      Identifier "x" @ 127..128
+                  Colon ":" @ 128..129 trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "Int" @ 130..133 trailing=[Whitespace " "]
+              Arrow "->" @ 134..136 trailing=[Whitespace " "]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  NameExpression
+                    Identifier "x" @ 137..138 trailing=[Whitespace " "]
+                TerminatorList
+            RBrace "}" @ 139..140
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 141..144 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "destructured" @ 145..157 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 158..159 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 160..161 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  ModifierList
+                  LambdaParameterBinding
+                    DestructuringDeclaration
+                      LParen "(" @ 162..163
+                      DestructuringEntrySeparatedList
+                        DestructuringEntry
+                          Name
+                            Identifier "a" @ 163..164
+                        Comma "," @ 164..165 trailing=[Whitespace " "]
+                        DestructuringEntry
+                          Name
+                            Identifier "b" @ 166..167
+                      RParen ")" @ 167..168 trailing=[Whitespace " "]
+              Arrow "->" @ 169..171 trailing=[Whitespace " "]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  NameExpression
+                    Identifier "a" @ 172..173 trailing=[Whitespace " "]
+                TerminatorList
+            RBrace "}" @ 174..175
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 176..179 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "softKeywordNames" @ 180..196 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 197..198 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 199..200 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  ModifierList
+                  LambdaParameterBinding
+                    Name
+                      Identifier "value" @ 201..206 trailing=[Whitespace " "]
+              Arrow "->" @ 207..209 trailing=[Whitespace " "]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  NameExpression
+                    Identifier "value" @ 210..215 trailing=[Whitespace " "]
+                TerminatorList
+            RBrace "}" @ 216..217
+      PropertyBodyMemberList
+  Eof "" @ 218..218 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

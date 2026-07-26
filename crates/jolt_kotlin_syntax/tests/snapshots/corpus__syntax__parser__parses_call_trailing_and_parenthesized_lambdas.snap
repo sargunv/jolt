@@ -100,6 +100,7 @@ KotlinFile
                                 LambdaParameterList
                                   LambdaParameterSeparatedList
                                     LambdaParameter
+                                      ModifierList
                                       LambdaParameterBinding
                                         Name
                                           Identifier "value" @ 78..83 trailing=[Whitespace " "]
@@ -135,11 +136,13 @@ KotlinFile
                         LambdaParameterList
                           LambdaParameterSeparatedList
                             LambdaParameter
+                              ModifierList
                               LambdaParameterBinding
                                 Name
                                   Identifier "acc" @ 119..122
                             Comma "," @ 122..123 trailing=[Whitespace " "]
                             LambdaParameter
+                              ModifierList
                               LambdaParameterBinding
                                 Name
                                   Identifier "value" @ 124..129 trailing=[Whitespace " "]
