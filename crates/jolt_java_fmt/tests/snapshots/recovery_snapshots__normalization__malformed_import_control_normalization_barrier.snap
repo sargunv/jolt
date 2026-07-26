@@ -11,9 +11,7 @@ class C { void f(boolean ok) { if () ; while (ok) ; } }
 
 formatted:
 import z.Z;
-
 import broken+;
-
 import a.A;
 import c.C;
 

@@ -120,7 +120,6 @@ class TrailingSeparatorAtEof {
       1,
 
 
-
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(42), end: TextSize(43) }) message=expected type parameter
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(68), end: TextSize(69) }) message=expected type argument

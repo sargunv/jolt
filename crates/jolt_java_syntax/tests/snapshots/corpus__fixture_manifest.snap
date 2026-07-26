@@ -72,6 +72,7 @@ style/expressions/operators-and-ternaries.java
 style/expressions/readability-parenthesized-binaries.java
 style/expressions/unary-parenthesized-operators.java
 style/imports/case-sensitive-sorting.java
+style/imports/comment-barrier-blank-lines.java
 style/imports/comment-barrier.java
 style/imports/normal-and-static-groups.java
 style/imports/sorted-comments.java
@@ -88,6 +89,7 @@ style/modules/name-list-comments.java
 style/modules/qualified-names.java
 style/modules/sorted-directive-comments.java
 style/program/comment-only-file.java
+style/program/comments-on-removed-semicolons.java
 style/program/empty-file.java
 style/program/final-newline.java
 style/program/formatter-ignore-top-level-next-item.java

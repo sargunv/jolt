@@ -6,7 +6,7 @@ use jolt_java_syntax::{
 
 use crate::helpers::comments::{
     comments_from_tokens, format_comment, format_ignored_trivia, format_token_removal,
-    format_token_with_comments, has_removed_comments, trailing_comments_force_line,
+    format_token_with_comments, has_removed_comments,
 };
 use crate::helpers::recovery::{
     JavaFormatField, format_malformed, format_missing, format_required_field,
@@ -65,31 +65,34 @@ pub(crate) fn format_compilation_unit<'source>(
         format_program_entries_with_ignored(entries, &runs, doc)
     };
     let has_source_contents = unit.token_iter().any(|token| !token.text().is_empty());
-    let last_source_token_forces_line = unit
-        .token_iter()
-        .filter(|token| !token.text().is_empty())
-        .last()
-        .is_some_and(|token| trailing_comments_force_line(&token));
     let eof = format_required_field(unit.eof(), doc, |token, doc| {
         let comments = doc.concat_list(|comments| {
             let mut emitted_comment = false;
+            // The gap in front of the first comment belongs to the token's
+            // trivia; every later gap belongs to the comment it follows.
+            let mut blank_before = token.has_leading_blank_line();
             for comment in token.leading_comments().chain(token.trailing_comments()) {
+                let blank_after = comment.is_followed_by_blank_line();
                 if formatter_ignore_runs_claim_boundary_comment(&runs, &comment) {
+                    blank_before = blank_after;
                     continue;
                 }
                 if emitted_comment || has_source_contents {
-                    let hard_line = comments.hard_line();
-                    comments.push(hard_line);
+                    let separator = BodyItemSeparator::between(blank_before).doc(comments);
+                    comments.push(separator);
                 }
                 let comment = format_comment(comments, &comment);
                 comments.push(comment);
+                blank_before = blank_after;
                 emitted_comment = true;
             }
         });
-        let line = if last_source_token_forces_line {
-            Doc::nil()
-        } else if unit.is_recovery_free() || token.has_leading_line_break() {
-            doc.hard_line()
+        // A boundary, not a break: the file's last item may already have ended
+        // its line, for instance with a trailing line comment. Naming the state
+        // the end of the file must reach keeps that from stacking a blank line
+        // on top of a line end the item itself emitted.
+        let line = if unit.is_recovery_free() || token.has_leading_line_break() {
+            doc.hard_line_boundary()
         } else {
             Doc::nil()
         };
@@ -106,15 +109,31 @@ enum ProgramEntry<'source> {
     Missing(JavaMissingSyntax<'source>),
 }
 
-/// One top-level section, with the spacing policy that follows it.
+/// What a top-level section is, for the purpose of spacing it.
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum ProgramSpacing {
+    /// A declaration. Java spaces top-level declarations apart by policy, so
+    /// both sides ask for a blank line.
+    Declaration,
+    /// A verbatim formatter-ignore run, which owns the layout that follows it.
+    Ignored,
+    /// A stray semicolon that survives only to carry its comments. It reads as
+    /// leading trivia of the section it precedes, so it borrows that section's
+    /// leading spacing and contributes none of its own after.
+    LeadingTrivia,
+}
+
+/// One top-level section, with the spacing that surrounds it.
 ///
-/// Top-level declarations are spaced apart by default. `compact_after` marks
-/// the two places that policy does not apply: after a verbatim formatter-ignore
-/// run, and after a stray empty declaration.
+/// `spaced_before` and `spaced_after` say whether the declaration spacing
+/// policy applies on that side. Where it does not, `blank_before` decides, so
+/// the gap the source wrote is the gap that comes back.
 struct ProgramSection<'source> {
     doc: Doc<'source>,
     visible: bool,
-    compact_after: bool,
+    spacing: ProgramSpacing,
+    spaced_before: bool,
+    blank_before: bool,
 }
 
 impl<'source> ProgramSection<'source> {
@@ -122,20 +141,58 @@ impl<'source> ProgramSection<'source> {
         Self {
             doc,
             visible: false,
-            compact_after: false,
+            spacing: ProgramSpacing::Declaration,
+            spaced_before: true,
+            blank_before: false,
         }
     }
 
-    fn visible(doc: Doc<'source>, compact_after: bool) -> Self {
+    fn declaration(doc: Doc<'source>, blank_before: bool) -> Self {
         Self {
             doc,
             visible: true,
-            compact_after,
+            spacing: ProgramSpacing::Declaration,
+            spaced_before: true,
+            blank_before,
         }
+    }
+
+    fn salvaged_comments(doc: Doc<'source>, blank_before: bool) -> Self {
+        Self {
+            doc,
+            visible: true,
+            spacing: ProgramSpacing::LeadingTrivia,
+            // Resolved against the section this one leads.
+            spaced_before: false,
+            blank_before,
+        }
+    }
+
+    fn ignored(doc: Doc<'source>) -> Self {
+        Self {
+            doc,
+            visible: true,
+            spacing: ProgramSpacing::Ignored,
+            spaced_before: true,
+            blank_before: false,
+        }
+    }
+
+    const fn spaced_after(&self) -> bool {
+        matches!(self.spacing, ProgramSpacing::Declaration)
     }
 }
 
 impl ProgramEntry<'_> {
+    fn starts_after_blank_line(&self) -> bool {
+        match self {
+            Self::Item(item) => item.starts_after_blank_line(),
+            Self::Token(token) => token.has_leading_blank_line(),
+            Self::Malformed(item) => item.starts_after_blank_line(),
+            Self::Missing(_) => false,
+        }
+    }
+
     fn ignore_range(&self) -> Option<FormatterIgnoreItemRange> {
         match self {
             Self::Item(item) => {
@@ -165,6 +222,7 @@ fn format_program_sections<'source>(
     let mut sections = Vec::with_capacity(entries.len());
     let mut imports = Vec::new();
     for entry in entries {
+        let blank_before = entry.starts_after_blank_line();
         let section = match entry {
             ProgramEntry::Item(CompilationUnitItem::ImportDeclaration(import)) => {
                 imports.push(import);
@@ -186,27 +244,30 @@ fn format_program_sections<'source>(
                 flush_imports(&mut imports, &mut sections, doc);
                 let visible = bogus.first_token().is_some();
                 let recovery = format_malformed(&bogus, doc);
-                append_program_recovery(&mut sections, recovery, visible, doc);
+                append_program_recovery(&mut sections, recovery, visible, blank_before, doc);
                 continue;
             }
             ProgramEntry::Item(item) => {
                 flush_imports(&mut imports, &mut sections, doc);
-                // A stray top-level semicolon that kept comments is not a
-                // declaration worth spacing the next one away from.
-                let compact_after = matches!(item, CompilationUnitItem::EmptyDeclaration(_));
-                ProgramSection::visible(format_program_item(item, doc), compact_after)
+                let salvaged = matches!(item, CompilationUnitItem::EmptyDeclaration(_));
+                let formatted = format_program_item(item, doc);
+                if salvaged {
+                    ProgramSection::salvaged_comments(formatted, blank_before)
+                } else {
+                    ProgramSection::declaration(formatted, blank_before)
+                }
             }
             ProgramEntry::Token(token) => {
                 flush_imports(&mut imports, &mut sections, doc);
                 let recovery = format_token_with_comments(doc, &token);
-                append_program_recovery(&mut sections, recovery, true, doc);
+                append_program_recovery(&mut sections, recovery, true, blank_before, doc);
                 continue;
             }
             ProgramEntry::Malformed(malformed) => {
                 flush_imports(&mut imports, &mut sections, doc);
                 let visible = malformed.first_token().is_some();
                 let recovery = format_malformed(&malformed, doc);
-                append_program_recovery(&mut sections, recovery, visible, doc);
+                append_program_recovery(&mut sections, recovery, visible, blank_before, doc);
                 continue;
             }
             ProgramEntry::Missing(missing) => {
@@ -224,17 +285,21 @@ fn append_program_recovery<'source>(
     sections: &mut Vec<ProgramSection<'source>>,
     recovery: Doc<'source>,
     visible: bool,
+    blank_before: bool,
     doc: &mut DocBuilder<'source>,
 ) {
     if let Some(previous) = sections.last_mut() {
         previous.doc = doc.concat([previous.doc, recovery]);
         if visible {
+            // The section now emits syntax of its own, so it is spaced like a
+            // declaration rather than like the trivia carrier it started as.
             previous.visible = true;
-            previous.compact_after = false;
+            previous.spacing = ProgramSpacing::Declaration;
+            previous.spaced_before = true;
         }
     } else {
         sections.push(if visible {
-            ProgramSection::visible(recovery, false)
+            ProgramSection::declaration(recovery, blank_before)
         } else {
             ProgramSection::claim_only(recovery)
         });
@@ -246,31 +311,59 @@ fn flush_imports<'source>(
     sections: &mut Vec<ProgramSection<'source>>,
     doc: &mut DocBuilder<'source>,
 ) {
+    let blank_before = imports
+        .first()
+        .is_some_and(ImportDeclaration::starts_after_blank_line);
     if let Some(formatted) = format_imports(imports, doc) {
-        sections.push(ProgramSection::visible(formatted, false));
+        sections.push(ProgramSection::declaration(formatted, blank_before));
     }
     imports.clear();
 }
 
 fn join_program_sections<'source>(
     doc: &mut DocBuilder<'source>,
-    sections: Vec<ProgramSection<'source>>,
+    mut sections: Vec<ProgramSection<'source>>,
 ) -> Doc<'source> {
-    let mut saw_visible = false;
-    let mut compact_after = false;
+    resolve_leading_trivia_spacing(&mut sections);
+    let mut previous_spaced_after = None;
     doc.concat_list(|joined| {
         for section in sections {
-            if section.visible && saw_visible {
-                let separator = BodyItemSeparator::between(!compact_after).doc(joined);
+            if let Some(spaced_after) = previous_spaced_after
+                && section.visible
+            {
+                // Two declarations take the policy blank line. Where either
+                // side opts out, the source's own gap decides.
+                let blank = if spaced_after && section.spaced_before {
+                    true
+                } else {
+                    section.blank_before
+                };
+                let separator = BodyItemSeparator::between(blank).doc(joined);
                 joined.push(separator);
             }
             joined.push(section.doc);
             if section.visible {
-                saw_visible = true;
-                compact_after = section.compact_after;
+                previous_spaced_after = Some(section.spaced_after());
             }
         }
     })
+}
+
+/// Gives every trivia-carrying section the leading spacing of the section it
+/// leads, so a comment salvaged from a stray semicolon is spaced the way the
+/// declaration it will read as leading trivia of is spaced. One that leads
+/// nothing keeps the source's own gap.
+fn resolve_leading_trivia_spacing(sections: &mut [ProgramSection<'_>]) {
+    let mut next_spaced_before = false;
+    for section in sections.iter_mut().rev() {
+        if !section.visible {
+            continue;
+        }
+        if section.spacing == ProgramSpacing::LeadingTrivia {
+            section.spaced_before = next_spaced_before;
+        }
+        next_spaced_before = section.spaced_before;
+    }
 }
 
 fn format_program_entries_with_ignored<'source>(
@@ -284,10 +377,7 @@ fn format_program_entries_with_ignored<'source>(
     for_each_formatter_ignore_splice(entries.len(), runs, |event| match event {
         FormatterIgnoreSplice::Ignore(run) => {
             flush_retained_program_sections(&mut retained, &mut sections, doc);
-            sections.push(ProgramSection::visible(
-                formatter_ignore_run_doc(run, doc),
-                true,
-            ));
+            sections.push(ProgramSection::ignored(formatter_ignore_run_doc(run, doc)));
         }
         FormatterIgnoreSplice::Item { index, .. } => {
             if let Some(entry) = entries[index].take() {
