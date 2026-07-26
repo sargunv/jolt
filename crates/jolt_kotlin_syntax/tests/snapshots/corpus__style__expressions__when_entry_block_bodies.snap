@@ -1,0 +1,395 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.expressions
+
+fun classify(k: Int): Int =
+    when (k) {
+        0 -> 0
+        1 -> {
+            fallback(k)
+        }
+        2 -> {}
+        3 -> if (k > 0) 1 else -1
+        4 -> run { k * 2 }
+        5 ->
+            when (k) {
+                6 -> 6
+                else -> 7
+            }
+        else -> {
+            val doubled = k * 2
+            doubled + 1
+        }
+    }
+
+fun dispatch(k: Int) {
+    when (k) {
+        0 -> {
+            reportTheFirstReason(k, k) + reportTheSecondReason(k, k) + reportTheThirdReason(k, k)
+        }
+        else -> report(-1)
+    }
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PackageHeader
+      PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "com" @ 8..11
+          Dot "." @ 11..12
+          Name
+            Identifier "example" @ 12..19
+          Dot "." @ 19..20
+          Name
+            Identifier "expressions" @ 20..31
+      TerminatorList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "classify" @ 37..45
+      ValueParameterList
+        LParen "(" @ 45..46
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "k" @ 46..47
+            Colon ":" @ 47..48 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 49..52
+        RParen ")" @ 52..53
+      Colon ":" @ 53..54 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 55..58 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 59..60
+        WhenExpression
+          WhenKw "when" @ 65..69 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 70..71
+            NameExpression
+              Identifier "k" @ 71..72
+            RParen ")" @ 72..73 trailing=[Whitespace " "]
+          LBrace "{" @ 74..75
+          WhenEntryList
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  LiteralExpression
+                    IntegerLiteral "0" @ 84..85 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              Arrow "->" @ 86..88 trailing=[Whitespace " "]
+              WhenEntryBody
+                LiteralExpression
+                  IntegerLiteral "0" @ 89..90
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  LiteralExpression
+                    IntegerLiteral "1" @ 99..100 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              Arrow "->" @ 101..103 trailing=[Whitespace " "]
+              WhenEntryBody
+                Block
+                  LBrace "{" @ 104..105
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "fallback" @ 118..126 leading=[Newline "\n", Whitespace "            "]
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 126..127
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "k" @ 127..128
+                            RParen ")" @ 128..129
+                          LambdaExpressionList
+                      TerminatorList
+                  RBrace "}" @ 138..139 leading=[Newline "\n", Whitespace "        "]
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  LiteralExpression
+                    IntegerLiteral "2" @ 148..149 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              Arrow "->" @ 150..152 trailing=[Whitespace " "]
+              WhenEntryBody
+                Block
+                  LBrace "{" @ 153..154
+                  BlockItemList
+                  RBrace "}" @ 154..155
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  LiteralExpression
+                    IntegerLiteral "3" @ 164..165 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              Arrow "->" @ 166..168 trailing=[Whitespace " "]
+              WhenEntryBody
+                IfExpression
+                  IfKw "if" @ 169..171 trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 172..173
+                    BinaryExpression
+                      NameExpression
+                        Identifier "k" @ 173..174 trailing=[Whitespace " "]
+                      Gt ">" @ 175..176 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "0" @ 177..178
+                    RParen ")" @ 178..179 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "1" @ 180..181 trailing=[Whitespace " "]
+                  ElseKw "else" @ 182..186 trailing=[Whitespace " "]
+                  UnaryExpression
+                    Minus "-" @ 187..188
+                    LiteralExpression
+                      IntegerLiteral "1" @ 188..189
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  LiteralExpression
+                    IntegerLiteral "4" @ 198..199 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              Arrow "->" @ 200..202 trailing=[Whitespace " "]
+              WhenEntryBody
+                CallExpression
+                  NameExpression
+                    Identifier "run" @ 203..206 trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 207..208 trailing=[Whitespace " "]
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "k" @ 209..210 trailing=[Whitespace " "]
+                                Star "*" @ 211..212 trailing=[Whitespace " "]
+                                LiteralExpression
+                                  IntegerLiteral "2" @ 213..214 trailing=[Whitespace " "]
+                            TerminatorList
+                        RBrace "}" @ 215..216
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  LiteralExpression
+                    IntegerLiteral "5" @ 225..226 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              Arrow "->" @ 227..229
+              WhenEntryBody
+                WhenExpression
+                  WhenKw "when" @ 242..246 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                  WhenSubject
+                    LParen "(" @ 247..248
+                    NameExpression
+                      Identifier "k" @ 248..249
+                    RParen ")" @ 249..250 trailing=[Whitespace " "]
+                  LBrace "{" @ 251..252
+                  WhenEntryList
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          LiteralExpression
+                            IntegerLiteral "6" @ 269..270 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+                      Arrow "->" @ 271..273 trailing=[Whitespace " "]
+                      WhenEntryBody
+                        LiteralExpression
+                          IntegerLiteral "6" @ 274..275
+                    WhenEntry
+                      ElseKw "else" @ 292..296 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+                      WhenConditionSeparatedList
+                      Arrow "->" @ 297..299 trailing=[Whitespace " "]
+                      WhenEntryBody
+                        LiteralExpression
+                          IntegerLiteral "7" @ 300..301
+                  RBrace "}" @ 314..315 leading=[Newline "\n", Whitespace "            "]
+            WhenEntry
+              ElseKw "else" @ 324..328 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 329..331 trailing=[Whitespace " "]
+              WhenEntryBody
+                Block
+                  LBrace "{" @ 332..333
+                  BlockItemList
+                    PropertyDeclaration
+                      ModifierList
+                      ModifierList
+                      ValKw "val" @ 346..349 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                      Name
+                        Identifier "doubled" @ 350..357 trailing=[Whitespace " "]
+                      PropertyInitializer
+                        Assign "=" @ 358..359 trailing=[Whitespace " "]
+                        BinaryExpression
+                          NameExpression
+                            Identifier "k" @ 360..361 trailing=[Whitespace " "]
+                          Star "*" @ 362..363 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "2" @ 364..365
+                      PropertyBodyMemberList
+                    Statement
+                      ExpressionStatement
+                        BinaryExpression
+                          NameExpression
+                            Identifier "doubled" @ 378..385 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                          Plus "+" @ 386..387 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "1" @ 388..389
+                      TerminatorList
+                  RBrace "}" @ 398..399 leading=[Newline "\n", Whitespace "        "]
+          RBrace "}" @ 404..405 leading=[Newline "\n", Whitespace "    "]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 407..410 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "dispatch" @ 411..419
+      ValueParameterList
+        LParen "(" @ 419..420
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "k" @ 420..421
+            Colon ":" @ 421..422 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 423..426
+        RParen ")" @ 426..427 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 428..429
+          BlockItemList
+            Statement
+              ExpressionStatement
+                WhenExpression
+                  WhenKw "when" @ 434..438 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  WhenSubject
+                    LParen "(" @ 439..440
+                    NameExpression
+                      Identifier "k" @ 440..441
+                    RParen ")" @ 441..442 trailing=[Whitespace " "]
+                  LBrace "{" @ 443..444
+                  WhenEntryList
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          LiteralExpression
+                            IntegerLiteral "0" @ 453..454 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      Arrow "->" @ 455..457 trailing=[Whitespace " "]
+                      WhenEntryBody
+                        Block
+                          LBrace "{" @ 458..459
+                          BlockItemList
+                            Statement
+                              ExpressionStatement
+                                BinaryExpression
+                                  BinaryExpression
+                                    CallExpression
+                                      NameExpression
+                                        Identifier "reportTheFirstReason" @ 472..492 leading=[Newline "\n", Whitespace "            "]
+                                      TypeArgumentListList
+                                      ValueArgumentList
+                                        LParen "(" @ 492..493
+                                        ValueArgumentEntryList
+                                          ValueArgument
+                                            ValueArgumentPrefixList
+                                            NameExpression
+                                              Identifier "k" @ 493..494
+                                          Comma "," @ 494..495 trailing=[Whitespace " "]
+                                          ValueArgument
+                                            ValueArgumentPrefixList
+                                            NameExpression
+                                              Identifier "k" @ 496..497
+                                        RParen ")" @ 497..498 trailing=[Whitespace " "]
+                                      LambdaExpressionList
+                                    Plus "+" @ 499..500 trailing=[Whitespace " "]
+                                    CallExpression
+                                      NameExpression
+                                        Identifier "reportTheSecondReason" @ 501..522
+                                      TypeArgumentListList
+                                      ValueArgumentList
+                                        LParen "(" @ 522..523
+                                        ValueArgumentEntryList
+                                          ValueArgument
+                                            ValueArgumentPrefixList
+                                            NameExpression
+                                              Identifier "k" @ 523..524
+                                          Comma "," @ 524..525 trailing=[Whitespace " "]
+                                          ValueArgument
+                                            ValueArgumentPrefixList
+                                            NameExpression
+                                              Identifier "k" @ 526..527
+                                        RParen ")" @ 527..528 trailing=[Whitespace " "]
+                                      LambdaExpressionList
+                                  Plus "+" @ 529..530 trailing=[Whitespace " "]
+                                  CallExpression
+                                    NameExpression
+                                      Identifier "reportTheThirdReason" @ 531..551
+                                    TypeArgumentListList
+                                    ValueArgumentList
+                                      LParen "(" @ 551..552
+                                      ValueArgumentEntryList
+                                        ValueArgument
+                                          ValueArgumentPrefixList
+                                          NameExpression
+                                            Identifier "k" @ 552..553
+                                        Comma "," @ 553..554 trailing=[Whitespace " "]
+                                        ValueArgument
+                                          ValueArgumentPrefixList
+                                          NameExpression
+                                            Identifier "k" @ 555..556
+                                      RParen ")" @ 556..557
+                                    LambdaExpressionList
+                              TerminatorList
+                          RBrace "}" @ 566..567 leading=[Newline "\n", Whitespace "        "]
+                    WhenEntry
+                      ElseKw "else" @ 576..580 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      WhenConditionSeparatedList
+                      Arrow "->" @ 581..583 trailing=[Whitespace " "]
+                      WhenEntryBody
+                        CallExpression
+                          NameExpression
+                            Identifier "report" @ 584..590
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 590..591
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                UnaryExpression
+                                  Minus "-" @ 591..592
+                                  LiteralExpression
+                                    IntegerLiteral "1" @ 592..593
+                            RParen ")" @ 593..594
+                          LambdaExpressionList
+                  RBrace "}" @ 599..600 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+          RBrace "}" @ 601..602 leading=[Newline "\n"]
+  Eof "" @ 603..603 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

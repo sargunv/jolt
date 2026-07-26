@@ -591,6 +591,15 @@ fn format_when_entry<'source>(
         jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
             if body.first_token().is_some()
     );
+    let body_is_block = matches!(
+        entry.body(),
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
+            if matches!(
+                body.value(),
+                jolt_kotlin_syntax::KotlinSyntaxField::Present(ref value)
+                    if matches!(value.classify(), Ok(WhenEntryBodySyntax::Block(_)))
+            )
+    );
     let else_token = resolve_optional_field(entry.else_token(), doc);
     let label = match else_token {
         KotlinFormatField::Present(Some(token)) => format_plain_token(doc, token),
@@ -610,12 +619,17 @@ fn format_when_entry<'source>(
     let body = format_required_field(entry.body(), doc, |body, doc| {
         format_when_entry_body(doc, body)
     });
-    let body = if has_body {
+    let body = if !has_body {
+        body
+    } else if body_is_block {
+        // A block body hugs the arrow: its own braces already carry the layout,
+        // so joining it with a `line` would only push `{` down an extra level.
+        let space = doc.space();
+        doc.concat([space, body])
+    } else {
         let line = doc.line();
         let body = doc.concat([line, body]);
         doc.indent(body)
-    } else {
-        body
     };
     let contents = doc.concat([label, guard, arrow, body]);
     doc.group(contents)
