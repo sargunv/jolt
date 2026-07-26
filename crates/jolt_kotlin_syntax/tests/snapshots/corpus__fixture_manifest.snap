@@ -58,6 +58,7 @@ style/layout-fit-boundaries/when-branch-expression.kt
 style/program/comment-only-file.kt
 style/program/formatter-ignore.kt
 style/program/package-import-spacing.kt
+style/program/qualified-name-comment-positions.kt
 style/program/qualified-names.kt
 style/program/section-visibility.kt
 style/program/top-level-blank-lines.kt

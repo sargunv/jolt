@@ -106,34 +106,52 @@ impl PartialOrd for NameSortKey<'_> {
     }
 }
 
+/// Only a line comment that lands *between* two segments can split a name.
+///
+/// A comment leading the first segment sits before the whole name, and one
+/// trailing the last segment sits after it; neither has a segment on the far
+/// side to push onto another line, so the enclosing construct places them.
 fn name_has_line_comments(name: &NameSyntax<'_>) -> bool {
-    let field_has_comments =
-        |field| matches!(field, JavaSyntaxField::Present(token) if token_has_line_comments(&token));
-    // A line comment leading the name's first token sits before the whole name
-    // rather than between two of its segments, so it does not split the name.
-    let first_field_has_comments = |field: JavaSyntaxField<'_, JavaSyntaxToken<'_>>| {
+    let leading_forces_line = |field: JavaSyntaxField<'_, JavaSyntaxToken<'_>>| {
+        matches!(field, JavaSyntaxField::Present(token) if token
+            .leading_comments()
+            .any(|comment| comment_forces_line(&comment)))
+    };
+    let trailing_forces_line = |field: JavaSyntaxField<'_, JavaSyntaxToken<'_>>| {
         matches!(field, JavaSyntaxField::Present(token) if token
             .trailing_comments()
             .any(|comment| comment_forces_line(&comment)))
     };
-    match name {
-        NameSyntax::Name(name) => first_field_has_comments(name.identifier()),
-        NameSyntax::QualifiedName(name) => {
-            matches!(name.first_segment(), JavaSyntaxField::Present(segment) if first_field_has_comments(segment.identifier()))
-                || field_has_comments(name.first_dot())
-                || match name.remaining_segments() {
-                    JavaSyntaxField::Present(segments) => segments.parts().any(|part| match part {
-                        JavaSyntaxListPart::Item(segment) => {
-                            field_has_comments(segment.identifier())
-                        }
-                        JavaSyntaxListPart::Separator(token) => token_has_line_comments(&token),
-                        JavaSyntaxListPart::Missing(_) | JavaSyntaxListPart::Malformed(_) => false,
-                    }),
-                    _ => false,
-                }
-        }
-        NameSyntax::BogusName(_) => false,
+    // A lone identifier has no interior boundary to break at.
+    let NameSyntax::QualifiedName(name) = name else {
+        return false;
+    };
+    if matches!(name.first_segment(), JavaSyntaxField::Present(segment) if trailing_forces_line(segment.identifier()))
+    {
+        return true;
     }
+    if matches!(name.first_dot(), JavaSyntaxField::Present(dot) if token_has_line_comments(&dot)) {
+        return true;
+    }
+    let JavaSyntaxField::Present(segments) = name.remaining_segments() else {
+        return false;
+    };
+    let mut parts = segments.parts().peekable();
+    while let Some(part) = parts.next() {
+        let followed_by_part = parts.peek().is_some();
+        let splits = match part {
+            JavaSyntaxListPart::Item(segment) => {
+                leading_forces_line(segment.identifier())
+                    || (followed_by_part && trailing_forces_line(segment.identifier()))
+            }
+            JavaSyntaxListPart::Separator(token) => token_has_line_comments(&token),
+            JavaSyntaxListPart::Missing(_) | JavaSyntaxListPart::Malformed(_) => false,
+        };
+        if splits {
+            return true;
+        }
+    }
+    false
 }
 
 fn token_has_line_comments(token: &JavaSyntaxToken<'_>) -> bool {

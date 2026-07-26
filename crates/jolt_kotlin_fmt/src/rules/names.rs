@@ -79,35 +79,68 @@ fn format_qualified_name_parts<'source>(
     }
 }
 
+/// Only a line comment that lands *between* two segments can split a name.
+///
+/// A comment leading the first segment sits before the whole name, and one
+/// trailing the last segment sits after it; neither has a segment on the far
+/// side to push onto another line, so the enclosing construct places them.
 fn qualified_name_has_line_comments(name: &QualifiedName<'_>) -> bool {
     let KotlinSyntaxField::Present(segments) = name.segments() else {
         return false;
     };
-    segments.parts().any(|part| match part {
-        KotlinSyntaxListPart::Item(QualifiedNameSegment::Name(name)) => {
-            name.first_token()
-                .is_some_and(|token| token_has_line_comments(&token))
-                || name
-                    .last_token()
-                    .is_some_and(|token| token_has_line_comments(&token))
+    let mut parts = segments.parts().peekable();
+    let mut preceded_by_part = false;
+    while let Some(part) = parts.next() {
+        let leading_splits = preceded_by_part;
+        let trailing_splits = parts.peek().is_some();
+        preceded_by_part = true;
+        let splits = match part {
+            KotlinSyntaxListPart::Item(QualifiedNameSegment::Name(name)) => segment_splits(
+                name.first_token(),
+                name.last_token(),
+                leading_splits,
+                trailing_splits,
+            ),
+            KotlinSyntaxListPart::Item(QualifiedNameSegment::BogusQualifiedNameSegment(
+                malformed,
+            )) => segment_splits(
+                malformed.first_token(),
+                malformed.last_token(),
+                leading_splits,
+                trailing_splits,
+            ),
+            KotlinSyntaxListPart::Separator(token) => token_has_line_comments(&token),
+            KotlinSyntaxListPart::Missing(_) | KotlinSyntaxListPart::Malformed(_) => false,
+        };
+        if splits {
+            return true;
         }
-        KotlinSyntaxListPart::Item(QualifiedNameSegment::BogusQualifiedNameSegment(malformed)) => {
-            malformed
-                .first_token()
-                .is_some_and(|token| token_has_line_comments(&token))
-                || malformed
-                    .last_token()
-                    .is_some_and(|token| token_has_line_comments(&token))
-        }
-        KotlinSyntaxListPart::Separator(token) => token_has_line_comments(&token),
-        KotlinSyntaxListPart::Missing(_) | KotlinSyntaxListPart::Malformed(_) => false,
-    })
+    }
+    false
+}
+
+fn segment_splits(
+    first_token: Option<KotlinSyntaxToken<'_>>,
+    last_token: Option<KotlinSyntaxToken<'_>>,
+    leading_splits: bool,
+    trailing_splits: bool,
+) -> bool {
+    let leading = leading_splits
+        && first_token.is_some_and(|token| comments_force_line(token.leading_comments()));
+    let trailing = trailing_splits
+        && last_token.is_some_and(|token| comments_force_line(token.trailing_comments()));
+    leading || trailing
 }
 
 fn token_has_line_comments(token: &KotlinSyntaxToken<'_>) -> bool {
-    token
-        .leading_comments()
-        .chain(token.trailing_comments())
+    comments_force_line(token.leading_comments().chain(token.trailing_comments()))
+}
+
+fn comments_force_line<'source>(
+    comments: impl IntoIterator<Item = KotlinComment<'source>>,
+) -> bool {
+    comments
+        .into_iter()
         .any(|comment| comment_forces_line(&comment))
 }
 

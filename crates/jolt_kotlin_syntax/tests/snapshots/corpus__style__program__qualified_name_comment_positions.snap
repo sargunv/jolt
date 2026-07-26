@@ -1,0 +1,112 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+// A comment trailing the last segment of a qualified name sits after the whole
+// name, so the name stays compact rather than splitting across lines.
+package a.b.c // trailing the package name
+
+import kotlin.collections.List // trailing the import name
+
+fun names(values: List<String>): String {
+  return values.joinToString()
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PackageHeader
+      PackageKw "package" @ 151..158 leading=[LineComment "// A comment trailing the last segment of a qualified name sits after the whole", Newline "\n", LineComment "// name, so the name stays compact rather than splitting across lines.", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentList
+          Name
+            Identifier "a" @ 159..160
+          Dot "." @ 160..161
+          Name
+            Identifier "b" @ 161..162
+          Dot "." @ 162..163
+          Name
+            Identifier "c" @ 163..164 trailing=[Whitespace " ", LineComment "// trailing the package name"]
+      TerminatorList
+    ImportDirectiveList
+      ImportDirective
+        Identifier "import" @ 195..201 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "kotlin" @ 202..208
+            Dot "." @ 208..209
+            Name
+              Identifier "collections" @ 209..220
+            Dot "." @ 220..221
+            Name
+              Identifier "List" @ 221..225 trailing=[Whitespace " ", LineComment "// trailing the import name"]
+        TerminatorList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 255..258 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "names" @ 259..264
+      ValueParameterList
+        LParen "(" @ 264..265
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "values" @ 265..271
+            Colon ":" @ 271..272 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "List" @ 273..277
+                    TypeArgumentList
+                      Lt "<" @ 277..278
+                      TypeProjectionSeparatedList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                Identifier "String" @ 278..284
+                      Gt ">" @ 284..285
+        RParen ")" @ 285..286
+      Colon ":" @ 286..287 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "String" @ 288..294 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 295..296
+          BlockItemList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 299..305 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                  CallExpression
+                    NavigationExpression
+                      NameExpression
+                        Identifier "values" @ 306..312
+                      Dot "." @ 312..313
+                      Identifier "joinToString" @ 313..325
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 325..326
+                      ValueArgumentEntryList
+                      RParen ")" @ 326..327
+                    LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 328..329 leading=[Newline "\n"]
+  Eof "" @ 330..330 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

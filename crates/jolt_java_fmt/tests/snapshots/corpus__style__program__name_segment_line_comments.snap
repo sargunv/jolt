@@ -6,12 +6,9 @@ formatted:
 package a //x
 ;
 
-import b
-  .c
-  .D //y
+import b.c.D //y
 ;
-import e
-  .F //z
+import e.F //z
 ;
 
 class NameSegmentLineComments {
