@@ -466,7 +466,9 @@ fn assignment_expression<'source>(
 }
 
 fn assignment_rhs<'source>(right: Doc<'source>, doc: &mut DocBuilder<'source>) -> Doc<'source> {
-    doc_indent!(doc, doc_concat!(doc, [doc.line(), right]))
+    // A comment trailing the operator already ends the line, so a boundary line
+    // contributes only the continuation indent rather than a second line end.
+    doc_indent!(doc, doc_concat!(doc, [doc.line_boundary(), right]))
 }
 
 fn binary_chain<'source>(

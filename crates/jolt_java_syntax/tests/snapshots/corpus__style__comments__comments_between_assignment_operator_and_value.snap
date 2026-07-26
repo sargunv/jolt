@@ -1,0 +1,263 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class CommentsBetweenAssignmentAndValue {
+  int field = // a comment ends the line after the operator
+  1;
+
+  int longField = // the long value moves to the next line
+  someLongMethodCall(firstArgumentName, secondArgumentName) + anotherLongValue;
+
+  int ownLine =
+  // a comment on its own line before the value
+  1;
+
+  int anotherLongValue = 2;
+  int firstArgumentName = 3;
+  int secondArgumentName = 4;
+
+  void assignments(int y) {
+    int local = // a declaration keeps its value on the next line
+    y + 1;
+    field = // a short right-hand side moves to the next line
+    y + 1;
+    field = // a long right-hand side wraps below the operator
+    someLongMethodCall(firstArgumentName, secondArgumentName) + anotherLongValue;
+    field = /* a block comment stays inline */ y + local;
+  }
+
+  int someLongMethodCall(int first, int second) {
+    return first + second;
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "CommentsBetweenAssignmentAndValue" @ 6..39 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 40..41
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 44..47 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "field" @ 48..53 trailing=[Whitespace " "]
+                Assign "=" @ 54..55 trailing=[Whitespace " ", LineComment "// a comment ends the line after the operator"]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "1" @ 104..105 leading=[Newline "\n", Whitespace "  "]
+            Semicolon ";" @ 105..106
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 110..113 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "longField" @ 114..123 trailing=[Whitespace " "]
+                Assign "=" @ 124..125 trailing=[Whitespace " ", LineComment "// the long value moves to the next line"]
+                VariableInitializer
+                  BinaryExpression
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "someLongMethodCall" @ 169..187 leading=[Newline "\n", Whitespace "  "]
+                        ArgumentList
+                          LParen "(" @ 187..188
+                          ExpressionList
+                            NameExpression
+                              Identifier "firstArgumentName" @ 188..205
+                            Comma "," @ 205..206 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "secondArgumentName" @ 207..225
+                          RParen ")" @ 225..226 trailing=[Whitespace " "]
+                    Plus "+" @ 227..228 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "anotherLongValue" @ 229..245
+            Semicolon ";" @ 245..246
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 250..253 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "ownLine" @ 254..261 trailing=[Whitespace " "]
+                Assign "=" @ 262..263
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "1" @ 314..315 leading=[Newline "\n", Whitespace "  ", LineComment "// a comment on its own line before the value", Newline "\n", Whitespace "  "]
+            Semicolon ";" @ 315..316
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 320..323 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "anotherLongValue" @ 324..340 trailing=[Whitespace " "]
+                Assign "=" @ 341..342 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "2" @ 343..344
+            Semicolon ";" @ 344..345
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 348..351 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "firstArgumentName" @ 352..369 trailing=[Whitespace " "]
+                Assign "=" @ 370..371 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "3" @ 372..373
+            Semicolon ";" @ 373..374
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 377..380 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "secondArgumentName" @ 381..399 trailing=[Whitespace " "]
+                Assign "=" @ 400..401 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "4" @ 402..403
+            Semicolon ";" @ 403..404
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 408..412 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "assignments" @ 413..424
+            LParen "(" @ 424..425
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 425..428 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "y" @ 429..430
+            RParen ")" @ 430..431 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 432..433
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 438..441 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "local" @ 442..447 trailing=[Whitespace " "]
+                        Assign "=" @ 448..449 trailing=[Whitespace " ", LineComment "// a declaration keeps its value on the next line"]
+                        VariableInitializer
+                          BinaryExpression
+                            NameExpression
+                              Identifier "y" @ 504..505 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                            Plus "+" @ 506..507 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "1" @ 508..509
+                  Semicolon ";" @ 509..510
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "field" @ 515..520 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      Assign "=" @ 521..522 trailing=[Whitespace " ", LineComment "// a short right-hand side moves to the next line"]
+                      BinaryExpression
+                        NameExpression
+                          Identifier "y" @ 577..578 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                        Plus "+" @ 579..580 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "1" @ 581..582
+                    Semicolon ";" @ 582..583
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "field" @ 588..593 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      Assign "=" @ 594..595 trailing=[Whitespace " ", LineComment "// a long right-hand side wraps below the operator"]
+                      BinaryExpression
+                        MethodInvocationExpression
+                          UnqualifiedMethodInvocation
+                            NameExpression
+                              Identifier "someLongMethodCall" @ 651..669 leading=[Newline "\n", Whitespace "    "]
+                            ArgumentList
+                              LParen "(" @ 669..670
+                              ExpressionList
+                                NameExpression
+                                  Identifier "firstArgumentName" @ 670..687
+                                Comma "," @ 687..688 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "secondArgumentName" @ 689..707
+                              RParen ")" @ 707..708 trailing=[Whitespace " "]
+                        Plus "+" @ 709..710 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "anotherLongValue" @ 711..727
+                    Semicolon ";" @ 727..728
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "field" @ 733..738 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      Assign "=" @ 739..740 trailing=[Whitespace " ", BlockComment "/* a block comment stays inline */", Whitespace " "]
+                      BinaryExpression
+                        NameExpression
+                          Identifier "y" @ 776..777 trailing=[Whitespace " "]
+                        Plus "+" @ 778..779 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "local" @ 780..785
+                    Semicolon ";" @ 785..786
+              RBrace "}" @ 789..790 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 794..797 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "someLongMethodCall" @ 798..816
+            LParen "(" @ 816..817
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 817..820 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "first" @ 821..826
+              Comma "," @ 826..827 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 828..831 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "second" @ 832..838
+            RParen ")" @ 838..839 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 840..841
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 846..852 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    BinaryExpression
+                      NameExpression
+                        Identifier "first" @ 853..858 trailing=[Whitespace " "]
+                      Plus "+" @ 859..860 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "second" @ 861..867
+                    Semicolon ";" @ 867..868
+              RBrace "}" @ 871..872 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 873..874 leading=[Newline "\n"]
+  Eof "" @ 875..875 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

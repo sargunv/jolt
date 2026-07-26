@@ -67,7 +67,9 @@ pub(super) fn format_assignment_expression<'source>(
     });
 
     let space = doc.space();
-    let line = doc.line();
+    // A comment trailing the operator already ends the line, so a boundary line
+    // contributes only the continuation indent rather than a second line end.
+    let line = doc.line_boundary();
     let right = doc.concat([line, right]);
     let right = doc.indent(right);
     let contents = doc.concat([left, space, operator, right]);

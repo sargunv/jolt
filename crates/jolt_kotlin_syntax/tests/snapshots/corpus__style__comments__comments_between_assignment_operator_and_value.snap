@@ -1,0 +1,291 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class CommentsBetweenAssignmentAndValue {
+  var total = // a comment ends the line after the operator
+  1
+
+  val longProperty = // the long value moves to the next line
+  someLongFunctionCall(firstArgumentName, secondArgumentName) + anotherLongValue
+
+  val ownLine =
+  // a comment on its own line before the value
+  1
+
+  var anotherLongValue = 2
+  val firstArgumentName = 3
+  val secondArgumentName = 4
+
+  fun assignments(y: Int) {
+    val local = // a declaration keeps its value on the next line
+    y + 1
+    total = // a short right-hand side moves to the next line
+    y + 1
+    total = // a long right-hand side wraps below the operator
+    someLongFunctionCall(firstArgumentName, secondArgumentName) + anotherLongValue
+    total = /* a block comment stays inline */ y + local
+  }
+
+  fun someLongFunctionCall(first: Int, second: Int): Int = first + second
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "CommentsBetweenAssignmentAndValue" @ 6..39 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 40..41
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              VarKw "var" @ 44..47 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "total" @ 48..53 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 54..55 trailing=[Whitespace " ", LineComment "// a comment ends the line after the operator"]
+                LiteralExpression
+                  IntegerLiteral "1" @ 104..105 leading=[Newline "\n", Whitespace "  "]
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 109..112 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "longProperty" @ 113..125 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 126..127 trailing=[Whitespace " ", LineComment "// the long value moves to the next line"]
+                BinaryExpression
+                  CallExpression
+                    NameExpression
+                      Identifier "someLongFunctionCall" @ 171..191 leading=[Newline "\n", Whitespace "  "]
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 191..192
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          NameExpression
+                            Identifier "firstArgumentName" @ 192..209
+                        Comma "," @ 209..210 trailing=[Whitespace " "]
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          NameExpression
+                            Identifier "secondArgumentName" @ 211..229
+                      RParen ")" @ 229..230 trailing=[Whitespace " "]
+                    LambdaExpressionList
+                  Plus "+" @ 231..232 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "anotherLongValue" @ 233..249
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 253..256 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "ownLine" @ 257..264 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 265..266
+                LiteralExpression
+                  IntegerLiteral "1" @ 317..318 leading=[Newline "\n", Whitespace "  ", LineComment "// a comment on its own line before the value", Newline "\n", Whitespace "  "]
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              VarKw "var" @ 322..325 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "anotherLongValue" @ 326..342 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 343..344 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "2" @ 345..346
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 349..352 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "firstArgumentName" @ 353..370 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 371..372 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "3" @ 373..374
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 377..380 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "secondArgumentName" @ 381..399 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 400..401 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "4" @ 402..403
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 407..410 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "assignments" @ 411..422
+              ValueParameterList
+                LParen "(" @ 422..423
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierList
+                    Name
+                      Identifier "y" @ 423..424
+                    Colon ":" @ 424..425 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "Int" @ 426..429
+                RParen ")" @ 429..430 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 431..432
+                  BlockItemList
+                    PropertyDeclaration
+                      ModifierList
+                      ModifierList
+                      ValKw "val" @ 437..440 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      Name
+                        Identifier "local" @ 441..446 trailing=[Whitespace " "]
+                      PropertyInitializer
+                        Assign "=" @ 447..448 trailing=[Whitespace " ", LineComment "// a declaration keeps its value on the next line"]
+                        BinaryExpression
+                          NameExpression
+                            Identifier "y" @ 503..504 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                          Plus "+" @ 505..506 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "1" @ 507..508
+                      PropertyBodyMemberList
+                    Statement
+                      ExpressionStatement
+                        AssignmentExpression
+                          NameExpression
+                            Identifier "total" @ 513..518 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                          Assign "=" @ 519..520 trailing=[Whitespace " ", LineComment "// a short right-hand side moves to the next line"]
+                          BinaryExpression
+                            NameExpression
+                              Identifier "y" @ 575..576 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                            Plus "+" @ 577..578 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "1" @ 579..580
+                      TerminatorList
+                    Statement
+                      ExpressionStatement
+                        AssignmentExpression
+                          NameExpression
+                            Identifier "total" @ 585..590 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                          Assign "=" @ 591..592 trailing=[Whitespace " ", LineComment "// a long right-hand side wraps below the operator"]
+                          BinaryExpression
+                            CallExpression
+                              NameExpression
+                                Identifier "someLongFunctionCall" @ 648..668 leading=[Newline "\n", Whitespace "    "]
+                              TypeArgumentListList
+                              ValueArgumentList
+                                LParen "(" @ 668..669
+                                ValueArgumentEntryList
+                                  ValueArgument
+                                    ValueArgumentPrefixList
+                                    NameExpression
+                                      Identifier "firstArgumentName" @ 669..686
+                                  Comma "," @ 686..687 trailing=[Whitespace " "]
+                                  ValueArgument
+                                    ValueArgumentPrefixList
+                                    NameExpression
+                                      Identifier "secondArgumentName" @ 688..706
+                                RParen ")" @ 706..707 trailing=[Whitespace " "]
+                              LambdaExpressionList
+                            Plus "+" @ 708..709 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "anotherLongValue" @ 710..726
+                      TerminatorList
+                    Statement
+                      ExpressionStatement
+                        AssignmentExpression
+                          NameExpression
+                            Identifier "total" @ 731..736 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                          Assign "=" @ 737..738 trailing=[Whitespace " ", BlockComment "/* a block comment stays inline */", Whitespace " "]
+                          BinaryExpression
+                            NameExpression
+                              Identifier "y" @ 774..775 trailing=[Whitespace " "]
+                            Plus "+" @ 776..777 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "local" @ 778..783
+                      TerminatorList
+                  RBrace "}" @ 786..787 leading=[Newline "\n", Whitespace "  "]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 791..794 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "someLongFunctionCall" @ 795..815
+              ValueParameterList
+                LParen "(" @ 815..816
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierList
+                    Name
+                      Identifier "first" @ 816..821
+                    Colon ":" @ 821..822 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "Int" @ 823..826
+                  Comma "," @ 826..827 trailing=[Whitespace " "]
+                  ValueParameter
+                    ModifierList
+                    Name
+                      Identifier "second" @ 828..834
+                    Colon ":" @ 834..835 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "Int" @ 836..839
+                RParen ")" @ 839..840
+              Colon ":" @ 840..841 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "Int" @ 842..845 trailing=[Whitespace " "]
+              ExpressionBody
+                Assign "=" @ 846..847 trailing=[Whitespace " "]
+                BinaryExpression
+                  NameExpression
+                    Identifier "first" @ 848..853 trailing=[Whitespace " "]
+                  Plus "+" @ 854..855 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "second" @ 856..862
+        RBrace "}" @ 863..864 leading=[Newline "\n"]
+  Eof "" @ 865..865 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

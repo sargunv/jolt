@@ -568,10 +568,10 @@ fn format_variable_initializer_split<'source>(
     }
 
     let space = doc.space();
-    let separator = if operator_forces_line {
-        Doc::nil()
-    } else if value_has_leading_comments {
-        doc.hard_line()
+    let separator = if operator_forces_line || value_has_leading_comments {
+        // A comment trailing the operator already ends the line; the boundary
+        // then contributes only the continuation indent, not a blank line.
+        doc.hard_line_boundary()
     } else {
         doc.line()
     };

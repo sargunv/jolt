@@ -357,14 +357,27 @@ fn format_assignment_rhs<'source>(
         expression,
         KotlinSyntaxField::Present(jolt_kotlin_syntax::Expression::AnnotatedExpression(_))
     );
+    let expression_leads_with_comment = match expression {
+        KotlinSyntaxField::Present(expression) => expression
+            .first_token()
+            .is_some_and(|token| !token.leading_comments().is_empty()),
+        _ => false,
+    };
     let expression = format_required_field(expression, doc, |expression, doc| {
         format_expression(doc, &expression)
     });
-    if has_expression
-        && operator_token.is_some_and(|operator| trailing_comments_force_line(&operator))
-    {
-        let line = doc.hard_line();
-        return doc.concat([before, operator, line, expression]);
+    // Comments between the operator and the expression each end their line, so
+    // the expression starts a new line whichever side owns them.
+    let comment_between = operator_token
+        .is_some_and(|operator| trailing_comments_force_line(&operator))
+        || expression_leads_with_comment;
+    if has_expression && comment_between {
+        // A comment trailing the operator already ended the line, so the
+        // boundary then contributes only the continuation indent.
+        let line = doc.hard_line_boundary();
+        let expression = doc.concat([line, expression]);
+        let expression = doc.indent(expression);
+        return doc.concat([before, operator, expression]);
     }
     if is_annotated {
         let line = doc.hard_line();

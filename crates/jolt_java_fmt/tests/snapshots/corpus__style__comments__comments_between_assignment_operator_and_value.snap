@@ -1,0 +1,39 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class CommentsBetweenAssignmentAndValue {
+  int field = // a comment ends the line after the operator
+    1;
+
+  int longField = // the long value moves to the next line
+    someLongMethodCall(firstArgumentName, secondArgumentName)
+      + anotherLongValue;
+
+  int ownLine =
+    // a comment on its own line before the value
+    1;
+
+  int anotherLongValue = 2;
+  int firstArgumentName = 3;
+  int secondArgumentName = 4;
+
+  void assignments(int y) {
+    int local = // a declaration keeps its value on the next line
+      y + 1;
+    field = // a short right-hand side moves to the next line
+      y + 1;
+    field = // a long right-hand side wraps below the operator
+      someLongMethodCall(firstArgumentName, secondArgumentName)
+        + anotherLongValue;
+    field = /* a block comment stays inline */ y + local;
+  }
+
+  int someLongMethodCall(int first, int second) {
+    return first + second;
+  }
+}
+
+diagnostics:
+(none)
