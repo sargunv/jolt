@@ -1,0 +1,400 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class TrailingCommas<T,>(val first: Int, val second: String,) {
+fun parameters(a: Int, b: Int,) {}
+fun arguments() { consume(1, 2,) }
+fun typeArguments() { val values = listOf<String,>() }
+fun collections() { val items = listOf(1, 2,) }
+fun consume(vararg values: Any?) {}
+}
+
+fun <T,> genericFunction(value: T,): T = value
+
+annotation class Marker(val names: Array<String>,)
+
+@Marker(names = ["a", "b",],)
+class Annotated
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "TrailingCommas" @ 6..20
+      TypeParameterList
+        Lt "<" @ 20..21
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierList
+            Name
+              Identifier "T" @ 21..22
+          Comma "," @ 22..23
+        Gt ">" @ 23..24
+      PrimaryConstructor
+        ModifierList
+        ValueParameterList
+          LParen "(" @ 24..25
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierList
+              ValKw "val" @ 25..28 trailing=[Whitespace " "]
+              Name
+                Identifier "first" @ 29..34
+              Colon ":" @ 34..35 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "Int" @ 36..39
+            Comma "," @ 39..40 trailing=[Whitespace " "]
+            ValueParameter
+              ModifierList
+              ValKw "val" @ 41..44 trailing=[Whitespace " "]
+              Name
+                Identifier "second" @ 45..51
+              Colon ":" @ 51..52 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "String" @ 53..59
+            Comma "," @ 59..60
+          RParen ")" @ 60..61 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 62..63
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 64..67 leading=[Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "parameters" @ 68..78
+              ValueParameterList
+                LParen "(" @ 78..79
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierList
+                    Name
+                      Identifier "a" @ 79..80
+                    Colon ":" @ 80..81 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "Int" @ 82..85
+                  Comma "," @ 85..86 trailing=[Whitespace " "]
+                  ValueParameter
+                    ModifierList
+                    Name
+                      Identifier "b" @ 87..88
+                    Colon ":" @ 88..89 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "Int" @ 90..93
+                  Comma "," @ 93..94
+                RParen ")" @ 94..95 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 96..97
+                  BlockItemList
+                  RBrace "}" @ 97..98
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 99..102 leading=[Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "arguments" @ 103..112
+              ValueParameterList
+                LParen "(" @ 112..113
+                ValueParameterSeparatedList
+                RParen ")" @ 113..114 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 115..116 trailing=[Whitespace " "]
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "consume" @ 117..124
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 124..125
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 125..126
+                              Comma "," @ 126..127 trailing=[Whitespace " "]
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                LiteralExpression
+                                  IntegerLiteral "2" @ 128..129
+                              Comma "," @ 129..130
+                            RParen ")" @ 130..131 trailing=[Whitespace " "]
+                          LambdaExpressionList
+                      TerminatorList
+                  RBrace "}" @ 132..133
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 134..137 leading=[Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "typeArguments" @ 138..151
+              ValueParameterList
+                LParen "(" @ 151..152
+                ValueParameterSeparatedList
+                RParen ")" @ 152..153 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 154..155 trailing=[Whitespace " "]
+                  BlockItemList
+                    PropertyDeclaration
+                      ModifierList
+                      ModifierList
+                      ValKw "val" @ 156..159 trailing=[Whitespace " "]
+                      Name
+                        Identifier "values" @ 160..166 trailing=[Whitespace " "]
+                      PropertyInitializer
+                        Assign "=" @ 167..168 trailing=[Whitespace " "]
+                        CallExpression
+                          NameExpression
+                            Identifier "listOf" @ 169..175
+                          TypeArgumentListList
+                            TypeArgumentList
+                              Lt "<" @ 175..176
+                              TypeProjectionSeparatedList
+                                TypeReference
+                                  UserType
+                                    UserTypeSegmentList
+                                      UserTypeSegment
+                                        Identifier "String" @ 176..182
+                                Comma "," @ 182..183
+                              Gt ">" @ 183..184
+                          ValueArgumentList
+                            LParen "(" @ 184..185
+                            ValueArgumentEntryList
+                            RParen ")" @ 185..186 trailing=[Whitespace " "]
+                          LambdaExpressionList
+                      PropertyBodyMemberList
+                  RBrace "}" @ 187..188
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 189..192 leading=[Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "collections" @ 193..204
+              ValueParameterList
+                LParen "(" @ 204..205
+                ValueParameterSeparatedList
+                RParen ")" @ 205..206 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 207..208 trailing=[Whitespace " "]
+                  BlockItemList
+                    PropertyDeclaration
+                      ModifierList
+                      ModifierList
+                      ValKw "val" @ 209..212 trailing=[Whitespace " "]
+                      Name
+                        Identifier "items" @ 213..218 trailing=[Whitespace " "]
+                      PropertyInitializer
+                        Assign "=" @ 219..220 trailing=[Whitespace " "]
+                        CallExpression
+                          NameExpression
+                            Identifier "listOf" @ 221..227
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 227..228
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 228..229
+                              Comma "," @ 229..230 trailing=[Whitespace " "]
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                LiteralExpression
+                                  IntegerLiteral "2" @ 231..232
+                              Comma "," @ 232..233
+                            RParen ")" @ 233..234 trailing=[Whitespace " "]
+                          LambdaExpressionList
+                      PropertyBodyMemberList
+                  RBrace "}" @ 235..236
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 237..240 leading=[Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "consume" @ 241..248
+              ValueParameterList
+                LParen "(" @ 248..249
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierList
+                      Identifier "vararg" @ 249..255 trailing=[Whitespace " "]
+                    Name
+                      Identifier "values" @ 256..262
+                    Colon ":" @ 262..263 trailing=[Whitespace " "]
+                    TypeReference
+                      NullableType
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              Identifier "Any" @ 264..267
+                        Question "?" @ 267..268
+                RParen ")" @ 268..269 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 270..271
+                  BlockItemList
+                  RBrace "}" @ 271..272
+        RBrace "}" @ 273..274 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 276..279 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      TypeParameterList
+        Lt "<" @ 280..281
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierList
+            Name
+              Identifier "T" @ 281..282
+          Comma "," @ 282..283
+        Gt ">" @ 283..284 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "genericFunction" @ 285..300
+      ValueParameterList
+        LParen "(" @ 300..301
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "value" @ 301..306
+            Colon ":" @ 306..307 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "T" @ 308..309
+          Comma "," @ 309..310
+        RParen ")" @ 310..311
+      Colon ":" @ 311..312 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "T" @ 313..314 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 315..316 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "value" @ 317..322
+    ClassDeclaration
+      ModifierList
+        Identifier "annotation" @ 324..334 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 335..340 trailing=[Whitespace " "]
+      Name
+        Identifier "Marker" @ 341..347
+      PrimaryConstructor
+        ModifierList
+        ValueParameterList
+          LParen "(" @ 347..348
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierList
+              ValKw "val" @ 348..351 trailing=[Whitespace " "]
+              Name
+                Identifier "names" @ 352..357
+              Colon ":" @ 357..358 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "Array" @ 359..364
+                      TypeArgumentList
+                        Lt "<" @ 364..365
+                        TypeProjectionSeparatedList
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  Identifier "String" @ 365..371
+                        Gt ">" @ 371..372
+            Comma "," @ 372..373
+          RParen ")" @ 373..374
+    ClassDeclaration
+      ModifierList
+        Annotation
+          At "@" @ 376..377 leading=[Newline "\n", Newline "\n"]
+          QualifiedName
+            QualifiedNameSegmentList
+              Name
+                Identifier "Marker" @ 377..383
+          AnnotationArgumentList
+            LParen "(" @ 383..384
+            ValueArgumentSeparatedList
+              ValueArgument
+                ValueArgumentPrefixList
+                Name
+                  Identifier "names" @ 384..389 trailing=[Whitespace " "]
+                Assign "=" @ 390..391 trailing=[Whitespace " "]
+                CollectionLiteralExpression
+                  LBracket "[" @ 392..393
+                  ValueArgumentEntryList
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      StringTemplateExpression
+                        StringTemplateEntryList
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 393..394
+                          StringTemplateEntry
+                            RegularStringPart "a" @ 394..395
+                        ClosingQuote "\"" @ 395..396
+                    Comma "," @ 396..397 trailing=[Whitespace " "]
+                    ValueArgument
+                      ValueArgumentPrefixList
+                      StringTemplateExpression
+                        StringTemplateEntryList
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 398..399
+                          StringTemplateEntry
+                            RegularStringPart "b" @ 399..400
+                        ClosingQuote "\"" @ 400..401
+                    Comma "," @ 401..402
+                  RBracket "]" @ 402..403
+              Comma "," @ 403..404
+            RParen ")" @ 404..405
+      ModifierList
+      ClassKw "class" @ 406..411 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Annotated" @ 412..421
+  Eof "" @ 422..422 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

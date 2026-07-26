@@ -115,10 +115,9 @@ fn format_record_pattern_components<'source>(
                 format_component_pattern(&component, doc)
             })
         }
-        JavaFormatField::Malformed(recovery) => vec![crate::helpers::lists::CommaListItem {
-            doc: recovery,
-            comma: None,
-        }],
+        JavaFormatField::Malformed(recovery) => {
+            vec![crate::helpers::lists::CommaListItem::visible(recovery)]
+        }
     };
     delimited_comma_list(doc, open, close, items)
 }

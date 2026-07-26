@@ -18,6 +18,7 @@ style/declarations/explicit-backing-fields.kt
 style/declarations/objects-and-companions.kt
 style/declarations/primary-constructor-comments.kt
 style/declarations/properties-accessors.kt
+style/declarations/trailing-commas.kt
 style/declarations/type-parameters-where.kt
 style/expressions/call-chains.kt
 style/expressions/collection-builders.kt

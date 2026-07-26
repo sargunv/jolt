@@ -1,12 +1,12 @@
 use super::{
     AnnotationInterfaceDeclaration, ClassDeclaration, CommaListItem, Doc, EnumDeclaration,
     ExtendsClause, ImplementsClause, InterfaceDeclaration, JavaSyntaxToken, LeadingTrivia,
-    PermitsClause, RecordDeclaration, TrailingTrivia, TypeLeadingComments, comma_list,
-    comment_forces_line, delimited_comma_list, format_annotation_interface_body, format_class_body,
-    format_construct_leading_comments, format_enum_body_contents, format_interface_body,
-    format_modifier_prefix, format_name, format_record_body, format_record_component, format_token,
-    format_token_with_comments, format_type_parameter_list, format_type_without_leading_comments,
-    source_braced_body,
+    PermitsClause, RecordDeclaration, TrailingTrivia, TypeLeadingComments, attach_comma_separator,
+    comma_list, comment_forces_line, delimited_comma_list, format_annotation_interface_body,
+    format_class_body, format_construct_leading_comments, format_enum_body_contents,
+    format_interface_body, format_modifier_prefix, format_name, format_record_body,
+    format_record_component, format_token, format_token_with_comments, format_type_parameter_list,
+    format_type_without_leading_comments, source_braced_body,
 };
 use crate::helpers::recovery::{
     JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_optional_field,
@@ -319,37 +319,23 @@ fn format_record_components<'source>(
             let mut items = Vec::with_capacity(lower);
             for part in parts {
                 match resolve_list_part(part, doc) {
-                    JavaFormatListPart::Item(component) => items.push(CommaListItem {
-                        doc: format_record_component(&component, doc),
-                        comma: None,
-                    }),
+                    JavaFormatListPart::Item(component) => items.push(CommaListItem::visible(
+                        format_record_component(&component, doc),
+                    )),
                     JavaFormatListPart::Separator(comma) => {
-                        if let Some(item) = items.last_mut() {
-                            item.comma = Some(comma);
-                        } else {
-                            doc.block_on_invariant(
-                                "record component separator had no preceding component",
-                            );
-                        }
+                        attach_comma_separator(doc, &mut items, comma);
                     }
-                    JavaFormatListPart::Recovery(malformed) => items.push(CommaListItem {
-                        doc: malformed.doc(),
-                        comma: None,
-                    }),
+                    JavaFormatListPart::Recovery(malformed) => {
+                        items.push(CommaListItem::recovery(malformed));
+                    }
                 }
             }
             delimited_comma_list(doc, open, close, items)
         }
         JavaFormatField::Present(None) => delimited_comma_list(doc, open, close, []),
-        JavaFormatField::Malformed(malformed) => delimited_comma_list(
-            doc,
-            open,
-            close,
-            [CommaListItem {
-                doc: malformed,
-                comma: None,
-            }],
-        ),
+        JavaFormatField::Malformed(malformed) => {
+            delimited_comma_list(doc, open, close, [CommaListItem::visible(malformed)])
+        }
     }
 }
 
@@ -387,25 +373,19 @@ fn format_permits<'source>(
     let mut items = Vec::with_capacity(lower);
     for part in parts {
         match resolve_list_part(part, doc) {
-            JavaFormatListPart::Item(name) => items.push(CommaListItem {
-                doc: doc_concat!(
-                    doc,
-                    [
-                        format_construct_leading_comments(doc, name.first_token().as_ref()),
-                        format_name(&name, doc)
-                    ]
-                ),
-                comma: None,
-            }),
+            JavaFormatListPart::Item(name) => items.push(CommaListItem::visible(doc_concat!(
+                doc,
+                [
+                    format_construct_leading_comments(doc, name.first_token().as_ref()),
+                    format_name(&name, doc)
+                ]
+            ))),
             JavaFormatListPart::Separator(comma) => {
-                if let Some(item) = items.last_mut() {
-                    item.comma = Some(comma);
-                }
+                attach_comma_separator(doc, &mut items, comma);
             }
-            JavaFormatListPart::Recovery(malformed) => items.push(CommaListItem {
-                doc: malformed.doc(),
-                comma: None,
-            }),
+            JavaFormatListPart::Recovery(malformed) => {
+                items.push(CommaListItem::recovery(malformed));
+            }
         }
     }
     match keyword {
@@ -463,25 +443,19 @@ fn format_type_clause<'source>(
     let mut items = Vec::with_capacity(lower);
     for part in parts {
         match resolve_list_part(part, doc) {
-            JavaFormatListPart::Item(ty) => items.push(CommaListItem {
-                doc: doc_concat!(
-                    doc,
-                    [
-                        format_construct_leading_comments(doc, ty.first_token().as_ref()),
-                        format_type_without_leading_comments(&ty, doc)
-                    ]
-                ),
-                comma: None,
-            }),
+            JavaFormatListPart::Item(ty) => items.push(CommaListItem::visible(doc_concat!(
+                doc,
+                [
+                    format_construct_leading_comments(doc, ty.first_token().as_ref()),
+                    format_type_without_leading_comments(&ty, doc)
+                ]
+            ))),
             JavaFormatListPart::Separator(comma) => {
-                if let Some(item) = items.last_mut() {
-                    item.comma = Some(comma);
-                }
+                attach_comma_separator(doc, &mut items, comma);
             }
-            JavaFormatListPart::Recovery(malformed) => items.push(CommaListItem {
-                doc: malformed.doc(),
-                comma: None,
-            }),
+            JavaFormatListPart::Recovery(malformed) => {
+                items.push(CommaListItem::recovery(malformed));
+            }
         }
     }
     header_clause(keyword, items, doc)
