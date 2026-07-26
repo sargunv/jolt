@@ -1,0 +1,114 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class FormatterIgnoreCommentBeforeOn {
+  // @formatter:off
+  void   raw( ) { }
+ // owned by the next member
+  // @formatter:on
+  static void formatted() {}
+}
+
+class FormatterIgnoreCommentBeforeOnAtBoundary {
+  // @formatter:off
+  void   raw( ) { }
+ // owned by the close brace
+  // @formatter:on
+}
+
+class FormatterIgnoreRepeatedOffBeforeOn {
+  // @formatter:off
+  void   raw( ) { }
+  // @formatter:off
+  // @formatter:on
+  static void formatted() {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "FormatterIgnoreCommentBeforeOn" @ 6..36 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 37..38
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 61..65 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+            Identifier "raw" @ 68..71
+            LParen "(" @ 71..72 trailing=[Whitespace " "]
+            RParen ")" @ 73..74 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 75..76 trailing=[Whitespace " "]
+              BlockStatementList
+              RBrace "}" @ 77..78
+          MethodDeclaration
+            ModifierList
+              StaticKw "static" @ 129..135 leading=[Newline "\n", Whitespace " ", LineComment "// owned by the next member", Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VoidType
+              VoidKw "void" @ 136..140 trailing=[Whitespace " "]
+            Identifier "formatted" @ 141..150
+            LParen "(" @ 150..151
+            RParen ")" @ 151..152 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 153..154
+              BlockStatementList
+              RBrace "}" @ 154..155
+        RBrace "}" @ 156..157 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 159..164 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "FormatterIgnoreCommentBeforeOnAtBoundary" @ 165..205 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 206..207
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 230..234 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+            Identifier "raw" @ 237..240
+            LParen "(" @ 240..241 trailing=[Whitespace " "]
+            RParen ")" @ 242..243 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 244..245 trailing=[Whitespace " "]
+              BlockStatementList
+              RBrace "}" @ 246..247
+        RBrace "}" @ 296..297 leading=[Newline "\n", Whitespace " ", LineComment "// owned by the close brace", Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 299..304 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "FormatterIgnoreRepeatedOffBeforeOn" @ 305..339 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 340..341
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 364..368 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+            Identifier "raw" @ 371..374
+            LParen "(" @ 374..375 trailing=[Whitespace " "]
+            RParen ")" @ 376..377 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 378..379 trailing=[Whitespace " "]
+              BlockStatementList
+              RBrace "}" @ 380..381
+          MethodDeclaration
+            ModifierList
+              StaticKw "static" @ 423..429 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VoidType
+              VoidKw "void" @ 430..434 trailing=[Whitespace " "]
+            Identifier "formatted" @ 435..444
+            LParen "(" @ 444..445
+            RParen ")" @ 445..446 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 447..448
+              BlockStatementList
+              RBrace "}" @ 448..449
+        RBrace "}" @ 450..451 leading=[Newline "\n"]
+  Eof "" @ 452..452 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

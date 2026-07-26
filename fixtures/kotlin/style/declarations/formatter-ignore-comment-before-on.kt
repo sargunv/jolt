@@ -1,0 +1,22 @@
+class FormatterIgnoreCommentBeforeOn {
+  // @formatter:off
+  fun   raw( ) { }
+ // owned by the next member
+  // @formatter:on
+  fun formatted() {}
+}
+
+class FormatterIgnoreCommentBeforeOnAtBoundary {
+  // @formatter:off
+  fun   raw( ) { }
+ // owned by the close brace
+  // @formatter:on
+}
+
+class FormatterIgnoreRepeatedOffBeforeOn {
+  // @formatter:off
+  fun   raw( ) { }
+  // @formatter:off
+  // @formatter:on
+  fun formatted() {}
+}

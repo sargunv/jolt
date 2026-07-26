@@ -17,6 +17,7 @@ style/declarations/class-header-clauses.kt
 style/declarations/delegation.kt
 style/declarations/enum-entries.kt
 style/declarations/explicit-backing-fields.kt
+style/declarations/formatter-ignore-comment-before-on.kt
 style/declarations/formatter-ignore-members.kt
 style/declarations/formatter-ignore-trailing-line-comment.kt
 style/declarations/member-trailing-comment-spacing.kt
