@@ -27,6 +27,24 @@ class LeadingCommentsOnConstructorInvocations {
       // leads a qualified invocation with explicit type arguments
       outer.<String>super(name, 0);
     }
+
+    Inner(LeadingCommentsOnConstructorInvocations outer, String name, int marker) {
+      outer.
+      // sits between the qualifier dot and the explicit type arguments
+      <String>super(name, marker);
+    }
+
+    Inner(LeadingCommentsOnConstructorInvocations outer, int marker) {
+      outer.
+      /* block comment sits between the qualifier dot and the type arguments */
+      <String>super("value", marker);
+    }
+
+    Inner(LeadingCommentsOnConstructorInvocations outer, boolean flag) {
+      (outer).
+      // sits behind a parenthesized qualifier's dot
+      <String>super("value", 0);
+    }
   }
 
   static class Generic {
@@ -242,57 +260,9 @@ CompilationUnit
                           RParen ")" @ 608..609
                         Semicolon ";" @ 609..610
                     RBrace "}" @ 615..616 leading=[Newline "\n", Whitespace "    "]
-              RBrace "}" @ 619..620 leading=[Newline "\n", Whitespace "  "]
-          ClassDeclaration
-            ModifierList
-              StaticKw "static" @ 624..630 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            ClassKw "class" @ 631..636 trailing=[Whitespace " "]
-            Identifier "Generic" @ 637..644 trailing=[Whitespace " "]
-            ClassBody
-              LBrace "{" @ 645..646
-              ClassBodyMemberList
                 ConstructorDeclaration
-                  Identifier "Generic" @ 651..658 leading=[Newline "\n", Whitespace "    "]
-                  LParen "(" @ 658..659
-                  RParen ")" @ 659..660 trailing=[Whitespace " "]
-                  ConstructorBody
-                    LBrace "{" @ 661..662
-                    ConstructorBodyEntryList
-                      ConstructorInvocation
-                        TypeArgumentList
-                          Lt "<" @ 720..721 leading=[Newline "\n", Whitespace "      ", BlockComment "/* block comment leads the type arguments */", Newline "\n", Whitespace "      "]
-                          TypeArgumentSeparatedList
-                            TypeArgument
-                              AnnotationList
-                              ClassType
-                                ClassTypeSegmentList
-                                  ClassTypeSegmentNode
-                                    AnnotationList
-                                    Name
-                                      Identifier "String" @ 721..727
-                          Gt ">" @ 727..728
-                        ThisKw "this" @ 728..732
-                        ArgumentList
-                          LParen "(" @ 732..733
-                          ExpressionList
-                            LiteralExpression
-                              StringLiteral "\"value\"" @ 733..740
-                            Comma "," @ 740..741 trailing=[Whitespace " "]
-                            LiteralExpression
-                              IntegerLiteral "0" @ 742..743
-                          RParen ")" @ 743..744
-                        Semicolon ";" @ 744..745
-                    RBrace "}" @ 750..751 leading=[Newline "\n", Whitespace "    "]
-                ConstructorDeclaration
-                  TypeParameterList
-                    Lt "<" @ 757..758 leading=[Newline "\n", Newline "\n", Whitespace "    "]
-                    TypeParameterSeparatedList
-                      TypeParameter
-                        AnnotationList
-                        Identifier "T" @ 758..759
-                    Gt ">" @ 759..760 trailing=[Whitespace " "]
-                  Identifier "Generic" @ 761..768
-                  LParen "(" @ 768..769
+                  Identifier "Inner" @ 622..627 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+                  LParen "(" @ 627..628
                   FormalParameterList
                     FormalParameter
                       ParameterModifierList
@@ -301,25 +271,249 @@ CompilationUnit
                           ClassTypeSegmentNode
                             AnnotationList
                             Name
-                              Identifier "T" @ 769..770 trailing=[Whitespace " "]
+                              Identifier "LeadingCommentsOnConstructorInvocations" @ 628..667 trailing=[Whitespace " "]
                       AnnotationList
-                      Identifier "value" @ 771..776
-                    Comma "," @ 776..777 trailing=[Whitespace " "]
+                      Identifier "outer" @ 668..673
+                    Comma "," @ 673..674 trailing=[Whitespace " "]
+                    FormalParameter
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 675..681 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "name" @ 682..686
+                    Comma "," @ 686..687 trailing=[Whitespace " "]
                     FormalParameter
                       ParameterModifierList
                       PrimitiveType
                         AnnotationList
-                        IntKw "int" @ 778..781 trailing=[Whitespace " "]
+                        IntKw "int" @ 688..691 trailing=[Whitespace " "]
                       AnnotationList
-                      Identifier "marker" @ 782..788
-                  RParen ")" @ 788..789 trailing=[Whitespace " "]
+                      Identifier "marker" @ 692..698
+                  RParen ")" @ 698..699 trailing=[Whitespace " "]
                   ConstructorBody
-                    LBrace "{" @ 790..791
+                    LBrace "{" @ 700..701
                     ConstructorBodyEntryList
-                    RBrace "}" @ 791..792
-              RBrace "}" @ 795..796 leading=[Newline "\n", Whitespace "  "]
-        RBrace "}" @ 797..798 leading=[Newline "\n"]
-  Eof "" @ 799..799 leading=[Newline "\n"]
+                      ConstructorInvocation
+                        Name
+                          Identifier "outer" @ 708..713 leading=[Newline "\n", Whitespace "      "]
+                        Dot "." @ 713..714
+                        TypeArgumentList
+                          Lt "<" @ 793..794 leading=[Newline "\n", Whitespace "      ", LineComment "// sits between the qualifier dot and the explicit type arguments", Newline "\n", Whitespace "      "]
+                          TypeArgumentSeparatedList
+                            TypeArgument
+                              AnnotationList
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "String" @ 794..800
+                          Gt ">" @ 800..801
+                        SuperKw "super" @ 801..806
+                        ArgumentList
+                          LParen "(" @ 806..807
+                          ExpressionList
+                            NameExpression
+                              Identifier "name" @ 807..811
+                            Comma "," @ 811..812 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "marker" @ 813..819
+                          RParen ")" @ 819..820
+                        Semicolon ";" @ 820..821
+                    RBrace "}" @ 826..827 leading=[Newline "\n", Whitespace "    "]
+                ConstructorDeclaration
+                  Identifier "Inner" @ 833..838 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+                  LParen "(" @ 838..839
+                  FormalParameterList
+                    FormalParameter
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "LeadingCommentsOnConstructorInvocations" @ 839..878 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "outer" @ 879..884
+                    Comma "," @ 884..885 trailing=[Whitespace " "]
+                    FormalParameter
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 886..889 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "marker" @ 890..896
+                  RParen ")" @ 896..897 trailing=[Whitespace " "]
+                  ConstructorBody
+                    LBrace "{" @ 898..899
+                    ConstructorBodyEntryList
+                      ConstructorInvocation
+                        Name
+                          Identifier "outer" @ 906..911 leading=[Newline "\n", Whitespace "      "]
+                        Dot "." @ 911..912
+                        TypeArgumentList
+                          Lt "<" @ 999..1000 leading=[Newline "\n", Whitespace "      ", BlockComment "/* block comment sits between the qualifier dot and the type arguments */", Newline "\n", Whitespace "      "]
+                          TypeArgumentSeparatedList
+                            TypeArgument
+                              AnnotationList
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "String" @ 1000..1006
+                          Gt ">" @ 1006..1007
+                        SuperKw "super" @ 1007..1012
+                        ArgumentList
+                          LParen "(" @ 1012..1013
+                          ExpressionList
+                            LiteralExpression
+                              StringLiteral "\"value\"" @ 1013..1020
+                            Comma "," @ 1020..1021 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "marker" @ 1022..1028
+                          RParen ")" @ 1028..1029
+                        Semicolon ";" @ 1029..1030
+                    RBrace "}" @ 1035..1036 leading=[Newline "\n", Whitespace "    "]
+                ConstructorDeclaration
+                  Identifier "Inner" @ 1042..1047 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+                  LParen "(" @ 1047..1048
+                  FormalParameterList
+                    FormalParameter
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "LeadingCommentsOnConstructorInvocations" @ 1048..1087 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "outer" @ 1088..1093
+                    Comma "," @ 1093..1094 trailing=[Whitespace " "]
+                    FormalParameter
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        BooleanKw "boolean" @ 1095..1102 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "flag" @ 1103..1107
+                  RParen ")" @ 1107..1108 trailing=[Whitespace " "]
+                  ConstructorBody
+                    LBrace "{" @ 1109..1110
+                    ConstructorBodyEntryList
+                      ConstructorInvocation
+                        ParenthesizedExpression
+                          LParen "(" @ 1117..1118 leading=[Newline "\n", Whitespace "      "]
+                          NameExpression
+                            Identifier "outer" @ 1118..1123
+                          RParen ")" @ 1123..1124
+                        Dot "." @ 1124..1125
+                        TypeArgumentList
+                          Lt "<" @ 1185..1186 leading=[Newline "\n", Whitespace "      ", LineComment "// sits behind a parenthesized qualifier's dot", Newline "\n", Whitespace "      "]
+                          TypeArgumentSeparatedList
+                            TypeArgument
+                              AnnotationList
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "String" @ 1186..1192
+                          Gt ">" @ 1192..1193
+                        SuperKw "super" @ 1193..1198
+                        ArgumentList
+                          LParen "(" @ 1198..1199
+                          ExpressionList
+                            LiteralExpression
+                              StringLiteral "\"value\"" @ 1199..1206
+                            Comma "," @ 1206..1207 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "0" @ 1208..1209
+                          RParen ")" @ 1209..1210
+                        Semicolon ";" @ 1210..1211
+                    RBrace "}" @ 1216..1217 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 1220..1221 leading=[Newline "\n", Whitespace "  "]
+          ClassDeclaration
+            ModifierList
+              StaticKw "static" @ 1225..1231 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            ClassKw "class" @ 1232..1237 trailing=[Whitespace " "]
+            Identifier "Generic" @ 1238..1245 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 1246..1247
+              ClassBodyMemberList
+                ConstructorDeclaration
+                  Identifier "Generic" @ 1252..1259 leading=[Newline "\n", Whitespace "    "]
+                  LParen "(" @ 1259..1260
+                  RParen ")" @ 1260..1261 trailing=[Whitespace " "]
+                  ConstructorBody
+                    LBrace "{" @ 1262..1263
+                    ConstructorBodyEntryList
+                      ConstructorInvocation
+                        TypeArgumentList
+                          Lt "<" @ 1321..1322 leading=[Newline "\n", Whitespace "      ", BlockComment "/* block comment leads the type arguments */", Newline "\n", Whitespace "      "]
+                          TypeArgumentSeparatedList
+                            TypeArgument
+                              AnnotationList
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "String" @ 1322..1328
+                          Gt ">" @ 1328..1329
+                        ThisKw "this" @ 1329..1333
+                        ArgumentList
+                          LParen "(" @ 1333..1334
+                          ExpressionList
+                            LiteralExpression
+                              StringLiteral "\"value\"" @ 1334..1341
+                            Comma "," @ 1341..1342 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "0" @ 1343..1344
+                          RParen ")" @ 1344..1345
+                        Semicolon ";" @ 1345..1346
+                    RBrace "}" @ 1351..1352 leading=[Newline "\n", Whitespace "    "]
+                ConstructorDeclaration
+                  TypeParameterList
+                    Lt "<" @ 1358..1359 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+                    TypeParameterSeparatedList
+                      TypeParameter
+                        AnnotationList
+                        Identifier "T" @ 1359..1360
+                    Gt ">" @ 1360..1361 trailing=[Whitespace " "]
+                  Identifier "Generic" @ 1362..1369
+                  LParen "(" @ 1369..1370
+                  FormalParameterList
+                    FormalParameter
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "T" @ 1370..1371 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "value" @ 1372..1377
+                    Comma "," @ 1377..1378 trailing=[Whitespace " "]
+                    FormalParameter
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 1379..1382 trailing=[Whitespace " "]
+                      AnnotationList
+                      Identifier "marker" @ 1383..1389
+                  RParen ")" @ 1389..1390 trailing=[Whitespace " "]
+                  ConstructorBody
+                    LBrace "{" @ 1391..1392
+                    ConstructorBodyEntryList
+                    RBrace "}" @ 1392..1393
+              RBrace "}" @ 1396..1397 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 1398..1399 leading=[Newline "\n"]
+  Eof "" @ 1400..1400 leading=[Newline "\n"]
 
 diagnostics:
   (none)
