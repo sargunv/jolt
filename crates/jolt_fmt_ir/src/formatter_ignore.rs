@@ -351,14 +351,22 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
             let line = lines.comment_line(start_offset);
             let end_line = lines.comment_line(end_offset.saturating_sub(1).max(start_offset));
             let comment_text = comment.text();
-            // A complete pair is first-off-wins: nested/repeated off markers
-            // remain ordinary raw contents until the matching on marker.
+            // A complete pair is first-off-wins: a nested or repeated off
+            // marker never opens a second region, it is only one more comment
+            // between the first pair's markers.
             if is_formatter_off_marker(comment_text) && off_comment_start.is_none() {
                 off_comment_start = Some(leading_comment_start.take().unwrap_or(line.start));
             } else if is_formatter_on_marker(comment_text)
                 && let Some(start) = off_comment_start.take()
             {
-                let end = line.start;
+                // Every comment that leads the on marker's token also leads
+                // the next represented item, which emits those comments
+                // itself. The run has to stop before the first of them, the
+                // same way it already stops before the on marker.
+                let end = leading_comment_start
+                    .take()
+                    .filter(|&given_away| start < given_away)
+                    .unwrap_or(line.start);
                 if start < end {
                     ranges.push(FormatterIgnoreRange {
                         raw_text: strip_trailing_line_ending(&source[start..end]),
@@ -391,10 +399,7 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
                         },
                     });
                 }
-            } else if off_comment_start.is_none()
-                && leading_comment_start.is_none()
-                && line.comment_starts_own_line
-            {
+            } else if leading_comment_start.is_none() && line.comment_starts_own_line {
                 *leading_comment_start = Some(line.start);
             }
         };

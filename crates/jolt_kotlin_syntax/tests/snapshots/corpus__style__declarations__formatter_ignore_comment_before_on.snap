@@ -1,0 +1,155 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class FormatterIgnoreCommentBeforeOn {
+  // @formatter:off
+  fun   raw( ) { }
+ // owned by the next member
+  // @formatter:on
+  fun formatted() {}
+}
+
+class FormatterIgnoreCommentBeforeOnAtBoundary {
+  // @formatter:off
+  fun   raw( ) { }
+ // owned by the close brace
+  // @formatter:on
+}
+
+class FormatterIgnoreRepeatedOffBeforeOn {
+  // @formatter:off
+  fun   raw( ) { }
+  // @formatter:off
+  // @formatter:on
+  fun formatted() {}
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "FormatterIgnoreCommentBeforeOn" @ 6..36 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 37..38
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 61..64 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+              ModifierList
+              Name
+                Identifier "raw" @ 67..70
+              ValueParameterList
+                LParen "(" @ 70..71 trailing=[Whitespace " "]
+                ValueParameterSeparatedList
+                RParen ")" @ 72..73 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 74..75 trailing=[Whitespace " "]
+                  BlockItemList
+                  RBrace "}" @ 76..77
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 128..131 leading=[Newline "\n", Whitespace " ", LineComment "// owned by the next member", Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "formatted" @ 132..141
+              ValueParameterList
+                LParen "(" @ 141..142
+                ValueParameterSeparatedList
+                RParen ")" @ 142..143 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 144..145
+                  BlockItemList
+                  RBrace "}" @ 145..146
+        RBrace "}" @ 147..148 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 150..155 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "FormatterIgnoreCommentBeforeOnAtBoundary" @ 156..196 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 197..198
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 221..224 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+              ModifierList
+              Name
+                Identifier "raw" @ 227..230
+              ValueParameterList
+                LParen "(" @ 230..231 trailing=[Whitespace " "]
+                ValueParameterSeparatedList
+                RParen ")" @ 232..233 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 234..235 trailing=[Whitespace " "]
+                  BlockItemList
+                  RBrace "}" @ 236..237
+        RBrace "}" @ 286..287 leading=[Newline "\n", Whitespace " ", LineComment "// owned by the close brace", Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 289..294 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "FormatterIgnoreRepeatedOffBeforeOn" @ 295..329 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 330..331
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 354..357 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+              ModifierList
+              Name
+                Identifier "raw" @ 360..363
+              ValueParameterList
+                LParen "(" @ 363..364 trailing=[Whitespace " "]
+                ValueParameterSeparatedList
+                RParen ")" @ 365..366 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 367..368 trailing=[Whitespace " "]
+                  BlockItemList
+                  RBrace "}" @ 369..370
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 412..415 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "formatted" @ 416..425
+              ValueParameterList
+                LParen "(" @ 425..426
+                ValueParameterSeparatedList
+                RParen ")" @ 426..427 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 428..429
+                  BlockItemList
+                  RBrace "}" @ 429..430
+        RBrace "}" @ 431..432 leading=[Newline "\n"]
+  Eof "" @ 433..433 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
