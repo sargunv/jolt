@@ -3,7 +3,6 @@ use jolt_kotlin_syntax::{
     Block, BlockItem, BlockItemList, BlockItemListElement, BlockItemListElementSyntax,
     KotlinSyntaxListPart, KotlinSyntaxToken, boundary_separator_removal_claim,
 };
-use jolt_syntax::tokens_have_blank_line_between;
 
 use crate::helpers::blocks::{BodyItem, BodyItemSeparator, join_body_items};
 use crate::helpers::comments::{
@@ -252,7 +251,7 @@ fn block_item_separator<'source>(
         return BodyItemSeparator::Line;
     };
     BodyItemSeparator::between(
-        tokens_have_blank_line_between(&previous, &current),
+        current.has_leading_blank_line(),
         trailing_comments_force_line(&previous),
     )
 }

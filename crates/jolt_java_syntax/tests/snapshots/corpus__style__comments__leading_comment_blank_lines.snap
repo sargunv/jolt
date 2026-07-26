@@ -1,0 +1,200 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+// file header comment
+
+// second header comment after a blank line
+
+package com.example.leading;
+
+// comment run leading the type
+
+class LeadingCommentBlankLines {
+// first comment of the run
+
+// second comment of the run
+int spacedRun = 1;
+
+// comment separated from the field it leads
+
+int spacedItem = 2;
+
+// collapsed blank lines between comments
+
+
+
+// collapsed blank lines before the field
+
+
+
+int collapsed = 3;
+
+int adjacent = 4;
+// no blank line before this comment
+
+int afterComment = 5;
+
+/** Doc comment separated from its method. */
+
+void documented() {
+// comment separated from the statement it leads
+
+int local = 1;
+call(local);
+}
+
+void call(int value) {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    PackageDeclaration
+      AnnotationList
+      PackageKw "package" @ 69..76 leading=[LineComment "// file header comment", Newline "\n", Newline "\n", LineComment "// second header comment after a blank line", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "com" @ 77..80
+        Dot "." @ 80..81
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "example" @ 81..88
+          Dot "." @ 88..89
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "leading" @ 89..96
+      Semicolon ";" @ 96..97
+    ClassDeclaration
+      ClassKw "class" @ 132..137 leading=[Newline "\n", Newline "\n", LineComment "// comment run leading the type", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "LeadingCommentBlankLines" @ 138..162 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 163..164
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 223..226 leading=[Newline "\n", LineComment "// first comment of the run", Newline "\n", Newline "\n", LineComment "// second comment of the run", Newline "\n"] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "spacedRun" @ 227..236 trailing=[Whitespace " "]
+                Assign "=" @ 237..238 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "1" @ 239..240
+            Semicolon ";" @ 240..241
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 289..292 leading=[Newline "\n", Newline "\n", LineComment "// comment separated from the field it leads", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "spacedItem" @ 293..303 trailing=[Whitespace " "]
+                Assign "=" @ 304..305 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "2" @ 306..307
+            Semicolon ";" @ 307..308
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 400..403 leading=[Newline "\n", Newline "\n", LineComment "// collapsed blank lines between comments", Newline "\n", Newline "\n", Newline "\n", Newline "\n", LineComment "// collapsed blank lines before the field", Newline "\n", Newline "\n", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "collapsed" @ 404..413 trailing=[Whitespace " "]
+                Assign "=" @ 414..415 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "3" @ 416..417
+            Semicolon ";" @ 417..418
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 420..423 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "adjacent" @ 424..432 trailing=[Whitespace " "]
+                Assign "=" @ 433..434 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "4" @ 435..436
+            Semicolon ";" @ 436..437
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 476..479 leading=[Newline "\n", LineComment "// no blank line before this comment", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "afterComment" @ 480..492 trailing=[Whitespace " "]
+                Assign "=" @ 493..494 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "5" @ 495..496
+            Semicolon ";" @ 496..497
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 546..550 leading=[Newline "\n", Newline "\n", DocComment "/** Doc comment separated from its method. */", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "documented" @ 551..561
+            LParen "(" @ 561..562
+            RParen ")" @ 562..563 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 564..565
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 616..619 leading=[Newline "\n", LineComment "// comment separated from the statement it leads", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "local" @ 620..625 trailing=[Whitespace " "]
+                        Assign "=" @ 626..627 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "1" @ 628..629
+                  Semicolon ";" @ 629..630
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "call" @ 631..635 leading=[Newline "\n"]
+                        ArgumentList
+                          LParen "(" @ 635..636
+                          ExpressionList
+                            NameExpression
+                              Identifier "local" @ 636..641
+                          RParen ")" @ 641..642
+                    Semicolon ";" @ 642..643
+              RBrace "}" @ 644..645 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 647..651 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "call" @ 652..656
+            LParen "(" @ 656..657
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 657..660 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 661..666
+            RParen ")" @ 666..667 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 668..669
+              BlockStatementList
+              RBrace "}" @ 669..670
+        RBrace "}" @ 671..672 leading=[Newline "\n"]
+  Eof "" @ 673..673 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

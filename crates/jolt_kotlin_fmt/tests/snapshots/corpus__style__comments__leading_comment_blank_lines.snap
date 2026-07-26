@@ -1,0 +1,50 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+// file header comment
+
+// second header comment after a blank line
+
+package com.example.leading
+
+// comment run leading the class
+
+class LeadingCommentBlankLines {
+  // first comment of the run
+
+  // second comment of the run
+  val spacedRun = 1
+
+  // comment separated from the property it leads
+
+  val spacedItem = 2
+
+  // collapsed blank lines between comments
+
+  // collapsed blank lines before the property
+
+  val collapsed = 3
+
+  val adjacent = 4
+  // no blank line before this comment
+
+  val afterComment = 5
+
+  /**
+   * Doc comment separated from its function.
+   */
+
+  fun documented() {
+    // comment separated from the statement it leads
+
+    val local = 1
+    call(local)
+  }
+
+  fun call(value: Int) {}
+}
+
+diagnostics:
+(none)

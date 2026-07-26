@@ -33,6 +33,7 @@ pub enum CommentKind {
 pub struct Comment<'source> {
     kind: CommentKind,
     terminated: bool,
+    followed_by_blank_line: bool,
     source: &'source str,
     #[cfg(not(debug_assertions))]
     text_range: TextRange,
@@ -53,6 +54,17 @@ impl<'source> Comment<'source> {
     #[must_use]
     pub const fn is_terminated(&self) -> bool {
         self.terminated
+    }
+
+    /// Returns whether a blank line separates this comment from what follows it
+    /// in the same trivia run.
+    ///
+    /// "What follows" is the next comment in the run, or the token the run is
+    /// attached to. The gap after a comment belongs to that comment, so this is
+    /// the only place a blank line inside a comment run is represented.
+    #[must_use]
+    pub const fn is_followed_by_blank_line(&self) -> bool {
+        self.followed_by_blank_line
     }
 
     /// Returns the raw comment text.
@@ -97,6 +109,7 @@ impl<'source> Comment<'source> {
     pub(crate) const fn new(
         kind: CommentKind,
         terminated: bool,
+        followed_by_blank_line: bool,
         source: &'source str,
         piece: SourceTriviaPiece<'source>,
         line_terminator: Option<SourceTriviaPiece<'source>>,
@@ -104,6 +117,7 @@ impl<'source> Comment<'source> {
         Self {
             kind,
             terminated,
+            followed_by_blank_line,
             source,
             piece,
             line_terminator,
@@ -114,12 +128,14 @@ impl<'source> Comment<'source> {
     pub(crate) const fn new(
         kind: CommentKind,
         terminated: bool,
+        followed_by_blank_line: bool,
         source: &'source str,
         text_range: TextRange,
     ) -> Self {
         Self {
             kind,
             terminated,
+            followed_by_blank_line,
             source,
             text_range,
         }
@@ -214,6 +230,7 @@ impl<'source> Iterator for Comments<'source> {
                 TriviaKind::UnterminatedDocComment => (CommentKind::Doc, false),
                 TriviaKind::Whitespace | TriviaKind::Newline | TriviaKind::Ignored => continue,
             };
+            let followed_by_blank_line = trivia_opens_with_blank_line(self.trivia.as_slice());
             #[cfg(debug_assertions)]
             let line_terminator = if matches!(kind, CommentKind::Line) {
                 (|| {
@@ -241,37 +258,40 @@ impl<'source> Iterator for Comments<'source> {
             return Some(Comment::new(
                 kind,
                 terminated,
+                followed_by_blank_line,
                 self.source,
                 SourceTriviaPiece::new(id, *trivia, text_range),
                 line_terminator,
             ));
             #[cfg(not(debug_assertions))]
-            return Some(Comment::new(kind, terminated, self.source, text_range));
+            return Some(Comment::new(
+                kind,
+                terminated,
+                followed_by_blank_line,
+                self.source,
+                text_range,
+            ));
         }
 
         None
     }
 }
 
-/// Returns true when the supplied trivia contains an intentional blank line
-/// (two or more consecutive `Newline` pieces not reset by an intervening
-/// comment).
+/// Returns true when `trivia` opens with an intentional blank line: two or more
+/// `Newline` pieces before anything else.
 ///
-/// Whitespace and ignored trivia do not interrupt the run.
+/// Whitespace and ignored trivia do not interrupt the run, but a comment ends
+/// it. The gap that follows a comment belongs to that comment
+/// ([`Comment::is_followed_by_blank_line`]), not to the run in front of it, so
+/// scanning past a comment would report one blank line in two places.
 #[must_use]
-pub(crate) fn trivia_has_blank_line(trivia: &[SyntaxTrivia]) -> bool {
-    trivia_iter_has_blank_line(trivia)
-}
-
-pub(crate) fn trivia_iter_has_blank_line<'a>(
-    trivia: impl IntoIterator<Item = &'a SyntaxTrivia>,
-) -> bool {
-    let mut line_breaks_since_content = 0;
+pub(crate) fn trivia_opens_with_blank_line(trivia: &[SyntaxTrivia]) -> bool {
+    let mut line_breaks = 0;
     for trivia in trivia {
         match trivia.kind() {
             TriviaKind::Newline => {
-                line_breaks_since_content += 1;
-                if line_breaks_since_content >= 2 {
+                line_breaks += 1;
+                if line_breaks >= 2 {
                     return true;
                 }
             }
@@ -281,9 +301,7 @@ pub(crate) fn trivia_iter_has_blank_line<'a>(
             | TriviaKind::BlockComment
             | TriviaKind::DocComment
             | TriviaKind::UnterminatedBlockComment
-            | TriviaKind::UnterminatedDocComment => {
-                line_breaks_since_content = 0;
-            }
+            | TriviaKind::UnterminatedDocComment => return false,
         }
     }
 
