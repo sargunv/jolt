@@ -22,6 +22,18 @@ class CommentsBetweenStatementKeywordAndValue {
     return; // a comment after the terminator stays there
   }
 
+  void returnsNothingAfterKeywordComment() {
+    return // no value follows the keyword, so the terminator stays put
+    ;
+  }
+
+  int returnsBeforeTerminatorComment(int y) {
+    return // a comment ends the line after the keyword
+    y
+    // a comment before the terminator keeps it in the continuation
+    ;
+  }
+
   void throws1() {
     throw // a comment ends the line after the keyword
     new IllegalStateException();
@@ -81,6 +93,20 @@ class CommentsBetweenStatementKeywordAndValue {
   void breaksWithoutLabel() {
     while (ready()) {
       break; // a comment after the terminator stays there
+    }
+  }
+
+  void breaksWithoutLabelAfterKeywordComment() {
+    while (ready()) {
+      break // no label follows the keyword, so the terminator stays put
+      ;
+    }
+  }
+
+  void continuesWithoutLabelAfterKeywordComment() {
+    while (ready()) {
+      continue // no label follows the keyword, so the terminator stays put
+      ;
     }
   }
 
@@ -231,481 +257,582 @@ CompilationUnit
           MethodDeclaration
             VoidType
               VoidKw "void" @ 492..496 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            Identifier "throws1" @ 497..504
-            LParen "(" @ 504..505
-            RParen ")" @ 505..506 trailing=[Whitespace " "]
+            Identifier "returnsNothingAfterKeywordComment" @ 497..530
+            LParen "(" @ 530..531
+            RParen ")" @ 531..532 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 507..508
+              LBrace "{" @ 533..534
               BlockStatementList
                 BlockStatement
-                  ThrowStatement
-                    ThrowKw "throw" @ 513..518 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", LineComment "// a comment ends the line after the keyword"]
-                    ObjectCreationExpression
-                      NewKw "new" @ 568..571 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "IllegalStateException" @ 572..593
-                      ArgumentList
-                        LParen "(" @ 593..594
-                        ExpressionList
-                        RParen ")" @ 594..595
-                    Semicolon ";" @ 595..596
-              RBrace "}" @ 599..600 leading=[Newline "\n", Whitespace "  "]
-          MethodDeclaration
-            VoidType
-              VoidKw "void" @ 604..608 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            Identifier "throwsInline" @ 609..621
-            LParen "(" @ 621..622
-            RParen ")" @ 622..623 trailing=[Whitespace " "]
-            Block
-              LBrace "{" @ 624..625
-              BlockStatementList
-                BlockStatement
-                  ThrowStatement
-                    ThrowKw "throw" @ 630..635 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* a block comment stays inline */", Whitespace " "]
-                    ObjectCreationExpression
-                      NewKw "new" @ 671..674 trailing=[Whitespace " "]
-                      ClassType
-                        ClassTypeSegmentList
-                          ClassTypeSegmentNode
-                            AnnotationList
-                            Name
-                              Identifier "IllegalStateException" @ 675..696
-                      ArgumentList
-                        LParen "(" @ 696..697
-                        ExpressionList
-                        RParen ")" @ 697..698
-                    Semicolon ";" @ 698..699
-              RBrace "}" @ 702..703 leading=[Newline "\n", Whitespace "  "]
+                  ReturnStatement
+                    ReturnKw "return" @ 539..545 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", LineComment "// no value follows the keyword, so the terminator stays put"]
+                    Semicolon ";" @ 611..612 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 615..616 leading=[Newline "\n", Whitespace "  "]
           MethodDeclaration
             PrimitiveType
               AnnotationList
-              IntKw "int" @ 707..710 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            Identifier "yields" @ 711..717
-            LParen "(" @ 717..718
+              IntKw "int" @ 620..623 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "returnsBeforeTerminatorComment" @ 624..654
+            LParen "(" @ 654..655
             FormalParameterList
               FormalParameter
                 ParameterModifierList
                 PrimitiveType
                   AnnotationList
-                  IntKw "int" @ 718..721 trailing=[Whitespace " "]
+                  IntKw "int" @ 655..658 trailing=[Whitespace " "]
                 AnnotationList
-                Identifier "value" @ 722..727
-            RParen ")" @ 727..728 trailing=[Whitespace " "]
+                Identifier "y" @ 659..660
+            RParen ")" @ 660..661 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 729..730
+              LBrace "{" @ 662..663
               BlockStatementList
                 BlockStatement
                   ReturnStatement
-                    ReturnKw "return" @ 735..741 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                    SwitchExpression
-                      SwitchKw "switch" @ 742..748 trailing=[Whitespace " "]
-                      LParen "(" @ 749..750
-                      NameExpression
-                        Identifier "value" @ 750..755
-                      RParen ")" @ 755..756 trailing=[Whitespace " "]
-                      SwitchBlock
-                        LBrace "{" @ 757..758
-                        SwitchEntryList
-                          SwitchRule
-                            SwitchLabel
-                              DefaultKw "default" @ 765..772 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
-                              SwitchLabelItemList
-                            Arrow "->" @ 773..775 trailing=[Whitespace " "]
-                            Block
-                              LBrace "{" @ 776..777
-                              BlockStatementList
-                                BlockStatement
-                                  YieldStatement
-                                    Identifier "yield" @ 786..791 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", LineComment "// a comment ends the line after the keyword"]
-                                    BinaryExpression
-                                      NameExpression
-                                        Identifier "value" @ 845..850 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                                      Plus "+" @ 851..852 trailing=[Whitespace " "]
-                                      LiteralExpression
-                                        IntegerLiteral "1" @ 853..854
-                                    Semicolon ";" @ 854..855
-                              RBrace "}" @ 862..863 leading=[Newline "\n", Whitespace "      "]
-                        RBrace "}" @ 868..869 leading=[Newline "\n", Whitespace "    "]
-                    Semicolon ";" @ 869..870
-              RBrace "}" @ 873..874 leading=[Newline "\n", Whitespace "  "]
+                    ReturnKw "return" @ 668..674 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", LineComment "// a comment ends the line after the keyword"]
+                    NameExpression
+                      Identifier "y" @ 724..725 leading=[Newline "\n", Whitespace "    "]
+                    Semicolon ";" @ 798..799 leading=[Newline "\n", Whitespace "    ", LineComment "// a comment before the terminator keeps it in the continuation", Newline "\n", Whitespace "    "]
+              RBrace "}" @ 802..803 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 807..811 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "throws1" @ 812..819
+            LParen "(" @ 819..820
+            RParen ")" @ 820..821 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 822..823
+              BlockStatementList
+                BlockStatement
+                  ThrowStatement
+                    ThrowKw "throw" @ 828..833 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", LineComment "// a comment ends the line after the keyword"]
+                    ObjectCreationExpression
+                      NewKw "new" @ 883..886 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "IllegalStateException" @ 887..908
+                      ArgumentList
+                        LParen "(" @ 908..909
+                        ExpressionList
+                        RParen ")" @ 909..910
+                    Semicolon ";" @ 910..911
+              RBrace "}" @ 914..915 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 919..923 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "throwsInline" @ 924..936
+            LParen "(" @ 936..937
+            RParen ")" @ 937..938 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 939..940
+              BlockStatementList
+                BlockStatement
+                  ThrowStatement
+                    ThrowKw "throw" @ 945..950 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* a block comment stays inline */", Whitespace " "]
+                    ObjectCreationExpression
+                      NewKw "new" @ 986..989 trailing=[Whitespace " "]
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "IllegalStateException" @ 990..1011
+                      ArgumentList
+                        LParen "(" @ 1011..1012
+                        ExpressionList
+                        RParen ")" @ 1012..1013
+                    Semicolon ";" @ 1013..1014
+              RBrace "}" @ 1017..1018 leading=[Newline "\n", Whitespace "  "]
           MethodDeclaration
             PrimitiveType
               AnnotationList
-              IntKw "int" @ 878..881 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            Identifier "yieldsInline" @ 882..894
-            LParen "(" @ 894..895
+              IntKw "int" @ 1022..1025 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "yields" @ 1026..1032
+            LParen "(" @ 1032..1033
             FormalParameterList
               FormalParameter
                 ParameterModifierList
                 PrimitiveType
                   AnnotationList
-                  IntKw "int" @ 895..898 trailing=[Whitespace " "]
+                  IntKw "int" @ 1033..1036 trailing=[Whitespace " "]
                 AnnotationList
-                Identifier "value" @ 899..904
-            RParen ")" @ 904..905 trailing=[Whitespace " "]
+                Identifier "value" @ 1037..1042
+            RParen ")" @ 1042..1043 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 906..907
+              LBrace "{" @ 1044..1045
               BlockStatementList
                 BlockStatement
                   ReturnStatement
-                    ReturnKw "return" @ 912..918 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ReturnKw "return" @ 1050..1056 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                     SwitchExpression
-                      SwitchKw "switch" @ 919..925 trailing=[Whitespace " "]
-                      LParen "(" @ 926..927
+                      SwitchKw "switch" @ 1057..1063 trailing=[Whitespace " "]
+                      LParen "(" @ 1064..1065
                       NameExpression
-                        Identifier "value" @ 927..932
-                      RParen ")" @ 932..933 trailing=[Whitespace " "]
+                        Identifier "value" @ 1065..1070
+                      RParen ")" @ 1070..1071 trailing=[Whitespace " "]
                       SwitchBlock
-                        LBrace "{" @ 934..935
+                        LBrace "{" @ 1072..1073
                         SwitchEntryList
                           SwitchRule
                             SwitchLabel
-                              DefaultKw "default" @ 942..949 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                              DefaultKw "default" @ 1080..1087 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
                               SwitchLabelItemList
-                            Arrow "->" @ 950..952 trailing=[Whitespace " "]
+                            Arrow "->" @ 1088..1090 trailing=[Whitespace " "]
                             Block
-                              LBrace "{" @ 953..954
+                              LBrace "{" @ 1091..1092
                               BlockStatementList
                                 BlockStatement
                                   YieldStatement
-                                    Identifier "yield" @ 963..968 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* a block comment stays inline */", Whitespace " "]
+                                    Identifier "yield" @ 1101..1106 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", LineComment "// a comment ends the line after the keyword"]
                                     BinaryExpression
                                       NameExpression
-                                        Identifier "value" @ 1004..1009 trailing=[Whitespace " "]
-                                      Plus "+" @ 1010..1011 trailing=[Whitespace " "]
+                                        Identifier "value" @ 1160..1165 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                                      Plus "+" @ 1166..1167 trailing=[Whitespace " "]
                                       LiteralExpression
-                                        IntegerLiteral "1" @ 1012..1013
-                                    Semicolon ";" @ 1013..1014
-                              RBrace "}" @ 1021..1022 leading=[Newline "\n", Whitespace "      "]
-                        RBrace "}" @ 1027..1028 leading=[Newline "\n", Whitespace "    "]
-                    Semicolon ";" @ 1028..1029
-              RBrace "}" @ 1032..1033 leading=[Newline "\n", Whitespace "  "]
+                                        IntegerLiteral "1" @ 1168..1169
+                                    Semicolon ";" @ 1169..1170
+                              RBrace "}" @ 1177..1178 leading=[Newline "\n", Whitespace "      "]
+                        RBrace "}" @ 1183..1184 leading=[Newline "\n", Whitespace "    "]
+                    Semicolon ";" @ 1184..1185
+              RBrace "}" @ 1188..1189 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 1193..1196 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "yieldsInline" @ 1197..1209
+            LParen "(" @ 1209..1210
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 1210..1213 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 1214..1219
+            RParen ")" @ 1219..1220 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1221..1222
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 1227..1233 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    SwitchExpression
+                      SwitchKw "switch" @ 1234..1240 trailing=[Whitespace " "]
+                      LParen "(" @ 1241..1242
+                      NameExpression
+                        Identifier "value" @ 1242..1247
+                      RParen ")" @ 1247..1248 trailing=[Whitespace " "]
+                      SwitchBlock
+                        LBrace "{" @ 1249..1250
+                        SwitchEntryList
+                          SwitchRule
+                            SwitchLabel
+                              DefaultKw "default" @ 1257..1264 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                            Arrow "->" @ 1265..1267 trailing=[Whitespace " "]
+                            Block
+                              LBrace "{" @ 1268..1269
+                              BlockStatementList
+                                BlockStatement
+                                  YieldStatement
+                                    Identifier "yield" @ 1278..1283 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* a block comment stays inline */", Whitespace " "]
+                                    BinaryExpression
+                                      NameExpression
+                                        Identifier "value" @ 1319..1324 trailing=[Whitespace " "]
+                                      Plus "+" @ 1325..1326 trailing=[Whitespace " "]
+                                      LiteralExpression
+                                        IntegerLiteral "1" @ 1327..1328
+                                    Semicolon ";" @ 1328..1329
+                              RBrace "}" @ 1336..1337 leading=[Newline "\n", Whitespace "      "]
+                        RBrace "}" @ 1342..1343 leading=[Newline "\n", Whitespace "    "]
+                    Semicolon ";" @ 1343..1344
+              RBrace "}" @ 1347..1348 leading=[Newline "\n", Whitespace "  "]
           MethodDeclaration
             VoidType
-              VoidKw "void" @ 1037..1041 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            Identifier "breaksToLabel" @ 1042..1055
-            LParen "(" @ 1055..1056
-            RParen ")" @ 1056..1057 trailing=[Whitespace " "]
+              VoidKw "void" @ 1352..1356 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "breaksToLabel" @ 1357..1370
+            LParen "(" @ 1370..1371
+            RParen ")" @ 1371..1372 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 1058..1059
+              LBrace "{" @ 1373..1374
               BlockStatementList
                 BlockStatement
                   LabeledStatement
-                    Identifier "outer" @ 1064..1069 leading=[Newline "\n", Whitespace "    "]
-                    Colon ":" @ 1069..1070
+                    Identifier "outer" @ 1379..1384 leading=[Newline "\n", Whitespace "    "]
+                    Colon ":" @ 1384..1385
                     WhileStatement
-                      WhileKw "while" @ 1075..1080 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                      LParen "(" @ 1081..1082
+                      WhileKw "while" @ 1390..1395 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      LParen "(" @ 1396..1397
                       MethodInvocationExpression
                         UnqualifiedMethodInvocation
                           NameExpression
-                            Identifier "ready" @ 1082..1087
+                            Identifier "ready" @ 1397..1402
                           ArgumentList
-                            LParen "(" @ 1087..1088
+                            LParen "(" @ 1402..1403
                             ExpressionList
-                            RParen ")" @ 1088..1089
-                      RParen ")" @ 1089..1090 trailing=[Whitespace " "]
+                            RParen ")" @ 1403..1404
+                      RParen ")" @ 1404..1405 trailing=[Whitespace " "]
                       Block
-                        LBrace "{" @ 1091..1092
+                        LBrace "{" @ 1406..1407
                         BlockStatementList
                           BlockStatement
                             BreakStatement
-                              BreakKw "break" @ 1099..1104 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", LineComment "// a comment ends the line after the keyword"]
-                              Identifier "outer" @ 1156..1161 leading=[Newline "\n", Whitespace "      "]
-                              Semicolon ";" @ 1161..1162
-                        RBrace "}" @ 1167..1168 leading=[Newline "\n", Whitespace "    "]
-              RBrace "}" @ 1171..1172 leading=[Newline "\n", Whitespace "  "]
+                              BreakKw "break" @ 1414..1419 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", LineComment "// a comment ends the line after the keyword"]
+                              Identifier "outer" @ 1471..1476 leading=[Newline "\n", Whitespace "      "]
+                              Semicolon ";" @ 1476..1477
+                        RBrace "}" @ 1482..1483 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 1486..1487 leading=[Newline "\n", Whitespace "  "]
           MethodDeclaration
             VoidType
-              VoidKw "void" @ 1176..1180 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            Identifier "breaksToLabelInline" @ 1181..1200
-            LParen "(" @ 1200..1201
-            RParen ")" @ 1201..1202 trailing=[Whitespace " "]
+              VoidKw "void" @ 1491..1495 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "breaksToLabelInline" @ 1496..1515
+            LParen "(" @ 1515..1516
+            RParen ")" @ 1516..1517 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 1203..1204
+              LBrace "{" @ 1518..1519
               BlockStatementList
                 BlockStatement
                   LabeledStatement
-                    Identifier "outer" @ 1209..1214 leading=[Newline "\n", Whitespace "    "]
-                    Colon ":" @ 1214..1215
+                    Identifier "outer" @ 1524..1529 leading=[Newline "\n", Whitespace "    "]
+                    Colon ":" @ 1529..1530
                     WhileStatement
-                      WhileKw "while" @ 1220..1225 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                      LParen "(" @ 1226..1227
+                      WhileKw "while" @ 1535..1540 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      LParen "(" @ 1541..1542
                       MethodInvocationExpression
                         UnqualifiedMethodInvocation
                           NameExpression
-                            Identifier "ready" @ 1227..1232
+                            Identifier "ready" @ 1542..1547
                           ArgumentList
-                            LParen "(" @ 1232..1233
+                            LParen "(" @ 1547..1548
                             ExpressionList
-                            RParen ")" @ 1233..1234
-                      RParen ")" @ 1234..1235 trailing=[Whitespace " "]
+                            RParen ")" @ 1548..1549
+                      RParen ")" @ 1549..1550 trailing=[Whitespace " "]
                       Block
-                        LBrace "{" @ 1236..1237
+                        LBrace "{" @ 1551..1552
                         BlockStatementList
                           BlockStatement
                             BreakStatement
-                              BreakKw "break" @ 1244..1249 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* a block comment stays inline */", Whitespace " "]
-                              Identifier "outer" @ 1285..1290
-                              Semicolon ";" @ 1290..1291
-                        RBrace "}" @ 1296..1297 leading=[Newline "\n", Whitespace "    "]
-              RBrace "}" @ 1300..1301 leading=[Newline "\n", Whitespace "  "]
+                              BreakKw "break" @ 1559..1564 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* a block comment stays inline */", Whitespace " "]
+                              Identifier "outer" @ 1600..1605
+                              Semicolon ";" @ 1605..1606
+                        RBrace "}" @ 1611..1612 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 1615..1616 leading=[Newline "\n", Whitespace "  "]
           MethodDeclaration
             VoidType
-              VoidKw "void" @ 1305..1309 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            Identifier "continuesToLabel" @ 1310..1326
-            LParen "(" @ 1326..1327
-            RParen ")" @ 1327..1328 trailing=[Whitespace " "]
+              VoidKw "void" @ 1620..1624 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "continuesToLabel" @ 1625..1641
+            LParen "(" @ 1641..1642
+            RParen ")" @ 1642..1643 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 1329..1330
+              LBrace "{" @ 1644..1645
               BlockStatementList
                 BlockStatement
                   LabeledStatement
-                    Identifier "outer" @ 1335..1340 leading=[Newline "\n", Whitespace "    "]
-                    Colon ":" @ 1340..1341
+                    Identifier "outer" @ 1650..1655 leading=[Newline "\n", Whitespace "    "]
+                    Colon ":" @ 1655..1656
                     WhileStatement
-                      WhileKw "while" @ 1346..1351 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                      LParen "(" @ 1352..1353
+                      WhileKw "while" @ 1661..1666 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      LParen "(" @ 1667..1668
                       MethodInvocationExpression
                         UnqualifiedMethodInvocation
                           NameExpression
-                            Identifier "ready" @ 1353..1358
+                            Identifier "ready" @ 1668..1673
                           ArgumentList
-                            LParen "(" @ 1358..1359
+                            LParen "(" @ 1673..1674
                             ExpressionList
-                            RParen ")" @ 1359..1360
-                      RParen ")" @ 1360..1361 trailing=[Whitespace " "]
+                            RParen ")" @ 1674..1675
+                      RParen ")" @ 1675..1676 trailing=[Whitespace " "]
                       Block
-                        LBrace "{" @ 1362..1363
+                        LBrace "{" @ 1677..1678
                         BlockStatementList
                           BlockStatement
                             ContinueStatement
-                              ContinueKw "continue" @ 1370..1378 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", LineComment "// a comment ends the line after the keyword"]
-                              Identifier "outer" @ 1430..1435 leading=[Newline "\n", Whitespace "      "]
-                              Semicolon ";" @ 1435..1436
-                        RBrace "}" @ 1441..1442 leading=[Newline "\n", Whitespace "    "]
-              RBrace "}" @ 1445..1446 leading=[Newline "\n", Whitespace "  "]
+                              ContinueKw "continue" @ 1685..1693 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", LineComment "// a comment ends the line after the keyword"]
+                              Identifier "outer" @ 1745..1750 leading=[Newline "\n", Whitespace "      "]
+                              Semicolon ";" @ 1750..1751
+                        RBrace "}" @ 1756..1757 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 1760..1761 leading=[Newline "\n", Whitespace "  "]
           MethodDeclaration
             VoidType
-              VoidKw "void" @ 1450..1454 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            Identifier "continuesToLabelInline" @ 1455..1477
-            LParen "(" @ 1477..1478
-            RParen ")" @ 1478..1479 trailing=[Whitespace " "]
+              VoidKw "void" @ 1765..1769 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "continuesToLabelInline" @ 1770..1792
+            LParen "(" @ 1792..1793
+            RParen ")" @ 1793..1794 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 1480..1481
+              LBrace "{" @ 1795..1796
               BlockStatementList
                 BlockStatement
                   LabeledStatement
-                    Identifier "outer" @ 1486..1491 leading=[Newline "\n", Whitespace "    "]
-                    Colon ":" @ 1491..1492
+                    Identifier "outer" @ 1801..1806 leading=[Newline "\n", Whitespace "    "]
+                    Colon ":" @ 1806..1807
                     WhileStatement
-                      WhileKw "while" @ 1497..1502 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                      LParen "(" @ 1503..1504
+                      WhileKw "while" @ 1812..1817 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      LParen "(" @ 1818..1819
                       MethodInvocationExpression
                         UnqualifiedMethodInvocation
                           NameExpression
-                            Identifier "ready" @ 1504..1509
+                            Identifier "ready" @ 1819..1824
                           ArgumentList
-                            LParen "(" @ 1509..1510
+                            LParen "(" @ 1824..1825
                             ExpressionList
-                            RParen ")" @ 1510..1511
-                      RParen ")" @ 1511..1512 trailing=[Whitespace " "]
+                            RParen ")" @ 1825..1826
+                      RParen ")" @ 1826..1827 trailing=[Whitespace " "]
                       Block
-                        LBrace "{" @ 1513..1514
+                        LBrace "{" @ 1828..1829
                         BlockStatementList
                           BlockStatement
                             ContinueStatement
-                              ContinueKw "continue" @ 1521..1529 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* a block comment stays inline */", Whitespace " "]
-                              Identifier "outer" @ 1565..1570
-                              Semicolon ";" @ 1570..1571
-                        RBrace "}" @ 1576..1577 leading=[Newline "\n", Whitespace "    "]
-              RBrace "}" @ 1580..1581 leading=[Newline "\n", Whitespace "  "]
+                              ContinueKw "continue" @ 1836..1844 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* a block comment stays inline */", Whitespace " "]
+                              Identifier "outer" @ 1880..1885
+                              Semicolon ";" @ 1885..1886
+                        RBrace "}" @ 1891..1892 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 1895..1896 leading=[Newline "\n", Whitespace "  "]
           MethodDeclaration
             VoidType
-              VoidKw "void" @ 1585..1589 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            Identifier "breaksWithoutLabel" @ 1590..1608
-            LParen "(" @ 1608..1609
-            RParen ")" @ 1609..1610 trailing=[Whitespace " "]
+              VoidKw "void" @ 1900..1904 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "breaksWithoutLabel" @ 1905..1923
+            LParen "(" @ 1923..1924
+            RParen ")" @ 1924..1925 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 1611..1612
+              LBrace "{" @ 1926..1927
               BlockStatementList
                 BlockStatement
                   WhileStatement
-                    WhileKw "while" @ 1617..1622 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                    LParen "(" @ 1623..1624
+                    WhileKw "while" @ 1932..1937 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    LParen "(" @ 1938..1939
                     MethodInvocationExpression
                       UnqualifiedMethodInvocation
                         NameExpression
-                          Identifier "ready" @ 1624..1629
+                          Identifier "ready" @ 1939..1944
                         ArgumentList
-                          LParen "(" @ 1629..1630
+                          LParen "(" @ 1944..1945
                           ExpressionList
-                          RParen ")" @ 1630..1631
-                    RParen ")" @ 1631..1632 trailing=[Whitespace " "]
+                          RParen ")" @ 1945..1946
+                    RParen ")" @ 1946..1947 trailing=[Whitespace " "]
                     Block
-                      LBrace "{" @ 1633..1634
+                      LBrace "{" @ 1948..1949
                       BlockStatementList
                         BlockStatement
                           BreakStatement
-                            BreakKw "break" @ 1641..1646 leading=[Newline "\n", Whitespace "      "]
-                            Semicolon ";" @ 1646..1647 trailing=[Whitespace " ", LineComment "// a comment after the terminator stays there"]
-                      RBrace "}" @ 1698..1699 leading=[Newline "\n", Whitespace "    "]
-              RBrace "}" @ 1702..1703 leading=[Newline "\n", Whitespace "  "]
+                            BreakKw "break" @ 1956..1961 leading=[Newline "\n", Whitespace "      "]
+                            Semicolon ";" @ 1961..1962 trailing=[Whitespace " ", LineComment "// a comment after the terminator stays there"]
+                      RBrace "}" @ 2013..2014 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 2017..2018 leading=[Newline "\n", Whitespace "  "]
           MethodDeclaration
             VoidType
-              VoidKw "void" @ 1707..1711 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            Identifier "asserts" @ 1712..1719
-            LParen "(" @ 1719..1720
+              VoidKw "void" @ 2022..2026 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "breaksWithoutLabelAfterKeywordComment" @ 2027..2064
+            LParen "(" @ 2064..2065
+            RParen ")" @ 2065..2066 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 2067..2068
+              BlockStatementList
+                BlockStatement
+                  WhileStatement
+                    WhileKw "while" @ 2073..2078 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    LParen "(" @ 2079..2080
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "ready" @ 2080..2085
+                        ArgumentList
+                          LParen "(" @ 2085..2086
+                          ExpressionList
+                          RParen ")" @ 2086..2087
+                    RParen ")" @ 2087..2088 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 2089..2090
+                      BlockStatementList
+                        BlockStatement
+                          BreakStatement
+                            BreakKw "break" @ 2097..2102 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", LineComment "// no label follows the keyword, so the terminator stays put"]
+                            Semicolon ";" @ 2170..2171 leading=[Newline "\n", Whitespace "      "]
+                      RBrace "}" @ 2176..2177 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 2180..2181 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 2185..2189 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "continuesWithoutLabelAfterKeywordComment" @ 2190..2230
+            LParen "(" @ 2230..2231
+            RParen ")" @ 2231..2232 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 2233..2234
+              BlockStatementList
+                BlockStatement
+                  WhileStatement
+                    WhileKw "while" @ 2239..2244 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    LParen "(" @ 2245..2246
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "ready" @ 2246..2251
+                        ArgumentList
+                          LParen "(" @ 2251..2252
+                          ExpressionList
+                          RParen ")" @ 2252..2253
+                    RParen ")" @ 2253..2254 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 2255..2256
+                      BlockStatementList
+                        BlockStatement
+                          ContinueStatement
+                            ContinueKw "continue" @ 2263..2271 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", LineComment "// no label follows the keyword, so the terminator stays put"]
+                            Semicolon ";" @ 2339..2340 leading=[Newline "\n", Whitespace "      "]
+                      RBrace "}" @ 2345..2346 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 2349..2350 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 2354..2358 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "asserts" @ 2359..2366
+            LParen "(" @ 2366..2367
             FormalParameterList
               FormalParameter
                 ParameterModifierList
                 PrimitiveType
                   AnnotationList
-                  IntKw "int" @ 1720..1723 trailing=[Whitespace " "]
+                  IntKw "int" @ 2367..2370 trailing=[Whitespace " "]
                 AnnotationList
-                Identifier "y" @ 1724..1725
-            RParen ")" @ 1725..1726 trailing=[Whitespace " "]
+                Identifier "y" @ 2371..2372
+            RParen ")" @ 2372..2373 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 1727..1728
+              LBrace "{" @ 2374..2375
               BlockStatementList
                 BlockStatement
                   AssertStatement
-                    AssertKw "assert" @ 1733..1739 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", LineComment "// a comment ends the line after the keyword"]
+                    AssertKw "assert" @ 2380..2386 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", LineComment "// a comment ends the line after the keyword"]
                     BinaryExpression
                       NameExpression
-                        Identifier "y" @ 1789..1790 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                      Gt ">" @ 1791..1792 trailing=[Whitespace " "]
+                        Identifier "y" @ 2436..2437 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      Gt ">" @ 2438..2439 trailing=[Whitespace " "]
                       LiteralExpression
-                        IntegerLiteral "1" @ 1793..1794 trailing=[Whitespace " "]
-                    Colon ":" @ 1795..1796 trailing=[Whitespace " "]
+                        IntegerLiteral "1" @ 2440..2441 trailing=[Whitespace " "]
+                    Colon ":" @ 2442..2443 trailing=[Whitespace " "]
                     LiteralExpression
-                      StringLiteral "\"message\"" @ 1797..1806
-                    Semicolon ";" @ 1806..1807
-              RBrace "}" @ 1810..1811 leading=[Newline "\n", Whitespace "  "]
+                      StringLiteral "\"message\"" @ 2444..2453
+                    Semicolon ";" @ 2453..2454
+              RBrace "}" @ 2457..2458 leading=[Newline "\n", Whitespace "  "]
           MethodDeclaration
             VoidType
-              VoidKw "void" @ 1815..1819 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            Identifier "assertsInline" @ 1820..1833
-            LParen "(" @ 1833..1834
+              VoidKw "void" @ 2462..2466 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "assertsInline" @ 2467..2480
+            LParen "(" @ 2480..2481
             FormalParameterList
               FormalParameter
                 ParameterModifierList
                 PrimitiveType
                   AnnotationList
-                  IntKw "int" @ 1834..1837 trailing=[Whitespace " "]
+                  IntKw "int" @ 2481..2484 trailing=[Whitespace " "]
                 AnnotationList
-                Identifier "y" @ 1838..1839
-            RParen ")" @ 1839..1840 trailing=[Whitespace " "]
+                Identifier "y" @ 2485..2486
+            RParen ")" @ 2486..2487 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 1841..1842
+              LBrace "{" @ 2488..2489
               BlockStatementList
                 BlockStatement
                   AssertStatement
-                    AssertKw "assert" @ 1847..1853 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* a block comment stays inline */", Whitespace " "]
+                    AssertKw "assert" @ 2494..2500 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* a block comment stays inline */", Whitespace " "]
                     BinaryExpression
                       NameExpression
-                        Identifier "y" @ 1889..1890 trailing=[Whitespace " "]
-                      Gt ">" @ 1891..1892 trailing=[Whitespace " "]
+                        Identifier "y" @ 2536..2537 trailing=[Whitespace " "]
+                      Gt ">" @ 2538..2539 trailing=[Whitespace " "]
                       LiteralExpression
-                        IntegerLiteral "1" @ 1893..1894
-                    Semicolon ";" @ 1894..1895
-              RBrace "}" @ 1898..1899 leading=[Newline "\n", Whitespace "  "]
+                        IntegerLiteral "1" @ 2540..2541
+                    Semicolon ";" @ 2541..2542
+              RBrace "}" @ 2545..2546 leading=[Newline "\n", Whitespace "  "]
           MethodDeclaration
             PrimitiveType
               AnnotationList
-              BooleanKw "boolean" @ 1903..1910 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            Identifier "ready" @ 1911..1916
-            LParen "(" @ 1916..1917
-            RParen ")" @ 1917..1918 trailing=[Whitespace " "]
+              BooleanKw "boolean" @ 2550..2557 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "ready" @ 2558..2563
+            LParen "(" @ 2563..2564
+            RParen ")" @ 2564..2565 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 1919..1920
+              LBrace "{" @ 2566..2567
               BlockStatementList
                 BlockStatement
                   ReturnStatement
-                    ReturnKw "return" @ 1925..1931 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ReturnKw "return" @ 2572..2578 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                     LiteralExpression
-                      BooleanLiteral "true" @ 1932..1936
-                    Semicolon ";" @ 1936..1937
-              RBrace "}" @ 1940..1941 leading=[Newline "\n", Whitespace "  "]
+                      BooleanLiteral "true" @ 2579..2583
+                    Semicolon ";" @ 2583..2584
+              RBrace "}" @ 2587..2588 leading=[Newline "\n", Whitespace "  "]
           MethodDeclaration
             PrimitiveType
               AnnotationList
-              IntKw "int" @ 1945..1948 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            Identifier "someLongMethodCall" @ 1949..1967
-            LParen "(" @ 1967..1968
+              IntKw "int" @ 2592..2595 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "someLongMethodCall" @ 2596..2614
+            LParen "(" @ 2614..2615
             FormalParameterList
               FormalParameter
                 ParameterModifierList
                 PrimitiveType
                   AnnotationList
-                  IntKw "int" @ 1968..1971 trailing=[Whitespace " "]
+                  IntKw "int" @ 2615..2618 trailing=[Whitespace " "]
                 AnnotationList
-                Identifier "first" @ 1972..1977
-              Comma "," @ 1977..1978 trailing=[Whitespace " "]
+                Identifier "first" @ 2619..2624
+              Comma "," @ 2624..2625 trailing=[Whitespace " "]
               FormalParameter
                 ParameterModifierList
                 PrimitiveType
                   AnnotationList
-                  IntKw "int" @ 1979..1982 trailing=[Whitespace " "]
+                  IntKw "int" @ 2626..2629 trailing=[Whitespace " "]
                 AnnotationList
-                Identifier "second" @ 1983..1989
-            RParen ")" @ 1989..1990 trailing=[Whitespace " "]
+                Identifier "second" @ 2630..2636
+            RParen ")" @ 2636..2637 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 1991..1992
+              LBrace "{" @ 2638..2639
               BlockStatementList
                 BlockStatement
                   ReturnStatement
-                    ReturnKw "return" @ 1997..2003 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ReturnKw "return" @ 2644..2650 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                     BinaryExpression
                       NameExpression
-                        Identifier "first" @ 2004..2009 trailing=[Whitespace " "]
-                      Plus "+" @ 2010..2011 trailing=[Whitespace " "]
+                        Identifier "first" @ 2651..2656 trailing=[Whitespace " "]
+                      Plus "+" @ 2657..2658 trailing=[Whitespace " "]
                       NameExpression
-                        Identifier "second" @ 2012..2018
-                    Semicolon ";" @ 2018..2019
-              RBrace "}" @ 2022..2023 leading=[Newline "\n", Whitespace "  "]
+                        Identifier "second" @ 2659..2665
+                    Semicolon ";" @ 2665..2666
+              RBrace "}" @ 2669..2670 leading=[Newline "\n", Whitespace "  "]
           FieldDeclaration
             PrimitiveType
               AnnotationList
-              IntKw "int" @ 2027..2030 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              IntKw "int" @ 2674..2677 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
             VariableDeclaratorList
               VariableDeclarator
-                Identifier "anotherLongValue" @ 2031..2047 trailing=[Whitespace " "]
-                Assign "=" @ 2048..2049 trailing=[Whitespace " "]
+                Identifier "anotherLongValue" @ 2678..2694 trailing=[Whitespace " "]
+                Assign "=" @ 2695..2696 trailing=[Whitespace " "]
                 VariableInitializer
                   LiteralExpression
-                    IntegerLiteral "2" @ 2050..2051
-            Semicolon ";" @ 2051..2052
+                    IntegerLiteral "2" @ 2697..2698
+            Semicolon ";" @ 2698..2699
           FieldDeclaration
             PrimitiveType
               AnnotationList
-              IntKw "int" @ 2055..2058 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              IntKw "int" @ 2702..2705 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
             VariableDeclaratorList
               VariableDeclarator
-                Identifier "firstArgumentName" @ 2059..2076 trailing=[Whitespace " "]
-                Assign "=" @ 2077..2078 trailing=[Whitespace " "]
+                Identifier "firstArgumentName" @ 2706..2723 trailing=[Whitespace " "]
+                Assign "=" @ 2724..2725 trailing=[Whitespace " "]
                 VariableInitializer
                   LiteralExpression
-                    IntegerLiteral "3" @ 2079..2080
-            Semicolon ";" @ 2080..2081
+                    IntegerLiteral "3" @ 2726..2727
+            Semicolon ";" @ 2727..2728
           FieldDeclaration
             PrimitiveType
               AnnotationList
-              IntKw "int" @ 2084..2087 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              IntKw "int" @ 2731..2734 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
             VariableDeclaratorList
               VariableDeclarator
-                Identifier "secondArgumentName" @ 2088..2106 trailing=[Whitespace " "]
-                Assign "=" @ 2107..2108 trailing=[Whitespace " "]
+                Identifier "secondArgumentName" @ 2735..2753 trailing=[Whitespace " "]
+                Assign "=" @ 2754..2755 trailing=[Whitespace " "]
                 VariableInitializer
                   LiteralExpression
-                    IntegerLiteral "4" @ 2109..2110
-            Semicolon ";" @ 2110..2111
-        RBrace "}" @ 2112..2113 leading=[Newline "\n"]
-  Eof "" @ 2114..2114 leading=[Newline "\n"]
+                    IntegerLiteral "4" @ 2756..2757
+            Semicolon ";" @ 2757..2758
+        RBrace "}" @ 2759..2760 leading=[Newline "\n"]
+  Eof "" @ 2761..2761 leading=[Newline "\n"]
 
 diagnostics:
   (none)

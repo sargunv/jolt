@@ -85,19 +85,13 @@ pub(super) fn format_assert_statement<'source>(
             doc_concat!(doc, [comments, recovery])
         }
     };
+    let terminator = format_statement_semicolon(statement.semicolon(), doc);
     let operand = indent_keyword_continuation(
         keyword_token.as_ref(),
-        doc_concat!(doc, [condition, message]),
+        doc_concat!(doc, [condition, message, terminator]),
         doc,
     );
-    doc_concat!(
-        doc,
-        [
-            head,
-            operand,
-            format_statement_semicolon(statement.semicolon(), doc),
-        ]
-    )
+    doc_concat!(doc, [head, operand])
 }
 
 pub(super) fn format_return_statement<'source>(
@@ -187,25 +181,27 @@ fn format_keyword_operand_statement<'source, T>(
 ) -> Doc<'source> {
     let keyword_token = present_keyword(keyword);
     let head = format_statement_keyword_head(keyword, doc);
+    let terminator = format_statement_semicolon(semicolon, doc);
     let operand = match operand {
         JavaFormatField::Present(Some(operand)) => {
             let separator = format_keyword_operand_separator(keyword_token.as_ref(), doc);
             let operand = format_operand(operand, doc);
-            let operand = doc_concat!(doc, [separator, operand]);
+            let operand = doc_concat!(doc, [separator, operand, terminator]);
             indent_keyword_continuation(keyword_token.as_ref(), operand, doc)
         }
+        // A statement whose operand slot is empty (`return;`, `break;`) has no
+        // continuation, so its terminator belongs at the keyword's own column.
         JavaFormatField::Present(None) => {
-            format_orphaned_keyword_comments(keyword_token.as_ref(), doc)
+            let comments = format_orphaned_keyword_comments(keyword_token.as_ref(), doc);
+            doc_concat!(doc, [comments, terminator])
         }
         JavaFormatField::Malformed(recovery) => {
             let comments = format_orphaned_keyword_comments(keyword_token.as_ref(), doc);
-            doc_concat!(doc, [comments, recovery])
+            let recovery = doc_concat!(doc, [comments, recovery, terminator]);
+            indent_keyword_continuation(keyword_token.as_ref(), recovery, doc)
         }
     };
-    doc_concat!(
-        doc,
-        [head, operand, format_statement_semicolon(semicolon, doc)]
-    )
+    doc_concat!(doc, [head, operand])
 }
 
 fn into_optional_operand<T>(field: JavaFormatField<'_, T>) -> JavaFormatField<'_, Option<T>> {
@@ -222,11 +218,16 @@ fn present_keyword(keyword: TokenField<'_>) -> Option<JavaSyntaxToken<'_>> {
     }
 }
 
-/// Indents an operand that a comment moved off its keyword's line.
+/// Indents the continuation that a comment moved off its keyword's line.
 ///
 /// The comment's own hard line sits inside the indent, so the operand lands one
 /// level in and reads as the keyword's continuation rather than as a statement
 /// of its own. Without such a comment there is no line to indent.
+///
+/// The continuation covers the terminator too. An operand that recovered to
+/// nothing leaves the terminator as the only visible text on the indented line,
+/// and indentation is only applied where text follows it, so a terminator left
+/// outside would drag that line back to the keyword's own column.
 fn indent_keyword_continuation<'source>(
     keyword: Option<&JavaSyntaxToken<'source>>,
     operand: Doc<'source>,

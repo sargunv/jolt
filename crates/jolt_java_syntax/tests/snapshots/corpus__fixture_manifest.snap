@@ -398,6 +398,7 @@ syntax/recovery/import-and-module-directives.java
 syntax/recovery/import-trailing-tokens.java
 syntax/recovery/incomplete-module-directive.java
 syntax/recovery/incomplete-module-name-gap.java
+syntax/recovery/keyword-comment-without-operand.java
 syntax/recovery/line-comment-before-missing-syntax.java
 syntax/recovery/malformed-import-pieces.java
 syntax/recovery/malformed-import-without-semicolon.java
