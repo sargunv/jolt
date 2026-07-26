@@ -628,7 +628,10 @@ impl Parser<'_> {
     fn parse_throw_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
         let marker = self.start();
         self.bump();
-        if self.at_semicolon_boundary()
+        // `throw` is the one jump form whose grammar is `'throw' {NL} expression`,
+        // so a newline after the keyword continues the throw instead of ending
+        // it the way it ends a `return`, `break`, or `continue`.
+        if self.at_statement_terminator()
             || self.at_expression_boundary(stops.with_extra(K::RBrace))
             || self.at_expression_rhs_declaration_boundary()
         {

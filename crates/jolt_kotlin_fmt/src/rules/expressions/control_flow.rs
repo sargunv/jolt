@@ -10,7 +10,10 @@ use jolt_kotlin_syntax::{
 };
 
 use crate::helpers::blocks::join_hard_lines;
-use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
+use crate::helpers::comments::{
+    LeadingTrivia, TrailingTrivia, format_token, format_trailing_comments_before_line_break,
+    trailing_comments_force_line,
+};
 use crate::helpers::lists::{CommaListItem, physical_comma_list_items};
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_delimiter_with_preserved_trailing,
@@ -376,13 +379,85 @@ pub(super) fn format_throw_expression<'source>(
     expression: &ThrowExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let keyword = format_required_token(expression.throw_token(), doc, leading);
-    let value = format_required_field(expression.expression(), doc, |value, doc| {
-        let space = doc.space();
-        let value = format_expression(doc, &value);
-        doc.concat([space, value])
+    let throw_token = expression.throw_token();
+    let keyword_token = match throw_token {
+        KotlinSyntaxField::Present(token) => Some(token),
+        KotlinSyntaxField::Missing(_) | KotlinSyntaxField::Malformed(_) => None,
+    };
+    // The keyword's own trailing comments are emitted below rather than here,
+    // because they decide where the thrown value goes.
+    let keyword = format_required_field(throw_token, doc, |token, doc| {
+        format_token(
+            doc,
+            &token,
+            leading,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        )
     });
+    let value = match resolve_required_field(expression.expression(), doc) {
+        KotlinFormatField::Present(value) => {
+            let separator = format_keyword_value_separator(doc, keyword_token.as_ref());
+            let value = format_expression(doc, &value);
+            let value = doc.concat([separator, value]);
+            // A comment that ends the keyword's line pushes the value onto the
+            // next one; indenting it there keeps it subordinate to its `throw`
+            // instead of reading as a statement of its own.
+            if keyword_token
+                .as_ref()
+                .is_some_and(trailing_comments_force_line)
+            {
+                doc.indent(value)
+            } else {
+                value
+            }
+        }
+        KotlinFormatField::Malformed(recovery) => {
+            let comments = format_orphaned_keyword_comments(doc, keyword_token.as_ref());
+            doc.concat([comments, recovery])
+        }
+    };
     doc.concat([keyword, value])
+}
+
+/// Joins a keyword to the value it applies to, ending the keyword's line when
+/// its trailing comments do.
+fn format_keyword_value_separator<'source>(
+    doc: &mut DocBuilder<'source>,
+    keyword: Option<&KotlinSyntaxToken<'source>>,
+) -> Doc<'source> {
+    let Some(keyword) = keyword else {
+        return doc.space();
+    };
+    if keyword.trailing_comments().is_empty() {
+        return doc.space();
+    }
+    let comments = format_trailing_comments_before_line_break(doc, keyword);
+    let separator = if trailing_comments_force_line(keyword) {
+        doc.hard_line()
+    } else {
+        doc.space()
+    };
+    doc.concat([comments, separator])
+}
+
+/// Emits a keyword's trailing comments when no value follows to carry them.
+fn format_orphaned_keyword_comments<'source>(
+    doc: &mut DocBuilder<'source>,
+    keyword: Option<&KotlinSyntaxToken<'source>>,
+) -> Doc<'source> {
+    let Some(keyword) = keyword else {
+        return Doc::nil();
+    };
+    if keyword.trailing_comments().is_empty() {
+        return Doc::nil();
+    }
+    let comments = format_trailing_comments_before_line_break(doc, keyword);
+    if trailing_comments_force_line(keyword) {
+        let line = doc.hard_line();
+        doc.concat([comments, line])
+    } else {
+        comments
+    }
 }
 
 fn format_control_flow_condition<'source>(
