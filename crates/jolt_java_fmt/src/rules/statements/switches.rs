@@ -11,6 +11,7 @@ use super::{
 };
 use crate::helpers::blocks::BodyItem;
 use crate::helpers::comments::token_has_comments;
+use crate::helpers::comments::trailing_comments_force_line;
 use crate::helpers::recovery::{
     JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_malformed, resolve_list_part,
     resolve_optional_field, resolve_required_delimiter, resolve_required_field,
@@ -469,7 +470,7 @@ fn format_switch_label_items<'source>(
             match resolve_list_part(part, docs) {
                 JavaFormatListPart::Item(item) => {
                     if need_line {
-                        let line = docs.line();
+                        let line = docs.line_boundary();
                         docs.push(line);
                     }
                     let formatted = match item.classify() {
@@ -499,12 +500,24 @@ fn format_switch_label_items<'source>(
                         Ok(SwitchLabelItemSyntax::BogusSwitchLabelItem(value)) => {
                             format_malformed(&value, docs)
                         }
-                        Ok(SwitchLabelItemSyntax::Default(token)) => format_token(
-                            docs,
-                            &token,
-                            LeadingTrivia::Preserve,
-                            TrailingTrivia::BeforeLineBreak,
-                        ),
+                        Ok(SwitchLabelItemSyntax::Default(token)) => {
+                            // Nothing between this item and the arrow, colon or
+                            // next item supplies the break `BeforeLineBreak`
+                            // promises, so a line comment would swallow it.
+                            let ends_line = trailing_comments_force_line(&token);
+                            let item = format_token(
+                                docs,
+                                &token,
+                                LeadingTrivia::Preserve,
+                                TrailingTrivia::BeforeLineBreak,
+                            );
+                            if ends_line {
+                                let line = docs.hard_line();
+                                docs.concat([item, line])
+                            } else {
+                                item
+                            }
+                        }
                         Err(error) => {
                             docs.block_on_invariant(error.to_string());
                             Doc::nil()
@@ -514,14 +527,14 @@ fn format_switch_label_items<'source>(
                     need_line = true;
                 }
                 JavaFormatListPart::Separator(comma) => {
-                    let line = docs.line();
+                    let line = docs.line_boundary();
                     let comma = format_separator_with_comments(docs, &comma, line);
                     docs.push(comma);
                     need_line = false;
                 }
                 JavaFormatListPart::Recovery(value) => {
                     if need_line {
-                        let line = docs.line();
+                        let line = docs.line_boundary();
                         docs.push(line);
                     }
                     docs.push(value.doc());

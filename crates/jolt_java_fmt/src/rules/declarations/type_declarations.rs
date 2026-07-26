@@ -9,6 +9,7 @@ use super::{
     format_token_with_comments, format_type_parameter_list, format_type_without_leading_comments,
     source_braced_body,
 };
+use crate::helpers::comments::trailing_comments_force_line;
 use crate::helpers::recovery::{
     JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_optional_field,
     format_required_field, resolve_list_part, resolve_optional_field, resolve_required_delimiter,
@@ -462,6 +463,13 @@ fn format_missing_clause_target<'source>(
     missing: Doc<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    // The clause's list is absent, so nothing follows the keyword to supply the
+    // break `BeforeLineBreak` promises; a line comment would swallow whatever
+    // the enclosing declaration renders next, typically its `{`.
+    let keyword_ends_line = matches!(
+        &keyword,
+        JavaFormatField::Present(keyword) if trailing_comments_force_line(keyword)
+    );
     let keyword = match keyword {
         JavaFormatField::Present(keyword) => format_token(
             doc,
@@ -471,7 +479,15 @@ fn format_missing_clause_target<'source>(
         ),
         JavaFormatField::Malformed(malformed) => malformed,
     };
-    doc_indent!(doc, doc_concat!(doc, [doc.line(), keyword, missing]))
+    let ends_line = if keyword_ends_line {
+        doc.hard_line()
+    } else {
+        Doc::nil()
+    };
+    doc_indent!(
+        doc,
+        doc_concat!(doc, [doc.line(), keyword, ends_line, missing])
+    )
 }
 
 fn format_type_clause<'source>(
