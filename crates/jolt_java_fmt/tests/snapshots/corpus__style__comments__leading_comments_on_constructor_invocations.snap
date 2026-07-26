@@ -52,6 +52,12 @@ class LeadingCommentsOnConstructorInvocations {
       // sits behind a parenthesized qualifier's dot
       <String>super("value", 0);
     }
+
+    Inner(LeadingCommentsOnConstructorInvocations outer, long marker) {
+      outer. // trails the qualifier dot
+      // sits between the qualifier dot and the explicit type arguments
+      <String>super("value", 0);
+    }
   }
 
   static class Generic {
