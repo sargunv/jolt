@@ -31,6 +31,9 @@ void innerMarkers(){}
 plain body
 */
 void plainBody(){}
+/* opener
+ * closes on this line */
+void closingOnBody(){}
 }
 
 syntax:
@@ -113,8 +116,18 @@ CompilationUnit
               LBrace "{" @ 387..388
               BlockStatementList
               RBrace "}" @ 388..389
-        RBrace "}" @ 390..391 leading=[Newline "\n"]
-  Eof "" @ 392..392 leading=[Newline "\n"]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 426..430 leading=[Newline "\n", BlockComment "/* opener\n * closes on this line */", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "closingOnBody" @ 431..444
+            LParen "(" @ 444..445
+            RParen ")" @ 445..446
+            Block
+              LBrace "{" @ 446..447
+              BlockStatementList
+              RBrace "}" @ 447..448
+        RBrace "}" @ 449..450 leading=[Newline "\n"]
+  Eof "" @ 451..451 leading=[Newline "\n"]
 
 diagnostics:
   (none)

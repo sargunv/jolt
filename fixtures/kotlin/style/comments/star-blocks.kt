@@ -31,6 +31,9 @@ fun nestedBlocks() {}
 plain body
 */
 fun plainBody() {}
+/* opener
+ * closes on this line */
+fun closingOnBody() {}
 fun trailingDoc() {} /** stays on its line */
 val trailingStar = 1 /* stays on its line */
 }

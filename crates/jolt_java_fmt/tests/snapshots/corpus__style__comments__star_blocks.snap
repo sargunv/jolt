@@ -44,6 +44,12 @@ class Example {
   */
   void plainBody() {
   }
+
+  /* opener
+   * closes on this line
+   */
+  void closingOnBody() {
+  }
 }
 
 diagnostics:

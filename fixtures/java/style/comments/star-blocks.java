@@ -26,4 +26,7 @@ void innerMarkers(){}
 plain body
 */
 void plainBody(){}
+/* opener
+ * closes on this line */
+void closingOnBody(){}
 }

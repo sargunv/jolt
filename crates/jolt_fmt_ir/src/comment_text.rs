@@ -41,12 +41,16 @@ pub fn is_empty_single_line_block_comment(comment: &str) -> bool {
     !comment.contains(['\n', '\r']) && strip_block_comment_delimiters(comment).trim().is_empty()
 }
 
-/// Strips a leading `*` from a star-block body line after left-trim.
+/// Strips a leading `*` from a star-block body line and trims it.
+///
+/// The renderer supplies the ` * ` prefix, so a body line contributes text
+/// only. Trimming both ends keeps the last line of `/* a\n * b */`, which the
+/// closing delimiter leaves as `" * b "`, from emitting trailing whitespace.
 #[must_use]
 fn normalize_star_block_body_line(line: &str) -> &str {
     line.trim_start()
         .strip_prefix('*')
-        .map_or_else(|| line.trim(), str::trim_start)
+        .map_or_else(|| line.trim(), str::trim)
 }
 
 /// True when a body line carries the aligning `*` of a star block.

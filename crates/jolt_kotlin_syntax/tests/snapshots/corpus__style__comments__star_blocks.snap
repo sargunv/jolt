@@ -36,6 +36,9 @@ fun nestedBlocks() {}
 plain body
 */
 fun plainBody() {}
+/* opener
+ * closes on this line */
+fun closingOnBody() {}
 fun trailingDoc() {} /** stays on its line */
 val trailingStar = 1 /* stays on its line */
 }
@@ -195,33 +198,50 @@ KotlinFile
             FunctionDeclaration
               ModifierList
               ModifierList
-              FunKw "fun" @ 492..495 leading=[Newline "\n"] trailing=[Whitespace " "]
+              FunKw "fun" @ 528..531 leading=[Newline "\n", BlockComment "/* opener\n * closes on this line */", Newline "\n"] trailing=[Whitespace " "]
               ModifierList
               Name
-                Identifier "trailingDoc" @ 496..507
+                Identifier "closingOnBody" @ 532..545
               ValueParameterList
-                LParen "(" @ 507..508
+                LParen "(" @ 545..546
                 ValueParameterSeparatedList
-                RParen ")" @ 508..509 trailing=[Whitespace " "]
+                RParen ")" @ 546..547 trailing=[Whitespace " "]
               BlockBody
                 Block
-                  LBrace "{" @ 510..511
+                  LBrace "{" @ 548..549
                   BlockItemList
-                  RBrace "}" @ 511..512 trailing=[Whitespace " ", DocComment "/** stays on its line */"]
+                  RBrace "}" @ 549..550
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 551..554 leading=[Newline "\n"] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "trailingDoc" @ 555..566
+              ValueParameterList
+                LParen "(" @ 566..567
+                ValueParameterSeparatedList
+                RParen ")" @ 567..568 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 569..570
+                  BlockItemList
+                  RBrace "}" @ 570..571 trailing=[Whitespace " ", DocComment "/** stays on its line */"]
           ClassMemberDeclaration
             PropertyDeclaration
               ModifierList
               ModifierList
-              ValKw "val" @ 538..541 leading=[Newline "\n"] trailing=[Whitespace " "]
+              ValKw "val" @ 597..600 leading=[Newline "\n"] trailing=[Whitespace " "]
               Name
-                Identifier "trailingStar" @ 542..554 trailing=[Whitespace " "]
+                Identifier "trailingStar" @ 601..613 trailing=[Whitespace " "]
               PropertyInitializer
-                Assign "=" @ 555..556 trailing=[Whitespace " "]
+                Assign "=" @ 614..615 trailing=[Whitespace " "]
                 LiteralExpression
-                  IntegerLiteral "1" @ 557..558 trailing=[Whitespace " ", BlockComment "/* stays on its line */"]
+                  IntegerLiteral "1" @ 616..617 trailing=[Whitespace " ", BlockComment "/* stays on its line */"]
               PropertyBodyMemberList
-        RBrace "}" @ 583..584 leading=[Newline "\n"]
-  Eof "" @ 585..585 leading=[Newline "\n"]
+        RBrace "}" @ 642..643 leading=[Newline "\n"]
+  Eof "" @ 644..644 leading=[Newline "\n"]
 
 diagnostics:
   (none)
