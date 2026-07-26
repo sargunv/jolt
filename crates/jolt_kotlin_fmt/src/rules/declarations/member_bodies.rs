@@ -1,7 +1,8 @@
 use jolt_fmt_ir::{BodyItemSeparator, Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     ClassBody, ClassMember, ClassMemberDeclaration, ClassMemberList, Declaration,
-    KotlinRoleElement, KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView, StatementSyntax,
+    KotlinRoleElement, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken,
+    KotlinSyntaxView, StatementSyntax,
 };
 
 use crate::helpers::comments::{
@@ -59,10 +60,10 @@ fn format_class_body_contents<'source>(
     if let Some(close) = close
         && !close.leading_comments().is_empty()
     {
-        sections.push(ClassBodySection {
-            doc: format_dangling_comments(doc, close.leading_comments()),
-            hard_line_after: false,
-        });
+        sections.push(ClassBodySection::neutral(
+            format_dangling_comments(doc, close.leading_comments()),
+            false,
+        ));
     }
     (!sections.is_empty()).then(|| join_class_body_sections(doc, sections))
 }
@@ -172,6 +173,8 @@ fn push_class_body_part<'source>(
             sections.push(ClassBodySection {
                 doc: format_class_member(doc, member),
                 hard_line_after: enum_entry_continues(member) || trailing_ended_line,
+                category: Some(member_category(member)),
+                starts_after_blank_line: member.starts_after_blank_line(),
             });
             return;
         }
@@ -205,10 +208,10 @@ fn class_body_sections_with_ignored<'source>(
     let mut previous_had_comments = false;
     for_each_formatter_ignore_splice(parts.len(), ignored_runs, |event| match event {
         FormatterIgnoreSplice::Ignore(run) => {
-            sections.push(ClassBodySection {
-                doc: formatter_ignore_run_doc(run, doc),
-                hard_line_after: !run.ends_with_on_marker(),
-            });
+            sections.push(ClassBodySection::neutral(
+                formatter_ignore_run_doc(run, doc),
+                !run.ends_with_on_marker(),
+            ));
         }
         FormatterIgnoreSplice::Item {
             index,
@@ -241,25 +244,19 @@ fn push_class_body_physical_doc<'source>(
 ) {
     if previous_had_comments {
         let line = doc.hard_line();
-        sections.push(ClassBodySection {
-            doc: doc.concat([line, physical]),
-            hard_line_after: false,
-        });
+        sections.push(ClassBodySection::neutral(
+            doc.concat([line, physical]),
+            false,
+        ));
     } else if sections
         .last()
         .is_some_and(|previous| previous.hard_line_after)
     {
-        sections.push(ClassBodySection {
-            doc: physical,
-            hard_line_after: false,
-        });
+        sections.push(ClassBodySection::neutral(physical, false));
     } else if let Some(previous) = sections.last_mut() {
         previous.doc = doc.concat([std::mem::replace(&mut previous.doc, Doc::nil()), physical]);
     } else {
-        sections.push(ClassBodySection {
-            doc: physical,
-            hard_line_after: false,
-        });
+        sections.push(ClassBodySection::neutral(physical, false));
     }
 }
 
@@ -377,19 +374,119 @@ fn join_class_body_sections<'source>(
     sections: Vec<ClassBodySection<'source>>,
 ) -> Doc<'source> {
     let mut previous_hard_line_after = false;
+    let mut previous_category = None;
+    let mut previous_was_neutral = false;
     doc.concat_list(|joined| {
         for section in sections {
             if !joined.is_empty() {
-                let separator = BodyItemSeparator::spaced(previous_hard_line_after).doc(joined);
+                let separator = class_member_separator(
+                    joined,
+                    previous_category,
+                    section.category,
+                    section.starts_after_blank_line,
+                    previous_was_neutral,
+                    previous_hard_line_after,
+                );
                 joined.push(separator);
             }
             joined.push(section.doc);
+            previous_was_neutral = section.category.is_none();
+            if let Some(category) = section.category {
+                previous_category = Some(category);
+            }
             previous_hard_line_after = section.hard_line_after;
         }
     })
 }
 
+fn class_member_separator<'source>(
+    doc: &mut DocBuilder<'source>,
+    previous_category: Option<MemberCategory>,
+    current_category: Option<MemberCategory>,
+    starts_after_blank_line: bool,
+    previous_was_neutral: bool,
+    previous_hard_line_after: bool,
+) -> Doc<'source> {
+    if previous_was_neutral || previous_hard_line_after {
+        return BodyItemSeparator::Line.doc(doc);
+    }
+
+    let categories_stay_adjacent = matches!(
+        (previous_category, current_category),
+        (
+            Some(MemberCategory::Property),
+            Some(MemberCategory::Property)
+        ) | (
+            Some(MemberCategory::EnumEntry),
+            Some(MemberCategory::EnumEntry)
+        ) | (None, Some(_))
+            | (_, None)
+    );
+    let separator = if starts_after_blank_line || !categories_stay_adjacent {
+        BodyItemSeparator::EmptyLine
+    } else {
+        BodyItemSeparator::Line
+    };
+    separator.doc(doc)
+}
+
 struct ClassBodySection<'source> {
     doc: Doc<'source>,
     hard_line_after: bool,
+    category: Option<MemberCategory>,
+    starts_after_blank_line: bool,
+}
+
+impl<'source> ClassBodySection<'source> {
+    /// A section that is not a member declaration: a stray token, salvaged
+    /// comments, or recovery output.
+    const fn neutral(doc: Doc<'source>, hard_line_after: bool) -> Self {
+        Self {
+            doc,
+            hard_line_after,
+            category: None,
+            starts_after_blank_line: false,
+        }
+    }
+}
+
+/// Which member kinds may sit on adjacent lines.
+///
+/// Properties read as a group, so adjacent ones stay adjacent unless the source
+/// separated them; enum entries are a list. Everything else — functions,
+/// constructors, initializers, nested types — is spaced apart.
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum MemberCategory {
+    Property,
+    EnumEntry,
+    Spaced,
+}
+
+fn member_category(member: &ClassMember<'_>) -> MemberCategory {
+    match member {
+        // A member declaration wraps the declaration it carries, so the kind
+        // that decides spacing is the wrapped one.
+        ClassMember::ClassMemberDeclaration(declaration) => {
+            let KotlinSyntaxField::Present(element) = declaration.member() else {
+                return MemberCategory::Spaced;
+            };
+            element
+                .cast_family::<Declaration<'_>>()
+                .as_ref()
+                .map_or(MemberCategory::Spaced, declaration_category)
+        }
+        ClassMember::PropertyDeclaration(_)
+        | ClassMember::ExplicitBackingField(_)
+        | ClassMember::PropertyAccessor(_) => MemberCategory::Property,
+        ClassMember::EnumEntry(_) => MemberCategory::EnumEntry,
+        _ => MemberCategory::Spaced,
+    }
+}
+
+const fn declaration_category(declaration: &Declaration<'_>) -> MemberCategory {
+    match declaration {
+        Declaration::PropertyDeclaration(_) => MemberCategory::Property,
+        Declaration::EnumEntry(_) => MemberCategory::EnumEntry,
+        _ => MemberCategory::Spaced,
+    }
 }

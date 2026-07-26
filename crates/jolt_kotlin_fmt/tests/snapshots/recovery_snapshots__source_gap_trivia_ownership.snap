@@ -34,7 +34,6 @@ fun triviaOwnedBlockGaps() {
 }
 
 val firstTopLevel = 1 // JOLT-TRIVIA:top-level-line-comment-no-blank
-
 val secondTopLevel = 2 // JOLT-TRIVIA:top-level-line-comment-before-blank
 
 val thirdTopLevel = 3

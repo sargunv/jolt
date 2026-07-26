@@ -17,7 +17,6 @@ class TrailingCommentSpacing {
   fun f() {}
 
   val g = 5 /* block does not end the line */
-
   val h = 6
 }
 
