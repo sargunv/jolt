@@ -11,6 +11,7 @@ style/comments/comments-between-statement-keyword-and-value.java
 style/comments/content-shapes.java
 style/comments/dangling-comment-blank-lines.java
 style/comments/leading-comment-blank-lines.java
+style/comments/leading-comments-before-cast-and-block.java
 style/comments/leading-comments-on-assignments.java
 style/comments/leading-comments-on-binary-operands.java
 style/comments/leading-comments-on-constructor-invocations.java

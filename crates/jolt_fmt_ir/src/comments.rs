@@ -410,20 +410,40 @@ pub fn format_token_with_inline_leading_comments<'source, L: Language>(
     let leading = if leading.is_empty() {
         Doc::nil()
     } else {
+        let mut final_comment_forces_line = false;
         let comments = doc.concat_list(|comments| {
             for comment in leading {
                 if !comments.is_empty() {
-                    let space = comments.space();
-                    comments.push(space);
+                    let separator = if final_comment_forces_line {
+                        comments.hard_line()
+                    } else {
+                        comments.space()
+                    };
+                    comments.push(separator);
                 }
+                final_comment_forces_line = comment_forces_line(&comment);
                 let comment = format_comment(comments, &comment);
                 comments.push(comment);
             }
         });
-        let space = doc.space();
         match placement {
-            InlineLeadingTrivia::AfterPreviousToken => doc.concat([space, comments]),
-            InlineLeadingTrivia::BeforeToken => doc.concat([comments, space]),
+            InlineLeadingTrivia::AfterPreviousToken => {
+                let before_comments = doc.space();
+                let after_comments = if final_comment_forces_line {
+                    doc.hard_line()
+                } else {
+                    Doc::nil()
+                };
+                doc.concat([before_comments, comments, after_comments])
+            }
+            InlineLeadingTrivia::BeforeToken => {
+                let after_comments = if final_comment_forces_line {
+                    doc.hard_line()
+                } else {
+                    doc.space()
+                };
+                doc.concat([comments, after_comments])
+            }
         }
     };
     let token = format_token_after_relocated_leading_comments(doc, token, trailing);
