@@ -1,0 +1,21 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class ParenthesizedPostfixIncrement {
+  void statement(int value) {
+    (value)++;
+  }
+
+  int expression(int value) {
+    return (value)++ + 1;
+  }
+
+  int decrement(int value) {
+    return (value)-- - 1;
+  }
+}
+
+diagnostics:
+(none)

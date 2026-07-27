@@ -335,6 +335,7 @@ syntax/parser/parses-normal-class-declaration-clauses-and-members.java
 syntax/parser/parses-optional-basic-for-condition-and-bare-return.java
 syntax/parser/parses-ordinary-compilation-unit-package-imports-and-top-level-types.java
 syntax/parser/parses-parenthesized-concise-lambda-parameter-list.java
+syntax/parser/parses-parenthesized-postfix-increment.java
 syntax/parser/parses-primary-access-invocation-creation-and-references.java
 syntax/parser/parses-primary-qualified-class-instance-creation.java
 syntax/parser/parses-primitive-and-void-class-literals.java
