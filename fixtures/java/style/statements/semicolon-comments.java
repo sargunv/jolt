@@ -12,3 +12,13 @@ class Example {
     do value++; while (advance()); // do while
   }
 }
+
+class RemovedSemicolonCommentGap {
+  void run() {
+    int before = 1;
+    // comment salvaged from the removed semicolon
+
+    ;
+    int after = 2;
+  }
+}

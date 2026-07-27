@@ -232,6 +232,7 @@ fn format_entry_segment<'source>(
                 sections.push(FileSection {
                     doc: separator,
                     visible,
+                    compact_before: visible,
                     compact_after: visible,
                 });
             }
@@ -259,6 +260,10 @@ fn join_sections<'source>(
     sections: Vec<FileSection<'source>>,
 ) -> FileSection<'source> {
     let visible = sections.iter().any(|section| section.visible);
+    let compact_before = sections
+        .iter()
+        .find(|section| section.visible)
+        .is_some_and(|section| section.compact_before);
     let mut compact_after = false;
     let joined = doc.concat_list(|docs| {
         let mut has_visible_section = false;
@@ -267,7 +272,7 @@ fn join_sections<'source>(
                 // Boundaries, not breaks: the gap names the line state the next
                 // section starts from, so a section that already ended its own
                 // line — a trailing comment forces one — is not stacked on.
-                let line = if compact_after {
+                let line = if compact_after || section.compact_before {
                     docs.hard_line_boundary()
                 } else {
                     docs.empty_line_boundary()
@@ -284,6 +289,7 @@ fn join_sections<'source>(
     FileSection {
         doc: joined,
         visible,
+        compact_before,
         compact_after,
     }
 }
@@ -291,6 +297,7 @@ fn join_sections<'source>(
 struct FileSection<'source> {
     doc: Doc<'source>,
     visible: bool,
+    compact_before: bool,
     compact_after: bool,
 }
 
@@ -299,6 +306,7 @@ impl<'source> FileSection<'source> {
         Self {
             doc,
             visible,
+            compact_before: false,
             compact_after: false,
         }
     }
@@ -307,6 +315,7 @@ impl<'source> FileSection<'source> {
         Self {
             doc,
             visible: true,
+            compact_before: false,
             compact_after: true,
         }
     }

@@ -4,10 +4,8 @@ expression: snapshot
 ---
 formatted:
 val trailingOnly = 1
-
 // trailing comment salvaged from the removed semicolon
 val leadingRun = 2
-
 // first comment salvaged from the removed semicolon
 
 // second salvaged comment after a blank line
@@ -15,11 +13,14 @@ val leadingRun = 2
 val afterSalvage = 3
 
 val collapsedRun = 4
-
 // salvaged comment before collapsed blank lines
 
 // salvaged comment after collapsed blank lines
 val last = 5
+
+val compactBefore = 6
+// salvaged comment without a preceding blank line
+val compactAfter = 7
 
 diagnostics:
 (none)

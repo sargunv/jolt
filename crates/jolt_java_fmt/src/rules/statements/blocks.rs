@@ -217,9 +217,10 @@ pub(crate) fn format_block_statement_item<'source>(
     };
     let formatted = match item {
         BlockItem::EmptyStatement(empty) => {
-            let (removed, visible) = format_removed_empty_statement(&empty, doc);
+            let (removed, visible, ends_before_blank_line) =
+                format_removed_empty_statement(&empty, doc);
             return if visible {
-                BodyItem::new(removed, starts_after_blank_line)
+                BodyItem::removed_comments(removed, starts_after_blank_line, ends_before_blank_line)
             } else {
                 BodyItem::invisible(removed)
             };
@@ -286,14 +287,22 @@ pub(crate) fn format_block_statement_item<'source>(
 fn format_removed_empty_statement<'source>(
     statement: &jolt_java_syntax::EmptyStatement<'source>,
     doc: &mut DocBuilder<'source>,
-) -> (Doc<'source>, bool) {
-    let has_comments = has_removed_comments(comments_from_tokens(statement.token_iter()));
+) -> (Doc<'source>, bool, bool) {
+    let comments = comments_from_tokens(statement.token_iter()).collect::<Vec<_>>();
+    let has_comments = has_removed_comments(comments.iter().copied());
+    let ends_before_blank_line = comments
+        .last()
+        .is_some_and(jolt_java_syntax::JavaComment::is_followed_by_blank_line);
     let jolt_java_syntax::JavaSyntaxField::Present(semicolon) = statement.semicolon() else {
-        return (format_statement_semicolon(statement.semicolon(), doc), true);
+        return (
+            format_statement_semicolon(statement.semicolon(), doc),
+            true,
+            false,
+        );
     };
     let (normalized, removed) =
         format_token_removal(doc, &semicolon, statement.separator_removal_claim());
-    (normalized, has_comments || !removed)
+    (normalized, has_comments || !removed, ends_before_blank_line)
 }
 
 fn block_statement_ignore_range(
