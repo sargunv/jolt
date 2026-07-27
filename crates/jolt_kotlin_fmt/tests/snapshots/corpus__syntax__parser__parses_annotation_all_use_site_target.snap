@@ -4,8 +4,7 @@ expression: snapshot
 ---
 formatted:
 class AllTarget(
-  @all:Label("user")
-  val name: String,
+  @all:Label("user") val name: String,
 )
 
 annotation class Label(val value: String)

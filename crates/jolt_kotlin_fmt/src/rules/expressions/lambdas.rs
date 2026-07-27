@@ -187,8 +187,8 @@ fn format_lambda_parameter_prefix<'source>(
         )
     });
     let visible_item_count = items.iter().filter(|item| item.is_visible()).count();
-    // A parameter annotation ends its own line, so the parameters that follow it
-    // must be indented rather than landing back at column zero.
+    // A comment may end a parameter modifier's line, so keep the remainder of
+    // the parameter prefix subordinate to the lambda when that happens.
     let prefix = doc.concat_list(|docs| {
         let mut visible_index = 0;
         for item in items {

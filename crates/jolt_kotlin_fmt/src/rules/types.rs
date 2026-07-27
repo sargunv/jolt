@@ -686,8 +686,8 @@ pub(crate) fn format_modifier_sequence<'source>(
                     if let Some(annotation) = role.cast_node::<Annotation<'source>>() {
                         let annotation = format_annotation(docs, &annotation);
                         docs.push(annotation);
-                        let line = docs.hard_line();
-                        docs.push(line);
+                        let space = docs.space();
+                        docs.push(space);
                     } else if let Some(token) = role.token() {
                         let token = format_token(
                             docs,

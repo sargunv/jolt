@@ -4,8 +4,7 @@ expression: snapshot
 ---
 formatted:
 class Injected @Inject constructor(
-  @Named("id")
-  val id: String,
+  @Named("id") val id: String,
 )
 
 annotation class Inject
