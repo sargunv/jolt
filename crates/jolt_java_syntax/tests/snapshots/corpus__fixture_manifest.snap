@@ -19,6 +19,7 @@ style/comments/leading-comments-on-parenthesized-expressions.java
 style/comments/lexical-boundaries.java
 style/comments/mixed-comment-line-endings.java
 style/comments/star-blocks.java
+style/comments/trailing-line-boundaries.java
 style/compact-compilation-units/mixed-declarations-preserve-order.java
 style/compact-compilation-units/mixed-declarations-second-order.java
 style/compact-compilation-units/void-main.java
@@ -382,6 +383,7 @@ syntax/recovery/binary-expression.java
 syntax/recovery/block-statement.java
 syntax/recovery/block-with-formatter-ignore.java
 syntax/recovery/catch-parameter-modifiers.java
+syntax/recovery/commented-trailing-separator.java
 syntax/recovery/compilation-unit-top-level.java
 syntax/recovery/constructor-body.java
 syntax/recovery/declarations.java

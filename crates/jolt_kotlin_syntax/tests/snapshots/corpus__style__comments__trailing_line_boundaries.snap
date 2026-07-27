@@ -1,0 +1,229 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import a.B // import
+import a.C
+
+fun block() {
+  consume() // block item
+}
+
+fun choose(value: Int) = when (value) { // opening brace
+  else -> 0
+}
+
+val lambda = { value: Int -> // arrow
+  value
+}
+
+fun chain(values: List<String>) =
+  values
+    .filter { it.isNotEmpty() } // step
+    .joinToString()
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ImportDirectiveList
+      ImportDirective
+        Identifier "import" @ 0..6 trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "a" @ 7..8
+            Dot "." @ 8..9
+            Name
+              Identifier "B" @ 9..10 trailing=[Whitespace " ", LineComment "// import"]
+        TerminatorList
+      ImportDirective
+        Identifier "import" @ 21..27 leading=[Newline "\n"] trailing=[Whitespace " "]
+        QualifiedName
+          QualifiedNameSegmentList
+            Name
+              Identifier "a" @ 28..29
+            Dot "." @ 29..30
+            Name
+              Identifier "C" @ 30..31
+        TerminatorList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "block" @ 37..42
+      ValueParameterList
+        LParen "(" @ 42..43
+        ValueParameterSeparatedList
+        RParen ")" @ 43..44 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 45..46
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "consume" @ 49..56 leading=[Newline "\n", Whitespace "  "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 56..57
+                    ValueArgumentEntryList
+                    RParen ")" @ 57..58 trailing=[Whitespace " ", LineComment "// block item"]
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 73..74 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 76..79 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "choose" @ 80..86
+      ValueParameterList
+        LParen "(" @ 86..87
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "value" @ 87..92
+            Colon ":" @ 92..93 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 94..97
+        RParen ")" @ 97..98 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 99..100 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 101..105 trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 106..107
+            NameExpression
+              Identifier "value" @ 107..112
+            RParen ")" @ 112..113 trailing=[Whitespace " "]
+          LBrace "{" @ 114..115 trailing=[Whitespace " ", LineComment "// opening brace"]
+          WhenEntryList
+            WhenEntry
+              ElseKw "else" @ 135..139 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 140..142 trailing=[Whitespace " "]
+              WhenEntryBody
+                LiteralExpression
+                  IntegerLiteral "0" @ 143..144
+          RBrace "}" @ 145..146 leading=[Newline "\n"]
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 148..151 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "lambda" @ 152..158 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 159..160 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 161..162 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  ModifierList
+                  LambdaParameterBinding
+                    Name
+                      Identifier "value" @ 163..168
+                  Colon ":" @ 168..169 trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "Int" @ 170..173 trailing=[Whitespace " "]
+              Arrow "->" @ 174..176 trailing=[Whitespace " ", LineComment "// arrow"]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  NameExpression
+                    Identifier "value" @ 188..193 leading=[Newline "\n", Whitespace "  "]
+                TerminatorList
+            RBrace "}" @ 194..195 leading=[Newline "\n"]
+      PropertyBodyMemberList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 197..200 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "chain" @ 201..206
+      ValueParameterList
+        LParen "(" @ 206..207
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "values" @ 207..213
+            Colon ":" @ 213..214 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "List" @ 215..219
+                    TypeArgumentList
+                      Lt "<" @ 219..220
+                      TypeProjectionSeparatedList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                Identifier "String" @ 220..226
+                      Gt ">" @ 226..227
+        RParen ")" @ 227..228 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 229..230
+        CallExpression
+          NavigationExpression
+            CallExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "values" @ 233..239 leading=[Newline "\n", Whitespace "  "]
+                Dot "." @ 244..245 leading=[Newline "\n", Whitespace "    "]
+                Identifier "filter" @ 245..251 trailing=[Whitespace " "]
+              TypeArgumentListList
+              LambdaExpressionList
+                LambdaExpression
+                  LambdaBody
+                    LBrace "{" @ 252..253 trailing=[Whitespace " "]
+                    LambdaBodyItemList
+                      Statement
+                        ExpressionStatement
+                          CallExpression
+                            NavigationExpression
+                              NameExpression
+                                Identifier "it" @ 254..256
+                              Dot "." @ 256..257
+                              Identifier "isNotEmpty" @ 257..267
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 267..268
+                              ValueArgumentEntryList
+                              RParen ")" @ 268..269 trailing=[Whitespace " "]
+                            LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 270..271 trailing=[Whitespace " ", LineComment "// step"]
+            Dot "." @ 284..285 leading=[Newline "\n", Whitespace "    "]
+            Identifier "joinToString" @ 285..297
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 297..298
+            ValueArgumentEntryList
+            RParen ")" @ 298..299
+          LambdaExpressionList
+  Eof "" @ 300..300 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

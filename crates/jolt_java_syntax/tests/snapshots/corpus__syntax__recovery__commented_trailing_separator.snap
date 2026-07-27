@@ -1,0 +1,55 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class CommentedTrailingSeparator {
+  void call() {
+    f(
+        1, // separator
+        );
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "CommentedTrailingSeparator" @ 6..32 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 33..34
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 37..41 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "call" @ 42..46
+            LParen "(" @ 46..47
+            RParen ")" @ 47..48 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 49..50
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "f" @ 55..56 leading=[Newline "\n", Whitespace "    "]
+                        ArgumentList
+                          LParen "(" @ 56..57
+                          ExpressionList
+                            LiteralExpression
+                              IntegerLiteral "1" @ 66..67 leading=[Newline "\n", Whitespace "        "]
+                            Comma "," @ 67..68 trailing=[Whitespace " ", LineComment "// separator"]
+                          RParen ")" @ 90..91 leading=[Newline "\n", Whitespace "        "]
+                    Semicolon ";" @ 91..92
+              RBrace "}" @ 95..96 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 97..98 leading=[Newline "\n"]
+  Eof "" @ 99..99 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=90..91 message="expected argument"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(90), end: TextSize(91) }) message=expected argument
