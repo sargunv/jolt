@@ -132,6 +132,7 @@ syntax/parser/parses-annotation-use-site-targets.kt
 syntax/parser/parses-annotation-with-arguments-and-array.kt
 syntax/parser/parses-assignment-compound-operators.kt
 syntax/parser/parses-assignment-left-hand-side-forms.kt
+syntax/parser/parses-bare-type-argument-comparison.kt
 syntax/parser/parses-binary-elvis-as-is-in-precedence.kt
 syntax/parser/parses-binary-range-and-range-until.kt
 syntax/parser/parses-call-explicit-context-argument-names.kt

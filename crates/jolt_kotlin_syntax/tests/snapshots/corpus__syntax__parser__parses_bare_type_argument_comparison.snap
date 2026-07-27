@@ -1,0 +1,46 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val comparison = a < b >> c
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      Name
+        Identifier "comparison" @ 4..14 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 15..16 trailing=[Whitespace " "]
+        BinaryExpression
+          CallExpression
+            NameExpression
+              Identifier "a" @ 17..18 trailing=[Whitespace " "]
+            TypeArgumentListList
+              TypeArgumentList
+                Lt "<" @ 19..20 trailing=[Whitespace " "]
+                TypeProjectionSeparatedList
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "b" @ 21..22 trailing=[Whitespace " "]
+                Gt ">" @ 23..24
+            LambdaExpressionList
+          Gt ">" @ 24..25 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "c" @ 26..27
+      PropertyBodyMemberList
+  Eof "" @ 28..28 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
