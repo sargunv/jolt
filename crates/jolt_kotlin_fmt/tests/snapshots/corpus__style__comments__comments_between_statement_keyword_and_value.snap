@@ -52,8 +52,7 @@ class CommentsBetweenStatementKeywordAndValue {
 
   fun breaksToLabel(y: Int) {
     outer@ while (ready()) {
-      if (y > 1)
-        break@outer // a comment after the label stays there
+      if (y > 1) break@outer // a comment after the label stays there
       report(y)
     }
   }

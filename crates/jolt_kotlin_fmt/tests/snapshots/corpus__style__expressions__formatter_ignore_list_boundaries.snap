@@ -76,7 +76,8 @@ fun ignoredWhenConditions(value: Any): Int = when (value) {
   // @formatter:off
   is   FirstType
   // @formatter:on
-  , is SecondType ->
+  ,
+  is SecondType ->
     1
   else -> 0
 }

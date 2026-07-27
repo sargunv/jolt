@@ -16,6 +16,7 @@ fn layout_fit_boundary_fixtures_stay_within_width() {
         "properties/layout-fit-boundaries/braceless-if-expression.kt",
         "properties/layout-fit-boundaries/long-when-result.kt",
         "properties/layout-fit-boundaries/property-delegate.kt",
+        "properties/layout-fit-boundaries/when-condition-list.kt",
         "properties/layout-fit-boundaries/when-subject.kt",
         "style/layout-fit-boundaries/annotated-lambda-parameters.kt",
         "style/layout-fit-boundaries/call-chain-single-argument.kt",
