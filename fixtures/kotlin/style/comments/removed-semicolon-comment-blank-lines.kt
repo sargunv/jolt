@@ -15,3 +15,8 @@ val collapsedRun = 4
 // salvaged comment after collapsed blank lines
 ;
 val last = 5
+
+val compactBefore = 6
+// salvaged comment without a preceding blank line
+;
+val compactAfter = 7

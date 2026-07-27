@@ -18,6 +18,16 @@ class Example {
   }
 }
 
+class RemovedSemicolonCommentGap {
+  void run() {
+    int before = 1;
+    // comment salvaged from the removed semicolon
+
+    ;
+    int after = 2;
+  }
+}
+
 syntax:
 syntax:
 CompilationUnit
@@ -176,7 +186,55 @@ CompilationUnit
                     Semicolon ";" @ 463..464 trailing=[Whitespace " ", LineComment "// do while"]
               RBrace "}" @ 479..480 leading=[Newline "\n", Whitespace "  "]
         RBrace "}" @ 481..482 leading=[Newline "\n"]
-  Eof "" @ 483..483 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 484..489 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "RemovedSemicolonCommentGap" @ 490..516 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 517..518
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 521..525 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "run" @ 526..529
+            LParen "(" @ 529..530
+            RParen ")" @ 530..531 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 532..533
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 538..541 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "before" @ 542..548 trailing=[Whitespace " "]
+                        Assign "=" @ 549..550 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "1" @ 551..552
+                  Semicolon ";" @ 552..553
+                BlockStatement
+                  EmptyStatement
+                    Semicolon ";" @ 610..611 leading=[Newline "\n", Whitespace "    ", LineComment "// comment salvaged from the removed semicolon", Newline "\n", Newline "\n", Whitespace "    "]
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 616..619 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "after" @ 620..625 trailing=[Whitespace " "]
+                        Assign "=" @ 626..627 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "2" @ 628..629
+                  Semicolon ";" @ 629..630
+              RBrace "}" @ 633..634 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 635..636 leading=[Newline "\n"]
+  Eof "" @ 637..637 leading=[Newline "\n"]
 
 diagnostics:
   (none)

@@ -21,6 +21,11 @@ val collapsedRun = 4
 ;
 val last = 5
 
+val compactBefore = 6
+// salvaged comment without a preceding blank line
+;
+val compactAfter = 7
+
 syntax:
 syntax:
 KotlinFile
@@ -84,7 +89,30 @@ KotlinFile
         LiteralExpression
           IntegerLiteral "5" @ 407..408
       PropertyBodyMemberList
-  Eof "" @ 409..409 leading=[Newline "\n"]
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 410..413 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "compactBefore" @ 414..427 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 428..429 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "6" @ 430..431
+      PropertyBodyMemberList
+    Semicolon ";" @ 483..484 leading=[Newline "\n", LineComment "// salvaged comment without a preceding blank line", Newline "\n"]
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 485..488 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "compactAfter" @ 489..501 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 502..503 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "7" @ 504..505
+      PropertyBodyMemberList
+  Eof "" @ 506..506 leading=[Newline "\n"]
 
 diagnostics:
   (none)

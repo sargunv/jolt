@@ -36,6 +36,7 @@ impl<'source> From<Option<Doc<'source>>> for BodyContent<'source> {
 pub(crate) struct BodyItem<'source> {
     doc: Doc<'source>,
     starts_after_blank_line: bool,
+    ends_before_blank_line: bool,
     pub(crate) visible: bool,
 }
 
@@ -44,6 +45,20 @@ impl<'source> BodyItem<'source> {
         Self {
             doc,
             starts_after_blank_line,
+            ends_before_blank_line: false,
+            visible: true,
+        }
+    }
+
+    pub(crate) fn removed_comments(
+        doc: Doc<'source>,
+        starts_after_blank_line: bool,
+        ends_before_blank_line: bool,
+    ) -> Self {
+        Self {
+            doc,
+            starts_after_blank_line,
+            ends_before_blank_line,
             visible: true,
         }
     }
@@ -52,6 +67,7 @@ impl<'source> BodyItem<'source> {
         Self {
             doc,
             starts_after_blank_line: false,
+            ends_before_blank_line: false,
             visible: false,
         }
     }
@@ -157,14 +173,20 @@ pub(crate) fn join_body_items<'source>(
 ) -> Doc<'source> {
     doc.concat_list(|joined| {
         let mut saw_visible = false;
+        let mut previous_ends_before_blank_line = false;
         for item in items {
             if item.visible && saw_visible {
-                let separator =
-                    BodyItemSeparator::between(item.starts_after_blank_line).doc(joined);
+                let separator = BodyItemSeparator::between(
+                    previous_ends_before_blank_line || item.starts_after_blank_line,
+                )
+                .doc(joined);
                 joined.push(separator);
             }
             joined.push(item.doc);
-            saw_visible |= item.visible;
+            if item.visible {
+                saw_visible = true;
+                previous_ends_before_blank_line = item.ends_before_blank_line;
+            }
         }
     })
 }
