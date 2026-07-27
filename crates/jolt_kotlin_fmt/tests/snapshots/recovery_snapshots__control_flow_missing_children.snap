@@ -14,7 +14,6 @@ fun demo(flag: Boolean) {
     work()
   }
   when (flag)
-
 }
 
 diagnostics:

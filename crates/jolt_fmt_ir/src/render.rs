@@ -389,17 +389,31 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
 
     fn render_line(&mut self, line: &Line, mode: Mode) {
         match (mode, line.mode) {
-            (_, LineMode::Boundary | LineMode::HardBoundary) if self.pending_line_ends > 0 => {
+            (_, LineMode::SoftBoundary | LineMode::Boundary | LineMode::HardBoundary)
+                if self.pending_line_ends > 0 =>
+            {
                 self.write_newlines(line.indent_delta, 0);
             }
-            (Mode::Flat, LineMode::Soft | LineMode::SoftOrSpace | LineMode::Boundary) => {
+            (
+                Mode::Flat,
+                LineMode::Soft
+                | LineMode::SoftBoundary
+                | LineMode::SoftOrSpace
+                | LineMode::Boundary,
+            ) => {
                 self.write_flat_line(&line.flat);
             }
             (
                 _,
                 LineMode::Hard | LineMode::HardBoundary | LineMode::Empty | LineMode::EmptyBoundary,
             )
-            | (Mode::Break, LineMode::Soft | LineMode::SoftOrSpace | LineMode::Boundary) => {
+            | (
+                Mode::Break,
+                LineMode::Soft
+                | LineMode::SoftBoundary
+                | LineMode::SoftOrSpace
+                | LineMode::Boundary,
+            ) => {
                 let count = self.owed_line_ends(line.mode);
                 self.write_newlines(line.indent_delta, count);
             }
@@ -807,9 +821,13 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
 
     fn fit_line(&mut self, line: &Line, mode: Mode) -> FitResult {
         match (mode, line.mode) {
-            (Mode::Flat, LineMode::Soft | LineMode::SoftOrSpace | LineMode::Boundary) => {
-                self.fit_flat_line(&line.flat)
-            }
+            (
+                Mode::Flat,
+                LineMode::Soft
+                | LineMode::SoftBoundary
+                | LineMode::SoftOrSpace
+                | LineMode::Boundary,
+            ) => self.fit_flat_line(&line.flat),
             (
                 Mode::Flat,
                 LineMode::Hard | LineMode::HardBoundary | LineMode::Empty | LineMode::EmptyBoundary,
@@ -1980,6 +1998,34 @@ mod tests {
         render_to(&arena, doc, options(), &mut sink).expect("document renders");
 
         assert_eq!(sink.0, "raw\n    next");
+    }
+
+    #[test]
+    fn soft_line_boundary_keeps_flat_concatenation_and_coalesces_when_broken() {
+        for (should_break, expected) in [(false, "left.right"), (true, "left\n.right")] {
+            let mut builder = DocBuilder::new();
+            let left = builder.text("left");
+            let preceding_line = should_break.then(|| builder.hard_line());
+            let boundary = builder.soft_line_boundary();
+            let right = builder.text(".right");
+            let contents = builder.concat([
+                left,
+                preceding_line.unwrap_or_else(Doc::nil),
+                boundary,
+                right,
+            ]);
+            let doc = if should_break {
+                builder.force_group(contents)
+            } else {
+                builder.group(contents)
+            };
+            let arena = builder.into_arena();
+            let mut sink = StringSink::default();
+
+            render_to(&arena, doc, options(), &mut sink).expect("document renders");
+
+            assert_eq!(sink.0, expected);
+        }
     }
 
     #[test]

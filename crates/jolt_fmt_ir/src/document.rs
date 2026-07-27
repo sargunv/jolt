@@ -517,6 +517,17 @@ impl<'source> DocBuilder<'source> {
         }))
     }
 
+    /// Uses an empty flat representation unless preceding content already
+    /// ended the line.
+    #[must_use]
+    pub fn soft_line_boundary(&mut self) -> Doc<'source> {
+        self.push_node(DocNode::Line(Line {
+            mode: LineMode::SoftBoundary,
+            flat: FlatLine::Empty,
+            indent_delta: 0,
+        }))
+    }
+
     #[must_use]
     pub fn hard_line(&mut self) -> Doc<'source> {
         self.push_node(DocNode::Line(Line {
@@ -874,6 +885,7 @@ pub(crate) struct Line {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum LineMode {
     Soft,
+    SoftBoundary,
     SoftOrSpace,
     Hard,
     Boundary,

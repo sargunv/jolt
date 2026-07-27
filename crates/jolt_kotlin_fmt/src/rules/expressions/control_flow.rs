@@ -9,7 +9,7 @@ use jolt_kotlin_syntax::{
     WhileBodySyntax, WhileStatement,
 };
 
-use crate::helpers::blocks::join_hard_lines;
+use crate::helpers::blocks::join_line_boundaries;
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_token, format_trailing_comments_before_line_break,
     trailing_comments_force_line,
@@ -116,12 +116,12 @@ pub(super) fn format_when_expression<'source>(
     let entries = if entries.is_empty() {
         doc.hard_line()
     } else {
-        let line = doc.hard_line();
-        let entries = join_hard_lines(doc, entries);
+        let line = doc.hard_line_boundary();
+        let entries = join_line_boundaries(doc, entries);
         let entries = doc.concat([line, entries]);
         let entries = doc.indent(entries);
         if has_close {
-            let trailing = doc.hard_line();
+            let trailing = doc.hard_line_boundary();
             doc.concat([entries, trailing])
         } else {
             entries

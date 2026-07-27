@@ -25,11 +25,11 @@ impl<'source> BodyItem<'source> {
     }
 }
 
-pub(crate) fn join_hard_lines<'source>(
+pub(crate) fn join_line_boundaries<'source>(
     doc: &mut DocBuilder<'source>,
     docs: impl IntoIterator<Item = Doc<'source>>,
 ) -> Doc<'source> {
-    let separator = doc.hard_line();
+    let separator = doc.hard_line_boundary();
     doc.join(separator, docs)
 }
 

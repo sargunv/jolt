@@ -5,7 +5,7 @@ use jolt_kotlin_syntax::{
     StatementSyntax, boundary_separator_removal_claim,
 };
 
-use crate::helpers::blocks::{BodyItemSeparator, join_hard_lines};
+use crate::helpers::blocks::{BodyItemSeparator, join_line_boundaries};
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_comment, format_ignored_trivia, format_removed_separator,
     format_terminator_list, format_token, token_has_comments,
@@ -359,7 +359,7 @@ fn format_file_annotations<'source>(
     if formatted.is_empty() {
         return (invisible, false);
     }
-    let formatted = join_hard_lines(doc, formatted);
+    let formatted = join_line_boundaries(doc, formatted);
     (doc.concat([invisible, formatted]), true)
 }
 

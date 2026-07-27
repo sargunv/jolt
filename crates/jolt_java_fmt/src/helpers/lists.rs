@@ -372,7 +372,7 @@ fn format_close_with_spacing<'source>(
             if close_has_leading_comments {
                 doc.hard_line()
             } else {
-                doc.soft_line()
+                doc.soft_line_boundary()
             },
             match close {
                 JavaFormatDelimiter::Source(close) => {

@@ -283,11 +283,11 @@ fn format_braced_body<'source>(
             return doc.concat([open, close]);
         }
         BlockContents::Body(body) => {
-            let line = doc.hard_line();
+            let line = doc.hard_line_boundary();
             let body = doc.concat([line, body]);
             let body = doc.indent(body);
             if has_close {
-                let line = doc.hard_line();
+                let line = doc.hard_line_boundary();
                 doc.concat([body, line])
             } else {
                 body

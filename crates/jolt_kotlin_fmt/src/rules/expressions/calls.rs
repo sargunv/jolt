@@ -354,7 +354,7 @@ impl<'source> MemberChainBuilder<'source> {
             });
         } else {
             self.has_rest_suffixes = true;
-            let line = rest.soft_line();
+            let line = rest.soft_line_boundary();
             rest.push(line);
             rest.push(suffix);
         }

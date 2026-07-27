@@ -111,10 +111,10 @@ fn format_lambda_body<'source>(
     } else {
         doc.nil()
     };
-    let body_line = doc.hard_line();
+    let body_line = doc.hard_line_boundary();
     let block_body = doc.concat([body_line, contents]);
     let block_body = doc.indent(block_body);
-    let close_line = doc.hard_line();
+    let close_line = doc.hard_line_boundary();
     let block = doc.concat([open, block_parameters, block_body, close_line, close]);
 
     if count == 1 {
@@ -335,7 +335,7 @@ fn push_lambda_body_doc<'source>(
     item: Doc<'source>,
 ) {
     if *count > 0 {
-        let line = body.hard_line();
+        let line = body.hard_line_boundary();
         body.push(line);
     }
     body.push(item);

@@ -1,0 +1,24 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class CommentedTrailingSeparator {
+  void call() {
+    f(
+        1, // separator
+        );
+  }
+}
+
+formatted:
+class CommentedTrailingSeparator {
+  void call() {
+    f(
+      1, // separator
+    );
+  }
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(90), end: TextSize(91) }) message=expected argument

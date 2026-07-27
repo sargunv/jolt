@@ -1,0 +1,125 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+@A // annotation
+package p;
+
+class TrailingLineBoundaries {
+  String chain(java.util.List<String> values) {
+    return values
+        .stream() // step
+        .findFirst()
+        .orElse("");
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    PackageDeclaration
+      AnnotationList
+        Annotation
+          At "@" @ 0..1
+          Name
+            Identifier "A" @ 1..2 trailing=[Whitespace " ", LineComment "// annotation"]
+      PackageKw "package" @ 17..24 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "p" @ 25..26
+      Semicolon ";" @ 26..27
+    ClassDeclaration
+      ClassKw "class" @ 29..34 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "TrailingLineBoundaries" @ 35..57 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 58..59
+        ClassBodyMemberList
+          MethodDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "String" @ 62..68 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "chain" @ 69..74
+            LParen "(" @ 74..75
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      QualifiedName
+                        QualifiedNameSegmentNode
+                          AnnotationList
+                          Identifier "java" @ 75..79
+                        Dot "." @ 79..80
+                        NameSegmentDotList
+                          QualifiedNameSegmentNode
+                            AnnotationList
+                            Identifier "util" @ 80..84
+                          Dot "." @ 84..85
+                          QualifiedNameSegmentNode
+                            AnnotationList
+                            Identifier "List" @ 85..89
+                      TypeArgumentList
+                        Lt "<" @ 89..90
+                        TypeArgumentSeparatedList
+                          TypeArgument
+                            AnnotationList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "String" @ 90..96
+                        Gt ">" @ 96..97 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "values" @ 98..104
+            RParen ")" @ 104..105 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 106..107
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 112..118 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    MethodInvocationExpression
+                      QualifiedMethodInvocation
+                        MethodInvocationExpression
+                          QualifiedMethodInvocation
+                            MethodInvocationExpression
+                              QualifiedMethodInvocation
+                                NameExpression
+                                  Identifier "values" @ 119..125
+                                Dot "." @ 134..135 leading=[Newline "\n", Whitespace "        "]
+                                Identifier "stream" @ 135..141
+                                ArgumentList
+                                  LParen "(" @ 141..142
+                                  ExpressionList
+                                  RParen ")" @ 142..143 trailing=[Whitespace " ", LineComment "// step"]
+                            Dot "." @ 160..161 leading=[Newline "\n", Whitespace "        "]
+                            Identifier "findFirst" @ 161..170
+                            ArgumentList
+                              LParen "(" @ 170..171
+                              ExpressionList
+                              RParen ")" @ 171..172
+                        Dot "." @ 181..182 leading=[Newline "\n", Whitespace "        "]
+                        Identifier "orElse" @ 182..188
+                        ArgumentList
+                          LParen "(" @ 188..189
+                          ExpressionList
+                            LiteralExpression
+                              StringLiteral "\"\"" @ 189..191
+                          RParen ")" @ 191..192
+                    Semicolon ";" @ 192..193
+              RBrace "}" @ 196..197 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 198..199 leading=[Newline "\n"]
+  Eof "" @ 200..200 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

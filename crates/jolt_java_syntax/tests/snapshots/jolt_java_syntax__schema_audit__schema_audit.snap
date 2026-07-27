@@ -63,6 +63,7 @@ syntax__parser__recovers_missing_declaration_names: ConstructorDeclaration occur
 syntax__parser__recovers_missing_declaration_names: MethodDeclaration occurrence 1 (VoidType LParen("(") RParen(")") Block)
 syntax__parser__recovers_missing_declaration_names: AnnotationElementDeclaration occurrence 1 (PrimitiveType LParen("(") RParen(")") Semicolon(";"))
 syntax__parser__recovers_missing_declaration_names: EnumConstant occurrence 1 (AnnotationList)
+syntax__recovery__commented_trailing_separator: ExpressionList occurrence 1 (LiteralExpression Comma(","))
 syntax__recovery__declarations: EnumConstant occurrence 2 (AnnotationList ArgumentList ClassBody)
 syntax__recovery__declarations: EnumConstant occurrence 3 (AnnotationList)
 syntax__recovery__delimiter_summary_recovery_contexts: Annotation occurrence 3 (At("@"))

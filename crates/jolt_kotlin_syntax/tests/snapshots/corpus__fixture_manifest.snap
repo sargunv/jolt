@@ -20,6 +20,7 @@ style/comments/removed-semicolon-comment-blank-lines.kt
 style/comments/star-blocks.kt
 style/comments/token-trailing-comments.kt
 style/comments/trailing-comment-before-synthesized-parentheses.kt
+style/comments/trailing-line-boundaries.kt
 style/declarations/annotations-and-modifiers.kt
 style/declarations/class-header-clauses.kt
 style/declarations/delegation.kt
