@@ -48,6 +48,7 @@ style/expressions/lambdas-and-trailing.kt
 style/expressions/member-chain-expression-body.kt
 style/expressions/operator-line-comments.kt
 style/expressions/simple-expression-bodies.kt
+style/expressions/string-template-entries-stay-flat.kt
 style/expressions/string-templates.kt
 style/expressions/when-entry-block-bodies.kt
 style/expressions/when-expression.kt

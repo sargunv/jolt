@@ -71,8 +71,7 @@ fun Scope /* JOLT-TRIVIA:receiver-type */. /* JOLT-TRIVIA:receiver-dot */comment
       fallback /* JOLT-TRIVIA:if-empty-body */
     }
     ?: /* JOLT-TRIVIA:elvis */ fallback
-  val rendered = "value=${ /* JOLT-TRIVIA:template-open */computed
-    + /* JOLT-TRIVIA:template-plus */ "!"}"
+  val rendered = "value=${ /* JOLT-TRIVIA:template-open */computed + /* JOLT-TRIVIA:template-plus */ "!"}"
   val casted = rendered /* JOLT-TRIVIA:as-left */ as? /* JOLT-TRIVIA:as-operator */
     String
   val checked = casted /* JOLT-TRIVIA:is-left */ !is /* JOLT-TRIVIA:is-operator */

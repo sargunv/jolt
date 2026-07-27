@@ -470,6 +470,18 @@ impl<'source> DocBuilder<'source> {
         self.group_with_break(contents, true)
     }
 
+    /// Renders every nested breakable group in `contents` flat, including groups
+    /// explicitly marked to break, even when they exceed the line width. Hard
+    /// lines remain hard so represented source boundaries are never discarded.
+    #[must_use]
+    pub fn force_flat(&mut self, contents: Doc<'source>) -> Doc<'source> {
+        if contents.is_nil() {
+            return contents;
+        }
+
+        self.push_node(DocNode::ForceFlat { contents })
+    }
+
     #[must_use]
     pub fn indent(&mut self, contents: Doc<'source>) -> Doc<'source> {
         if contents.is_nil() {
@@ -812,6 +824,9 @@ pub(crate) enum DocNode<'source> {
     Group {
         contents: Doc<'source>,
         should_break: bool,
+    },
+    ForceFlat {
+        contents: Doc<'source>,
     },
     Indent {
         contents: Doc<'source>,

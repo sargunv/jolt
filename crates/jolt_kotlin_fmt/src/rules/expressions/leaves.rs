@@ -168,7 +168,8 @@ fn format_long_string_template_entry<'source>(
         format_token(doc, &open, leading, TrailingTrivia::Preserve)
     });
     let expression = format_required_field(entry.expression(), doc, |expression, doc| {
-        format_expression(doc, &expression)
+        let expression = format_expression(doc, &expression);
+        doc.force_flat(expression)
     });
     let close = format_required_field(entry.close(), doc, |close, doc| {
         format_token(
