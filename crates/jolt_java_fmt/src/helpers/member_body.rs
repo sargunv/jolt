@@ -58,13 +58,26 @@ pub(crate) fn join_member_body<'source>(
     doc: &mut DocBuilder<'source>,
     members: Vec<MemberBodyItem<'source>>,
 ) -> Doc<'source> {
+    // A neutral comment/removal item leads the next categorized member. Carry
+    // that category backward once so spacing before the comment is the same as
+    // spacing before the member after the source is reparsed without the
+    // removed token.
+    let mut next_category = None;
+    let mut spacing_categories = vec![None; members.len()];
+    for (index, member) in members.iter().enumerate().rev() {
+        if member.visible && member.category.is_some() {
+            next_category = member.category;
+        }
+        spacing_categories[index] = member.category.or(next_category);
+    }
+
     let mut previous_category = None;
     let mut previous_was_neutral = false;
     let mut previous_was_ignored_region = false;
     let mut saw_visible = false;
 
     doc.concat_list(|joined| {
-        for member in members {
+        for (index, member) in members.into_iter().enumerate() {
             if !member.visible {
                 joined.push(member.doc);
                 continue;
@@ -73,7 +86,7 @@ pub(crate) fn join_member_body<'source>(
                 let separator = member_separator(
                     joined,
                     previous_category,
-                    member.category,
+                    spacing_categories[index],
                     member.starts_after_blank_line,
                     previous_was_neutral,
                     previous_was_ignored_region,

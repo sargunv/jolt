@@ -1,0 +1,71 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class RemovedStraySemicolonCommentIdempotence {
+  int field;
+  /* JOLT-TRIVIA:stray-semicolon */ ;
+  static {}
+
+  void method() {}
+  /*
+   * JOLT-TRIVIA:multiline-stray-semicolon
+   */ ;
+  int following;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "RemovedStraySemicolonCommentIdempotence" @ 6..45 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 46..47
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 50..53 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "field" @ 54..59
+            Semicolon ";" @ 59..60
+          EmptyDeclaration
+            Semicolon ";" @ 97..98 leading=[Newline "\n", Whitespace "  ", BlockComment "/* JOLT-TRIVIA:stray-semicolon */", Whitespace " "]
+          StaticInitializer
+            StaticKw "static" @ 101..107 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 108..109
+              BlockStatementList
+              RBrace "}" @ 109..110
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 114..118 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "method" @ 119..125
+            LParen "(" @ 125..126
+            RParen ")" @ 126..127 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 128..129
+              BlockStatementList
+              RBrace "}" @ 129..130
+          EmptyDeclaration
+            Semicolon ";" @ 185..186 leading=[Newline "\n", Whitespace "  ", BlockComment "/*\n   * JOLT-TRIVIA:multiline-stray-semicolon\n   */", Whitespace " "]
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 189..192 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "following" @ 193..202
+            Semicolon ";" @ 202..203
+        RBrace "}" @ 204..205 leading=[Newline "\n"]
+  Eof "" @ 206..206 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

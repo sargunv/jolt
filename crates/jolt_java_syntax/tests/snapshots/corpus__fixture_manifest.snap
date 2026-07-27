@@ -20,6 +20,7 @@ style/comments/leading-comments-on-member-chains.java
 style/comments/leading-comments-on-parenthesized-expressions.java
 style/comments/lexical-boundaries.java
 style/comments/mixed-comment-line-endings.java
+style/comments/removed-stray-semicolon-comment-idempotence.java
 style/comments/star-blocks.java
 style/comments/trailing-line-boundaries.java
 style/compact-compilation-units/mixed-declarations-preserve-order.java
