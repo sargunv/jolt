@@ -184,6 +184,7 @@ impl<'source> Scanner<'source> {
 
     fn trivia_piece(&mut self) -> Option<SyntaxTrivia> {
         match (self.current_char(), self.peek_char(1)) {
+            (Some(BYTE_ORDER_MARK), _) if self.pos == 0 => Some(self.byte_order_mark()),
             (Some('\u{001A}'), _) if self.is_ignored_final_sub() => Some(self.ignored_final_sub()),
             (Some(ch), _) if is_horizontal_whitespace(ch) => Some(self.horizontal_whitespace()),
             (Some('\r'), Some('\n')) => Some(self.newline(2)),
@@ -194,12 +195,19 @@ impl<'source> Scanner<'source> {
         }
     }
 
+    fn byte_order_mark(&mut self) -> SyntaxTrivia {
+        let range = self.current_range().expect("BOM starts before EOF");
+        self.bump();
+        // Keep the ignored leading marker as trivia so formatting remains lossless.
+        SyntaxTrivia::new(SyntaxTriviaKind::ByteOrderMark, range.len())
+    }
+
     fn ignored_final_sub(&mut self) -> SyntaxTrivia {
         let range = self.current_range().expect("SUB starts before EOF");
         self.bump();
         // JLS 3.5 ignores a final ASCII SUB/control-Z after Unicode escape
         // processing. Keep its raw range as trivia so formatting remains lossless.
-        SyntaxTrivia::new(SyntaxTriviaKind::Ignored, range.len())
+        SyntaxTrivia::new(SyntaxTriviaKind::TrailingSubstitute, range.len())
     }
 
     fn horizontal_whitespace(&mut self) -> SyntaxTrivia {
@@ -954,6 +962,8 @@ fn find_block_comment_end(source: &str, start: usize) -> Option<usize> {
 fn contains_line_terminator(text: &str) -> bool {
     text.chars().any(|ch| matches!(ch, '\r' | '\n'))
 }
+
+const BYTE_ORDER_MARK: char = '\u{feff}';
 
 fn is_horizontal_whitespace(ch: char) -> bool {
     matches!(ch, ' ' | '\t' | '\u{000C}')

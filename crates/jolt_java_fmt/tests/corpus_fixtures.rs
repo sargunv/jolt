@@ -128,6 +128,71 @@ fn imported_fixture_inputs_format_idempotently_and_conserve_represented_syntax()
 }
 
 #[test]
+fn file_boundary_markers_remain_disjoint_at_eof() {
+    const BYTE_ORDER_MARK: char = '\u{feff}';
+    const FINAL_SUBSTITUTE: char = '\u{001a}';
+    const EOF_COMMENT: &str = "/* eof */";
+
+    for source in [
+        "",
+        "\u{feff}",
+        "\u{feff}/* eof */",
+        "\u{feff}\u{001a}",
+        "\u{feff}/* eof */\u{001a}",
+        "\u{001a}",
+    ] {
+        let formatted = format_source(source, FormatOptions::default())
+            .unwrap_or_else(|diagnostics| panic!("formatter blocked: {diagnostics:#?}"));
+        assert_eq!(
+            formatted.matches(BYTE_ORDER_MARK).count(),
+            usize::from(source.starts_with(BYTE_ORDER_MARK)),
+            "leading byte order mark changed for {source:?}: {formatted:?}"
+        );
+        assert_eq!(
+            formatted.matches(FINAL_SUBSTITUTE).count(),
+            usize::from(source.ends_with(FINAL_SUBSTITUTE)),
+            "final SUB changed for {source:?}: {formatted:?}"
+        );
+        if source.ends_with(FINAL_SUBSTITUTE) {
+            assert!(
+                formatted.ends_with(FINAL_SUBSTITUTE),
+                "SUB stopped being the final source marker for {source:?}: {formatted:?}"
+            );
+        }
+        if source.contains(EOF_COMMENT) {
+            let comment = formatted
+                .find(EOF_COMMENT)
+                .expect("represented EOF comment must survive formatting");
+            let byte_order_mark = formatted
+                .find(BYTE_ORDER_MARK)
+                .expect("comment case starts with a byte order mark");
+            assert!(
+                byte_order_mark < comment,
+                "byte order mark moved after the EOF comment: {formatted:?}"
+            );
+            if let Some(final_substitute) = formatted.find(FINAL_SUBSTITUTE) {
+                assert!(
+                    comment < final_substitute,
+                    "final SUB moved before the EOF comment: {formatted:?}"
+                );
+            }
+        }
+
+        let parse = parse_compilation_unit(&formatted);
+        let syntax = parse
+            .syntax()
+            .expect("formatted boundary source is represented");
+        assert_eq!(syntax.source_text(), formatted);
+        assert_eq!(
+            format_source(&formatted, FormatOptions::default())
+                .expect("formatted boundary source remains formattable"),
+            formatted,
+            "boundary formatting was not idempotent for {source:?}"
+        );
+    }
+}
+
+#[test]
 fn deeply_nested_generic_recovery_formats_without_panicking_or_losing_following_syntax() {
     // Generate threshold and stress inputs here: syntax-tree snapshots for these
     // regular nested shapes grow to hundreds of kilobytes without adding signal.

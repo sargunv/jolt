@@ -134,15 +134,20 @@ impl<'tree, L: Language> SyntaxToken<'tree, L> {
         )
     }
 
-    /// Returns represented ignored trivia from both sides of this token.
+    /// Returns represented, lexically ignored source markers from both sides
+    /// of this token.
     ///
-    /// Ignored trivia is lexically inert but source-significant (for example,
-    /// Java's permitted trailing SUB character), so formatters must emit and
-    /// claim it rather than treating it as layout whitespace.
+    /// Source markers are lexically inert but source-significant, so formatters
+    /// must emit and claim them rather than treating them as layout whitespace.
     pub fn ignored_trivia(&self) -> impl Iterator<Item = SourceTriviaPiece<'tree>> + use<'tree, L> {
         self.leading_trivia_with_ids()
             .chain(self.trailing_trivia_with_ids())
-            .filter(|piece| piece.trivia().kind() == TriviaKind::Ignored)
+            .filter(|piece| {
+                matches!(
+                    piece.trivia().kind(),
+                    TriviaKind::ByteOrderMark | TriviaKind::TrailingSubstitute
+                )
+            })
     }
 
     /// Returns whether represented leading trivia contains a source line ending.

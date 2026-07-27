@@ -14,7 +14,7 @@ KotlinFile
     PropertyDeclaration
       ModifierList
       ModifierList
-      ValKw "val" @ 25..28 leading=[Ignored "\u{feff}", ShebangComment "#!/usr/bin/env kotlin", Newline "\n"] trailing=[Whitespace " "]
+      ValKw "val" @ 25..28 leading=[ByteOrderMark "\u{feff}", ShebangComment "#!/usr/bin/env kotlin", Newline "\n"] trailing=[Whitespace " "]
       Name
         Identifier "x" @ 29..30 trailing=[Whitespace " "]
       PropertyInitializer

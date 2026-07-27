@@ -228,7 +228,10 @@ impl<'source> Iterator for Comments<'source> {
                 TriviaKind::DocComment => (CommentKind::Doc, true),
                 TriviaKind::UnterminatedBlockComment => (CommentKind::Block, false),
                 TriviaKind::UnterminatedDocComment => (CommentKind::Doc, false),
-                TriviaKind::Whitespace | TriviaKind::Newline | TriviaKind::Ignored => continue,
+                TriviaKind::Whitespace
+                | TriviaKind::Newline
+                | TriviaKind::ByteOrderMark
+                | TriviaKind::TrailingSubstitute => continue,
             };
             let followed_by_blank_line = trivia_opens_with_blank_line(self.trivia.as_slice());
             #[cfg(debug_assertions)]
@@ -295,7 +298,8 @@ pub(crate) fn trivia_opens_with_blank_line(trivia: &[SyntaxTrivia]) -> bool {
                     return true;
                 }
             }
-            TriviaKind::Whitespace | TriviaKind::Ignored => {}
+            TriviaKind::Whitespace | TriviaKind::ByteOrderMark | TriviaKind::TrailingSubstitute => {
+            }
             TriviaKind::LineComment
             | TriviaKind::ShebangComment
             | TriviaKind::BlockComment

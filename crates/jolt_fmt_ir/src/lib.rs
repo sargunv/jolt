@@ -19,14 +19,14 @@ pub use comment_text::{
     preserved_comment_lines,
 };
 pub use comments::{
-    InlineLeadingTrivia, comment_forces_line, comment_is_star_block, format_comment,
-    format_dangling_comments, format_delimiter_dangling_comments, format_ignored_trivia,
+    InlineLeadingTrivia, comment_forces_line, comment_is_star_block, format_byte_order_mark,
+    format_comment, format_dangling_comments, format_delimiter_dangling_comments,
     format_inline_trailing_comment_list, format_leading_comment_list, format_leading_comments,
     format_removed_comments, format_separator_with_comments, format_token,
     format_token_after_relocated_leading_comments, format_token_body,
     format_token_with_inline_leading_comments, format_trailing_comment,
-    format_trailing_comments_before_line_break, has_delimiter_dangling_comments,
-    token_has_comments, trailing_comments_force_line,
+    format_trailing_comments_before_line_break, format_trailing_substitute,
+    has_delimiter_dangling_comments, token_has_comments, trailing_comments_force_line,
 };
 #[cfg(feature = "bench")]
 pub use document::DocArenaMetrics;

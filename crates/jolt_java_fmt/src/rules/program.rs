@@ -5,8 +5,8 @@ use jolt_java_syntax::{
 };
 
 use crate::helpers::comments::{
-    comments_from_tokens, format_comment, format_ignored_trivia, format_token_removal,
-    format_token_with_comments, has_removed_comments,
+    comments_from_tokens, format_byte_order_mark, format_comment, format_token_removal,
+    format_token_with_comments, format_trailing_substitute, has_removed_comments,
 };
 use crate::helpers::recovery::{
     JavaFormatField, format_malformed, format_missing, format_required_field,
@@ -28,6 +28,12 @@ pub(crate) fn format_compilation_unit<'source>(
     unit: &CompilationUnit<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    // A byte order mark is lexically inert but part of the source, so claim it
+    // from the first token before any layout begins.
+    let byte_order_mark = unit
+        .token_iter()
+        .next()
+        .map_or_else(Doc::nil, |token| format_byte_order_mark(doc, &token));
     let mut entries = Vec::new();
     match unit.items() {
         jolt_java_syntax::JavaSyntaxField::Present(items) => {
@@ -96,10 +102,10 @@ pub(crate) fn format_compilation_unit<'source>(
         } else {
             Doc::nil()
         };
-        let ignored = format_ignored_trivia(doc, &token);
+        let ignored = format_trailing_substitute(doc, &token);
         doc.concat([comments, line, ignored])
     });
-    doc.concat([contents, eof])
+    doc.concat([byte_order_mark, contents, eof])
 }
 
 enum ProgramEntry<'source> {
