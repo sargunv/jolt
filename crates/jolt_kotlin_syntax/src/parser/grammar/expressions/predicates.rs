@@ -65,7 +65,6 @@ pub(super) fn is_binary_operator(kind: K) -> bool {
             | K::Elvis
             | K::AndAnd
             | K::OrOr
-            | K::Amp
             | K::EqEq
             | K::BangEq
             | K::EqEqEq
@@ -89,29 +88,18 @@ pub(super) fn is_expression_continuation(kind: K) -> bool {
     // and binary_operator_info. Primary-expression starters such as `(`, `[`, `{`,
     // and `::` must not appear here, or a new statement can be mistaken for an
     // unterminated previous expression and recovery can grow badly on repeated
-    // inputs. Only `.` and `?.` continue a postfix chain across a newline.
+    // inputs. Besides postfix navigation, only the operators whose grammar
+    // explicitly admits a preceding newline continue from the next line.
     matches!(
         kind,
-        K::Dot
-            | K::SafeAccess
-            | K::Plus
-            | K::Minus
-            | K::Star
-            | K::Slash
-            | K::Percent
-            | K::Range
-            | K::RangeUntil
-            | K::Elvis
-            | K::AndAnd
-            | K::OrOr
-            | K::Amp
-            | K::EqEq
-            | K::BangEq
-            | K::EqEqEq
-            | K::BangEqEqEq
-            | K::Lt
-            | K::LtEq
-            | K::Gt
-            | K::GtEq
+        K::Dot | K::SafeAccess | K::Elvis | K::AndAnd | K::OrOr | K::AsKw | K::AsSafe
     )
+}
+
+pub(super) fn expression_can_continue_after(kind: K) -> bool {
+    is_binary_operator(kind)
+        || matches!(
+            kind,
+            K::Dot | K::SafeAccess | K::InKw | K::NotIn | K::IsKw | K::NotIs | K::AsKw | K::AsSafe
+        )
 }

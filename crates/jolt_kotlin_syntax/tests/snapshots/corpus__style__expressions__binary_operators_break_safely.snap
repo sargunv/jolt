@@ -1,0 +1,165 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun binaryOperatorsBreakSafely(
+  aLongVariableName: Int,
+  anotherLongVariableName: Int,
+  yetAnother: Int,
+  lastOne: Int,
+) {
+  val subtraction = aLongVariableName - anotherLongVariableName - yetAnother - lastOne - lastOne
+  val multiplication = aLongVariableName * anotherLongVariableName * yetAnother * lastOne * lastOne
+  val comparison = aLongVariableName == anotherLongVariableName && yetAnother == lastOne
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "binaryOperatorsBreakSafely" @ 4..30
+      ValueParameterList
+        LParen "(" @ 30..31
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "aLongVariableName" @ 34..51 leading=[Newline "\n", Whitespace "  "]
+            Colon ":" @ 51..52 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 53..56
+          Comma "," @ 56..57
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "anotherLongVariableName" @ 60..83 leading=[Newline "\n", Whitespace "  "]
+            Colon ":" @ 83..84 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 85..88
+          Comma "," @ 88..89
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "yetAnother" @ 92..102 leading=[Newline "\n", Whitespace "  "]
+            Colon ":" @ 102..103 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 104..107
+          Comma "," @ 107..108
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "lastOne" @ 111..118 leading=[Newline "\n", Whitespace "  "]
+            Colon ":" @ 118..119 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 120..123
+          Comma "," @ 123..124
+        RParen ")" @ 125..126 leading=[Newline "\n"] trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 127..128
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 131..134 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "subtraction" @ 135..146 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 147..148 trailing=[Whitespace " "]
+                BinaryExpression
+                  BinaryExpression
+                    BinaryExpression
+                      BinaryExpression
+                        NameExpression
+                          Identifier "aLongVariableName" @ 149..166 trailing=[Whitespace " "]
+                        Minus "-" @ 167..168 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "anotherLongVariableName" @ 169..192 trailing=[Whitespace " "]
+                      Minus "-" @ 193..194 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "yetAnother" @ 195..205 trailing=[Whitespace " "]
+                    Minus "-" @ 206..207 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "lastOne" @ 208..215 trailing=[Whitespace " "]
+                  Minus "-" @ 216..217 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "lastOne" @ 218..225
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 228..231 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "multiplication" @ 232..246 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 247..248 trailing=[Whitespace " "]
+                BinaryExpression
+                  BinaryExpression
+                    BinaryExpression
+                      BinaryExpression
+                        NameExpression
+                          Identifier "aLongVariableName" @ 249..266 trailing=[Whitespace " "]
+                        Star "*" @ 267..268 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "anotherLongVariableName" @ 269..292 trailing=[Whitespace " "]
+                      Star "*" @ 293..294 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "yetAnother" @ 295..305 trailing=[Whitespace " "]
+                    Star "*" @ 306..307 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "lastOne" @ 308..315 trailing=[Whitespace " "]
+                  Star "*" @ 316..317 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "lastOne" @ 318..325
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 328..331 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "comparison" @ 332..342 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 343..344 trailing=[Whitespace " "]
+                BinaryExpression
+                  BinaryExpression
+                    NameExpression
+                      Identifier "aLongVariableName" @ 345..362 trailing=[Whitespace " "]
+                    EqEq "==" @ 363..365 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "anotherLongVariableName" @ 366..389 trailing=[Whitespace " "]
+                  AndAnd "&&" @ 390..392 trailing=[Whitespace " "]
+                  BinaryExpression
+                    NameExpression
+                      Identifier "yetAnother" @ 393..403 trailing=[Whitespace " "]
+                    EqEq "==" @ 404..406 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "lastOne" @ 407..414
+              PropertyBodyMemberList
+          RBrace "}" @ 415..416 leading=[Newline "\n"]
+  Eof "" @ 417..417 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

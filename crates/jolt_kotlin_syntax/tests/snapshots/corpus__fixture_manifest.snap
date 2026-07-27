@@ -36,6 +36,7 @@ style/declarations/properties-accessors.kt
 style/declarations/trailing-commas.kt
 style/declarations/type-body-brace-after-header-comment.kt
 style/declarations/type-parameters-where.kt
+style/expressions/binary-operators-break-safely.kt
 style/expressions/call-chains.kt
 style/expressions/collection-builders.kt
 style/expressions/deep-lambda-control-flow.kt
@@ -198,6 +199,7 @@ syntax/parser/parses-modifier-function-property-combinations.kt
 syntax/parser/parses-nested-classes-objects-and-functions.kt
 syntax/parser/parses-nested-interface-and-enum.kt
 syntax/parser/parses-nested-type-alias.kt
+syntax/parser/parses-newline-before-as.kt
 syntax/parser/parses-object-data-object.kt
 syntax/parser/parses-object-declaration.kt
 syntax/parser/parses-object-expression.kt
@@ -226,6 +228,7 @@ syntax/parser/parses-when-condition-forms.kt
 syntax/parser/parses-when-multiple-conditions-with-guards.kt
 syntax/parser/parses-when-subject-binding.kt
 syntax/parser/parses-when-subject-guards-and-else.kt
+syntax/parser/preserves-newline-before-disallowed-binary-operators.kt
 syntax/parser/preserves-newline-before-trailing-lambda.kt
 syntax/parser/recovers-incomplete-lambda-and-call.kt
 syntax/parser/recovers-missing-expression-after-elvis.kt

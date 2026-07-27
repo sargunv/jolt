@@ -8,8 +8,8 @@ class CommentsBetweenAssignmentAndValue {
     1
 
   val longProperty = // the long value moves to the next line
-    someLongFunctionCall(firstArgumentName, secondArgumentName)
-      + anotherLongValue
+    someLongFunctionCall(firstArgumentName, secondArgumentName) +
+      anotherLongValue
 
   val ownLine =
     // a comment on its own line before the value
@@ -25,8 +25,8 @@ class CommentsBetweenAssignmentAndValue {
     total = // a short right-hand side moves to the next line
       y + 1
     total = // a long right-hand side wraps below the operator
-      someLongFunctionCall(firstArgumentName, secondArgumentName)
-        + anotherLongValue
+      someLongFunctionCall(firstArgumentName, secondArgumentName) +
+        anotherLongValue
     total = /* a block comment stays inline */ y + local
   }
 

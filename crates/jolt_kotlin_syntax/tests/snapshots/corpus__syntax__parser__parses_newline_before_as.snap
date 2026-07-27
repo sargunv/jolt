@@ -1,0 +1,103 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun newlineBeforeAs(value: Any) {
+  value
+    as Int
+}
+
+fun newlineBeforeSafeAs(value: Any) {
+  value
+    as? Int
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "newlineBeforeAs" @ 4..19
+      ValueParameterList
+        LParen "(" @ 19..20
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "value" @ 20..25
+            Colon ":" @ 25..26 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Any" @ 27..30
+        RParen ")" @ 30..31 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 32..33
+          BlockItemList
+            Statement
+              ExpressionStatement
+                BinaryExpression
+                  NameExpression
+                    Identifier "value" @ 36..41 leading=[Newline "\n", Whitespace "  "]
+                  AsKw "as" @ 46..48 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "Int" @ 49..52
+              TerminatorList
+          RBrace "}" @ 53..54 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 56..59 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "newlineBeforeSafeAs" @ 60..79
+      ValueParameterList
+        LParen "(" @ 79..80
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "value" @ 80..85
+            Colon ":" @ 85..86 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Any" @ 87..90
+        RParen ")" @ 90..91 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 92..93
+          BlockItemList
+            Statement
+              ExpressionStatement
+                BinaryExpression
+                  NameExpression
+                    Identifier "value" @ 96..101 leading=[Newline "\n", Whitespace "  "]
+                  AsSafe "as?" @ 106..109 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "Int" @ 110..113
+              TerminatorList
+          RBrace "}" @ 114..115 leading=[Newline "\n"]
+  Eof "" @ 116..116 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

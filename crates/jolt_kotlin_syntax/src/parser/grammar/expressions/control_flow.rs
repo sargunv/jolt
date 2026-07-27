@@ -3,7 +3,7 @@ use jolt_syntax::CompletedMarker;
 use crate::KotlinSyntaxKind as K;
 
 use super::super::{Parser, StopSet};
-use super::predicates::is_expression_continuation;
+use super::predicates::{expression_can_continue_after, is_expression_continuation};
 use crate::parser::grammar::support::is_identifier_like_kind;
 
 const MAX_ANONYMOUS_FUNCTION_RECEIVER_LOOKAHEAD: usize = 128;
@@ -262,7 +262,7 @@ impl Parser<'_> {
                 return None;
             }
             if self.newline_between(position - 1, position)
-                && !is_expression_continuation(self.kind_at(position - 1))
+                && !expression_can_continue_after(self.kind_at(position - 1))
                 && !is_expression_continuation(kind)
                 && self.line_has_when_arrow_from(offset)
             {
