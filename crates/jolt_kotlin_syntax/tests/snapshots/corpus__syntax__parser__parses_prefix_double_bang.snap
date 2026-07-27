@@ -1,0 +1,55 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val doubleNegation = !!true
+
+val repeatedNegation = !!!!false
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      Name
+        Identifier "doubleNegation" @ 4..18 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 19..20 trailing=[Whitespace " "]
+        UnaryExpression
+          Bang "!" @ 21..22
+          UnaryExpression
+            Bang "!" @ 22..23
+            LiteralExpression
+              TrueKw "true" @ 23..27
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 29..32 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "repeatedNegation" @ 33..49 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 50..51 trailing=[Whitespace " "]
+        UnaryExpression
+          Bang "!" @ 52..53
+          UnaryExpression
+            Bang "!" @ 53..54
+            UnaryExpression
+              Bang "!" @ 54..55
+              UnaryExpression
+                Bang "!" @ 55..56
+                LiteralExpression
+                  FalseKw "false" @ 56..61
+      PropertyBodyMemberList
+  Eof "" @ 62..62 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
