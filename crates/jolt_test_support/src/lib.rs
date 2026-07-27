@@ -908,6 +908,9 @@ pub trait CorpusLanguage {
     /// Human-readable language name used in harness assertion messages.
     fn language_name(&self) -> &'static str;
 
+    /// End offsets of the represented source tokens, in source order.
+    fn token_end_offsets(&self, source: &str) -> Vec<usize>;
+
     /// Parses one fixture source into owned conservation facts.
     fn parse_facts(&self, source: &str) -> CorpusParseFacts;
 
@@ -1192,11 +1195,7 @@ pub fn assert_comments_format_at_every_token_position<L: CorpusLanguage>(
             lang.language_name()
         );
 
-        let mut boundary = 0;
-        while boundary < source.len() {
-            let token_end = next_token_end(source, boundary);
-            let Some(token_end) = token_end else { break };
-            boundary = token_end;
+        for token_end in lang.token_end_offsets(source) {
             for insert in [" /*c*/"] {
                 let mut probe = String::with_capacity(source.len() + insert.len());
                 probe.push_str(&source[..token_end]);
@@ -1230,20 +1229,4 @@ pub fn assert_comments_format_at_every_token_position<L: CorpusLanguage>(
         blocked.len(),
         blocked.join("\n")
     );
-}
-
-/// Returns the end offset of the next whitespace-delimited token after `from`.
-fn next_token_end(source: &str, from: usize) -> Option<usize> {
-    let bytes = source.as_bytes();
-    let mut index = from;
-    while index < bytes.len() && bytes[index].is_ascii_whitespace() {
-        index += 1;
-    }
-    if index >= bytes.len() {
-        return None;
-    }
-    while index < bytes.len() && !bytes[index].is_ascii_whitespace() {
-        index += 1;
-    }
-    Some(index)
 }

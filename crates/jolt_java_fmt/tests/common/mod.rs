@@ -64,6 +64,19 @@ impl CorpusLanguage for JavaCorpus {
         "Java"
     }
 
+    fn token_end_offsets(&self, source: &str) -> Vec<usize> {
+        parse_compilation_unit(source)
+            .syntax()
+            .and_then(|unit| unit.syntax_node())
+            .map(|root| {
+                root.tokens()
+                    .filter(|token| !token.text().is_empty())
+                    .map(|token| token.text_range().end().get())
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+
     fn parse_facts(&self, source: &str) -> CorpusParseFacts {
         let parse = parse_compilation_unit(source);
         let root = parse.syntax().and_then(|unit| unit.syntax_node());

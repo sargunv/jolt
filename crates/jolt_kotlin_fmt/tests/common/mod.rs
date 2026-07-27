@@ -39,6 +39,19 @@ impl CorpusLanguage for KotlinCorpus {
         "Kotlin"
     }
 
+    fn token_end_offsets(&self, source: &str) -> Vec<usize> {
+        parse_kotlin_file(source)
+            .syntax()
+            .and_then(|file| file.syntax_node())
+            .map(|root| {
+                root.tokens()
+                    .filter(|token| !token.text().is_empty())
+                    .map(|token| token.text_range().end().get())
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+
     fn parse_facts(&self, source: &str) -> CorpusParseFacts {
         let parse = parse_kotlin_file(source);
         let root = parse.syntax().and_then(|file| file.syntax_node());
