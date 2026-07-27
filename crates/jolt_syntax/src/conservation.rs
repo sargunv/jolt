@@ -774,7 +774,8 @@ fn mark_conserved_trivia(tree: &SyntaxTree, states: &mut [ClaimState]) {
                 | TriviaKind::DocComment
                 | TriviaKind::UnterminatedBlockComment
                 | TriviaKind::UnterminatedDocComment
-                | TriviaKind::Ignored
+                | TriviaKind::ByteOrderMark
+                | TriviaKind::TrailingSubstitute
         ) || (kind == TriviaKind::Newline && line_comment_needs_terminator);
         if conserved {
             *state = ClaimState::Unclaimed;
@@ -787,7 +788,8 @@ fn mark_conserved_trivia(tree: &SyntaxTree, states: &mut [ClaimState]) {
             | TriviaKind::DocComment
             | TriviaKind::UnterminatedBlockComment
             | TriviaKind::UnterminatedDocComment
-            | TriviaKind::Ignored => false,
+            | TriviaKind::ByteOrderMark
+            | TriviaKind::TrailingSubstitute => false,
         };
     }
 }
@@ -809,7 +811,10 @@ impl<'tree, L: Language> SyntaxVerbatimCore<'tree, L> {
             let mut start = first.token_text_range().start();
             let mut ignored_run_start = None;
             for piece in first.leading_trivia_with_ids() {
-                if piece.trivia().kind() == TriviaKind::Ignored {
+                if matches!(
+                    piece.trivia().kind(),
+                    TriviaKind::ByteOrderMark | TriviaKind::TrailingSubstitute
+                ) {
                     ignored_run_start.get_or_insert(piece.text_range().start());
                 } else {
                     ignored_run_start = None;
@@ -821,7 +826,10 @@ impl<'tree, L: Language> SyntaxVerbatimCore<'tree, L> {
 
             let mut end = last.token_text_range().end();
             for piece in last.trailing_trivia_with_ids() {
-                if piece.trivia().kind() != TriviaKind::Ignored {
+                if !matches!(
+                    piece.trivia().kind(),
+                    TriviaKind::ByteOrderMark | TriviaKind::TrailingSubstitute
+                ) {
                     break;
                 }
                 end = piece.text_range().end();
@@ -917,7 +925,8 @@ impl<'tree, L: Language> SyntaxVerbatimCore<'tree, L> {
                     | TriviaKind::DocComment
                     | TriviaKind::UnterminatedBlockComment
                     | TriviaKind::UnterminatedDocComment
-                    | TriviaKind::Ignored => false,
+                    | TriviaKind::ByteOrderMark
+                    | TriviaKind::TrailingSubstitute => false,
                 };
             }
             if range_contains(self.range, token.token_text_range()) && !token.text().is_empty() {
@@ -935,7 +944,8 @@ impl<'tree, L: Language> SyntaxVerbatimCore<'tree, L> {
                     | TriviaKind::DocComment
                     | TriviaKind::UnterminatedBlockComment
                     | TriviaKind::UnterminatedDocComment
-                    | TriviaKind::Ignored => false,
+                    | TriviaKind::ByteOrderMark
+                    | TriviaKind::TrailingSubstitute => false,
                 };
             }
         }
@@ -980,7 +990,8 @@ fn is_conserved_trivia(identity: SourceTriviaId<'_>) -> bool {
             | TriviaKind::DocComment
             | TriviaKind::UnterminatedBlockComment
             | TriviaKind::UnterminatedDocComment
-            | TriviaKind::Ignored
+            | TriviaKind::ByteOrderMark
+            | TriviaKind::TrailingSubstitute
     ) || (kind == TriviaKind::Newline
         && index.checked_sub(1).is_some_and(|previous| {
             matches!(
@@ -1108,7 +1119,7 @@ mod tests {
             SyntaxTrivia::new(TriviaKind::LineComment, TextSize::new(4)),
             SyntaxTrivia::new(TriviaKind::Newline, TextSize::new(1)),
             SyntaxTrivia::new(TriviaKind::Whitespace, TextSize::new(1)),
-            SyntaxTrivia::new(TriviaKind::Ignored, TextSize::new(1)),
+            SyntaxTrivia::new(TriviaKind::TrailingSubstitute, TextSize::new(1)),
         ];
         let tokens = vec![
             SyntaxTokenData::new(

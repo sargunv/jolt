@@ -9,7 +9,7 @@
 //! grammar, such as Java's modifier relocation or Kotlin's semicolon
 //! terminators.
 
-use jolt_syntax::{Comment, CommentKind, Language, SyntaxToken};
+use jolt_syntax::{Comment, CommentKind, Language, SyntaxToken, TriviaKind};
 
 use crate::comment_text::{
     StarBlockOpener, format_comment_lines, format_star_block_comment,
@@ -26,18 +26,34 @@ pub enum InlineLeadingTrivia {
     BeforeToken,
 }
 
-/// Emits lexically ignored but source-significant trivia exactly once.
+/// Emits byte-order-mark trivia exactly once.
 ///
-/// Ignored trivia carries no layout meaning but is part of the source, so a
-/// formatter must emit and claim it verbatim rather than dropping it as
-/// whitespace. Java's permitted final SUB and Kotlin's leading byte order mark
-/// are both of this shape.
-pub fn format_ignored_trivia<'source, L: Language>(
+/// A byte order mark carries no layout meaning but is part of the source.
+pub fn format_byte_order_mark<'source, L: Language>(
     doc: &mut DocBuilder<'source>,
     token: &SyntaxToken<'source, L>,
 ) -> Doc<'source> {
+    format_source_marker(doc, token, TriviaKind::ByteOrderMark)
+}
+
+/// Emits Java's lexically ignored final SUB marker exactly once.
+pub fn format_trailing_substitute<'source, L: Language>(
+    doc: &mut DocBuilder<'source>,
+    token: &SyntaxToken<'source, L>,
+) -> Doc<'source> {
+    format_source_marker(doc, token, TriviaKind::TrailingSubstitute)
+}
+
+fn format_source_marker<'source, L: Language>(
+    doc: &mut DocBuilder<'source>,
+    token: &SyntaxToken<'source, L>,
+    kind: TriviaKind,
+) -> Doc<'source> {
     doc.concat_list(|docs| {
-        for piece in token.ignored_trivia() {
+        for piece in token
+            .ignored_trivia()
+            .filter(|piece| piece.trivia().kind() == kind)
+        {
             let range = piece.text_range();
             let text = &token.source()[range.start().get()..range.end().get()];
             let exact = docs.source_trivia([piece], |docs| docs.literal_text(text));

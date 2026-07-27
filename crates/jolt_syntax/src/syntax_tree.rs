@@ -141,7 +141,8 @@ pub enum TriviaKind {
     DocComment,
     UnterminatedBlockComment,
     UnterminatedDocComment,
-    Ignored,
+    ByteOrderMark,
+    TrailingSubstitute,
 }
 
 /// Trivia attached to a token.

@@ -10,7 +10,7 @@ syntax:
 CompilationUnit
   CompilationUnitItemList
     ClassDeclaration
-      ClassKw "class" @ 3..8 leading=[Ignored "\u{feff}"] trailing=[Whitespace " "]
+      ClassKw "class" @ 3..8 leading=[ByteOrderMark "\u{feff}"] trailing=[Whitespace " "]
       Identifier "LeadingByteOrderMark" @ 9..29 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 30..31

@@ -199,7 +199,7 @@ impl<'source> Scanner<'source> {
         let range = self.current_range().expect("BOM starts before EOF");
         self.bump();
         // Keep the ignored leading marker as trivia so formatting remains lossless.
-        SyntaxTrivia::new(SyntaxTriviaKind::Ignored, range.len())
+        SyntaxTrivia::new(SyntaxTriviaKind::ByteOrderMark, range.len())
     }
 
     fn ignored_final_sub(&mut self) -> SyntaxTrivia {
@@ -207,7 +207,7 @@ impl<'source> Scanner<'source> {
         self.bump();
         // JLS 3.5 ignores a final ASCII SUB/control-Z after Unicode escape
         // processing. Keep its raw range as trivia so formatting remains lossless.
-        SyntaxTrivia::new(SyntaxTriviaKind::Ignored, range.len())
+        SyntaxTrivia::new(SyntaxTriviaKind::TrailingSubstitute, range.len())
     }
 
     fn horizontal_whitespace(&mut self) -> SyntaxTrivia {

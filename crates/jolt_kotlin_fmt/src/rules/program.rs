@@ -7,8 +7,8 @@ use jolt_kotlin_syntax::{
 
 use crate::helpers::blocks::{BodyItemSeparator, join_line_boundaries};
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_comment, format_ignored_trivia, format_removed_separator,
-    format_terminator_list, format_token, token_has_comments,
+    LeadingTrivia, TrailingTrivia, format_byte_order_mark, format_comment,
+    format_removed_separator, format_terminator_list, format_token, token_has_comments,
 };
 use crate::helpers::recovery::{
     KotlinFormatListPart, format_malformed, format_missing, format_optional_field,
@@ -34,7 +34,7 @@ pub(crate) fn format_file<'source>(
     let byte_order_mark = file
         .token_iter()
         .next()
-        .map_or_else(Doc::nil, |token| format_ignored_trivia(doc, &token));
+        .map_or_else(Doc::nil, |token| format_byte_order_mark(doc, &token));
     let (annotations, annotations_visible) = format_file_annotations(doc, file);
     let mut entries = Vec::new();
 

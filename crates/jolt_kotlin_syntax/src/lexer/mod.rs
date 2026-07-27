@@ -355,7 +355,7 @@ impl<'source> Scanner<'source> {
         self.bump();
         // Kotlin ignores a byte order mark at the start of a file. Keep its raw
         // range as trivia so formatting remains lossless.
-        SyntaxTrivia::new(SyntaxTriviaKind::Ignored, range.len())
+        SyntaxTrivia::new(SyntaxTriviaKind::ByteOrderMark, range.len())
     }
 
     fn shebang_comment(&mut self) -> SyntaxTrivia {
