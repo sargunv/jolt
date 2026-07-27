@@ -11,8 +11,7 @@ requires formatted.dependency;
 
 formatted:
 module demo.missing /* @formatter:off */
-  requires raw.dependency;
-
+  requires   raw.dependency;
   // @formatter:on
   requires formatted.dependency;
 }
