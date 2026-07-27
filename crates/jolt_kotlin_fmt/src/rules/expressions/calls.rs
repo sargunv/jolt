@@ -394,9 +394,6 @@ fn format_member_chain<'source>(
                         && let Some((Expression::CallExpression(call), call_node)) =
                             suffix_parent(parent_node)
                     {
-                        let forces_break = forces_break
-                            || (call_has_lambdas(&call)
-                                && !call_has_parenthesized_arguments(&call));
                         let arguments = format_call_arguments(rest, &call);
                         let suffix = rest.concat([navigation_doc, arguments]);
                         builder.push_suffix(rest, suffix, forces_break);
@@ -647,19 +644,6 @@ const fn is_simple_member_chain_root(expression: &Expression<'_>) -> bool {
             | Expression::SuperExpression(_)
             | Expression::CallExpression(_)
     )
-}
-
-fn call_has_lambdas(call: &CallExpression<'_>) -> bool {
-    match call.lambdas() {
-        KotlinSyntaxField::Present(lambdas) => lambdas
-            .parts()
-            .any(|part| matches!(part, KotlinSyntaxListPart::Item(_))),
-        KotlinSyntaxField::Missing(_) | KotlinSyntaxField::Malformed(_) => false,
-    }
-}
-
-fn call_has_parenthesized_arguments(call: &CallExpression<'_>) -> bool {
-    matches!(call.arguments(), KotlinSyntaxField::Present(_))
 }
 
 pub(crate) fn format_value_argument_list<'source>(
