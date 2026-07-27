@@ -352,6 +352,7 @@ syntax/parser/parses-super-field-access-forms.java
 syntax/parser/parses-switch-block-statement-group.java
 syntax/parser/parses-switch-rule-with-throw-statement.java
 syntax/parser/parses-switch-statement-rules-groups-labels-and-guards.java
+syntax/parser/parses-ternary-switch-rule-labels.java
 syntax/parser/parses-trailing-dims-on-method-and-annotation-element-declarators.java
 syntax/parser/parses-type-shapes-and-type-arguments.java
 syntax/parser/parses-unary-postfix-cast-and-switch-expressions.java
