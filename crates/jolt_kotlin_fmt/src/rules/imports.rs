@@ -85,6 +85,7 @@ fn format_import_entries_with_ignored<'source>(
                 retained.push(entry);
             }
         }
+        FormatterIgnoreSplice::End { .. } => {}
     });
     if !retained.is_empty() {
         sections.push(format_import_entries(doc, retained));

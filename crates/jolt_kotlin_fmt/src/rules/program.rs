@@ -179,6 +179,7 @@ fn format_entries_with_ignored<'source>(
                 segment.push(entry);
             }
         }
+        FormatterIgnoreSplice::End { .. } => {}
     });
     push_entry_segment(doc, &mut sections, &mut segment);
     Some(join_sections(doc, sections))

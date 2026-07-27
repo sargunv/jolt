@@ -21,6 +21,12 @@ val inlineMarkerBeforeLaterLineComment = listOf(
   , trailingValue,
 )
 
+val ignoredFinalArgument = listOf(
+  // @formatter:off
+  first   +   second
+  // @formatter:on
+)
+
 val adjacentIgnoredRuns = listOf(
   // @formatter:off
   first   +   value
@@ -45,6 +51,13 @@ val ownLineIgnoredLambdaParameters = {
   , second: Int -> first + second
 }
 
+val ignoredFinalLambdaParameter = {
+  // @formatter:off
+  value   :   Int
+  // @formatter:on
+  -> value
+}
+
 fun <T> ignoredTypeConstraints(value: T): T
   where // @formatter:off
     T   :   FirstConstraint
@@ -63,6 +76,22 @@ fun ignoredWhenConditions(value: Any): Int = when (value) {
   is   FirstType
   // @formatter:on
   , is SecondType -> 1
+  else -> 0
+}
+
+fun ignoredFinalWhenCondition(value: Any): Int = when (value) {
+  // @formatter:off
+  is   FirstType
+  // @formatter:on
+  -> 1
+  else -> 0
+}
+
+fun ignoredFinalGuardedCondition(value: Any, allowed: Boolean): Int = when (value) {
+  // @formatter:off
+  is   FirstType
+  // @formatter:on
+  if allowed -> 1
   else -> 0
 }
 

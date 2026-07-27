@@ -762,7 +762,8 @@ fn format_indented_comma_items<'source>(
     open: Option<&KotlinSyntaxToken<'source>>,
     enclosing_separator_forces_line: bool,
 ) -> Doc<'source> {
-    let items = prepare_comma_list_items_between(doc, items, open, None);
+    let (items, terminal_starts_after_line) =
+        prepare_comma_list_items_between(doc, items, open, None);
     let indent_complete_list = enclosing_separator_forces_line
         || items
             .iter()
@@ -810,7 +811,12 @@ fn format_indented_comma_items<'source>(
             comma
         }
     });
-    let constraints = doc.concat([first_doc, rest, trailing_comma]);
+    let terminal_boundary = if terminal_starts_after_line {
+        doc.hard_line_boundary()
+    } else {
+        Doc::nil()
+    };
+    let constraints = doc.concat([first_doc, rest, trailing_comma, terminal_boundary]);
     if indent_complete_list {
         doc.indent(constraints)
     } else {

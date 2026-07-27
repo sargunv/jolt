@@ -34,8 +34,15 @@ pub(crate) fn comma_list_between<'source>(
     open: Option<&KotlinSyntaxToken<'source>>,
     close: Option<&KotlinSyntaxToken<'source>>,
 ) -> Doc<'source> {
-    let items = prepare_comma_list_items_between(doc, items, open, close);
-    jolt_fmt_ir::comma_list(doc, items)
+    let (items, terminal_starts_after_line) =
+        prepare_comma_list_items_between(doc, items, open, close);
+    let list = jolt_fmt_ir::comma_list(doc, items);
+    if terminal_starts_after_line {
+        let boundary = doc.hard_line_boundary();
+        doc.concat([list, boundary])
+    } else {
+        list
+    }
 }
 
 pub(crate) fn prepare_comma_list_items_between<'source>(
@@ -43,10 +50,13 @@ pub(crate) fn prepare_comma_list_items_between<'source>(
     items: Vec<CommaListItem<'source>>,
     open: Option<&KotlinSyntaxToken<'source>>,
     close: Option<&KotlinSyntaxToken<'source>>,
-) -> Vec<CommaListItem<'source>> {
+) -> (Vec<CommaListItem<'source>>, bool) {
     let runs = formatter_ignore_list_runs(doc, open, close, &items);
-    let items = splice_formatter_ignore_items(doc, items, &runs);
-    attach_staged_separators(doc, items)
+    let (items, terminal_starts_after_line) = splice_formatter_ignore_items(doc, items, &runs);
+    (
+        attach_staged_separators(doc, items),
+        terminal_starts_after_line,
+    )
 }
 
 pub(crate) fn comma_list_item_range<'source>(
@@ -102,7 +112,8 @@ fn delimited_comma_list_with<'source>(
     let ignored_runs = formatter_ignore_list_runs(doc, open.source(), close.source(), &items);
     let (close_comments, close_has_leading_comments) =
         format_close_leading_comments(doc, close.source(), &ignored_runs);
-    let items = splice_formatter_ignore_items(doc, items, &ignored_runs);
+    let (items, terminal_starts_after_line) =
+        splice_formatter_ignore_items(doc, items, &ignored_runs);
     let items = attach_staged_separators(doc, items);
     let visible_count = items.iter().filter(|item| item.is_visible()).count();
     if visible_count == 0 {
@@ -118,7 +129,12 @@ fn delimited_comma_list_with<'source>(
         .is_some_and(|item| item.comma().is_some());
     let open_doc = format_open_delimiter_with_trailing(doc, open, TrailingTrivia::BeforeSoftLine);
     let list = jolt_fmt_ir::comma_list(doc, items);
-    let indented_contents = doc.concat([open_doc, list, close_comments]);
+    let terminal_boundary = if terminal_starts_after_line {
+        doc.hard_line_boundary()
+    } else {
+        Doc::nil()
+    };
+    let indented_contents = doc.concat([open_doc, list, terminal_boundary, close_comments]);
     let indented_contents = doc.indent(indented_contents);
     let close_doc =
         format_close_with_spacing(doc, close, close_trailing, close_has_leading_comments);
@@ -278,12 +294,13 @@ fn splice_formatter_ignore_items<'source>(
     doc: &mut DocBuilder<'source>,
     items: Vec<CommaListItem<'source>>,
     runs: &[FormatterIgnoreRun<'source>],
-) -> Vec<CommaListItem<'source>> {
+) -> (Vec<CommaListItem<'source>>, bool) {
     if runs.is_empty() {
-        return items;
+        return (items, false);
     }
     let mut items = items.into_iter().map(Some).collect::<Vec<_>>();
     let mut spliced = Vec::with_capacity(items.len().saturating_add(runs.len()));
+    let mut terminal_starts_after_line = false;
     for_each_formatter_ignore_splice(items.len(), runs, |event| match event {
         FormatterIgnoreSplice::Ignore(run) => {
             // Ignore ranges are line-oriented source sections. Make that
@@ -316,8 +333,11 @@ fn splice_formatter_ignore_items<'source>(
                 );
             }
         }
+        FormatterIgnoreSplice::End {
+            starts_after_ignore_line,
+        } => terminal_starts_after_line = starts_after_ignore_line,
     });
-    spliced
+    (spliced, terminal_starts_after_line)
 }
 
 fn attach_staged_separators<'source>(

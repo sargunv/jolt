@@ -390,6 +390,7 @@ fn format_program_entries_with_ignored<'source>(
                 retained.push(entry);
             }
         }
+        FormatterIgnoreSplice::End { .. } => {}
     });
     flush_retained_program_sections(&mut retained, &mut sections, doc);
     join_program_sections(doc, sections)
