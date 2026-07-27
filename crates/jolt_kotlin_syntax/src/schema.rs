@@ -799,7 +799,7 @@ macro_rules! kotlin_syntax_schema {
                 IfExpression => IfExpression [if_expression valid] {
                     if_token: required (token IfKw);
                     condition: required (node ParenthesizedExpression);
-                    then_branch: required (choice [(category Expression), (node_set [Block, EmptyStatement])]) => IfThenBranchValue;
+                    then_branch: optional (choice [(category Expression), (node_set [Block, EmptyStatement])]) => IfThenBranchValue;
                     else_token: optional (token ElseKw);
                     else_branch: optional (choice [(category Expression), (node_set [Block, EmptyStatement])]) => IfElseBranchValue;
                 }

@@ -1,0 +1,61 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun emptyThen() {
+  if (true) else println(1)
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "emptyThen" @ 4..13
+      ValueParameterList
+        LParen "(" @ 13..14
+        ValueParameterSeparatedList
+        RParen ")" @ 14..15 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 16..17
+          BlockItemList
+            Statement
+              ExpressionStatement
+                IfExpression
+                  IfKw "if" @ 20..22 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 23..24
+                    LiteralExpression
+                      TrueKw "true" @ 24..28
+                    RParen ")" @ 28..29 trailing=[Whitespace " "]
+                  ElseKw "else" @ 30..34 trailing=[Whitespace " "]
+                  CallExpression
+                    NameExpression
+                      Identifier "println" @ 35..42
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 42..43
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          LiteralExpression
+                            IntegerLiteral "1" @ 43..44
+                      RParen ")" @ 44..45
+                    LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 46..47 leading=[Newline "\n"]
+  Eof "" @ 48..48 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

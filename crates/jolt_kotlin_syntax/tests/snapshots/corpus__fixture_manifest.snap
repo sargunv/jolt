@@ -162,6 +162,7 @@ syntax/parser/parses-delegation-property.kt
 syntax/parser/parses-destructuring-baseline-declarations.kt
 syntax/parser/parses-destructuring-name-based-preview.kt
 syntax/parser/parses-destructuring-square-preview.kt
+syntax/parser/parses-empty-if-then-branch.kt
 syntax/parser/parses-enum-entries-and-body.kt
 syntax/parser/parses-enum-entry-class-body.kt
 syntax/parser/parses-expression-annotations.kt
