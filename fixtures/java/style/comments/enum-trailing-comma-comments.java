@@ -4,8 +4,7 @@ enum EnumTrailingCommaBlockComment {
 }
 
 enum EnumTrailingCommaLineComment {
-  FIRST,
-  // JOLT-TRIVIA:enum-comma-line
+  FIRST, // JOLT-TRIVIA:enum-comma-line
   ;
 }
 
