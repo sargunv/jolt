@@ -35,11 +35,11 @@ impl Parser<'_> {
         }
 
         let marker = self.start();
-        self.parse_modifier_list();
+        self.parse_declaration_modifier_list(allow_class_members);
         if self.at_context_parameter_clause() {
             self.parse_context_parameter_clause();
         }
-        self.parse_modifier_list();
+        self.parse_declaration_modifier_list(allow_class_members);
 
         let kind = match self.current_kind() {
             K::ClassKw => {
@@ -56,7 +56,7 @@ impl Parser<'_> {
                 K::InterfaceDeclaration
             }
             K::ObjectKw => {
-                self.parse_object_tail();
+                self.parse_object_tail(true);
                 K::ObjectDeclaration
             }
             K::FunKw => {
@@ -85,7 +85,7 @@ impl Parser<'_> {
                 && self.nth_kind(1) == K::ObjectKw =>
             {
                 self.bump();
-                self.parse_object_tail();
+                self.parse_object_tail(false);
                 K::CompanionObject
             }
             _ => {
@@ -213,8 +213,20 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_modifier_list(&mut self) {
+        self.parse_modifier_list_impl(false);
+    }
+
+    fn parse_declaration_modifier_list(&mut self, allow_class_members: bool) {
+        self.parse_modifier_list_impl(allow_class_members);
+    }
+
+    fn parse_modifier_list_impl(&mut self, stop_before_companion_object: bool) {
         let modifiers = self.start();
-        while self.at_modifier_or_annotation() {
+        while self.at_modifier_or_annotation()
+            && !(stop_before_companion_object
+                && self.at_soft_keyword("companion")
+                && self.nth_kind(1) == K::ObjectKw)
+        {
             let before = self.position();
             if self.at(K::At) || self.at(K::Hash) {
                 self.parse_annotation();

@@ -147,10 +147,10 @@ KotlinFile
         LBrace "{" @ 208..209
         ClassMemberList
           ClassMemberDeclaration
-            ObjectDeclaration
+            CompanionObject
               ModifierList
-                Identifier "companion" @ 214..223 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
+              Identifier "companion" @ 214..223 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ObjectKw "object" @ 224..230 trailing=[Whitespace " "]
               ClassBody
                 LBrace "{" @ 231..232

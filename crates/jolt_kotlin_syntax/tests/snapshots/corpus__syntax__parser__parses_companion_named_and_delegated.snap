@@ -56,10 +56,10 @@ KotlinFile
         LBrace "{" @ 70..71
         ClassMemberList
           ClassMemberDeclaration
-            ObjectDeclaration
+            CompanionObject
               ModifierList
-                Identifier "companion" @ 76..85 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
+              Identifier "companion" @ 76..85 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ObjectKw "object" @ 86..92 trailing=[Whitespace " "]
               Name
                 Identifier "Defaults" @ 93..101 trailing=[Whitespace " "]
