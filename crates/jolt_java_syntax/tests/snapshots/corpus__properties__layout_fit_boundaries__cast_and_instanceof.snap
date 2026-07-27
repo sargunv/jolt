@@ -1,0 +1,110 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class CastAndInstanceofLayoutFitBoundaries {
+  void layout(Object someObjectReference) {
+    Object value = (SomeVeryLongCastTargetTypeName) someExpressionThatIsAlsoQuiteLongHere.getValue();
+    boolean matches = someObjectReference instanceof SomeVeryLongPatternTypeName someBindingName;
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "CastAndInstanceofLayoutFitBoundaries" @ 6..42 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 43..44
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 47..51 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "layout" @ 52..58
+            LParen "(" @ 58..59
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 59..65 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "someObjectReference" @ 66..85
+            RParen ")" @ 85..86 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 87..88
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Object" @ 93..99 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "value" @ 100..105 trailing=[Whitespace " "]
+                        Assign "=" @ 106..107 trailing=[Whitespace " "]
+                        VariableInitializer
+                          CastExpression
+                            LParen "(" @ 108..109
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "SomeVeryLongCastTargetTypeName" @ 109..139
+                            RParen ")" @ 139..140 trailing=[Whitespace " "]
+                            MethodInvocationExpression
+                              QualifiedMethodInvocation
+                                NameExpression
+                                  Identifier "someExpressionThatIsAlsoQuiteLongHere" @ 141..178
+                                Dot "." @ 178..179
+                                Identifier "getValue" @ 179..187
+                                ArgumentList
+                                  LParen "(" @ 187..188
+                                  ExpressionList
+                                  RParen ")" @ 188..189
+                  Semicolon ";" @ 189..190
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      BooleanKw "boolean" @ 195..202 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "matches" @ 203..210 trailing=[Whitespace " "]
+                        Assign "=" @ 211..212 trailing=[Whitespace " "]
+                        VariableInitializer
+                          InstanceofExpression
+                            NameExpression
+                              Identifier "someObjectReference" @ 213..232 trailing=[Whitespace " "]
+                            InstanceofKw "instanceof" @ 233..243 trailing=[Whitespace " "]
+                            TypePattern
+                              ParameterModifierList
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "SomeVeryLongPatternTypeName" @ 244..271 trailing=[Whitespace " "]
+                              Identifier "someBindingName" @ 272..287
+                  Semicolon ";" @ 287..288
+              RBrace "}" @ 291..292 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 293..294 leading=[Newline "\n"]
+  Eof "" @ 295..295 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

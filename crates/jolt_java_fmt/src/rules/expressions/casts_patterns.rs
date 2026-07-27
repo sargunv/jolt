@@ -26,6 +26,23 @@ pub(super) fn format_cast_expression<'source>(
     let expression_doc = format_required_field(expression.expression(), doc, |expression, doc| {
         format_expression(&expression, doc)
     });
+    let operand = doc_indent!(
+        doc,
+        doc_concat!(
+            doc,
+            [
+                if close_paren
+                    .as_ref()
+                    .is_some_and(trailing_comments_force_line)
+                {
+                    Doc::nil()
+                } else {
+                    doc.line()
+                },
+                expression_doc,
+            ]
+        )
+    );
 
     doc_group!(
         doc,
@@ -37,15 +54,7 @@ pub(super) fn format_cast_expression<'source>(
                 ty,
                 format_cast_close_paren(close_paren.as_ref(), doc),
                 close_recovery,
-                if close_paren
-                    .as_ref()
-                    .is_some_and(trailing_comments_force_line)
-                {
-                    Doc::nil()
-                } else {
-                    doc.space()
-                },
-                expression_doc,
+                operand,
             ]
         ),
     )
@@ -108,7 +117,8 @@ pub(super) fn format_instanceof_expression<'source>(
         InstanceofTargetSyntax::BogusInstanceofTarget(target) => format_malformed(&target, doc),
     });
 
-    doc_concat!(doc, [expression_doc, doc.space(), operator, rhs])
+    let tail = doc_indent!(doc, doc_concat!(doc, [doc.line(), operator, rhs]));
+    doc_group!(doc, doc_concat!(doc, [expression_doc, tail]))
 }
 
 fn format_instanceof_operator<'source>(

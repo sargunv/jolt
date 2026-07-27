@@ -2,6 +2,7 @@
 source: crates/jolt_java_syntax/tests/corpus.rs
 expression: "fixture_manifest(&root, &paths)"
 ---
+properties/layout-fit-boundaries/cast-and-instanceof.java
 properties/layout-fit-boundaries/expression-statement-assignment.java
 properties/layout-fit-boundaries/field-initializer.java
 properties/layout-fit-boundaries/return-statement-ternary.java

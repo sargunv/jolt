@@ -77,8 +77,9 @@ class LeadingCommentOwnership {
     }
 
     if (
-      candidate instanceof // Type pattern documentation.
-      final String text
+      candidate
+        instanceof // Type pattern documentation.
+        final String text
     ) {
     }
   }
