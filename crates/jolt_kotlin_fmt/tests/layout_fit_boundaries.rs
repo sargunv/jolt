@@ -13,6 +13,7 @@ fn layout_fit_boundary_fixtures_stay_within_width() {
     // literals; pinning it here would fail. Track as a known formatter gap.
     for name in [
         "properties/layout-fit-boundaries/deep-call-chain.kt",
+        "properties/layout-fit-boundaries/braceless-if-expression.kt",
         "properties/layout-fit-boundaries/long-when-result.kt",
         "properties/layout-fit-boundaries/property-delegate.kt",
         "properties/layout-fit-boundaries/when-subject.kt",

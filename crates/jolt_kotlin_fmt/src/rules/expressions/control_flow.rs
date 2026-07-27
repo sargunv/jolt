@@ -52,25 +52,40 @@ pub(super) fn format_if_expression<'source>(
         KotlinFormatField::Present(Some(branch))
             if matches!(branch.classify(), Ok(IfThenBranchSyntax::EmptyStatement(_)))
     );
+    let then_branch_is_block = matches!(
+        &then_branch,
+        KotlinFormatField::Present(Some(branch))
+            if matches!(branch.classify(), Ok(IfThenBranchSyntax::Block(_)))
+    );
     let then_branch = match then_branch {
         KotlinFormatField::Present(Some(branch)) => {
             let branch = format_if_then_branch(doc, branch);
-            if then_branch_is_nested_if {
-                let line = doc.hard_line();
-                let branch = doc.concat([line, branch]);
-                doc.indent(branch)
-            } else if then_branch_is_empty {
+            if then_branch_is_empty {
                 branch
-            } else {
+            } else if then_branch_is_block {
                 let space = doc.space();
                 doc.concat([space, branch])
+            } else {
+                let line = if then_branch_is_nested_if {
+                    doc.hard_line_boundary()
+                } else {
+                    doc.line_boundary()
+                };
+                let branch = doc.concat([line, branch]);
+                doc.indent(branch)
             }
         }
         KotlinFormatField::Present(None) => Doc::nil(),
         KotlinFormatField::Malformed(recovery) => recovery,
     };
-    let else_branch = format_else_branch(doc, expression, then_branch_is_nested_if);
-    doc.concat([keyword, condition, then_branch, else_branch])
+    let else_branch = format_else_branch(
+        doc,
+        expression,
+        then_branch_is_nested_if,
+        then_branch_is_block,
+    );
+    let contents = doc.concat([keyword, condition, then_branch, else_branch]);
+    doc.group(contents)
 }
 
 pub(super) fn format_when_expression<'source>(
@@ -543,6 +558,7 @@ fn format_else_branch<'source>(
     doc: &mut DocBuilder<'source>,
     expression: &IfExpression<'source>,
     starts_after_broken_then: bool,
+    follows_block: bool,
 ) -> Doc<'source> {
     let else_token = match resolve_optional_field(expression.else_token(), doc) {
         KotlinFormatField::Present(Some(token)) => token,
@@ -554,21 +570,32 @@ fn format_else_branch<'source>(
         KotlinFormatField::Present(Some(branch)) => {
             let branch_is_empty =
                 matches!(branch.classify(), Ok(IfElseBranchSyntax::EmptyStatement(_)));
+            let branch_hugs_else = matches!(
+                branch.classify(),
+                Ok(IfElseBranchSyntax::Block(_)
+                    | IfElseBranchSyntax::Expression(Expression::IfExpression(_)))
+            );
             let branch = format_if_else_branch(doc, branch);
             if branch_is_empty {
                 branch
-            } else {
+            } else if branch_hugs_else {
                 let space = doc.space();
                 doc.concat([space, branch])
+            } else {
+                let line = doc.line_boundary();
+                let branch = doc.concat([line, branch]);
+                doc.indent(branch)
             }
         }
         KotlinFormatField::Present(None) => Doc::nil(),
         KotlinFormatField::Malformed(recovery) => recovery,
     };
     let separator = if starts_after_broken_then {
-        doc.hard_line()
-    } else {
+        doc.hard_line_boundary()
+    } else if follows_block {
         doc.space()
+    } else {
+        doc.line_boundary()
     };
     doc.concat([separator, token, branch])
 }
