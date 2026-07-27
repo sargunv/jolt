@@ -54,6 +54,7 @@ style/expressions/when-expression.kt
 style/imports/aliases-and-stars.kt
 style/imports/basic-sorting.kt
 style/imports/comment-barrier.kt
+style/layout-fit-boundaries/annotated-lambda-parameters.kt
 style/layout-fit-boundaries/call-chain-single-argument.kt
 style/layout-fit-boundaries/property-initializer.kt
 style/layout-fit-boundaries/single-argument-call.kt

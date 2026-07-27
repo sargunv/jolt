@@ -1,0 +1,175 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val short = { @Mark
+  value: Int -> value }
+
+val medium = {
+  @Configured("moderate")
+    value: MediumType ->
+    value
+}
+
+val long = {
+  @AnnotationWithAnExceptionallyLongName("an-exceptionally-long-argument")
+    value: LongType ->
+    value
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      Name
+        Identifier "short" @ 4..9 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 10..11 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 12..13 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  ModifierList
+                    Annotation
+                      At "@" @ 14..15
+                      QualifiedName
+                        QualifiedNameSegmentList
+                          Name
+                            Identifier "Mark" @ 15..19
+                  LambdaParameterBinding
+                    Name
+                      Identifier "value" @ 22..27 leading=[Newline "\n", Whitespace "  "]
+                  Colon ":" @ 27..28 trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "Int" @ 29..32 trailing=[Whitespace " "]
+              Arrow "->" @ 33..35 trailing=[Whitespace " "]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  NameExpression
+                    Identifier "value" @ 36..41 trailing=[Whitespace " "]
+                TerminatorList
+            RBrace "}" @ 42..43
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 45..48 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "medium" @ 49..55 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 56..57 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 58..59
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  ModifierList
+                    Annotation
+                      At "@" @ 62..63 leading=[Newline "\n", Whitespace "  "]
+                      QualifiedName
+                        QualifiedNameSegmentList
+                          Name
+                            Identifier "Configured" @ 63..73
+                      AnnotationArgumentList
+                        LParen "(" @ 73..74
+                        ValueArgumentSeparatedList
+                          ValueArgument
+                            ValueArgumentPrefixList
+                            StringTemplateExpression
+                              StringTemplateEntryList
+                                StringTemplateEntry
+                                  OpenQuote "\"" @ 74..75
+                                StringTemplateEntry
+                                  RegularStringPart "moderate" @ 75..83
+                              ClosingQuote "\"" @ 83..84
+                        RParen ")" @ 84..85
+                  LambdaParameterBinding
+                    Name
+                      Identifier "value" @ 90..95 leading=[Newline "\n", Whitespace "    "]
+                  Colon ":" @ 95..96 trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "MediumType" @ 97..107 trailing=[Whitespace " "]
+              Arrow "->" @ 108..110
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  NameExpression
+                    Identifier "value" @ 115..120 leading=[Newline "\n", Whitespace "    "]
+                TerminatorList
+            RBrace "}" @ 121..122 leading=[Newline "\n"]
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 124..127 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "long" @ 128..132 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 133..134 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 135..136
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  ModifierList
+                    Annotation
+                      At "@" @ 139..140 leading=[Newline "\n", Whitespace "  "]
+                      QualifiedName
+                        QualifiedNameSegmentList
+                          Name
+                            Identifier "AnnotationWithAnExceptionallyLongName" @ 140..177
+                      AnnotationArgumentList
+                        LParen "(" @ 177..178
+                        ValueArgumentSeparatedList
+                          ValueArgument
+                            ValueArgumentPrefixList
+                            StringTemplateExpression
+                              StringTemplateEntryList
+                                StringTemplateEntry
+                                  OpenQuote "\"" @ 178..179
+                                StringTemplateEntry
+                                  RegularStringPart "an-exceptionally-long-argument" @ 179..209
+                              ClosingQuote "\"" @ 209..210
+                        RParen ")" @ 210..211
+                  LambdaParameterBinding
+                    Name
+                      Identifier "value" @ 216..221 leading=[Newline "\n", Whitespace "    "]
+                  Colon ":" @ 221..222 trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "LongType" @ 223..231 trailing=[Whitespace " "]
+              Arrow "->" @ 232..234
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  NameExpression
+                    Identifier "value" @ 239..244 leading=[Newline "\n", Whitespace "    "]
+                TerminatorList
+            RBrace "}" @ 245..246 leading=[Newline "\n"]
+      PropertyBodyMemberList
+  Eof "" @ 247..247 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
