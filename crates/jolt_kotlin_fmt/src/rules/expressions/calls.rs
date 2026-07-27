@@ -499,8 +499,18 @@ fn format_call_arguments<'source>(
             for part in lambdas.parts() {
                 match resolve_list_part(part, docs) {
                     KotlinFormatListPart::Item(lambda) => {
-                        let space = docs.space();
-                        docs.push(space);
+                        // The CST owns a trailing lambda across either boundary, but moving a
+                        // next-line lambda onto the call's line can change compiler diagnostics
+                        // when overload resolution does not accept that lambda.
+                        let boundary = if lambda
+                            .first_token()
+                            .is_some_and(|token| token.has_leading_line_break())
+                        {
+                            docs.hard_line_boundary()
+                        } else {
+                            docs.space()
+                        };
+                        docs.push(boundary);
                         let lambda =
                             format_lambda_expression(docs, &lambda, LeadingTrivia::Preserve);
                         docs.push(lambda);

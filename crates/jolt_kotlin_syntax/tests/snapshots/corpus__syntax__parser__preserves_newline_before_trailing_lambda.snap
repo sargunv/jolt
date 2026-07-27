@@ -3,11 +3,25 @@ source: crates/jolt_kotlin_syntax/tests/corpus.rs
 expression: snapshot
 ---
 input:
-fun value(): Int = 1
+fun returnsInt(): Int = 1
 
-fun nextLineBlock() {
-  value()
-  { println() }
+fun acceptsLambda(block: () -> Unit) {}
+
+fun acceptsTwo(first: () -> Unit, second: () -> Unit) {}
+
+fun nextLineTrailingLambdas() {
+  returnsInt()
+  { println("ambiguous") }
+  acceptsLambda()
+  { println("valid") }
+  acceptsLambda() // boundary comment
+  { println("commented") }
+  acceptsLambda()
+  /* leading comment */ { println("leading comment") }
+  acceptsTwo()
+  first@ { println("first") }
+  second@ { println("second") }
+  acceptsLambda() { println("same line") }
 }
 
 syntax:
@@ -21,70 +35,387 @@ KotlinFile
       FunKw "fun" @ 0..3 trailing=[Whitespace " "]
       ModifierList
       Name
-        Identifier "value" @ 4..9
+        Identifier "returnsInt" @ 4..14
       ValueParameterList
-        LParen "(" @ 9..10
+        LParen "(" @ 14..15
         ValueParameterSeparatedList
-        RParen ")" @ 10..11
-      Colon ":" @ 11..12 trailing=[Whitespace " "]
+        RParen ")" @ 15..16
+      Colon ":" @ 16..17 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              Identifier "Int" @ 13..16 trailing=[Whitespace " "]
+              Identifier "Int" @ 18..21 trailing=[Whitespace " "]
       ExpressionBody
-        Assign "=" @ 17..18 trailing=[Whitespace " "]
+        Assign "=" @ 22..23 trailing=[Whitespace " "]
         LiteralExpression
-          IntegerLiteral "1" @ 19..20
+          IntegerLiteral "1" @ 24..25
     FunctionDeclaration
       ModifierList
       ModifierList
-      FunKw "fun" @ 22..25 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      FunKw "fun" @ 27..30 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
       Name
-        Identifier "nextLineBlock" @ 26..39
+        Identifier "acceptsLambda" @ 31..44
       ValueParameterList
-        LParen "(" @ 39..40
+        LParen "(" @ 44..45
         ValueParameterSeparatedList
-        RParen ")" @ 40..41 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "block" @ 45..50
+            Colon ":" @ 50..51 trailing=[Whitespace " "]
+            TypeReference
+              FunctionType
+                ArrowFunctionType
+                  ParenthesizedType
+                    AnnotationList
+                    LParen "(" @ 52..53
+                    ParenthesizedTypeEntryList
+                    RParen ")" @ 53..54 trailing=[Whitespace " "]
+                  Arrow "->" @ 55..57 trailing=[Whitespace " "]
+                  UserType
+                    UserTypeSegmentList
+                      UserTypeSegment
+                        Identifier "Unit" @ 58..62
+        RParen ")" @ 62..63 trailing=[Whitespace " "]
       BlockBody
         Block
-          LBrace "{" @ 42..43
+          LBrace "{" @ 64..65
+          BlockItemList
+          RBrace "}" @ 65..66
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 68..71 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "acceptsTwo" @ 72..82
+      ValueParameterList
+        LParen "(" @ 82..83
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "first" @ 83..88
+            Colon ":" @ 88..89 trailing=[Whitespace " "]
+            TypeReference
+              FunctionType
+                ArrowFunctionType
+                  ParenthesizedType
+                    AnnotationList
+                    LParen "(" @ 90..91
+                    ParenthesizedTypeEntryList
+                    RParen ")" @ 91..92 trailing=[Whitespace " "]
+                  Arrow "->" @ 93..95 trailing=[Whitespace " "]
+                  UserType
+                    UserTypeSegmentList
+                      UserTypeSegment
+                        Identifier "Unit" @ 96..100
+          Comma "," @ 100..101 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "second" @ 102..108
+            Colon ":" @ 108..109 trailing=[Whitespace " "]
+            TypeReference
+              FunctionType
+                ArrowFunctionType
+                  ParenthesizedType
+                    AnnotationList
+                    LParen "(" @ 110..111
+                    ParenthesizedTypeEntryList
+                    RParen ")" @ 111..112 trailing=[Whitespace " "]
+                  Arrow "->" @ 113..115 trailing=[Whitespace " "]
+                  UserType
+                    UserTypeSegmentList
+                      UserTypeSegment
+                        Identifier "Unit" @ 116..120
+        RParen ")" @ 120..121 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 122..123
+          BlockItemList
+          RBrace "}" @ 123..124
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 126..129 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "nextLineTrailingLambdas" @ 130..153
+      ValueParameterList
+        LParen "(" @ 153..154
+        ValueParameterSeparatedList
+        RParen ")" @ 154..155 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 156..157
           BlockItemList
             Statement
               ExpressionStatement
                 CallExpression
                   NameExpression
-                    Identifier "value" @ 46..51 leading=[Newline "\n", Whitespace "  "]
+                    Identifier "returnsInt" @ 160..170 leading=[Newline "\n", Whitespace "  "]
                   TypeArgumentListList
                   ValueArgumentList
-                    LParen "(" @ 51..52
+                    LParen "(" @ 170..171
                     ValueArgumentEntryList
-                    RParen ")" @ 52..53
+                    RParen ")" @ 171..172
                   LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 175..176 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              CallExpression
+                                NameExpression
+                                  Identifier "println" @ 177..184
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 184..185
+                                  ValueArgumentEntryList
+                                    ValueArgument
+                                      ValueArgumentPrefixList
+                                      StringTemplateExpression
+                                        StringTemplateEntryList
+                                          StringTemplateEntry
+                                            OpenQuote "\"" @ 185..186
+                                          StringTemplateEntry
+                                            RegularStringPart "ambiguous" @ 186..195
+                                        ClosingQuote "\"" @ 195..196
+                                  RParen ")" @ 196..197 trailing=[Whitespace " "]
+                                LambdaExpressionList
+                            TerminatorList
+                        RBrace "}" @ 198..199
               TerminatorList
             Statement
               ExpressionStatement
-                LambdaExpression
-                  LambdaBody
-                    LBrace "{" @ 56..57 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-                    LambdaBodyItemList
-                      Statement
-                        ExpressionStatement
-                          CallExpression
-                            NameExpression
-                              Identifier "println" @ 58..65
-                            TypeArgumentListList
-                            ValueArgumentList
-                              LParen "(" @ 65..66
-                              ValueArgumentEntryList
-                              RParen ")" @ 66..67 trailing=[Whitespace " "]
-                            LambdaExpressionList
-                        TerminatorList
-                    RBrace "}" @ 68..69
+                CallExpression
+                  NameExpression
+                    Identifier "acceptsLambda" @ 202..215 leading=[Newline "\n", Whitespace "  "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 215..216
+                    ValueArgumentEntryList
+                    RParen ")" @ 216..217
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 220..221 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              CallExpression
+                                NameExpression
+                                  Identifier "println" @ 222..229
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 229..230
+                                  ValueArgumentEntryList
+                                    ValueArgument
+                                      ValueArgumentPrefixList
+                                      StringTemplateExpression
+                                        StringTemplateEntryList
+                                          StringTemplateEntry
+                                            OpenQuote "\"" @ 230..231
+                                          StringTemplateEntry
+                                            RegularStringPart "valid" @ 231..236
+                                        ClosingQuote "\"" @ 236..237
+                                  RParen ")" @ 237..238 trailing=[Whitespace " "]
+                                LambdaExpressionList
+                            TerminatorList
+                        RBrace "}" @ 239..240
               TerminatorList
-          RBrace "}" @ 70..71 leading=[Newline "\n"]
-  Eof "" @ 72..72 leading=[Newline "\n"]
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "acceptsLambda" @ 243..256 leading=[Newline "\n", Whitespace "  "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 256..257
+                    ValueArgumentEntryList
+                    RParen ")" @ 257..258 trailing=[Whitespace " ", LineComment "// boundary comment"]
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 281..282 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              CallExpression
+                                NameExpression
+                                  Identifier "println" @ 283..290
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 290..291
+                                  ValueArgumentEntryList
+                                    ValueArgument
+                                      ValueArgumentPrefixList
+                                      StringTemplateExpression
+                                        StringTemplateEntryList
+                                          StringTemplateEntry
+                                            OpenQuote "\"" @ 291..292
+                                          StringTemplateEntry
+                                            RegularStringPart "commented" @ 292..301
+                                        ClosingQuote "\"" @ 301..302
+                                  RParen ")" @ 302..303 trailing=[Whitespace " "]
+                                LambdaExpressionList
+                            TerminatorList
+                        RBrace "}" @ 304..305
+              TerminatorList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "acceptsLambda" @ 308..321 leading=[Newline "\n", Whitespace "  "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 321..322
+                    ValueArgumentEntryList
+                    RParen ")" @ 322..323
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 348..349 leading=[Newline "\n", Whitespace "  ", BlockComment "/* leading comment */", Whitespace " "] trailing=[Whitespace " "]
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              CallExpression
+                                NameExpression
+                                  Identifier "println" @ 350..357
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 357..358
+                                  ValueArgumentEntryList
+                                    ValueArgument
+                                      ValueArgumentPrefixList
+                                      StringTemplateExpression
+                                        StringTemplateEntryList
+                                          StringTemplateEntry
+                                            OpenQuote "\"" @ 358..359
+                                          StringTemplateEntry
+                                            RegularStringPart "leading comment" @ 359..374
+                                        ClosingQuote "\"" @ 374..375
+                                  RParen ")" @ 375..376 trailing=[Whitespace " "]
+                                LambdaExpressionList
+                            TerminatorList
+                        RBrace "}" @ 377..378
+              TerminatorList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "acceptsTwo" @ 381..391 leading=[Newline "\n", Whitespace "  "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 391..392
+                    ValueArgumentEntryList
+                    RParen ")" @ 392..393
+                  LambdaExpressionList
+                    LambdaExpression
+                      LabeledLambdaExpression
+                        Identifier "first" @ 396..401 leading=[Newline "\n", Whitespace "  "]
+                        At "@" @ 401..402 trailing=[Whitespace " "]
+                        LambdaExpression
+                          LambdaBody
+                            LBrace "{" @ 403..404 trailing=[Whitespace " "]
+                            LambdaBodyItemList
+                              Statement
+                                ExpressionStatement
+                                  CallExpression
+                                    NameExpression
+                                      Identifier "println" @ 405..412
+                                    TypeArgumentListList
+                                    ValueArgumentList
+                                      LParen "(" @ 412..413
+                                      ValueArgumentEntryList
+                                        ValueArgument
+                                          ValueArgumentPrefixList
+                                          StringTemplateExpression
+                                            StringTemplateEntryList
+                                              StringTemplateEntry
+                                                OpenQuote "\"" @ 413..414
+                                              StringTemplateEntry
+                                                RegularStringPart "first" @ 414..419
+                                            ClosingQuote "\"" @ 419..420
+                                      RParen ")" @ 420..421 trailing=[Whitespace " "]
+                                    LambdaExpressionList
+                                TerminatorList
+                            RBrace "}" @ 422..423
+                    LambdaExpression
+                      LabeledLambdaExpression
+                        Identifier "second" @ 426..432 leading=[Newline "\n", Whitespace "  "]
+                        At "@" @ 432..433 trailing=[Whitespace " "]
+                        LambdaExpression
+                          LambdaBody
+                            LBrace "{" @ 434..435 trailing=[Whitespace " "]
+                            LambdaBodyItemList
+                              Statement
+                                ExpressionStatement
+                                  CallExpression
+                                    NameExpression
+                                      Identifier "println" @ 436..443
+                                    TypeArgumentListList
+                                    ValueArgumentList
+                                      LParen "(" @ 443..444
+                                      ValueArgumentEntryList
+                                        ValueArgument
+                                          ValueArgumentPrefixList
+                                          StringTemplateExpression
+                                            StringTemplateEntryList
+                                              StringTemplateEntry
+                                                OpenQuote "\"" @ 444..445
+                                              StringTemplateEntry
+                                                RegularStringPart "second" @ 445..451
+                                            ClosingQuote "\"" @ 451..452
+                                      RParen ")" @ 452..453 trailing=[Whitespace " "]
+                                    LambdaExpressionList
+                                TerminatorList
+                            RBrace "}" @ 454..455
+              TerminatorList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "acceptsLambda" @ 458..471 leading=[Newline "\n", Whitespace "  "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 471..472
+                    ValueArgumentEntryList
+                    RParen ")" @ 472..473 trailing=[Whitespace " "]
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 474..475 trailing=[Whitespace " "]
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              CallExpression
+                                NameExpression
+                                  Identifier "println" @ 476..483
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 483..484
+                                  ValueArgumentEntryList
+                                    ValueArgument
+                                      ValueArgumentPrefixList
+                                      StringTemplateExpression
+                                        StringTemplateEntryList
+                                          StringTemplateEntry
+                                            OpenQuote "\"" @ 484..485
+                                          StringTemplateEntry
+                                            RegularStringPart "same line" @ 485..494
+                                        ClosingQuote "\"" @ 494..495
+                                  RParen ")" @ 495..496 trailing=[Whitespace " "]
+                                LambdaExpressionList
+                            TerminatorList
+                        RBrace "}" @ 497..498
+              TerminatorList
+          RBrace "}" @ 499..500 leading=[Newline "\n"]
+  Eof "" @ 501..501 leading=[Newline "\n"]
 
 diagnostics:
   (none)
