@@ -210,6 +210,9 @@ impl Parser<'_> {
     }
 
     fn parse_unary_expression_inner(&mut self, stops: StopSet) -> CompletedMarker {
+        if self.at(K::BangBang) {
+            self.split_current_token(&[K::Bang, K::Bang]);
+        }
         if is_unary_operator(self.current_kind()) {
             let unary = self.start();
             self.bump();

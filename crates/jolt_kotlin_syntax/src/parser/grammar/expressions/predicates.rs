@@ -47,6 +47,7 @@ pub(super) fn expression_start_kind(kind: K) -> bool {
             | K::Plus
             | K::Minus
             | K::Bang
+            | K::BangBang
             | K::Star
     )
 }

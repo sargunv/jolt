@@ -478,13 +478,28 @@ pub(super) fn format_unary_expression<'source>(
     expression: &UnaryExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
+    let separate_bangs = matches!(
+        expression.operator(),
+        KotlinSyntaxField::Present(ref operator) if operator.kind() == KotlinSyntaxKind::Bang
+    ) && matches!(
+        expression.operand(),
+        KotlinSyntaxField::Present(ref operand)
+            if operand
+                .first_token()
+                .is_some_and(|token| token.kind() == KotlinSyntaxKind::Bang)
+    );
     let operator = format_required_field(expression.operator(), doc, |operator, doc| {
         format_token(doc, &operator, leading, TrailingTrivia::Preserve)
     });
+    let separator = if separate_bangs {
+        doc.space()
+    } else {
+        Doc::nil()
+    };
     let operand = format_required_field(expression.operand(), doc, |operand, doc| {
         format_expression_with_leading(doc, &operand, LeadingTrivia::Preserve)
     });
-    doc.concat([operator, operand])
+    doc.concat([operator, separator, operand])
 }
 
 pub(super) fn format_postfix_expression<'source>(

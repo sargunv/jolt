@@ -192,6 +192,15 @@ impl<'source, L: Language> Parser<'source, L> {
         self.events.push(Event::Token);
     }
 
+    /// Splits the current source token into one-byte syntax tokens before it is consumed.
+    ///
+    /// This supports composite lexemes whose interpretation is grammar-dependent. The first
+    /// split token retains the source token's leading trivia and the last retains its trailing
+    /// trivia.
+    pub fn split_current_token(&mut self, kinds: &[L::Kind]) {
+        self.buffer.split_token_at(self.cursor.position(), kinds);
+    }
+
     pub fn fork_cursor(&self) -> TokenCursor {
         self.cursor.fork()
     }
@@ -569,6 +578,50 @@ impl<'source, L: Language> TokenBuffer<'source, L> {
                 },
             );
         }
+    }
+
+    fn split_token_at(&mut self, index: usize, kinds: &[L::Kind]) {
+        self.ensure(index);
+        let token = self.tokens.remove(index);
+        assert!(
+            !kinds.is_empty(),
+            "a source token must retain syntax coverage"
+        );
+        assert_eq!(
+            token.token_text_range().len().get(),
+            kinds.len(),
+            "split syntax kinds must cover one source byte each"
+        );
+
+        let start = token.token_text_range().start();
+        let last_index = kinds.len() - 1;
+        let empty_trivia = self.empty_trivia();
+        let mut split = Vec::with_capacity(kinds.len());
+        for (part, kind) in kinds.iter().copied().enumerate() {
+            let token_start = start + TextSize::new(part);
+            let range = TextRange::new(token_start, token_start + TextSize::new(1));
+            let leading = if part == 0 {
+                token.leading()
+            } else {
+                empty_trivia.clone()
+            };
+            let trailing = if part == last_index {
+                token.trailing()
+            } else {
+                empty_trivia.clone()
+            };
+            let leading_len = self.trivia_text_len(&leading);
+            let full_start = range.start() - leading_len;
+            let full_end = range.end() + self.trivia_text_len(&trailing);
+            split.push(SyntaxTokenData::new(
+                L::kind_to_raw(kind),
+                TextRange::new(full_start, full_end),
+                range,
+                leading,
+                trailing,
+            ));
+        }
+        self.tokens.splice(index..index, split);
     }
 
     fn push_buffered_token(
