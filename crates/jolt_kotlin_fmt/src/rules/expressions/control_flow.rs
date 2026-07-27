@@ -38,10 +38,10 @@ pub(super) fn format_if_expression<'source>(
     let condition = format_spaced_required_field(doc, expression.condition(), |condition, doc| {
         format_control_flow_condition(doc, &condition)
     });
-    let then_branch = resolve_required_field(expression.then_branch(), doc);
+    let then_branch = resolve_optional_field(expression.then_branch(), doc);
     let then_branch_is_nested_if = matches!(
         &then_branch,
-        KotlinFormatField::Present(branch)
+        KotlinFormatField::Present(Some(branch))
             if matches!(
                 branch.classify(),
                 Ok(IfThenBranchSyntax::Expression(Expression::IfExpression(_)))
@@ -49,11 +49,11 @@ pub(super) fn format_if_expression<'source>(
     );
     let then_branch_is_empty = matches!(
         &then_branch,
-        KotlinFormatField::Present(branch)
+        KotlinFormatField::Present(Some(branch))
             if matches!(branch.classify(), Ok(IfThenBranchSyntax::EmptyStatement(_)))
     );
     let then_branch = match then_branch {
-        KotlinFormatField::Present(branch) => {
+        KotlinFormatField::Present(Some(branch)) => {
             let branch = format_if_then_branch(doc, branch);
             if then_branch_is_nested_if {
                 let line = doc.hard_line();
@@ -66,6 +66,7 @@ pub(super) fn format_if_expression<'source>(
                 doc.concat([space, branch])
             }
         }
+        KotlinFormatField::Present(None) => Doc::nil(),
         KotlinFormatField::Malformed(recovery) => recovery,
     };
     let else_branch = format_else_branch(doc, expression, then_branch_is_nested_if);
