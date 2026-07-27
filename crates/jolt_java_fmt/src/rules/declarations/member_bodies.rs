@@ -155,7 +155,7 @@ pub(super) fn format_class_member_body<'source>(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn format_member_parts<'source, T: Copy>(
+fn format_member_parts<'source, T: Copy + JavaSyntaxView<'source>>(
     container: TextRange,
     members: impl IntoIterator<Item = JavaSyntaxListPart<'source, T>>,
     open_dangling_comments: Option<FormattedMember<'source>>,
@@ -196,14 +196,15 @@ fn format_member_parts<'source, T: Copy>(
     formatted.extend(open_dangling_comments);
     for_each_formatter_ignore_splice(members.len(), &runs, |event| match event {
         FormatterIgnoreSplice::Ignore(run) => {
-            let category = members
-                .get(run.first_skipped_index())
-                .map_or(MemberCategory::Type, |part| {
-                    part_category(part, &item_category)
-                });
+            let first_skipped = members.get(run.first_skipped_index());
+            let category = first_skipped.map_or(MemberCategory::Type, |part| {
+                part_category(part, &item_category)
+            });
+            let starts_after_blank_line = first_skipped.is_some_and(part_starts_after_blank_line);
             formatted.push(FormattedMember::ignored(
                 formatter_ignore_run_doc(run, doc),
                 category,
+                starts_after_blank_line,
             ));
         }
         FormatterIgnoreSplice::Item { index, .. } => {
@@ -269,6 +270,17 @@ fn part_category<T>(
     match part {
         JavaSyntaxListPart::Item(item) => item_category(item),
         _ => MemberCategory::Type,
+    }
+}
+
+fn part_starts_after_blank_line<'source, T: JavaSyntaxView<'source>>(
+    part: &JavaSyntaxListPart<'source, T>,
+) -> bool {
+    match part {
+        JavaSyntaxListPart::Item(item) => item.starts_after_blank_line(),
+        JavaSyntaxListPart::Separator(token) => token.has_leading_blank_line(),
+        JavaSyntaxListPart::Malformed(malformed) => malformed.starts_after_blank_line(),
+        JavaSyntaxListPart::Missing(_) => false,
     }
 }
 

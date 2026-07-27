@@ -29,10 +29,14 @@ impl<'source> MemberBodyItem<'source> {
         }
     }
 
-    pub(crate) fn ignored(doc: Doc<'source>, category: MemberBodyCategory) -> Self {
+    pub(crate) fn ignored(
+        doc: Doc<'source>,
+        category: MemberBodyCategory,
+        starts_after_blank_line: bool,
+    ) -> Self {
         Self {
             category: Some(category),
-            starts_after_blank_line: false,
+            starts_after_blank_line,
             ignored_region: true,
             doc,
             visible: true,
