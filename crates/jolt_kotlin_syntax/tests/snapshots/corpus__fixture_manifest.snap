@@ -75,6 +75,7 @@ style/statements/if-else.kt
 style/statements/local-declarations.kt
 style/statements/loops-and-labels.kt
 style/statements/nested-control-flow.kt
+style/statements/redundant-semicolon.kt
 style/statements/simple-expression-statements.kt
 style/statements/try-catch-finally.kt
 style/statements/when-statement.kt

@@ -1,13 +1,14 @@
 use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder, LayoutDoc};
 use jolt_kotlin_syntax::{
-    KotlinSyntaxField, KotlinSyntaxView, LabeledLambdaExpression, LambdaBody, LambdaBodyItemSyntax,
-    LambdaExpression, LambdaForm, LambdaParameter, LambdaParameterBindingSyntax,
-    LambdaParameterList, LambdaParameterListEntry,
+    BlockItem, KotlinSyntaxField, KotlinSyntaxView, LabeledLambdaExpression, LambdaBody,
+    LambdaBodyItemSyntax, LambdaExpression, LambdaForm, LambdaParameter,
+    LambdaParameterBindingSyntax, LambdaParameterList, LambdaParameterListEntry,
+    boundary_separator_removal_claim,
 };
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_dangling_comments, format_leading_comments,
-    format_separator_with_comments, format_token, token_has_comments,
+    format_removed_separator, format_separator_with_comments, format_token, token_has_comments,
 };
 use crate::helpers::lists::{CommaListItem, physical_comma_list_items};
 use crate::helpers::recovery::{
@@ -273,23 +274,24 @@ pub(super) fn lambda_body_doc<'source>(
     );
     let body_doc = match resolve_required_field(items, doc) {
         KotlinFormatField::Present(items) => doc.concat_list(|docs| {
+            let mut preceding_item: Option<BlockItem<'source>> = None;
             for part in items.parts() {
                 let (item, layout_visible) = match resolve_list_part(part, docs) {
                     KotlinFormatListPart::Item(role) => match role.classify() {
                         Ok(LambdaBodyItemSyntax::Item(item)) => {
                             let visible = item.first_token().is_some();
+                            preceding_item = Some(item);
                             (format_block_item(docs, &item), visible)
                         }
-                        Ok(LambdaBodyItemSyntax::Terminator(token)) => (
-                            format_token(
-                                docs,
-                                &token,
-                                LeadingTrivia::Preserve,
-                                TrailingTrivia::Preserve,
-                            ),
-                            true,
-                        ),
+                        Ok(LambdaBodyItemSyntax::Terminator(token)) => {
+                            let claim = preceding_item
+                                .as_ref()
+                                .and_then(|owner| boundary_separator_removal_claim(owner, token));
+                            let separator = format_removed_separator(docs, &token, claim, false);
+                            (separator, token_has_comments(&token))
+                        }
                         Err(error) => {
+                            preceding_item = None;
                             docs.block_on_invariant(error.to_string());
                             (Doc::nil(), false)
                         }
@@ -302,6 +304,7 @@ pub(super) fn lambda_body_doc<'source>(
                         (Doc::nil(), false)
                     }
                     KotlinFormatListPart::Recovery(recovery) => {
+                        preceding_item = None;
                         (recovery.doc(), recovery.is_visible())
                     }
                 };

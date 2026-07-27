@@ -1,0 +1,176 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun redundantSemicolons() {
+  val first = 1; val second = 2
+  consume(first); consume(second)
+}
+
+fun lambdaDeclarationSeparators() {
+  consume {
+    val first = 1;
+    val second = 2;
+    use(first, second)
+  }
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "redundantSemicolons" @ 4..23
+      ValueParameterList
+        LParen "(" @ 23..24
+        ValueParameterSeparatedList
+        RParen ")" @ 24..25 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 26..27
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 30..33 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "first" @ 34..39 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 40..41 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "1" @ 42..43
+              PropertyBodyMemberList
+            Semicolon ";" @ 43..44 trailing=[Whitespace " "]
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 45..48 trailing=[Whitespace " "]
+              Name
+                Identifier "second" @ 49..55 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 56..57 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "2" @ 58..59
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "consume" @ 62..69 leading=[Newline "\n", Whitespace "  "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 69..70
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "first" @ 70..75
+                    RParen ")" @ 75..76
+                  LambdaExpressionList
+              TerminatorList
+                Semicolon ";" @ 76..77 trailing=[Whitespace " "]
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "consume" @ 78..85
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 85..86
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "second" @ 86..92
+                    RParen ")" @ 92..93
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 94..95 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 97..100 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "lambdaDeclarationSeparators" @ 101..128
+      ValueParameterList
+        LParen "(" @ 128..129
+        ValueParameterSeparatedList
+        RParen ")" @ 129..130 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 131..132
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "consume" @ 135..142 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 143..144
+                        LambdaBodyItemList
+                          PropertyDeclaration
+                            ModifierList
+                            ModifierList
+                            ValKw "val" @ 149..152 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                            Name
+                              Identifier "first" @ 153..158 trailing=[Whitespace " "]
+                            PropertyInitializer
+                              Assign "=" @ 159..160 trailing=[Whitespace " "]
+                              LiteralExpression
+                                IntegerLiteral "1" @ 161..162
+                            PropertyBodyMemberList
+                          Semicolon ";" @ 162..163
+                          PropertyDeclaration
+                            ModifierList
+                            ModifierList
+                            ValKw "val" @ 168..171 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                            Name
+                              Identifier "second" @ 172..178 trailing=[Whitespace " "]
+                            PropertyInitializer
+                              Assign "=" @ 179..180 trailing=[Whitespace " "]
+                              LiteralExpression
+                                IntegerLiteral "2" @ 181..182
+                            PropertyBodyMemberList
+                          Semicolon ";" @ 182..183
+                          Statement
+                            ExpressionStatement
+                              CallExpression
+                                NameExpression
+                                  Identifier "use" @ 188..191 leading=[Newline "\n", Whitespace "    "]
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 191..192
+                                  ValueArgumentEntryList
+                                    ValueArgument
+                                      ValueArgumentPrefixList
+                                      NameExpression
+                                        Identifier "first" @ 192..197
+                                    Comma "," @ 197..198 trailing=[Whitespace " "]
+                                    ValueArgument
+                                      ValueArgumentPrefixList
+                                      NameExpression
+                                        Identifier "second" @ 199..205
+                                  RParen ")" @ 205..206
+                                LambdaExpressionList
+                            TerminatorList
+                        RBrace "}" @ 209..210 leading=[Newline "\n", Whitespace "  "]
+              TerminatorList
+          RBrace "}" @ 211..212 leading=[Newline "\n"]
+  Eof "" @ 213..213 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
