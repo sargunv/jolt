@@ -1,6 +1,6 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    Annotation, AnnotationList, ArrowFunctionType, BangDefinitelyNonNullableType,
+    AnnotationList, AnnotationSyntax, ArrowFunctionType, BangDefinitelyNonNullableType,
     ContextFunctionType, DefinitelyNonNullableType, DefinitelyNonNullableTypeForm, FunctionType,
     FunctionTypeForm, FunctionTypeParameter, FunctionTypeParameterListEntry,
     IntersectionDefinitelyNonNullableType, KotlinFamily, KotlinNode, KotlinRoleElement,
@@ -17,7 +17,7 @@ use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_malformed, format_optional_field,
     format_required_field, resolve_list_part, resolve_required_delimiter, resolve_required_field,
 };
-use crate::rules::annotations::format_annotation;
+use crate::rules::annotations::format_annotation_syntax;
 use crate::rules::names::format_name;
 
 pub(crate) fn format_type_parameter_list<'source>(
@@ -608,7 +608,7 @@ fn format_type_annotations<'source>(
         for part in annotations.parts() {
             match resolve_list_part(part, docs) {
                 KotlinFormatListPart::Item(annotation) => {
-                    let annotation = format_annotation(docs, &annotation);
+                    let annotation = format_annotation_syntax(docs, &annotation);
                     docs.push(annotation);
                     let space = docs.space();
                     docs.push(space);
@@ -684,8 +684,8 @@ pub(crate) fn format_modifier_sequence<'source>(
         for part in modifiers.parts() {
             match resolve_list_part(part, docs) {
                 KotlinFormatListPart::Item(role) => {
-                    if let Some(annotation) = role.cast_node::<Annotation<'source>>() {
-                        let annotation = format_annotation(docs, &annotation);
+                    if let Some(annotation) = role.cast_family::<AnnotationSyntax<'source>>() {
+                        let annotation = format_annotation_syntax(docs, &annotation);
                         docs.push(annotation);
                         let line = docs.line();
                         docs.push(line);

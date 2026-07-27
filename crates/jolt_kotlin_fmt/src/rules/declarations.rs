@@ -3,7 +3,7 @@ use jolt_kotlin_syntax::{
     CallableDeclarationName, CallableName, ContextParameter, ContextParameterClause,
     ContextParameterListEntry, Declaration, DeclarationBody, DestructuringDeclaration,
     DestructuringEntry, EnumEntry, ExplicitBackingField, ExpressionBody, FunctionDeclaration,
-    InitializerBlock, KotlinFileItem, KotlinNode, KotlinRoleElement, KotlinSyntaxField,
+    InitializerBlock, KotlinFamily, KotlinFileItem, KotlinRoleElement, KotlinSyntaxField,
     KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView, ModifierList, PropertyAccessor,
     PropertyBinding, PropertyBodyMember, PropertyDeclaration, PropertyInitializer,
     SecondaryConstructor, TypeAliasDeclaration, TypeReference, boundary_separator_removal_claim,
@@ -21,7 +21,7 @@ use crate::helpers::recovery::{
     format_required_field, resolve_list_part, resolve_optional_field, resolve_required_delimiter,
     resolve_required_field,
 };
-use crate::rules::annotations::format_annotation_with_leading;
+use crate::rules::annotations::format_annotation_syntax_with_leading;
 use crate::rules::expressions::{format_expression, format_value_argument_list};
 use crate::rules::names::format_name;
 use crate::rules::statements::format_block;
@@ -785,14 +785,14 @@ pub(crate) fn format_modifier_list_with_leading<'source>(
         for part in list.parts() {
             match resolve_list_part(part, docs) {
                 KotlinFormatListPart::Item(KotlinRoleElement::Node(node)) => {
-                    if let Some(annotation) = jolt_kotlin_syntax::Annotation::cast(node) {
+                    if let Some(annotation) = jolt_kotlin_syntax::AnnotationSyntax::cast(node) {
                         let item_leading = if first {
                             leading
                         } else {
                             LeadingTrivia::Preserve
                         };
                         let annotation =
-                            format_annotation_with_leading(docs, &annotation, item_leading);
+                            format_annotation_syntax_with_leading(docs, &annotation, item_leading);
                         docs.push(annotation);
                         let separator = if annotations_break {
                             docs.hard_line()

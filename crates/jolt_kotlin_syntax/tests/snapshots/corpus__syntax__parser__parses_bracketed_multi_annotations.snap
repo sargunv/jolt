@@ -1,0 +1,94 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+annotation class FirstAnnotation
+annotation class SecondAnnotation
+
+@[FirstAnnotation] fun annotated() {}
+
+@field:[FirstAnnotation SecondAnnotation]
+val value = 1
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+        Identifier "annotation" @ 0..10 trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 11..16 trailing=[Whitespace " "]
+      Name
+        Identifier "FirstAnnotation" @ 17..32
+    ClassDeclaration
+      ModifierList
+        Identifier "annotation" @ 33..43 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 44..49 trailing=[Whitespace " "]
+      Name
+        Identifier "SecondAnnotation" @ 50..66
+    FunctionDeclaration
+      ModifierList
+        MultiAnnotation
+          At "@" @ 68..69 leading=[Newline "\n", Newline "\n"]
+          LBracket "[" @ 69..70
+          UnescapedAnnotationList
+            UnescapedAnnotation
+              QualifiedName
+                QualifiedNameSegmentList
+                  Name
+                    Identifier "FirstAnnotation" @ 70..85
+          RBracket "]" @ 85..86 trailing=[Whitespace " "]
+      ModifierList
+      FunKw "fun" @ 87..90 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "annotated" @ 91..100
+      ValueParameterList
+        LParen "(" @ 100..101
+        ValueParameterSeparatedList
+        RParen ")" @ 101..102 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 103..104
+          BlockItemList
+          RBrace "}" @ 104..105
+    PropertyDeclaration
+      ModifierList
+        MultiAnnotation
+          At "@" @ 107..108 leading=[Newline "\n", Newline "\n"]
+          AnnotationUseSiteTarget
+            Identifier "field" @ 108..113
+            Colon ":" @ 113..114
+          LBracket "[" @ 114..115
+          UnescapedAnnotationList
+            UnescapedAnnotation
+              QualifiedName
+                QualifiedNameSegmentList
+                  Name
+                    Identifier "FirstAnnotation" @ 115..130 trailing=[Whitespace " "]
+            UnescapedAnnotation
+              QualifiedName
+                QualifiedNameSegmentList
+                  Name
+                    Identifier "SecondAnnotation" @ 131..147
+          RBracket "]" @ 147..148
+      ModifierList
+      ValKw "val" @ 149..152 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "value" @ 153..158 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 159..160 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "1" @ 161..162
+      PropertyBodyMemberList
+  Eof "" @ 163..163 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

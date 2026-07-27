@@ -152,6 +152,10 @@ macro_rules! kotlin_syntax_schema {
                 NotIs,
             }
             categories {
+                AnnotationSyntax => BogusAnnotation {
+                    Annotation,
+                    MultiAnnotation,
+                }
                 KotlinFileItem => BogusKotlinFileItem {
                     PackageHeader,
                     ImportDirectiveList,
@@ -379,6 +383,17 @@ macro_rules! kotlin_syntax_schema {
                 Annotation => Annotation [annotation valid] {
                     sigil: required (token_set [At, Hash]);
                     use_site_target: optional (node AnnotationUseSiteTarget);
+                    name: required (node_set [QualifiedName, Name]);
+                    argument_list: optional (node AnnotationArgumentList);
+                }
+                MultiAnnotation => MultiAnnotation [multi_annotation valid] {
+                    sigil: required (token_set [At, Hash]);
+                    use_site_target: optional (node AnnotationUseSiteTarget);
+                    open_bracket: required (token LBracket);
+                    annotations: required (list UnescapedAnnotationList);
+                    close_bracket: required (token RBracket);
+                }
+                UnescapedAnnotation => UnescapedAnnotation [unescaped_annotation valid] {
                     name: required (node_set [QualifiedName, Name]);
                     argument_list: optional (node AnnotationArgumentList);
                 }
@@ -979,7 +994,7 @@ macro_rules! kotlin_syntax_schema {
                     binding: required (node_set [Name, DestructuringDeclaration]) => LambdaParameterBindingValue;
                 }
                 ValueArgumentPrefix => ValueArgumentPrefix [value_argument_prefix valid] {
-                    prefix: required (choice [(token Star), (node Annotation)]) => ValueArgumentPrefixValue;
+                    prefix: required (choice [(token Star), (category AnnotationSyntax)]) => ValueArgumentPrefixValue;
                 }
                 IntersectionDefinitelyNonNullableType => IntersectionDefinitelyNonNullableType [intersection_definitely_non_nullable_type valid] {
                     left: required (category TypeSyntax);
@@ -991,7 +1006,10 @@ macro_rules! kotlin_syntax_schema {
                     bang_bang: required (token BangBang);
                 }
                 AnnotationList => AnnotationList [annotation_list list] {
-                    annotations: many (node Annotation);
+                    annotations: many (category AnnotationSyntax);
+                }
+                UnescapedAnnotationList => UnescapedAnnotationList [unescaped_annotation_list list] {
+                    annotations: many (node UnescapedAnnotation);
                 }
                 KotlinFileItemList => KotlinFileItemList [kotlin_file_item_list list] {
                     items: many (choice [(category KotlinFileItem), (token_set [EolOrSemicolon, Semicolon])]);
@@ -1004,7 +1022,7 @@ macro_rules! kotlin_syntax_schema {
                 }
                 ModifierList => ModifierList [modifier_list list] {
                     modifiers: many (choice [
-                        (node Annotation),
+                        (category AnnotationSyntax),
                         (contextual "abstract"), (contextual "enum"),
                         (contextual "contract"), (contextual "open"),
                         (contextual "inner"), (contextual "override"),
