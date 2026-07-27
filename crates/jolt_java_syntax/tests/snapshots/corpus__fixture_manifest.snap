@@ -275,6 +275,7 @@ syntax/parser/ordinary-import-declarations-expose-structured-names.java
 syntax/parser/parses-annotated-array-dimensions.java
 syntax/parser/parses-annotated-dim-expression.java
 syntax/parser/parses-annotated-expression-type-uses.java
+syntax/parser/parses-annotated-intersection-cast-bounds.java
 syntax/parser/parses-annotated-record-components.java
 syntax/parser/parses-annotated-type-parameter-modifier.java
 syntax/parser/parses-annotation-forms-and-element-values.java

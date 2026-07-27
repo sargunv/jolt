@@ -1,0 +1,111 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+@interface NonNull {}
+
+interface FirstBound {}
+
+interface SecondBound {}
+
+class AnnotatedIntersectionCastBounds {
+  Object cast(Object value) {
+    return (FirstBound & @NonNull SecondBound) value;
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    AnnotationInterfaceDeclaration
+      At "@" @ 0..1
+      InterfaceKw "interface" @ 1..10 trailing=[Whitespace " "]
+      Identifier "NonNull" @ 11..18 trailing=[Whitespace " "]
+      AnnotationInterfaceBody
+        LBrace "{" @ 19..20
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+        RBrace "}" @ 20..21
+    InterfaceDeclaration
+      InterfaceKw "interface" @ 23..32 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "FirstBound" @ 33..43 trailing=[Whitespace " "]
+      InterfaceBody
+        LBrace "{" @ 44..45
+        InterfaceBodyMemberList
+        RBrace "}" @ 45..46
+    InterfaceDeclaration
+      InterfaceKw "interface" @ 48..57 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "SecondBound" @ 58..69 trailing=[Whitespace " "]
+      InterfaceBody
+        LBrace "{" @ 70..71
+        InterfaceBodyMemberList
+        RBrace "}" @ 71..72
+    ClassDeclaration
+      ClassKw "class" @ 74..79 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "AnnotatedIntersectionCastBounds" @ 80..111 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 112..113
+        ClassBodyMemberList
+          MethodDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "Object" @ 116..122 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "cast" @ 123..127
+            LParen "(" @ 127..128
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 128..134 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 135..140
+            RParen ")" @ 140..141 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 142..143
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 148..154 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    CastExpression
+                      LParen "(" @ 155..156
+                      IntersectionType
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "FirstBound" @ 156..166 trailing=[Whitespace " "]
+                        Amp "&" @ 167..168 trailing=[Whitespace " "]
+                        TypeAmpList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                  Annotation
+                                    At "@" @ 169..170
+                                    Name
+                                      Identifier "NonNull" @ 170..177 trailing=[Whitespace " "]
+                                Name
+                                  Identifier "SecondBound" @ 178..189
+                      RParen ")" @ 189..190 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "value" @ 191..196
+                    Semicolon ";" @ 196..197
+              RBrace "}" @ 200..201 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 202..203 leading=[Newline "\n"]
+  Eof "" @ 204..204 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
