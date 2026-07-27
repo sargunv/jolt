@@ -22,7 +22,7 @@ use self::predicates::{
 fn deferred_expression_stop(
     buffer: &mut TokenBuffer<'_>,
     mut cursor: TokenCursor,
-    stops: StopSet<'_>,
+    stops: StopSet,
 ) -> Option<usize> {
     let (mut parens, mut brackets, mut braces, mut long_templates) =
         (0usize, 0usize, 0usize, 0usize);
@@ -65,7 +65,7 @@ fn deferred_expression_stop(
 }
 
 impl Parser<'_> {
-    pub(super) fn parse_expression_until<'a>(&mut self, stops: impl Into<StopSet<'a>>) {
+    pub(super) fn parse_expression_until(&mut self, stops: impl Into<StopSet>) {
         let stops = stops.into();
         if self.at_expression_boundary(stops) {
             let error = self.start();
@@ -106,7 +106,7 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_assignment_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+    fn parse_assignment_expression(&mut self, stops: StopSet) -> CompletedMarker {
         if let Some(expression) =
             self.with_syntax_nesting(|parser| parser.parse_assignment_expression_inner(stops))
         {
@@ -116,7 +116,7 @@ impl Parser<'_> {
         self.parse_excessive_expression(stops)
     }
 
-    fn parse_assignment_expression_inner(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+    fn parse_assignment_expression_inner(&mut self, stops: StopSet) -> CompletedMarker {
         let lhs = self.parse_binary_expression(stops, 0);
         if self.at_expression_boundary(stops) || !is_assignment_operator(self.current_kind()) {
             return lhs;
@@ -146,7 +146,7 @@ impl Parser<'_> {
 
     fn parse_binary_expression(
         &mut self,
-        stops: StopSet<'_>,
+        stops: StopSet,
         minimum_precedence: u8,
     ) -> CompletedMarker {
         let mut lhs = self.parse_unary_expression(stops);
@@ -199,7 +199,7 @@ impl Parser<'_> {
         lhs
     }
 
-    fn parse_unary_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+    fn parse_unary_expression(&mut self, stops: StopSet) -> CompletedMarker {
         if let Some(expression) =
             self.with_syntax_nesting(|parser| parser.parse_unary_expression_inner(stops))
         {
@@ -209,7 +209,7 @@ impl Parser<'_> {
         self.parse_excessive_expression(stops)
     }
 
-    fn parse_unary_expression_inner(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+    fn parse_unary_expression_inner(&mut self, stops: StopSet) -> CompletedMarker {
         if is_unary_operator(self.current_kind()) {
             let unary = self.start();
             self.bump();
@@ -220,7 +220,7 @@ impl Parser<'_> {
         self.parse_postfix_expression(stops)
     }
 
-    fn parse_excessive_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+    fn parse_excessive_expression(&mut self, stops: StopSet) -> CompletedMarker {
         let cursor = self.fork_cursor();
         let deferred_stop = deferred_expression_stop(&mut self.buffer, cursor, stops);
         let expression = self.start();
@@ -267,7 +267,7 @@ impl Parser<'_> {
         self.complete_recovery(expression, K::BogusExpression, [diagnostic])
     }
 
-    fn parse_postfix_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+    fn parse_postfix_expression(&mut self, stops: StopSet) -> CompletedMarker {
         let mut expression = self.parse_primary_expression(stops);
 
         loop {
@@ -433,7 +433,7 @@ impl Parser<'_> {
         self.complete(call, K::CallExpression)
     }
 
-    fn parse_primary_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+    fn parse_primary_expression(&mut self, stops: StopSet) -> CompletedMarker {
         match self.current_kind() {
             K::At | K::Hash => self.parse_annotated_expression(stops),
             K::IfKw => self.parse_if_expression(stops),
@@ -476,7 +476,7 @@ impl Parser<'_> {
         self.complete(marker, kind)
     }
 
-    fn parse_annotated_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+    fn parse_annotated_expression(&mut self, stops: StopSet) -> CompletedMarker {
         let marker = self.start();
         let prefix = self.start();
         while self.at_modifier_or_annotation() {
@@ -602,47 +602,47 @@ impl Parser<'_> {
         self.complete(marker, K::ParenthesizedExpression)
     }
 
-    fn parse_jump_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+    fn parse_jump_expression(&mut self, stops: StopSet) -> CompletedMarker {
         let marker = self.start();
         let keyword = self.current_kind();
         self.bump();
         self.parse_optional_typed_label_reference();
         if !self.at_semicolon_boundary()
-            && !self.at_expression_boundary(stops.with_extra(K::RBrace))
+            && !self.at_expression_boundary(stops.with_kind(K::RBrace))
             && !self.at_expression_rhs_declaration_boundary()
         {
             if keyword == K::ReturnKw {
-                self.parse_expression_until(stops.with_extra(K::RBrace));
+                self.parse_expression_until(stops.with_kind(K::RBrace));
             } else {
                 let expression = self.start();
                 let diagnostic =
                     self.pending_unexpected("break and continue do not accept an expression");
 
-                self.parse_expression_until(stops.with_extra(K::RBrace));
+                self.parse_expression_until(stops.with_kind(K::RBrace));
                 self.complete_recovery(expression, K::BogusExpression, [diagnostic]);
             }
         }
         self.complete(marker, K::JumpExpression)
     }
 
-    fn parse_throw_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+    fn parse_throw_expression(&mut self, stops: StopSet) -> CompletedMarker {
         let marker = self.start();
         self.bump();
         // `throw` is the one jump form whose grammar is `'throw' {NL} expression`,
         // so a newline after the keyword continues the throw instead of ending
         // it the way it ends a `return`, `break`, or `continue`.
         if self.at_statement_terminator()
-            || self.at_expression_boundary(stops.with_extra(K::RBrace))
+            || self.at_expression_boundary(stops.with_kind(K::RBrace))
             || self.at_expression_rhs_declaration_boundary()
         {
             self.complete_missing_expression("expected expression after 'throw'");
         } else {
-            self.parse_expression_until(stops.with_extra(K::RBrace));
+            self.parse_expression_until(stops.with_kind(K::RBrace));
         }
         self.complete(marker, K::ThrowExpression)
     }
 
-    fn parse_labeled_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+    fn parse_labeled_expression(&mut self, stops: StopSet) -> CompletedMarker {
         let marker = self.start();
         self.parse_optional_label_definition();
         self.parse_assignment_expression(stops);
@@ -678,7 +678,7 @@ impl Parser<'_> {
         self.complete(target, K::CallableReferenceTarget);
     }
 
-    fn elvis_missing_rhs(&mut self, stops: StopSet<'_>) -> bool {
+    fn elvis_missing_rhs(&mut self, stops: StopSet) -> bool {
         let next = self.nth_kind(1);
         next == K::Eof
             || stops.contains(next, self.position() + 1)
@@ -690,7 +690,7 @@ impl Parser<'_> {
                 && matches!(next, K::ReturnKw | K::BreakKw | K::ContinueKw))
     }
 
-    fn at_expression_boundary(&mut self, stops: StopSet<'_>) -> bool {
+    fn at_expression_boundary(&mut self, stops: StopSet) -> bool {
         self.at_eof() || stops.contains(self.current_kind(), self.position())
     }
 
@@ -719,7 +719,7 @@ impl Parser<'_> {
         true
     }
 
-    fn binary_operator_info(&mut self, stops: StopSet<'_>) -> Option<BinaryOperatorInfo> {
+    fn binary_operator_info(&mut self, stops: StopSet) -> Option<BinaryOperatorInfo> {
         if self.at_expression_boundary(stops) {
             return None;
         }

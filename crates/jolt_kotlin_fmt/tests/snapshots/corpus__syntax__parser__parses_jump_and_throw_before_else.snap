@@ -1,0 +1,29 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class JumpBeforeElseException : Exception()
+
+fun emptyReturn() {
+  if (true) return else println(1)
+}
+
+fun valuedReturn(): Int = if (true) return 1 else 2
+
+fun loop() {
+  for (index in 1..2) if (index > 1) break else continue
+}
+
+fun thrown() {
+  if (true) throw JumpBeforeElseException() else println(1)
+}
+
+fun nested(first: Boolean, second: Boolean): Int {
+  if (first)
+    if (second) return 1 else return 2
+  return 3
+}
+
+diagnostics:
+(none)

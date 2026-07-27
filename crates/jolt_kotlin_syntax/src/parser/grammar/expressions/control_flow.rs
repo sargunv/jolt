@@ -10,7 +10,7 @@ const MAX_ANONYMOUS_FUNCTION_RECEIVER_LOOKAHEAD: usize = 128;
 const MAX_FOR_HEADER_RECOVERY_LOOKAHEAD: usize = 128;
 
 impl Parser<'_> {
-    pub(super) fn parse_if_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+    pub(super) fn parse_if_expression(&mut self, stops: StopSet) -> CompletedMarker {
         let marker = self.start();
         self.eat_asserted(K::IfKw);
         if self.at(K::LParen) {
@@ -19,7 +19,7 @@ impl Parser<'_> {
             self.complete_missing_parenthesized_expression("expected condition after 'if'");
         }
         self.parse_control_structure_body(
-            stops.with_extra(K::ElseKw),
+            stops.with_kind(K::ElseKw),
             "expected branch after 'if' condition",
         );
         if self.eat(K::ElseKw) {
@@ -536,7 +536,7 @@ impl Parser<'_> {
         self.complete(marker, K::ObjectExpression)
     }
 
-    fn parse_control_structure_body(&mut self, stops: StopSet<'_>, message: &'static str) {
+    fn parse_control_structure_body(&mut self, stops: StopSet, message: &'static str) {
         if self.at(K::LBrace) {
             self.parse_block();
         } else if matches!(self.current_kind(), K::Semicolon | K::DoubleSemicolon) {
