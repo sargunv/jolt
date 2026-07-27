@@ -1,0 +1,148 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun infixChains(baseValue: Int, shiftAmountFromConfiguration: Int, lowBitsMaskValue: Int, highMaskValue: Int) {
+  val mask = baseValue shl shiftAmountFromConfiguration or lowBitsMaskValue and highMaskValue
+  for (index in initialIndexValue until exclusiveEndIndexBoundary step configuredStepSizeValue) {
+    consume(index)
+  }
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "infixChains" @ 4..15
+      ValueParameterList
+        LParen "(" @ 15..16
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "baseValue" @ 16..25
+            Colon ":" @ 25..26 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 27..30
+          Comma "," @ 30..31 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "shiftAmountFromConfiguration" @ 32..60
+            Colon ":" @ 60..61 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 62..65
+          Comma "," @ 65..66 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "lowBitsMaskValue" @ 67..83
+            Colon ":" @ 83..84 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 85..88
+          Comma "," @ 88..89 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "highMaskValue" @ 90..103
+            Colon ":" @ 103..104 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 105..108
+        RParen ")" @ 108..109 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 110..111
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 114..117 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "mask" @ 118..122 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 123..124 trailing=[Whitespace " "]
+                BinaryExpression
+                  BinaryExpression
+                    BinaryExpression
+                      NameExpression
+                        Identifier "baseValue" @ 125..134 trailing=[Whitespace " "]
+                      Identifier "shl" @ 135..138 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "shiftAmountFromConfiguration" @ 139..167 trailing=[Whitespace " "]
+                    Identifier "or" @ 168..170 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "lowBitsMaskValue" @ 171..187 trailing=[Whitespace " "]
+                  Identifier "and" @ 188..191 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "highMaskValue" @ 192..205
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                ForStatement
+                  ForKw "for" @ 208..211 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                  LParen "(" @ 212..213
+                  ForVariable
+                    ModifierList
+                    Name
+                      Identifier "index" @ 213..218 trailing=[Whitespace " "]
+                  InKw "in" @ 219..221 trailing=[Whitespace " "]
+                  BinaryExpression
+                    BinaryExpression
+                      NameExpression
+                        Identifier "initialIndexValue" @ 222..239 trailing=[Whitespace " "]
+                      Identifier "until" @ 240..245 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "exclusiveEndIndexBoundary" @ 246..271 trailing=[Whitespace " "]
+                    Identifier "step" @ 272..276 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "configuredStepSizeValue" @ 277..300
+                  RParen ")" @ 300..301 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 302..303
+                    BlockItemList
+                      Statement
+                        ExpressionStatement
+                          CallExpression
+                            NameExpression
+                              Identifier "consume" @ 308..315 leading=[Newline "\n", Whitespace "    "]
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 315..316
+                              ValueArgumentEntryList
+                                ValueArgument
+                                  ValueArgumentPrefixList
+                                  NameExpression
+                                    Identifier "index" @ 316..321
+                              RParen ")" @ 321..322
+                            LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 325..326 leading=[Newline "\n", Whitespace "  "]
+              TerminatorList
+          RBrace "}" @ 327..328 leading=[Newline "\n"]
+  Eof "" @ 329..329 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,24 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun infixChains(
+  baseValue: Int,
+  shiftAmountFromConfiguration: Int,
+  lowBitsMaskValue: Int,
+  highMaskValue: Int
+) {
+  val mask = baseValue shl
+    shiftAmountFromConfiguration or
+    lowBitsMaskValue and
+    highMaskValue
+  for (index in initialIndexValue until
+    exclusiveEndIndexBoundary step
+    configuredStepSizeValue) {
+    consume(index)
+  }
+}
+
+diagnostics:
+(none)

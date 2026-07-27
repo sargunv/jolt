@@ -188,11 +188,6 @@ fn finish_pending_binary_run<'source>(
         &run.first_operand,
         root_operator,
     );
-    let keep_infix_chain_flat = run.parts.len() > 1
-        && run
-            .parts
-            .iter()
-            .all(|(operator, _)| operator.kind() == KotlinSyntaxKind::Identifier);
     let rest = doc.concat_list(|docs| {
         for (operator, operand) in run.parts {
             let operand = format_binary_operand(docs, &run.owner, &operand, &operator);
@@ -206,8 +201,6 @@ fn finish_pending_binary_run<'source>(
                 // space and swallow the operand into the comment.
                 let line = if operator.forces_line_after {
                     docs.hard_line()
-                } else if keep_infix_chain_flat {
-                    docs.space()
                 } else if !spaced {
                     docs.soft_line()
                 } else {
