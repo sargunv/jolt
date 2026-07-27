@@ -1,0 +1,128 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class MultiVariableDeclaratorContinuations {
+  int firstFieldVariable = 1, secondFieldVariable = 2, thirdFieldVariable = provider();
+
+  void method() {
+    int firstLocalVariable = 1, secondLocalVariable = 2, thirdLocalVariable = provider();
+  }
+
+  int provider() {
+    return 3;
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "MultiVariableDeclaratorContinuations" @ 6..42 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 43..44
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 47..50 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "firstFieldVariable" @ 51..69 trailing=[Whitespace " "]
+                Assign "=" @ 70..71 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "1" @ 72..73
+              Comma "," @ 73..74 trailing=[Whitespace " "]
+              VariableDeclarator
+                Identifier "secondFieldVariable" @ 75..94 trailing=[Whitespace " "]
+                Assign "=" @ 95..96 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "2" @ 97..98
+              Comma "," @ 98..99 trailing=[Whitespace " "]
+              VariableDeclarator
+                Identifier "thirdFieldVariable" @ 100..118 trailing=[Whitespace " "]
+                Assign "=" @ 119..120 trailing=[Whitespace " "]
+                VariableInitializer
+                  MethodInvocationExpression
+                    UnqualifiedMethodInvocation
+                      NameExpression
+                        Identifier "provider" @ 121..129
+                      ArgumentList
+                        LParen "(" @ 129..130
+                        ExpressionList
+                        RParen ")" @ 130..131
+            Semicolon ";" @ 131..132
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 136..140 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "method" @ 141..147
+            LParen "(" @ 147..148
+            RParen ")" @ 148..149 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 150..151
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 156..159 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "firstLocalVariable" @ 160..178 trailing=[Whitespace " "]
+                        Assign "=" @ 179..180 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "1" @ 181..182
+                      Comma "," @ 182..183 trailing=[Whitespace " "]
+                      VariableDeclarator
+                        Identifier "secondLocalVariable" @ 184..203 trailing=[Whitespace " "]
+                        Assign "=" @ 204..205 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "2" @ 206..207
+                      Comma "," @ 207..208 trailing=[Whitespace " "]
+                      VariableDeclarator
+                        Identifier "thirdLocalVariable" @ 209..227 trailing=[Whitespace " "]
+                        Assign "=" @ 228..229 trailing=[Whitespace " "]
+                        VariableInitializer
+                          MethodInvocationExpression
+                            UnqualifiedMethodInvocation
+                              NameExpression
+                                Identifier "provider" @ 230..238
+                              ArgumentList
+                                LParen "(" @ 238..239
+                                ExpressionList
+                                RParen ")" @ 239..240
+                  Semicolon ";" @ 240..241
+              RBrace "}" @ 244..245 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 249..252 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "provider" @ 253..261
+            LParen "(" @ 261..262
+            RParen ")" @ 262..263 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 264..265
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 270..276 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    LiteralExpression
+                      IntegerLiteral "3" @ 277..278
+                    Semicolon ";" @ 278..279
+              RBrace "}" @ 282..283 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 284..285 leading=[Newline "\n"]
+  Eof "" @ 286..286 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

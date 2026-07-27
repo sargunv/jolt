@@ -446,7 +446,7 @@ fn format_variable_declarator_list<'source>(
 ) -> Doc<'source> {
     let items = variable_declarator_list_items(declarators, doc);
     let list = comma_list(doc, items);
-    doc_group!(doc, list)
+    doc_group!(doc, doc_indent!(doc, list))
 }
 
 fn single_declarator<'source>(
