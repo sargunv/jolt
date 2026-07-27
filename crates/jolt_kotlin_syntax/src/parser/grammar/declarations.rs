@@ -140,6 +140,10 @@ impl Parser<'_> {
             index += 2;
         }
 
+        if self.kind_at(index) == K::LBracket {
+            return self.skip_balanced_delimiter(index, K::LBracket, K::RBracket);
+        }
+
         let end = self.position() + MAX_DECLARATION_LOOKAHEAD;
         let mut consumed_name = false;
         while index < end {
@@ -239,6 +243,14 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_annotation(&mut self) {
+        self.parse_annotation_with_argument_spacing(false);
+    }
+
+    pub(super) fn parse_type_prefix_annotation(&mut self) {
+        self.parse_annotation_with_argument_spacing(true);
+    }
+
+    fn parse_annotation_with_argument_spacing(&mut self, require_adjacent_arguments: bool) {
         let marker = self.start();
         let _ = self.eat(K::At) || self.eat(K::Hash);
         if self.at_annotation_use_site_target() && self.nth_kind(1) == K::Colon {
@@ -247,8 +259,36 @@ impl Parser<'_> {
             self.bump();
             self.complete(target, K::AnnotationUseSiteTarget);
         }
+
+        if self.at(K::LBracket) {
+            self.bump();
+            let annotations = self.start();
+            while self.at_identifier_like() {
+                let annotation = self.start();
+                self.parse_qualified_name();
+                if self.at(K::LParen) {
+                    self.parse_annotation_argument_list();
+                }
+                self.complete(annotation, K::UnescapedAnnotation);
+            }
+            self.complete(annotations, K::UnescapedAnnotationList);
+            if !self.eat(K::RBracket) {
+                let diagnostic = self.pending_expected("expected ']' after annotations");
+                self.missing_required_slot(
+                    marker.anchor(),
+                    crate::shape::multi_annotation::Slot::close_bracket as u16,
+                    [diagnostic],
+                );
+            }
+            self.complete(marker, K::MultiAnnotation);
+            return;
+        }
+
         self.parse_qualified_name();
-        if self.at(K::LParen) {
+        let position = self.position();
+        let arguments_are_adjacent = !require_adjacent_arguments
+            || (position > 0 && self.tokens_are_adjacent(position - 1, 2));
+        if self.at(K::LParen) && arguments_are_adjacent {
             self.parse_annotation_argument_list();
         }
         self.complete(marker, K::Annotation);

@@ -14,7 +14,7 @@ use crate::helpers::recovery::{
     KotlinFormatListPart, format_malformed, format_missing, format_optional_field,
     format_required_field, resolve_list_part,
 };
-use crate::rules::annotations::format_annotation;
+use crate::rules::annotations::format_annotation_syntax;
 use crate::rules::declarations::format_file_item;
 use crate::rules::imports::format_import_list;
 use crate::rules::names::format_qualified_name;
@@ -338,7 +338,7 @@ fn format_file_annotations<'source>(
     for part in annotations.parts() {
         match resolve_list_part(part, doc) {
             KotlinFormatListPart::Item(annotation) => {
-                formatted.push(format_annotation(doc, &annotation));
+                formatted.push(format_annotation_syntax(doc, &annotation));
             }
             KotlinFormatListPart::Separator(separator) => formatted.push(format_token(
                 doc,
