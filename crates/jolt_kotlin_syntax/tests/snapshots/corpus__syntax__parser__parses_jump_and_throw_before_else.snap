@@ -1,0 +1,311 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class JumpBeforeElseException : Exception()
+
+fun emptyReturn() {
+  if (true) return else println(1)
+}
+
+fun valuedReturn(): Int = if (true) return 1 else 2
+
+fun loop() {
+  for (index in 1..2) if (index > 1) break else continue
+}
+
+fun thrown() {
+  if (true) throw JumpBeforeElseException() else println(1)
+}
+
+fun nested(first: Boolean, second: Boolean): Int {
+  if (first)
+    if (second) return 1
+    else return 2
+  return 3
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "JumpBeforeElseException" @ 6..29 trailing=[Whitespace " "]
+      DelegationClause
+        Colon ":" @ 30..31 trailing=[Whitespace " "]
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Exception" @ 32..41
+            ValueArgumentList
+              LParen "(" @ 41..42
+              ValueArgumentEntryList
+              RParen ")" @ 42..43
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 45..48 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "emptyReturn" @ 49..60
+      ValueParameterList
+        LParen "(" @ 60..61
+        ValueParameterSeparatedList
+        RParen ")" @ 61..62 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 63..64
+          BlockItemList
+            Statement
+              ExpressionStatement
+                IfExpression
+                  IfKw "if" @ 67..69 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 70..71
+                    LiteralExpression
+                      TrueKw "true" @ 71..75
+                    RParen ")" @ 75..76 trailing=[Whitespace " "]
+                  JumpExpression
+                    ReturnKw "return" @ 77..83 trailing=[Whitespace " "]
+                  ElseKw "else" @ 84..88 trailing=[Whitespace " "]
+                  CallExpression
+                    NameExpression
+                      Identifier "println" @ 89..96
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 96..97
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          LiteralExpression
+                            IntegerLiteral "1" @ 97..98
+                      RParen ")" @ 98..99
+                    LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 100..101 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 103..106 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "valuedReturn" @ 107..119
+      ValueParameterList
+        LParen "(" @ 119..120
+        ValueParameterSeparatedList
+        RParen ")" @ 120..121
+      Colon ":" @ 121..122 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 123..126 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 127..128 trailing=[Whitespace " "]
+        IfExpression
+          IfKw "if" @ 129..131 trailing=[Whitespace " "]
+          ParenthesizedExpression
+            LParen "(" @ 132..133
+            LiteralExpression
+              TrueKw "true" @ 133..137
+            RParen ")" @ 137..138 trailing=[Whitespace " "]
+          JumpExpression
+            ReturnKw "return" @ 139..145 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "1" @ 146..147 trailing=[Whitespace " "]
+          ElseKw "else" @ 148..152 trailing=[Whitespace " "]
+          LiteralExpression
+            IntegerLiteral "2" @ 153..154
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 156..159 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "loop" @ 160..164
+      ValueParameterList
+        LParen "(" @ 164..165
+        ValueParameterSeparatedList
+        RParen ")" @ 165..166 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 167..168
+          BlockItemList
+            Statement
+              ExpressionStatement
+                ForStatement
+                  ForKw "for" @ 171..174 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                  LParen "(" @ 175..176
+                  ForVariable
+                    ModifierList
+                    Name
+                      Identifier "index" @ 176..181 trailing=[Whitespace " "]
+                  InKw "in" @ 182..184 trailing=[Whitespace " "]
+                  BinaryExpression
+                    LiteralExpression
+                      IntegerLiteral "1" @ 185..186
+                    Range ".." @ 186..188
+                    LiteralExpression
+                      IntegerLiteral "2" @ 188..189
+                  RParen ")" @ 189..190 trailing=[Whitespace " "]
+                  IfExpression
+                    IfKw "if" @ 191..193 trailing=[Whitespace " "]
+                    ParenthesizedExpression
+                      LParen "(" @ 194..195
+                      BinaryExpression
+                        NameExpression
+                          Identifier "index" @ 195..200 trailing=[Whitespace " "]
+                        Gt ">" @ 201..202 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "1" @ 203..204
+                      RParen ")" @ 204..205 trailing=[Whitespace " "]
+                    JumpExpression
+                      BreakKw "break" @ 206..211 trailing=[Whitespace " "]
+                    ElseKw "else" @ 212..216 trailing=[Whitespace " "]
+                    JumpExpression
+                      ContinueKw "continue" @ 217..225
+              TerminatorList
+          RBrace "}" @ 226..227 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 229..232 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "thrown" @ 233..239
+      ValueParameterList
+        LParen "(" @ 239..240
+        ValueParameterSeparatedList
+        RParen ")" @ 240..241 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 242..243
+          BlockItemList
+            Statement
+              ExpressionStatement
+                IfExpression
+                  IfKw "if" @ 246..248 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 249..250
+                    LiteralExpression
+                      TrueKw "true" @ 250..254
+                    RParen ")" @ 254..255 trailing=[Whitespace " "]
+                  ThrowExpression
+                    ThrowKw "throw" @ 256..261 trailing=[Whitespace " "]
+                    CallExpression
+                      NameExpression
+                        Identifier "JumpBeforeElseException" @ 262..285
+                      TypeArgumentListList
+                      ValueArgumentList
+                        LParen "(" @ 285..286
+                        ValueArgumentEntryList
+                        RParen ")" @ 286..287 trailing=[Whitespace " "]
+                      LambdaExpressionList
+                  ElseKw "else" @ 288..292 trailing=[Whitespace " "]
+                  CallExpression
+                    NameExpression
+                      Identifier "println" @ 293..300
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 300..301
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          LiteralExpression
+                            IntegerLiteral "1" @ 301..302
+                      RParen ")" @ 302..303
+                    LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 304..305 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 307..310 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "nested" @ 311..317
+      ValueParameterList
+        LParen "(" @ 317..318
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "first" @ 318..323
+            Colon ":" @ 323..324 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Boolean" @ 325..332
+          Comma "," @ 332..333 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "second" @ 334..340
+            Colon ":" @ 340..341 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Boolean" @ 342..349
+        RParen ")" @ 349..350
+      Colon ":" @ 350..351 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 352..355 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 356..357
+          BlockItemList
+            Statement
+              ExpressionStatement
+                IfExpression
+                  IfKw "if" @ 360..362 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 363..364
+                    NameExpression
+                      Identifier "first" @ 364..369
+                    RParen ")" @ 369..370
+                  IfExpression
+                    IfKw "if" @ 375..377 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ParenthesizedExpression
+                      LParen "(" @ 378..379
+                      NameExpression
+                        Identifier "second" @ 379..385
+                      RParen ")" @ 385..386 trailing=[Whitespace " "]
+                    JumpExpression
+                      ReturnKw "return" @ 387..393 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "1" @ 394..395
+                    ElseKw "else" @ 400..404 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    JumpExpression
+                      ReturnKw "return" @ 405..411 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "2" @ 412..413
+              TerminatorList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 416..422 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "3" @ 423..424
+              TerminatorList
+          RBrace "}" @ 425..426 leading=[Newline "\n"]
+  Eof "" @ 427..427 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

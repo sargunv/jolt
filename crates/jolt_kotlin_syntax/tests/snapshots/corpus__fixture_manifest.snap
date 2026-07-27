@@ -181,6 +181,7 @@ syntax/parser/parses-import-soft-keyword-qualified-names.kt
 syntax/parser/parses-import-star.kt
 syntax/parser/parses-interface-fun-and-sealed.kt
 syntax/parser/parses-interface-members-and-properties.kt
+syntax/parser/parses-jump-and-throw-before-else.kt
 syntax/parser/parses-jump-labeled-return-break-continue.kt
 syntax/parser/parses-lambda-anonymous-function-expressions.kt
 syntax/parser/parses-lambda-parameter-forms-and-labels.kt

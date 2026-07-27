@@ -5,7 +5,10 @@ use super::source::{ParseEvents, Parser};
 #[derive(Clone, Copy)]
 struct StopSet<'a> {
     kinds: &'a [KotlinSyntaxKind],
-    extra: Option<KotlinSyntaxKind>,
+    // Expression parsing composes at most the enclosing control-flow stop and
+    // the braced-expression recovery stop. Keep both inline so passing a stop
+    // through another expression layer cannot overwrite it.
+    extras: [Option<KotlinSyntaxKind>; 2],
     position: Option<usize>,
 }
 
@@ -13,17 +16,19 @@ impl<'a> StopSet<'a> {
     const fn new(kinds: &'a [KotlinSyntaxKind]) -> Self {
         Self {
             kinds,
-            extra: None,
+            extras: [None, None],
             position: None,
         }
     }
 
-    const fn with_extra(self, extra: KotlinSyntaxKind) -> Self {
-        Self {
-            kinds: self.kinds,
-            extra: Some(extra),
-            position: self.position,
+    fn with_extra(mut self, extra: KotlinSyntaxKind) -> Self {
+        if self.extras.contains(&Some(extra)) {
+            return self;
         }
+        if let Some(slot) = self.extras.iter_mut().find(|slot| slot.is_none()) {
+            *slot = Some(extra);
+        }
+        self
     }
 
     const fn with_position(self, position: Option<usize>) -> Self {
@@ -31,7 +36,9 @@ impl<'a> StopSet<'a> {
     }
 
     fn contains(self, kind: KotlinSyntaxKind, position: usize) -> bool {
-        self.position == Some(position) || self.extra == Some(kind) || self.kinds.contains(&kind)
+        self.position == Some(position)
+            || self.extras.contains(&Some(kind))
+            || self.kinds.contains(&kind)
     }
 }
 
