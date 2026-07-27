@@ -295,29 +295,30 @@ impl<'source> Scanner<'source> {
             return start..start;
         }
 
-        while self.current_char().is_some_and(is_horizontal_whitespace) {
-            trivia.push(self.horizontal_whitespace());
-        }
-
-        match (self.current_char(), self.peek_char(1)) {
-            (Some('/'), Some('/')) => {
-                trivia.push(self.line_comment());
-                while self.current_char().is_some_and(is_horizontal_whitespace) {
-                    trivia.push(self.horizontal_whitespace());
-                }
+        loop {
+            while self.current_char().is_some_and(is_horizontal_whitespace) {
+                trivia.push(self.horizontal_whitespace());
             }
-            (Some('/'), Some('*')) => {
-                let end = find_nested_block_comment_end(self.source, self.pos);
-                let is_trailing_comment =
-                    end.is_some_and(|end| !contains_line_terminator(&self.source[self.pos..end]));
-                if is_trailing_comment {
-                    trivia.push(self.block_comment());
+
+            match (self.current_char(), self.peek_char(1)) {
+                (Some('/'), Some('/')) => {
+                    trivia.push(self.line_comment());
                     while self.current_char().is_some_and(is_horizontal_whitespace) {
                         trivia.push(self.horizontal_whitespace());
                     }
+                    break;
                 }
+                (Some('/'), Some('*')) => {
+                    let end = find_nested_block_comment_end(self.source, self.pos);
+                    let is_trailing_comment = end
+                        .is_some_and(|end| !contains_line_terminator(&self.source[self.pos..end]));
+                    if !is_trailing_comment {
+                        break;
+                    }
+                    trivia.push(self.block_comment());
+                }
+                _ => break,
             }
-            _ => {}
         }
 
         start..trivia.len()

@@ -114,6 +114,11 @@ class CommentsBetweenStatementKeywordAndValue {
     assert /* a block comment stays inline */ y > 1;
   }
 
+  int returnsAfterSameLineCommentRun(int y) {
+    return /* block */ // line
+    y + 1;
+  }
+
   boolean ready() {
     return true;
   }

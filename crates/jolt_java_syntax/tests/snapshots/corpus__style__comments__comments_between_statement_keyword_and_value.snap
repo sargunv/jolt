@@ -119,6 +119,11 @@ class CommentsBetweenStatementKeywordAndValue {
     assert /* a block comment stays inline */ y > 1;
   }
 
+  int returnsAfterSameLineCommentRun(int y) {
+    return /* block */ // line
+    y + 1;
+  }
+
   boolean ready() {
     return true;
   }
@@ -744,95 +749,124 @@ CompilationUnit
           MethodDeclaration
             PrimitiveType
               AnnotationList
-              BooleanKw "boolean" @ 2550..2557 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            Identifier "ready" @ 2558..2563
-            LParen "(" @ 2563..2564
-            RParen ")" @ 2564..2565 trailing=[Whitespace " "]
-            Block
-              LBrace "{" @ 2566..2567
-              BlockStatementList
-                BlockStatement
-                  ReturnStatement
-                    ReturnKw "return" @ 2572..2578 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                    LiteralExpression
-                      BooleanLiteral "true" @ 2579..2583
-                    Semicolon ";" @ 2583..2584
-              RBrace "}" @ 2587..2588 leading=[Newline "\n", Whitespace "  "]
-          MethodDeclaration
-            PrimitiveType
-              AnnotationList
-              IntKw "int" @ 2592..2595 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            Identifier "someLongMethodCall" @ 2596..2614
-            LParen "(" @ 2614..2615
+              IntKw "int" @ 2550..2553 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "returnsAfterSameLineCommentRun" @ 2554..2584
+            LParen "(" @ 2584..2585
             FormalParameterList
               FormalParameter
                 ParameterModifierList
                 PrimitiveType
                   AnnotationList
-                  IntKw "int" @ 2615..2618 trailing=[Whitespace " "]
+                  IntKw "int" @ 2585..2588 trailing=[Whitespace " "]
                 AnnotationList
-                Identifier "first" @ 2619..2624
-              Comma "," @ 2624..2625 trailing=[Whitespace " "]
+                Identifier "y" @ 2589..2590
+            RParen ")" @ 2590..2591 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 2592..2593
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 2598..2604 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* block */", Whitespace " ", LineComment "// line"]
+                    BinaryExpression
+                      NameExpression
+                        Identifier "y" @ 2629..2630 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      Plus "+" @ 2631..2632 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "1" @ 2633..2634
+                    Semicolon ";" @ 2634..2635
+              RBrace "}" @ 2638..2639 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              BooleanKw "boolean" @ 2643..2650 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "ready" @ 2651..2656
+            LParen "(" @ 2656..2657
+            RParen ")" @ 2657..2658 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 2659..2660
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 2665..2671 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    LiteralExpression
+                      BooleanLiteral "true" @ 2672..2676
+                    Semicolon ";" @ 2676..2677
+              RBrace "}" @ 2680..2681 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 2685..2688 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "someLongMethodCall" @ 2689..2707
+            LParen "(" @ 2707..2708
+            FormalParameterList
               FormalParameter
                 ParameterModifierList
                 PrimitiveType
                   AnnotationList
-                  IntKw "int" @ 2626..2629 trailing=[Whitespace " "]
+                  IntKw "int" @ 2708..2711 trailing=[Whitespace " "]
                 AnnotationList
-                Identifier "second" @ 2630..2636
-            RParen ")" @ 2636..2637 trailing=[Whitespace " "]
+                Identifier "first" @ 2712..2717
+              Comma "," @ 2717..2718 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 2719..2722 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "second" @ 2723..2729
+            RParen ")" @ 2729..2730 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 2638..2639
+              LBrace "{" @ 2731..2732
               BlockStatementList
                 BlockStatement
                   ReturnStatement
-                    ReturnKw "return" @ 2644..2650 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ReturnKw "return" @ 2737..2743 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
                     BinaryExpression
                       NameExpression
-                        Identifier "first" @ 2651..2656 trailing=[Whitespace " "]
-                      Plus "+" @ 2657..2658 trailing=[Whitespace " "]
+                        Identifier "first" @ 2744..2749 trailing=[Whitespace " "]
+                      Plus "+" @ 2750..2751 trailing=[Whitespace " "]
                       NameExpression
-                        Identifier "second" @ 2659..2665
-                    Semicolon ";" @ 2665..2666
-              RBrace "}" @ 2669..2670 leading=[Newline "\n", Whitespace "  "]
+                        Identifier "second" @ 2752..2758
+                    Semicolon ";" @ 2758..2759
+              RBrace "}" @ 2762..2763 leading=[Newline "\n", Whitespace "  "]
           FieldDeclaration
             PrimitiveType
               AnnotationList
-              IntKw "int" @ 2674..2677 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              IntKw "int" @ 2767..2770 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
             VariableDeclaratorList
               VariableDeclarator
-                Identifier "anotherLongValue" @ 2678..2694 trailing=[Whitespace " "]
-                Assign "=" @ 2695..2696 trailing=[Whitespace " "]
+                Identifier "anotherLongValue" @ 2771..2787 trailing=[Whitespace " "]
+                Assign "=" @ 2788..2789 trailing=[Whitespace " "]
                 VariableInitializer
                   LiteralExpression
-                    IntegerLiteral "2" @ 2697..2698
-            Semicolon ";" @ 2698..2699
+                    IntegerLiteral "2" @ 2790..2791
+            Semicolon ";" @ 2791..2792
           FieldDeclaration
             PrimitiveType
               AnnotationList
-              IntKw "int" @ 2702..2705 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              IntKw "int" @ 2795..2798 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
             VariableDeclaratorList
               VariableDeclarator
-                Identifier "firstArgumentName" @ 2706..2723 trailing=[Whitespace " "]
-                Assign "=" @ 2724..2725 trailing=[Whitespace " "]
+                Identifier "firstArgumentName" @ 2799..2816 trailing=[Whitespace " "]
+                Assign "=" @ 2817..2818 trailing=[Whitespace " "]
                 VariableInitializer
                   LiteralExpression
-                    IntegerLiteral "3" @ 2726..2727
-            Semicolon ";" @ 2727..2728
+                    IntegerLiteral "3" @ 2819..2820
+            Semicolon ";" @ 2820..2821
           FieldDeclaration
             PrimitiveType
               AnnotationList
-              IntKw "int" @ 2731..2734 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              IntKw "int" @ 2824..2827 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
             VariableDeclaratorList
               VariableDeclarator
-                Identifier "secondArgumentName" @ 2735..2753 trailing=[Whitespace " "]
-                Assign "=" @ 2754..2755 trailing=[Whitespace " "]
+                Identifier "secondArgumentName" @ 2828..2846 trailing=[Whitespace " "]
+                Assign "=" @ 2847..2848 trailing=[Whitespace " "]
                 VariableInitializer
                   LiteralExpression
-                    IntegerLiteral "4" @ 2756..2757
-            Semicolon ";" @ 2757..2758
-        RBrace "}" @ 2759..2760 leading=[Newline "\n"]
-  Eof "" @ 2761..2761 leading=[Newline "\n"]
+                    IntegerLiteral "4" @ 2849..2850
+            Semicolon ";" @ 2850..2851
+        RBrace "}" @ 2852..2853 leading=[Newline "\n"]
+  Eof "" @ 2854..2854 leading=[Newline "\n"]
 
 diagnostics:
   (none)
