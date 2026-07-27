@@ -183,7 +183,8 @@ impl Parser<'_> {
             } else {
                 self.bump();
                 if self.at_expression_boundary(stops)
-                    || self.at_expression_rhs_declaration_boundary()
+                    || !expression_start_kind(self.current_kind())
+                        && self.at_expression_rhs_declaration_boundary()
                 {
                     let rhs = self.start();
                     let diagnostic = self.pending_expected("expected expression after operator");
