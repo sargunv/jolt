@@ -210,6 +210,7 @@ fn format_member_parts<'source, T: Copy + JavaSyntaxView<'source>>(
         FormatterIgnoreSplice::Item { index, .. } => {
             formatted.push(format_part(&members[index], &mut format_item, doc));
         }
+        FormatterIgnoreSplice::End { .. } => {}
     });
     formatted.extend(close_dangling_comments);
     let present = !formatted.is_empty();

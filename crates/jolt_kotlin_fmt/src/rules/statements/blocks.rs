@@ -238,6 +238,7 @@ fn block_body_parts_with_ignored<'source>(
                 previous = part.last_token();
             }
         }
+        FormatterIgnoreSplice::End { .. } => {}
     });
     body_items
 }

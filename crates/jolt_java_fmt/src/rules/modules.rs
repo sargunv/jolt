@@ -151,6 +151,7 @@ fn format_directive_parts_with_ignored<'source>(
         FormatterIgnoreSplice::Item { index, .. } => {
             retained.push(parts[index]);
         }
+        FormatterIgnoreSplice::End { .. } => {}
     });
     if !retained.is_empty() {
         let visible = retained.iter().any(directive_part_is_visible);

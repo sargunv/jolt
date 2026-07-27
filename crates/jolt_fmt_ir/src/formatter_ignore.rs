@@ -187,6 +187,10 @@ pub enum FormatterIgnoreSplice<'a, 'source> {
         follows_ignore_run: bool,
         starts_after_ignore_line: bool,
     },
+    /// The container boundary follows the final ignore run directly. An
+    /// own-line marker must carry its line state into the token the container
+    /// emits next, such as a close delimiter, arrow, or guard.
+    End { starts_after_ignore_line: bool },
 }
 
 /// Walks `item_count` represented items together with precomputed ignore runs.
@@ -228,6 +232,12 @@ pub fn for_each_formatter_ignore_splice<'a, 'source>(
         visit(FormatterIgnoreSplice::Ignore(&runs[ignored_index]));
         ignored_index += 1;
     }
+    let starts_after_ignore_line = runs
+        .last()
+        .is_some_and(|run| run.skip_end == item_count && run.range.following_starts_after_line);
+    visit(FormatterIgnoreSplice::End {
+        starts_after_ignore_line,
+    });
 }
 
 /// Derives exact ignored runs for one source-ordered syntax item list.
@@ -1113,8 +1123,32 @@ mod tests {
             FormatterIgnoreSplice::Item { index, .. } => {
                 visited.push(if index == 3 { "after" } else { "unexpected" });
             }
+            FormatterIgnoreSplice::End { .. } => {}
         });
         assert_eq!(visited, ["ignore", "after"]);
+    }
+
+    #[test]
+    fn terminal_ignore_run_carries_own_line_state_to_container_boundary() {
+        let source = "class C { void m() {\n// @formatter:off\nint value;\n// @formatter:on\n} }";
+        let parse = parse_compilation_unit(source);
+        let syntax = parse.syntax().expect("test source has syntax");
+        let root = syntax.syntax_node().expect("test source has a root");
+        let plan = formatter_ignore_plan_with_safety(source, root.tokens(), &mut TestSafety);
+        let items = [Some(item_range(&root, "value"))];
+        let runs = formatter_ignore_runs(&plan, root.text_range(), &items);
+        let mut terminal_starts_after_line = false;
+
+        for_each_formatter_ignore_splice(items.len(), &runs, |event| {
+            if let FormatterIgnoreSplice::End {
+                starts_after_ignore_line,
+            } = event
+            {
+                terminal_starts_after_line = starts_after_ignore_line;
+            }
+        });
+
+        assert!(terminal_starts_after_line);
     }
 
     // Output fixtures cannot measure the required O(items * log ranges) query bound.

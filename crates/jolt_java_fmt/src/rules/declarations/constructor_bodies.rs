@@ -72,6 +72,7 @@ pub(super) fn format_constructor_body<'source>(
         FormatterIgnoreSplice::Item { index, .. } => {
             items.push(format_constructor_body_element(&elements[index], doc));
         }
+        FormatterIgnoreSplice::End { .. } => {}
     });
     items.extend(format_constructor_body_close_dangling_comments(doc, close));
 

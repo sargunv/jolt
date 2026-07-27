@@ -202,12 +202,13 @@ fn format_lambda_parameter_prefix<'source>(
         KotlinSyntaxField::Present(arrow) => Some(arrow),
         _ => None,
     };
-    let items = prepare_comma_list_items_between(doc, items, open, arrow_source.as_ref());
+    let (items, terminal_starts_after_line) =
+        prepare_comma_list_items_between(doc, items, open, arrow_source.as_ref());
     let arrow = format_required_field(parameter_list.arrow(), doc, |arrow, doc| {
         format_token(
             doc,
             &arrow,
-            LeadingTrivia::SuppressAlreadyHandled,
+            LeadingTrivia::Preserve,
             TrailingTrivia::Preserve,
         )
     });
@@ -236,8 +237,12 @@ fn format_lambda_parameter_prefix<'source>(
             visible_index += 1;
         }
         if visible_item_count > 0 {
-            let space = docs.space();
-            docs.push(space);
+            let separator = if terminal_starts_after_line {
+                docs.hard_line_boundary()
+            } else {
+                docs.space()
+            };
+            docs.push(separator);
         }
         docs.push(arrow);
     })

@@ -26,6 +26,12 @@ val inlineMarkerBeforeLaterLineComment = listOf(
   , trailingValue,
 )
 
+val ignoredFinalArgument = listOf(
+  // @formatter:off
+  first   +   second
+  // @formatter:on
+)
+
 val adjacentIgnoredRuns = listOf(
   // @formatter:off
   first   +   value
@@ -50,6 +56,13 @@ val ownLineIgnoredLambdaParameters = {
   , second: Int -> first + second
 }
 
+val ignoredFinalLambdaParameter = {
+  // @formatter:off
+  value   :   Int
+  // @formatter:on
+  -> value
+}
+
 fun <T> ignoredTypeConstraints(value: T): T
   where // @formatter:off
     T   :   FirstConstraint
@@ -68,6 +81,22 @@ fun ignoredWhenConditions(value: Any): Int = when (value) {
   is   FirstType
   // @formatter:on
   , is SecondType -> 1
+  else -> 0
+}
+
+fun ignoredFinalWhenCondition(value: Any): Int = when (value) {
+  // @formatter:off
+  is   FirstType
+  // @formatter:on
+  -> 1
+  else -> 0
+}
+
+fun ignoredFinalGuardedCondition(value: Any, allowed: Boolean): Int = when (value) {
+  // @formatter:off
+  is   FirstType
+  // @formatter:on
+  if allowed -> 1
   else -> 0
 }
 
@@ -216,356 +245,548 @@ KotlinFile
       ModifierList
       ValKw "val" @ 479..482 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
-        Identifier "adjacentIgnoredRuns" @ 483..502 trailing=[Whitespace " "]
+        Identifier "ignoredFinalArgument" @ 483..503 trailing=[Whitespace " "]
       PropertyInitializer
-        Assign "=" @ 503..504 trailing=[Whitespace " "]
+        Assign "=" @ 504..505 trailing=[Whitespace " "]
         CallExpression
           NameExpression
-            Identifier "listOf" @ 505..511
+            Identifier "listOf" @ 506..512
           TypeArgumentListList
           ValueArgumentList
-            LParen "(" @ 511..512
+            LParen "(" @ 512..513
             ValueArgumentEntryList
               ValueArgument
                 ValueArgumentPrefixList
                 BinaryExpression
                   NameExpression
-                    Identifier "first" @ 535..540 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
-                  Plus "+" @ 543..544 trailing=[Whitespace "   "]
+                    Identifier "first" @ 536..541 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+                  Plus "+" @ 544..545 trailing=[Whitespace "   "]
                   NameExpression
-                    Identifier "value" @ 547..552
-              Comma "," @ 574..575 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "]
-              ValueArgument
-                ValueArgumentPrefixList
-                BinaryExpression
-                  NameExpression
-                    Identifier "second" @ 598..604 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
-                  Plus "+" @ 607..608 trailing=[Whitespace "   "]
-                  NameExpression
-                    Identifier "value" @ 611..616
-              Comma "," @ 638..639 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-              ValueArgument
-                ValueArgumentPrefixList
-                NameExpression
-                  Identifier "trailingValue" @ 640..653
-              Comma "," @ 653..654
-            RParen ")" @ 655..656 leading=[Newline "\n"]
+                    Identifier "second" @ 548..554
+            RParen ")" @ 574..575 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"]
           LambdaExpressionList
       PropertyBodyMemberList
     PropertyDeclaration
       ModifierList
       ModifierList
-      ValKw "val" @ 658..661 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ValKw "val" @ 577..580 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
-        Identifier "ignoredLambdaParameters" @ 662..685 trailing=[Whitespace " "]
+        Identifier "adjacentIgnoredRuns" @ 581..600 trailing=[Whitespace " "]
       PropertyInitializer
-        Assign "=" @ 686..687 trailing=[Whitespace " "]
-        LambdaExpression
-          LambdaBody
-            LBrace "{" @ 688..689 trailing=[Whitespace " ", LineComment "// @formatter:off"]
-            LambdaParameterList
-              LambdaParameterSeparatedList
-                LambdaParameter
-                  ModifierList
-                  LambdaParameterBinding
-                    Name
-                      Identifier "first" @ 710..715 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
-                  Colon ":" @ 718..719 trailing=[Whitespace "   "]
-                  TypeReference
-                    UserType
-                      UserTypeSegmentList
-                        UserTypeSegment
-                          Identifier "Int" @ 722..725
-                Comma "," @ 747..748 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-                LambdaParameter
-                  ModifierList
-                  LambdaParameterBinding
-                    Name
-                      Identifier "second" @ 749..755
-                  Colon ":" @ 755..756 trailing=[Whitespace " "]
-                  TypeReference
-                    UserType
-                      UserTypeSegmentList
-                        UserTypeSegment
-                          Identifier "Int" @ 757..760 trailing=[Whitespace " "]
-              Arrow "->" @ 761..763 trailing=[Whitespace " "]
-            LambdaBodyItemList
-              Statement
-                ExpressionStatement
-                  BinaryExpression
-                    NameExpression
-                      Identifier "first" @ 764..769 trailing=[Whitespace " "]
-                    Plus "+" @ 770..771 trailing=[Whitespace " "]
-                    NameExpression
-                      Identifier "second" @ 772..778
-                TerminatorList
-            RBrace "}" @ 779..780 leading=[Newline "\n"]
+        Assign "=" @ 601..602 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "listOf" @ 603..609
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 609..610
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                BinaryExpression
+                  NameExpression
+                    Identifier "first" @ 633..638 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+                  Plus "+" @ 641..642 trailing=[Whitespace "   "]
+                  NameExpression
+                    Identifier "value" @ 645..650
+              Comma "," @ 672..673 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "]
+              ValueArgument
+                ValueArgumentPrefixList
+                BinaryExpression
+                  NameExpression
+                    Identifier "second" @ 696..702 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+                  Plus "+" @ 705..706 trailing=[Whitespace "   "]
+                  NameExpression
+                    Identifier "value" @ 709..714
+              Comma "," @ 736..737 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ValueArgument
+                ValueArgumentPrefixList
+                NameExpression
+                  Identifier "trailingValue" @ 738..751
+              Comma "," @ 751..752
+            RParen ")" @ 753..754 leading=[Newline "\n"]
+          LambdaExpressionList
       PropertyBodyMemberList
     PropertyDeclaration
       ModifierList
       ModifierList
-      ValKw "val" @ 782..785 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ValKw "val" @ 756..759 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
-        Identifier "ownLineIgnoredLambdaParameters" @ 786..816 trailing=[Whitespace " "]
+        Identifier "ignoredLambdaParameters" @ 760..783 trailing=[Whitespace " "]
       PropertyInitializer
-        Assign "=" @ 817..818 trailing=[Whitespace " "]
+        Assign "=" @ 784..785 trailing=[Whitespace " "]
         LambdaExpression
           LambdaBody
-            LBrace "{" @ 819..820
+            LBrace "{" @ 786..787 trailing=[Whitespace " ", LineComment "// @formatter:off"]
             LambdaParameterList
               LambdaParameterSeparatedList
                 LambdaParameter
                   ModifierList
                   LambdaParameterBinding
                     Name
-                      Identifier "first" @ 843..848 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
-                  Colon ":" @ 851..852 trailing=[Whitespace "   "]
+                      Identifier "first" @ 808..813 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+                  Colon ":" @ 816..817 trailing=[Whitespace "   "]
                   TypeReference
                     UserType
                       UserTypeSegmentList
                         UserTypeSegment
-                          Identifier "Int" @ 855..858
-                Comma "," @ 880..881 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                          Identifier "Int" @ 820..823
+                Comma "," @ 845..846 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
                 LambdaParameter
                   ModifierList
                   LambdaParameterBinding
                     Name
-                      Identifier "second" @ 882..888
-                  Colon ":" @ 888..889 trailing=[Whitespace " "]
+                      Identifier "second" @ 847..853
+                  Colon ":" @ 853..854 trailing=[Whitespace " "]
                   TypeReference
                     UserType
                       UserTypeSegmentList
                         UserTypeSegment
-                          Identifier "Int" @ 890..893 trailing=[Whitespace " "]
-              Arrow "->" @ 894..896 trailing=[Whitespace " "]
+                          Identifier "Int" @ 855..858 trailing=[Whitespace " "]
+              Arrow "->" @ 859..861 trailing=[Whitespace " "]
             LambdaBodyItemList
               Statement
                 ExpressionStatement
                   BinaryExpression
                     NameExpression
-                      Identifier "first" @ 897..902 trailing=[Whitespace " "]
-                    Plus "+" @ 903..904 trailing=[Whitespace " "]
+                      Identifier "first" @ 862..867 trailing=[Whitespace " "]
+                    Plus "+" @ 868..869 trailing=[Whitespace " "]
                     NameExpression
-                      Identifier "second" @ 905..911
+                      Identifier "second" @ 870..876
                 TerminatorList
-            RBrace "}" @ 912..913 leading=[Newline "\n"]
+            RBrace "}" @ 877..878 leading=[Newline "\n"]
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 880..883 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "ownLineIgnoredLambdaParameters" @ 884..914 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 915..916 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 917..918
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  ModifierList
+                  LambdaParameterBinding
+                    Name
+                      Identifier "first" @ 941..946 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+                  Colon ":" @ 949..950 trailing=[Whitespace "   "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "Int" @ 953..956
+                Comma "," @ 978..979 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                LambdaParameter
+                  ModifierList
+                  LambdaParameterBinding
+                    Name
+                      Identifier "second" @ 980..986
+                  Colon ":" @ 986..987 trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "Int" @ 988..991 trailing=[Whitespace " "]
+              Arrow "->" @ 992..994 trailing=[Whitespace " "]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  BinaryExpression
+                    NameExpression
+                      Identifier "first" @ 995..1000 trailing=[Whitespace " "]
+                    Plus "+" @ 1001..1002 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "second" @ 1003..1009
+                TerminatorList
+            RBrace "}" @ 1010..1011 leading=[Newline "\n"]
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 1013..1016 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "ignoredFinalLambdaParameter" @ 1017..1044 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 1045..1046 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 1047..1048
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  ModifierList
+                  LambdaParameterBinding
+                    Name
+                      Identifier "value" @ 1071..1076 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+                  Colon ":" @ 1079..1080 trailing=[Whitespace "   "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "Int" @ 1083..1086
+              Arrow "->" @ 1108..1110 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  NameExpression
+                    Identifier "value" @ 1111..1116
+                TerminatorList
+            RBrace "}" @ 1117..1118 leading=[Newline "\n"]
       PropertyBodyMemberList
     FunctionDeclaration
       ModifierList
       ModifierList
-      FunKw "fun" @ 915..918 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      FunKw "fun" @ 1120..1123 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       TypeParameterList
-        Lt "<" @ 919..920
+        Lt "<" @ 1124..1125
         TypeParameterSeparatedList
           TypeParameter
             ModifierList
             Name
-              Identifier "T" @ 920..921
-        Gt ">" @ 921..922 trailing=[Whitespace " "]
+              Identifier "T" @ 1125..1126
+        Gt ">" @ 1126..1127 trailing=[Whitespace " "]
       ModifierList
       Name
-        Identifier "ignoredTypeConstraints" @ 923..945
+        Identifier "ignoredTypeConstraints" @ 1128..1150
       ValueParameterList
-        LParen "(" @ 945..946
+        LParen "(" @ 1150..1151
         ValueParameterSeparatedList
           ValueParameter
             ModifierList
             Name
-              Identifier "value" @ 946..951
-            Colon ":" @ 951..952 trailing=[Whitespace " "]
+              Identifier "value" @ 1151..1156
+            Colon ":" @ 1156..1157 trailing=[Whitespace " "]
             TypeReference
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    Identifier "T" @ 953..954
-        RParen ")" @ 954..955
-      Colon ":" @ 955..956 trailing=[Whitespace " "]
+                    Identifier "T" @ 1158..1159
+        RParen ")" @ 1159..1160
+      Colon ":" @ 1160..1161 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              Identifier "T" @ 957..958
+              Identifier "T" @ 1162..1163
       TypeConstraintList
-        Identifier "where" @ 961..966 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", LineComment "// @formatter:off"]
+        Identifier "where" @ 1166..1171 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", LineComment "// @formatter:off"]
         TypeConstraintSeparatedList
           TypeConstraint
             Name
-              Identifier "T" @ 989..990 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace "   "]
-            Colon ":" @ 993..994 trailing=[Whitespace "   "]
+              Identifier "T" @ 1194..1195 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace "   "]
+            Colon ":" @ 1198..1199 trailing=[Whitespace "   "]
             TypeReference
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    Identifier "FirstConstraint" @ 997..1012
-          Comma "," @ 1038..1039 leading=[Newline "\n", Whitespace "    ", LineComment "// @formatter:on", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    Identifier "FirstConstraint" @ 1202..1217
+          Comma "," @ 1243..1244 leading=[Newline "\n", Whitespace "    ", LineComment "// @formatter:on", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           TypeConstraint
             Name
-              Identifier "T" @ 1040..1041 trailing=[Whitespace " "]
-            Colon ":" @ 1042..1043 trailing=[Whitespace " "]
+              Identifier "T" @ 1245..1246 trailing=[Whitespace " "]
+            Colon ":" @ 1247..1248 trailing=[Whitespace " "]
             TypeReference
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    Identifier "SecondConstraint" @ 1044..1060 trailing=[Whitespace " "]
+                    Identifier "SecondConstraint" @ 1249..1265 trailing=[Whitespace " "]
       ExpressionBody
-        Assign "=" @ 1061..1062 trailing=[Whitespace " "]
+        Assign "=" @ 1266..1267 trailing=[Whitespace " "]
         NameExpression
-          Identifier "value" @ 1063..1068
+          Identifier "value" @ 1268..1273
     FunctionDeclaration
       ModifierList
       ModifierList
-      FunKw "fun" @ 1070..1073 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      FunKw "fun" @ 1275..1278 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       TypeParameterList
-        Lt "<" @ 1074..1075
+        Lt "<" @ 1279..1280
         TypeParameterSeparatedList
           TypeParameter
             ModifierList
             Name
-              Identifier "T" @ 1075..1076
-        Gt ">" @ 1076..1077 trailing=[Whitespace " "]
+              Identifier "T" @ 1280..1281
+        Gt ">" @ 1281..1282 trailing=[Whitespace " "]
       ModifierList
       Name
-        Identifier "ownLineIgnoredTypeConstraints" @ 1078..1107
+        Identifier "ownLineIgnoredTypeConstraints" @ 1283..1312
       ValueParameterList
-        LParen "(" @ 1107..1108
+        LParen "(" @ 1312..1313
         ValueParameterSeparatedList
           ValueParameter
             ModifierList
             Name
-              Identifier "value" @ 1108..1113
-            Colon ":" @ 1113..1114 trailing=[Whitespace " "]
+              Identifier "value" @ 1313..1318
+            Colon ":" @ 1318..1319 trailing=[Whitespace " "]
             TypeReference
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    Identifier "T" @ 1115..1116
-        RParen ")" @ 1116..1117
-      Colon ":" @ 1117..1118 trailing=[Whitespace " "]
+                    Identifier "T" @ 1320..1321
+        RParen ")" @ 1321..1322
+      Colon ":" @ 1322..1323 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              Identifier "T" @ 1119..1120
+              Identifier "T" @ 1324..1325
       TypeConstraintList
-        Identifier "where" @ 1123..1128 leading=[Newline "\n", Whitespace "  "]
+        Identifier "where" @ 1328..1333 leading=[Newline "\n", Whitespace "  "]
         TypeConstraintSeparatedList
           TypeConstraint
             Name
-              Identifier "T" @ 1155..1156 leading=[Newline "\n", Whitespace "    ", LineComment "// @formatter:off", Newline "\n", Whitespace "    "] trailing=[Whitespace "   "]
-            Colon ":" @ 1159..1160 trailing=[Whitespace "   "]
+              Identifier "T" @ 1360..1361 leading=[Newline "\n", Whitespace "    ", LineComment "// @formatter:off", Newline "\n", Whitespace "    "] trailing=[Whitespace "   "]
+            Colon ":" @ 1364..1365 trailing=[Whitespace "   "]
             TypeReference
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    Identifier "FirstConstraint" @ 1163..1178
-          Comma "," @ 1204..1205 leading=[Newline "\n", Whitespace "    ", LineComment "// @formatter:on", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    Identifier "FirstConstraint" @ 1368..1383
+          Comma "," @ 1409..1410 leading=[Newline "\n", Whitespace "    ", LineComment "// @formatter:on", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           TypeConstraint
             Name
-              Identifier "T" @ 1206..1207 trailing=[Whitespace " "]
-            Colon ":" @ 1208..1209 trailing=[Whitespace " "]
+              Identifier "T" @ 1411..1412 trailing=[Whitespace " "]
+            Colon ":" @ 1413..1414 trailing=[Whitespace " "]
             TypeReference
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    Identifier "SecondConstraint" @ 1210..1226 trailing=[Whitespace " "]
+                    Identifier "SecondConstraint" @ 1415..1431 trailing=[Whitespace " "]
       ExpressionBody
-        Assign "=" @ 1227..1228 trailing=[Whitespace " "]
+        Assign "=" @ 1432..1433 trailing=[Whitespace " "]
         NameExpression
-          Identifier "value" @ 1229..1234
+          Identifier "value" @ 1434..1439
     FunctionDeclaration
       ModifierList
       ModifierList
-      FunKw "fun" @ 1236..1239 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      FunKw "fun" @ 1441..1444 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
       Name
-        Identifier "ignoredWhenConditions" @ 1240..1261
+        Identifier "ignoredWhenConditions" @ 1445..1466
       ValueParameterList
-        LParen "(" @ 1261..1262
+        LParen "(" @ 1466..1467
         ValueParameterSeparatedList
           ValueParameter
             ModifierList
             Name
-              Identifier "value" @ 1262..1267
-            Colon ":" @ 1267..1268 trailing=[Whitespace " "]
+              Identifier "value" @ 1467..1472
+            Colon ":" @ 1472..1473 trailing=[Whitespace " "]
             TypeReference
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    Identifier "Any" @ 1269..1272
-        RParen ")" @ 1272..1273
-      Colon ":" @ 1273..1274 trailing=[Whitespace " "]
+                    Identifier "Any" @ 1474..1477
+        RParen ")" @ 1477..1478
+      Colon ":" @ 1478..1479 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              Identifier "Int" @ 1275..1278 trailing=[Whitespace " "]
+              Identifier "Int" @ 1480..1483 trailing=[Whitespace " "]
       ExpressionBody
-        Assign "=" @ 1279..1280 trailing=[Whitespace " "]
+        Assign "=" @ 1484..1485 trailing=[Whitespace " "]
         WhenExpression
-          WhenKw "when" @ 1281..1285 trailing=[Whitespace " "]
+          WhenKw "when" @ 1486..1490 trailing=[Whitespace " "]
           WhenSubject
-            LParen "(" @ 1286..1287
+            LParen "(" @ 1491..1492
             NameExpression
-              Identifier "value" @ 1287..1292
-            RParen ")" @ 1292..1293 trailing=[Whitespace " "]
-          LBrace "{" @ 1294..1295
+              Identifier "value" @ 1492..1497
+            RParen ")" @ 1497..1498 trailing=[Whitespace " "]
+          LBrace "{" @ 1499..1500
           WhenEntryList
             WhenEntry
               WhenConditionSeparatedList
                 WhenCondition
-                  IsKw "is" @ 1318..1320 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+                  IsKw "is" @ 1523..1525 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
                   TypeReference
                     UserType
                       UserTypeSegmentList
                         UserTypeSegment
-                          Identifier "FirstType" @ 1323..1332
-                Comma "," @ 1354..1355 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                          Identifier "FirstType" @ 1528..1537
+                Comma "," @ 1559..1560 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
                 WhenCondition
-                  IsKw "is" @ 1356..1358 trailing=[Whitespace " "]
+                  IsKw "is" @ 1561..1563 trailing=[Whitespace " "]
                   TypeReference
                     UserType
                       UserTypeSegmentList
                         UserTypeSegment
-                          Identifier "SecondType" @ 1359..1369 trailing=[Whitespace " "]
-              Arrow "->" @ 1370..1372 trailing=[Whitespace " "]
+                          Identifier "SecondType" @ 1564..1574 trailing=[Whitespace " "]
+              Arrow "->" @ 1575..1577 trailing=[Whitespace " "]
               WhenEntryBody
                 LiteralExpression
-                  IntegerLiteral "1" @ 1373..1374
+                  IntegerLiteral "1" @ 1578..1579
             WhenEntry
-              ElseKw "else" @ 1377..1381 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ElseKw "else" @ 1582..1586 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
               WhenConditionSeparatedList
-              Arrow "->" @ 1382..1384 trailing=[Whitespace " "]
+              Arrow "->" @ 1587..1589 trailing=[Whitespace " "]
               WhenEntryBody
                 LiteralExpression
-                  IntegerLiteral "0" @ 1385..1386
-          RBrace "}" @ 1387..1388 leading=[Newline "\n"]
+                  IntegerLiteral "0" @ 1590..1591
+          RBrace "}" @ 1592..1593 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 1595..1598 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "ignoredFinalWhenCondition" @ 1599..1624
+      ValueParameterList
+        LParen "(" @ 1624..1625
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "value" @ 1625..1630
+            Colon ":" @ 1630..1631 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Any" @ 1632..1635
+        RParen ")" @ 1635..1636
+      Colon ":" @ 1636..1637 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 1638..1641 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 1642..1643 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 1644..1648 trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 1649..1650
+            NameExpression
+              Identifier "value" @ 1650..1655
+            RParen ")" @ 1655..1656 trailing=[Whitespace " "]
+          LBrace "{" @ 1657..1658
+          WhenEntryList
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  IsKw "is" @ 1681..1683 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "FirstType" @ 1686..1695
+              Arrow "->" @ 1717..1719 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              WhenEntryBody
+                LiteralExpression
+                  IntegerLiteral "1" @ 1720..1721
+            WhenEntry
+              ElseKw "else" @ 1724..1728 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 1729..1731 trailing=[Whitespace " "]
+              WhenEntryBody
+                LiteralExpression
+                  IntegerLiteral "0" @ 1732..1733
+          RBrace "}" @ 1734..1735 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 1737..1740 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "ignoredFinalGuardedCondition" @ 1741..1769
+      ValueParameterList
+        LParen "(" @ 1769..1770
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "value" @ 1770..1775
+            Colon ":" @ 1775..1776 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Any" @ 1777..1780
+          Comma "," @ 1780..1781 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "allowed" @ 1782..1789
+            Colon ":" @ 1789..1790 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Boolean" @ 1791..1798
+        RParen ")" @ 1798..1799
+      Colon ":" @ 1799..1800 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 1801..1804 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 1805..1806 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 1807..1811 trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 1812..1813
+            NameExpression
+              Identifier "value" @ 1813..1818
+            RParen ")" @ 1818..1819 trailing=[Whitespace " "]
+          LBrace "{" @ 1820..1821
+          WhenEntryList
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  IsKw "is" @ 1844..1846 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "FirstType" @ 1849..1858
+              WhenGuard
+                IfKw "if" @ 1880..1882 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "allowed" @ 1883..1890 trailing=[Whitespace " "]
+              Arrow "->" @ 1891..1893 trailing=[Whitespace " "]
+              WhenEntryBody
+                LiteralExpression
+                  IntegerLiteral "1" @ 1894..1895
+            WhenEntry
+              ElseKw "else" @ 1898..1902 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 1903..1905 trailing=[Whitespace " "]
+              WhenEntryBody
+                LiteralExpression
+                  IntegerLiteral "0" @ 1906..1907
+          RBrace "}" @ 1908..1909 leading=[Newline "\n"]
     ClassDeclaration
       ModifierList
       ModifierList
-      ClassKw "class" @ 1390..1395 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ClassKw "class" @ 1911..1916 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
-        Identifier "IgnoredDelegation" @ 1396..1413 trailing=[Whitespace " "]
+        Identifier "IgnoredDelegation" @ 1917..1934 trailing=[Whitespace " "]
       DelegationClause
-        Colon ":" @ 1414..1415
+        Colon ":" @ 1935..1936
         DelegationSpecifierSeparatedList
           DelegationSpecifier
             TypeReference
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    Identifier "FirstType" @ 1438..1447 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
-          Comma "," @ 1450..1451 trailing=[Whitespace "   "]
+                    Identifier "FirstType" @ 1959..1968 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+          Comma "," @ 1971..1972 trailing=[Whitespace "   "]
           DelegationSpecifier
             TypeReference
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    Identifier "SecondType" @ 1454..1464
+                    Identifier "SecondType" @ 1975..1985
       ClassBody
-        LBrace "{" @ 1484..1485 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"]
+        LBrace "{" @ 2005..2006 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"]
         ClassMemberList
-        RBrace "}" @ 1486..1487 leading=[Newline "\n"]
-  Eof "" @ 1488..1488 leading=[Newline "\n"]
+        RBrace "}" @ 2007..2008 leading=[Newline "\n"]
+  Eof "" @ 2009..2009 leading=[Newline "\n"]
 
 diagnostics:
   (none)

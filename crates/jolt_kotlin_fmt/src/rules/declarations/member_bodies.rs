@@ -276,6 +276,7 @@ fn class_body_sections_with_ignored<'source>(
             }
             push_class_body_part(doc, &mut sections, &parts[index], &mut previous_forces_line);
         }
+        FormatterIgnoreSplice::End { .. } => {}
     });
     sections
 }

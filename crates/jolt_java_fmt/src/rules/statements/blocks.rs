@@ -123,6 +123,7 @@ fn format_block_statement_items_with_ignored<'source>(
         FormatterIgnoreSplice::Item { index, .. } => {
             items.push(format_block_statement_part(&entries[index], doc));
         }
+        FormatterIgnoreSplice::End { .. } => {}
     });
     items
 }
