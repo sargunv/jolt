@@ -167,6 +167,7 @@ syntax/parser/parses-expression-parenthesized-control-expressions.kt
 syntax/parser/parses-expression-precedence-ladder.kt
 syntax/parser/parses-expression-soft-keywords-as-identifiers.kt
 syntax/parser/parses-expression-throw-and-return-in-expression-contexts.kt
+syntax/parser/parses-extension-property-parenthesized-function-receiver.kt
 syntax/parser/parses-file-annotations-package-and-imports.kt
 syntax/parser/parses-file-with-shebang-and-package.kt
 syntax/parser/parses-function-context-parameters-with-suspend.kt
@@ -196,6 +197,7 @@ syntax/parser/parses-nested-type-alias.kt
 syntax/parser/parses-object-data-object.kt
 syntax/parser/parses-object-declaration.kt
 syntax/parser/parses-object-expression.kt
+syntax/parser/parses-parenthesized-extension-receiver-types.kt
 syntax/parser/parses-postfix-newline-breaks-before-selector.kt
 syntax/parser/parses-postfix-newline-sensitive-call-chain.kt
 syntax/parser/parses-postfix-safe-call-and-not-null-chain.kt

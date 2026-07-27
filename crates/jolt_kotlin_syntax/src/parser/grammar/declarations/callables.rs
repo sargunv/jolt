@@ -84,7 +84,9 @@ impl Parser<'_> {
         if self.at(K::Lt) {
             self.parse_type_parameter_list();
         }
-        if self.at_destructuring_declaration_start() {
+        if self.at_destructuring_declaration_start()
+            && self.callable_receiver_separator_position().is_none()
+        {
             self.parse_destructuring_declaration();
         } else if !self.parse_callable_name_prefix(false) {
             let missing = self.start();
@@ -719,7 +721,7 @@ impl Parser<'_> {
             let at_top_level =
                 paren_depth == 0 && bracket_depth == 0 && brace_depth == 0 && angle_depth == 0;
 
-            if at_top_level && self.callable_name_boundary_at(index, start) {
+            if at_top_level && index > start && self.callable_name_boundary_at(index, start) {
                 break;
             }
             if kind == K::Eof {

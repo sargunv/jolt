@@ -1,0 +1,14 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun ((Int) -> Int).twice(value: Int) = value * 2
+
+fun (Int).identity() = this
+
+val (Int).property: Int
+  get() = this
+
+diagnostics:
+(none)

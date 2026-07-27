@@ -1,0 +1,72 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val ((Int) -> Int).result: Int
+  get() = 1
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      CallableName
+        TypeReference
+          ParenthesizedType
+            AnnotationList
+            LParen "(" @ 4..5
+            ParenthesizedTypeEntryList
+              FunctionTypeParameter
+                TypeReference
+                  FunctionType
+                    ArrowFunctionType
+                      ParenthesizedType
+                        AnnotationList
+                        LParen "(" @ 5..6
+                        ParenthesizedTypeEntryList
+                          FunctionTypeParameter
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  UserTypeSegment
+                                    Identifier "Int" @ 6..9
+                        RParen ")" @ 9..10 trailing=[Whitespace " "]
+                      Arrow "->" @ 11..13 trailing=[Whitespace " "]
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "Int" @ 14..17
+            RParen ")" @ 17..18
+        Dot "." @ 18..19
+        Name
+          Identifier "result" @ 19..25
+      Colon ":" @ 25..26 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 27..30
+      PropertyBodyMemberList
+        PropertyAccessor
+          ModifierList
+          Identifier "get" @ 33..36 leading=[Newline "\n", Whitespace "  "]
+          ValueParameterList
+            LParen "(" @ 36..37
+            ValueParameterSeparatedList
+            RParen ")" @ 37..38 trailing=[Whitespace " "]
+          ExpressionBody
+            Assign "=" @ 39..40 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "1" @ 41..42
+  Eof "" @ 43..43 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
