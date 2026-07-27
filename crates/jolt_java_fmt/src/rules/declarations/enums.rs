@@ -232,11 +232,11 @@ fn format_enum_constants_doc<'source>(
             } else {
                 ","
             };
+            let replaces_comma_with_body_separator =
+                is_last_constant && body_declaration_separator.is_some();
             if let Some(comma) = entry.comma.as_ref() {
-                let moved_comments = enum_separator_moved_comments(
-                    *comma,
-                    has_body_declarations && is_last_constant,
-                );
+                let moved_comments =
+                    enum_separator_moved_comments(*comma, replaces_comma_with_body_separator);
                 if has_body_declarations && is_last_constant {
                     moved_member_comments.extend(moved_comments);
                 } else {
@@ -256,7 +256,7 @@ fn format_enum_constants_doc<'source>(
                             .then_some(body_declaration_separator)
                             .flatten(),
                         separator,
-                        !has_body_declarations || !is_last_constant,
+                        !replaces_comma_with_body_separator,
                     ),
                 ]
             );
@@ -265,7 +265,11 @@ fn format_enum_constants_doc<'source>(
 
         if !pending_constant_comments.is_empty() {
             let comments = format_dangling_comments(constant_lines, pending_constant_comments);
-            push_hard_line_separated(constant_lines, &mut has_constant_line, comments);
+            if has_constant_line {
+                let empty_line = constant_lines.empty_line();
+                constant_lines.push(empty_line);
+            }
+            constant_lines.push(comments);
         }
     })
 }
