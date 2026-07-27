@@ -224,9 +224,7 @@ fn physical_delegation_items<'source>(
                 items.push(CommaListItem::visible(specifier));
             }
             KotlinFormatListPart::Separator(comma) => {
-                attach_comma_separator(&mut items, comma, |comma| {
-                    CommaListItem::visible_with_comma(Doc::nil(), comma)
-                });
+                attach_comma_separator(&mut items, comma);
             }
             KotlinFormatListPart::Recovery(recovery) => {
                 items.push(CommaListItem::recovery(recovery));

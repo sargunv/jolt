@@ -14,7 +14,8 @@ use crate::helpers::comments::{
     trailing_comments_force_line,
 };
 use crate::helpers::lists::{
-    CommaListItem, attach_comma_separator, delimited_comma_list, physical_comma_list_items,
+    CommaListItem, attach_comma_separator, comma_list_item_range, delimited_comma_list,
+    physical_comma_list_items,
 };
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_malformed, format_optional_field,
@@ -958,17 +959,19 @@ fn syntax_comma_items<'source, T>(
     doc: &mut DocBuilder<'source>,
     parts: impl Iterator<Item = KotlinSyntaxListPart<'source, T>>,
     mut format_item: impl FnMut(T, &mut DocBuilder<'source>) -> Doc<'source>,
-) -> Vec<CommaListItem<'source>> {
+) -> Vec<CommaListItem<'source>>
+where
+    T: KotlinSyntaxView<'source>,
+{
     let mut items = Vec::new();
     for part in parts {
         match resolve_list_part(part, doc) {
             KotlinFormatListPart::Item(item) => {
-                items.push(CommaListItem::visible(format_item(item, doc)));
+                let range = comma_list_item_range(&item);
+                items.push(CommaListItem::visible(format_item(item, doc)).with_ignore_range(range));
             }
             KotlinFormatListPart::Separator(comma) => {
-                attach_comma_separator(&mut items, comma, |comma| {
-                    CommaListItem::visible(keyword_token(doc, comma))
-                });
+                attach_comma_separator(&mut items, comma);
             }
             KotlinFormatListPart::Recovery(recovery) => {
                 items.push(CommaListItem::recovery(recovery));

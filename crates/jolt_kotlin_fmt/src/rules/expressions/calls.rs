@@ -13,7 +13,8 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_leading_comments, format_token,
 };
 use crate::helpers::lists::{
-    CommaListItem, attach_comma_separator, delimited_comma_list, force_parenthesized_list,
+    CommaListItem, attach_comma_separator, comma_list_item_range, delimited_comma_list,
+    force_parenthesized_list,
 };
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_optional_field, format_required_field,
@@ -677,6 +678,7 @@ fn value_argument_list_entry_items<'source>(
     for part in parts {
         match resolve_list_part(part, doc) {
             KotlinFormatListPart::Item(entry) => {
+                let range = comma_list_item_range(&entry);
                 let formatted = match entry {
                     ValueArgumentListEntry::ValueArgument(argument) => {
                         format_value_argument(doc, &argument)
@@ -685,12 +687,10 @@ fn value_argument_list_entry_items<'source>(
                         crate::helpers::recovery::format_malformed(&bogus, doc)
                     }
                 };
-                items.push(CommaListItem::visible(formatted));
+                items.push(CommaListItem::visible(formatted).with_ignore_range(range));
             }
             KotlinFormatListPart::Separator(comma) => {
-                attach_comma_separator(&mut items, comma, |comma| {
-                    CommaListItem::visible_with_comma(Doc::nil(), comma)
-                });
+                attach_comma_separator(&mut items, comma);
             }
             KotlinFormatListPart::Recovery(recovery) => {
                 items.push(CommaListItem::recovery(recovery));

@@ -14,7 +14,7 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_dangling_comments, format_token,
     format_trailing_comments_before_line_break, trailing_comments_force_line,
 };
-use crate::helpers::lists::{CommaListItem, physical_comma_list_items};
+use crate::helpers::lists::{CommaListItem, physical_comma_list_items, prepare_comma_list_items};
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_delimiter, format_optional_field,
     format_required_field, resolve_list_part, resolve_optional_field, resolve_required_delimiter,
@@ -776,11 +776,15 @@ fn format_when_conditions<'source>(
                     }
                 })
             });
-            let mut items = items.into_iter().peekable();
+            let mut items = prepare_comma_list_items(doc, items).into_iter().peekable();
             doc.concat_list(|docs| {
                 while let Some(item) = items.next() {
                     docs.push(item.doc());
                     if let Some(comma) = item.comma() {
+                        if item.comma_starts_after_line() {
+                            let boundary = docs.hard_line_boundary();
+                            docs.push(boundary);
+                        }
                         let comma = format_token(
                             docs,
                             &comma,

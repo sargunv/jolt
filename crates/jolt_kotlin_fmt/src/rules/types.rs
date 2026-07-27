@@ -11,8 +11,13 @@ use jolt_kotlin_syntax::{
     TypeProjection, TypeReference, TypeSyntax, UserType, UserTypeSegment, UserTypeSegmentSyntax,
 };
 
-use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
-use crate::helpers::lists::{CommaListItem, delimited_comma_list, physical_comma_list_items};
+use crate::helpers::comments::{
+    LeadingTrivia, TrailingTrivia, format_token, trailing_comments_force_line,
+};
+use crate::helpers::lists::{
+    CommaListItem, delimited_comma_list, physical_comma_list_items,
+    prepare_comma_list_items_between,
+};
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_malformed, format_optional_field,
     format_required_field, resolve_list_part, resolve_required_delimiter, resolve_required_field,
@@ -49,6 +54,13 @@ pub(crate) fn format_type_constraint_list<'source>(
     constraints: TypeConstraintList<'source>,
 ) -> Doc<'source> {
     let has_where = matches!(constraints.where_token(), KotlinSyntaxField::Present(_));
+    let where_source = match constraints.where_token() {
+        KotlinSyntaxField::Present(token) => Some(token),
+        _ => None,
+    };
+    let where_forces_line = where_source
+        .as_ref()
+        .is_some_and(trailing_comments_force_line);
     let where_token = format_required_field(constraints.where_token(), doc, |token, doc| {
         format_token(
             doc,
@@ -72,11 +84,19 @@ pub(crate) fn format_type_constraint_list<'source>(
         }
         KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
     };
-    let constraints = format_indented_comma_items(doc, items);
+    let constraints =
+        format_indented_comma_items(doc, items, where_source.as_ref(), where_forces_line);
     let line = doc.line();
-    let space = if has_where { doc.space() } else { Doc::nil() };
+    let separator = if !has_where {
+        Doc::nil()
+    } else if where_forces_line {
+        doc.hard_line_boundary()
+    } else {
+        doc.space()
+    };
+    let constraints = doc.concat([separator, constraints]);
     let constraints = doc.group(constraints);
-    let contents = doc.concat([line, where_token, space, constraints]);
+    let contents = doc.concat([line, where_token, constraints]);
     doc.indent(contents)
 }
 
@@ -739,16 +759,29 @@ pub(crate) fn format_bogus_list_entry<'source>(
 fn format_indented_comma_items<'source>(
     doc: &mut DocBuilder<'source>,
     items: Vec<CommaListItem<'source>>,
+    open: Option<&KotlinSyntaxToken<'source>>,
+    enclosing_separator_forces_line: bool,
 ) -> Doc<'source> {
+    let items = prepare_comma_list_items_between(doc, items, open, None);
+    let indent_complete_list = enclosing_separator_forces_line
+        || items
+            .iter()
+            .find(|item| item.is_visible())
+            .is_some_and(CommaListItem::starts_after_line);
     let mut items = items.into_iter();
     let Some(first) = items.next() else {
         return doc.nil();
     };
     let first_doc = first.doc();
     let mut previous_comma = first.comma();
+    let mut previous_comma_starts_after_line = first.comma_starts_after_line();
     let rest = doc.concat_list(|rest| {
         for entry in items {
             if let Some(comma) = previous_comma.take() {
+                if previous_comma_starts_after_line {
+                    let boundary = rest.hard_line_boundary();
+                    rest.push(boundary);
+                }
                 let line = rest.line();
                 let separator =
                     crate::helpers::comments::format_separator_with_comments(rest, &comma, line);
@@ -759,11 +792,28 @@ fn format_indented_comma_items<'source>(
             }
             rest.push(entry.doc());
             previous_comma = entry.comma();
+            previous_comma_starts_after_line = entry.comma_starts_after_line();
         }
     });
-    let rest = doc.indent(rest);
+    let rest = if indent_complete_list {
+        rest
+    } else {
+        doc.indent(rest)
+    };
     let trailing_comma = previous_comma.map_or_else(Doc::nil, |comma| {
-        crate::helpers::comments::format_separator_with_comments(doc, &comma, Doc::nil())
+        let comma =
+            crate::helpers::comments::format_separator_with_comments(doc, &comma, Doc::nil());
+        if previous_comma_starts_after_line {
+            let boundary = doc.hard_line_boundary();
+            doc.concat([boundary, comma])
+        } else {
+            comma
+        }
     });
-    doc.concat([first_doc, rest, trailing_comma])
+    let constraints = doc.concat([first_doc, rest, trailing_comma]);
+    if indent_complete_list {
+        doc.indent(constraints)
+    } else {
+        constraints
+    }
 }

@@ -1,0 +1,72 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val alignedNumbers = listOf(
+  // @formatter:off
+  1,   2,   3,
+  10,  20,  30,
+  // @formatter:on
+)
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      Name
+        Identifier "alignedNumbers" @ 4..18 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 19..20 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "listOf" @ 21..27
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 27..28
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                LiteralExpression
+                  IntegerLiteral "1" @ 51..52 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "]
+              Comma "," @ 52..53 trailing=[Whitespace "   "]
+              ValueArgument
+                ValueArgumentPrefixList
+                LiteralExpression
+                  IntegerLiteral "2" @ 56..57
+              Comma "," @ 57..58 trailing=[Whitespace "   "]
+              ValueArgument
+                ValueArgumentPrefixList
+                LiteralExpression
+                  IntegerLiteral "3" @ 61..62
+              Comma "," @ 62..63
+              ValueArgument
+                ValueArgumentPrefixList
+                LiteralExpression
+                  IntegerLiteral "10" @ 66..68 leading=[Newline "\n", Whitespace "  "]
+              Comma "," @ 68..69 trailing=[Whitespace "  "]
+              ValueArgument
+                ValueArgumentPrefixList
+                LiteralExpression
+                  IntegerLiteral "20" @ 71..73
+              Comma "," @ 73..74 trailing=[Whitespace "  "]
+              ValueArgument
+                ValueArgumentPrefixList
+                LiteralExpression
+                  IntegerLiteral "30" @ 76..78
+              Comma "," @ 78..79
+            RParen ")" @ 99..100 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"]
+          LambdaExpressionList
+      PropertyBodyMemberList
+  Eof "" @ 101..101 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

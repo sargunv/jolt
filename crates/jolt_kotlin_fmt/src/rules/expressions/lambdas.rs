@@ -9,8 +9,11 @@ use jolt_kotlin_syntax::{
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_dangling_comments, format_leading_comments,
     format_removed_separator, format_separator_with_comments, format_token, token_has_comments,
+    trailing_comments_force_line,
 };
-use crate::helpers::lists::{CommaListItem, physical_comma_list_items};
+use crate::helpers::lists::{
+    CommaListItem, physical_comma_list_items, prepare_comma_list_items_between,
+};
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_optional_field, format_required_field,
     resolve_list_part, resolve_required_field,
@@ -68,6 +71,13 @@ fn format_lambda_body<'source>(
     body: &LambdaBody<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
+    let open_source = match body.open_brace() {
+        jolt_kotlin_syntax::KotlinSyntaxField::Present(open) => Some(open),
+        _ => None,
+    };
+    let open_forces_line = open_source
+        .as_ref()
+        .is_some_and(trailing_comments_force_line);
     let close_source = match body.close_brace() {
         jolt_kotlin_syntax::KotlinSyntaxField::Present(close) => Some(close),
         _ => None,
@@ -85,9 +95,11 @@ fn format_lambda_body<'source>(
     });
     let parameters = match crate::helpers::recovery::resolve_optional_field(body.parameters(), doc)
     {
-        KotlinFormatField::Present(Some(parameters)) => {
-            Some(format_lambda_parameter_prefix(doc, &parameters))
-        }
+        KotlinFormatField::Present(Some(parameters)) => Some(format_lambda_parameter_prefix(
+            doc,
+            &parameters,
+            open_source.as_ref(),
+        )),
         KotlinFormatField::Present(None) => None,
         KotlinFormatField::Malformed(recovery) => Some(recovery),
     };
@@ -97,7 +109,8 @@ fn format_lambda_body<'source>(
         let parameters = if let Some(parameters) = parameters {
             let before = doc.space();
             let after = doc.space();
-            doc.concat([before, parameters, after])
+            let parameters = doc.concat([before, parameters, after]);
+            doc.indent(parameters)
         } else {
             doc.nil()
         };
@@ -107,8 +120,13 @@ fn format_lambda_body<'source>(
     let count = body_doc.count;
     let contents = body_doc.doc;
     let block_parameters = if let Some(parameters) = parameters {
-        let space = doc.space();
-        doc.concat([space, parameters])
+        let separator = if open_forces_line {
+            doc.hard_line_boundary()
+        } else {
+            doc.space()
+        };
+        let parameters = doc.concat([separator, parameters]);
+        doc.indent(parameters)
     } else {
         doc.nil()
     };
@@ -144,6 +162,7 @@ fn format_lambda_body<'source>(
 fn format_lambda_parameter_prefix<'source>(
     doc: &mut DocBuilder<'source>,
     parameter_list: &LambdaParameterList<'source>,
+    open: Option<&jolt_kotlin_syntax::KotlinSyntaxToken<'source>>,
 ) -> Doc<'source> {
     let parameters = parameter_list.parameters();
     let malformed_is_visible = matches!(
@@ -179,6 +198,11 @@ fn format_lambda_parameter_prefix<'source>(
             vec![CommaListItem::recovery(layout)]
         }
     };
+    let arrow_source = match parameter_list.arrow() {
+        KotlinSyntaxField::Present(arrow) => Some(arrow),
+        _ => None,
+    };
+    let items = prepare_comma_list_items_between(doc, items, open, arrow_source.as_ref());
     let arrow = format_required_field(parameter_list.arrow(), doc, |arrow, doc| {
         format_token(
             doc,
@@ -188,9 +212,9 @@ fn format_lambda_parameter_prefix<'source>(
         )
     });
     let visible_item_count = items.iter().filter(|item| item.is_visible()).count();
-    // An annotation or comment may break a parameter modifier's line, so keep
-    // the remainder of the parameter prefix subordinate to the lambda.
-    let prefix = doc.concat_list(|docs| {
+    // The enclosing lambda owns indentation for the complete prefix, including
+    // the first line of a formatter-ignore run.
+    doc.concat_list(|docs| {
         let mut visible_index = 0;
         for item in items {
             docs.push(item.doc());
@@ -198,6 +222,10 @@ fn format_lambda_parameter_prefix<'source>(
                 continue;
             }
             if let Some(comma) = item.comma() {
+                if item.comma_starts_after_line() {
+                    let boundary = docs.hard_line_boundary();
+                    docs.push(boundary);
+                }
                 let space = docs.space();
                 let comma = format_separator_with_comments(docs, &comma, space);
                 docs.push(comma);
@@ -212,8 +240,7 @@ fn format_lambda_parameter_prefix<'source>(
             docs.push(space);
         }
         docs.push(arrow);
-    });
-    doc.indent(prefix)
+    })
 }
 
 fn format_lambda_parameter<'source>(

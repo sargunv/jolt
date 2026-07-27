@@ -8,7 +8,7 @@ use std::borrow::Cow;
 #[cfg(test)]
 use std::cell::Cell;
 
-use jolt_syntax::{Comment, Language, SourceRangeClaim, SyntaxToken};
+use jolt_syntax::{Comment, CommentKind, Language, SourceRangeClaim, SyntaxToken};
 use jolt_text::{TextRange, TextSize};
 
 use crate::source_fragment::{
@@ -126,6 +126,11 @@ impl FormatterIgnoreItemRange {
                 last.token_text_range().end(),
             ),
         }
+    }
+
+    #[must_use]
+    pub fn spanning(first: Self, last: Self) -> TextRange {
+        TextRange::new(first.owned.start(), last.owned.end())
     }
 }
 
@@ -329,6 +334,25 @@ fn range_containing_start(
     .then_some(index)
 }
 
+fn formatter_on_owned_end<L: Language>(
+    tokens: &[SyntaxToken<'_, L>],
+    kind: CommentKind,
+    comment_end: usize,
+    line_raw_end: usize,
+    next_line_start: usize,
+) -> (usize, usize) {
+    let next_token = tokens
+        .get(tokens.partition_point(|token| token.token_text_range().start().get() < comment_end))
+        .map(|token| token.token_text_range().start().get());
+    let owns_rest_of_line =
+        kind == CommentKind::Line || next_token.is_none_or(|start| start >= line_raw_end);
+    if owns_rest_of_line {
+        (line_raw_end, next_line_start)
+    } else {
+        (comment_end, comment_end)
+    }
+}
+
 pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
     source: &'source str,
     tokens: impl IntoIterator<Item = SyntaxToken<'source, L>>,
@@ -374,6 +398,13 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
                 // itself. The run has to stop before the first of them, the
                 // same way it already stops before the on marker.
                 let on_marker_is_trailing = !line.comment_starts_own_line;
+                let (with_on_text_end, with_on_claim_end) = formatter_on_owned_end(
+                    &tokens,
+                    comment.kind(),
+                    end_offset,
+                    end_line.raw_end,
+                    end_line.next_start,
+                );
                 let end = if on_marker_is_trailing {
                     start_offset
                 } else {
@@ -386,7 +417,7 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
                     ranges.push(FormatterIgnoreRange {
                         raw_text: strip_trailing_line_ending(&source[start..end]),
                         raw_text_with_on: strip_trailing_line_ending(
-                            &source[start..end_line.raw_end],
+                            &source[start..with_on_text_end],
                         ),
                         interior: TextRange::new(TextSize::new(start), TextSize::new(end)),
                         // The claim runs through the line ending the region's
@@ -394,10 +425,7 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
                         // a line comment's terminating newline belongs to that
                         // comment, and the region owns every comment it covers.
                         claim_with_on: claim_anchor.source_range_claim(
-                            TextRange::new(
-                                TextSize::new(start),
-                                TextSize::new(end_line.next_start),
-                            ),
+                            TextRange::new(TextSize::new(start), TextSize::new(with_on_claim_end)),
                             true,
                         ),
                         claim_without_on: claim_anchor.source_range_claim(
