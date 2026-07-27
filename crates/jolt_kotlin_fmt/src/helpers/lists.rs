@@ -28,19 +28,14 @@ pub(crate) fn attach_comma_separator<'source>(
     items.push(CommaListItem::physical_separator(separator));
 }
 
-pub(crate) fn comma_list<'source>(
+pub(crate) fn comma_list_between<'source>(
     doc: &mut DocBuilder<'source>,
     items: Vec<CommaListItem<'source>>,
+    open: Option<&KotlinSyntaxToken<'source>>,
+    close: Option<&KotlinSyntaxToken<'source>>,
 ) -> Doc<'source> {
-    let items = prepare_comma_list_items(doc, items);
+    let items = prepare_comma_list_items_between(doc, items, open, close);
     jolt_fmt_ir::comma_list(doc, items)
-}
-
-pub(crate) fn prepare_comma_list_items<'source>(
-    doc: &mut DocBuilder<'source>,
-    items: Vec<CommaListItem<'source>>,
-) -> Vec<CommaListItem<'source>> {
-    prepare_comma_list_items_between(doc, items, None, None)
 }
 
 pub(crate) fn prepare_comma_list_items_between<'source>(
@@ -266,7 +261,7 @@ fn formatter_ignore_list_runs<'source>(
         .next_back();
     let fallback = first
         .zip(last)
-        .map(|(first, last)| FormatterIgnoreItemRange::spanning(first, last))
+        .map(|(first, last)| FormatterIgnoreItemRange::source_spanning(first, last))
         .or_else(|| open.map(KotlinSyntaxToken::token_text_range))
         .or_else(|| close.map(KotlinSyntaxToken::token_text_range));
     let Some(fallback) = fallback else {
@@ -295,9 +290,17 @@ fn splice_formatter_ignore_items<'source>(
             let run = formatter_ignore_run_doc(run, doc);
             spliced.push(CommaListItem::visible(doc.concat([boundary, run])).with_line_before());
         }
-        FormatterIgnoreSplice::Item { index, .. } => {
+        FormatterIgnoreSplice::Item {
+            index,
+            starts_after_ignore_line,
+            ..
+        } => {
             if let Some(item) = items[index].take() {
-                spliced.push(item);
+                spliced.push(if starts_after_ignore_line {
+                    item.with_line_before()
+                } else {
+                    item
+                });
             }
         }
     });
@@ -311,10 +314,15 @@ fn attach_staged_separators<'source>(
     let mut attached = Vec::with_capacity(items.len());
     for item in items {
         if let Some(separator) = item.staged_separator() {
-            jolt_fmt_ir::attach_comma_separator(&mut attached, separator, |separator| {
-                let separator = format_separator_with_comments(doc, &separator, Doc::nil());
-                CommaListItem::visible(separator)
-            });
+            jolt_fmt_ir::attach_comma_separator(
+                &mut attached,
+                separator,
+                item.starts_after_line(),
+                |separator| {
+                    let separator = format_separator_with_comments(doc, &separator, Doc::nil());
+                    CommaListItem::visible(separator)
+                },
+            );
         } else {
             attached.push(item);
         }

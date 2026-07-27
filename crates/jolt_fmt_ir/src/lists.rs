@@ -45,7 +45,7 @@ impl<'source, L: Language> CommaListItem<'source, L> {
         Self {
             layout: LayoutDoc::Visible(doc),
             comma: Some(comma),
-            comma_starts_after_line: comma.has_leading_line_break(),
+            comma_starts_after_line: false,
             physical_separator: None,
             ignore_range: None,
             starts_after_line: false,
@@ -135,19 +135,24 @@ impl<'source, L: Language> CommaListItem<'source, L> {
 /// A separator must never attach to a claim-only recovery element: that element
 /// contributes no layout, so a separator held there would never be emitted and
 /// its token would be lost. Callers supply `orphan` because they differ in how
-/// a separator with no owning element places its trailing trivia.
+/// a separator with no owning element places its trailing trivia. The explicit
+/// `starts_after_line` state comes from an enclosing structural splice; ordinary
+/// source trivia does not force the surrounding layout group.
 pub fn attach_comma_separator<'source, L: Language>(
     items: &mut Vec<CommaListItem<'source, L>>,
     separator: SyntaxToken<'source, L>,
+    starts_after_line: bool,
     orphan: impl FnOnce(SyntaxToken<'source, L>) -> CommaListItem<'source, L>,
 ) {
     if let Some(item) = items.iter_mut().rev().find(|item| item.is_visible())
         && item.comma.is_none()
     {
         item.comma = Some(separator);
-        item.comma_starts_after_line = separator.has_leading_line_break();
+        item.comma_starts_after_line = starts_after_line;
     } else {
-        items.push(orphan(separator));
+        let mut item = orphan(separator);
+        item.comma_starts_after_line = starts_after_line;
+        items.push(item);
     }
 }
 

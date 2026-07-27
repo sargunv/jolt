@@ -115,6 +115,7 @@ pub(crate) struct FormatterIgnorePlan<'source> {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FormatterIgnoreItemRange {
     owned: TextRange,
+    source: TextRange,
 }
 
 impl FormatterIgnoreItemRange {
@@ -125,12 +126,17 @@ impl FormatterIgnoreItemRange {
                 first.token_text_range().start(),
                 last.token_text_range().end(),
             ),
+            source: TextRange::new(first.text_range().start(), last.text_range().end()),
         }
     }
 
+    /// Returns the full syntax-owned source interval, including trivia at the
+    /// outside edges. This is suitable as the container fallback for an
+    /// undelimited list; item matching still uses the trivia-free `owned`
+    /// interval above.
     #[must_use]
-    pub fn spanning(first: Self, last: Self) -> TextRange {
-        TextRange::new(first.owned.start(), last.owned.end())
+    pub fn source_spanning(first: Self, last: Self) -> TextRange {
+        TextRange::new(first.source.start(), last.source.end())
     }
 }
 
@@ -173,9 +179,12 @@ pub enum FormatterIgnoreSplice<'a, 'source> {
     /// set, the previous ignore run skipped the items immediately before this
     /// one, so any state a caller carries across items has to be recovered from
     /// the last skipped item rather than from the last formatted one.
+    /// `starts_after_ignore_line` additionally records that this join follows
+    /// an own-line `@formatter:on` marker; an inline marker leaves it false.
     Item {
         index: usize,
         follows_ignore_run: bool,
+        starts_after_ignore_line: bool,
     },
 }
 
@@ -201,10 +210,17 @@ pub fn for_each_formatter_ignore_splice<'a, 'source>(
         if skip_index < runs.len() && runs[skip_index].skips(index) {
             continue;
         }
-        let follows_ignore_run = skip_index > 0 && runs[skip_index - 1].skip_end == index;
+        let previous_run = skip_index
+            .checked_sub(1)
+            .and_then(|previous| runs.get(previous))
+            .filter(|run| run.skip_end == index);
+        let follows_ignore_run = previous_run.is_some();
+        let starts_after_ignore_line =
+            previous_run.is_some_and(|run| !run.range.on_marker_is_trailing);
         visit(FormatterIgnoreSplice::Item {
             index,
             follows_ignore_run,
+            starts_after_ignore_line,
         });
     }
     while ignored_index < runs.len() {
@@ -336,13 +352,20 @@ fn range_containing_start(
 
 fn formatter_on_owned_end<L: Language>(
     tokens: &[SyntaxToken<'_, L>],
+    next_token_cursor: &mut usize,
     kind: CommentKind,
     comment_end: usize,
     line_raw_end: usize,
     next_line_start: usize,
 ) -> (usize, usize) {
+    while tokens
+        .get(*next_token_cursor)
+        .is_some_and(|token| token.token_text_range().start().get() < comment_end)
+    {
+        *next_token_cursor += 1;
+    }
     let next_token = tokens
-        .get(tokens.partition_point(|token| token.token_text_range().start().get() < comment_end))
+        .get(*next_token_cursor)
         .map(|token| token.token_text_range().start().get());
     let owns_rest_of_line =
         kind == CommentKind::Line || next_token.is_none_or(|start| start >= line_raw_end);
@@ -372,6 +395,10 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
     let mut off_comment_start = None;
     let mut ranges = Vec::new();
     let mut lines = SourceLineCursor::new(source);
+    // Comments are visited in source order, so the next-token lookup for each
+    // `on` marker can share one monotonic cursor. Plan construction therefore
+    // remains linear in tokens plus comments.
+    let mut next_token_cursor = 0;
 
     let mut visit_comment =
         |comment: Comment<'source>, leading_comment_start: &mut Option<usize>| {
@@ -400,6 +427,7 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
                 let on_marker_is_trailing = !line.comment_starts_own_line;
                 let (with_on_text_end, with_on_claim_end) = formatter_on_owned_end(
                     &tokens,
+                    &mut next_token_cursor,
                     comment.kind(),
                     end_offset,
                     end_line.raw_end,

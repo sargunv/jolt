@@ -46,3 +46,18 @@ fun <T> ownLineIgnoredTypeConstraints(value: T): T
     T   :   FirstConstraint
     // @formatter:on
     , T : SecondConstraint = value
+
+fun ignoredWhenConditions(value: Any): Int = when (value) {
+  // @formatter:off
+  is   FirstType
+  // @formatter:on
+  , is SecondType -> 1
+  else -> 0
+}
+
+class IgnoredDelegation :
+  // @formatter:off
+  FirstType   ,   SecondType
+  // @formatter:on
+{
+}

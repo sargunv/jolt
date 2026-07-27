@@ -52,6 +52,21 @@ fun <T> ownLineIgnoredTypeConstraints(value: T): T
     // @formatter:on
     , T : SecondConstraint = value
 
+fun ignoredWhenConditions(value: Any): Int = when (value) {
+  // @formatter:off
+  is   FirstType
+  // @formatter:on
+  , is SecondType -> 1
+  else -> 0
+}
+
+class IgnoredDelegation :
+  // @formatter:off
+  FirstType   ,   SecondType
+  // @formatter:on
+{
+}
+
 syntax:
 syntax:
 KotlinFile
@@ -382,7 +397,100 @@ KotlinFile
         Assign "=" @ 962..963 trailing=[Whitespace " "]
         NameExpression
           Identifier "value" @ 964..969
-  Eof "" @ 970..970 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 971..974 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "ignoredWhenConditions" @ 975..996
+      ValueParameterList
+        LParen "(" @ 996..997
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "value" @ 997..1002
+            Colon ":" @ 1002..1003 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Any" @ 1004..1007
+        RParen ")" @ 1007..1008
+      Colon ":" @ 1008..1009 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 1010..1013 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 1014..1015 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 1016..1020 trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 1021..1022
+            NameExpression
+              Identifier "value" @ 1022..1027
+            RParen ")" @ 1027..1028 trailing=[Whitespace " "]
+          LBrace "{" @ 1029..1030
+          WhenEntryList
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  IsKw "is" @ 1053..1055 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "FirstType" @ 1058..1067
+                Comma "," @ 1089..1090 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                WhenCondition
+                  IsKw "is" @ 1091..1093 trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "SecondType" @ 1094..1104 trailing=[Whitespace " "]
+              Arrow "->" @ 1105..1107 trailing=[Whitespace " "]
+              WhenEntryBody
+                LiteralExpression
+                  IntegerLiteral "1" @ 1108..1109
+            WhenEntry
+              ElseKw "else" @ 1112..1116 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 1117..1119 trailing=[Whitespace " "]
+              WhenEntryBody
+                LiteralExpression
+                  IntegerLiteral "0" @ 1120..1121
+          RBrace "}" @ 1122..1123 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 1125..1130 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "IgnoredDelegation" @ 1131..1148 trailing=[Whitespace " "]
+      DelegationClause
+        Colon ":" @ 1149..1150
+        DelegationSpecifierSeparatedList
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "FirstType" @ 1173..1182 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+          Comma "," @ 1185..1186 trailing=[Whitespace "   "]
+          DelegationSpecifier
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "SecondType" @ 1189..1199
+      ClassBody
+        LBrace "{" @ 1219..1220 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"]
+        ClassMemberList
+        RBrace "}" @ 1221..1222 leading=[Newline "\n"]
+  Eof "" @ 1223..1223 leading=[Newline "\n"]
 
 diagnostics:
   (none)

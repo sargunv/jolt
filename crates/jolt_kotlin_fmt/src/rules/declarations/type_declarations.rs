@@ -1,15 +1,14 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     ClassBody, ClassDeclaration, CompanionObject, DelegationClause, DelegationSpecifier,
-    DelegationSpecifierEntry, InterfaceDeclaration, KotlinSyntaxField, KotlinSyntaxListPart,
-    KotlinSyntaxToken, KotlinSyntaxView, ObjectDeclaration, ObjectExpression, PrimaryConstructor,
+    DelegationSpecifierEntry, InterfaceDeclaration, KotlinSyntaxField, KotlinSyntaxToken,
+    KotlinSyntaxView, ObjectDeclaration, ObjectExpression, PrimaryConstructor,
 };
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
-use crate::helpers::lists::{CommaListItem, attach_comma_separator, comma_list};
+use crate::helpers::lists::{CommaListItem, comma_list_between, physical_comma_list_items};
 use crate::helpers::recovery::{
-    KotlinFormatField, KotlinFormatListPart, format_optional_field, format_required_field,
-    resolve_list_part, resolve_required_field,
+    KotlinFormatField, format_optional_field, format_required_field, resolve_required_field,
 };
 use crate::rules::expressions::{format_expression, format_value_argument_list};
 use crate::rules::names::format_name;
@@ -135,11 +134,13 @@ pub(crate) fn format_object_expression<'source>(
     let keyword = format_required_field(expression.object_token(), doc, |token, doc| {
         format_token(doc, &token, leading, TrailingTrivia::Preserve)
     });
+    let body = expression.body();
+    let delegation_close = field_first_token(&body);
     let delegation = format_optional_field(expression.delegation(), doc, |delegation, doc| {
-        let delegation = format_delegation_clause(doc, &delegation);
+        let delegation = format_delegation_clause(doc, &delegation, delegation_close.as_ref());
         doc.group(delegation)
     });
-    let body = format_required_field(expression.body(), doc, |body, doc| {
+    let body = format_required_field(body, doc, |body, doc| {
         if body.first_token().is_none() {
             Doc::nil()
         } else {
@@ -158,8 +159,12 @@ fn format_type_tail<'source>(
     >,
     body: KotlinSyntaxField<'source, ClassBody<'source>>,
 ) -> Doc<'source> {
+    let delegation_close = constraints
+        .as_ref()
+        .and_then(field_first_token)
+        .or_else(|| field_first_token(&body));
     let delegation = format_optional_field(delegation, doc, |delegation, doc| {
-        format_delegation_clause(doc, &delegation)
+        format_delegation_clause(doc, &delegation, delegation_close.as_ref())
     });
     let constraints = constraints.map_or_else(Doc::nil, |constraints| {
         format_optional_field(constraints, doc, |constraints, doc| {
@@ -173,6 +178,7 @@ fn format_type_tail<'source>(
 fn format_delegation_clause<'source>(
     doc: &mut DocBuilder<'source>,
     delegation: &DelegationClause<'source>,
+    close: Option<&KotlinSyntaxToken<'source>>,
 ) -> Doc<'source> {
     let has_colon = matches!(delegation.colon(), KotlinSyntaxField::Present(_));
     let has_specifiers = matches!(
@@ -182,13 +188,26 @@ fn format_delegation_clause<'source>(
         delegation.specifiers(),
         KotlinSyntaxField::Malformed(ref malformed) if malformed.first_token().is_some()
     );
+    let colon_source = match delegation.colon() {
+        KotlinSyntaxField::Present(colon) => Some(colon),
+        _ => None,
+    };
     let colon = format_required_field(delegation.colon(), doc, |colon, doc| {
         format_keyword_token(doc, colon)
     });
     let specifiers = match resolve_required_field(delegation.specifiers(), doc) {
         KotlinFormatField::Present(specifiers) => {
-            let items = physical_delegation_items(doc, specifiers.parts());
-            comma_list(doc, items)
+            let items = physical_comma_list_items(doc, specifiers.parts(), |doc, specifier| {
+                CommaListItem::visible(match specifier {
+                    DelegationSpecifierEntry::DelegationSpecifier(specifier) => {
+                        format_delegation_specifier(doc, &specifier)
+                    }
+                    DelegationSpecifierEntry::BogusDelegationSpecifier(bogus) => {
+                        crate::helpers::recovery::format_malformed(&bogus, doc)
+                    }
+                })
+            });
+            comma_list_between(doc, items, colon_source.as_ref(), close)
         }
         KotlinFormatField::Malformed(recovery) => recovery,
     };
@@ -205,33 +224,14 @@ fn format_delegation_clause<'source>(
     doc.indent(tail)
 }
 
-fn physical_delegation_items<'source>(
-    doc: &mut DocBuilder<'source>,
-    parts: impl Iterator<Item = KotlinSyntaxListPart<'source, DelegationSpecifierEntry<'source>>>,
-) -> Vec<CommaListItem<'source>> {
-    let mut items = Vec::new();
-    for part in parts {
-        match resolve_list_part(part, doc) {
-            KotlinFormatListPart::Item(specifier) => {
-                let specifier = match specifier {
-                    DelegationSpecifierEntry::DelegationSpecifier(specifier) => {
-                        format_delegation_specifier(doc, &specifier)
-                    }
-                    DelegationSpecifierEntry::BogusDelegationSpecifier(bogus) => {
-                        crate::helpers::recovery::format_malformed(&bogus, doc)
-                    }
-                };
-                items.push(CommaListItem::visible(specifier));
-            }
-            KotlinFormatListPart::Separator(comma) => {
-                attach_comma_separator(&mut items, comma);
-            }
-            KotlinFormatListPart::Recovery(recovery) => {
-                items.push(CommaListItem::recovery(recovery));
-            }
-        }
+fn field_first_token<'source, T: KotlinSyntaxView<'source>>(
+    field: &KotlinSyntaxField<'source, T>,
+) -> Option<KotlinSyntaxToken<'source>> {
+    match field {
+        KotlinSyntaxField::Present(value) => value.first_token(),
+        KotlinSyntaxField::Malformed(malformed) => malformed.first_token(),
+        KotlinSyntaxField::Missing(_) => None,
     }
-    items
 }
 
 fn format_delegation_specifier<'source>(
