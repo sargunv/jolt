@@ -147,7 +147,7 @@ impl<'buffer, 'source> KotlinLookahead<'buffer, 'source> {
                     if depth == 0 {
                         let is_suffix = matches!(
                             self.nth_kind(1),
-                            K::LParen | K::LBrace | K::Dot | K::SafeAccess | K::ColonColon
+                            K::LParen | K::LBrace | K::Dot | K::SafeAccess | K::ColonColon | K::Gt
                         ) || self.nth_kind(1) == K::Question
                             && self.nth_kind(2) == K::Dot
                             && self.tokens_are_adjacent(1, 2);
