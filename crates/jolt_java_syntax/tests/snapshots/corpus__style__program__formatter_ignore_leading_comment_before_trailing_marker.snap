@@ -1,0 +1,52 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class FormatterIgnoreLeadingCommentBeforeTrailingMarker {
+  // JOLT-TRIVIA:member-leading
+  int value = 1; // @formatter:off
+  // @formatter:on
+}
+
+// JOLT-TRIVIA:top-level-leading
+class TopLevelIgnored {} // @formatter:off
+// @formatter:on
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "FormatterIgnoreLeadingCommentBeforeTrailingMarker" @ 6..55 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 56..57
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 92..95 leading=[Newline "\n", Whitespace "  ", LineComment "// JOLT-TRIVIA:member-leading", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "value" @ 96..101 trailing=[Whitespace " "]
+                Assign "=" @ 102..103 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "1" @ 104..105
+            Semicolon ";" @ 105..106 trailing=[Whitespace " ", LineComment "// @formatter:off"]
+        RBrace "}" @ 144..145 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 180..185 leading=[Newline "\n", Newline "\n", LineComment "// JOLT-TRIVIA:top-level-leading", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "TopLevelIgnored" @ 186..201 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 202..203
+        ClassBodyMemberList
+        RBrace "}" @ 203..204 trailing=[Whitespace " ", LineComment "// @formatter:off"]
+  Eof "" @ 240..240 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

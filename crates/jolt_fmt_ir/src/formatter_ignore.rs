@@ -25,6 +25,7 @@ struct FormatterIgnoreRange<'source> {
     claim_without_on: SourceRangeClaim<'source>,
     separators_with_on: ExceptionalSeparators,
     separators_without_on: ExceptionalSeparators,
+    on_marker_is_trailing: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -276,7 +277,11 @@ pub(crate) fn formatter_ignore_runs<'source>(
             insert_index: skip_start,
             skip_start,
             skip_end,
-            on_marker_owner: next_physical.map_or(OnMarkerOwner::Boundary, OnMarkerOwner::Item),
+            on_marker_owner: if plan.ranges[range_index].on_marker_is_trailing {
+                OnMarkerOwner::IgnoreRun
+            } else {
+                next_physical.map_or(OnMarkerOwner::Boundary, OnMarkerOwner::Item)
+            },
         });
     }
 
@@ -356,7 +361,11 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
             // marker never opens a second region, it is only one more comment
             // between the first pair's markers.
             if is_formatter_off_marker(comment_text) && off_comment_start.is_none() {
-                off_comment_start = Some(leading_comment_start.take().unwrap_or(line.start));
+                off_comment_start = Some(if line.comment_starts_own_line {
+                    leading_comment_start.take().unwrap_or(line.start)
+                } else {
+                    next_non_whitespace_offset(source, line.next_start)
+                });
             } else if is_formatter_on_marker(comment_text)
                 && let Some(start) = off_comment_start.take()
             {
@@ -364,10 +373,15 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
                 // the next represented item, which emits those comments
                 // itself. The run has to stop before the first of them, the
                 // same way it already stops before the on marker.
-                let end = leading_comment_start
-                    .take()
-                    .filter(|&given_away| start < given_away)
-                    .unwrap_or(line.start);
+                let on_marker_is_trailing = !line.comment_starts_own_line;
+                let end = if on_marker_is_trailing {
+                    start_offset
+                } else {
+                    leading_comment_start
+                        .take()
+                        .filter(|&given_away| start < given_away)
+                        .unwrap_or(line.start)
+                };
                 if start < end {
                     ranges.push(FormatterIgnoreRange {
                         raw_text: strip_trailing_line_ending(&source[start..end]),
@@ -398,6 +412,7 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
                             before: crate::ExceptionalSeparator::None,
                             after: crate::ExceptionalSeparator::None,
                         },
+                        on_marker_is_trailing,
                     });
                 }
             } else if leading_comment_start.is_none() && line.comment_starts_own_line {
@@ -732,6 +747,13 @@ fn strip_trailing_line_ending(text: &str) -> &str {
         .or_else(|| text.strip_suffix('\n'))
         .or_else(|| text.strip_suffix('\r'))
         .unwrap_or(text)
+}
+
+fn next_non_whitespace_offset(source: &str, start: usize) -> usize {
+    source[start..]
+        .char_indices()
+        .find_map(|(offset, ch)| (!ch.is_whitespace()).then_some(start + offset))
+        .unwrap_or(source.len())
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

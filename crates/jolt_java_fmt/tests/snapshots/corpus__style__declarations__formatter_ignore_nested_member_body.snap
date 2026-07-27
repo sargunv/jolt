@@ -36,7 +36,7 @@ class Example {
 
   class HeaderMarker {
     /* @formatter:off */
-    int stillFormatted = 1 + 2;
+    int stillFormatted=1+2;
     // @formatter:on
     int after = 3;
   }

@@ -1,0 +1,15 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class FormatterIgnoreTrailingMarkers {
+  void before() {
+    int value = 0;
+  } // @formatter:off
+
+  void  inside(){ int value= 0; } // @formatter:on
+}
+
+diagnostics:
+(none)
