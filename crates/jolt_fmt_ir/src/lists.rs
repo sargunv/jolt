@@ -18,6 +18,7 @@ use crate::{Doc, DocBuilder};
 pub struct CommaListItem<'source, L: Language> {
     layout: LayoutDoc<'source>,
     comma: Option<SyntaxToken<'source, L>>,
+    line_after_required: bool,
 }
 
 impl<'source, L: Language> CommaListItem<'source, L> {
@@ -27,6 +28,7 @@ impl<'source, L: Language> CommaListItem<'source, L> {
         Self {
             layout: LayoutDoc::Visible(doc),
             comma: None,
+            line_after_required: false,
         }
     }
 
@@ -36,6 +38,7 @@ impl<'source, L: Language> CommaListItem<'source, L> {
         Self {
             layout: LayoutDoc::Visible(doc),
             comma: Some(comma),
+            line_after_required: false,
         }
     }
 
@@ -45,7 +48,16 @@ impl<'source, L: Language> CommaListItem<'source, L> {
         Self {
             layout,
             comma: None,
+            line_after_required: false,
         }
+    }
+
+    /// Marks that this element ends in trivia which requires the following
+    /// delimiter or item to begin on a new line.
+    #[must_use]
+    pub const fn with_line_after_required(mut self) -> Self {
+        self.line_after_required = true;
+        self
     }
 
     #[must_use]
@@ -61,6 +73,11 @@ impl<'source, L: Language> CommaListItem<'source, L> {
     #[must_use]
     pub const fn comma(&self) -> Option<SyntaxToken<'source, L>> {
         self.comma
+    }
+
+    #[must_use]
+    pub const fn line_after_required(&self) -> bool {
+        self.line_after_required
     }
 }
 

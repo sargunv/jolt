@@ -1,0 +1,151 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun trailingComments(values: List<Int>, chain: Chain) {
+  val numbers = listOf(1, 2, 3) // declaration
+  values.map { it + 1 } // lambda
+  chain.first().second() // chain
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "trailingComments" @ 4..20
+      ValueParameterList
+        LParen "(" @ 20..21
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "values" @ 21..27
+            Colon ":" @ 27..28 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "List" @ 29..33
+                    TypeArgumentList
+                      Lt "<" @ 33..34
+                      TypeProjectionSeparatedList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                Identifier "Int" @ 34..37
+                      Gt ">" @ 37..38
+          Comma "," @ 38..39 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "chain" @ 40..45
+            Colon ":" @ 45..46 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Chain" @ 47..52
+        RParen ")" @ 52..53 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 54..55
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 58..61 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "numbers" @ 62..69 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 70..71 trailing=[Whitespace " "]
+                CallExpression
+                  NameExpression
+                    Identifier "listOf" @ 72..78
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 78..79
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        LiteralExpression
+                          IntegerLiteral "1" @ 79..80
+                      Comma "," @ 80..81 trailing=[Whitespace " "]
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        LiteralExpression
+                          IntegerLiteral "2" @ 82..83
+                      Comma "," @ 83..84 trailing=[Whitespace " "]
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        LiteralExpression
+                          IntegerLiteral "3" @ 85..86
+                    RParen ")" @ 86..87 trailing=[Whitespace " ", LineComment "// declaration"]
+                  LambdaExpressionList
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NavigationExpression
+                    NameExpression
+                      Identifier "values" @ 105..111 leading=[Newline "\n", Whitespace "  "]
+                    Dot "." @ 111..112
+                    Identifier "map" @ 112..115 trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 116..117 trailing=[Whitespace " "]
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "it" @ 118..120 trailing=[Whitespace " "]
+                                Plus "+" @ 121..122 trailing=[Whitespace " "]
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 123..124 trailing=[Whitespace " "]
+                            TerminatorList
+                        RBrace "}" @ 125..126 trailing=[Whitespace " ", LineComment "// lambda"]
+              TerminatorList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NavigationExpression
+                    CallExpression
+                      NavigationExpression
+                        NameExpression
+                          Identifier "chain" @ 139..144 leading=[Newline "\n", Whitespace "  "]
+                        Dot "." @ 144..145
+                        Identifier "first" @ 145..150
+                      TypeArgumentListList
+                      ValueArgumentList
+                        LParen "(" @ 150..151
+                        ValueArgumentEntryList
+                        RParen ")" @ 151..152
+                      LambdaExpressionList
+                    Dot "." @ 152..153
+                    Identifier "second" @ 153..159
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 159..160
+                    ValueArgumentEntryList
+                    RParen ")" @ 160..161 trailing=[Whitespace " ", LineComment "// chain"]
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 171..172 leading=[Newline "\n"]
+  Eof "" @ 173..173 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

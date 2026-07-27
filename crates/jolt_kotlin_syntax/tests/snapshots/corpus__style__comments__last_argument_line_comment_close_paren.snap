@@ -1,0 +1,61 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun lastArgumentComment() {
+  consume(
+    first,
+    second // last argument
+  )
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "lastArgumentComment" @ 4..23
+      ValueParameterList
+        LParen "(" @ 23..24
+        ValueParameterSeparatedList
+        RParen ")" @ 24..25 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 26..27
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "consume" @ 30..37 leading=[Newline "\n", Whitespace "  "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 37..38
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "first" @ 43..48 leading=[Newline "\n", Whitespace "    "]
+                      Comma "," @ 48..49
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "second" @ 54..60 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", LineComment "// last argument"]
+                    RParen ")" @ 80..81 leading=[Newline "\n", Whitespace "  "]
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 82..83 leading=[Newline "\n"]
+  Eof "" @ 84..84 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

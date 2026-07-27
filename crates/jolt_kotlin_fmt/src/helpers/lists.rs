@@ -71,12 +71,18 @@ fn delimited_comma_list_with<'source>(
         .rev()
         .find(|item| item.is_visible())
         .is_some_and(|item| item.comma().is_some());
+    let line_before_close_required = items
+        .iter()
+        .rev()
+        .find(|item| item.is_visible())
+        .is_some_and(CommaListItem::line_after_required);
     let open_doc = format_open_delimiter_with_trailing(doc, open, TrailingTrivia::BeforeSoftLine);
     let list = comma_list(doc, items);
     let close_comments = format_close_leading_comments(doc, close.source());
     let indented_contents = doc.concat([open_doc, list, close_comments]);
     let indented_contents = doc.indent(indented_contents);
-    let close_doc = format_close_with_spacing(doc, close, close_trailing);
+    let close_doc =
+        format_close_with_spacing(doc, close, close_trailing, line_before_close_required);
     let contents = doc.concat([indented_contents, close_doc]);
 
     if force_multiline
@@ -159,13 +165,14 @@ fn format_close_with_spacing<'source>(
     doc: &mut DocBuilder<'source>,
     close: KotlinFormatDelimiter<'source>,
     trailing: TrailingTrivia,
+    line_before_close_required: bool,
 ) -> Doc<'source> {
     let close_has_leading_comments = close
         .source()
         .is_some_and(|token| !token.leading_comments().is_empty());
 
-    let line = if close_has_leading_comments {
-        doc.hard_line()
+    let line = if close_has_leading_comments || line_before_close_required {
+        doc.hard_line_boundary()
     } else {
         doc.soft_line()
     };

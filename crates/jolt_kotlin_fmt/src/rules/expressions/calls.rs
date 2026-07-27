@@ -11,6 +11,7 @@ use jolt_kotlin_syntax::{
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_leading_comments, format_token,
+    trailing_comments_force_line,
 };
 use crate::helpers::lists::{
     CommaListItem, attach_comma_separator, delimited_comma_list, force_parenthesized_list,
@@ -677,6 +678,9 @@ fn value_argument_list_entry_items<'source>(
     for part in parts {
         match resolve_list_part(part, doc) {
             KotlinFormatListPart::Item(entry) => {
+                let line_after_required = entry
+                    .last_token()
+                    .is_some_and(|token| trailing_comments_force_line(&token));
                 let formatted = match entry {
                     ValueArgumentListEntry::ValueArgument(argument) => {
                         format_value_argument(doc, &argument)
@@ -685,7 +689,12 @@ fn value_argument_list_entry_items<'source>(
                         crate::helpers::recovery::format_malformed(&bogus, doc)
                     }
                 };
-                items.push(CommaListItem::visible(formatted));
+                let item = CommaListItem::visible(formatted);
+                items.push(if line_after_required {
+                    item.with_line_after_required()
+                } else {
+                    item
+                });
             }
             KotlinFormatListPart::Separator(comma) => {
                 attach_comma_separator(&mut items, comma, |comma| {
