@@ -14,8 +14,9 @@ pub(crate) use jolt_fmt_ir::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, format_byte_order_mark, format_comment,
     format_dangling_comments, format_delimiter_dangling_comments, format_leading_comments,
     format_removed_comments, format_separator_with_comments, format_token,
-    format_token_after_relocated_leading_comments, format_trailing_comments_before_line_break,
-    has_delimiter_dangling_comments, token_has_comments, trailing_comments_force_line,
+    format_token_after_relocated_leading_comments, format_trailing_comment_list_before_line_break,
+    format_trailing_comments_before_line_break, has_delimiter_dangling_comments,
+    token_has_comments, trailing_comments_force_line,
 };
 
 /// Kotlin keeps inline leading comments immediately before their token.
@@ -47,9 +48,15 @@ pub(crate) fn format_removed_separator<'source>(
         );
     };
     let removed = doc.removed_source(claim);
+    let trailing_is_relocated = doc.relocates_trailing_trivia(token);
     let comments = format_removed_comments(
         doc,
-        token.leading_comments().chain(token.trailing_comments()),
+        token.leading_comments().chain(
+            (!trailing_is_relocated)
+                .then(|| token.trailing_comments())
+                .into_iter()
+                .flatten(),
+        ),
     );
     match comments {
         Some(comments) if space_before_comments => {

@@ -1,0 +1,42 @@
+package com.example.comments
+
+fun blockWithRemovedSemicolon() {
+  consume(first); // boundary comment
+  consume(second)
+}
+
+fun blockWithoutSemicolon() {
+  consume(first) // boundary comment
+  consume(second)
+}
+
+fun finalBlockItem() {
+  consume(first); // boundary comment
+}
+
+val lambdaWithRemovedSemicolon = {
+  consume(first); // boundary comment
+  consume(second)
+}
+
+val lambdaWithoutSemicolon = {
+  consume(first) // boundary comment
+  consume(second)
+}
+
+val finalLambdaItemWithRemovedSemicolon = {
+  consume(first); // final boundary comment
+}
+
+val finalLambdaItemWithoutSemicolon = {
+  consume(first) // final boundary comment
+}
+
+fun nestedFinalItemCommentOwnedByOuterClose() {
+  for (i in 1..2) {
+    consume(i)
+  }
+  while (ready()) {
+    consume(next())
+  } /* close-boundary comment */
+}

@@ -18,7 +18,7 @@ use jolt_fmt_ir::formatter_ignore::{
     for_each_formatter_ignore_splice, formatter_ignore_content_range, formatter_ignore_run_doc,
 };
 
-use super::format_block_item;
+use super::format_block_item_at_body_boundary;
 
 pub(crate) fn format_block<'source>(
     doc: &mut DocBuilder<'source>,
@@ -55,9 +55,9 @@ fn format_block_contents<'source>(
     let ignored_runs =
         doc.formatter_ignore_runs(container, parts.iter().map(block_part_ignore_range));
     let mut body_items = if ignored_runs.is_empty() {
-        block_body_parts(doc, &parts)
+        block_body_parts(doc, &parts, close)
     } else {
-        block_body_parts_with_ignored(doc, &parts, &ignored_runs)
+        block_body_parts_with_ignored(doc, &parts, &ignored_runs, close)
     };
     if let Some(comments) = format_open_dangling_comments(doc, open) {
         body_items.insert(0, BodyItem::new(comments, BodyItemSeparator::Line));
@@ -182,11 +182,13 @@ fn separator_part<'source>(
 fn block_body_parts<'source>(
     doc: &mut DocBuilder<'source>,
     parts: &[BlockPart<'source>],
+    close: Option<&KotlinSyntaxToken<'source>>,
 ) -> Vec<BodyItem<'source>> {
     let mut body_items = Vec::with_capacity(parts.len());
     let mut previous = None;
-    for part in parts {
-        body_items.push(block_body_part(doc, part, previous));
+    let successors = block_part_successors(parts, close);
+    for (part, successor) in parts.iter().zip(successors) {
+        body_items.push(block_body_part(doc, part, previous, successor.as_ref()));
         if !matches!(part, BlockPart::Separator { visible: false, .. }) {
             previous = part.last_token();
         }
@@ -198,9 +200,10 @@ fn block_body_part<'source>(
     doc: &mut DocBuilder<'source>,
     part: &BlockPart<'source>,
     previous: Option<KotlinSyntaxToken<'source>>,
+    successor: Option<&KotlinSyntaxToken<'source>>,
 ) -> BodyItem<'source> {
     let part_doc = match part {
-        BlockPart::Item(item) => format_block_item(doc, item),
+        BlockPart::Item(item) => format_block_item_at_body_boundary(doc, item, successor).doc,
         BlockPart::Separator {
             removed, visible, ..
         } => {
@@ -217,13 +220,15 @@ fn block_body_parts_with_ignored<'source>(
     doc: &mut DocBuilder<'source>,
     parts: &[BlockPart<'source>],
     ignored_runs: &[FormatterIgnoreRun<'source>],
+    close: Option<&KotlinSyntaxToken<'source>>,
 ) -> Vec<BodyItem<'source>> {
     if ignored_runs.is_empty() {
-        return block_body_parts(doc, parts);
+        return block_body_parts(doc, parts, close);
     }
 
     let mut body_items = Vec::with_capacity(parts.len().saturating_add(ignored_runs.len()));
     let mut previous = None;
+    let successors = block_part_successors(parts, close);
     for_each_formatter_ignore_splice(parts.len(), ignored_runs, |event| match event {
         FormatterIgnoreSplice::Ignore(run) => {
             body_items.push(BodyItem::new(
@@ -233,7 +238,12 @@ fn block_body_parts_with_ignored<'source>(
         }
         FormatterIgnoreSplice::Item { index, .. } => {
             let part = &parts[index];
-            body_items.push(block_body_part(doc, part, previous));
+            body_items.push(block_body_part(
+                doc,
+                part,
+                previous,
+                successors[index].as_ref(),
+            ));
             if !matches!(part, BlockPart::Separator { visible: false, .. }) {
                 previous = part.last_token();
             }
@@ -241,6 +251,21 @@ fn block_body_parts_with_ignored<'source>(
         FormatterIgnoreSplice::End { .. } => {}
     });
     body_items
+}
+
+fn block_part_successors<'source>(
+    parts: &[BlockPart<'source>],
+    close: Option<&KotlinSyntaxToken<'source>>,
+) -> Vec<Option<KotlinSyntaxToken<'source>>> {
+    let mut successor = close.copied();
+    let mut successors = vec![None; parts.len()];
+    for (index, part) in parts.iter().enumerate().rev() {
+        successors[index] = successor;
+        if let Some(first) = part.first_token() {
+            successor = Some(first);
+        }
+    }
+    successors
 }
 
 fn block_item_separator<'source>(

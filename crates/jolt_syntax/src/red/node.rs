@@ -133,6 +133,34 @@ impl<'tree, L: Language> SyntaxNode<'tree, L> {
         self.tree.is_recovery_free(self.id)
     }
 
+    /// Returns whether this node's final represented token belongs to a
+    /// syntax-owned malformed subtree.
+    ///
+    /// Formatters use this when an enclosing boundary would otherwise
+    /// relocate trivia from the final token. A malformed subtree emits its
+    /// represented source verbatim and therefore already owns that trivia.
+    #[must_use]
+    pub fn last_token_is_malformed_owned(&self) -> bool {
+        let mut current = *self;
+        loop {
+            if current.is_directly_malformed() {
+                return current.last_token().is_some();
+            }
+            let Some(last_slot) = (0..current.slot_count()).rev().find_map(|index| {
+                current
+                    .slot_at(index)
+                    .filter(|slot| slot.last_token().is_some())
+            }) else {
+                return false;
+            };
+            match last_slot {
+                SyntaxSlot::Node(node) => current = node,
+                SyntaxSlot::Token(_) => return false,
+                SyntaxSlot::Empty => unreachable!("empty slots have no last token"),
+            }
+        }
+    }
+
     pub(crate) const fn tree(&self) -> &'tree SyntaxTree {
         self.tree
     }

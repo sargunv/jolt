@@ -21,6 +21,7 @@ style/comments/leading-comments-on-assignments.kt
 style/comments/leading-comments-on-binary-operands.kt
 style/comments/lexical-boundaries.kt
 style/comments/mixed-comment-line-endings.kt
+style/comments/removed-semicolon-boundary-comments.kt
 style/comments/removed-semicolon-comment-blank-lines.kt
 style/comments/star-blocks.kt
 style/comments/token-trailing-comments.kt
@@ -253,6 +254,7 @@ syntax/recovery/assignment-without-left.kt
 syntax/recovery/block-empty-statement-adjacent-braces.kt
 syntax/recovery/block-missing-close.kt
 syntax/recovery/block-with-formatter-ignore.kt
+syntax/recovery/body-boundary-comments.kt
 syntax/recovery/braced-opening-comments.kt
 syntax/recovery/call-without-callee.kt
 syntax/recovery/callable-reference-missing-target.kt

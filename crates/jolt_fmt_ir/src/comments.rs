@@ -202,7 +202,20 @@ pub fn format_trailing_comments_before_line_break<'source, L: Language>(
     doc: &mut DocBuilder<'source>,
     token: &SyntaxToken<'source, L>,
 ) -> Doc<'source> {
-    let mut comments = token.trailing_comments().peekable();
+    format_trailing_comment_list_before_line_break(doc, token.trailing_comments())
+}
+
+/// Formats a selected trailing-comment run where an enclosing layout break
+/// follows.
+///
+/// This is the list form of [`format_trailing_comments_before_line_break`]. It
+/// lets an enclosing construct format only the comments it owns when the
+/// parser exposes the same source comment at both sides of a syntax boundary.
+pub fn format_trailing_comment_list_before_line_break<'source>(
+    doc: &mut DocBuilder<'source>,
+    comments: impl IntoIterator<Item = Comment<'source>>,
+) -> Doc<'source> {
+    let mut comments = comments.into_iter().peekable();
     doc.concat_list(|docs| {
         while let Some(comment) = comments.next() {
             let space = docs.space();
@@ -379,8 +392,11 @@ pub fn format_token_body<'source, L: Language>(
     token: &SyntaxToken<'source, L>,
     token_doc: Doc<'source>,
     leading: LeadingTrivia,
-    trailing: TrailingTrivia,
+    mut trailing: TrailingTrivia,
 ) -> Doc<'source> {
+    if doc.relocates_trailing_trivia(token) {
+        trailing = TrailingTrivia::RelocatedToEnclosingContext;
+    }
     format_token_doc(
         doc,
         token_doc,

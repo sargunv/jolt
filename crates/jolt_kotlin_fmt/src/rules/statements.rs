@@ -1,13 +1,14 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    BlockItem, Declaration, Expression, ExpressionStatement, KotlinSyntaxField, Statement,
-    StatementContentSyntax, StatementContentValue, StatementSyntax, ThrowExpression,
+    BlockItem, Declaration, Expression, ExpressionStatement, KotlinSyntaxField, KotlinSyntaxView,
+    Statement, StatementContentSyntax, StatementContentValue, StatementSyntax, ThrowExpression,
 };
 
 mod blocks;
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_terminator_list, format_token,
+    LeadingTrivia, TrailingTrivia, comment_forces_line, format_terminator_list, format_token,
+    format_trailing_comment_list_before_line_break,
 };
 use crate::helpers::recovery::{format_malformed, format_required_field};
 use crate::rules::expressions::{format_expression, format_expression_without_leading};
@@ -55,6 +56,84 @@ pub(crate) fn format_block_item<'source>(
         BlockItem::Block(block) => format_block(doc, block),
         BlockItem::EmptyStatement(statement) => format_empty_statement(doc, statement),
         BlockItem::BogusBlockItem(item) => format_malformed(item, doc),
+    }
+}
+
+/// A body item together with the layout state owned by its following boundary.
+pub(crate) struct BodyBoundaryDoc<'source> {
+    pub(crate) doc: Doc<'source>,
+    pub(crate) forces_line_after: bool,
+}
+
+/// Formats an item at the enclosing body's boundary with its source successor.
+///
+/// A final token can be formatted by a nested rule while its trailing comments
+/// semantically belong to the surrounding body. The syntax tree may also expose
+/// the same physical comment as leading trivia on the successor. The body join
+/// therefore relocates the complete trailing run out of the nested layout, then
+/// emits only comments not already owned by the successor.
+pub(crate) fn format_block_item_at_body_boundary<'source>(
+    doc: &mut DocBuilder<'source>,
+    item: &BlockItem<'source>,
+    successor: Option<&jolt_kotlin_syntax::KotlinSyntaxToken<'source>>,
+) -> BodyBoundaryDoc<'source> {
+    let Some(last) = item.last_token() else {
+        return BodyBoundaryDoc {
+            doc: format_block_item(doc, item),
+            forces_line_after: false,
+        };
+    };
+    let trailing = last.trailing_comments().collect::<Vec<_>>();
+    if trailing.is_empty() {
+        return BodyBoundaryDoc {
+            doc: format_block_item(doc, item),
+            forces_line_after: false,
+        };
+    }
+
+    if item.last_token_is_malformed_owned() {
+        return BodyBoundaryDoc {
+            doc: format_block_item(doc, item),
+            forces_line_after: false,
+        };
+    }
+
+    // An ancestor body boundary for the same physical final token is the
+    // source-level join that owns this trivia. Keep formatting structurally,
+    // but do not create a second relocation/emission at a nested body view.
+    if doc.relocates_trailing_trivia(&last) {
+        return BodyBoundaryDoc {
+            doc: format_block_item(doc, item),
+            forces_line_after: false,
+        };
+    }
+
+    let item = doc.with_relocated_trailing_trivia(&last, |doc| format_block_item(doc, item));
+    let mut successor_comments = successor
+        .into_iter()
+        .flat_map(jolt_syntax::SyntaxToken::leading_comments)
+        .map(|comment| comment.text_range())
+        .peekable();
+    let comments = trailing
+        .into_iter()
+        .filter(|comment| {
+            let range = comment.text_range();
+            while successor_comments
+                .peek()
+                .is_some_and(|successor| successor.start() < range.start())
+            {
+                successor_comments.next();
+            }
+            successor_comments
+                .peek()
+                .is_none_or(|successor| *successor != range)
+        })
+        .collect::<Vec<_>>();
+    let forces_line_after = comments.iter().any(comment_forces_line);
+    let comments = format_trailing_comment_list_before_line_break(doc, comments);
+    BodyBoundaryDoc {
+        doc: doc.concat([item, comments]),
+        forces_line_after,
     }
 }
 
