@@ -86,7 +86,12 @@ pub(super) fn format_when_expression<'source>(
             doc.concat([space, subject])
         }
         KotlinFormatField::Present(None) => Doc::nil(),
-        KotlinFormatField::Malformed(recovery) => recovery,
+        KotlinFormatField::Malformed(recovery) => {
+            // A represented subject, including a syntax-owned malformed one,
+            // is lexically separated from `when`.
+            let space = doc.space();
+            doc.concat([space, recovery])
+        }
     };
     let open = resolve_required_delimiter(expression.open_brace(), doc);
     let close = resolve_required_delimiter(expression.close_brace(), doc);

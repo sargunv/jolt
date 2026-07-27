@@ -189,6 +189,7 @@ impl Parser<'_> {
 
     fn parse_when_subject(&mut self) {
         let subject = self.start();
+        let mut binding_diagnostic = None;
         self.eat_asserted(K::LParen);
         if self.at(K::ValKw) || self.at(K::VarKw) {
             self.bump();
@@ -197,12 +198,11 @@ impl Parser<'_> {
                 self.parse_type_reference_until(&[K::Assign, K::RParen]);
             }
             if !self.eat(K::Assign) {
-                let diagnostic = self.pending_expected("expected '=' in when subject");
-                self.missing_required_slot(
-                    subject.anchor(),
-                    crate::shape::when_subject::Slot::assign as u16,
-                    [diagnostic],
-                );
+                // `assign` is optional for expression-only subjects, but
+                // conditionally required once a binding starts. Own that
+                // conditional recovery at the subject rather than inventing a
+                // required empty value for an optional schema slot.
+                binding_diagnostic = Some(self.pending_expected("expected '=' in when subject"));
             }
             if self.at(K::RParen) {
                 self.complete_missing_expression("expected when subject expression");
@@ -222,7 +222,11 @@ impl Parser<'_> {
                 [diagnostic],
             );
         }
-        self.complete(subject, K::WhenSubject);
+        if let Some(diagnostic) = binding_diagnostic {
+            self.complete_recovery(subject, K::WhenSubject, [diagnostic]);
+        } else {
+            self.complete(subject, K::WhenSubject);
+        }
     }
 
     fn parse_when_condition(&mut self, boundary: Option<usize>) {
