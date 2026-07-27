@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
+use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
 
 use crate::width::{TextWidth, display_width, literal_text_metrics};
 use crate::{
@@ -15,7 +16,7 @@ use crate::{
 };
 use jolt_syntax::{
     Language, RemovalClaim, ReorderClaim, ReplacementClaim, SourceIdentity, SourceRangeClaim,
-    SourceTriviaPiece, SyntaxToken, SyntaxVerbatimCore, SynthesisClaim,
+    SourceTokenId, SourceTriviaPiece, SyntaxToken, SyntaxVerbatimCore, SynthesisClaim,
 };
 use jolt_text::TextRange;
 
@@ -138,6 +139,7 @@ pub struct DocBuilder<'source> {
     arena: DocArena<'source>,
     list_scratch: Vec<Doc<'source>>,
     formatter_ignore: Option<FormatterIgnorePlan<'source>>,
+    relocated_trailing_trivia: Option<SourceTokenId<'source>>,
 }
 
 impl<'source> DocBuilder<'source> {
@@ -147,7 +149,33 @@ impl<'source> DocBuilder<'source> {
             arena: DocArena::default(),
             list_scratch: Vec::new(),
             formatter_ignore: None,
+            relocated_trailing_trivia: None,
         }
+    }
+
+    /// Formats a syntax-owned construct while its last token's trailing trivia
+    /// is owned by the enclosing layout boundary.
+    ///
+    /// Nested boundaries replace and then restore the active token in constant
+    /// time. Token formatting consults only this exact source identity, so no
+    /// source text or token scan is needed.
+    pub fn with_relocated_trailing_trivia<L: Language, T>(
+        &mut self,
+        token: &SyntaxToken<'source, L>,
+        format: impl FnOnce(&mut Self) -> T,
+    ) -> T {
+        let previous = self.relocated_trailing_trivia.replace(token.source_id());
+        let result = catch_unwind(AssertUnwindSafe(|| format(self)));
+        self.relocated_trailing_trivia = previous;
+        match result {
+            Ok(result) => result,
+            Err(payload) => resume_unwind(payload),
+        }
+    }
+
+    #[must_use]
+    pub fn relocates_trailing_trivia<L: Language>(&self, token: &SyntaxToken<'source, L>) -> bool {
+        self.relocated_trailing_trivia == Some(token.source_id())
     }
 
     /// Creates the root document builder with its immutable formatter-ignore
@@ -187,6 +215,7 @@ impl<'source> DocBuilder<'source> {
             },
             list_scratch: Vec::new(),
             formatter_ignore: None,
+            relocated_trailing_trivia: None,
         }
     }
 

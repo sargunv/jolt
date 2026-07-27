@@ -1,0 +1,117 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun adjacentControlFlowWithoutTerminator() {
+  for (i in 1..2) { consume(i) } while (ready()) { consume(next()) } /* recovery boundary */
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "adjacentControlFlowWithoutTerminator" @ 4..40
+      ValueParameterList
+        LParen "(" @ 40..41
+        ValueParameterSeparatedList
+        RParen ")" @ 41..42 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 43..44
+          BlockItemList
+            Statement
+              ExpressionStatement
+                BinaryExpression
+                  ForStatement
+                    ForKw "for" @ 47..50 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                    LParen "(" @ 51..52
+                    ForVariable
+                      ModifierList
+                      Name
+                        Identifier "i" @ 52..53 trailing=[Whitespace " "]
+                    InKw "in" @ 54..56 trailing=[Whitespace " "]
+                    BinaryExpression
+                      LiteralExpression
+                        IntegerLiteral "1" @ 57..58
+                      Range ".." @ 58..60
+                      LiteralExpression
+                        IntegerLiteral "2" @ 60..61
+                    RParen ")" @ 61..62 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 63..64 trailing=[Whitespace " "]
+                      BlockItemList
+                        Statement
+                          ExpressionStatement
+                            CallExpression
+                              NameExpression
+                                Identifier "consume" @ 65..72
+                              TypeArgumentListList
+                              ValueArgumentList
+                                LParen "(" @ 72..73
+                                ValueArgumentEntryList
+                                  ValueArgument
+                                    ValueArgumentPrefixList
+                                    NameExpression
+                                      Identifier "i" @ 73..74
+                                RParen ")" @ 74..75 trailing=[Whitespace " "]
+                              LambdaExpressionList
+                          TerminatorList
+                      RBrace "}" @ 76..77 trailing=[Whitespace " "]
+                  WhileStatement
+                    WhileKw "while" @ 78..83 trailing=[Whitespace " "]
+                    ParenthesizedExpression
+                      LParen "(" @ 84..85
+                      CallExpression
+                        NameExpression
+                          Identifier "ready" @ 85..90
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 90..91
+                          ValueArgumentEntryList
+                          RParen ")" @ 91..92
+                        LambdaExpressionList
+                      RParen ")" @ 92..93 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 94..95 trailing=[Whitespace " "]
+                      BlockItemList
+                        Statement
+                          ExpressionStatement
+                            CallExpression
+                              NameExpression
+                                Identifier "consume" @ 96..103
+                              TypeArgumentListList
+                              ValueArgumentList
+                                LParen "(" @ 103..104
+                                ValueArgumentEntryList
+                                  ValueArgument
+                                    ValueArgumentPrefixList
+                                    CallExpression
+                                      NameExpression
+                                        Identifier "next" @ 104..108
+                                      TypeArgumentListList
+                                      ValueArgumentList
+                                        LParen "(" @ 108..109
+                                        ValueArgumentEntryList
+                                        RParen ")" @ 109..110
+                                      LambdaExpressionList
+                                RParen ")" @ 110..111 trailing=[Whitespace " "]
+                              LambdaExpressionList
+                          TerminatorList
+                      RBrace "}" @ 112..113 trailing=[Whitespace " ", BlockComment "/* recovery boundary */"]
+              TerminatorList
+          RBrace "}" @ 138..139 leading=[Newline "\n"]
+  Eof "" @ 140..140 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=78..83 message="unexpected token in expression"
+
+diagnostics:
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(78), end: TextSize(83) }) message=unexpected token in expression

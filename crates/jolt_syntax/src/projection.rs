@@ -145,6 +145,12 @@ macro_rules! define_typed_cst_access {
             }
 
             #[must_use]
+            fn last_token_is_malformed_owned(&self) -> bool {
+                self.syntax_node()
+                    .is_some_and(|syntax| syntax.last_token_is_malformed_owned())
+            }
+
+            #[must_use]
             fn malformed_verbatim_core(&self) -> Option<SyntaxVerbatimCore<'source, $language>> {
                 self.syntax_node()
                     .and_then(|syntax| syntax.malformed_verbatim_core())

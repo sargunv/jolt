@@ -1,8 +1,8 @@
 use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder, LayoutDoc};
 use jolt_kotlin_syntax::{
-    BlockItem, KotlinSyntaxField, KotlinSyntaxView, LabeledLambdaExpression, LambdaBody,
-    LambdaBodyItemSyntax, LambdaExpression, LambdaForm, LambdaParameter,
-    LambdaParameterBindingSyntax, LambdaParameterList, LambdaParameterListEntry,
+    BlockItem, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView,
+    LabeledLambdaExpression, LambdaBody, LambdaBodyItemSyntax, LambdaExpression, LambdaForm,
+    LambdaParameter, LambdaParameterBindingSyntax, LambdaParameterList, LambdaParameterListEntry,
     boundary_separator_removal_claim,
 };
 
@@ -20,7 +20,7 @@ use crate::helpers::recovery::{
 };
 use crate::rules::declarations::format_destructuring_declaration;
 use crate::rules::names::format_name_with_leading;
-use crate::rules::statements::format_block_item;
+use crate::rules::statements::format_block_item_at_body_boundary;
 use crate::rules::types::format_modifier_sequence;
 use crate::rules::types::format_type_reference;
 
@@ -136,7 +136,7 @@ fn format_lambda_body<'source>(
     let close_line = doc.hard_line_boundary();
     let block = doc.concat([open, block_parameters, block_body, close_line, close]);
 
-    if count == 1 {
+    if count == 1 && !body_doc.forces_line_after {
         let open_space = doc.space();
         let inline_parameters = if let Some(parameters) = parameters {
             let space = doc.space();
@@ -299,61 +299,73 @@ pub(super) fn lambda_body_doc<'source>(
     close: Option<&jolt_kotlin_syntax::KotlinSyntaxToken<'source>>,
 ) -> LambdaBodyDoc<'source> {
     let mut count = 0;
+    let mut forces_line_after = false;
     let items = body.items();
     let malformed_is_visible = matches!(
         &items,
         KotlinSyntaxField::Malformed(malformed) if malformed.first_token().is_some()
     );
     let body_doc = match resolve_required_field(items, doc) {
-        KotlinFormatField::Present(items) => doc.concat_list(|docs| {
-            let mut preceding_item: Option<BlockItem<'source>> = None;
-            for part in items.parts() {
-                let (item, layout_visible) = match resolve_list_part(part, docs) {
-                    KotlinFormatListPart::Item(role) => match role.classify() {
-                        Ok(LambdaBodyItemSyntax::Item(item)) => {
-                            let visible = item.first_token().is_some();
-                            preceding_item = Some(item);
-                            (format_block_item(docs, &item), visible)
-                        }
-                        Ok(LambdaBodyItemSyntax::Terminator(token)) => {
-                            let claim = preceding_item
-                                .as_ref()
-                                .and_then(|owner| boundary_separator_removal_claim(owner, token));
-                            let separator = format_removed_separator(docs, &token, claim, false);
-                            (separator, token_has_comments(&token))
-                        }
-                        Err(error) => {
-                            preceding_item = None;
-                            docs.block_on_invariant(error.to_string());
+        KotlinFormatField::Present(items) => {
+            let parts = items.parts().collect::<Vec<_>>();
+            let successors = lambda_body_part_successors(&parts, close);
+            doc.concat_list(|docs| {
+                let mut preceding_item: Option<BlockItem<'source>> = None;
+                for (part, successor) in parts.iter().copied().zip(successors) {
+                    let (item, layout_visible) = match resolve_list_part(part, docs) {
+                        KotlinFormatListPart::Item(role) => match role.classify() {
+                            Ok(LambdaBodyItemSyntax::Item(item)) => {
+                                let visible = item.first_token().is_some();
+                                preceding_item = Some(item);
+                                let boundary = format_block_item_at_body_boundary(
+                                    docs,
+                                    &item,
+                                    successor.as_ref(),
+                                );
+                                forces_line_after |= boundary.forces_line_after;
+                                (boundary.doc, visible)
+                            }
+                            Ok(LambdaBodyItemSyntax::Terminator(token)) => {
+                                let claim = preceding_item.as_ref().and_then(|owner| {
+                                    boundary_separator_removal_claim(owner, token)
+                                });
+                                let separator =
+                                    format_removed_separator(docs, &token, claim, false);
+                                (separator, token_has_comments(&token))
+                            }
+                            Err(error) => {
+                                preceding_item = None;
+                                docs.block_on_invariant(error.to_string());
+                                (Doc::nil(), false)
+                            }
+                        },
+                        KotlinFormatListPart::Separator(separator) => {
+                            docs.block_on_invariant(format!(
+                                "unexpected lambda-body separator: {:?}",
+                                separator.kind()
+                            ));
                             (Doc::nil(), false)
                         }
-                    },
-                    KotlinFormatListPart::Separator(separator) => {
-                        docs.block_on_invariant(format!(
-                            "unexpected lambda-body separator: {:?}",
-                            separator.kind()
-                        ));
-                        (Doc::nil(), false)
+                        KotlinFormatListPart::Recovery(recovery) => {
+                            preceding_item = None;
+                            (recovery.doc(), recovery.is_visible())
+                        }
+                    };
+                    if layout_visible {
+                        push_lambda_body_doc(docs, &mut count, item);
+                    } else {
+                        docs.push(item);
                     }
-                    KotlinFormatListPart::Recovery(recovery) => {
-                        preceding_item = None;
-                        (recovery.doc(), recovery.is_visible())
+                }
+                if let Some(close) = close {
+                    let comments = close.leading_comments().collect::<Vec<_>>();
+                    if !comments.is_empty() {
+                        let comments = format_dangling_comments(docs, comments);
+                        push_lambda_body_doc(docs, &mut count, comments);
                     }
-                };
-                if layout_visible {
-                    push_lambda_body_doc(docs, &mut count, item);
-                } else {
-                    docs.push(item);
                 }
-            }
-            if let Some(close) = close {
-                let comments = close.leading_comments().collect::<Vec<_>>();
-                if !comments.is_empty() {
-                    let comments = format_dangling_comments(docs, comments);
-                    push_lambda_body_doc(docs, &mut count, comments);
-                }
-            }
-        }),
+            })
+        }
         KotlinFormatField::Malformed(recovery) => {
             count = usize::from(malformed_is_visible);
             recovery
@@ -362,7 +374,34 @@ pub(super) fn lambda_body_doc<'source>(
     LambdaBodyDoc {
         doc: body_doc,
         count,
+        forces_line_after,
     }
+}
+
+fn lambda_body_part_first_token<'source>(
+    part: KotlinSyntaxListPart<'source, jolt_kotlin_syntax::LambdaBodyItem<'source>>,
+) -> Option<KotlinSyntaxToken<'source>> {
+    match part {
+        KotlinSyntaxListPart::Item(item) => item.first_token(),
+        KotlinSyntaxListPart::Separator(token) => Some(token),
+        KotlinSyntaxListPart::Missing(_) => None,
+        KotlinSyntaxListPart::Malformed(malformed) => malformed.first_token(),
+    }
+}
+
+fn lambda_body_part_successors<'source>(
+    parts: &[KotlinSyntaxListPart<'source, jolt_kotlin_syntax::LambdaBodyItem<'source>>],
+    close: Option<&KotlinSyntaxToken<'source>>,
+) -> Vec<Option<KotlinSyntaxToken<'source>>> {
+    let mut successor = close.copied();
+    let mut successors = vec![None; parts.len()];
+    for (index, part) in parts.iter().copied().enumerate().rev() {
+        successors[index] = successor;
+        if let Some(first) = lambda_body_part_first_token(part) {
+            successor = Some(first);
+        }
+    }
+    successors
 }
 
 fn push_lambda_body_doc<'source>(
@@ -381,6 +420,7 @@ fn push_lambda_body_doc<'source>(
 pub(super) struct LambdaBodyDoc<'source> {
     pub(super) doc: Doc<'source>,
     pub(super) count: usize,
+    pub(super) forces_line_after: bool,
 }
 
 impl LambdaBodyDoc<'_> {
