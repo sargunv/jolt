@@ -442,7 +442,12 @@ pub fn format_token_with_inline_leading_comments<'source, L: Language>(
                 } else {
                     doc.space()
                 };
-                doc.concat([comments, after_comments])
+                let comments = doc.concat([comments, after_comments]);
+                if final_comment_forces_line {
+                    doc.comment_prefix(comments)
+                } else {
+                    comments
+                }
             }
         }
     };
