@@ -1,0 +1,165 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun plus(a: Int, b: Int): Int {
+  val result = a
+  +b
+  return result
+}
+
+fun minus(a: Int, b: Int): Int {
+  val result = a
+  -b
+  return result
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "plus" @ 4..8
+      ValueParameterList
+        LParen "(" @ 8..9
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "a" @ 9..10
+            Colon ":" @ 10..11 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 12..15
+          Comma "," @ 15..16 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "b" @ 17..18
+            Colon ":" @ 18..19 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 20..23
+        RParen ")" @ 23..24
+      Colon ":" @ 24..25 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 26..29 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 30..31
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 34..37 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "result" @ 38..44 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 45..46 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "a" @ 47..48
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                UnaryExpression
+                  Plus "+" @ 51..52 leading=[Newline "\n", Whitespace "  "]
+                  NameExpression
+                    Identifier "b" @ 52..53
+              TerminatorList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 56..62 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "result" @ 63..69
+              TerminatorList
+          RBrace "}" @ 70..71 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 73..76 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "minus" @ 77..82
+      ValueParameterList
+        LParen "(" @ 82..83
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "a" @ 83..84
+            Colon ":" @ 84..85 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 86..89
+          Comma "," @ 89..90 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "b" @ 91..92
+            Colon ":" @ 92..93 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 94..97
+        RParen ")" @ 97..98
+      Colon ":" @ 98..99 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 100..103 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 104..105
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 108..111 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "result" @ 112..118 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 119..120 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "a" @ 121..122
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                UnaryExpression
+                  Minus "-" @ 125..126 leading=[Newline "\n", Whitespace "  "]
+                  NameExpression
+                    Identifier "b" @ 126..127
+              TerminatorList
+            Statement
+              ExpressionStatement
+                JumpExpression
+                  ReturnKw "return" @ 130..136 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "result" @ 137..143
+              TerminatorList
+          RBrace "}" @ 144..145 leading=[Newline "\n"]
+  Eof "" @ 146..146 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

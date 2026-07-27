@@ -183,7 +183,8 @@ impl Parser<'_> {
             } else {
                 self.bump();
                 if self.at_expression_boundary(stops)
-                    || self.at_expression_rhs_declaration_boundary()
+                    || !expression_start_kind(self.current_kind())
+                        && self.at_expression_rhs_declaration_boundary()
                 {
                     let rhs = self.start();
                     let diagnostic = self.pending_expected("expected expression after operator");
@@ -728,9 +729,9 @@ impl Parser<'_> {
         }
 
         if self.newline_before_current()
-            && matches!(
+            && !matches!(
                 self.current_kind(),
-                K::InKw | K::NotIn | K::IsKw | K::NotIs | K::AsKw | K::AsSafe
+                K::OrOr | K::AndAnd | K::Elvis | K::AsKw | K::AsSafe
             )
         {
             return None;
@@ -745,7 +746,7 @@ impl Parser<'_> {
             K::Elvis => 6,
             K::Range | K::RangeUntil => 7,
             K::Plus | K::Minus => 8,
-            K::Star | K::Slash | K::Percent | K::Amp => 9,
+            K::Star | K::Slash | K::Percent => 9,
             kind if self.at_infix_function_operator(kind) => 6,
             kind if is_binary_operator(kind) => 4,
             _ => return None,

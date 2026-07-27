@@ -297,6 +297,7 @@ mod tests {
     fn valid_multiline_rhs_stays_expression_owned() {
         for source in [
             "fun f() = 1 +\n !value\n",
+            "fun f() = root +\n value\nclass Following\n",
             "val f =\n fun(value: Int) = value\n",
             "fun f() = predicate &&\n fun(value: Int) = value\n",
             "val f = fun() = 1\n",

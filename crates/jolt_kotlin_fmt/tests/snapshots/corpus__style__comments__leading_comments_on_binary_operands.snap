@@ -16,16 +16,16 @@ class LeadingCommentsOnBinaryOperands {
       first > second && second < third
     sum =
       // an operand chain that does not fit still breaks at its operators
-      first
-        + second
-        + third
-        + sum
-        + product
-        + first
-        + second
-        + third
-        + sum
-        + product
+      first +
+        second +
+        third +
+        sum +
+        product +
+        first +
+        second +
+        third +
+        sum +
+        product
     return if (flag) sum else product
   }
 }

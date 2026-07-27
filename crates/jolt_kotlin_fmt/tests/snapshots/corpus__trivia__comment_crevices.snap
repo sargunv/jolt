@@ -60,11 +60,11 @@ fun Scope /* JOLT-TRIVIA:receiver-type */. /* JOLT-TRIVIA:receiver-dot */comment
   ) = input[
     0 /* JOLT-TRIVIA:index-zero */
   ] /* JOLT-TRIVIA:to-receiver */ to /* JOLT-TRIVIA:to-name */
-      input[1 /* JOLT-TRIVIA:index-one */]
+    input[1 /* JOLT-TRIVIA:index-one */]
   val computed = (transform /* JOLT-TRIVIA:call-callee */( /* JOLT-TRIVIA:call-open */
     first /* JOLT-TRIVIA:call-arg */
-  ) /* JOLT-TRIVIA:binary-left */
-    + /* JOLT-TRIVIA:binary-plus */ transform(second))
+  ) /* JOLT-TRIVIA:binary-left */ + /* JOLT-TRIVIA:binary-plus */
+    transform(second))
     /* JOLT-TRIVIA:before-chain-dot */
     . /* JOLT-TRIVIA:chain-dot */ trim /* JOLT-TRIVIA:trim-name */()
     ?. /* JOLT-TRIVIA:safe-chain */ ifEmpty /* JOLT-TRIVIA:if-empty-name */ { /* JOLT-TRIVIA:if-empty-open */
@@ -80,7 +80,7 @@ fun Scope /* JOLT-TRIVIA:receiver-type */. /* JOLT-TRIVIA:receiver-dot */comment
   if /* JOLT-TRIVIA:if-keyword */ ( /* JOLT-TRIVIA:if-open */
     checked /* JOLT-TRIVIA:if-condition */
       && /* JOLT-TRIVIA:if-and */ computed !in /* JOLT-TRIVIA:not-in */
-          listOf("") /* JOLT-TRIVIA:if-close */
+        listOf("") /* JOLT-TRIVIA:if-close */
   ) {
     emit /* JOLT-TRIVIA:emit-callee */(rendered)
   } else /* JOLT-TRIVIA:else-keyword */ {
@@ -114,8 +114,8 @@ fun Scope /* JOLT-TRIVIA:receiver-type */. /* JOLT-TRIVIA:receiver-dot */comment
       return@joinToString /* JOLT-TRIVIA:labeled-return */ fallback
     }
     local
-  }
-    + holder /* JOLT-TRIVIA:callable-reference-left */:: /* JOLT-TRIVIA:callable-reference-operator */component1 /* JOLT-TRIVIA:callable-reference-name */
+  } +
+    holder /* JOLT-TRIVIA:callable-reference-left */:: /* JOLT-TRIVIA:callable-reference-operator */component1 /* JOLT-TRIVIA:callable-reference-name */
 }
 
 diagnostics:

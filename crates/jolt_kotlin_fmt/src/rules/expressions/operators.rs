@@ -200,7 +200,7 @@ fn finish_pending_binary_run<'source>(
             let break_before_operator = can_break_before_operator(&operator);
             let operator = format_binary_operator(docs, &operator);
             let part = if !break_before_operator {
-                let space = docs.space();
+                let before_operator = if spaced { docs.space() } else { Doc::nil() };
                 // A line comment after the operator runs to end of line, so the
                 // operand must start a new one; a soft line would flatten to a
                 // space and swallow the operand into the comment.
@@ -208,12 +208,13 @@ fn finish_pending_binary_run<'source>(
                     docs.hard_line()
                 } else if keep_infix_chain_flat {
                     docs.space()
+                } else if !spaced {
+                    docs.soft_line()
                 } else {
                     docs.line()
                 };
                 let operand = docs.concat([line, operand]);
-                let operand = docs.indent(operand);
-                docs.concat([space, operator.doc, operand])
+                docs.concat([before_operator, operator.doc, operand])
             } else if operator.forces_line_after {
                 let before = docs.line();
                 // Hard, not soft: a soft line flattens to a space and would put
@@ -428,10 +429,7 @@ fn binary_operator_precedence(operator: &KotlinSyntaxToken<'_>) -> Option<u8> {
         KotlinSyntaxKind::Elvis | KotlinSyntaxKind::Identifier => Some(6),
         KotlinSyntaxKind::Range | KotlinSyntaxKind::RangeUntil => Some(7),
         KotlinSyntaxKind::Plus | KotlinSyntaxKind::Minus => Some(8),
-        KotlinSyntaxKind::Star
-        | KotlinSyntaxKind::Slash
-        | KotlinSyntaxKind::Percent
-        | KotlinSyntaxKind::Amp => Some(9),
+        KotlinSyntaxKind::Star | KotlinSyntaxKind::Slash | KotlinSyntaxKind::Percent => Some(9),
         _ => None,
     }
 }
@@ -454,15 +452,9 @@ fn is_range_operator(operator: &KotlinSyntaxToken<'_>) -> bool {
 }
 
 fn can_break_before_operator(operator: &KotlinSyntaxToken<'_>) -> bool {
-    !matches!(
+    matches!(
         operator.kind(),
-        KotlinSyntaxKind::InKw
-            | KotlinSyntaxKind::NotIn
-            | KotlinSyntaxKind::IsKw
-            | KotlinSyntaxKind::NotIs
-            | KotlinSyntaxKind::AsKw
-            | KotlinSyntaxKind::AsSafe
-            | KotlinSyntaxKind::Identifier
+        KotlinSyntaxKind::OrOr | KotlinSyntaxKind::AndAnd | KotlinSyntaxKind::Elvis
     )
 }
 

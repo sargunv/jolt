@@ -1,0 +1,15 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun newlineBeforeAs(value: Any) {
+  value as Int
+}
+
+fun newlineBeforeSafeAs(value: Any) {
+  value as? Int
+}
+
+diagnostics:
+(none)

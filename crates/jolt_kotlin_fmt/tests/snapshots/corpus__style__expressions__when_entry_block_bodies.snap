@@ -27,9 +27,9 @@ fun classify(k: Int): Int = when (k) {
 fun dispatch(k: Int) {
   when (k) {
     0 -> {
-      reportTheFirstReason(k, k)
-        + reportTheSecondReason(k, k)
-        + reportTheThirdReason(k, k)
+      reportTheFirstReason(k, k) +
+        reportTheSecondReason(k, k) +
+        reportTheThirdReason(k, k)
     }
     else -> report(-1)
   }
