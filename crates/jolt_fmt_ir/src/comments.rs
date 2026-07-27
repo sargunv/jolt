@@ -175,14 +175,19 @@ fn format_trailing_comments<'source, L: Language>(
     doc: &mut DocBuilder<'source>,
     token: &SyntaxToken<'source, L>,
 ) -> Doc<'source> {
+    let mut comments = token.trailing_comments().peekable();
     doc.concat_list(|docs| {
-        for comment in token.trailing_comments() {
+        while let Some(comment) = comments.next() {
             let space = docs.space();
             docs.push(space);
             let comment_doc = format_trailing_comment(docs, &comment);
             docs.push(comment_doc);
             if comment_forces_line(&comment) {
-                let hard_line = docs.hard_line();
+                let hard_line = if comments.peek().is_none() {
+                    docs.hard_line_suffix()
+                } else {
+                    docs.hard_line()
+                };
                 docs.push(hard_line);
             }
         }

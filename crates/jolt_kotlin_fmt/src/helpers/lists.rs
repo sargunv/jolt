@@ -165,9 +165,12 @@ fn format_close_with_spacing<'source>(
         .is_some_and(|token| !token.leading_comments().is_empty());
 
     let line = if close_has_leading_comments {
-        doc.hard_line()
+        doc.hard_line_boundary()
     } else {
-        doc.soft_line()
+        // The close participates in the same line boundary as the final item.
+        // In flat mode this is empty; in broken mode it reaches the next line,
+        // coalescing with any hard suffix emitted by the item or its comma.
+        doc.soft_line_boundary()
     };
     let close = format_close_delimiter_without_leading(doc, close, trailing);
     doc.concat([line, close])

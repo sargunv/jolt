@@ -549,6 +549,17 @@ impl<'source> DocBuilder<'source> {
         }))
     }
 
+    /// A mandatory line which does not break a measured group when it is the
+    /// final emitted content in that group.
+    #[must_use]
+    pub fn hard_line_suffix(&mut self) -> Doc<'source> {
+        self.push_node(DocNode::Line(Line {
+            mode: LineMode::HardSuffix,
+            flat: FlatLine::Empty,
+            indent_delta: 0,
+        }))
+    }
+
     /// Uses normal group line spacing unless preceding content already ended
     /// the line.
     #[must_use]
@@ -903,6 +914,7 @@ pub(crate) enum LineMode {
     SoftBoundary,
     SoftOrSpace,
     Hard,
+    HardSuffix,
     Boundary,
     HardBoundary,
     Empty,

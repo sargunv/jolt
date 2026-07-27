@@ -13,6 +13,7 @@ style/comments/comments-between-assignment-operator-and-value.kt
 style/comments/comments-between-statement-keyword-and-value.kt
 style/comments/content-shapes.kt
 style/comments/dangling-comment-blank-lines.kt
+style/comments/last-argument-line-comment-close-paren.kt
 style/comments/leading-comment-blank-lines.kt
 style/comments/leading-comments-before-short-constructs.kt
 style/comments/leading-comments-on-assignments.kt
@@ -24,6 +25,7 @@ style/comments/star-blocks.kt
 style/comments/token-trailing-comments.kt
 style/comments/trailing-comment-before-synthesized-parentheses.kt
 style/comments/trailing-line-boundaries.kt
+style/comments/trailing-line-comments-stay-flat.kt
 style/declarations/annotations-and-modifiers.kt
 style/declarations/class-header-clauses.kt
 style/declarations/delegation.kt

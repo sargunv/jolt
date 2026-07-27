@@ -418,7 +418,11 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
             }
             (
                 _,
-                LineMode::Hard | LineMode::HardBoundary | LineMode::Empty | LineMode::EmptyBoundary,
+                LineMode::Hard
+                | LineMode::HardSuffix
+                | LineMode::HardBoundary
+                | LineMode::Empty
+                | LineMode::EmptyBoundary,
             )
             | (
                 Mode::Break,
@@ -771,7 +775,7 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
             }
             Some(DocNode::Line(line)) => {
                 self.at_group_start = false;
-                self.fit_line(line, mode)
+                self.fit_line(line, mode, stack)
             }
             Some(DocNode::IfBreak { breaks, flat }) => {
                 self.at_group_start = false;
@@ -840,7 +844,12 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
         self.fits_stack(&mut fit_stack)
     }
 
-    fn fit_line(&mut self, line: &Line, mode: Mode) -> FitResult {
+    fn fit_line(
+        &mut self,
+        line: &Line,
+        mode: Mode,
+        stack: &FitStack<'_, '_, 'source>,
+    ) -> FitResult {
         match (mode, line.mode) {
             (
                 Mode::Flat | Mode::ForcedFlat,
@@ -853,6 +862,13 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
                 Mode::Flat | Mode::ForcedFlat,
                 LineMode::Hard | LineMode::HardBoundary | LineMode::Empty | LineMode::EmptyBoundary,
             ) => FitResult::No,
+            (Mode::Flat | Mode::ForcedFlat, LineMode::HardSuffix) => {
+                if stack.measured_group_ends_here() && self.column <= self.line_width {
+                    FitResult::Done
+                } else {
+                    FitResult::No
+                }
+            }
             (Mode::Break, _) => {
                 if self.column <= self.line_width {
                     FitResult::Done
@@ -946,6 +962,14 @@ impl<'stack, 'scratch, 'source> FitStack<'stack, 'scratch, 'source> {
             self.base_next = self.base_next.checked_sub(1)?;
             Some(self.base[self.base_next].into())
         })
+    }
+
+    fn measured_group_ends_here(&self) -> bool {
+        self.overlay.iter().rev().find_map(|command| match command {
+            FitCommand::EndIndent | FitCommand::EndGroup => None,
+            FitCommand::EndMeasuredGroup => Some(true),
+            FitCommand::Doc(_, _) | FitCommand::ConcatRange { .. } => Some(false),
+        }) == Some(true)
     }
 }
 
@@ -1355,6 +1379,41 @@ mod tests {
             .expect("removed source completes conservation");
 
         assert_eq!(sink.0, format!("{} b", "a".repeat(78)));
+    }
+
+    #[test]
+    fn final_hard_line_suffix_does_not_break_its_group() {
+        let mut builder = DocBuilder::new();
+        let first = builder.text("first");
+        let line = builder.line();
+        let comment = builder.text("second // comment");
+        let suffix = builder.hard_line_suffix();
+        let contents = builder.concat([first, line, comment, suffix]);
+        let doc = builder.group(contents);
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        render_to(&arena, doc, options(), &mut sink).expect("document renders");
+
+        assert_eq!(sink.0, "first second // comment\n");
+    }
+
+    #[test]
+    fn hard_line_suffix_breaks_when_layout_follows_it() {
+        let mut builder = DocBuilder::new();
+        let first = builder.text("first");
+        let line = builder.line();
+        let comment = builder.text("second // comment");
+        let suffix = builder.hard_line_suffix();
+        let close = builder.text(")");
+        let contents = builder.concat([first, line, comment, suffix, close]);
+        let doc = builder.group(contents);
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        render_to(&arena, doc, options(), &mut sink).expect("document renders");
+
+        assert_eq!(sink.0, "first\nsecond // comment\n)");
     }
 
     #[cfg(debug_assertions)]

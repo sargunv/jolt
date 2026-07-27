@@ -1,0 +1,106 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun lastArgumentComment() {
+  consume(
+    first,
+    second // last argument
+  )
+}
+
+fun trailingCommaComment() {
+  consume(
+    first,
+    second, // trailing comma owns the comment
+  )
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "lastArgumentComment" @ 4..23
+      ValueParameterList
+        LParen "(" @ 23..24
+        ValueParameterSeparatedList
+        RParen ")" @ 24..25 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 26..27
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "consume" @ 30..37 leading=[Newline "\n", Whitespace "  "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 37..38
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "first" @ 43..48 leading=[Newline "\n", Whitespace "    "]
+                      Comma "," @ 48..49
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "second" @ 54..60 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", LineComment "// last argument"]
+                    RParen ")" @ 80..81 leading=[Newline "\n", Whitespace "  "]
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 82..83 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 85..88 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "trailingCommaComment" @ 89..109
+      ValueParameterList
+        LParen "(" @ 109..110
+        ValueParameterSeparatedList
+        RParen ")" @ 110..111 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 112..113
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "consume" @ 116..123 leading=[Newline "\n", Whitespace "  "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 123..124
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "first" @ 129..134 leading=[Newline "\n", Whitespace "    "]
+                      Comma "," @ 134..135
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "second" @ 140..146 leading=[Newline "\n", Whitespace "    "]
+                      Comma "," @ 146..147 trailing=[Whitespace " ", LineComment "// trailing comma owns the comment"]
+                    RParen ")" @ 185..186 leading=[Newline "\n", Whitespace "  "]
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 187..188 leading=[Newline "\n"]
+  Eof "" @ 189..189 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
