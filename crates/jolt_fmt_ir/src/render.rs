@@ -160,7 +160,14 @@ impl RenderSink for DiscardSink {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Mode {
     Flat,
+    ForcedFlat,
     Break,
+}
+
+impl Mode {
+    const fn is_broken(self) -> bool {
+        matches!(self, Self::Break)
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -316,9 +323,9 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
                 Ok(())
             }
             Some(DocNode::ForceFlat { contents }) => {
-                self.group_stack.push(Mode::Flat);
+                self.group_stack.push(Mode::ForcedFlat);
                 stack.push(RenderCommand::EndGroup);
-                stack.push(RenderCommand::Doc(*contents, Mode::Flat));
+                stack.push(RenderCommand::Doc(*contents, Mode::ForcedFlat));
                 Ok(())
             }
             Some(DocNode::Indent { contents, levels }) => {
@@ -365,12 +372,12 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         mode: Mode,
         stack: &mut Vec<RenderCommand<'source>>,
     ) {
-        let group_mode = if should_break {
-            Mode::Break
-        } else if mode == Mode::Flat || self.group_fits(contents, stack) {
-            Mode::Flat
-        } else {
-            Mode::Break
+        let group_mode = match mode {
+            Mode::ForcedFlat => Mode::ForcedFlat,
+            Mode::Flat | Mode::Break if should_break => Mode::Break,
+            Mode::Flat => Mode::Flat,
+            Mode::Break if self.group_fits(contents, stack) => Mode::Flat,
+            Mode::Break => Mode::Break,
         };
         self.group_stack.push(group_mode);
         stack.push(RenderCommand::EndGroup);
@@ -401,7 +408,7 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
                 self.write_newlines(line.indent_delta, 0);
             }
             (
-                Mode::Flat,
+                Mode::Flat | Mode::ForcedFlat,
                 LineMode::Soft
                 | LineMode::SoftBoundary
                 | LineMode::SoftOrSpace
@@ -444,7 +451,7 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         self.group_stack
             .last()
             .copied()
-            .map(|mode| mode == Mode::Break)
+            .map(Mode::is_broken)
             .ok_or_else(RenderError::no_current_group)
     }
 
@@ -740,9 +747,9 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
                 should_break,
             }) => self.fit_group(*contents, *should_break, mode, stack),
             Some(DocNode::ForceFlat { contents }) => {
-                self.group_stack.push(Mode::Flat);
+                self.group_stack.push(Mode::ForcedFlat);
                 stack.push(FitCommand::EndGroup);
-                stack.push(FitCommand::Doc(*contents, Mode::Flat));
+                stack.push(FitCommand::Doc(*contents, Mode::ForcedFlat));
                 FitResult::Continue
             }
             Some(DocNode::Indent { contents, .. }) => {
@@ -808,10 +815,12 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
         mode: Mode,
         stack: &mut FitStack<'_, '_, 'source>,
     ) -> FitResult {
-        if mode == Mode::Flat && should_break {
-            return FitResult::No;
-        }
-        let group_mode = mode;
+        let group_mode = match mode {
+            Mode::ForcedFlat => Mode::ForcedFlat,
+            Mode::Flat if should_break => return FitResult::No,
+            Mode::Flat => Mode::Flat,
+            Mode::Break => Mode::Break,
+        };
         self.group_stack.push(group_mode);
         stack.push(FitCommand::EndGroup);
         stack.push(FitCommand::Doc(contents, group_mode));
@@ -834,14 +843,14 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
     fn fit_line(&mut self, line: &Line, mode: Mode) -> FitResult {
         match (mode, line.mode) {
             (
-                Mode::Flat,
+                Mode::Flat | Mode::ForcedFlat,
                 LineMode::Soft
                 | LineMode::SoftBoundary
                 | LineMode::SoftOrSpace
                 | LineMode::Boundary,
             ) => self.fit_flat_line(&line.flat),
             (
-                Mode::Flat,
+                Mode::Flat | Mode::ForcedFlat,
                 LineMode::Hard | LineMode::HardBoundary | LineMode::Empty | LineMode::EmptyBoundary,
             ) => FitResult::No,
             (Mode::Break, _) => {
@@ -871,7 +880,7 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
             .last()
             .or_else(|| self.base_group_stack[..self.base_group_len].last())
             .copied()
-            .is_some_and(|mode| mode == Mode::Break)
+            .is_some_and(Mode::is_broken)
     }
 
     fn width_result(&mut self, width: TextWidth) -> FitResult {
@@ -1563,6 +1572,95 @@ mod tests {
 
         assert_eq!(sink.0, ";");
         assert!(!outcome.used_malformed_verbatim());
+    }
+
+    #[test]
+    fn force_flat_overrides_nested_forced_groups() {
+        let mut builder = DocBuilder::new();
+        let left = builder.text("left");
+        let line = builder.line();
+        let right = builder.text("right");
+        let contents = builder.concat([left, line, right]);
+        let forced_group = builder.force_group(contents);
+        let document = builder.force_flat(forced_group);
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        render_to(&arena, document, options(), &mut sink).expect("document renders");
+
+        assert_eq!(sink.0, "left right");
+    }
+
+    #[test]
+    fn force_flat_selects_flat_if_break_branch_without_claiming_break_branch() {
+        let source = "ab";
+        let tree = syntax_tree(source);
+        let root = SyntaxNode::<ClaimLanguage>::new_root(source, &tree);
+        let mut tokens = root.tokens();
+        let first = tokens.next().expect("first token").source_id();
+        let second = tokens.next().expect("second token").source_id();
+        let mut builder = DocBuilder::new();
+        let breaks =
+            builder.replaced_source(replacement_claim(&root, first, NormalizedToken::EnumComma));
+        let flat = builder.replaced_source(replacement_claim(
+            &root,
+            second,
+            NormalizedToken::EnumSemicolon,
+        ));
+        let conditional = builder.if_break(breaks, flat);
+        let conditional = builder.force_flat(conditional);
+        let removed = builder.removed_source(removal_claim(
+            &root,
+            SourceIdentity::Token(first),
+            RemovalReason::DuplicateImport,
+        ));
+        let document = builder.concat([conditional, removed]);
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        let outcome = render_source_to(&arena, document, options(), &mut sink, &root)
+            .expect("selected branch renders without a duplicate claim");
+
+        assert_eq!(sink.0, ";");
+        assert!(!outcome.used_malformed_verbatim());
+    }
+
+    #[test]
+    fn force_flat_preserves_hard_lines_and_indentation() {
+        let mut builder = DocBuilder::new();
+        let left = builder.text("left");
+        let line = builder.hard_line();
+        let right = builder.text("right");
+        let contents = builder.concat([left, line, right]);
+        let contents = builder.indent(contents);
+        let document = builder.force_flat(contents);
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        render_to(&arena, document, options(), &mut sink).expect("document renders");
+
+        assert_eq!(sink.0, "left\n    right");
+    }
+
+    #[test]
+    fn enclosing_group_measures_forced_flat_contents() {
+        let mut builder = DocBuilder::new();
+        let prefix = builder.text("a".repeat(78));
+        let outer_line = builder.line();
+        let left = builder.text("x");
+        let inner_line = builder.line();
+        let right = builder.text("y");
+        let inner = builder.concat([left, inner_line, right]);
+        let inner = builder.force_group(inner);
+        let inner = builder.force_flat(inner);
+        let contents = builder.concat([prefix, outer_line, inner]);
+        let document = builder.group(contents);
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        render_to(&arena, document, options(), &mut sink).expect("document renders");
+
+        assert_eq!(sink.0, format!("{}\nx y", "a".repeat(78)));
     }
 
     #[cfg(debug_assertions)]

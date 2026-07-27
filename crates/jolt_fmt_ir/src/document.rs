@@ -470,8 +470,9 @@ impl<'source> DocBuilder<'source> {
         self.group_with_break(contents, true)
     }
 
-    /// Renders all breakable groups in `contents` flat, even when they exceed the line width.
-    /// Hard lines remain hard so represented source boundaries are never discarded.
+    /// Renders every nested breakable group in `contents` flat, including groups
+    /// explicitly marked to break, even when they exceed the line width. Hard
+    /// lines remain hard so represented source boundaries are never discarded.
     #[must_use]
     pub fn force_flat(&mut self, contents: Doc<'source>) -> Doc<'source> {
         if contents.is_nil() {

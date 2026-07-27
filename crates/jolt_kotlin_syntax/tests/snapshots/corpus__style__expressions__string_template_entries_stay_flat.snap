@@ -7,6 +7,10 @@ fun stringTemplateEntriesStayFlat(user: Long, pendingCredits: Long, pendingDebit
   val line = "user has ${user + pendingCredits + pendingDebits + user + user + pendingCredits} money"
   val raw = """user has ${user + pendingCredits + pendingDebits + user + user + pendingCredits} money"""
   val call = "user has ${accounting.service().nestedCall(user, pendingCredits, pendingDebits, user)} money"
+  val trailingCommaCall = "value=${foo(1,)}"
+  val rawTrailingCommaCall = """value=${foo(1,)}"""
+  val trailingLambdaChain = "value=${items.map { it + 1 }.filter { it > 1 }}"
+  val rawTrailingLambdaChain = """value=${items.map { it + 1 }.filter { it > 1 }}"""
 }
 
 syntax:
@@ -212,8 +216,200 @@ KotlinFile
                       RegularStringPart " money" @ 398..404
                   ClosingQuote "\"" @ 404..405
               PropertyBodyMemberList
-          RBrace "}" @ 406..407 leading=[Newline "\n"]
-  Eof "" @ 408..408 leading=[Newline "\n"]
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 408..411 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "trailingCommaCall" @ 412..429 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 430..431 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 432..433
+                    StringTemplateEntry
+                      RegularStringPart "value=" @ 433..439
+                    StringTemplateEntry
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 439..441
+                        CallExpression
+                          NameExpression
+                            Identifier "foo" @ 441..444
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 444..445
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 445..446
+                              Comma "," @ 446..447
+                            RParen ")" @ 447..448
+                          LambdaExpressionList
+                        LongTemplateEntryEnd "}" @ 448..449
+                  ClosingQuote "\"" @ 449..450
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 453..456 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "rawTrailingCommaCall" @ 457..477 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 478..479 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"\"\"" @ 480..483
+                    StringTemplateEntry
+                      RegularStringPart "value=" @ 483..489
+                    StringTemplateEntry
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 489..491
+                        CallExpression
+                          NameExpression
+                            Identifier "foo" @ 491..494
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 494..495
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 495..496
+                              Comma "," @ 496..497
+                            RParen ")" @ 497..498
+                          LambdaExpressionList
+                        LongTemplateEntryEnd "}" @ 498..499
+                  ClosingQuote "\"\"\"" @ 499..502
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 505..508 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "trailingLambdaChain" @ 509..528 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 529..530 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 531..532
+                    StringTemplateEntry
+                      RegularStringPart "value=" @ 532..538
+                    StringTemplateEntry
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 538..540
+                        CallExpression
+                          NavigationExpression
+                            CallExpression
+                              NavigationExpression
+                                NameExpression
+                                  Identifier "items" @ 540..545
+                                Dot "." @ 545..546
+                                Identifier "map" @ 546..549 trailing=[Whitespace " "]
+                              TypeArgumentListList
+                              LambdaExpressionList
+                                LambdaExpression
+                                  LambdaBody
+                                    LBrace "{" @ 550..551 trailing=[Whitespace " "]
+                                    LambdaBodyItemList
+                                      Statement
+                                        ExpressionStatement
+                                          BinaryExpression
+                                            NameExpression
+                                              Identifier "it" @ 552..554 trailing=[Whitespace " "]
+                                            Plus "+" @ 555..556 trailing=[Whitespace " "]
+                                            LiteralExpression
+                                              IntegerLiteral "1" @ 557..558 trailing=[Whitespace " "]
+                                        TerminatorList
+                                    RBrace "}" @ 559..560
+                            Dot "." @ 560..561
+                            Identifier "filter" @ 561..567 trailing=[Whitespace " "]
+                          TypeArgumentListList
+                          LambdaExpressionList
+                            LambdaExpression
+                              LambdaBody
+                                LBrace "{" @ 568..569 trailing=[Whitespace " "]
+                                LambdaBodyItemList
+                                  Statement
+                                    ExpressionStatement
+                                      BinaryExpression
+                                        NameExpression
+                                          Identifier "it" @ 570..572 trailing=[Whitespace " "]
+                                        Gt ">" @ 573..574 trailing=[Whitespace " "]
+                                        LiteralExpression
+                                          IntegerLiteral "1" @ 575..576 trailing=[Whitespace " "]
+                                    TerminatorList
+                                RBrace "}" @ 577..578
+                        LongTemplateEntryEnd "}" @ 578..579
+                  ClosingQuote "\"" @ 579..580
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 583..586 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "rawTrailingLambdaChain" @ 587..609 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 610..611 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"\"\"" @ 612..615
+                    StringTemplateEntry
+                      RegularStringPart "value=" @ 615..621
+                    StringTemplateEntry
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 621..623
+                        CallExpression
+                          NavigationExpression
+                            CallExpression
+                              NavigationExpression
+                                NameExpression
+                                  Identifier "items" @ 623..628
+                                Dot "." @ 628..629
+                                Identifier "map" @ 629..632 trailing=[Whitespace " "]
+                              TypeArgumentListList
+                              LambdaExpressionList
+                                LambdaExpression
+                                  LambdaBody
+                                    LBrace "{" @ 633..634 trailing=[Whitespace " "]
+                                    LambdaBodyItemList
+                                      Statement
+                                        ExpressionStatement
+                                          BinaryExpression
+                                            NameExpression
+                                              Identifier "it" @ 635..637 trailing=[Whitespace " "]
+                                            Plus "+" @ 638..639 trailing=[Whitespace " "]
+                                            LiteralExpression
+                                              IntegerLiteral "1" @ 640..641 trailing=[Whitespace " "]
+                                        TerminatorList
+                                    RBrace "}" @ 642..643
+                            Dot "." @ 643..644
+                            Identifier "filter" @ 644..650 trailing=[Whitespace " "]
+                          TypeArgumentListList
+                          LambdaExpressionList
+                            LambdaExpression
+                              LambdaBody
+                                LBrace "{" @ 651..652 trailing=[Whitespace " "]
+                                LambdaBodyItemList
+                                  Statement
+                                    ExpressionStatement
+                                      BinaryExpression
+                                        NameExpression
+                                          Identifier "it" @ 653..655 trailing=[Whitespace " "]
+                                        Gt ">" @ 656..657 trailing=[Whitespace " "]
+                                        LiteralExpression
+                                          IntegerLiteral "1" @ 658..659 trailing=[Whitespace " "]
+                                    TerminatorList
+                                RBrace "}" @ 660..661
+                        LongTemplateEntryEnd "}" @ 661..662
+                  ClosingQuote "\"\"\"" @ 662..665
+              PropertyBodyMemberList
+          RBrace "}" @ 666..667 leading=[Newline "\n"]
+  Eof "" @ 668..668 leading=[Newline "\n"]
 
 diagnostics:
   (none)
