@@ -1,0 +1,13 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+val labeledValue = label@ 1
+
+val repeatedlyLabeledLambda = first@ second@ {}
+
+val repeatedlyLabeledValue = first@ second@ 1
+
+diagnostics:
+(none)

@@ -1,0 +1,74 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val labeledValue = label@ 1
+
+val repeatedlyLabeledLambda = first@ second@ {}
+
+val repeatedlyLabeledValue = first@ second@ 1
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      Name
+        Identifier "labeledValue" @ 4..16 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 17..18 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "label" @ 19..24
+          At "@" @ 24..25 trailing=[Whitespace " "]
+          LiteralExpression
+            IntegerLiteral "1" @ 26..27
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 29..32 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "repeatedlyLabeledLambda" @ 33..56 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 57..58 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "first" @ 59..64
+          At "@" @ 64..65 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "second" @ 66..72
+            At "@" @ 72..73 trailing=[Whitespace " "]
+            LambdaExpression
+              LambdaBody
+                LBrace "{" @ 74..75
+                LambdaBodyItemList
+                RBrace "}" @ 75..76
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 78..81 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "repeatedlyLabeledValue" @ 82..104 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 105..106 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "first" @ 107..112
+          At "@" @ 112..113 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "second" @ 114..120
+            At "@" @ 120..121 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "1" @ 122..123
+      PropertyBodyMemberList
+  Eof "" @ 124..124 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
