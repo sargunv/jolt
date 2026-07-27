@@ -326,8 +326,6 @@ fn trailing_comma_separator<'source>(
                 }
             } else if force_line {
                 doc.hard_line()
-            } else if has_trailing_comments {
-                doc.line()
             } else {
                 doc.line()
             },
