@@ -10,20 +10,23 @@ mod callables;
 mod classes;
 
 impl Parser<'_> {
-    pub(super) fn parse_declaration_or_statement(&mut self) {
-        self.parse_declaration_or_statement_with_class_members(false);
+    pub(super) fn parse_declaration_or_statement(&mut self) -> bool {
+        self.parse_declaration_or_statement_with_class_members(false)
     }
 
     pub(in crate::parser::grammar) fn parse_class_member_declaration_or_statement(&mut self) {
         self.parse_declaration_or_statement_with_class_members(true);
     }
 
-    fn parse_declaration_or_statement_with_class_members(&mut self, allow_class_members: bool) {
+    fn parse_declaration_or_statement_with_class_members(
+        &mut self,
+        allow_class_members: bool,
+    ) -> bool {
         if !self.at_declaration_start(allow_class_members) {
             let marker = self.start();
             self.parse_statement_tail();
             self.complete(marker, K::Statement);
-            return;
+            return false;
         }
 
         if allow_class_members && self.at_soft_keyword("init") {
@@ -31,7 +34,7 @@ impl Parser<'_> {
             self.bump();
             self.parse_block();
             self.complete(marker, K::InitializerBlock);
-            return;
+            return true;
         }
 
         let marker = self.start();
@@ -95,6 +98,7 @@ impl Parser<'_> {
         };
 
         self.complete(marker, kind);
+        kind != K::Statement
     }
 
     pub(in crate::parser::grammar) fn at_declaration_start(

@@ -1,0 +1,22 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun redundantSemicolons() {
+  val first = 1
+  val second = 2
+  consume(first)
+  consume(second)
+}
+
+fun lambdaDeclarationSeparators() {
+  consume {
+    val first = 1
+    val second = 2
+    use(first, second)
+  }
+}
+
+diagnostics:
+(none)

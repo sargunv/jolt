@@ -45,7 +45,13 @@ impl Parser<'_> {
         let items = self.start();
         while !matches!(self.current_kind(), K::RBrace | K::Eof) {
             let before = self.position();
-            self.parse_declaration_or_statement();
+            let declaration = self.parse_declaration_or_statement();
+            if declaration && self.at(K::Semicolon) {
+                // A declaration's trailing semicolon separates body items; it
+                // is not an empty statement. Keeping it directly in the list
+                // gives the syntax-owned boundary normalizer the right owner.
+                self.bump();
+            }
             debug_assert!(self.position() > before);
         }
         self.complete(items, K::BlockItemList);
