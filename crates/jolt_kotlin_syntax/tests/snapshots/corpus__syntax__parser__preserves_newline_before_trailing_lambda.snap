@@ -1,0 +1,93 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun value(): Int = 1
+
+fun nextLineBlock() {
+  value()
+  { println() }
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "value" @ 4..9
+      ValueParameterList
+        LParen "(" @ 9..10
+        ValueParameterSeparatedList
+        RParen ")" @ 10..11
+      Colon ":" @ 11..12 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 13..16 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 17..18 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "1" @ 19..20
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 22..25 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "nextLineBlock" @ 26..39
+      ValueParameterList
+        LParen "(" @ 39..40
+        ValueParameterSeparatedList
+        RParen ")" @ 40..41 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 42..43
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "value" @ 46..51 leading=[Newline "\n", Whitespace "  "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 51..52
+                    ValueArgumentEntryList
+                    RParen ")" @ 52..53
+                  LambdaExpressionList
+              TerminatorList
+            Statement
+              ExpressionStatement
+                LambdaExpression
+                  LambdaBody
+                    LBrace "{" @ 56..57 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                    LambdaBodyItemList
+                      Statement
+                        ExpressionStatement
+                          CallExpression
+                            NameExpression
+                              Identifier "println" @ 58..65
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 65..66
+                              ValueArgumentEntryList
+                              RParen ")" @ 66..67 trailing=[Whitespace " "]
+                            LambdaExpressionList
+                        TerminatorList
+                    RBrace "}" @ 68..69
+              TerminatorList
+          RBrace "}" @ 70..71 leading=[Newline "\n"]
+  Eof "" @ 72..72 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

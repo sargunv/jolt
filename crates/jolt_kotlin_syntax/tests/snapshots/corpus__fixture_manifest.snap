@@ -216,6 +216,7 @@ syntax/parser/parses-when-condition-forms.kt
 syntax/parser/parses-when-multiple-conditions-with-guards.kt
 syntax/parser/parses-when-subject-binding.kt
 syntax/parser/parses-when-subject-guards-and-else.kt
+syntax/parser/preserves-newline-before-trailing-lambda.kt
 syntax/parser/recovers-incomplete-lambda-and-call.kt
 syntax/parser/recovers-missing-expression-after-elvis.kt
 syntax/parser/recovers-missing-expression-in-collection-literal-preview.kt

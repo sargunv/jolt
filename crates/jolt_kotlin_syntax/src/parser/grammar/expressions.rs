@@ -420,7 +420,9 @@ impl Parser<'_> {
         let lambdas = self.start();
         loop {
             let kind = self.current_kind();
-            if !self.at(K::LBrace) && !self.at_labeled_lambda_start(kind) {
+            if self.newline_before_current()
+                || !self.at(K::LBrace) && !self.at_labeled_lambda_start(kind)
+            {
                 break;
             }
             if self.at(K::LBrace) {
