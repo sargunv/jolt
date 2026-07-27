@@ -323,7 +323,7 @@ mod tests {
         check("fun f() { if (value) }\n", "expected branch after 'if' condition", KotlinSyntaxKind::BogusExpression, None);
         check("fun f() { if (value) else }\n", "expected branch after 'else'", KotlinSyntaxKind::BogusExpression, None);
         check("fun f() { when () {} }\n", "expected when subject expression", KotlinSyntaxKind::BogusExpression, None);
-        check("fun f() { when (val value) {} }\n", "expected '=' in when subject", KotlinSyntaxKind::WhenSubject, Some(crate::shape::when_subject::Slot::assign as u16));
+        check("fun f() { when (val value) {} }\n", "expected '=' in when subject", KotlinSyntaxKind::WhenSubject, None);
         check("fun f() { when (value) }\n", "expected '{' after when subject", KotlinSyntaxKind::WhenExpression, Some(crate::shape::when_expression::Slot::open_brace as u16));
         check("fun f() { when (value) }\n", "expected '}' after when", KotlinSyntaxKind::WhenExpression, Some(crate::shape::when_expression::Slot::close_brace as u16));
         check_code("fun f() { when (value) { , one -> 1 } }\n", "expected when condition between commas", KotlinParseDiagnosticCode::UnexpectedSyntax, KotlinSyntaxKind::BogusWhenCondition, None);

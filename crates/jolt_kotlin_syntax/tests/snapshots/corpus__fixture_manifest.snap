@@ -6,6 +6,7 @@ properties/layout-fit-boundaries/deep-call-chain.kt
 properties/layout-fit-boundaries/infix-identifier-chain.kt
 properties/layout-fit-boundaries/long-when-result.kt
 properties/layout-fit-boundaries/property-delegate.kt
+properties/layout-fit-boundaries/when-subject.kt
 style/comments/comment-shapes.kt
 style/comments/comments-between-assignment-operator-and-value.kt
 style/comments/comments-between-statement-keyword-and-value.kt
@@ -294,6 +295,7 @@ syntax/recovery/unterminated-nested-comment.kt
 syntax/recovery/value-parameter-list.kt
 syntax/recovery/when-condition-list.kt
 syntax/recovery/when-missing-close.kt
+syntax/recovery/when-subject-missing-assignment.kt
 trivia/annotations-use-site-targets.kt
 trivia/call-chains-and-safe-calls.kt
 trivia/callable-references-and-labels.kt

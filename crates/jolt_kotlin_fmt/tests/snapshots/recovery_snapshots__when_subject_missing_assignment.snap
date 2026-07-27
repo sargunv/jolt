@@ -1,0 +1,16 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+fun missingAssignment(value: State): Int = when (val current value) {
+  else -> 0
+}
+
+formatted:
+fun missingAssignment(value: State): Int = when (val current value) {
+  else -> 0
+}
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(61), end: TextSize(66) }) message=expected '=' in when subject

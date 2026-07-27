@@ -94,7 +94,10 @@ fun Scope /* JOLT-TRIVIA:receiver-type */. /* JOLT-TRIVIA:receiver-dot */comment
     emit("$index:$item")
   }
 
-  when /* JOLT-TRIVIA:when-keyword */ ( /* JOLT-TRIVIA:when-open */val text /* JOLT-TRIVIA:when-subject-name */ = /* JOLT-TRIVIA:when-subject-equals */ rendered /* JOLT-TRIVIA:when-close */) {
+  when /* JOLT-TRIVIA:when-keyword */ ( /* JOLT-TRIVIA:when-open */
+    val text /* JOLT-TRIVIA:when-subject-name */ = /* JOLT-TRIVIA:when-subject-equals */
+      rendered /* JOLT-TRIVIA:when-close */
+  ) {
     "" /* JOLT-TRIVIA:when-empty-condition */ -> /* JOLT-TRIVIA:when-empty-arrow */
       emit("blank")
     in /* JOLT-TRIVIA:when-in */ listOf(
