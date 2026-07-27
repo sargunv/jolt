@@ -528,7 +528,13 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
 
     pub(in crate::parser::grammar) fn starts_expression_not_plus_minus(&mut self) -> bool {
         self.starts_expression()
-            && !matches!(self.kind(), JavaSyntaxKind::Plus | JavaSyntaxKind::Minus)
+            && !matches!(
+                self.kind(),
+                JavaSyntaxKind::Plus
+                    | JavaSyntaxKind::Minus
+                    | JavaSyntaxKind::PlusPlus
+                    | JavaSyntaxKind::MinusMinus
+            )
     }
 
     pub(in crate::parser::grammar) fn starts_literal_expression(&mut self) -> bool {

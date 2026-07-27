@@ -1,0 +1,133 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class ParenthesizedPostfixIncrement {
+  void statement(int value) {
+    (value)++;
+  }
+
+  int expression(int value) {
+    return (value)++ + 1;
+  }
+
+  int decrement(int value) {
+    return (value)-- - 1;
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "ParenthesizedPostfixIncrement" @ 6..35 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 36..37
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 40..44 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "statement" @ 45..54
+            LParen "(" @ 54..55
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 55..58 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 59..64
+            RParen ")" @ 64..65 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 66..67
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    PostfixExpression
+                      ParenthesizedExpression
+                        LParen "(" @ 72..73 leading=[Newline "\n", Whitespace "    "]
+                        NameExpression
+                          Identifier "value" @ 73..78
+                        RParen ")" @ 78..79
+                      PlusPlus "++" @ 79..81
+                    Semicolon ";" @ 81..82
+              RBrace "}" @ 85..86 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 90..93 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "expression" @ 94..104
+            LParen "(" @ 104..105
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 105..108 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 109..114
+            RParen ")" @ 114..115 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 116..117
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 122..128 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    BinaryExpression
+                      PostfixExpression
+                        ParenthesizedExpression
+                          LParen "(" @ 129..130
+                          NameExpression
+                            Identifier "value" @ 130..135
+                          RParen ")" @ 135..136
+                        PlusPlus "++" @ 136..138 trailing=[Whitespace " "]
+                      Plus "+" @ 139..140 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "1" @ 141..142
+                    Semicolon ";" @ 142..143
+              RBrace "}" @ 146..147 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 151..154 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "decrement" @ 155..164
+            LParen "(" @ 164..165
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 165..168 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 169..174
+            RParen ")" @ 174..175 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 176..177
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 182..188 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    BinaryExpression
+                      PostfixExpression
+                        ParenthesizedExpression
+                          LParen "(" @ 189..190
+                          NameExpression
+                            Identifier "value" @ 190..195
+                          RParen ")" @ 195..196
+                        MinusMinus "--" @ 196..198 trailing=[Whitespace " "]
+                      Minus "-" @ 199..200 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "1" @ 201..202
+                    Semicolon ";" @ 202..203
+              RBrace "}" @ 206..207 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 208..209 leading=[Newline "\n"]
+  Eof "" @ 210..210 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
