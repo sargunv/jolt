@@ -1,0 +1,148 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun ((Int) -> Int).twice(value: Int) = value * 2
+
+fun (Int).identity() = this
+
+val (Int).property: Int
+  get() = this
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      CallableName
+        TypeReference
+          ParenthesizedType
+            AnnotationList
+            LParen "(" @ 4..5
+            ParenthesizedTypeEntryList
+              FunctionTypeParameter
+                TypeReference
+                  FunctionType
+                    ArrowFunctionType
+                      ParenthesizedType
+                        AnnotationList
+                        LParen "(" @ 5..6
+                        ParenthesizedTypeEntryList
+                          FunctionTypeParameter
+                            TypeReference
+                              UserType
+                                UserTypeSegmentList
+                                  UserTypeSegment
+                                    Identifier "Int" @ 6..9
+                        RParen ")" @ 9..10 trailing=[Whitespace " "]
+                      Arrow "->" @ 11..13 trailing=[Whitespace " "]
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "Int" @ 14..17
+            RParen ")" @ 17..18
+        Dot "." @ 18..19
+        Name
+          Identifier "twice" @ 19..24
+      ValueParameterList
+        LParen "(" @ 24..25
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "value" @ 25..30
+            Colon ":" @ 30..31 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 32..35
+        RParen ")" @ 35..36 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 37..38 trailing=[Whitespace " "]
+        BinaryExpression
+          NameExpression
+            Identifier "value" @ 39..44 trailing=[Whitespace " "]
+          Star "*" @ 45..46 trailing=[Whitespace " "]
+          LiteralExpression
+            IntegerLiteral "2" @ 47..48
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 50..53 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      CallableName
+        TypeReference
+          ParenthesizedType
+            AnnotationList
+            LParen "(" @ 54..55
+            ParenthesizedTypeEntryList
+              FunctionTypeParameter
+                TypeReference
+                  UserType
+                    UserTypeSegmentList
+                      UserTypeSegment
+                        Identifier "Int" @ 55..58
+            RParen ")" @ 58..59
+        Dot "." @ 59..60
+        Name
+          Identifier "identity" @ 60..68
+      ValueParameterList
+        LParen "(" @ 68..69
+        ValueParameterSeparatedList
+        RParen ")" @ 69..70 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 71..72 trailing=[Whitespace " "]
+        ThisExpression
+          ThisKw "this" @ 73..77
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 79..82 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      CallableName
+        TypeReference
+          ParenthesizedType
+            AnnotationList
+            LParen "(" @ 83..84
+            ParenthesizedTypeEntryList
+              FunctionTypeParameter
+                TypeReference
+                  UserType
+                    UserTypeSegmentList
+                      UserTypeSegment
+                        Identifier "Int" @ 84..87
+            RParen ")" @ 87..88
+        Dot "." @ 88..89
+        Name
+          Identifier "property" @ 89..97
+      Colon ":" @ 97..98 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 99..102
+      PropertyBodyMemberList
+        PropertyAccessor
+          ModifierList
+          Identifier "get" @ 105..108 leading=[Newline "\n", Whitespace "  "]
+          ValueParameterList
+            LParen "(" @ 108..109
+            ValueParameterSeparatedList
+            RParen ")" @ 109..110 trailing=[Whitespace " "]
+          ExpressionBody
+            Assign "=" @ 111..112 trailing=[Whitespace " "]
+            ThisExpression
+              ThisKw "this" @ 113..117
+  Eof "" @ 118..118 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
