@@ -315,6 +315,12 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
                 self.render_group(*contents, *should_break, mode, stack);
                 Ok(())
             }
+            Some(DocNode::ForceFlat { contents }) => {
+                self.group_stack.push(Mode::Flat);
+                stack.push(RenderCommand::EndGroup);
+                stack.push(RenderCommand::Doc(*contents, Mode::Flat));
+                Ok(())
+            }
             Some(DocNode::Indent { contents, levels }) => {
                 self.indent_levels += i32::from(*levels);
                 stack.push(RenderCommand::EndIndent(*levels));
@@ -733,6 +739,12 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
                 contents,
                 should_break,
             }) => self.fit_group(*contents, *should_break, mode, stack),
+            Some(DocNode::ForceFlat { contents }) => {
+                self.group_stack.push(Mode::Flat);
+                stack.push(FitCommand::EndGroup);
+                stack.push(FitCommand::Doc(*contents, Mode::Flat));
+                FitResult::Continue
+            }
             Some(DocNode::Indent { contents, .. }) => {
                 stack.push(FitCommand::EndIndent);
                 stack.push(FitCommand::Doc(*contents, mode));

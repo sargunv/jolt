@@ -1,0 +1,222 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun stringTemplateEntriesStayFlat(user: Long, pendingCredits: Long, pendingDebits: Long) {
+  val line = "user has ${user + pendingCredits + pendingDebits + user + user + pendingCredits} money"
+  val raw = """user has ${user + pendingCredits + pendingDebits + user + user + pendingCredits} money"""
+  val call = "user has ${accounting.service().nestedCall(user, pendingCredits, pendingDebits, user)} money"
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "stringTemplateEntriesStayFlat" @ 4..33
+      ValueParameterList
+        LParen "(" @ 33..34
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "user" @ 34..38
+            Colon ":" @ 38..39 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Long" @ 40..44
+          Comma "," @ 44..45 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "pendingCredits" @ 46..60
+            Colon ":" @ 60..61 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Long" @ 62..66
+          Comma "," @ 66..67 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "pendingDebits" @ 68..81
+            Colon ":" @ 81..82 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Long" @ 83..87
+        RParen ")" @ 87..88 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 89..90
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 93..96 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "line" @ 97..101 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 102..103 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 104..105
+                    StringTemplateEntry
+                      RegularStringPart "user has " @ 105..114
+                    StringTemplateEntry
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 114..116
+                        BinaryExpression
+                          BinaryExpression
+                            BinaryExpression
+                              BinaryExpression
+                                BinaryExpression
+                                  NameExpression
+                                    Identifier "user" @ 116..120 trailing=[Whitespace " "]
+                                  Plus "+" @ 121..122 trailing=[Whitespace " "]
+                                  NameExpression
+                                    Identifier "pendingCredits" @ 123..137 trailing=[Whitespace " "]
+                                Plus "+" @ 138..139 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "pendingDebits" @ 140..153 trailing=[Whitespace " "]
+                              Plus "+" @ 154..155 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "user" @ 156..160 trailing=[Whitespace " "]
+                            Plus "+" @ 161..162 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "user" @ 163..167 trailing=[Whitespace " "]
+                          Plus "+" @ 168..169 trailing=[Whitespace " "]
+                          NameExpression
+                            Identifier "pendingCredits" @ 170..184
+                        LongTemplateEntryEnd "}" @ 184..185
+                    StringTemplateEntry
+                      RegularStringPart " money" @ 185..191
+                  ClosingQuote "\"" @ 191..192
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 195..198 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "raw" @ 199..202 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 203..204 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"\"\"" @ 205..208
+                    StringTemplateEntry
+                      RegularStringPart "user has " @ 208..217
+                    StringTemplateEntry
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 217..219
+                        BinaryExpression
+                          BinaryExpression
+                            BinaryExpression
+                              BinaryExpression
+                                BinaryExpression
+                                  NameExpression
+                                    Identifier "user" @ 219..223 trailing=[Whitespace " "]
+                                  Plus "+" @ 224..225 trailing=[Whitespace " "]
+                                  NameExpression
+                                    Identifier "pendingCredits" @ 226..240 trailing=[Whitespace " "]
+                                Plus "+" @ 241..242 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "pendingDebits" @ 243..256 trailing=[Whitespace " "]
+                              Plus "+" @ 257..258 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "user" @ 259..263 trailing=[Whitespace " "]
+                            Plus "+" @ 264..265 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "user" @ 266..270 trailing=[Whitespace " "]
+                          Plus "+" @ 271..272 trailing=[Whitespace " "]
+                          NameExpression
+                            Identifier "pendingCredits" @ 273..287
+                        LongTemplateEntryEnd "}" @ 287..288
+                    StringTemplateEntry
+                      RegularStringPart " money" @ 288..294
+                  ClosingQuote "\"\"\"" @ 294..297
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 300..303 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "call" @ 304..308 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 309..310 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 311..312
+                    StringTemplateEntry
+                      RegularStringPart "user has " @ 312..321
+                    StringTemplateEntry
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 321..323
+                        CallExpression
+                          NavigationExpression
+                            CallExpression
+                              NavigationExpression
+                                NameExpression
+                                  Identifier "accounting" @ 323..333
+                                Dot "." @ 333..334
+                                Identifier "service" @ 334..341
+                              TypeArgumentListList
+                              ValueArgumentList
+                                LParen "(" @ 341..342
+                                ValueArgumentEntryList
+                                RParen ")" @ 342..343
+                              LambdaExpressionList
+                            Dot "." @ 343..344
+                            Identifier "nestedCall" @ 344..354
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 354..355
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "user" @ 355..359
+                              Comma "," @ 359..360 trailing=[Whitespace " "]
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "pendingCredits" @ 361..375
+                              Comma "," @ 375..376 trailing=[Whitespace " "]
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "pendingDebits" @ 377..390
+                              Comma "," @ 390..391 trailing=[Whitespace " "]
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                NameExpression
+                                  Identifier "user" @ 392..396
+                            RParen ")" @ 396..397
+                          LambdaExpressionList
+                        LongTemplateEntryEnd "}" @ 397..398
+                    StringTemplateEntry
+                      RegularStringPart " money" @ 398..404
+                  ClosingQuote "\"" @ 404..405
+              PropertyBodyMemberList
+          RBrace "}" @ 406..407 leading=[Newline "\n"]
+  Eof "" @ 408..408 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
