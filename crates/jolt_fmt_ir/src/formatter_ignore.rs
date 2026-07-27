@@ -361,7 +361,6 @@ struct FormatterOnBoundary {
 }
 
 fn formatter_on_owned_end<L: Language>(
-    source: &str,
     tokens: &[SyntaxToken<'_, L>],
     next_token_cursor: &mut usize,
     boundary: FormatterOnBoundary,
@@ -379,11 +378,7 @@ fn formatter_on_owned_end<L: Language>(
         // must travel with the marker; no surviving token can emit it. The
         // full token range gives that exact borrowed boundary without scanning
         // or guessing from source text.
-        let crosses_line = kind == CommentKind::Line
-            || source[comment_end..owner_end]
-                .bytes()
-                .any(|byte| matches!(byte, b'\n' | b'\r'));
-        return (owner_end, owner_end, crosses_line);
+        return (owner_end, owner_end, kind == CommentKind::Line);
     }
     while tokens
         .get(*next_token_cursor)
@@ -475,7 +470,6 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
             let on_marker_is_trailing = !line.comment_starts_own_line;
             let (with_on_text_end, with_on_claim_end, owned_suffix_crosses_line) =
                 formatter_on_owned_end(
-                    source,
                     &tokens,
                     &mut next_token_cursor,
                     FormatterOnBoundary {
