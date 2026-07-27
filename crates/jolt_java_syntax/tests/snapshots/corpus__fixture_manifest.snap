@@ -10,6 +10,7 @@ style/comments/comments-between-assignment-operator-and-value.java
 style/comments/comments-between-statement-keyword-and-value.java
 style/comments/content-shapes.java
 style/comments/dangling-comment-blank-lines.java
+style/comments/enum-trailing-comma-comments.java
 style/comments/leading-comment-blank-lines.java
 style/comments/leading-comments-before-cast-and-block.java
 style/comments/leading-comments-on-assignments.java

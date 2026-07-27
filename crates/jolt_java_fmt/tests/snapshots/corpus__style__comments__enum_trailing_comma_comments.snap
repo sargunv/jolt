@@ -1,0 +1,26 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+enum EnumTrailingCommaBlockComment {
+  FIRST;
+
+  /* JOLT-TRIVIA:enum-comma-block */
+}
+
+enum EnumTrailingCommaLineComment {
+  FIRST;
+
+  // JOLT-TRIVIA:enum-comma-line
+}
+
+enum EnumBodyTrailingCommaComment {
+  FIRST {
+  };
+
+  /* JOLT-TRIVIA:enum-body-comma */
+}
+
+diagnostics:
+(none)

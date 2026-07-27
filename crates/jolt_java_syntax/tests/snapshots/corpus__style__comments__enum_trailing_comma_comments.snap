@@ -1,0 +1,74 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+enum EnumTrailingCommaBlockComment {
+  FIRST,
+  /* JOLT-TRIVIA:enum-comma-block */;
+}
+
+enum EnumTrailingCommaLineComment {
+  FIRST, // JOLT-TRIVIA:enum-comma-line
+  ;
+}
+
+enum EnumBodyTrailingCommaComment {
+  FIRST {},
+  /* JOLT-TRIVIA:enum-body-comma */;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    EnumDeclaration
+      EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
+      Identifier "EnumTrailingCommaBlockComment" @ 5..34 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 35..36
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+            Identifier "FIRST" @ 39..44 leading=[Newline "\n", Whitespace "  "]
+          Comma "," @ 44..45
+        Semicolon ";" @ 82..83 leading=[Newline "\n", Whitespace "  ", BlockComment "/* JOLT-TRIVIA:enum-comma-block */"]
+        ClassBodyMemberList
+        RBrace "}" @ 84..85 leading=[Newline "\n"]
+    EnumDeclaration
+      EnumKw "enum" @ 87..91 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "EnumTrailingCommaLineComment" @ 92..120 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 121..122
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+            Identifier "FIRST" @ 125..130 leading=[Newline "\n", Whitespace "  "]
+          Comma "," @ 130..131 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:enum-comma-line"]
+        Semicolon ";" @ 165..166 leading=[Newline "\n", Whitespace "  "]
+        ClassBodyMemberList
+        RBrace "}" @ 167..168 leading=[Newline "\n"]
+    EnumDeclaration
+      EnumKw "enum" @ 170..174 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "EnumBodyTrailingCommaComment" @ 175..203 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 204..205
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+            Identifier "FIRST" @ 208..213 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 214..215
+              ClassBodyMemberList
+              RBrace "}" @ 215..216
+          Comma "," @ 216..217
+        Semicolon ";" @ 253..254 leading=[Newline "\n", Whitespace "  ", BlockComment "/* JOLT-TRIVIA:enum-body-comma */"]
+        ClassBodyMemberList
+        RBrace "}" @ 255..256 leading=[Newline "\n"]
+  Eof "" @ 257..257 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
