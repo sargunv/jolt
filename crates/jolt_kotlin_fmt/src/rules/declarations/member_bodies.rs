@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{BodyItemSeparator, Doc, DocBuilder};
+use jolt_fmt_ir::{BodyItemSeparator, Doc, DocBuilder, InlineLeadingTrivia};
 use jolt_kotlin_syntax::{
     ClassBody, ClassMember, ClassMemberDeclaration, ClassMemberList, Declaration,
     KotlinRoleElement, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken,
@@ -7,6 +7,7 @@ use jolt_kotlin_syntax::{
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_dangling_comments, format_token,
+    trailing_comments_force_line,
 };
 use crate::helpers::recovery::{
     KotlinFormatDelimiter, KotlinFormatField, format_delimiter, format_malformed, format_missing,
@@ -178,9 +179,9 @@ fn class_body_sections<'source>(
     parts: &[ClassBodyPart<'source>],
 ) -> Vec<ClassBodySection<'source>> {
     let mut sections = Vec::with_capacity(parts.len());
-    let mut previous_had_comments = false;
+    let mut previous_forces_line = false;
     for part in parts {
-        push_class_body_part(doc, &mut sections, part, &mut previous_had_comments);
+        push_class_body_part(doc, &mut sections, part, &mut previous_forces_line);
     }
     sections
 }
@@ -189,13 +190,13 @@ fn push_class_body_part<'source>(
     doc: &mut DocBuilder<'source>,
     sections: &mut Vec<ClassBodySection<'source>>,
     part: &ClassBodyPart<'source>,
-    previous_had_comments: &mut bool,
+    previous_forces_line: &mut bool,
 ) {
     let physical = match part {
         ClassBodyPart::Member(member) => {
             let last_token = member.last_token();
-            *previous_had_comments =
-                last_token.is_some_and(|token| !token.trailing_comments().is_empty());
+            *previous_forces_line =
+                last_token.is_some_and(|token| trailing_comments_force_line(&token));
             sections.push(ClassBodySection {
                 doc: format_class_member(doc, member),
                 hard_line_after: enum_entry_continues(member),
@@ -204,15 +205,25 @@ fn push_class_body_part<'source>(
             });
             return;
         }
-        ClassBodyPart::Token(token) => format_token(
-            doc,
-            token,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::Preserve,
-        ),
+        ClassBodyPart::Token(token) => {
+            let attaches_to_previous = sections
+                .last()
+                .is_some_and(|previous| !previous.hard_line_after);
+            let placement = if attaches_to_previous {
+                InlineLeadingTrivia::AfterPreviousToken
+            } else {
+                InlineLeadingTrivia::BeforeToken
+            };
+            jolt_fmt_ir::format_token_with_inline_leading_comments(
+                doc,
+                token,
+                placement,
+                TrailingTrivia::Preserve,
+            )
+        }
         ClassBodyPart::Recovery { doc, .. } => *doc,
     };
-    push_class_body_physical_doc(doc, sections, physical, *previous_had_comments);
+    push_class_body_physical_doc(doc, sections, physical, *previous_forces_line);
 }
 
 fn enum_entry_continues(member: &ClassMember<'_>) -> bool {
@@ -231,7 +242,7 @@ fn class_body_sections_with_ignored<'source>(
     ignored_runs: &[FormatterIgnoreRun<'source>],
 ) -> Vec<ClassBodySection<'source>> {
     let mut sections = Vec::with_capacity(parts.len().saturating_add(ignored_runs.len()));
-    let mut previous_had_comments = false;
+    let mut previous_forces_line = false;
     for_each_formatter_ignore_splice(parts.len(), ignored_runs, |event| match event {
         FormatterIgnoreSplice::Ignore(run) => {
             sections.push(ClassBodySection::neutral(
@@ -248,16 +259,11 @@ fn class_body_sections_with_ignored<'source>(
             // next physical part reads. When this item immediately follows an
             // ignore run, recover that state from the last skipped part.
             if follows_ignore_run {
-                previous_had_comments = parts[index - 1]
+                previous_forces_line = parts[index - 1]
                     .last_token()
-                    .is_some_and(|token| !token.trailing_comments().is_empty());
+                    .is_some_and(|token| trailing_comments_force_line(&token));
             }
-            push_class_body_part(
-                doc,
-                &mut sections,
-                &parts[index],
-                &mut previous_had_comments,
-            );
+            push_class_body_part(doc, &mut sections, &parts[index], &mut previous_forces_line);
         }
     });
     sections
@@ -267,24 +273,35 @@ fn push_class_body_physical_doc<'source>(
     doc: &mut DocBuilder<'source>,
     sections: &mut Vec<ClassBodySection<'source>>,
     physical: Doc<'source>,
-    previous_had_comments: bool,
+    previous_forces_line: bool,
 ) {
-    if previous_had_comments {
-        let line = doc.hard_line();
-        sections.push(ClassBodySection::neutral(
-            doc.concat([line, physical]),
-            false,
-            false,
-        ));
-    } else if sections
+    if sections
         .last()
         .is_some_and(|previous| previous.hard_line_after)
     {
         sections.push(ClassBodySection::neutral(physical, false, false));
     } else if let Some(previous) = sections.last_mut() {
-        previous.doc = doc.concat([std::mem::replace(&mut previous.doc, Doc::nil()), physical]);
+        let boundary = if previous_forces_line {
+            doc.hard_line_boundary()
+        } else {
+            Doc::nil()
+        };
+        previous.doc = doc.concat([
+            std::mem::replace(&mut previous.doc, Doc::nil()),
+            boundary,
+            physical,
+        ]);
     } else {
-        sections.push(ClassBodySection::neutral(physical, false, false));
+        let boundary = if previous_forces_line {
+            doc.hard_line_boundary()
+        } else {
+            Doc::nil()
+        };
+        sections.push(ClassBodySection::neutral(
+            doc.concat([boundary, physical]),
+            false,
+            false,
+        ));
     }
 }
 

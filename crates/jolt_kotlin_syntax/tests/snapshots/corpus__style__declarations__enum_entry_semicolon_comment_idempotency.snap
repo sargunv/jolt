@@ -1,0 +1,241 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+enum class CommentedEntrySeparator {
+  FIRST, SECOND
+  /* before members */;
+  fun member() {}
+}
+
+enum class LineCommentedEntrySeparator {
+  FIRST, SECOND
+  // before members
+  ;
+  fun member() {}
+}
+
+enum class TrailingLineCommentedEntrySeparator {
+  FIRST, SECOND // before members
+  ;
+  fun member() {}
+}
+
+enum class TrailingBlockCommentedEntrySeparator {
+  FIRST, SECOND /* before members */
+  ;
+  fun member() {}
+}
+
+enum class IgnoredEntryBeforeSeparator {
+  FIRST,
+  // @formatter:off
+  SECOND
+  // @formatter:on
+  ;
+  fun member() {}
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+        Identifier "enum" @ 0..4 trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 5..10 trailing=[Whitespace " "]
+      Name
+        Identifier "CommentedEntrySeparator" @ 11..34 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 35..36
+        ClassMemberList
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "FIRST" @ 39..44 leading=[Newline "\n", Whitespace "  "]
+            Comma "," @ 44..45 trailing=[Whitespace " "]
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "SECOND" @ 46..52
+          Semicolon ";" @ 75..76 leading=[Newline "\n", Whitespace "  ", BlockComment "/* before members */"]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 79..82 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "member" @ 83..89
+              ValueParameterList
+                LParen "(" @ 89..90
+                ValueParameterSeparatedList
+                RParen ")" @ 90..91 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 92..93
+                  BlockItemList
+                  RBrace "}" @ 93..94
+        RBrace "}" @ 95..96 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+        Identifier "enum" @ 98..102 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 103..108 trailing=[Whitespace " "]
+      Name
+        Identifier "LineCommentedEntrySeparator" @ 109..136 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 137..138
+        ClassMemberList
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "FIRST" @ 141..146 leading=[Newline "\n", Whitespace "  "]
+            Comma "," @ 146..147 trailing=[Whitespace " "]
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "SECOND" @ 148..154
+          Semicolon ";" @ 177..178 leading=[Newline "\n", Whitespace "  ", LineComment "// before members", Newline "\n", Whitespace "  "]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 181..184 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "member" @ 185..191
+              ValueParameterList
+                LParen "(" @ 191..192
+                ValueParameterSeparatedList
+                RParen ")" @ 192..193 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 194..195
+                  BlockItemList
+                  RBrace "}" @ 195..196
+        RBrace "}" @ 197..198 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+        Identifier "enum" @ 200..204 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 205..210 trailing=[Whitespace " "]
+      Name
+        Identifier "TrailingLineCommentedEntrySeparator" @ 211..246 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 247..248
+        ClassMemberList
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "FIRST" @ 251..256 leading=[Newline "\n", Whitespace "  "]
+            Comma "," @ 256..257 trailing=[Whitespace " "]
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "SECOND" @ 258..264 trailing=[Whitespace " ", LineComment "// before members"]
+          Semicolon ";" @ 285..286 leading=[Newline "\n", Whitespace "  "]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 289..292 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "member" @ 293..299
+              ValueParameterList
+                LParen "(" @ 299..300
+                ValueParameterSeparatedList
+                RParen ")" @ 300..301 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 302..303
+                  BlockItemList
+                  RBrace "}" @ 303..304
+        RBrace "}" @ 305..306 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+        Identifier "enum" @ 308..312 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 313..318 trailing=[Whitespace " "]
+      Name
+        Identifier "TrailingBlockCommentedEntrySeparator" @ 319..355 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 356..357
+        ClassMemberList
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "FIRST" @ 360..365 leading=[Newline "\n", Whitespace "  "]
+            Comma "," @ 365..366 trailing=[Whitespace " "]
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "SECOND" @ 367..373 trailing=[Whitespace " ", BlockComment "/* before members */"]
+          Semicolon ";" @ 397..398 leading=[Newline "\n", Whitespace "  "]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 401..404 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "member" @ 405..411
+              ValueParameterList
+                LParen "(" @ 411..412
+                ValueParameterSeparatedList
+                RParen ")" @ 412..413 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 414..415
+                  BlockItemList
+                  RBrace "}" @ 415..416
+        RBrace "}" @ 417..418 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+        Identifier "enum" @ 420..424 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 425..430 trailing=[Whitespace " "]
+      Name
+        Identifier "IgnoredEntryBeforeSeparator" @ 431..458 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 459..460
+        ClassMemberList
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "FIRST" @ 463..468 leading=[Newline "\n", Whitespace "  "]
+            Comma "," @ 468..469
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "SECOND" @ 492..498 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "]
+          Semicolon ";" @ 520..521 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 524..527 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "member" @ 528..534
+              ValueParameterList
+                LParen "(" @ 534..535
+                ValueParameterSeparatedList
+                RParen ")" @ 535..536 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 537..538
+                  BlockItemList
+                  RBrace "}" @ 538..539
+        RBrace "}" @ 540..541 leading=[Newline "\n"]
+  Eof "" @ 542..542 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

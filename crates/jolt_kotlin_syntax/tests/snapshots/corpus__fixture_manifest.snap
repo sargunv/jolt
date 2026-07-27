@@ -25,6 +25,7 @@ style/declarations/annotations-and-modifiers.kt
 style/declarations/class-header-clauses.kt
 style/declarations/delegation.kt
 style/declarations/enum-entries.kt
+style/declarations/enum-entry-semicolon-comment-idempotency.kt
 style/declarations/explicit-backing-fields.kt
 style/declarations/formatter-ignore-comment-before-on.kt
 style/declarations/formatter-ignore-members.kt

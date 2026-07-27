@@ -1,0 +1,46 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+enum class CommentedEntrySeparator {
+  FIRST,
+  SECOND /* before members */;
+
+  fun member() {}
+}
+
+enum class LineCommentedEntrySeparator {
+  FIRST,
+  SECOND // before members
+  ;
+
+  fun member() {}
+}
+
+enum class TrailingLineCommentedEntrySeparator {
+  FIRST,
+  SECOND // before members
+  ;
+
+  fun member() {}
+}
+
+enum class TrailingBlockCommentedEntrySeparator {
+  FIRST,
+  SECOND /* before members */;
+
+  fun member() {}
+}
+
+enum class IgnoredEntryBeforeSeparator {
+  FIRST,
+  // @formatter:off
+  SECOND
+  // @formatter:on
+  ;
+  fun member() {}
+}
+
+diagnostics:
+(none)
