@@ -20,7 +20,6 @@ class ExpressionTrivia {
         && ((String) /* JOLT-TRIVIA:after-cast */ value).isEmpty();
     Runnable r =
       (
-
       ) /* JOLT-TRIVIA:lambda-arrow-left */ -> /* JOLT-TRIVIA:lambda-arrow-right */ service.accept(
         text,
         ok
