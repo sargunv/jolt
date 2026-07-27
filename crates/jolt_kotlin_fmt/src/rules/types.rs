@@ -94,7 +94,8 @@ fn format_type_parameter<'source>(
     });
     let name = format_required_field(parameter.name(), doc, |name, doc| format_name(doc, &name));
     let bound = format_optional_type_bound(doc, parameter.colon(), parameter.bound());
-    doc.concat([modifiers, variance, name, bound])
+    let parameter = doc.concat([modifiers, variance, name, bound]);
+    doc.group(parameter)
 }
 
 fn format_type_constraint<'source>(
@@ -686,8 +687,8 @@ pub(crate) fn format_modifier_sequence<'source>(
                     if let Some(annotation) = role.cast_node::<Annotation<'source>>() {
                         let annotation = format_annotation(docs, &annotation);
                         docs.push(annotation);
-                        let space = docs.space();
-                        docs.push(space);
+                        let line = docs.line();
+                        docs.push(line);
                     } else if let Some(token) = role.token() {
                         let token = format_token(
                             docs,

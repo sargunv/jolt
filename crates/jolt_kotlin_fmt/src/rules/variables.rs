@@ -116,7 +116,7 @@ fn format_value_parameter<'source>(
             doc.concat([space, expression])
         }
     });
-    doc.concat([
+    let parameter = doc.concat([
         modifiers,
         parameter_keyword,
         name,
@@ -125,7 +125,8 @@ fn format_value_parameter<'source>(
         ty,
         assign,
         default,
-    ])
+    ]);
+    doc.group(parameter)
 }
 
 fn format_parameter_name<'source>(

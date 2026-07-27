@@ -15,11 +15,43 @@ fn layout_fit_boundary_fixtures_stay_within_width() {
         "properties/layout-fit-boundaries/deep-call-chain.kt",
         "properties/layout-fit-boundaries/long-when-result.kt",
         "properties/layout-fit-boundaries/property-delegate.kt",
+        "style/layout-fit-boundaries/annotated-lambda-parameters.kt",
         "style/layout-fit-boundaries/call-chain-single-argument.kt",
         "style/layout-fit-boundaries/when-branch-expression.kt",
     ] {
         assert_no_line_exceeds_width(&root.join(name), 80);
     }
+}
+
+#[test]
+fn annotated_lambda_parameters_break_at_width_boundaries() {
+    let root = workspace_root(env!("CARGO_MANIFEST_DIR")).join("fixtures/kotlin");
+    let source =
+        read_to_string(&root.join("style/layout-fit-boundaries/annotated-lambda-parameters.kt"));
+
+    let width_60 = format_or_panic(&source, 60);
+    jolt_test_support::assert_no_line_exceeds_width(
+        &width_60,
+        "annotated lambda parameters at width 60",
+        60,
+    );
+    insta::assert_snapshot!("annotated_lambda_parameters_at_width_60", width_60);
+
+    let width_80 = format_or_panic(&source, 80);
+    jolt_test_support::assert_no_line_exceeds_width(
+        &width_80,
+        "annotated lambda parameters at width 80",
+        80,
+    );
+    insta::assert_snapshot!("annotated_lambda_parameters_at_width_80", width_80);
+
+    let width_100 = format_or_panic(&source, 100);
+    jolt_test_support::assert_no_line_exceeds_width(
+        &width_100,
+        "annotated lambda parameters at width 100",
+        100,
+    );
+    insta::assert_snapshot!("annotated_lambda_parameters_at_width_100", width_100);
 }
 
 #[test]

@@ -187,8 +187,8 @@ fn format_lambda_parameter_prefix<'source>(
         )
     });
     let visible_item_count = items.iter().filter(|item| item.is_visible()).count();
-    // A comment may end a parameter modifier's line, so keep the remainder of
-    // the parameter prefix subordinate to the lambda when that happens.
+    // An annotation or comment may break a parameter modifier's line, so keep
+    // the remainder of the parameter prefix subordinate to the lambda.
     let prefix = doc.concat_list(|docs| {
         let mut visible_index = 0;
         for item in items {
@@ -256,7 +256,8 @@ fn format_lambda_parameter<'source>(
     let ty = format_optional_field(parameter.r#type(), doc, |ty, doc| {
         format_type_reference(doc, &ty)
     });
-    doc.concat([modifiers, binding, colon, ty])
+    let parameter = doc.concat([modifiers, binding, colon, ty]);
+    doc.group(parameter)
 }
 
 pub(super) fn lambda_body_doc<'source>(
