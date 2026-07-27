@@ -25,9 +25,14 @@ impl Parser<'_> {
         }
     }
 
-    pub(in crate::parser::grammar) fn parse_object_tail(&mut self) {
+    pub(in crate::parser::grammar) fn parse_object_tail(&mut self, name_required: bool) {
         self.eat_asserted(K::ObjectKw);
-        if !matches!(self.current_kind(), K::Colon | K::LBrace | K::Eof) {
+        let has_name = if name_required {
+            !matches!(self.current_kind(), K::Colon | K::LBrace | K::Eof)
+        } else {
+            is_identifier_like_kind(self.current_kind())
+        };
+        if has_name {
             self.parse_name();
         }
         let recovered_delegation = !self.at(K::Colon)

@@ -1,0 +1,17 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class MarkerCompanion {
+  companion object
+}
+
+class PrivateMarkerCompanion {
+  private companion object
+
+  fun following() {}
+}
+
+diagnostics:
+(none)
