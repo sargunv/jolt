@@ -1,0 +1,29 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+fun throwsNothing() {
+  throw // a comment ends the line and no operand follows it
+  ;
+}
+
+fun throwsRecoveredOperand() {
+  throw // a comment ends the line and the operand recovers a token
+  )
+}
+
+formatted:
+fun throwsNothing() {
+  throw // a comment ends the line and no operand follows it
+    ;
+}
+
+fun throwsRecoveredOperand() {
+  throw // a comment ends the line and the operand recovers a token
+    )
+}
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(85), end: TextSize(86) }) message=expected expression after 'throw'
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(191), end: TextSize(192) }) message=expected expression

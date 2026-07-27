@@ -389,6 +389,15 @@ pub(super) fn format_throw_expression<'source>(
     expression: &ThrowExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
+    format_throw_expression_with_suffix(doc, expression, leading, Doc::nil())
+}
+
+pub(crate) fn format_throw_expression_with_suffix<'source>(
+    doc: &mut DocBuilder<'source>,
+    expression: &ThrowExpression<'source>,
+    leading: LeadingTrivia,
+    suffix: Doc<'source>,
+) -> Doc<'source> {
     let throw_token = expression.throw_token();
     let keyword_token = match throw_token {
         KotlinSyntaxField::Present(token) => Some(token),
@@ -408,25 +417,32 @@ pub(super) fn format_throw_expression<'source>(
         KotlinFormatField::Present(value) => {
             let separator = format_keyword_value_separator(doc, keyword_token.as_ref());
             let value = format_expression(doc, &value);
-            let value = doc.concat([separator, value]);
-            // A comment that ends the keyword's line pushes the value onto the
-            // next one; indenting it there keeps it subordinate to its `throw`
-            // instead of reading as a statement of its own.
-            if keyword_token
-                .as_ref()
-                .is_some_and(trailing_comments_force_line)
-            {
-                doc.indent(value)
-            } else {
-                value
-            }
+            let value = doc.concat([separator, value, suffix]);
+            indent_keyword_continuation(doc, keyword_token.as_ref(), value)
         }
         KotlinFormatField::Malformed(recovery) => {
             let comments = format_orphaned_keyword_comments(doc, keyword_token.as_ref());
-            doc.concat([comments, recovery])
+            let recovery = doc.concat([comments, recovery, suffix]);
+            indent_keyword_continuation(doc, keyword_token.as_ref(), recovery)
         }
     };
     doc.concat([keyword, value])
+}
+
+/// Indents the continuation that a comment moved off its keyword's line.
+///
+/// Recovery may leave a separator as the only represented continuation. It
+/// still belongs under the keyword, just like a well-formed thrown value.
+fn indent_keyword_continuation<'source>(
+    doc: &mut DocBuilder<'source>,
+    keyword: Option<&KotlinSyntaxToken<'source>>,
+    continuation: Doc<'source>,
+) -> Doc<'source> {
+    if keyword.is_some_and(trailing_comments_force_line) {
+        doc.indent(continuation)
+    } else {
+        continuation
+    }
 }
 
 /// Joins a keyword to the value it applies to, ending the keyword's line when
