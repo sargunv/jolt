@@ -131,6 +131,7 @@ style/statements/remove-empty-block-statements.java
 style/statements/semicolon-comments.java
 style/statements/simple-method-block.java
 style/statements/switch-groups-and-rules.java
+style/statements/switch-opening-brace-comment.java
 style/statements/switch-rule-arrow-break.java
 style/statements/try-catch-finally.java
 style/statements/try-with-resources.java

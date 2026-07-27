@@ -107,10 +107,10 @@ fn braced_switch_block<'source>(
         JavaFormatField::Malformed(malformed) => malformed,
     };
     let body = if body_is_visible {
-        let body = doc_concat!(doc, [doc.hard_line(), body]);
+        let body = doc_concat!(doc, [doc.hard_line_boundary(), body]);
         doc_concat!(doc, [doc_indent!(doc, body), doc.hard_line()])
     } else {
-        doc_concat!(doc, [body, doc.hard_line()])
+        doc_concat!(doc, [body, doc.hard_line_boundary()])
     };
     let close = match resolve_required_field(block.close_brace(), doc) {
         JavaFormatField::Present(token) => format_token_with_comments(doc, &token),
