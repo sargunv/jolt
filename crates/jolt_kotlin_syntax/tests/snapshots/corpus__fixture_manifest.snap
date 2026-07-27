@@ -205,6 +205,7 @@ syntax/parser/parses-parenthesized-extension-receiver-types.kt
 syntax/parser/parses-postfix-newline-breaks-before-selector.kt
 syntax/parser/parses-postfix-newline-sensitive-call-chain.kt
 syntax/parser/parses-postfix-safe-call-and-not-null-chain.kt
+syntax/parser/parses-prefix-double-bang.kt
 syntax/parser/parses-property-accessors.kt
 syntax/parser/parses-property-explicit-backing-field.kt
 syntax/parser/parses-property-extension-receiver.kt
