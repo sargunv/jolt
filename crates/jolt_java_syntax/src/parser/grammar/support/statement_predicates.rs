@@ -143,9 +143,7 @@ impl Parser<'_> {
                     conditional_depth -= 1;
                 }
                 JavaSyntaxKind::Colon if angle_depth == 0 => return false,
-                JavaSyntaxKind::RBrace
-                | JavaSyntaxKind::RParen
-                | JavaSyntaxKind::RBracket => {
+                JavaSyntaxKind::RBrace | JavaSyntaxKind::RParen | JavaSyntaxKind::RBracket => {
                     return false;
                 }
                 _ => {}
