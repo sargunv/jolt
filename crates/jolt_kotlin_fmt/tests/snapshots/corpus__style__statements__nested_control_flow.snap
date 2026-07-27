@@ -6,18 +6,19 @@ formatted:
 package com.example.statements
 
 fun summarize(rows: List<List<Int>>): String {
-  val total = try {
-    var count = 0
-    outer@ for (row in rows) {
-      for (value in row) {
-        if (value < 0) continue@outer
-        count += value
+  val total =
+    try {
+      var count = 0
+      outer@ for (row in rows) {
+        for (value in row) {
+          if (value < 0) continue@outer
+          count += value
+        }
       }
+      count
+    } catch (error: IllegalStateException) {
+      return "error"
     }
-    count
-  } catch (error: IllegalStateException) {
-    return "error"
-  }
 
   return when {
     total == 0 -> "empty"

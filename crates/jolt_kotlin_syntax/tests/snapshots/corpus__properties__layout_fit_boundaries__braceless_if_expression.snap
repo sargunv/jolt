@@ -1,0 +1,68 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun chooseValue(flag: Boolean) = if (flag) computeSomethingLongForTheTrueBranch() else computeSomethingEntirelyDifferentForTheFalseBranch()
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "chooseValue" @ 4..15
+      ValueParameterList
+        LParen "(" @ 15..16
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "flag" @ 16..20
+            Colon ":" @ 20..21 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Boolean" @ 22..29
+        RParen ")" @ 29..30 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 31..32 trailing=[Whitespace " "]
+        IfExpression
+          IfKw "if" @ 33..35 trailing=[Whitespace " "]
+          ParenthesizedExpression
+            LParen "(" @ 36..37
+            NameExpression
+              Identifier "flag" @ 37..41
+            RParen ")" @ 41..42 trailing=[Whitespace " "]
+          CallExpression
+            NameExpression
+              Identifier "computeSomethingLongForTheTrueBranch" @ 43..79
+            TypeArgumentListList
+            ValueArgumentList
+              LParen "(" @ 79..80
+              ValueArgumentEntryList
+              RParen ")" @ 80..81 trailing=[Whitespace " "]
+            LambdaExpressionList
+          ElseKw "else" @ 82..86 trailing=[Whitespace " "]
+          CallExpression
+            NameExpression
+              Identifier "computeSomethingEntirelyDifferentForTheFalseBranch" @ 87..137
+            TypeArgumentListList
+            ValueArgumentList
+              LParen "(" @ 137..138
+              ValueArgumentEntryList
+              RParen ")" @ 138..139
+            LambdaExpressionList
+  Eof "" @ 140..140 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

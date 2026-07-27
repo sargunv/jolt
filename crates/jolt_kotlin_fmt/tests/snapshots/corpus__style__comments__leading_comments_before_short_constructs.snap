@@ -28,11 +28,12 @@ sealed interface InterpolatableValue<T>
     MatchableValue,
     AnInterfaceWithAVeryLongNameThatCrowdsOutOtherSupertypes
 
-fun rank(tag: String): Int = when {
-  // Leads a branch whose body still fits beside its arrow.
-  tag.startsWith("@return") -> 1
-  else -> 2
-}
+fun rank(tag: String): Int =
+  when {
+    // Leads a branch whose body still fits beside its arrow.
+    tag.startsWith("@return") -> 1
+    else -> 2
+  }
 
 diagnostics:
 (none)

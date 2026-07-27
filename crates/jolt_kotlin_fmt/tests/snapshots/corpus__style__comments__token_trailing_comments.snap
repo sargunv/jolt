@@ -9,8 +9,9 @@ class SigilComment
 
 @file /*b*/:JvmName("X")
 @file: /*c*/JvmName("Y")
-val objectExpression = object /*d*/ : B() {
-}
+val objectExpression =
+  object /*d*/ : B() {
+  }
 
 val suspendType: suspend /*e*/ () -> Unit = {}
 

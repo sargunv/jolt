@@ -14,7 +14,7 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_token, format_trailing_comments_before_line_break,
     trailing_comments_force_line,
 };
-use crate::helpers::lists::{CommaListItem, physical_comma_list_items};
+use crate::helpers::lists::{CommaListItem, comma_list, physical_comma_list_items};
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_delimiter, format_optional_field,
     format_required_field, resolve_list_part, resolve_optional_field, resolve_required_delimiter,
@@ -52,25 +52,40 @@ pub(super) fn format_if_expression<'source>(
         KotlinFormatField::Present(Some(branch))
             if matches!(branch.classify(), Ok(IfThenBranchSyntax::EmptyStatement(_)))
     );
+    let then_branch_is_block = matches!(
+        &then_branch,
+        KotlinFormatField::Present(Some(branch))
+            if matches!(branch.classify(), Ok(IfThenBranchSyntax::Block(_)))
+    );
     let then_branch = match then_branch {
         KotlinFormatField::Present(Some(branch)) => {
             let branch = format_if_then_branch(doc, branch);
-            if then_branch_is_nested_if {
-                let line = doc.hard_line();
-                let branch = doc.concat([line, branch]);
-                doc.indent(branch)
-            } else if then_branch_is_empty {
+            if then_branch_is_empty {
                 branch
-            } else {
+            } else if then_branch_is_block {
                 let space = doc.space();
                 doc.concat([space, branch])
+            } else {
+                let line = if then_branch_is_nested_if {
+                    doc.hard_line()
+                } else {
+                    doc.line()
+                };
+                let branch = doc.concat([line, branch]);
+                doc.indent(branch)
             }
         }
         KotlinFormatField::Present(None) => Doc::nil(),
         KotlinFormatField::Malformed(recovery) => recovery,
     };
-    let else_branch = format_else_branch(doc, expression, then_branch_is_nested_if);
-    doc.concat([keyword, condition, then_branch, else_branch])
+    let else_branch = format_else_branch(
+        doc,
+        expression,
+        then_branch_is_nested_if,
+        then_branch_is_block,
+    );
+    let contents = doc.concat([keyword, condition, then_branch, else_branch]);
+    doc.group(contents)
 }
 
 pub(super) fn format_when_expression<'source>(
@@ -135,7 +150,12 @@ pub(super) fn format_when_expression<'source>(
     } else {
         Doc::nil()
     };
-    let open = format_delimiter(doc, open, LeadingTrivia::Preserve, TrailingTrivia::Preserve);
+    let open = format_delimiter(
+        doc,
+        open,
+        LeadingTrivia::Preserve,
+        TrailingTrivia::BeforeSoftLine,
+    );
     let close = format_delimiter(
         doc,
         close,
@@ -538,6 +558,7 @@ fn format_else_branch<'source>(
     doc: &mut DocBuilder<'source>,
     expression: &IfExpression<'source>,
     starts_after_broken_then: bool,
+    follows_block: bool,
 ) -> Doc<'source> {
     let else_token = match resolve_optional_field(expression.else_token(), doc) {
         KotlinFormatField::Present(Some(token)) => token,
@@ -549,12 +570,21 @@ fn format_else_branch<'source>(
         KotlinFormatField::Present(Some(branch)) => {
             let branch_is_empty =
                 matches!(branch.classify(), Ok(IfElseBranchSyntax::EmptyStatement(_)));
+            let branch_hugs_else = matches!(
+                branch.classify(),
+                Ok(IfElseBranchSyntax::Block(_)
+                    | IfElseBranchSyntax::Expression(Expression::IfExpression(_)))
+            );
             let branch = format_if_else_branch(doc, branch);
             if branch_is_empty {
                 branch
-            } else {
+            } else if branch_hugs_else {
                 let space = doc.space();
                 doc.concat([space, branch])
+            } else {
+                let line = doc.line();
+                let branch = doc.concat([line, branch]);
+                doc.indent(branch)
             }
         }
         KotlinFormatField::Present(None) => Doc::nil(),
@@ -562,8 +592,10 @@ fn format_else_branch<'source>(
     };
     let separator = if starts_after_broken_then {
         doc.hard_line()
-    } else {
+    } else if follows_block {
         doc.space()
+    } else {
+        doc.line()
     };
     doc.concat([separator, token, branch])
 }
@@ -596,7 +628,12 @@ fn format_when_subject<'source>(
         LeadingTrivia::Preserve,
         TrailingTrivia::Preserve,
     );
-    doc.concat([open, val_token, name, assign, expression, close])
+    let line = doc.soft_line();
+    let contents = doc.concat([line, val_token, name, assign, expression]);
+    let contents = doc.indent(contents);
+    let line = doc.soft_line();
+    let contents = doc.concat([open, contents, line, close]);
+    doc.group(contents)
 }
 
 fn format_when_entry<'source>(
@@ -683,25 +720,7 @@ fn format_when_conditions<'source>(
                     }
                 })
             });
-            let mut items = items.into_iter().peekable();
-            doc.concat_list(|docs| {
-                while let Some(item) = items.next() {
-                    docs.push(item.doc());
-                    if let Some(comma) = item.comma() {
-                        let comma = format_token(
-                            docs,
-                            &comma,
-                            LeadingTrivia::Preserve,
-                            TrailingTrivia::BeforeSpaceIfComments,
-                        );
-                        docs.push(comma);
-                    }
-                    if items.peek().is_some() {
-                        let space = docs.space();
-                        docs.push(space);
-                    }
-                }
-            })
+            comma_list(doc, items)
         }
         KotlinFormatField::Malformed(recovery) => recovery,
     }

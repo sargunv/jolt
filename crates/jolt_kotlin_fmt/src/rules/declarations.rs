@@ -385,12 +385,14 @@ fn format_assignment_rhs<'source>(
         let expression = doc.indent(expression);
         return doc.concat([before, operator, expression]);
     }
-    let after = if operator_token.is_some() && has_expression {
-        doc.space()
+    let expression = if operator_token.is_some() && has_expression {
+        let line = doc.line();
+        let expression = doc.concat([line, expression]);
+        doc.indent(expression)
     } else {
-        Doc::nil()
+        expression
     };
-    let contents = doc.concat([before, operator, after, expression]);
+    let contents = doc.concat([before, operator, expression]);
     doc.group(contents)
 }
 

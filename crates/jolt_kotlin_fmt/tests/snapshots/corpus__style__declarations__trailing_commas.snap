@@ -22,16 +22,18 @@ class TrailingCommas<
   }
 
   fun typeArguments() {
-    val values = listOf<
-      String,
-    >()
+    val values =
+      listOf<
+        String,
+      >()
   }
 
   fun collections() {
-    val items = listOf(
-      1,
-      2,
-    )
+    val items =
+      listOf(
+        1,
+        2,
+      )
   }
 
   fun consume(vararg values: Any?) {}

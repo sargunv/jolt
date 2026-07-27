@@ -13,9 +13,10 @@ fun lambdas() {
   consume /* JOLT-TRIVIA:trailing-lambda-call */ { value /* JOLT-TRIVIA:lambda-param */ ->
     println(value)
   }
-  val upper = transform("name") /* JOLT-TRIVIA:before-trailing */ {
-    it /* JOLT-TRIVIA:implicit-it */.uppercase()
-  }
+  val upper =
+    transform("name") /* JOLT-TRIVIA:before-trailing */ {
+      it /* JOLT-TRIVIA:implicit-it */.uppercase()
+    }
 }
 
 diagnostics:

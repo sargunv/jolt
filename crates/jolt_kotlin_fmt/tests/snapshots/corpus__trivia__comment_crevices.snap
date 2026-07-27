@@ -35,7 +35,8 @@ class Holder /* JOLT-TRIVIA:class-before-type-params */< /* JOLT-TRIVIA:type-par
     T /* JOLT-TRIVIA:type-arg-name */
   > /* JOLT-TRIVIA:type-after-args */ = listOf(payload)
 
-  operator fun component1 /* JOLT-TRIVIA:component-name */() /* JOLT-TRIVIA:component-before-return */: T = payload
+  operator fun component1 /* JOLT-TRIVIA:component-name */() /* JOLT-TRIVIA:component-before-return */: T =
+    payload
 }
 
 fun Scope /* JOLT-TRIVIA:receiver-type */. /* JOLT-TRIVIA:receiver-dot */commentCrevices /* JOLT-TRIVIA:function-name */(
@@ -47,35 +48,39 @@ fun Scope /* JOLT-TRIVIA:receiver-type */. /* JOLT-TRIVIA:receiver-dot */comment
   ) /* JOLT-TRIVIA:function-type-before-arrow */ -> /* JOLT-TRIVIA:function-type-arrow */ String,
   fallback /* JOLT-TRIVIA:default-param-name */: String = /* JOLT-TRIVIA:default-param-equals */ "empty",
 ) /* JOLT-TRIVIA:before-return-type */: /* JOLT-TRIVIA:return-colon */ String {
-  val holder /* JOLT-TRIVIA:holder-name */ = Holder /* JOLT-TRIVIA:constructor-call */< /* JOLT-TRIVIA:call-type-arg-open */
-    String /* JOLT-TRIVIA:call-type-arg */
-  > /* JOLT-TRIVIA:call-type-arg-close */( /* JOLT-TRIVIA:constructor-call-open */
-    input[
-      0 /* JOLT-TRIVIA:constructor-index */
-    ] /* JOLT-TRIVIA:constructor-call-close */
-  )
+  val holder /* JOLT-TRIVIA:holder-name */ =
+    Holder /* JOLT-TRIVIA:constructor-call */< /* JOLT-TRIVIA:call-type-arg-open */
+      String /* JOLT-TRIVIA:call-type-arg */
+    > /* JOLT-TRIVIA:call-type-arg-close */( /* JOLT-TRIVIA:constructor-call-open */
+      input[
+        0 /* JOLT-TRIVIA:constructor-index */
+      ] /* JOLT-TRIVIA:constructor-call-close */
+    )
   val (
     first /* JOLT-TRIVIA:destructure-first */,
     second /* JOLT-TRIVIA:destructure-second */
-  ) = input[
-    0 /* JOLT-TRIVIA:index-zero */
-  ] /* JOLT-TRIVIA:to-receiver */ to /* JOLT-TRIVIA:to-name */
-    input[1 /* JOLT-TRIVIA:index-one */]
-  val computed = (transform /* JOLT-TRIVIA:call-callee */( /* JOLT-TRIVIA:call-open */
-    first /* JOLT-TRIVIA:call-arg */
-  ) /* JOLT-TRIVIA:binary-left */ + /* JOLT-TRIVIA:binary-plus */
-    transform(second))
-    /* JOLT-TRIVIA:before-chain-dot */
-    . /* JOLT-TRIVIA:chain-dot */ trim /* JOLT-TRIVIA:trim-name */()
-    ?. /* JOLT-TRIVIA:safe-chain */ ifEmpty /* JOLT-TRIVIA:if-empty-name */ { /* JOLT-TRIVIA:if-empty-open */
-      fallback /* JOLT-TRIVIA:if-empty-body */
-    }
-    ?: /* JOLT-TRIVIA:elvis */ fallback
-  val rendered = "value=${ /* JOLT-TRIVIA:template-open */computed + /* JOLT-TRIVIA:template-plus */ "!"}"
-  val casted = rendered /* JOLT-TRIVIA:as-left */ as? /* JOLT-TRIVIA:as-operator */
-    String
-  val checked = casted /* JOLT-TRIVIA:is-left */ !is /* JOLT-TRIVIA:is-operator */
-    Nothing
+  ) =
+    input[
+      0 /* JOLT-TRIVIA:index-zero */
+    ] /* JOLT-TRIVIA:to-receiver */ to /* JOLT-TRIVIA:to-name */
+      input[1 /* JOLT-TRIVIA:index-one */]
+  val computed =
+    (transform /* JOLT-TRIVIA:call-callee */( /* JOLT-TRIVIA:call-open */
+      first /* JOLT-TRIVIA:call-arg */
+    ) /* JOLT-TRIVIA:binary-left */ + /* JOLT-TRIVIA:binary-plus */
+      transform(second))
+      /* JOLT-TRIVIA:before-chain-dot */
+      . /* JOLT-TRIVIA:chain-dot */ trim /* JOLT-TRIVIA:trim-name */()
+      ?. /* JOLT-TRIVIA:safe-chain */ ifEmpty /* JOLT-TRIVIA:if-empty-name */ { /* JOLT-TRIVIA:if-empty-open */
+        fallback /* JOLT-TRIVIA:if-empty-body */
+      }
+      ?: /* JOLT-TRIVIA:elvis */ fallback
+  val rendered =
+    "value=${ /* JOLT-TRIVIA:template-open */computed + /* JOLT-TRIVIA:template-plus */ "!"}"
+  val casted =
+    rendered /* JOLT-TRIVIA:as-left */ as? /* JOLT-TRIVIA:as-operator */ String
+  val checked =
+    casted /* JOLT-TRIVIA:is-left */ !is /* JOLT-TRIVIA:is-operator */ Nothing
 
   if /* JOLT-TRIVIA:if-keyword */ ( /* JOLT-TRIVIA:if-open */
     checked /* JOLT-TRIVIA:if-condition */
@@ -94,7 +99,9 @@ fun Scope /* JOLT-TRIVIA:receiver-type */. /* JOLT-TRIVIA:receiver-dot */comment
     emit("$index:$item")
   }
 
-  when /* JOLT-TRIVIA:when-keyword */ ( /* JOLT-TRIVIA:when-open */val text /* JOLT-TRIVIA:when-subject-name */ = /* JOLT-TRIVIA:when-subject-equals */ rendered /* JOLT-TRIVIA:when-close */) {
+  when /* JOLT-TRIVIA:when-keyword */ ( /* JOLT-TRIVIA:when-open */
+    val text /* JOLT-TRIVIA:when-subject-name */ = /* JOLT-TRIVIA:when-subject-equals */ rendered /* JOLT-TRIVIA:when-close */
+  ) {
     "" /* JOLT-TRIVIA:when-empty-condition */ -> /* JOLT-TRIVIA:when-empty-arrow */
       emit("blank")
     in /* JOLT-TRIVIA:when-in */ listOf(

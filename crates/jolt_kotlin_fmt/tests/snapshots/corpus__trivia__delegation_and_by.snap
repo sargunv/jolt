@@ -20,9 +20,8 @@ class Service(
   :
     Logger /* JOLT-TRIVIA:delegation-type */ by /* JOLT-TRIVIA:delegation-by */ logger
 
-val cached: String /* JOLT-TRIVIA:property-delegate-type */ by lazy /* JOLT-TRIVIA:property-by */ {
-  "value"
-}
+val cached: String /* JOLT-TRIVIA:property-delegate-type */ by
+  lazy /* JOLT-TRIVIA:property-by */ { "value" }
 
 diagnostics:
 (none)

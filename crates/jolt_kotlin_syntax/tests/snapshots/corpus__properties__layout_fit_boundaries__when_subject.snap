@@ -1,0 +1,84 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun inspectState(stateMachine: StateMachine): Int = when (val currentState = stateMachine.computeCurrentStateSnapshotForDiagnostics()) {
+  else -> currentState.code
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "inspectState" @ 4..16
+      ValueParameterList
+        LParen "(" @ 16..17
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "stateMachine" @ 17..29
+            Colon ":" @ 29..30 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "StateMachine" @ 31..43
+        RParen ")" @ 43..44
+      Colon ":" @ 44..45 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 46..49 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 50..51 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 52..56 trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 57..58
+            ValKw "val" @ 58..61 trailing=[Whitespace " "]
+            Name
+              Identifier "currentState" @ 62..74 trailing=[Whitespace " "]
+            Assign "=" @ 75..76 trailing=[Whitespace " "]
+            CallExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "stateMachine" @ 77..89
+                Dot "." @ 89..90
+                Identifier "computeCurrentStateSnapshotForDiagnostics" @ 90..131
+              TypeArgumentListList
+              ValueArgumentList
+                LParen "(" @ 131..132
+                ValueArgumentEntryList
+                RParen ")" @ 132..133
+              LambdaExpressionList
+            RParen ")" @ 133..134 trailing=[Whitespace " "]
+          LBrace "{" @ 135..136
+          WhenEntryList
+            WhenEntry
+              ElseKw "else" @ 139..143 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 144..146 trailing=[Whitespace " "]
+              WhenEntryBody
+                NavigationExpression
+                  NameExpression
+                    Identifier "currentState" @ 147..159
+                  Dot "." @ 159..160
+                  Identifier "code" @ 160..164
+          RBrace "}" @ 165..166 leading=[Newline "\n"]
+  Eof "" @ 167..167 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

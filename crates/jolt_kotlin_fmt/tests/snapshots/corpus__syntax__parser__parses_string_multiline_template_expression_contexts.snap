@@ -4,12 +4,14 @@ expression: snapshot
 ---
 formatted:
 fun multilineTemplates(total: Int): String {
-  val raw = """
+  val raw =
+    """
         total=${total + 1}
         status=${if (total > 0) "ready" else "empty"}
     """
-    .trimIndent()
-  val multiDollar = $$"""
+      .trimIndent()
+  val multiDollar =
+    $$"""
         literal $name
         interpolated $$total
     """

@@ -14,10 +14,11 @@ annotation class Tags(val names: Array<String>)
   ]
 )
 class CollectionUse {
-  val table = mapOf(
-    "one" /* JOLT-TRIVIA:pair-key */ to /* JOLT-TRIVIA:to-call */ 1,
-    "two" to 2,
-  )
+  val table =
+    mapOf(
+      "one" /* JOLT-TRIVIA:pair-key */ to /* JOLT-TRIVIA:to-call */ 1,
+      "two" to 2,
+    )
 }
 
 diagnostics:

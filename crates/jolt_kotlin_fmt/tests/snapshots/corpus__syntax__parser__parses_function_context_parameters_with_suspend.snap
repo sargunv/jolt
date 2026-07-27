@@ -16,9 +16,8 @@ tailrec suspend fun <T : CharSequence> Repository<UserId>.loadLater(
   where T : Comparable<T> = fetch(id)
 
 context(left: Counter)
-operator fun Counter.plus(right: Counter): Counter = Counter(
-  value + right.value
-)
+operator fun Counter.plus(right: Counter): Counter =
+  Counter(value + right.value)
 
 context(logger: Logger)
 infix fun Logger.then(message: String): Logger = this

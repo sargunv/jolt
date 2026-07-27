@@ -68,10 +68,8 @@ class CommentsBetweenStatementKeywordAndValue {
 
   fun report(value: Int) {}
 
-  fun someLongFunctionCall(
-    first: Int,
-    second: Int
-  ): String = "$first and $second"
+  fun someLongFunctionCall(first: Int, second: Int): String =
+    "$first and $second"
 
   val firstArgumentName = 3
   val secondArgumentName = 4

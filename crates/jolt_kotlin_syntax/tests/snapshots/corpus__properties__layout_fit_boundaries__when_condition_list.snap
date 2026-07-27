@@ -1,0 +1,97 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun classifyCondition(value: Any): Int = when (value) {
+  is VeryLongConditionTypeNumberOne, is VeryLongConditionTypeNumberTwo, is VeryLongConditionTypeNumberThree -> 1
+  else -> 2
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "classifyCondition" @ 4..21
+      ValueParameterList
+        LParen "(" @ 21..22
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "value" @ 22..27
+            Colon ":" @ 27..28 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Any" @ 29..32
+        RParen ")" @ 32..33
+      Colon ":" @ 33..34 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 35..38 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 39..40 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 41..45 trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 46..47
+            NameExpression
+              Identifier "value" @ 47..52
+            RParen ")" @ 52..53 trailing=[Whitespace " "]
+          LBrace "{" @ 54..55
+          WhenEntryList
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  IsKw "is" @ 58..60 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "VeryLongConditionTypeNumberOne" @ 61..91
+                Comma "," @ 91..92 trailing=[Whitespace " "]
+                WhenCondition
+                  IsKw "is" @ 93..95 trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "VeryLongConditionTypeNumberTwo" @ 96..126
+                Comma "," @ 126..127 trailing=[Whitespace " "]
+                WhenCondition
+                  IsKw "is" @ 128..130 trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "VeryLongConditionTypeNumberThree" @ 131..163 trailing=[Whitespace " "]
+              Arrow "->" @ 164..166 trailing=[Whitespace " "]
+              WhenEntryBody
+                LiteralExpression
+                  IntegerLiteral "1" @ 167..168
+            WhenEntry
+              ElseKw "else" @ 171..175 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 176..178 trailing=[Whitespace " "]
+              WhenEntryBody
+                LiteralExpression
+                  IntegerLiteral "2" @ 179..180
+          RBrace "}" @ 181..182 leading=[Newline "\n"]
+  Eof "" @ 183..183 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

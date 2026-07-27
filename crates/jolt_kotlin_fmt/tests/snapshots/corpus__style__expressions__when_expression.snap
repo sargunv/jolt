@@ -11,10 +11,11 @@ sealed interface Status {
   data class Failed(val reason: String) : Status
 }
 
-fun message(status: Status): String = when (status) {
-  Status.Ready -> "ready"
-  is Status.Failed -> "failed: ${status.reason}"
-}
+fun message(status: Status): String =
+  when (status) {
+    Status.Ready -> "ready"
+    is Status.Failed -> "failed: ${status.reason}"
+  }
 
 diagnostics:
 (none)
