@@ -1,0 +1,102 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class LambdaParameterListBreaking {
+  void method(Handler handler) {
+    handler.register((FirstEventTypeName firstEvent, SecondEventTypeName secondEvent) -> process(firstEvent, secondEvent));
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "LambdaParameterListBreaking" @ 6..33 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 34..35
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 38..42 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "method" @ 43..49
+            LParen "(" @ 49..50
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Handler" @ 50..57 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "handler" @ 58..65
+            RParen ")" @ 65..66 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 67..68
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      QualifiedMethodInvocation
+                        NameExpression
+                          Identifier "handler" @ 73..80 leading=[Newline "\n", Whitespace "    "]
+                        Dot "." @ 80..81
+                        Identifier "register" @ 81..89
+                        ArgumentList
+                          LParen "(" @ 89..90
+                          ExpressionList
+                            LambdaExpression
+                              LParen "(" @ 90..91
+                              LambdaParameterList
+                                LambdaParameter
+                                  LambdaModifierList
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "FirstEventTypeName" @ 91..109 trailing=[Whitespace " "]
+                                  AnnotationList
+                                  Identifier "firstEvent" @ 110..120
+                                Comma "," @ 120..121 trailing=[Whitespace " "]
+                                LambdaParameter
+                                  LambdaModifierList
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "SecondEventTypeName" @ 122..141 trailing=[Whitespace " "]
+                                  AnnotationList
+                                  Identifier "secondEvent" @ 142..153
+                              RParen ")" @ 153..154 trailing=[Whitespace " "]
+                              Arrow "->" @ 155..157 trailing=[Whitespace " "]
+                              MethodInvocationExpression
+                                UnqualifiedMethodInvocation
+                                  NameExpression
+                                    Identifier "process" @ 158..165
+                                  ArgumentList
+                                    LParen "(" @ 165..166
+                                    ExpressionList
+                                      NameExpression
+                                        Identifier "firstEvent" @ 166..176
+                                      Comma "," @ 176..177 trailing=[Whitespace " "]
+                                      NameExpression
+                                        Identifier "secondEvent" @ 178..189
+                                    RParen ")" @ 189..190
+                          RParen ")" @ 190..191
+                    Semicolon ";" @ 191..192
+              RBrace "}" @ 195..196 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 197..198 leading=[Newline "\n"]
+  Eof "" @ 199..199 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

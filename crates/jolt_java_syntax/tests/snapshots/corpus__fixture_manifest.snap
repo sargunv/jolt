@@ -74,6 +74,7 @@ style/expressions/assignment-ternary-continuation.java
 style/expressions/calls-and-arguments.java
 style/expressions/casts-instanceof-arrays.java
 style/expressions/dotted-identifier-runs.java
+style/expressions/lambda-parameter-list-breaking.java
 style/expressions/lambdas.java
 style/expressions/literals-and-text-blocks.java
 style/expressions/long-array-initializer.java

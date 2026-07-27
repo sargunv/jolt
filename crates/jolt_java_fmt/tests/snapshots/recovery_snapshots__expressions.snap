@@ -72,14 +72,16 @@ class RecoveredExpressions {
     java.util.function.Function<Integer, Integer> parenthesizedRecovered =
       (item, /* lambda-parameter-sibling */ ,) -> item;
     java.util.function.Function<Integer, Integer> trailingLineComment =
-      (first,
-      second // lambda-last-parameter
+      (
+        first,
+        second // lambda-last-parameter
       ) -> first;
     java.util.function.Function<Integer, Integer> trailingBlockComment =
       (first, second /* lambda-last-block */) -> first;
     java.util.function.Function<Integer, Integer> closeLeadingComment =
-      (first,
-      second
+      (
+        first,
+        second
       // lambda-close-leading
       ) -> first;
     int @Dimension [] array = new int[1] @Trailing [];
