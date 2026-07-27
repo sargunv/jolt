@@ -1,0 +1,25 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+﻿class LeadingByteOrderMark {}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 3..8 leading=[Ignored "\u{feff}"] trailing=[Whitespace " "]
+      Identifier "LeadingByteOrderMark" @ 9..29 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 30..31
+        ClassBodyMemberList
+        RBrace "}" @ 31..32
+  Eof "" @ 33..33 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

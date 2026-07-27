@@ -157,6 +157,7 @@ syntax/lexer/does-not-ignore-non-trailing-sub-character.java
 syntax/lexer/does-not-ignore-non-trailing-sub-outside-identifier.java
 syntax/lexer/escaped-quote-prevents-text-block-closing-delimiter.java
 syntax/lexer/fourth-quote-after-text-block-closing-delimiter-is-outside-token.java
+syntax/lexer/ignores-leading-byte-order-mark.java
 syntax/lexer/ignores-trailing-sub-after-unicode-escape-translation.java
 syntax/lexer/ignores-trailing-sub-character.java
 syntax/lexer/keeps-crlf-as-one-line-terminator-trivia.java

@@ -28,6 +28,12 @@ pub(crate) fn format_compilation_unit<'source>(
     unit: &CompilationUnit<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    // A byte order mark is lexically inert but part of the source, so claim it
+    // from the first token before any layout begins.
+    let byte_order_mark = unit
+        .token_iter()
+        .next()
+        .map_or_else(Doc::nil, |token| format_ignored_trivia(doc, &token));
     let mut entries = Vec::new();
     match unit.items() {
         jolt_java_syntax::JavaSyntaxField::Present(items) => {
@@ -99,7 +105,7 @@ pub(crate) fn format_compilation_unit<'source>(
         let ignored = format_ignored_trivia(doc, &token);
         doc.concat([comments, line, ignored])
     });
-    doc.concat([contents, eof])
+    doc.concat([byte_order_mark, contents, eof])
 }
 
 enum ProgramEntry<'source> {
