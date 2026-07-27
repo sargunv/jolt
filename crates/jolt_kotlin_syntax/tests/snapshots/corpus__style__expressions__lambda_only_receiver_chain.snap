@@ -1,0 +1,134 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun lambdaOnlyReceiver(items: List<Int>) {
+  items.forEach { println(it) }
+  items.map { it + 1 }.filter { it > 1 }
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "lambdaOnlyReceiver" @ 4..22
+      ValueParameterList
+        LParen "(" @ 22..23
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "items" @ 23..28
+            Colon ":" @ 28..29 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "List" @ 30..34
+                    TypeArgumentList
+                      Lt "<" @ 34..35
+                      TypeProjectionSeparatedList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                Identifier "Int" @ 35..38
+                      Gt ">" @ 38..39
+        RParen ")" @ 39..40 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 41..42
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NavigationExpression
+                    NameExpression
+                      Identifier "items" @ 45..50 leading=[Newline "\n", Whitespace "  "]
+                    Dot "." @ 50..51
+                    Identifier "forEach" @ 51..58 trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 59..60 trailing=[Whitespace " "]
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              CallExpression
+                                NameExpression
+                                  Identifier "println" @ 61..68
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 68..69
+                                  ValueArgumentEntryList
+                                    ValueArgument
+                                      ValueArgumentPrefixList
+                                      NameExpression
+                                        Identifier "it" @ 69..71
+                                  RParen ")" @ 71..72 trailing=[Whitespace " "]
+                                LambdaExpressionList
+                            TerminatorList
+                        RBrace "}" @ 73..74
+              TerminatorList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NavigationExpression
+                    CallExpression
+                      NavigationExpression
+                        NameExpression
+                          Identifier "items" @ 77..82 leading=[Newline "\n", Whitespace "  "]
+                        Dot "." @ 82..83
+                        Identifier "map" @ 83..86 trailing=[Whitespace " "]
+                      TypeArgumentListList
+                      LambdaExpressionList
+                        LambdaExpression
+                          LambdaBody
+                            LBrace "{" @ 87..88 trailing=[Whitespace " "]
+                            LambdaBodyItemList
+                              Statement
+                                ExpressionStatement
+                                  BinaryExpression
+                                    NameExpression
+                                      Identifier "it" @ 89..91 trailing=[Whitespace " "]
+                                    Plus "+" @ 92..93 trailing=[Whitespace " "]
+                                    LiteralExpression
+                                      IntegerLiteral "1" @ 94..95 trailing=[Whitespace " "]
+                                TerminatorList
+                            RBrace "}" @ 96..97
+                    Dot "." @ 97..98
+                    Identifier "filter" @ 98..104 trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 105..106 trailing=[Whitespace " "]
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "it" @ 107..109 trailing=[Whitespace " "]
+                                Gt ">" @ 110..111 trailing=[Whitespace " "]
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 112..113 trailing=[Whitespace " "]
+                            TerminatorList
+                        RBrace "}" @ 114..115
+              TerminatorList
+          RBrace "}" @ 116..117 leading=[Newline "\n"]
+  Eof "" @ 118..118 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

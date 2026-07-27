@@ -5,8 +5,7 @@ expression: snapshot
 formatted:
 class Accessors {
   var name: String = ""
-    get() = field
-      .ifBlank { "unknown" }
+    get() = field.ifBlank { "unknown" }
     private set(value) {
       field = value.trim()
     }
