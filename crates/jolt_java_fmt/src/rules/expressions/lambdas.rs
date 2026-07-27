@@ -80,6 +80,8 @@ fn format_lambda_parameters<'source>(
     expression: &LambdaExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    let has_parentheses = matches!(expression.open_paren(), JavaSyntaxField::Present(_))
+        && matches!(expression.close_paren(), JavaSyntaxField::Present(_));
     let parameters = resolve_required_field(expression.parameters(), doc);
     if let Some(removal) = expression.simple_parameter_parenthesis_removal()
         && optional_delimiter_is_comment_free(expression.open_paren())
@@ -116,7 +118,15 @@ fn format_lambda_parameters<'source>(
         }
     });
 
-    doc_group!(doc, doc_concat!(doc, [open, parameters, close]),)
+    if has_parentheses {
+        let parameters = doc_indent!(doc, doc_concat!(doc, [doc.soft_line(), parameters]));
+        doc_group!(
+            doc,
+            doc_concat!(doc, [open, parameters, doc.soft_line(), close]),
+        )
+    } else {
+        doc_group!(doc, doc_concat!(doc, [open, parameters, close]),)
+    }
 }
 
 fn optional_delimiter_is_comment_free(

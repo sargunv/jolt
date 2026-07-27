@@ -19,7 +19,9 @@ class ExpressionTrivia {
       value instanceof String /* JOLT-TRIVIA:instanceof-type */ s
         && ((String) /* JOLT-TRIVIA:after-cast */ value).isEmpty();
     Runnable r =
-      () /* JOLT-TRIVIA:lambda-arrow-left */ -> /* JOLT-TRIVIA:lambda-arrow-right */ service.accept(
+      (
+
+      ) /* JOLT-TRIVIA:lambda-arrow-left */ -> /* JOLT-TRIVIA:lambda-arrow-right */ service.accept(
         text,
         ok
       );
