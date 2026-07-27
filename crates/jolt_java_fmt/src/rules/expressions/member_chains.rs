@@ -232,7 +232,7 @@ impl<'source> MemberChainBuilder<'source> {
             let line = if has_leading_comments {
                 rest_suffixes.line()
             } else {
-                rest_suffixes.soft_line()
+                rest_suffixes.soft_line_boundary()
             };
             rest_suffixes.push(line);
             rest_suffixes.push(suffix);

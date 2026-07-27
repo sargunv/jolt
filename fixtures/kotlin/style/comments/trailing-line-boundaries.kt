@@ -1,0 +1,19 @@
+import a.B // import
+import a.C
+
+fun block() {
+  consume() // block item
+}
+
+fun choose(value: Int) = when (value) { // opening brace
+  else -> 0
+}
+
+val lambda = { value: Int -> // arrow
+  value
+}
+
+fun chain(values: List<String>) =
+  values
+    .filter { it.isNotEmpty() } // step
+    .joinToString()

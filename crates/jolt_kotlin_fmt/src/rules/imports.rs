@@ -93,7 +93,7 @@ fn format_import_entries_with_ignored<'source>(
     let joined = doc.concat_list(|docs| {
         for section in sections {
             if section.is_visible() && has_visible {
-                let line = docs.hard_line();
+                let line = docs.hard_line_boundary();
                 docs.push(line);
             }
             docs.push(section.doc());
@@ -177,9 +177,9 @@ fn format_import_entries<'source>(
         for section in sections {
             if section.visible && has_visible {
                 let separator = if section.starts_comment_barrier {
-                    docs.empty_line()
+                    docs.empty_line_boundary()
                 } else {
-                    docs.hard_line()
+                    docs.hard_line_boundary()
                 };
                 docs.push(separator);
             }

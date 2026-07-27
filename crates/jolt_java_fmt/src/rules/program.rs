@@ -466,7 +466,7 @@ fn format_package_declaration<'source>(
         });
         let declaration = doc_concat!(doc, [keyword, name, semicolon]);
         if annotations_visible {
-            doc_concat!(doc, [annotations, doc.hard_line(), declaration])
+            doc_concat!(doc, [annotations, doc.hard_line_boundary(), declaration])
         } else {
             doc_concat!(doc, [annotations, declaration])
         }

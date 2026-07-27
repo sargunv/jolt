@@ -1,0 +1,18 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+@A // annotation
+package p;
+
+class TrailingLineBoundaries {
+  String chain(java.util.List<String> values) {
+    return values.stream() // step
+      .findFirst()
+      .orElse("");
+  }
+}
+
+diagnostics:
+(none)
