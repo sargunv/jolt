@@ -12,6 +12,7 @@ fn layout_fit_boundary_fixtures_stay_within_width() {
         "properties/layout-fit-boundaries/return-statement-ternary.java",
         "style/layout-fit-boundaries/local-variable-nested-ternary.java",
         "properties/layout-fit-boundaries/field-initializer.java",
+        "properties/layout-fit-boundaries/cast-and-instanceof.java",
         "style/layout-fit-boundaries/call-single-argument-ternary.java",
     ] {
         assert_no_line_exceeds_width(&root.join(name), 80);
