@@ -18,10 +18,12 @@ impl Parser<'_> {
         } else {
             self.complete_missing_parenthesized_expression("expected condition after 'if'");
         }
-        self.parse_control_structure_body(
-            stops.with_kind(K::ElseKw),
-            "expected branch after 'if' condition",
-        );
+        if !self.at(K::ElseKw) {
+            self.parse_control_structure_body(
+                stops.with_kind(K::ElseKw),
+                "expected branch after 'if' condition",
+            );
+        }
         if self.eat(K::ElseKw) {
             self.parse_control_structure_body(stops, "expected branch after 'else'");
         }

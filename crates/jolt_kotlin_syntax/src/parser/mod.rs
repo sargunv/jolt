@@ -320,7 +320,6 @@ mod tests {
     fn control_flow_diagnostics_own_the_declared_node_or_slot() {
         check("fun f() { if value }\n", "expected condition after 'if'", KotlinSyntaxKind::ParenthesizedExpression, Some(crate::shape::parenthesized_expression::Slot::expression as u16));
         check("fun f() { if (value) }\n", "expected branch after 'if' condition", KotlinSyntaxKind::BogusExpression, None);
-        check("fun f() { if (value) else }\n", "expected branch after 'if' condition", KotlinSyntaxKind::BogusExpression, None);
         check("fun f() { if (value) else }\n", "expected branch after 'else'", KotlinSyntaxKind::BogusExpression, None);
         check("fun f() { when () {} }\n", "expected when subject expression", KotlinSyntaxKind::BogusExpression, None);
         check("fun f() { when (val value) {} }\n", "expected '=' in when subject", KotlinSyntaxKind::WhenSubject, Some(crate::shape::when_subject::Slot::assign as u16));
@@ -352,6 +351,7 @@ mod tests {
         for source in [
             "fun f() { ; }\n",
             "fun f() { if (ready); else {} }\n",
+            "fun f() { if (ready) else {} }\n",
             "fun f() { when (value) {\none, -> 1\nelse -> 0\n} }\n",
             "fun f() { when (value) {\nfirst(value)\n  && second(value)\n  && third(value) -> 1\nelse -> 0\n} }\n",
             "fun f() { when (var value: Any = source) {} }\n",
