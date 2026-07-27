@@ -5,10 +5,7 @@ use super::{
     format_token_before_relocated_trailing_comments, format_token_with_comments,
     format_trailing_comments_before_line_break, trailing_comments_force_line,
 };
-use crate::helpers::comments::{
-    comment_is_star_block, format_comment, format_construct_leading_comments,
-    format_token_after_relocated_leading_comments, format_trailing_comment,
-};
+use crate::helpers::comments::{comment_is_star_block, format_comment, format_trailing_comment};
 use crate::helpers::recovery::{
     JavaFormatField, format_optional_field, format_required_field, resolve_optional_field,
     resolve_required_field,
@@ -353,28 +350,6 @@ pub(super) fn format_statement_keyword<'source>(
     format_required_field(keyword, doc, |keyword, doc| {
         format_token_with_comments(doc, &keyword)
     })
-}
-
-/// Splits a statement keyword's leading comments from the keyword itself.
-///
-/// A leading comment ends its own line. Left inside a statement's header group,
-/// that hard line forces the whole header to break with it, so a comment above
-/// the statement would silently change its layout. The caller places the
-/// returned comments outside the group.
-pub(super) fn format_statement_keyword_hoisting_leading<'source>(
-    keyword: TokenField<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> (Doc<'source>, Doc<'source>) {
-    let token = match keyword {
-        jolt_java_syntax::JavaSyntaxField::Present(token) => Some(token),
-        jolt_java_syntax::JavaSyntaxField::Missing(_)
-        | jolt_java_syntax::JavaSyntaxField::Malformed(_) => None,
-    };
-    let leading = format_construct_leading_comments(doc, token.as_ref());
-    let keyword = format_required_field(keyword, doc, |keyword, doc| {
-        format_token_after_relocated_leading_comments(doc, &keyword, TrailingTrivia::Preserve)
-    });
-    (leading, keyword)
 }
 
 pub(super) fn format_statement_keyword_head<'source>(

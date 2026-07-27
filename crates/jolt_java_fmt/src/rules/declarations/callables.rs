@@ -10,15 +10,12 @@ use super::{
 };
 use jolt_fmt_ir::DocBuilder;
 
-use crate::helpers::comments::format_token_after_relocated_leading_comments;
 use crate::helpers::recovery::{
     JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_optional_field,
     format_required_field, resolve_list_part, resolve_optional_field, resolve_required_delimiter,
     resolve_required_field,
 };
 use crate::rules::annotations::format_annotation;
-use crate::rules::types::format_type_without_leading_comments;
-use jolt_java_syntax::JavaSyntaxField;
 
 fn format_optional_modifier_prefix<'source>(
     modifiers: JavaFormatField<'source, Option<jolt_java_syntax::ModifierList<'source>>>,
@@ -43,9 +40,6 @@ fn format_optional_type_parameters<'source>(
             } else {
                 TypeLeadingComments::Preserve
             };
-            // The hoisted comments are returned separately so the caller can
-            // place them outside the header group; a hard line inside it would
-            // break every header clause with them.
             let hoisted = if owns_leading {
                 format_construct_leading_comments(doc, construct_first_token)
             } else {
@@ -60,20 +54,6 @@ fn format_optional_type_parameters<'source>(
         JavaFormatField::Present(None) => (Doc::nil(), Doc::nil(), false),
         JavaFormatField::Malformed(malformed) => (Doc::nil(), malformed, true),
     }
-}
-
-/// Assembles the documents that must sit outside a callable's header group.
-///
-/// A leading comment ends its own line, so leaving that hard line inside the
-/// header group would break `throws` along with it.
-fn header_prefix<'source>(
-    doc: &mut DocBuilder<'source>,
-    hoisted_first_token: Option<JavaSyntaxToken<'source>>,
-    type_parameter_leading: Doc<'source>,
-    modifier_prefix: Doc<'source>,
-) -> Doc<'source> {
-    let hoisted = format_construct_leading_comments(doc, hoisted_first_token.as_ref());
-    doc_concat!(doc, [hoisted, type_parameter_leading, modifier_prefix])
 }
 
 fn format_optional_throws_clause<'source>(
@@ -115,27 +95,13 @@ pub(super) fn format_constructor_declaration<'source>(
     let modifiers = resolve_optional_field(constructor.modifiers(), doc);
     let throws = resolve_optional_field(constructor.throws(), doc);
     let type_parameters = resolve_optional_field(constructor.type_parameters(), doc);
-    // See `format_method_declaration`: without a modifier list to hoist them,
-    // the header's own leading comments would break `throws` with them.
-    let hoist_name_comments = matches!(constructor.modifiers(), JavaSyntaxField::Missing(_))
-        && matches!(constructor.type_parameters(), JavaSyntaxField::Missing(_));
     let name = format_required_field(constructor.name(), doc, |name, doc| {
-        if hoist_name_comments {
-            format_token_after_relocated_leading_comments(doc, &name, TrailingTrivia::Preserve)
-        } else {
-            format_token_with_comments(doc, &name)
-        }
+        format_token_with_comments(doc, &name)
     });
     let open_paren = resolve_required_delimiter(constructor.open_paren(), doc);
     let parameters = resolve_optional_field(constructor.parameters(), doc);
     let close_paren = resolve_required_delimiter(constructor.close_paren(), doc);
     let prefix = format_optional_modifier_prefix(modifiers, doc);
-    let prefix = if hoist_name_comments {
-        let leading = format_construct_leading_comments(doc, constructor_first_token.as_ref());
-        doc_concat!(doc, [leading, prefix])
-    } else {
-        prefix
-    };
     let (type_parameter_leading, type_parameters, has_type_parameters) =
         format_optional_type_parameters(type_parameters, constructor_first_token.as_ref(), doc);
     let prefix = doc_concat!(doc, [type_parameter_leading, prefix]);
@@ -197,19 +163,8 @@ pub(crate) fn format_method_declaration<'source>(
     let dimensions = format_optional_field(method.dimensions(), doc, |dimensions, doc| {
         format_array_dimensions(&dimensions, doc)
     });
-    // A leading comment ends its own line. Left inside the header group, that
-    // hard line would force `throws` to break with it, so a comment above a
-    // method with no modifiers would silently change its layout. A modifier list
-    // already hoists its own leading comments; without one the header's first
-    // token must.
-    let hoist_return_type_comments = matches!(method.modifiers(), JavaSyntaxField::Missing(_))
-        && matches!(method.type_parameters(), JavaSyntaxField::Missing(_));
     let return_type = format_required_field(method.return_type(), doc, |return_type, doc| {
-        if hoist_return_type_comments {
-            format_type_without_leading_comments(&return_type, doc)
-        } else {
-            format_type(&return_type, doc)
-        }
+        format_type(&return_type, doc)
     });
     let body = resolve_required_field(method.body(), doc);
     let modifiers = match method_modifiers {
@@ -221,14 +176,7 @@ pub(crate) fn format_method_declaration<'source>(
     };
     let (type_parameter_leading, type_parameters, has_type_parameters) =
         format_optional_type_parameters(type_parameters, method_first_token.as_ref(), doc);
-    let prefix = header_prefix(
-        doc,
-        hoist_return_type_comments
-            .then_some(method_first_token)
-            .flatten(),
-        type_parameter_leading,
-        modifiers.declaration_prefix,
-    );
+    let prefix = doc_concat!(doc, [type_parameter_leading, modifiers.declaration_prefix]);
     let return_annotations = format_optional_annotation_list(return_annotations, doc);
     let has_return_annotations = return_annotations.is_some();
     let name_and_parameters = doc_concat!(
