@@ -40,6 +40,13 @@ macro_rules! __define_syntax_kind {
         }
 
         impl $kind {
+            /// Number of token kinds at the start of this language's kind enum.
+            ///
+            /// Syntax schemas place every token before node and bogus kinds, so
+            /// token-indexed fixed-size data structures can use this as their
+            /// exact finite bound.
+            pub(crate) const TOKEN_KIND_COUNT: usize = [$(Self::$token),*].len();
+
             /// Converts this kind into the raw representation used by shared syntax data.
             #[must_use]
             pub(crate) fn to_raw(self) -> $crate::RawSyntaxKind {
