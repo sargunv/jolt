@@ -322,31 +322,6 @@ impl TypeParser<'_, '_, '_> {
         }
     }
 
-    fn parse_type_prefix_annotation(&mut self) {
-        let marker = self.start();
-        let _ = self.eat(K::At) || self.eat(K::Hash);
-        if self.at_annotation_use_site_target() && self.nth_kind(1) == K::Colon {
-            let target = self.start();
-            self.bump();
-            self.bump();
-            self.complete(target, K::AnnotationUseSiteTarget);
-        }
-        self.parse_qualified_name();
-        if self.type_prefix_annotation_has_argument_list() {
-            self.parse_annotation_argument_list();
-        }
-        self.complete(marker, K::Annotation);
-    }
-
-    fn type_prefix_annotation_has_argument_list(&mut self) -> bool {
-        if !self.at(K::LParen) || self.position() == 0 {
-            return false;
-        }
-
-        let index = self.position() - 1;
-        self.tokens_are_adjacent(index, 2)
-    }
-
     fn parse_user_type_tail(
         &mut self,
         first_segment: jolt_syntax::Marker,

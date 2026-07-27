@@ -19,7 +19,7 @@ use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_optional_field, format_required_field,
     resolve_list_part, resolve_required_delimiter, resolve_required_field,
 };
-use crate::rules::annotations::format_annotation;
+use crate::rules::annotations::format_annotation_syntax;
 use crate::rules::names::format_name;
 use crate::rules::types::format_type_argument_list;
 
@@ -812,7 +812,7 @@ fn format_value_argument_prefix_item<'source>(
                 TrailingTrivia::Preserve,
             ),
             Ok(ValueArgumentPrefixSyntax::Annotation(annotation)) => {
-                format_annotation(doc, &annotation)
+                format_annotation_syntax(doc, &annotation)
             }
             Err(error) => {
                 doc.block_on_invariant(error.to_string());

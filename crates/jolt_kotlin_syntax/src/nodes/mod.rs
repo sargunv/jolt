@@ -402,7 +402,7 @@ impl<'source> LambdaParameterBindingValue<'source> {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ValueArgumentPrefixSyntax<'source> {
     Spread(KotlinSyntaxToken<'source>),
-    Annotation(Annotation<'source>),
+    Annotation(AnnotationSyntax<'source>),
 }
 
 impl<'source> ValueArgumentPrefixValue<'source> {
@@ -410,7 +410,7 @@ impl<'source> ValueArgumentPrefixValue<'source> {
     pub fn classify(self) -> KotlinSyntaxResult<ValueArgumentPrefixSyntax<'source>> {
         if let Some(token) = self.token() {
             Ok(ValueArgumentPrefixSyntax::Spread(token))
-        } else if let Some(value) = self.cast_node::<Annotation<'source>>() {
+        } else if let Some(value) = self.cast_family::<AnnotationSyntax<'source>>() {
             Ok(ValueArgumentPrefixSyntax::Annotation(value))
         } else {
             Err(invalid_role_projection(self.element.kind()))
