@@ -378,6 +378,7 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
                 return true;
             }
 
+            self.skip_annotations();
             if !self.at_type_start() || !self.skip_type() {
                 self.cursor.rewind(checkpoint);
                 return true;

@@ -1,0 +1,11 @@
+@interface NonNull {}
+
+interface FirstBound {}
+
+interface SecondBound {}
+
+class AnnotatedIntersectionCastBounds {
+  Object cast(Object value) {
+    return (FirstBound & @NonNull SecondBound) value;
+  }
+}
