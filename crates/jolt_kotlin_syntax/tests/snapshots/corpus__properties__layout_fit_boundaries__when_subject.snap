@@ -1,0 +1,415 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun shortSubject(value: State): Int = when (val current = value) {
+  else -> current.code
+}
+
+fun typedSubject(value: State): Int = when (val current: State = value) {
+  else -> current.code
+}
+
+fun inspectState(stateMachine: StateMachine): Int = when (val currentState = stateMachine.computeCurrentStateSnapshotForDiagnostics()) {
+  else -> currentState.code
+}
+
+fun commentedSubject(stateMachine: StateMachine): Int = when (val currentState = stateMachine.computeCurrentStateSnapshotForDiagnostics() // computed subject
+) {
+  else -> currentState.code
+}
+
+fun typedCommentedSubject(stateMachine: StateMachine): Int = when (val currentState: State /* subject type */ = stateMachine.computeCurrentStateSnapshotForDiagnostics()) {
+  else -> currentState.code
+}
+
+fun delimiterComments(stateMachine: StateMachine): Int = when ( // after open
+  val currentState = stateMachine.computeCurrentStateSnapshotForDiagnostics()
+  // before close
+) {
+  else -> currentState.code
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "shortSubject" @ 4..16
+      ValueParameterList
+        LParen "(" @ 16..17
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "value" @ 17..22
+            Colon ":" @ 22..23 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "State" @ 24..29
+        RParen ")" @ 29..30
+      Colon ":" @ 30..31 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 32..35 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 36..37 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 38..42 trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 43..44
+            ValKw "val" @ 44..47 trailing=[Whitespace " "]
+            Name
+              Identifier "current" @ 48..55 trailing=[Whitespace " "]
+            Assign "=" @ 56..57 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "value" @ 58..63
+            RParen ")" @ 63..64 trailing=[Whitespace " "]
+          LBrace "{" @ 65..66
+          WhenEntryList
+            WhenEntry
+              ElseKw "else" @ 69..73 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 74..76 trailing=[Whitespace " "]
+              WhenEntryBody
+                NavigationExpression
+                  NameExpression
+                    Identifier "current" @ 77..84
+                  Dot "." @ 84..85
+                  Identifier "code" @ 85..89
+          RBrace "}" @ 90..91 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 93..96 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "typedSubject" @ 97..109
+      ValueParameterList
+        LParen "(" @ 109..110
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "value" @ 110..115
+            Colon ":" @ 115..116 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "State" @ 117..122
+        RParen ")" @ 122..123
+      Colon ":" @ 123..124 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 125..128 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 129..130 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 131..135 trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 136..137
+            ValKw "val" @ 137..140 trailing=[Whitespace " "]
+            Name
+              Identifier "current" @ 141..148
+            Colon ":" @ 148..149 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "State" @ 150..155 trailing=[Whitespace " "]
+            Assign "=" @ 156..157 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "value" @ 158..163
+            RParen ")" @ 163..164 trailing=[Whitespace " "]
+          LBrace "{" @ 165..166
+          WhenEntryList
+            WhenEntry
+              ElseKw "else" @ 169..173 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 174..176 trailing=[Whitespace " "]
+              WhenEntryBody
+                NavigationExpression
+                  NameExpression
+                    Identifier "current" @ 177..184
+                  Dot "." @ 184..185
+                  Identifier "code" @ 185..189
+          RBrace "}" @ 190..191 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 193..196 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "inspectState" @ 197..209
+      ValueParameterList
+        LParen "(" @ 209..210
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "stateMachine" @ 210..222
+            Colon ":" @ 222..223 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "StateMachine" @ 224..236
+        RParen ")" @ 236..237
+      Colon ":" @ 237..238 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 239..242 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 243..244 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 245..249 trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 250..251
+            ValKw "val" @ 251..254 trailing=[Whitespace " "]
+            Name
+              Identifier "currentState" @ 255..267 trailing=[Whitespace " "]
+            Assign "=" @ 268..269 trailing=[Whitespace " "]
+            CallExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "stateMachine" @ 270..282
+                Dot "." @ 282..283
+                Identifier "computeCurrentStateSnapshotForDiagnostics" @ 283..324
+              TypeArgumentListList
+              ValueArgumentList
+                LParen "(" @ 324..325
+                ValueArgumentEntryList
+                RParen ")" @ 325..326
+              LambdaExpressionList
+            RParen ")" @ 326..327 trailing=[Whitespace " "]
+          LBrace "{" @ 328..329
+          WhenEntryList
+            WhenEntry
+              ElseKw "else" @ 332..336 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 337..339 trailing=[Whitespace " "]
+              WhenEntryBody
+                NavigationExpression
+                  NameExpression
+                    Identifier "currentState" @ 340..352
+                  Dot "." @ 352..353
+                  Identifier "code" @ 353..357
+          RBrace "}" @ 358..359 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 361..364 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "commentedSubject" @ 365..381
+      ValueParameterList
+        LParen "(" @ 381..382
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "stateMachine" @ 382..394
+            Colon ":" @ 394..395 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "StateMachine" @ 396..408
+        RParen ")" @ 408..409
+      Colon ":" @ 409..410 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 411..414 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 415..416 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 417..421 trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 422..423
+            ValKw "val" @ 423..426 trailing=[Whitespace " "]
+            Name
+              Identifier "currentState" @ 427..439 trailing=[Whitespace " "]
+            Assign "=" @ 440..441 trailing=[Whitespace " "]
+            CallExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "stateMachine" @ 442..454
+                Dot "." @ 454..455
+                Identifier "computeCurrentStateSnapshotForDiagnostics" @ 455..496
+              TypeArgumentListList
+              ValueArgumentList
+                LParen "(" @ 496..497
+                ValueArgumentEntryList
+                RParen ")" @ 497..498 trailing=[Whitespace " ", LineComment "// computed subject"]
+              LambdaExpressionList
+            RParen ")" @ 519..520 leading=[Newline "\n"] trailing=[Whitespace " "]
+          LBrace "{" @ 521..522
+          WhenEntryList
+            WhenEntry
+              ElseKw "else" @ 525..529 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 530..532 trailing=[Whitespace " "]
+              WhenEntryBody
+                NavigationExpression
+                  NameExpression
+                    Identifier "currentState" @ 533..545
+                  Dot "." @ 545..546
+                  Identifier "code" @ 546..550
+          RBrace "}" @ 551..552 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 554..557 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "typedCommentedSubject" @ 558..579
+      ValueParameterList
+        LParen "(" @ 579..580
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "stateMachine" @ 580..592
+            Colon ":" @ 592..593 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "StateMachine" @ 594..606
+        RParen ")" @ 606..607
+      Colon ":" @ 607..608 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 609..612 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 613..614 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 615..619 trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 620..621
+            ValKw "val" @ 621..624 trailing=[Whitespace " "]
+            Name
+              Identifier "currentState" @ 625..637
+            Colon ":" @ 637..638 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "State" @ 639..644 trailing=[Whitespace " ", BlockComment "/* subject type */", Whitespace " "]
+            Assign "=" @ 664..665 trailing=[Whitespace " "]
+            CallExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "stateMachine" @ 666..678
+                Dot "." @ 678..679
+                Identifier "computeCurrentStateSnapshotForDiagnostics" @ 679..720
+              TypeArgumentListList
+              ValueArgumentList
+                LParen "(" @ 720..721
+                ValueArgumentEntryList
+                RParen ")" @ 721..722
+              LambdaExpressionList
+            RParen ")" @ 722..723 trailing=[Whitespace " "]
+          LBrace "{" @ 724..725
+          WhenEntryList
+            WhenEntry
+              ElseKw "else" @ 728..732 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 733..735 trailing=[Whitespace " "]
+              WhenEntryBody
+                NavigationExpression
+                  NameExpression
+                    Identifier "currentState" @ 736..748
+                  Dot "." @ 748..749
+                  Identifier "code" @ 749..753
+          RBrace "}" @ 754..755 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 757..760 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "delimiterComments" @ 761..778
+      ValueParameterList
+        LParen "(" @ 778..779
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "stateMachine" @ 779..791
+            Colon ":" @ 791..792 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "StateMachine" @ 793..805
+        RParen ")" @ 805..806
+      Colon ":" @ 806..807 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 808..811 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 812..813 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 814..818 trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 819..820 trailing=[Whitespace " ", LineComment "// after open"]
+            ValKw "val" @ 837..840 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Name
+              Identifier "currentState" @ 841..853 trailing=[Whitespace " "]
+            Assign "=" @ 854..855 trailing=[Whitespace " "]
+            CallExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "stateMachine" @ 856..868
+                Dot "." @ 868..869
+                Identifier "computeCurrentStateSnapshotForDiagnostics" @ 869..910
+              TypeArgumentListList
+              ValueArgumentList
+                LParen "(" @ 910..911
+                ValueArgumentEntryList
+                RParen ")" @ 911..912
+              LambdaExpressionList
+            RParen ")" @ 931..932 leading=[Newline "\n", Whitespace "  ", LineComment "// before close", Newline "\n"] trailing=[Whitespace " "]
+          LBrace "{" @ 933..934
+          WhenEntryList
+            WhenEntry
+              ElseKw "else" @ 937..941 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 942..944 trailing=[Whitespace " "]
+              WhenEntryBody
+                NavigationExpression
+                  NameExpression
+                    Identifier "currentState" @ 945..957
+                  Dot "." @ 957..958
+                  Identifier "code" @ 958..962
+          RBrace "}" @ 963..964 leading=[Newline "\n"]
+  Eof "" @ 965..965 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

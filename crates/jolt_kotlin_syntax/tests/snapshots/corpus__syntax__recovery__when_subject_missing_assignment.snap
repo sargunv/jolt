@@ -1,0 +1,70 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun missingAssignment(value: State): Int = when (val current value) {
+  else -> 0
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "missingAssignment" @ 4..21
+      ValueParameterList
+        LParen "(" @ 21..22
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "value" @ 22..27
+            Colon ":" @ 27..28 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "State" @ 29..34
+        RParen ")" @ 34..35
+      Colon ":" @ 35..36 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 37..40 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 41..42 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 43..47 trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 48..49
+            ValKw "val" @ 49..52 trailing=[Whitespace " "]
+            Name
+              Identifier "current" @ 53..60 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "value" @ 61..66
+            RParen ")" @ 66..67 trailing=[Whitespace " "]
+          LBrace "{" @ 68..69
+          WhenEntryList
+            WhenEntry
+              ElseKw "else" @ 72..76 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 77..79 trailing=[Whitespace " "]
+              WhenEntryBody
+                LiteralExpression
+                  IntegerLiteral "0" @ 80..81
+          RBrace "}" @ 82..83 leading=[Newline "\n"]
+  Eof "" @ 84..84 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=61..66 message="expected '=' in when subject"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(61), end: TextSize(66) }) message=expected '=' in when subject

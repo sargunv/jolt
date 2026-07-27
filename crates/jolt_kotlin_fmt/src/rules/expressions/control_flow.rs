@@ -11,8 +11,8 @@ use jolt_kotlin_syntax::{
 
 use crate::helpers::blocks::join_line_boundaries;
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_token, format_trailing_comments_before_line_break,
-    trailing_comments_force_line,
+    LeadingTrivia, TrailingTrivia, format_dangling_comments, format_token,
+    format_trailing_comments_before_line_break, trailing_comments_force_line,
 };
 use crate::helpers::lists::{CommaListItem, physical_comma_list_items};
 use crate::helpers::recovery::{
@@ -580,23 +580,84 @@ fn format_when_subject<'source>(
         doc.concat([token, space])
     });
     let name = format_optional_field(subject.name(), doc, |name, doc| format_name(doc, &name));
-    let assign = format_optional_field(subject.assign(), doc, |assign, doc| {
-        let before = doc.space();
-        let assign = format_plain_token(doc, assign);
-        let after = doc.space();
-        doc.concat([before, assign, after])
-    });
+    let ty = format_type_annotation(doc, subject.colon(), subject.r#type());
+    let has_binding = matches!(subject.val_token(), KotlinSyntaxField::Present(_))
+        || matches!(subject.name(), KotlinSyntaxField::Present(_))
+        || matches!(subject.colon(), KotlinSyntaxField::Present(_))
+        || matches!(subject.r#type(), KotlinSyntaxField::Present(_));
     let expression = format_required_field(subject.expression(), doc, |expression, doc| {
         format_expression(doc, &expression)
     });
-    let open = format_delimiter(doc, open, LeadingTrivia::Preserve, TrailingTrivia::Preserve);
-    let close = format_delimiter(
+    let prefix = doc.concat([val_token, name, ty]);
+    let subject_doc = match resolve_optional_field(subject.assign(), doc) {
+        KotlinFormatField::Present(Some(assign)) => {
+            let before = doc.space();
+            let assign = format_plain_token(doc, assign);
+            // This boundary is a space while the subject fits and one
+            // continuation line when it breaks. If comments already ended the
+            // operator's line, it coalesces with that existing boundary.
+            let line = doc.line_boundary();
+            let expression = doc.concat([line, expression]);
+            let expression = doc.indent(expression);
+            let assignment = doc.concat([prefix, before, assign, expression]);
+            doc.group(assignment)
+        }
+        KotlinFormatField::Present(None) if has_binding => {
+            let line = doc.line_boundary();
+            let expression = doc.concat([line, expression]);
+            let expression = doc.indent(expression);
+            let subject = doc.concat([prefix, expression]);
+            doc.group(subject)
+        }
+        KotlinFormatField::Present(None) => doc.concat([prefix, expression]),
+        KotlinFormatField::Malformed(recovery) => {
+            let line = doc.line_boundary();
+            let expression = doc.concat([line, expression]);
+            let expression = doc.indent(expression);
+            let subject = doc.concat([prefix, recovery, expression]);
+            doc.group(subject)
+        }
+    };
+
+    let open_doc = format_delimiter(
+        doc,
+        open,
+        LeadingTrivia::Preserve,
+        TrailingTrivia::BeforeSoftLine,
+    );
+    let leading_line = doc.soft_line_boundary();
+    let (close_comments, close_has_comments) = close.source().map_or_else(
+        || (Doc::nil(), false),
+        |close| {
+            let comments = close.leading_comments().collect::<Vec<_>>();
+            if comments.is_empty() {
+                (Doc::nil(), false)
+            } else {
+                let boundary = if close.has_leading_blank_line() {
+                    doc.empty_line_boundary()
+                } else {
+                    doc.hard_line_boundary()
+                };
+                let comments = format_dangling_comments(doc, comments);
+                (doc.concat([boundary, comments]), true)
+            }
+        },
+    );
+    let body = doc.concat([leading_line, subject_doc, close_comments]);
+    let body = doc.indent(body);
+    let before_close = if close_has_comments {
+        doc.hard_line_boundary()
+    } else {
+        doc.soft_line_boundary()
+    };
+    let close_doc = format_delimiter(
         doc,
         close,
-        LeadingTrivia::Preserve,
+        LeadingTrivia::SuppressAlreadyHandled,
         TrailingTrivia::Preserve,
     );
-    doc.concat([open, val_token, name, assign, expression, close])
+    let contents = doc.concat([open_doc, body, before_close, close_doc]);
+    doc.group(contents)
 }
 
 fn format_when_entry<'source>(

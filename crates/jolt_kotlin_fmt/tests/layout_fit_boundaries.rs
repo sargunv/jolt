@@ -15,6 +15,7 @@ fn layout_fit_boundary_fixtures_stay_within_width() {
         "properties/layout-fit-boundaries/deep-call-chain.kt",
         "properties/layout-fit-boundaries/long-when-result.kt",
         "properties/layout-fit-boundaries/property-delegate.kt",
+        "properties/layout-fit-boundaries/when-subject.kt",
         "style/layout-fit-boundaries/annotated-lambda-parameters.kt",
         "style/layout-fit-boundaries/call-chain-single-argument.kt",
         "style/layout-fit-boundaries/when-branch-expression.kt",
