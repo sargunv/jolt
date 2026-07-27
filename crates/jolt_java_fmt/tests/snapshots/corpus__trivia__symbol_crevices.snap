@@ -16,8 +16,8 @@ class SymbolCrevices
   > /* JOLT-TRIVIA:between-type-and-name */ values /* JOLT-TRIVIA:between-name-and-semi */;
 
   int /* JOLT-TRIVIA:primitive-type-name */ count /* JOLT-TRIVIA:var-before-equals */ =
-    1 /* JOLT-TRIVIA:var-before-comma */,
-  other /* JOLT-TRIVIA:second-var-before-semi */;
+      1 /* JOLT-TRIVIA:var-before-comma */,
+    other /* JOLT-TRIVIA:second-var-before-semi */;
 
   SymbolCrevices /* JOLT-TRIVIA:ctor-name-before-paren */() {
     this /* JOLT-TRIVIA:this-before-dot */.count =

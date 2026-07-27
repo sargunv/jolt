@@ -52,6 +52,7 @@ style/declarations/long-array-dimensions.java
 style/declarations/long-variable-declarator.java
 style/declarations/member-leading-comments.java
 style/declarations/modifiers-and-annotations.java
+style/declarations/multi-variable-declarator-continuations.java
 style/declarations/parameter-and-component-comments.java
 style/declarations/receiver-parameters.java
 style/declarations/remove-empty-type-body-declarations.java
