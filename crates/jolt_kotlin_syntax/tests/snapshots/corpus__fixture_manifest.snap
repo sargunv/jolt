@@ -3,6 +3,7 @@ source: crates/jolt_kotlin_syntax/tests/corpus.rs
 expression: "fixture_manifest(&root, &paths)"
 ---
 properties/layout-fit-boundaries/deep-call-chain.kt
+properties/layout-fit-boundaries/infix-identifier-chain.kt
 properties/layout-fit-boundaries/long-when-result.kt
 properties/layout-fit-boundaries/property-delegate.kt
 style/comments/comment-shapes.kt
