@@ -201,6 +201,7 @@ syntax/parser/parses-property-accessors.kt
 syntax/parser/parses-property-explicit-backing-field.kt
 syntax/parser/parses-property-extension-receiver.kt
 syntax/parser/parses-property-top-level-val-var.kt
+syntax/parser/parses-repeated-and-non-lambda-labels.kt
 syntax/parser/parses-script-top-level-statements.kt
 syntax/parser/parses-string-multiline-template-expression-contexts.kt
 syntax/parser/parses-string-template-expression-contexts.kt

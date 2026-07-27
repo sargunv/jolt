@@ -785,10 +785,6 @@ impl Parser<'_> {
     fn at_label_start(&mut self, kind: K) -> bool {
         (self.at_identifier_like() || matches!(kind, K::ThisKw | K::SuperKw))
             && self.nth_kind(1) == K::At
-            && matches!(
-                self.nth_kind(2),
-                K::ForKw | K::WhileKw | K::DoKw | K::LBrace | K::IfKw | K::WhenKw | K::TryKw
-            )
     }
 
     fn at_labeled_lambda_start(&mut self, kind: K) -> bool {
