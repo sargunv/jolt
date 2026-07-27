@@ -126,6 +126,8 @@ impl Parser<'_> {
 
     pub(in crate::parser::grammar) fn switch_label_is_rule(&mut self) -> bool {
         let mut index = self.position();
+        let mut conditional_depth = 0usize;
+        let mut angle_depth = 0usize;
         while self.kind_at(index) != JavaSyntaxKind::Eof {
             if let Some(next) = self.skip_balanced_delimiter_at(index) {
                 index = next;
@@ -134,10 +136,14 @@ impl Parser<'_> {
 
             match self.kind_at(index) {
                 JavaSyntaxKind::Arrow => return true,
-                JavaSyntaxKind::Colon
-                | JavaSyntaxKind::RBrace
-                | JavaSyntaxKind::RParen
-                | JavaSyntaxKind::RBracket => {
+                JavaSyntaxKind::Lt => angle_depth += 1,
+                JavaSyntaxKind::Gt if angle_depth > 0 => angle_depth -= 1,
+                JavaSyntaxKind::Question if angle_depth == 0 => conditional_depth += 1,
+                JavaSyntaxKind::Colon if angle_depth == 0 && conditional_depth > 0 => {
+                    conditional_depth -= 1;
+                }
+                JavaSyntaxKind::Colon if angle_depth == 0 => return false,
+                JavaSyntaxKind::RBrace | JavaSyntaxKind::RParen | JavaSyntaxKind::RBracket => {
                     return false;
                 }
                 _ => {}
