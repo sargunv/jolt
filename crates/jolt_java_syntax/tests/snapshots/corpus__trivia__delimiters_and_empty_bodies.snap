@@ -39,9 +39,9 @@ CompilationUnit
             LParen "(" @ 41..42
             RParen ")" @ 42..43 trailing=[Whitespace " "]
             Block
-              LBrace "{" @ 44..45 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:empty-block-open */", Whitespace " "]
+              LBrace "{" @ 44..45 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:empty-block-open */", Whitespace " ", LineComment "// JOLT-TRIVIA:empty-block-line"]
               BlockStatementList
-              RBrace "}" @ 155..156 leading=[LineComment "// JOLT-TRIVIA:empty-block-line", Newline "\n", Whitespace "    ", BlockComment "/* JOLT-TRIVIA:empty-block-close */", Newline "\n", Whitespace "  "]
+              RBrace "}" @ 155..156 leading=[Newline "\n", Whitespace "    ", BlockComment "/* JOLT-TRIVIA:empty-block-close */", Newline "\n", Whitespace "  "]
           MethodDeclaration
             VoidType
               VoidKw "void" @ 160..164 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]

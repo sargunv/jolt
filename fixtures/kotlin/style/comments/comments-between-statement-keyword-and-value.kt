@@ -18,6 +18,11 @@ class CommentsBetweenStatementKeywordAndValue {
     IllegalStateException(someLongFunctionCall(firstArgumentName, secondArgumentName))
   }
 
+  fun throwsAfterSameLineCommentRun(value: Throwable): Nothing {
+    throw /* block */ // line
+    value
+  }
+
   // A newline ends a `return`, a `break`, and a `continue`, so nothing below the
   // keyword's comment is its value: it is a statement of its own and stays at
   // statement indent. Only `throw` continues across the newline.
