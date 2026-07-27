@@ -1,0 +1,156 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class LeadingCommentsBeforeCastAndBlock {
+  long cast(int value) {
+    long result =
+        // JOLT-TRIVIA:cast-line
+        (long) value + 1;
+    return result;
+  }
+
+  void block() {
+    // JOLT-TRIVIA:block-line
+    {
+      int nested;
+    }
+    int following;
+  }
+
+  void blockComment() {
+    /* JOLT-TRIVIA:block-comment */
+    {
+      int nested;
+    }
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "LeadingCommentsBeforeCastAndBlock" @ 6..39 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 40..41
+        ClassBodyMemberList
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              LongKw "long" @ 44..48 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "cast" @ 49..53
+            LParen "(" @ 53..54
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 54..57 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 58..63
+            RParen ")" @ 63..64 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 65..66
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      LongKw "long" @ 71..75 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "result" @ 76..82 trailing=[Whitespace " "]
+                        Assign "=" @ 83..84
+                        VariableInitializer
+                          BinaryExpression
+                            CastExpression
+                              LParen "(" @ 126..127 leading=[Newline "\n", Whitespace "        ", LineComment "// JOLT-TRIVIA:cast-line", Newline "\n", Whitespace "        "]
+                              PrimitiveType
+                                AnnotationList
+                                LongKw "long" @ 127..131
+                              RParen ")" @ 131..132 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "value" @ 133..138 trailing=[Whitespace " "]
+                            Plus "+" @ 139..140 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "1" @ 141..142
+                  Semicolon ";" @ 142..143
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 148..154 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "result" @ 155..161
+                    Semicolon ";" @ 161..162
+              RBrace "}" @ 165..166 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 170..174 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "block" @ 175..180
+            LParen "(" @ 180..181
+            RParen ")" @ 181..182 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 183..184
+              BlockStatementList
+                BlockStatement
+                  Block
+                    LBrace "{" @ 219..220 leading=[Newline "\n", Whitespace "    ", LineComment "// JOLT-TRIVIA:block-line", Newline "\n", Whitespace "    "]
+                    BlockStatementList
+                      BlockStatement
+                        LocalVariableDeclaration
+                          ParameterModifierList
+                          PrimitiveType
+                            AnnotationList
+                            IntKw "int" @ 227..230 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                          VariableDeclaratorList
+                            VariableDeclarator
+                              Identifier "nested" @ 231..237
+                        Semicolon ";" @ 237..238
+                    RBrace "}" @ 243..244 leading=[Newline "\n", Whitespace "    "]
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 249..252 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "following" @ 253..262
+                  Semicolon ";" @ 262..263
+              RBrace "}" @ 266..267 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 271..275 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "blockComment" @ 276..288
+            LParen "(" @ 288..289
+            RParen ")" @ 289..290 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 291..292
+              BlockStatementList
+                BlockStatement
+                  Block
+                    LBrace "{" @ 333..334 leading=[Newline "\n", Whitespace "    ", BlockComment "/* JOLT-TRIVIA:block-comment */", Newline "\n", Whitespace "    "]
+                    BlockStatementList
+                      BlockStatement
+                        LocalVariableDeclaration
+                          ParameterModifierList
+                          PrimitiveType
+                            AnnotationList
+                            IntKw "int" @ 341..344 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                          VariableDeclaratorList
+                            VariableDeclarator
+                              Identifier "nested" @ 345..351
+                        Semicolon ";" @ 351..352
+                    RBrace "}" @ 357..358 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 361..362 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 363..364 leading=[Newline "\n"]
+  Eof "" @ 365..365 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
