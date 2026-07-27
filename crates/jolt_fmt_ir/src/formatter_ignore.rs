@@ -458,7 +458,7 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
             off_comment_start = Some(if line.comment_starts_own_line {
                 leading_comment_start.take().unwrap_or(line.start)
             } else {
-                next_non_whitespace_offset(source, line.next_start)
+                lines.next_non_whitespace_after_line()
             });
         } else if is_formatter_on_marker(comment_text)
             && let Some(start) = off_comment_start.take()
@@ -844,13 +844,6 @@ fn strip_trailing_line_ending(text: &str) -> &str {
         .unwrap_or(text)
 }
 
-fn next_non_whitespace_offset(source: &str, start: usize) -> usize {
-    source[start..]
-        .char_indices()
-        .find_map(|(offset, ch)| (!ch.is_whitespace()).then_some(start + offset))
-        .unwrap_or(source.len())
-}
-
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct SourceLine {
     start: usize,
@@ -875,7 +868,10 @@ struct SourceLineCursor<'source> {
     source: &'source str,
     line: SourceLine,
     line_has_comment: bool,
+    next_non_whitespace_after_line: Option<usize>,
     previous_comment_start: Option<usize>,
+    #[cfg(test)]
+    whitespace_scan_steps: usize,
 }
 
 impl<'source> SourceLineCursor<'source> {
@@ -884,8 +880,32 @@ impl<'source> SourceLineCursor<'source> {
             source,
             line: source_line(source.as_bytes(), 0),
             line_has_comment: false,
+            next_non_whitespace_after_line: None,
             previous_comment_start: None,
+            #[cfg(test)]
+            whitespace_scan_steps: 0,
         }
+    }
+
+    fn next_non_whitespace_after_line(&mut self) -> usize {
+        if let Some(offset) = self.next_non_whitespace_after_line {
+            return offset;
+        }
+
+        let start = self.line.next_start;
+        let mut next = self.source.len();
+        for (offset, character) in self.source[start..].char_indices() {
+            #[cfg(test)]
+            {
+                self.whitespace_scan_steps += 1;
+            }
+            if !character.is_whitespace() {
+                next = start + offset;
+                break;
+            }
+        }
+        self.next_non_whitespace_after_line = Some(next);
+        next
     }
 
     fn comment_line(&mut self, comment_start: usize) -> CommentLine {
@@ -899,6 +919,7 @@ impl<'source> SourceLineCursor<'source> {
         while self.line.next_start < self.source.len() && comment_start >= self.line.next_start {
             self.line = source_line(self.source.as_bytes(), self.line.next_start);
             self.line_has_comment = false;
+            self.next_non_whitespace_after_line = None;
         }
 
         let line = self.line;
@@ -1029,6 +1050,25 @@ mod tests {
                 .comment_line(source.find("/* fourth */").unwrap())
                 .comment_starts_own_line
         );
+    }
+
+    #[test]
+    fn source_line_cursor_caches_next_content_for_same_line_markers() {
+        let marker = "/* @formatter:off */ ";
+        let marker_count = 1_024;
+        let indent = " ".repeat(marker_count);
+        let source = format!("value {}\n{indent}next", marker.repeat(marker_count));
+        let mut lines = SourceLineCursor::new(&source);
+
+        for (start, _) in source.match_indices(marker.trim_end()) {
+            lines.comment_line(start);
+            assert_eq!(
+                lines.next_non_whitespace_after_line(),
+                source.len() - "next".len()
+            );
+        }
+
+        assert_eq!(lines.whitespace_scan_steps, indent.len() + 1);
     }
 
     // Output fixtures cannot distinguish this binary search from a linear scan.
