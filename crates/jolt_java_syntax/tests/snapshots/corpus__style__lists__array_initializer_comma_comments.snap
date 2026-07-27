@@ -1,0 +1,57 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class ArrayInitializerCommaComments {
+  int[] values = {
+    2, /* JOLT-TRIVIA:trailing-two */
+    // JOLT-TRIVIA:leading-three
+    3,
+  };
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "ArrayInitializerCommaComments" @ 6..35 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 36..37
+        ClassBodyMemberList
+          FieldDeclaration
+            ArrayType
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 40..43 leading=[Newline "\n", Whitespace "  "]
+              ArrayDimensions
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 43..44
+                  RBracket "]" @ 44..45 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "values" @ 46..52 trailing=[Whitespace " "]
+                Assign "=" @ 53..54 trailing=[Whitespace " "]
+                VariableInitializer
+                  ArrayInitializer
+                    LBrace "{" @ 55..56
+                    VariableInitializerList
+                      LiteralExpression
+                        IntegerLiteral "2" @ 61..62 leading=[Newline "\n", Whitespace "    "]
+                      Comma "," @ 62..63 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:trailing-two */"]
+                      LiteralExpression
+                        IntegerLiteral "3" @ 132..133 leading=[Newline "\n", Whitespace "    ", LineComment "// JOLT-TRIVIA:leading-three", Newline "\n", Whitespace "    "]
+                      Comma "," @ 133..134
+                    RBrace "}" @ 137..138 leading=[Newline "\n", Whitespace "  "]
+            Semicolon ";" @ 138..139
+        RBrace "}" @ 140..141 leading=[Newline "\n"]
+  Eof "" @ 142..142 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

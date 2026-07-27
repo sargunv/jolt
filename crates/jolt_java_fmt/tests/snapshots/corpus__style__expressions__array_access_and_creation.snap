@@ -37,7 +37,8 @@ class Example {
     return new int[] {
       /* start */
       1, // one
-      2, /* two */ 3 /* three */, // trailing
+      2, /* two */
+      3 /* three */, // trailing
     };
   }
 

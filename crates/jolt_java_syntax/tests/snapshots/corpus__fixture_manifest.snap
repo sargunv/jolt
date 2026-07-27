@@ -88,6 +88,7 @@ style/imports/star-import-sorting.java
 style/layout-fit-boundaries/call-single-argument-ternary.java
 style/layout-fit-boundaries/local-variable-nested-ternary.java
 style/layout-fit-boundaries/statement-boundary.java
+style/lists/array-initializer-comma-comments.java
 style/lists/trailing-comma-line-comment.java
 style/modules/case-sensitive-sorting.java
 style/modules/comment-barrier.java

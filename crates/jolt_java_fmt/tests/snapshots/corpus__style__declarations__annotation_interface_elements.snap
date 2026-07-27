@@ -9,7 +9,8 @@ formatted:
   int[] flags() default {
     /* start */
     1, // one
-    2, /* two */ 3, // trailing
+    2, /* two */
+    3, // trailing
   };
 
   Nested nested() default @Nested(name = "demo", enabled = true);
