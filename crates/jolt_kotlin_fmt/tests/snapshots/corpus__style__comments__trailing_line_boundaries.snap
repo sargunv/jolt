@@ -18,9 +18,7 @@ val lambda = { value: Int -> // arrow
   value
 }
 
-fun chain(values: List<String>) = values.filter {
-  it.isNotEmpty()
-} // step
+fun chain(values: List<String>) = values.filter { it.isNotEmpty() } // step
   .joinToString()
 
 diagnostics:
