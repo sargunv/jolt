@@ -8,7 +8,7 @@ use std::borrow::Cow;
 #[cfg(test)]
 use std::cell::Cell;
 
-use jolt_syntax::{Comment, Language, SourceRangeClaim, SyntaxToken};
+use jolt_syntax::{Comment, CommentKind, Language, SourceRangeClaim, SyntaxToken};
 use jolt_text::{TextRange, TextSize};
 
 use crate::source_fragment::{
@@ -26,6 +26,7 @@ struct FormatterIgnoreRange<'source> {
     separators_with_on: ExceptionalSeparators,
     separators_without_on: ExceptionalSeparators,
     on_marker_is_trailing: bool,
+    following_starts_after_line: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -115,6 +116,7 @@ pub(crate) struct FormatterIgnorePlan<'source> {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FormatterIgnoreItemRange {
     owned: TextRange,
+    source: TextRange,
 }
 
 impl FormatterIgnoreItemRange {
@@ -125,7 +127,17 @@ impl FormatterIgnoreItemRange {
                 first.token_text_range().start(),
                 last.token_text_range().end(),
             ),
+            source: TextRange::new(first.text_range().start(), last.text_range().end()),
         }
+    }
+
+    /// Returns the full syntax-owned source interval, including trivia at the
+    /// outside edges. This is suitable as the container fallback for an
+    /// undelimited list; item matching still uses the trivia-free `owned`
+    /// interval above.
+    #[must_use]
+    pub fn source_spanning(first: Self, last: Self) -> TextRange {
+        TextRange::new(first.source.start(), last.source.end())
     }
 }
 
@@ -168,9 +180,12 @@ pub enum FormatterIgnoreSplice<'a, 'source> {
     /// set, the previous ignore run skipped the items immediately before this
     /// one, so any state a caller carries across items has to be recovered from
     /// the last skipped item rather than from the last formatted one.
+    /// `starts_after_ignore_line` additionally records that this join follows
+    /// an own-line `@formatter:on` marker; an inline marker leaves it false.
     Item {
         index: usize,
         follows_ignore_run: bool,
+        starts_after_ignore_line: bool,
     },
 }
 
@@ -196,10 +211,17 @@ pub fn for_each_formatter_ignore_splice<'a, 'source>(
         if skip_index < runs.len() && runs[skip_index].skips(index) {
             continue;
         }
-        let follows_ignore_run = skip_index > 0 && runs[skip_index - 1].skip_end == index;
+        let previous_run = skip_index
+            .checked_sub(1)
+            .and_then(|previous| runs.get(previous))
+            .filter(|run| run.skip_end == index);
+        let follows_ignore_run = previous_run.is_some();
+        let starts_after_ignore_line =
+            previous_run.is_some_and(|run| run.range.following_starts_after_line);
         visit(FormatterIgnoreSplice::Item {
             index,
             follows_ignore_run,
+            starts_after_ignore_line,
         });
     }
     while ignored_index < runs.len() {
@@ -329,6 +351,73 @@ fn range_containing_start(
     .then_some(index)
 }
 
+#[derive(Clone, Copy)]
+struct FormatterOnBoundary {
+    kind: CommentKind,
+    comment_end: usize,
+    trailing_owner_end: Option<usize>,
+    line_raw_end: usize,
+    next_line_start: usize,
+}
+
+fn formatter_on_owned_end<L: Language>(
+    tokens: &[SyntaxToken<'_, L>],
+    next_token_cursor: &mut usize,
+    boundary: FormatterOnBoundary,
+) -> (usize, usize, bool) {
+    let FormatterOnBoundary {
+        kind,
+        comment_end,
+        trailing_owner_end,
+        line_raw_end,
+        next_line_start,
+    } = boundary;
+    if let Some(owner_end) = trailing_owner_end {
+        // A trailing marker belongs to the token immediately before it. If
+        // that token is skipped, every later trivia piece on the same token
+        // must travel with the marker; no surviving token can emit it. The
+        // full token range gives that exact borrowed boundary without scanning
+        // or guessing from source text.
+        return (owner_end, owner_end, kind == CommentKind::Line);
+    }
+    while tokens
+        .get(*next_token_cursor)
+        .is_some_and(|token| token.token_text_range().start().get() < comment_end)
+    {
+        *next_token_cursor += 1;
+    }
+    let next_token = tokens
+        .get(*next_token_cursor)
+        .map(|token| token.token_text_range().start().get());
+    let owns_rest_of_line =
+        kind == CommentKind::Line || next_token.is_none_or(|start| start >= line_raw_end);
+    if owns_rest_of_line {
+        (line_raw_end, next_line_start, true)
+    } else {
+        (comment_end, comment_end, false)
+    }
+}
+
+fn visit_token_comments<'source, L: Language>(
+    token: &SyntaxToken<'source, L>,
+    visit: &mut impl FnMut(Comment<'source>, &mut Option<usize>, Option<usize>),
+) {
+    let mut leading_comment_start = None;
+    for comment in token.leading_comments() {
+        visit(comment, &mut leading_comment_start, None);
+    }
+
+    let mut trailing_comment_start = None;
+    let trailing_owner_end = token.text_range().end().get();
+    for comment in token.trailing_comments() {
+        visit(
+            comment,
+            &mut trailing_comment_start,
+            Some(trailing_owner_end),
+        );
+    }
+}
+
 pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
     source: &'source str,
     tokens: impl IntoIterator<Item = SyntaxToken<'source, L>>,
@@ -348,88 +437,94 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
     let mut off_comment_start = None;
     let mut ranges = Vec::new();
     let mut lines = SourceLineCursor::new(source);
+    // Comments are visited in source order, so the next-token lookup for each
+    // `on` marker can share one monotonic cursor. Plan construction therefore
+    // remains linear in tokens plus comments.
+    let mut next_token_cursor = 0;
 
-    let mut visit_comment =
-        |comment: Comment<'source>, leading_comment_start: &mut Option<usize>| {
-            let range = comment.text_range();
-            let start_offset = range.start().get();
-            let end_offset = range.end().get();
-            let line = lines.comment_line(start_offset);
-            let end_line = lines.comment_line(end_offset.saturating_sub(1).max(start_offset));
-            let comment_text = comment.text();
-            // A complete pair is first-off-wins: a nested or repeated off
-            // marker never opens a second region, it is only one more comment
-            // between the first pair's markers.
-            if is_formatter_off_marker(comment_text) && off_comment_start.is_none() {
-                off_comment_start = Some(if line.comment_starts_own_line {
-                    leading_comment_start.take().unwrap_or(line.start)
-                } else {
-                    next_non_whitespace_offset(source, line.next_start)
+    let mut visit_comment = |comment: Comment<'source>,
+                             leading_comment_start: &mut Option<usize>,
+                             trailing_owner_end: Option<usize>| {
+        let range = comment.text_range();
+        let start_offset = range.start().get();
+        let end_offset = range.end().get();
+        let line = lines.comment_line(start_offset);
+        let end_line = lines.comment_line(end_offset.saturating_sub(1).max(start_offset));
+        let comment_text = comment.text();
+        // A complete pair is first-off-wins: a nested or repeated off
+        // marker never opens a second region, it is only one more comment
+        // between the first pair's markers.
+        if is_formatter_off_marker(comment_text) && off_comment_start.is_none() {
+            off_comment_start = Some(if line.comment_starts_own_line {
+                leading_comment_start.take().unwrap_or(line.start)
+            } else {
+                lines.next_non_whitespace_after_line()
+            });
+        } else if is_formatter_on_marker(comment_text)
+            && let Some(start) = off_comment_start.take()
+        {
+            // Every comment that leads the on marker's token also leads
+            // the next represented item, which emits those comments
+            // itself. The run has to stop before the first of them, the
+            // same way it already stops before the on marker.
+            let on_marker_is_trailing = !line.comment_starts_own_line;
+            let (with_on_text_end, with_on_claim_end, owned_suffix_crosses_line) =
+                formatter_on_owned_end(
+                    &tokens,
+                    &mut next_token_cursor,
+                    FormatterOnBoundary {
+                        kind: comment.kind(),
+                        comment_end: end_offset,
+                        trailing_owner_end,
+                        line_raw_end: end_line.raw_end,
+                        next_line_start: end_line.next_start,
+                    },
+                );
+            let end = if on_marker_is_trailing {
+                start_offset
+            } else {
+                leading_comment_start
+                    .take()
+                    .filter(|&given_away| start < given_away)
+                    .unwrap_or(line.start)
+            };
+            if start < end {
+                ranges.push(FormatterIgnoreRange {
+                    raw_text: strip_trailing_line_ending(&source[start..end]),
+                    raw_text_with_on: strip_trailing_line_ending(&source[start..with_on_text_end]),
+                    interior: TextRange::new(TextSize::new(start), TextSize::new(end)),
+                    // The claim runs through the line ending the region's
+                    // last line, even though the emitted text does not:
+                    // a line comment's terminating newline belongs to that
+                    // comment, and the region owns every comment it covers.
+                    claim_with_on: claim_anchor.source_range_claim(
+                        TextRange::new(TextSize::new(start), TextSize::new(with_on_claim_end)),
+                        true,
+                    ),
+                    claim_without_on: claim_anchor.source_range_claim(
+                        TextRange::new(TextSize::new(start), TextSize::new(end)),
+                        false,
+                    ),
+                    separators_with_on: ExceptionalSeparators {
+                        before: crate::ExceptionalSeparator::None,
+                        after: crate::ExceptionalSeparator::None,
+                    },
+                    separators_without_on: ExceptionalSeparators {
+                        before: crate::ExceptionalSeparator::None,
+                        after: crate::ExceptionalSeparator::None,
+                    },
+                    on_marker_is_trailing,
+                    following_starts_after_line: !on_marker_is_trailing
+                        || owned_suffix_crosses_line,
                 });
-            } else if is_formatter_on_marker(comment_text)
-                && let Some(start) = off_comment_start.take()
-            {
-                // Every comment that leads the on marker's token also leads
-                // the next represented item, which emits those comments
-                // itself. The run has to stop before the first of them, the
-                // same way it already stops before the on marker.
-                let on_marker_is_trailing = !line.comment_starts_own_line;
-                let end = if on_marker_is_trailing {
-                    start_offset
-                } else {
-                    leading_comment_start
-                        .take()
-                        .filter(|&given_away| start < given_away)
-                        .unwrap_or(line.start)
-                };
-                if start < end {
-                    ranges.push(FormatterIgnoreRange {
-                        raw_text: strip_trailing_line_ending(&source[start..end]),
-                        raw_text_with_on: strip_trailing_line_ending(
-                            &source[start..end_line.raw_end],
-                        ),
-                        interior: TextRange::new(TextSize::new(start), TextSize::new(end)),
-                        // The claim runs through the line ending the region's
-                        // last line, even though the emitted text does not:
-                        // a line comment's terminating newline belongs to that
-                        // comment, and the region owns every comment it covers.
-                        claim_with_on: claim_anchor.source_range_claim(
-                            TextRange::new(
-                                TextSize::new(start),
-                                TextSize::new(end_line.next_start),
-                            ),
-                            true,
-                        ),
-                        claim_without_on: claim_anchor.source_range_claim(
-                            TextRange::new(TextSize::new(start), TextSize::new(end)),
-                            false,
-                        ),
-                        separators_with_on: ExceptionalSeparators {
-                            before: crate::ExceptionalSeparator::None,
-                            after: crate::ExceptionalSeparator::None,
-                        },
-                        separators_without_on: ExceptionalSeparators {
-                            before: crate::ExceptionalSeparator::None,
-                            after: crate::ExceptionalSeparator::None,
-                        },
-                        on_marker_is_trailing,
-                    });
-                }
-            } else if leading_comment_start.is_none() && line.comment_starts_own_line {
-                *leading_comment_start = Some(line.start);
             }
-        };
+        } else if leading_comment_start.is_none() && line.comment_starts_own_line {
+            *leading_comment_start = Some(line.start);
+        }
+    };
 
     for token in &tokens {
-        let mut leading_comment_start = None;
-        for comment in token.leading_comments() {
-            visit_comment(comment, &mut leading_comment_start);
-        }
-
-        let mut trailing_comment_start = None;
-        for comment in token.trailing_comments() {
-            visit_comment(comment, &mut trailing_comment_start);
-        }
+        visit_token_comments(token, &mut visit_comment);
     }
 
     populate_separators(&mut ranges, &tokens, safety);
@@ -749,13 +844,6 @@ fn strip_trailing_line_ending(text: &str) -> &str {
         .unwrap_or(text)
 }
 
-fn next_non_whitespace_offset(source: &str, start: usize) -> usize {
-    source[start..]
-        .char_indices()
-        .find_map(|(offset, ch)| (!ch.is_whitespace()).then_some(start + offset))
-        .unwrap_or(source.len())
-}
-
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct SourceLine {
     start: usize,
@@ -780,7 +868,10 @@ struct SourceLineCursor<'source> {
     source: &'source str,
     line: SourceLine,
     line_has_comment: bool,
+    next_non_whitespace_after_line: Option<usize>,
     previous_comment_start: Option<usize>,
+    #[cfg(test)]
+    whitespace_scan_steps: usize,
 }
 
 impl<'source> SourceLineCursor<'source> {
@@ -789,8 +880,32 @@ impl<'source> SourceLineCursor<'source> {
             source,
             line: source_line(source.as_bytes(), 0),
             line_has_comment: false,
+            next_non_whitespace_after_line: None,
             previous_comment_start: None,
+            #[cfg(test)]
+            whitespace_scan_steps: 0,
         }
+    }
+
+    fn next_non_whitespace_after_line(&mut self) -> usize {
+        if let Some(offset) = self.next_non_whitespace_after_line {
+            return offset;
+        }
+
+        let start = self.line.next_start;
+        let mut next = self.source.len();
+        for (offset, character) in self.source[start..].char_indices() {
+            #[cfg(test)]
+            {
+                self.whitespace_scan_steps += 1;
+            }
+            if !character.is_whitespace() {
+                next = start + offset;
+                break;
+            }
+        }
+        self.next_non_whitespace_after_line = Some(next);
+        next
     }
 
     fn comment_line(&mut self, comment_start: usize) -> CommentLine {
@@ -804,6 +919,7 @@ impl<'source> SourceLineCursor<'source> {
         while self.line.next_start < self.source.len() && comment_start >= self.line.next_start {
             self.line = source_line(self.source.as_bytes(), self.line.next_start);
             self.line_has_comment = false;
+            self.next_non_whitespace_after_line = None;
         }
 
         let line = self.line;
@@ -934,6 +1050,25 @@ mod tests {
                 .comment_line(source.find("/* fourth */").unwrap())
                 .comment_starts_own_line
         );
+    }
+
+    #[test]
+    fn source_line_cursor_caches_next_content_for_same_line_markers() {
+        let marker = "/* @formatter:off */ ";
+        let marker_count = 1_024;
+        let indent = " ".repeat(marker_count);
+        let source = format!("value {}\n{indent}next", marker.repeat(marker_count));
+        let mut lines = SourceLineCursor::new(&source);
+
+        for (start, _) in source.match_indices(marker.trim_end()) {
+            lines.comment_line(start);
+            assert_eq!(
+                lines.next_non_whitespace_after_line(),
+                source.len() - "next".len()
+            );
+        }
+
+        assert_eq!(lines.whitespace_scan_steps, indent.len() + 1);
     }
 
     // Output fixtures cannot distinguish this binary search from a linear scan.

@@ -31,7 +31,17 @@ pub(super) fn format_class_body<'source>(
     let open = resolve_required_delimiter(body.open_brace(), doc);
     let close = resolve_required_delimiter(body.close_brace(), doc);
     let contents = format_class_body_contents(doc, &body, open.source(), close.source());
-    let space = doc.space();
+    let space = if open
+        .source()
+        .is_some_and(|open| open.has_leading_line_break() && !open.leading_comments().is_empty())
+    {
+        // Leading comments on a body delimiter are their own boundary. In
+        // particular, an `@formatter:on` marker closing a delegation-list run
+        // must not be joined to the last raw line by this enclosing space.
+        doc.hard_line_boundary()
+    } else {
+        doc.space()
+    };
     let body = format_class_braced_body(doc, open, close, contents);
     doc.concat([space, body])
 }
@@ -254,6 +264,7 @@ fn class_body_sections_with_ignored<'source>(
         FormatterIgnoreSplice::Item {
             index,
             follows_ignore_run,
+            ..
         } => {
             // Skipped parts still advance the trailing-comment state that the
             // next physical part reads. When this item immediately follows an

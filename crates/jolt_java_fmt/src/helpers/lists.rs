@@ -23,7 +23,7 @@ pub(crate) fn attach_comma_separator<'source>(
     items: &mut Vec<CommaListItem<'source>>,
     separator: JavaSyntaxToken<'source>,
 ) {
-    jolt_fmt_ir::attach_comma_separator(items, separator, |separator| {
+    jolt_fmt_ir::attach_comma_separator(items, separator, false, |separator| {
         let separator = format_token(
             doc,
             &separator,

@@ -1,0 +1,84 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val partlyAlignedNumbers = listOf(
+  leadingValue,
+  // @formatter:off
+  1,   2,   3,
+  10,  20,  30,
+  // @formatter:on
+  trailingValue,
+)
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      Name
+        Identifier "partlyAlignedNumbers" @ 4..24 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 25..26 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "listOf" @ 27..33
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 33..34
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                NameExpression
+                  Identifier "leadingValue" @ 37..49 leading=[Newline "\n", Whitespace "  "]
+              Comma "," @ 49..50
+              ValueArgument
+                ValueArgumentPrefixList
+                LiteralExpression
+                  IntegerLiteral "1" @ 73..74 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "]
+              Comma "," @ 74..75 trailing=[Whitespace "   "]
+              ValueArgument
+                ValueArgumentPrefixList
+                LiteralExpression
+                  IntegerLiteral "2" @ 78..79
+              Comma "," @ 79..80 trailing=[Whitespace "   "]
+              ValueArgument
+                ValueArgumentPrefixList
+                LiteralExpression
+                  IntegerLiteral "3" @ 83..84
+              Comma "," @ 84..85
+              ValueArgument
+                ValueArgumentPrefixList
+                LiteralExpression
+                  IntegerLiteral "10" @ 88..90 leading=[Newline "\n", Whitespace "  "]
+              Comma "," @ 90..91 trailing=[Whitespace "  "]
+              ValueArgument
+                ValueArgumentPrefixList
+                LiteralExpression
+                  IntegerLiteral "20" @ 93..95
+              Comma "," @ 95..96 trailing=[Whitespace "  "]
+              ValueArgument
+                ValueArgumentPrefixList
+                LiteralExpression
+                  IntegerLiteral "30" @ 98..100
+              Comma "," @ 100..101
+              ValueArgument
+                ValueArgumentPrefixList
+                NameExpression
+                  Identifier "trailingValue" @ 123..136 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "]
+              Comma "," @ 136..137
+            RParen ")" @ 138..139 leading=[Newline "\n"]
+          LambdaExpressionList
+      PropertyBodyMemberList
+  Eof "" @ 140..140 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

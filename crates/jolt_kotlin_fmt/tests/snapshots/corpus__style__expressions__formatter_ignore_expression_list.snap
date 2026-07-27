@@ -1,0 +1,14 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+val alignedNumbers = listOf(
+  // @formatter:off
+  1,   2,   3,
+  10,  20,  30,
+  // @formatter:on
+)
+
+diagnostics:
+(none)
