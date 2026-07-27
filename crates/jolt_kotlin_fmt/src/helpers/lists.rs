@@ -292,15 +292,25 @@ fn splice_formatter_ignore_items<'source>(
         }
         FormatterIgnoreSplice::Item {
             index,
+            follows_ignore_run,
             starts_after_ignore_line,
-            ..
         } => {
             if let Some(item) = items[index].take() {
-                spliced.push(if starts_after_ignore_line {
-                    item.with_line_before()
-                } else {
-                    item
-                });
+                // A physical separator may own only the newline after a
+                // trailing line comment that the raw run claimed. Read that
+                // syntax trivia only at this proven ignore-run join; ordinary
+                // source commas never force their surrounding group.
+                let separator_starts_after_source_line = follows_ignore_run
+                    && item
+                        .staged_separator()
+                        .is_some_and(|separator| separator.has_leading_line_break());
+                spliced.push(
+                    if starts_after_ignore_line || separator_starts_after_source_line {
+                        item.with_line_before()
+                    } else {
+                        item
+                    },
+                );
             }
         }
     });

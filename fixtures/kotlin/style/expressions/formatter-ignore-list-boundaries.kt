@@ -10,6 +10,17 @@ val inlineMarkerBeforeComma = listOf(
   1   +   2 /* @formatter:on */, trailingValue,
 )
 
+val inlineMarkerBeforeLaterBlockComment = listOf(
+  // @formatter:off
+  1   +   2 /* @formatter:on */ /* later */, trailingValue,
+)
+
+val inlineMarkerBeforeLaterLineComment = listOf(
+  // @formatter:off
+  1   +   2 /* @formatter:on */ // later
+  , trailingValue,
+)
+
 val adjacentIgnoredRuns = listOf(
   // @formatter:off
   first   +   value
