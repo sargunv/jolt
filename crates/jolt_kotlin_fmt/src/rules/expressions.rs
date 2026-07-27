@@ -15,6 +15,7 @@ mod references;
 
 use calls::{format_collection_literal_expression, format_suffix_expression};
 pub(crate) use calls::{format_value_argument, format_value_argument_list};
+pub(crate) use control_flow::format_throw_expression_with_suffix;
 use control_flow::{
     format_do_while_statement, format_for_statement, format_if_expression, format_jump_expression,
     format_labeled_expression, format_throw_expression, format_try_expression,

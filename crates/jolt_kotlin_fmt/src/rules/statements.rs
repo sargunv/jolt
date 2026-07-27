@@ -1,7 +1,7 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
-    BlockItem, Declaration, ExpressionStatement, Statement, StatementContentSyntax,
-    StatementContentValue, StatementSyntax,
+    BlockItem, Declaration, Expression, ExpressionStatement, KotlinSyntaxField, Statement,
+    StatementContentSyntax, StatementContentValue, StatementSyntax, ThrowExpression,
 };
 
 mod blocks;
@@ -122,13 +122,49 @@ fn format_statement_node<'source>(
     statement: &Statement<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let statement_doc = format_required_field(statement.statement(), doc, |inner, doc| {
-        format_statement_role(doc, inner, leading)
-    });
     let tail = format_required_field(statement.tail(), doc, |tail, doc| {
         format_terminator_list(doc, &tail)
     });
-    doc.concat([statement_doc, tail])
+    format_required_field(statement.statement(), doc, |inner, doc| {
+        format_statement_role_with_tail(doc, inner, leading, tail)
+    })
+}
+
+fn format_statement_role_with_tail<'source>(
+    doc: &mut DocBuilder<'source>,
+    inner: StatementContentValue<'source>,
+    leading: LeadingTrivia,
+    tail: Doc<'source>,
+) -> Doc<'source> {
+    if let Some(expression) = statement_throw_expression(inner) {
+        return crate::rules::expressions::format_throw_expression_with_suffix(
+            doc,
+            &expression,
+            leading,
+            tail,
+        );
+    }
+    let statement = format_statement_role(doc, inner, leading);
+    doc.concat([statement, tail])
+}
+
+fn statement_throw_expression(inner: StatementContentValue<'_>) -> Option<ThrowExpression<'_>> {
+    let expression = match inner.classify().ok()? {
+        StatementContentSyntax::Expression(expression) => expression,
+        StatementContentSyntax::Statement(StatementSyntax::ExpressionStatement(statement)) => {
+            match statement.expression() {
+                KotlinSyntaxField::Present(expression) => expression,
+                KotlinSyntaxField::Missing(_) | KotlinSyntaxField::Malformed(_) => return None,
+            }
+        }
+        StatementContentSyntax::Statement(_) | StatementContentSyntax::Declaration(_) => {
+            return None;
+        }
+    };
+    match expression {
+        Expression::ThrowExpression(expression) => Some(expression),
+        _ => None,
+    }
 }
 
 fn format_statement_role<'source>(

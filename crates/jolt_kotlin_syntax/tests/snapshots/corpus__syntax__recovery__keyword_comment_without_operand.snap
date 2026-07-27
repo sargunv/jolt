@@ -1,0 +1,75 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun throwsNothing() {
+  throw // a comment ends the line and no operand follows it
+  ;
+}
+
+fun throwsRecoveredOperand() {
+  throw // a comment ends the line and the operand recovers a token
+  )
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "throwsNothing" @ 4..17
+      ValueParameterList
+        LParen "(" @ 17..18
+        ValueParameterSeparatedList
+        RParen ")" @ 18..19 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 20..21
+          BlockItemList
+            Statement
+              ExpressionStatement
+                ThrowExpression
+                  ThrowKw "throw" @ 24..29 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", LineComment "// a comment ends the line and no operand follows it"]
+                  BogusExpression
+              TerminatorList
+                Semicolon ";" @ 85..86 leading=[Newline "\n", Whitespace "  "]
+          RBrace "}" @ 87..88 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 90..93 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "throwsRecoveredOperand" @ 94..116
+      ValueParameterList
+        LParen "(" @ 116..117
+        ValueParameterSeparatedList
+        RParen ")" @ 117..118 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 119..120
+          BlockItemList
+            Statement
+              ExpressionStatement
+                ThrowExpression
+                  ThrowKw "throw" @ 123..128 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", LineComment "// a comment ends the line and the operand recovers a token"]
+                  BogusExpression
+                    RParen ")" @ 191..192 leading=[Newline "\n", Whitespace "  "]
+              TerminatorList
+          RBrace "}" @ 193..194 leading=[Newline "\n"]
+  Eof "" @ 195..195 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=85..86 message="expected expression after 'throw'"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=191..192 message="expected expression"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(85), end: TextSize(86) }) message=expected expression after 'throw'
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(191), end: TextSize(192) }) message=expected expression

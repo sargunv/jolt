@@ -243,6 +243,7 @@ syntax/recovery/explicit-backing-field.kt
 syntax/recovery/expressions.kt
 syntax/recovery/for-partial-header.kt
 syntax/recovery/import-suffixes.kt
+syntax/recovery/keyword-comment-without-operand.kt
 syntax/recovery/lambda-branch.kt
 syntax/recovery/lambda-missing-close.kt
 syntax/recovery/lambda-parameter-list.kt
