@@ -1,0 +1,246 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class InstanceofPatternExpressionBoundaries {
+  int conditional(Object value) {
+    return value instanceof String text ? text.length() : 0;
+  }
+
+  boolean[] initializer(Object value) {
+    return new boolean[] {value instanceof String text};
+  }
+
+  Object guardedSwitch(Object value, Object candidate) {
+    return switch (value) {
+      case Integer number when candidate instanceof String text -> text;
+      default -> null;
+    };
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "InstanceofPatternExpressionBoundaries" @ 6..43 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 44..45
+        ClassBodyMemberList
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 48..51 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "conditional" @ 52..63
+            LParen "(" @ 63..64
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 64..70 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 71..76
+            RParen ")" @ 76..77 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 78..79
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 84..90 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ConditionalExpression
+                      InstanceofExpression
+                        NameExpression
+                          Identifier "value" @ 91..96 trailing=[Whitespace " "]
+                        InstanceofKw "instanceof" @ 97..107 trailing=[Whitespace " "]
+                        TypePattern
+                          ParameterModifierList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 108..114 trailing=[Whitespace " "]
+                          Identifier "text" @ 115..119 trailing=[Whitespace " "]
+                      Question "?" @ 120..121 trailing=[Whitespace " "]
+                      MethodInvocationExpression
+                        QualifiedMethodInvocation
+                          NameExpression
+                            Identifier "text" @ 122..126
+                          Dot "." @ 126..127
+                          Identifier "length" @ 127..133
+                          ArgumentList
+                            LParen "(" @ 133..134
+                            ExpressionList
+                            RParen ")" @ 134..135 trailing=[Whitespace " "]
+                      Colon ":" @ 136..137 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "0" @ 138..139
+                    Semicolon ";" @ 139..140
+              RBrace "}" @ 143..144 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            ArrayType
+              PrimitiveType
+                AnnotationList
+                BooleanKw "boolean" @ 148..155 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+              ArrayDimensions
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 155..156
+                  RBracket "]" @ 156..157 trailing=[Whitespace " "]
+            Identifier "initializer" @ 158..169
+            LParen "(" @ 169..170
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 170..176 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 177..182
+            RParen ")" @ 182..183 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 184..185
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 190..196 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    ArrayCreationExpression
+                      NewKw "new" @ 197..200 trailing=[Whitespace " "]
+                      ArrayType
+                        PrimitiveType
+                          AnnotationList
+                          BooleanKw "boolean" @ 201..208
+                        ArrayDimensions
+                          ArrayDimension
+                            AnnotationList
+                            LBracket "[" @ 208..209
+                            RBracket "]" @ 209..210 trailing=[Whitespace " "]
+                      DimExpressionList
+                      ArrayInitializer
+                        LBrace "{" @ 211..212
+                        VariableInitializerList
+                          InstanceofExpression
+                            NameExpression
+                              Identifier "value" @ 212..217 trailing=[Whitespace " "]
+                            InstanceofKw "instanceof" @ 218..228 trailing=[Whitespace " "]
+                            TypePattern
+                              ParameterModifierList
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "String" @ 229..235 trailing=[Whitespace " "]
+                              Identifier "text" @ 236..240
+                        RBrace "}" @ 240..241
+                    Semicolon ";" @ 241..242
+              RBrace "}" @ 245..246 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "Object" @ 250..256 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "guardedSwitch" @ 257..270
+            LParen "(" @ 270..271
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 271..277 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 278..283
+              Comma "," @ 283..284 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Object" @ 285..291 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "candidate" @ 292..301
+            RParen ")" @ 301..302 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 303..304
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 309..315 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    SwitchExpression
+                      SwitchKw "switch" @ 316..322 trailing=[Whitespace " "]
+                      LParen "(" @ 323..324
+                      NameExpression
+                        Identifier "value" @ 324..329
+                      RParen ")" @ 329..330 trailing=[Whitespace " "]
+                      SwitchBlock
+                        LBrace "{" @ 331..332
+                        SwitchEntryList
+                          SwitchRule
+                            SwitchLabel
+                              CaseKw "case" @ 339..343 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                                CasePattern
+                                  TypePattern
+                                    ParameterModifierList
+                                    ClassType
+                                      ClassTypeSegmentList
+                                        ClassTypeSegmentNode
+                                          AnnotationList
+                                          Name
+                                            Identifier "Integer" @ 344..351 trailing=[Whitespace " "]
+                                    Identifier "number" @ 352..358 trailing=[Whitespace " "]
+                              Guard
+                                Identifier "when" @ 359..363 trailing=[Whitespace " "]
+                                InstanceofExpression
+                                  NameExpression
+                                    Identifier "candidate" @ 364..373 trailing=[Whitespace " "]
+                                  InstanceofKw "instanceof" @ 374..384 trailing=[Whitespace " "]
+                                  TypePattern
+                                    ParameterModifierList
+                                    ClassType
+                                      ClassTypeSegmentList
+                                        ClassTypeSegmentNode
+                                          AnnotationList
+                                          Name
+                                            Identifier "String" @ 385..391 trailing=[Whitespace " "]
+                                    Identifier "text" @ 392..396 trailing=[Whitespace " "]
+                            Arrow "->" @ 397..399 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "text" @ 400..404
+                            Semicolon ";" @ 404..405
+                          SwitchRule
+                            SwitchLabel
+                              DefaultKw "default" @ 412..419 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                            Arrow "->" @ 420..422 trailing=[Whitespace " "]
+                            LiteralExpression
+                              NullLiteral "null" @ 423..427
+                            Semicolon ";" @ 427..428
+                        RBrace "}" @ 433..434 leading=[Newline "\n", Whitespace "    "]
+                    Semicolon ";" @ 434..435
+              RBrace "}" @ 438..439 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 440..441 leading=[Newline "\n"]
+  Eof "" @ 442..442 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -284,8 +284,11 @@ impl Parser<'_> {
                             JavaSyntaxKind::Semicolon,
                             JavaSyntaxKind::RParen,
                             JavaSyntaxKind::RBracket,
+                            JavaSyntaxKind::RBrace,
                             JavaSyntaxKind::Comma,
                             JavaSyntaxKind::Colon,
+                            JavaSyntaxKind::Question,
+                            JavaSyntaxKind::Arrow,
                         ],
                     );
                 } else {

@@ -315,6 +315,7 @@ syntax/parser/parses-floating-point-type.java
 syntax/parser/parses-for-statement-expression-lists.java
 syntax/parser/parses-generic-array-constructor-references.java
 syntax/parser/parses-guarded-switch-rule-lambda-results.java
+syntax/parser/parses-instanceof-pattern-expression-boundaries.java
 syntax/parser/parses-instanceof-reference-type-and-pattern-forms.java
 syntax/parser/parses-interface-and-annotation-interface-declarations.java
 syntax/parser/parses-intersection-cast-expression.java

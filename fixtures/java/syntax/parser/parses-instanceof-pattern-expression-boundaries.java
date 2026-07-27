@@ -1,0 +1,16 @@
+class InstanceofPatternExpressionBoundaries {
+  int conditional(Object value) {
+    return value instanceof String text ? text.length() : 0;
+  }
+
+  boolean[] initializer(Object value) {
+    return new boolean[] {value instanceof String text};
+  }
+
+  Object guardedSwitch(Object value, Object candidate) {
+    return switch (value) {
+      case Integer number when candidate instanceof String text -> text;
+      default -> null;
+    };
+  }
+}
