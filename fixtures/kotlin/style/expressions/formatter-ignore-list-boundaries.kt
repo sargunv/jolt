@@ -101,3 +101,18 @@ class IgnoredDelegation :
   // @formatter:on
 {
 }
+
+val markerBeforeCommentedComma = listOf(
+  // @formatter:off
+  1   +   2
+  // @formatter:on
+  , // separator comment
+  trailingValue,
+)
+
+val markerBeforeTrailingComma = listOf(
+  // @formatter:off
+  1   +   2
+  // @formatter:on
+  ,
+)
