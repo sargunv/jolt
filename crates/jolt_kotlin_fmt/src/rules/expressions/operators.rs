@@ -10,18 +10,22 @@ use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, comment_forces_lin
 use crate::helpers::recovery::format_required_field;
 use crate::rules::types::format_type_reference;
 
-use super::{format_expression, format_expression_with_leading};
+use super::{
+    ExpressionContext, format_expression, format_expression_with_leading,
+    format_expression_with_leading_and_context,
+};
 
 pub(super) fn format_parenthesized_expression<'source>(
     doc: &mut DocBuilder<'source>,
     expression: &ParenthesizedExpression<'source>,
     leading: LeadingTrivia,
+    context: ExpressionContext,
 ) -> Doc<'source> {
     let open = format_required_field(expression.open_paren(), doc, |token, doc| {
         format_token(doc, &token, leading, TrailingTrivia::Preserve)
     });
     let inner = format_required_field(expression.expression(), doc, |inner, doc| {
-        format_expression(doc, &inner)
+        format_expression_with_leading_and_context(doc, &inner, LeadingTrivia::Preserve, context)
     });
     let close = format_required_field(expression.close_paren(), doc, |token, doc| {
         format_token(

@@ -18,6 +18,12 @@ fun blockChoice(flag: Boolean) = if (flag) {
 
 fun nestedChoice(first: Boolean, second: Boolean) = if (first) firstValue() else if (second) secondValue() else thirdValue()
 
+class Choice {
+  fun chooseValue(flag: Boolean) = if (flag) computeSomethingLongForTheTrueBranch() else computeSomethingEntirelyDifferentForTheFalseBranch()
+}
+
+fun failChoice(flag: Boolean): Nothing = throw if (flag) buildSomethingLongForTheTrueFailure() else buildSomethingEntirelyDifferentForTheFalseFailure()
+
 syntax:
 syntax:
 KotlinFile
@@ -310,7 +316,124 @@ KotlinFile
                 ValueArgumentEntryList
                 RParen ")" @ 568..569
               LambdaExpressionList
-  Eof "" @ 570..570 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 571..576 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "Choice" @ 577..583 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 584..585
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 588..591 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "chooseValue" @ 592..603
+              ValueParameterList
+                LParen "(" @ 603..604
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierList
+                    Name
+                      Identifier "flag" @ 604..608
+                    Colon ":" @ 608..609 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "Boolean" @ 610..617
+                RParen ")" @ 617..618 trailing=[Whitespace " "]
+              ExpressionBody
+                Assign "=" @ 619..620 trailing=[Whitespace " "]
+                IfExpression
+                  IfKw "if" @ 621..623 trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 624..625
+                    NameExpression
+                      Identifier "flag" @ 625..629
+                    RParen ")" @ 629..630 trailing=[Whitespace " "]
+                  CallExpression
+                    NameExpression
+                      Identifier "computeSomethingLongForTheTrueBranch" @ 631..667
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 667..668
+                      ValueArgumentEntryList
+                      RParen ")" @ 668..669 trailing=[Whitespace " "]
+                    LambdaExpressionList
+                  ElseKw "else" @ 670..674 trailing=[Whitespace " "]
+                  CallExpression
+                    NameExpression
+                      Identifier "computeSomethingEntirelyDifferentForTheFalseBranch" @ 675..725
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 725..726
+                      ValueArgumentEntryList
+                      RParen ")" @ 726..727
+                    LambdaExpressionList
+        RBrace "}" @ 728..729 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 731..734 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "failChoice" @ 735..745
+      ValueParameterList
+        LParen "(" @ 745..746
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "flag" @ 746..750
+            Colon ":" @ 750..751 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Boolean" @ 752..759
+        RParen ")" @ 759..760
+      Colon ":" @ 760..761 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Nothing" @ 762..769 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 770..771 trailing=[Whitespace " "]
+        ThrowExpression
+          ThrowKw "throw" @ 772..777 trailing=[Whitespace " "]
+          IfExpression
+            IfKw "if" @ 778..780 trailing=[Whitespace " "]
+            ParenthesizedExpression
+              LParen "(" @ 781..782
+              NameExpression
+                Identifier "flag" @ 782..786
+              RParen ")" @ 786..787 trailing=[Whitespace " "]
+            CallExpression
+              NameExpression
+                Identifier "buildSomethingLongForTheTrueFailure" @ 788..823
+              TypeArgumentListList
+              ValueArgumentList
+                LParen "(" @ 823..824
+                ValueArgumentEntryList
+                RParen ")" @ 824..825 trailing=[Whitespace " "]
+              LambdaExpressionList
+            ElseKw "else" @ 826..830 trailing=[Whitespace " "]
+            CallExpression
+              NameExpression
+                Identifier "buildSomethingEntirelyDifferentForTheFalseFailure" @ 831..880
+              TypeArgumentListList
+              ValueArgumentList
+                LParen "(" @ 880..881
+                ValueArgumentEntryList
+                RParen ")" @ 881..882
+              LambdaExpressionList
+  Eof "" @ 883..883 leading=[Newline "\n"]
 
 diagnostics:
   (none)
