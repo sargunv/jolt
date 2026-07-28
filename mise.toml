@@ -10,7 +10,7 @@ lockfile = true
 "aqua:jdx/hk" = "1.48.0"
 "core:java" = "zulu-25.34.17.0"
 "core:python" = "3.14.5"
-"core:rust" = { version = "1.96.0", profile = "minimal", components = "rustfmt,clippy,llvm-tools-preview", targets = "wasm32-unknown-unknown" }
+"core:rust" = { version = "1.96.0", profile = "minimal", components = "rustfmt,clippy,llvm-tools", targets = "wasm32-unknown-unknown" }
 "aqua:google/google-java-format" = "1.35.0"
 "aqua:pnpm/pnpm" = "11.9.0"
 "core:node" = "24.18.0"

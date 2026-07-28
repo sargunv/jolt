@@ -333,6 +333,6 @@ version = "1.96.0"
 backend = "core:rust"
 
 [tools.rust.options]
-components = "clippy,llvm-tools-preview,rustfmt"
+components = "clippy,llvm-tools,rustfmt"
 profile = "minimal"
 targets = "wasm32-unknown-unknown"
