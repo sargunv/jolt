@@ -107,6 +107,21 @@ class IgnoredDelegation :
 {
 }
 
+val markerBeforeCommentedComma = listOf(
+  // @formatter:off
+  1   +   2
+  // @formatter:on
+  , // separator comment
+  trailingValue,
+)
+
+val markerBeforeTrailingComma = listOf(
+  // @formatter:off
+  1   +   2
+  // @formatter:on
+  ,
+)
+
 syntax:
 syntax:
 KotlinFile
@@ -786,7 +801,66 @@ KotlinFile
         LBrace "{" @ 2005..2006 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"]
         ClassMemberList
         RBrace "}" @ 2007..2008 leading=[Newline "\n"]
-  Eof "" @ 2009..2009 leading=[Newline "\n"]
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 2010..2013 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "markerBeforeCommentedComma" @ 2014..2040 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 2041..2042 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "listOf" @ 2043..2049
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 2049..2050
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                BinaryExpression
+                  LiteralExpression
+                    IntegerLiteral "1" @ 2073..2074 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+                  Plus "+" @ 2077..2078 trailing=[Whitespace "   "]
+                  LiteralExpression
+                    IntegerLiteral "2" @ 2081..2082
+              Comma "," @ 2104..2105 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " ", LineComment "// separator comment"]
+              ValueArgument
+                ValueArgumentPrefixList
+                NameExpression
+                  Identifier "trailingValue" @ 2129..2142 leading=[Newline "\n", Whitespace "  "]
+              Comma "," @ 2142..2143
+            RParen ")" @ 2144..2145 leading=[Newline "\n"]
+          LambdaExpressionList
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 2147..2150 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "markerBeforeTrailingComma" @ 2151..2176 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 2177..2178 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "listOf" @ 2179..2185
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 2185..2186
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                BinaryExpression
+                  LiteralExpression
+                    IntegerLiteral "1" @ 2209..2210 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+                  Plus "+" @ 2213..2214 trailing=[Whitespace "   "]
+                  LiteralExpression
+                    IntegerLiteral "2" @ 2217..2218
+              Comma "," @ 2240..2241 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "]
+            RParen ")" @ 2242..2243 leading=[Newline "\n"]
+          LambdaExpressionList
+      PropertyBodyMemberList
+  Eof "" @ 2244..2244 leading=[Newline "\n"]
 
 diagnostics:
   (none)

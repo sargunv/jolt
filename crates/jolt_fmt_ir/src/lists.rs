@@ -187,7 +187,17 @@ pub fn comma_list_parts<'source, L: Language>(
             let is_last = visible_index + 1 == visible_count;
             if let Some(comma) = item.comma {
                 has_source_trailing_separator |= is_last;
-                let unforced_break = if is_last { Doc::nil() } else { docs.line() };
+                // A separator displaced past an own-line structural boundary
+                // can no longer trail its preceding item. Keep it with the
+                // following item instead of leaving the comma on a line by
+                // itself when the surrounding list is broken.
+                let unforced_break = if is_last {
+                    Doc::nil()
+                } else if item.comma_starts_after_line {
+                    docs.space()
+                } else {
+                    docs.line()
+                };
                 let separator = format_separator_with_comments(docs, &comma, unforced_break);
                 if item.comma_starts_after_line {
                     let boundary = docs.hard_line_boundary();

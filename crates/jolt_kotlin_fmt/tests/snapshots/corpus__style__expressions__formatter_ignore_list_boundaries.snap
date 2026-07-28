@@ -7,8 +7,7 @@ val markerBeforeComma = listOf(
   // @formatter:off
   1   +   2
   // @formatter:on
-  ,
-  trailingValue,
+  , trailingValue,
 )
 
 val inlineMarkerBeforeComma = listOf(
@@ -26,8 +25,7 @@ val inlineMarkerBeforeLaterBlockComment = listOf(
 val inlineMarkerBeforeLaterLineComment = listOf(
   // @formatter:off
   1   +   2 /* @formatter:on */ // later
-  ,
-  trailingValue,
+  , trailingValue,
 )
 
 val ignoredFinalArgument = listOf(
@@ -44,8 +42,7 @@ val adjacentIgnoredRuns = listOf(
   // @formatter:off
   second   +   value
   // @formatter:on
-  ,
-  trailingValue,
+  , trailingValue,
 )
 
 val ignoredLambdaParameters = { // @formatter:off
@@ -75,23 +72,20 @@ fun <T> ignoredTypeConstraints(value: T): T
   where // @formatter:off
     T   :   FirstConstraint
     // @formatter:on
-    ,
-    T : SecondConstraint = value
+    , T : SecondConstraint = value
 
 fun <T> ownLineIgnoredTypeConstraints(value: T): T
   where
     // @formatter:off
     T   :   FirstConstraint
     // @formatter:on
-    ,
-    T : SecondConstraint = value
+    , T : SecondConstraint = value
 
 fun ignoredWhenConditions(value: Any): Int = when (value) {
   // @formatter:off
   is   FirstType
   // @formatter:on
-  ,
-  is SecondType ->
+  , is SecondType ->
     1
   else -> 0
 }
@@ -123,6 +117,21 @@ class IgnoredDelegation
 // @formatter:on
 {
 }
+
+val markerBeforeCommentedComma = listOf(
+  // @formatter:off
+  1   +   2
+  // @formatter:on
+  , // separator comment
+  trailingValue,
+)
+
+val markerBeforeTrailingComma = listOf(
+  // @formatter:off
+  1   +   2
+  // @formatter:on
+  ,
+)
 
 diagnostics:
 (none)

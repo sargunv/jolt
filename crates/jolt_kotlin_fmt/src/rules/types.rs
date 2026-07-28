@@ -783,9 +783,16 @@ fn format_indented_comma_items<'source>(
                     let boundary = rest.hard_line_boundary();
                     rest.push(boundary);
                 }
-                let line = rest.line();
-                let separator =
-                    crate::helpers::comments::format_separator_with_comments(rest, &comma, line);
+                let after_comma = if previous_comma_starts_after_line {
+                    rest.space()
+                } else {
+                    rest.line()
+                };
+                let separator = crate::helpers::comments::format_separator_with_comments(
+                    rest,
+                    &comma,
+                    after_comma,
+                );
                 rest.push(separator);
             } else {
                 let line = rest.line();
