@@ -12,9 +12,9 @@ fun binaryKinds(input: Any?, names: List<String>): String {
     && input !is StringBuilder
     && input is List<*>
   return if (present && typed)
-    name + typedList.size + nullableMap.size
-  else
-    "missing"
+      name + typedList.size + nullableMap.size
+    else
+      "missing"
 }
 
 diagnostics:

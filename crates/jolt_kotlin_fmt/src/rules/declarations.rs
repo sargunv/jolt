@@ -23,7 +23,9 @@ use crate::helpers::recovery::{
     resolve_required_field,
 };
 use crate::rules::annotations::format_annotation_syntax_with_leading;
-use crate::rules::expressions::{format_expression, format_value_argument_list};
+use crate::rules::expressions::{
+    format_expression, format_inline_value_expression, format_value_argument_list,
+};
 use crate::rules::names::format_name;
 use crate::rules::statements::format_block;
 use crate::rules::types::{
@@ -364,14 +366,18 @@ fn format_assignment_rhs<'source>(
             .is_some_and(|token| !token.leading_comments().is_empty()),
         _ => false,
     };
-    let expression = format_required_field(expression, doc, |expression, doc| {
-        format_expression(doc, &expression)
-    });
     // Comments between the operator and the expression each end their line, so
     // the expression starts a new line whichever side owns them.
     let comment_between = operator_token
         .is_some_and(|operator| trailing_comments_force_line(&operator))
         || expression_leads_with_comment;
+    let expression = format_required_field(expression, doc, |expression, doc| {
+        if comment_between || is_annotated {
+            format_expression(doc, &expression)
+        } else {
+            format_inline_value_expression(doc, &expression)
+        }
+    });
     if has_expression && comment_between {
         // A comment trailing the operator already ended the line, so the
         // boundary then contributes only the continuation indent.

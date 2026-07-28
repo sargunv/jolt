@@ -36,20 +36,59 @@ pub(crate) fn format_expression<'source>(
     doc: &mut DocBuilder<'source>,
     expression: &Expression<'source>,
 ) -> Doc<'source> {
-    format_expression_with_leading(doc, expression, LeadingTrivia::Preserve)
+    format_expression_with_leading_and_context(
+        doc,
+        expression,
+        LeadingTrivia::Preserve,
+        ExpressionContext::Default,
+    )
+}
+
+/// Formats an expression whose first token must remain beside an inline
+/// introducer such as `return` or `throw`.
+pub(crate) fn format_inline_value_expression<'source>(
+    doc: &mut DocBuilder<'source>,
+    expression: &Expression<'source>,
+) -> Doc<'source> {
+    format_expression_with_leading_and_context(
+        doc,
+        expression,
+        LeadingTrivia::Preserve,
+        ExpressionContext::InlineValue,
+    )
 }
 
 pub(crate) fn format_expression_without_leading<'source>(
     doc: &mut DocBuilder<'source>,
     expression: &Expression<'source>,
 ) -> Doc<'source> {
-    format_expression_with_leading(doc, expression, LeadingTrivia::SuppressAlreadyHandled)
+    format_expression_with_leading_and_context(
+        doc,
+        expression,
+        LeadingTrivia::SuppressAlreadyHandled,
+        ExpressionContext::Default,
+    )
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum ExpressionContext {
+    Default,
+    InlineValue,
 }
 
 fn format_expression_with_leading<'source>(
     doc: &mut DocBuilder<'source>,
     expression: &Expression<'source>,
     leading: LeadingTrivia,
+) -> Doc<'source> {
+    format_expression_with_leading_and_context(doc, expression, leading, ExpressionContext::Default)
+}
+
+pub(super) fn format_expression_with_leading_and_context<'source>(
+    doc: &mut DocBuilder<'source>,
+    expression: &Expression<'source>,
+    leading: LeadingTrivia,
+    context: ExpressionContext,
 ) -> Doc<'source> {
     match expression {
         Expression::LiteralExpression(expression) => {
@@ -59,7 +98,7 @@ fn format_expression_with_leading<'source>(
             format_string_template_expression(doc, expression, leading)
         }
         Expression::NameExpression(expression) => {
-            if let Some(labeled) = format_labeled_expression(doc, expression, leading) {
+            if let Some(labeled) = format_labeled_expression(doc, expression, leading, context) {
                 labeled
             } else {
                 format_name_expression(doc, expression, leading)
@@ -70,10 +109,10 @@ fn format_expression_with_leading<'source>(
             format_super_expression(doc, expression, leading)
         }
         Expression::ParenthesizedExpression(expression) => {
-            format_parenthesized_expression(doc, expression, leading)
+            format_parenthesized_expression(doc, expression, leading, context)
         }
         Expression::AnnotatedExpression(expression) => {
-            format_annotated_expression(doc, expression, leading)
+            format_annotated_expression(doc, expression, leading, context)
         }
         Expression::AssignmentExpression(expression) => {
             format_assignment_expression(doc, expression, leading)
@@ -91,14 +130,32 @@ fn format_expression_with_leading<'source>(
         | Expression::CallableReferenceExpression(_)) => {
             format_suffix_expression(doc, *expression, leading)
         }
-        Expression::IfExpression(expression) => format_if_expression(doc, expression, leading),
+        Expression::IfExpression(expression) => format_if_expression(
+            doc,
+            expression,
+            leading,
+            context == ExpressionContext::InlineValue,
+        ),
         Expression::WhenExpression(expression) => format_when_expression(doc, expression, leading),
         Expression::TryExpression(expression) => format_try_expression(doc, expression, leading),
-        Expression::ForStatement(expression) => format_for_statement(doc, expression, leading),
-        Expression::WhileStatement(expression) => format_while_statement(doc, expression, leading),
-        Expression::DoWhileStatement(expression) => {
-            format_do_while_statement(doc, expression, leading)
-        }
+        Expression::ForStatement(expression) => format_for_statement(
+            doc,
+            expression,
+            leading,
+            context == ExpressionContext::InlineValue,
+        ),
+        Expression::WhileStatement(expression) => format_while_statement(
+            doc,
+            expression,
+            leading,
+            context == ExpressionContext::InlineValue,
+        ),
+        Expression::DoWhileStatement(expression) => format_do_while_statement(
+            doc,
+            expression,
+            leading,
+            context == ExpressionContext::InlineValue,
+        ),
         Expression::JumpExpression(expression) => format_jump_expression(doc, expression, leading),
         Expression::ThrowExpression(expression) => {
             format_throw_expression(doc, expression, leading)
@@ -123,6 +180,7 @@ fn format_annotated_expression<'source>(
     doc: &mut DocBuilder<'source>,
     expression: &AnnotatedExpression<'source>,
     leading: LeadingTrivia,
+    context: ExpressionContext,
 ) -> Doc<'source> {
     let prefix = match resolve_required_field(expression.prefix(), doc) {
         KotlinFormatField::Present(prefix) => {
@@ -131,7 +189,12 @@ fn format_annotated_expression<'source>(
         KotlinFormatField::Malformed(recovery) => recovery,
     };
     let inner = match resolve_required_field(expression.expression(), doc) {
-        KotlinFormatField::Present(inner) => format_expression_without_leading(doc, &inner),
+        KotlinFormatField::Present(inner) => format_expression_with_leading_and_context(
+            doc,
+            &inner,
+            LeadingTrivia::SuppressAlreadyHandled,
+            context,
+        ),
         KotlinFormatField::Malformed(recovery) => recovery,
     };
     doc.concat([prefix, inner])

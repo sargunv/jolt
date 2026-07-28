@@ -27,65 +27,143 @@ use crate::rules::declarations::{
 use crate::rules::names::format_name;
 use crate::rules::types::format_type_reference;
 
-use super::{format_expression, format_expression_with_leading};
+use super::{
+    ExpressionContext, format_expression, format_expression_with_leading_and_context,
+    format_inline_value_expression,
+};
+
+#[derive(Clone, Copy)]
+enum ControlBodyForm {
+    Block,
+    Empty,
+    Expression { is_if: bool },
+}
+
+#[derive(Clone, Copy)]
+enum ControlBodyStyle {
+    Braced,
+    Empty,
+    ElseIfChain,
+    Bare { force_break: bool },
+}
+
+impl ControlBodyStyle {
+    fn requires_inline_continuation(self) -> bool {
+        matches!(self, Self::ElseIfChain | Self::Bare { .. })
+    }
+}
+
+#[derive(Clone, Copy)]
+struct FormattedControlBody<'source> {
+    doc: Doc<'source>,
+    style: ControlBodyStyle,
+}
+
+fn prepare_control_body(
+    body: Doc<'_>,
+    form: ControlBodyForm,
+    preserve_else_if_chain: bool,
+    protect_dangling_else: bool,
+) -> FormattedControlBody<'_> {
+    match form {
+        ControlBodyForm::Block => FormattedControlBody {
+            doc: body,
+            style: ControlBodyStyle::Braced,
+        },
+        ControlBodyForm::Empty => FormattedControlBody {
+            doc: body,
+            style: ControlBodyStyle::Empty,
+        },
+        ControlBodyForm::Expression { is_if: true } if preserve_else_if_chain => {
+            FormattedControlBody {
+                doc: body,
+                style: ControlBodyStyle::ElseIfChain,
+            }
+        }
+        ControlBodyForm::Expression { is_if } => FormattedControlBody {
+            doc: body,
+            style: ControlBodyStyle::Bare {
+                force_break: protect_dangling_else && is_if,
+            },
+        },
+    }
+}
+
+fn attach_control_body<'source>(
+    doc: &mut DocBuilder<'source>,
+    body: FormattedControlBody<'source>,
+) -> Doc<'source> {
+    match body.style {
+        ControlBodyStyle::Braced | ControlBodyStyle::ElseIfChain => {
+            let space = doc.space();
+            doc.concat([space, body.doc])
+        }
+        ControlBodyStyle::Empty => body.doc,
+        ControlBodyStyle::Bare { force_break } => {
+            let line = if force_break {
+                doc.hard_line_boundary()
+            } else {
+                doc.line_boundary()
+            };
+            let body = doc.concat([line, body.doc]);
+            doc.indent(body)
+        }
+    }
+}
+
+fn finish_control_flow<'source>(
+    doc: &mut DocBuilder<'source>,
+    contents: Doc<'source>,
+    add_inline_continuation: bool,
+) -> Doc<'source> {
+    let contents = if add_inline_continuation {
+        doc.indent(contents)
+    } else {
+        contents
+    };
+    doc.group(contents)
+}
+
+fn format_bare_control_body<'source>(
+    doc: &mut DocBuilder<'source>,
+    expression: Expression<'source>,
+) -> (Doc<'source>, ControlBodyForm) {
+    let is_if = matches!(expression, Expression::IfExpression(_));
+    (
+        format_expression(doc, &expression),
+        ControlBodyForm::Expression { is_if },
+    )
+}
 
 pub(super) fn format_if_expression<'source>(
     doc: &mut DocBuilder<'source>,
     expression: &IfExpression<'source>,
     leading: LeadingTrivia,
+    inline_value: bool,
 ) -> Doc<'source> {
     let keyword = format_required_token(expression.if_token(), doc, leading);
     let condition = format_spaced_required_field(doc, expression.condition(), |condition, doc| {
         format_control_flow_condition(doc, &condition)
     });
-    let then_branch = resolve_optional_field(expression.then_branch(), doc);
-    let then_branch_is_nested_if = matches!(
-        &then_branch,
-        KotlinFormatField::Present(Some(branch))
-            if matches!(
-                branch.classify(),
-                Ok(IfThenBranchSyntax::Expression(Expression::IfExpression(_)))
-            )
-    );
-    let then_branch_is_empty = matches!(
-        &then_branch,
-        KotlinFormatField::Present(Some(branch))
-            if matches!(branch.classify(), Ok(IfThenBranchSyntax::EmptyStatement(_)))
-    );
-    let then_branch_is_block = matches!(
-        &then_branch,
-        KotlinFormatField::Present(Some(branch))
-            if matches!(branch.classify(), Ok(IfThenBranchSyntax::Block(_)))
-    );
-    let then_branch = match then_branch {
+    let (then_branch, then_style) = match resolve_optional_field(expression.then_branch(), doc) {
         KotlinFormatField::Present(Some(branch)) => {
-            let branch = format_if_then_branch(doc, branch);
-            if then_branch_is_empty {
-                branch
-            } else if then_branch_is_block {
-                let space = doc.space();
-                doc.concat([space, branch])
-            } else {
-                let line = if then_branch_is_nested_if {
-                    doc.hard_line_boundary()
-                } else {
-                    doc.line_boundary()
-                };
-                let branch = doc.concat([line, branch]);
-                doc.indent(branch)
-            }
+            let (branch, form) = format_if_then_branch(doc, branch);
+            let branch = prepare_control_body(branch, form, false, true);
+            let style = branch.style;
+            (attach_control_body(doc, branch), style)
         }
-        KotlinFormatField::Present(None) => Doc::nil(),
-        KotlinFormatField::Malformed(recovery) => recovery,
+        KotlinFormatField::Present(None) => (Doc::nil(), ControlBodyStyle::Empty),
+        KotlinFormatField::Malformed(recovery) => (recovery, ControlBodyStyle::Empty),
     };
-    let else_branch = format_else_branch(
-        doc,
-        expression,
-        then_branch_is_nested_if,
-        then_branch_is_block,
-    );
+    let (else_branch, else_style) = format_else_branch(doc, expression, then_style);
     let contents = doc.concat([keyword, condition, then_branch, else_branch]);
-    doc.group(contents)
+    finish_control_flow(
+        doc,
+        contents,
+        inline_value
+            && (then_style.requires_inline_continuation()
+                || else_style.requires_inline_continuation()),
+    )
 }
 
 pub(super) fn format_when_expression<'source>(
@@ -216,6 +294,7 @@ pub(super) fn format_labeled_expression<'source>(
     doc: &mut DocBuilder<'source>,
     expression: &NameExpression<'source>,
     leading: LeadingTrivia,
+    context: ExpressionContext,
 ) -> Option<Doc<'source>> {
     let at = match resolve_optional_field(expression.at(), doc) {
         KotlinFormatField::Present(Some(at)) => at,
@@ -227,10 +306,11 @@ pub(super) fn format_labeled_expression<'source>(
     let labeled = match resolve_optional_field(expression.labeled_expression(), doc) {
         KotlinFormatField::Present(Some(labeled)) => {
             let space = doc.space();
-            let labeled = format_expression_with_leading(
+            let labeled = format_expression_with_leading_and_context(
                 doc,
                 &labeled,
                 LeadingTrivia::SuppressAlreadyHandled,
+                context,
             );
             doc.concat([space, labeled])
         }
@@ -244,12 +324,8 @@ pub(super) fn format_for_statement<'source>(
     doc: &mut DocBuilder<'source>,
     statement: &ForStatement<'source>,
     leading: LeadingTrivia,
+    inline_value: bool,
 ) -> Doc<'source> {
-    let has_body = matches!(
-        statement.body(),
-        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
-            if body.first_token().is_some()
-    );
     let keyword = format_required_token(statement.for_token(), doc, leading);
     let open = resolve_required_delimiter(statement.open_paren(), doc);
     let close = resolve_required_delimiter(statement.close_paren(), doc);
@@ -269,21 +345,25 @@ pub(super) fn format_for_statement<'source>(
     );
     let space = doc.space();
     let header = doc.concat([open, variable, space, in_token, space, iterable, close]);
-    let body = format_required_field(statement.body(), doc, |body, doc| {
-        format_for_body(doc, body)
-    });
-    let body_is_empty = matches!(
-        statement.body(),
-        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
-            if matches!(body.classify(), Ok(ForBodySyntax::EmptyStatement(_)))
-    );
-    let before_header = doc.space();
-    let before_body = if has_body && !body_is_empty {
-        doc.space()
-    } else {
-        Doc::nil()
+    let body = match resolve_required_field(statement.body(), doc) {
+        KotlinFormatField::Present(body) => {
+            let (body, form) = format_for_body(doc, body);
+            prepare_control_body(body, form, false, false)
+        }
+        KotlinFormatField::Malformed(recovery) => FormattedControlBody {
+            doc: recovery,
+            style: ControlBodyStyle::Empty,
+        },
     };
-    doc.concat([keyword, before_header, header, before_body, body])
+    let body_style = body.style;
+    let body = attach_control_body(doc, body);
+    let before_header = doc.space();
+    let contents = doc.concat([keyword, before_header, header, body]);
+    finish_control_flow(
+        doc,
+        contents,
+        inline_value && body_style.requires_inline_continuation(),
+    )
 }
 
 fn format_for_variable<'source>(
@@ -311,73 +391,75 @@ pub(super) fn format_while_statement<'source>(
     doc: &mut DocBuilder<'source>,
     statement: &WhileStatement<'source>,
     leading: LeadingTrivia,
+    inline_value: bool,
 ) -> Doc<'source> {
     let keyword = format_required_token(statement.while_token(), doc, leading);
     let condition = format_spaced_required_field(doc, statement.condition(), |condition, doc| {
         format_control_flow_condition(doc, &condition)
     });
-    let has_body = matches!(
-        statement.body(),
-        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
-            if body.first_token().is_some()
-    );
-    let body = format_required_field(statement.body(), doc, |body, doc| {
-        format_while_body(doc, body)
-    });
-    let body_is_empty = matches!(
-        statement.body(),
-        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
-            if matches!(body.classify(), Ok(WhileBodySyntax::EmptyStatement(_)))
-    );
-    let before_body = if has_body && !body_is_empty {
-        doc.space()
-    } else {
-        Doc::nil()
+    let body = match resolve_required_field(statement.body(), doc) {
+        KotlinFormatField::Present(body) => {
+            let (body, form) = format_while_body(doc, body);
+            prepare_control_body(body, form, false, false)
+        }
+        KotlinFormatField::Malformed(recovery) => FormattedControlBody {
+            doc: recovery,
+            style: ControlBodyStyle::Empty,
+        },
     };
-    doc.concat([keyword, condition, before_body, body])
+    let body_style = body.style;
+    let body = attach_control_body(doc, body);
+    let contents = doc.concat([keyword, condition, body]);
+    finish_control_flow(
+        doc,
+        contents,
+        inline_value && body_style.requires_inline_continuation(),
+    )
 }
 
 pub(super) fn format_do_while_statement<'source>(
     doc: &mut DocBuilder<'source>,
     statement: &DoWhileStatement<'source>,
     leading: LeadingTrivia,
+    inline_value: bool,
 ) -> Doc<'source> {
-    let has_body = matches!(
-        statement.body(),
-        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
-            if body.first_token().is_some()
-    );
     let has_while = matches!(
         statement.while_token(),
         jolt_kotlin_syntax::KotlinSyntaxField::Present(_)
     );
     let do_token = format_required_token(statement.do_token(), doc, leading);
-    let body = format_required_field(statement.body(), doc, |body, doc| {
-        format_do_while_body(doc, body)
-    });
-    let body_is_empty = matches!(
-        statement.body(),
-        jolt_kotlin_syntax::KotlinSyntaxField::Present(ref body)
-            if matches!(body.classify(), Ok(DoWhileBodySyntax::EmptyStatement(_)))
-    );
+    let body = match resolve_required_field(statement.body(), doc) {
+        KotlinFormatField::Present(body) => {
+            let (body, form) = format_do_while_body(doc, body);
+            prepare_control_body(body, form, false, false)
+        }
+        KotlinFormatField::Malformed(recovery) => FormattedControlBody {
+            doc: recovery,
+            style: ControlBodyStyle::Empty,
+        },
+    };
+    let body_style = body.style;
+    let body = attach_control_body(doc, body);
     let while_token = format_required_token(statement.while_token(), doc, LeadingTrivia::Preserve);
     let condition = format_spaced_required_field(doc, statement.condition(), |condition, doc| {
         format_control_flow_condition(doc, &condition)
     });
-    let after_do = if has_body && !body_is_empty {
+    let before_while = if !has_while {
+        Doc::nil()
+    } else if matches!(
+        body_style,
+        ControlBodyStyle::Braced | ControlBodyStyle::Empty
+    ) {
         doc.space()
     } else {
-        Doc::nil()
+        doc.line_boundary()
     };
-    let before_while = if has_while { doc.space() } else { Doc::nil() };
-    doc.concat([
-        do_token,
-        after_do,
-        body,
-        before_while,
-        while_token,
-        condition,
-    ])
+    let contents = doc.concat([do_token, body, before_while, while_token, condition]);
+    finish_control_flow(
+        doc,
+        contents,
+        inline_value && body_style.requires_inline_continuation(),
+    )
 }
 
 pub(super) fn format_jump_expression<'source>(
@@ -396,13 +478,14 @@ pub(super) fn format_jump_expression<'source>(
     let value = match resolve_optional_field(expression.expression(), doc) {
         KotlinFormatField::Present(Some(value)) => {
             let space = doc.space();
-            let value = format_expression(doc, &value);
+            let value = format_inline_value_expression(doc, &value);
             doc.concat([space, value])
         }
         KotlinFormatField::Present(None) => Doc::nil(),
         KotlinFormatField::Malformed(recovery) => recovery,
     };
-    doc.concat([keyword, label, value])
+    let contents = doc.concat([keyword, label, value]);
+    doc.group(contents)
 }
 
 pub(super) fn format_throw_expression<'source>(
@@ -437,24 +520,31 @@ pub(crate) fn format_throw_expression_with_suffix<'source>(
     let value = match resolve_required_field(expression.expression(), doc) {
         KotlinFormatField::Present(value) => {
             let separator = format_keyword_value_separator(doc, keyword_token.as_ref());
-            let value = format_expression(doc, &value);
+            let value = if keyword_token
+                .as_ref()
+                .is_some_and(trailing_comments_force_line)
+            {
+                format_expression(doc, &value)
+            } else {
+                format_inline_value_expression(doc, &value)
+            };
             let value = doc.concat([separator, value, suffix]);
-            indent_keyword_continuation(doc, keyword_token.as_ref(), value)
+            indent_commented_keyword_continuation(doc, keyword_token.as_ref(), value)
         }
         KotlinFormatField::Malformed(recovery) => {
             let comments = format_orphaned_keyword_comments(doc, keyword_token.as_ref());
             let recovery = doc.concat([comments, recovery, suffix]);
-            indent_keyword_continuation(doc, keyword_token.as_ref(), recovery)
+            indent_commented_keyword_continuation(doc, keyword_token.as_ref(), recovery)
         }
     };
-    doc.concat([keyword, value])
+    let contents = doc.concat([keyword, value]);
+    doc.group(contents)
 }
 
-/// Indents the continuation that a comment moved off its keyword's line.
-///
-/// Recovery may leave a separator as the only represented continuation. It
-/// still belongs under the keyword, just like a well-formed thrown value.
-fn indent_keyword_continuation<'source>(
+/// Indents a value that a keyword's trailing line comment moved onto the next
+/// line. The syntax requires ordinary, uncommented values to keep their first
+/// token beside the keyword.
+fn indent_commented_keyword_continuation<'source>(
     doc: &mut DocBuilder<'source>,
     keyword: Option<&KotlinSyntaxToken<'source>>,
     continuation: Doc<'source>,
@@ -557,47 +647,32 @@ where
 fn format_else_branch<'source>(
     doc: &mut DocBuilder<'source>,
     expression: &IfExpression<'source>,
-    starts_after_broken_then: bool,
-    follows_block: bool,
-) -> Doc<'source> {
+    then_style: ControlBodyStyle,
+) -> (Doc<'source>, ControlBodyStyle) {
     let else_token = match resolve_optional_field(expression.else_token(), doc) {
         KotlinFormatField::Present(Some(token)) => token,
-        KotlinFormatField::Present(None) => return Doc::nil(),
-        KotlinFormatField::Malformed(recovery) => return recovery,
+        KotlinFormatField::Present(None) => return (Doc::nil(), ControlBodyStyle::Empty),
+        KotlinFormatField::Malformed(recovery) => return (recovery, ControlBodyStyle::Empty),
     };
     let token = format_plain_token(doc, else_token);
-    let branch = match resolve_optional_field(expression.else_branch(), doc) {
+    let (branch, branch_style) = match resolve_optional_field(expression.else_branch(), doc) {
         KotlinFormatField::Present(Some(branch)) => {
-            let branch_is_empty =
-                matches!(branch.classify(), Ok(IfElseBranchSyntax::EmptyStatement(_)));
-            let branch_hugs_else = matches!(
-                branch.classify(),
-                Ok(IfElseBranchSyntax::Block(_)
-                    | IfElseBranchSyntax::Expression(Expression::IfExpression(_)))
-            );
-            let branch = format_if_else_branch(doc, branch);
-            if branch_is_empty {
-                branch
-            } else if branch_hugs_else {
-                let space = doc.space();
-                doc.concat([space, branch])
-            } else {
-                let line = doc.line_boundary();
-                let branch = doc.concat([line, branch]);
-                doc.indent(branch)
-            }
+            let (branch, form) = format_if_else_branch(doc, branch);
+            let branch = prepare_control_body(branch, form, true, false);
+            let style = branch.style;
+            (attach_control_body(doc, branch), style)
         }
-        KotlinFormatField::Present(None) => Doc::nil(),
-        KotlinFormatField::Malformed(recovery) => recovery,
+        KotlinFormatField::Present(None) => (Doc::nil(), ControlBodyStyle::Empty),
+        KotlinFormatField::Malformed(recovery) => (recovery, ControlBodyStyle::Empty),
     };
-    let separator = if starts_after_broken_then {
-        doc.hard_line_boundary()
-    } else if follows_block {
-        doc.space()
-    } else {
-        doc.line_boundary()
+    let separator = match then_style {
+        ControlBodyStyle::Braced => doc.space(),
+        ControlBodyStyle::Bare { force_break: true } => doc.hard_line_boundary(),
+        ControlBodyStyle::Empty
+        | ControlBodyStyle::ElseIfChain
+        | ControlBodyStyle::Bare { force_break: false } => doc.line_boundary(),
     };
-    doc.concat([separator, token, branch])
+    (doc.concat([separator, token, branch]), branch_style)
 }
 
 fn format_when_subject<'source>(
@@ -885,16 +960,20 @@ fn format_finally_clause<'source>(
 fn format_if_then_branch<'source>(
     doc: &mut DocBuilder<'source>,
     branch: jolt_kotlin_syntax::IfThenBranchValue<'source>,
-) -> Doc<'source> {
+) -> (Doc<'source>, ControlBodyForm) {
     match branch.classify() {
-        Ok(IfThenBranchSyntax::Expression(expression)) => format_expression(doc, &expression),
-        Ok(IfThenBranchSyntax::Block(block)) => crate::rules::statements::format_block(doc, &block),
-        Ok(IfThenBranchSyntax::EmptyStatement(statement)) => {
-            format_empty_statement(doc, &statement)
-        }
+        Ok(IfThenBranchSyntax::Expression(expression)) => format_bare_control_body(doc, expression),
+        Ok(IfThenBranchSyntax::Block(block)) => (
+            crate::rules::statements::format_block(doc, &block),
+            ControlBodyForm::Block,
+        ),
+        Ok(IfThenBranchSyntax::EmptyStatement(statement)) => (
+            format_empty_statement(doc, &statement),
+            ControlBodyForm::Empty,
+        ),
         Err(error) => {
             doc.block_on_invariant(error.to_string());
-            Doc::nil()
+            (Doc::nil(), ControlBodyForm::Empty)
         }
     }
 }
@@ -902,16 +981,20 @@ fn format_if_then_branch<'source>(
 fn format_if_else_branch<'source>(
     doc: &mut DocBuilder<'source>,
     branch: jolt_kotlin_syntax::IfElseBranchValue<'source>,
-) -> Doc<'source> {
+) -> (Doc<'source>, ControlBodyForm) {
     match branch.classify() {
-        Ok(IfElseBranchSyntax::Expression(expression)) => format_expression(doc, &expression),
-        Ok(IfElseBranchSyntax::Block(block)) => crate::rules::statements::format_block(doc, &block),
-        Ok(IfElseBranchSyntax::EmptyStatement(statement)) => {
-            format_empty_statement(doc, &statement)
-        }
+        Ok(IfElseBranchSyntax::Expression(expression)) => format_bare_control_body(doc, expression),
+        Ok(IfElseBranchSyntax::Block(block)) => (
+            crate::rules::statements::format_block(doc, &block),
+            ControlBodyForm::Block,
+        ),
+        Ok(IfElseBranchSyntax::EmptyStatement(statement)) => (
+            format_empty_statement(doc, &statement),
+            ControlBodyForm::Empty,
+        ),
         Err(error) => {
             doc.block_on_invariant(error.to_string());
-            Doc::nil()
+            (Doc::nil(), ControlBodyForm::Empty)
         }
     }
 }
@@ -919,14 +1002,20 @@ fn format_if_else_branch<'source>(
 fn format_for_body<'source>(
     doc: &mut DocBuilder<'source>,
     body: jolt_kotlin_syntax::ForBodyValue<'source>,
-) -> Doc<'source> {
+) -> (Doc<'source>, ControlBodyForm) {
     match body.classify() {
-        Ok(ForBodySyntax::Expression(expression)) => format_expression(doc, &expression),
-        Ok(ForBodySyntax::Block(block)) => crate::rules::statements::format_block(doc, &block),
-        Ok(ForBodySyntax::EmptyStatement(statement)) => format_empty_statement(doc, &statement),
+        Ok(ForBodySyntax::Expression(expression)) => format_bare_control_body(doc, expression),
+        Ok(ForBodySyntax::Block(block)) => (
+            crate::rules::statements::format_block(doc, &block),
+            ControlBodyForm::Block,
+        ),
+        Ok(ForBodySyntax::EmptyStatement(statement)) => (
+            format_empty_statement(doc, &statement),
+            ControlBodyForm::Empty,
+        ),
         Err(error) => {
             doc.block_on_invariant(error.to_string());
-            Doc::nil()
+            (Doc::nil(), ControlBodyForm::Empty)
         }
     }
 }
@@ -934,14 +1023,20 @@ fn format_for_body<'source>(
 fn format_while_body<'source>(
     doc: &mut DocBuilder<'source>,
     body: jolt_kotlin_syntax::WhileBodyValue<'source>,
-) -> Doc<'source> {
+) -> (Doc<'source>, ControlBodyForm) {
     match body.classify() {
-        Ok(WhileBodySyntax::Expression(expression)) => format_expression(doc, &expression),
-        Ok(WhileBodySyntax::Block(block)) => crate::rules::statements::format_block(doc, &block),
-        Ok(WhileBodySyntax::EmptyStatement(statement)) => format_empty_statement(doc, &statement),
+        Ok(WhileBodySyntax::Expression(expression)) => format_bare_control_body(doc, expression),
+        Ok(WhileBodySyntax::Block(block)) => (
+            crate::rules::statements::format_block(doc, &block),
+            ControlBodyForm::Block,
+        ),
+        Ok(WhileBodySyntax::EmptyStatement(statement)) => (
+            format_empty_statement(doc, &statement),
+            ControlBodyForm::Empty,
+        ),
         Err(error) => {
             doc.block_on_invariant(error.to_string());
-            Doc::nil()
+            (Doc::nil(), ControlBodyForm::Empty)
         }
     }
 }
@@ -949,14 +1044,20 @@ fn format_while_body<'source>(
 fn format_do_while_body<'source>(
     doc: &mut DocBuilder<'source>,
     body: jolt_kotlin_syntax::DoWhileBodyValue<'source>,
-) -> Doc<'source> {
+) -> (Doc<'source>, ControlBodyForm) {
     match body.classify() {
-        Ok(DoWhileBodySyntax::Expression(expression)) => format_expression(doc, &expression),
-        Ok(DoWhileBodySyntax::Block(block)) => crate::rules::statements::format_block(doc, &block),
-        Ok(DoWhileBodySyntax::EmptyStatement(statement)) => format_empty_statement(doc, &statement),
+        Ok(DoWhileBodySyntax::Expression(expression)) => format_bare_control_body(doc, expression),
+        Ok(DoWhileBodySyntax::Block(block)) => (
+            crate::rules::statements::format_block(doc, &block),
+            ControlBodyForm::Block,
+        ),
+        Ok(DoWhileBodySyntax::EmptyStatement(statement)) => (
+            format_empty_statement(doc, &statement),
+            ControlBodyForm::Empty,
+        ),
         Err(error) => {
             doc.block_on_invariant(error.to_string());
-            Doc::nil()
+            (Doc::nil(), ControlBodyForm::Empty)
         }
     }
 }
