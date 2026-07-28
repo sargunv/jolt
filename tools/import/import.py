@@ -106,15 +106,19 @@ def sync_repos(imports: list[dict]) -> None:
                 f"https://github.com/{item['repo']}.git",
                 str(destination),
             )
-        run_with_retries(
-            "git",
-            "fetch",
-            "--depth",
-            "1",
-            "origin",
-            f"refs/tags/{item['tag']}",
-            cwd=destination,
-        )
+        # A full filtered clone already contains reachable commit objects.
+        # Avoid a redundant exact-tag fetch: remote tag advertisement may
+        # transiently lag even though the pinned commit is available locally.
+        if not has_commit(destination, item["commit"]):
+            run_with_retries(
+                "git",
+                "fetch",
+                "--depth",
+                "1",
+                "origin",
+                f"refs/tags/{item['tag']}",
+                cwd=destination,
+            )
         run("git", "checkout", "--detach", item["commit"], cwd=destination)
         run("git", "clean", "-fdx", cwd=destination)
         actual = capture("git", "rev-parse", "HEAD", cwd=destination)
@@ -297,6 +301,19 @@ def run_with_retries(
                 f"retrying in {delay}s"
             )
             time.sleep(delay)
+
+
+def has_commit(repository: Path, commit: str) -> bool:
+    return (
+        subprocess.run(
+            ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
+            cwd=repository,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode
+        == 0
+    )
 
 
 def capture(*command: str, cwd: Path | None = None) -> str:
