@@ -172,6 +172,7 @@ syntax/parser/parses-companion-object.kt
 syntax/parser/parses-constructor-annotated-primary.kt
 syntax/parser/parses-constructor-delegates-to-super.kt
 syntax/parser/parses-constructor-secondary.kt
+syntax/parser/parses-constructor-soft-keyword-identifier.kt
 syntax/parser/parses-delegation-class-and-interface.kt
 syntax/parser/parses-delegation-property.kt
 syntax/parser/parses-destructuring-baseline-declarations.kt
