@@ -207,7 +207,9 @@ impl Parser<'_> {
         matches!(
             self.kind_at(index),
             K::ClassKw | K::InterfaceKw | K::FunKw | K::ValKw | K::VarKw | K::TypeAliasKw
-        ) || self.is_soft_kind_at(index, "constructor")
+        ) || (allow_class_members
+            && self.is_soft_kind_at(index, "constructor")
+            && self.kind_at(index + 1) == K::LParen)
             || (self.kind_at(index) == K::ObjectKw && self.object_declaration_head_at(index))
             || (allow_class_members && self.is_soft_kind_at(index, "init"))
             || (allow_class_members

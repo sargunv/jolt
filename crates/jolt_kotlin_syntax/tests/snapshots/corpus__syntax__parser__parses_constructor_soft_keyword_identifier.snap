@@ -1,0 +1,232 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class ConstructorProperty(val constructor: Any) {
+    init {
+        constructor.toString()
+    }
+
+    fun reassign() {
+        constructor(this)
+        val copy = constructor
+    }
+}
+
+class SecondaryConstructor(val x: Int) {
+    constructor() : this(0)
+
+    @Inject
+    private constructor(y: Long) : this(y.toInt())
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "ConstructorProperty" @ 6..25
+      PrimaryConstructor
+        ModifierList
+        ValueParameterList
+          LParen "(" @ 25..26
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierList
+              ValKw "val" @ 26..29 trailing=[Whitespace " "]
+              Name
+                Identifier "constructor" @ 30..41
+              Colon ":" @ 41..42 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "Any" @ 43..46
+          RParen ")" @ 46..47 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 48..49
+        ClassMemberList
+          ClassMemberDeclaration
+            InitializerBlock
+              Identifier "init" @ 54..58 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 59..60
+                BlockItemList
+                  Statement
+                    ExpressionStatement
+                      CallExpression
+                        NavigationExpression
+                          NameExpression
+                            Identifier "constructor" @ 69..80 leading=[Newline "\n", Whitespace "        "]
+                          Dot "." @ 80..81
+                          Identifier "toString" @ 81..89
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 89..90
+                          ValueArgumentEntryList
+                          RParen ")" @ 90..91
+                        LambdaExpressionList
+                    TerminatorList
+                RBrace "}" @ 96..97 leading=[Newline "\n", Whitespace "    "]
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 103..106 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "reassign" @ 107..115
+              ValueParameterList
+                LParen "(" @ 115..116
+                ValueParameterSeparatedList
+                RParen ")" @ 116..117 trailing=[Whitespace " "]
+              BlockBody
+                Block
+                  LBrace "{" @ 118..119
+                  BlockItemList
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NameExpression
+                            Identifier "constructor" @ 128..139 leading=[Newline "\n", Whitespace "        "]
+                          TypeArgumentListList
+                          ValueArgumentList
+                            LParen "(" @ 139..140
+                            ValueArgumentEntryList
+                              ValueArgument
+                                ValueArgumentPrefixList
+                                ThisExpression
+                                  ThisKw "this" @ 140..144
+                            RParen ")" @ 144..145
+                          LambdaExpressionList
+                      TerminatorList
+                    PropertyDeclaration
+                      ModifierList
+                      ModifierList
+                      ValKw "val" @ 154..157 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      Name
+                        Identifier "copy" @ 158..162 trailing=[Whitespace " "]
+                      PropertyInitializer
+                        Assign "=" @ 163..164 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "constructor" @ 165..176
+                      PropertyBodyMemberList
+                  RBrace "}" @ 181..182 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 183..184 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 186..191 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "SecondaryConstructor" @ 192..212
+      PrimaryConstructor
+        ModifierList
+        ValueParameterList
+          LParen "(" @ 212..213
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierList
+              ValKw "val" @ 213..216 trailing=[Whitespace " "]
+              Name
+                Identifier "x" @ 217..218
+              Colon ":" @ 218..219 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "Int" @ 220..223
+          RParen ")" @ 223..224 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 225..226
+        ClassMemberList
+          ClassMemberDeclaration
+            SecondaryConstructor
+              ModifierList
+              ModifierList
+              Identifier "constructor" @ 231..242 leading=[Newline "\n", Whitespace "    "]
+              ValueParameterList
+                LParen "(" @ 242..243
+                ValueParameterSeparatedList
+                RParen ")" @ 243..244 trailing=[Whitespace " "]
+              ConstructorDelegation
+                Colon ":" @ 245..246 trailing=[Whitespace " "]
+                ConstructorDelegationCall
+                  CallExpression
+                    ThisExpression
+                      ThisKw "this" @ 247..251
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 251..252
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          LiteralExpression
+                            IntegerLiteral "0" @ 252..253
+                      RParen ")" @ 253..254
+                    LambdaExpressionList
+          ClassMemberDeclaration
+            SecondaryConstructor
+              ModifierList
+                Annotation
+                  At "@" @ 260..261 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+                  QualifiedName
+                    QualifiedNameSegmentList
+                      Name
+                        Identifier "Inject" @ 261..267
+                Identifier "private" @ 272..279 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
+              Identifier "constructor" @ 280..291
+              ValueParameterList
+                LParen "(" @ 291..292
+                ValueParameterSeparatedList
+                  ValueParameter
+                    ModifierList
+                    Name
+                      Identifier "y" @ 292..293
+                    Colon ":" @ 293..294 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "Long" @ 295..299
+                RParen ")" @ 299..300 trailing=[Whitespace " "]
+              ConstructorDelegation
+                Colon ":" @ 301..302 trailing=[Whitespace " "]
+                ConstructorDelegationCall
+                  CallExpression
+                    ThisExpression
+                      ThisKw "this" @ 303..307
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 307..308
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          CallExpression
+                            NavigationExpression
+                              NameExpression
+                                Identifier "y" @ 308..309
+                              Dot "." @ 309..310
+                              Identifier "toInt" @ 310..315
+                            TypeArgumentListList
+                            ValueArgumentList
+                              LParen "(" @ 315..316
+                              ValueArgumentEntryList
+                              RParen ")" @ 316..317
+                            LambdaExpressionList
+                      RParen ")" @ 317..318
+                    LambdaExpressionList
+        RBrace "}" @ 319..320 leading=[Newline "\n"]
+  Eof "" @ 321..321 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
