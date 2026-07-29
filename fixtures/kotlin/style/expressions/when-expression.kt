@@ -10,3 +10,11 @@ fun message(status: Status): String =
         Status.Ready -> "ready"
         is Status.Failed -> "failed: ${status.reason}"
     }
+
+fun redundantEntrySemicolons(x: Int): String {
+    when (x) { 1 -> return "one"; else -> return "other" }
+}
+
+fun entrySemicolonComments(x: Int): String {
+    when (x) { 1 -> return "one"; /* mid */ else -> return "other" }
+}

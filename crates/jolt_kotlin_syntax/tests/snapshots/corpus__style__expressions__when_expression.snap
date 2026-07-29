@@ -16,6 +16,14 @@ fun message(status: Status): String =
         is Status.Failed -> "failed: ${status.reason}"
     }
 
+fun redundantEntrySemicolons(x: Int): String {
+    when (x) { 1 -> return "one"; else -> return "other" }
+}
+
+fun entrySemicolonComments(x: Int): String {
+    when (x) { 1 -> return "one"; /* mid */ else -> return "other" }
+}
+
 syntax:
 syntax:
 KotlinFile
@@ -182,7 +190,159 @@ KotlinFile
                         LongTemplateEntryEnd "}" @ 286..287
                   ClosingQuote "\"" @ 287..288
           RBrace "}" @ 293..294 leading=[Newline "\n", Whitespace "    "]
-  Eof "" @ 295..295 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 296..299 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "redundantEntrySemicolons" @ 300..324
+      ValueParameterList
+        LParen "(" @ 324..325
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "x" @ 325..326
+            Colon ":" @ 326..327 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 328..331
+        RParen ")" @ 331..332
+      Colon ":" @ 332..333 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "String" @ 334..340 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 341..342
+          BlockItemList
+            Statement
+              ExpressionStatement
+                WhenExpression
+                  WhenKw "when" @ 347..351 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  WhenSubject
+                    LParen "(" @ 352..353
+                    NameExpression
+                      Identifier "x" @ 353..354
+                    RParen ")" @ 354..355 trailing=[Whitespace " "]
+                  LBrace "{" @ 356..357 trailing=[Whitespace " "]
+                  WhenEntryList
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          LiteralExpression
+                            IntegerLiteral "1" @ 358..359 trailing=[Whitespace " "]
+                      Arrow "->" @ 360..362 trailing=[Whitespace " "]
+                      WhenEntryBody
+                        JumpExpression
+                          ReturnKw "return" @ 363..369 trailing=[Whitespace " "]
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                OpenQuote "\"" @ 370..371
+                              StringTemplateEntry
+                                RegularStringPart "one" @ 371..374
+                            ClosingQuote "\"" @ 374..375
+                    Semicolon ";" @ 375..376 trailing=[Whitespace " "]
+                    WhenEntry
+                      ElseKw "else" @ 377..381 trailing=[Whitespace " "]
+                      WhenConditionSeparatedList
+                      Arrow "->" @ 382..384 trailing=[Whitespace " "]
+                      WhenEntryBody
+                        JumpExpression
+                          ReturnKw "return" @ 385..391 trailing=[Whitespace " "]
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                OpenQuote "\"" @ 392..393
+                              StringTemplateEntry
+                                RegularStringPart "other" @ 393..398
+                            ClosingQuote "\"" @ 398..399 trailing=[Whitespace " "]
+                  RBrace "}" @ 400..401
+              TerminatorList
+          RBrace "}" @ 402..403 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 405..408 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "entrySemicolonComments" @ 409..431
+      ValueParameterList
+        LParen "(" @ 431..432
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "x" @ 432..433
+            Colon ":" @ 433..434 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 435..438
+        RParen ")" @ 438..439
+      Colon ":" @ 439..440 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "String" @ 441..447 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 448..449
+          BlockItemList
+            Statement
+              ExpressionStatement
+                WhenExpression
+                  WhenKw "when" @ 454..458 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  WhenSubject
+                    LParen "(" @ 459..460
+                    NameExpression
+                      Identifier "x" @ 460..461
+                    RParen ")" @ 461..462 trailing=[Whitespace " "]
+                  LBrace "{" @ 463..464 trailing=[Whitespace " "]
+                  WhenEntryList
+                    WhenEntry
+                      WhenConditionSeparatedList
+                        WhenCondition
+                          LiteralExpression
+                            IntegerLiteral "1" @ 465..466 trailing=[Whitespace " "]
+                      Arrow "->" @ 467..469 trailing=[Whitespace " "]
+                      WhenEntryBody
+                        JumpExpression
+                          ReturnKw "return" @ 470..476 trailing=[Whitespace " "]
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                OpenQuote "\"" @ 477..478
+                              StringTemplateEntry
+                                RegularStringPart "one" @ 478..481
+                            ClosingQuote "\"" @ 481..482
+                    Semicolon ";" @ 482..483 trailing=[Whitespace " ", BlockComment "/* mid */", Whitespace " "]
+                    WhenEntry
+                      ElseKw "else" @ 494..498 trailing=[Whitespace " "]
+                      WhenConditionSeparatedList
+                      Arrow "->" @ 499..501 trailing=[Whitespace " "]
+                      WhenEntryBody
+                        JumpExpression
+                          ReturnKw "return" @ 502..508 trailing=[Whitespace " "]
+                          StringTemplateExpression
+                            StringTemplateEntryList
+                              StringTemplateEntry
+                                OpenQuote "\"" @ 509..510
+                              StringTemplateEntry
+                                RegularStringPart "other" @ 510..515
+                            ClosingQuote "\"" @ 515..516 trailing=[Whitespace " "]
+                  RBrace "}" @ 517..518
+              TerminatorList
+          RBrace "}" @ 519..520 leading=[Newline "\n"]
+  Eof "" @ 521..521 leading=[Newline "\n"]
 
 diagnostics:
   (none)

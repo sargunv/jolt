@@ -13,6 +13,12 @@ fun stringTemplateEntriesStayFlat(user: Long, pendingCredits: Long, pendingDebit
   val rawTrailingLambdaChain = """value=${items.map { it + 1 }.filter { it > 1 }}"""
 }
 
+fun templateWhenEntries(x: Int, y: Int) {
+  val compact = "result: ${when (x) { 1 -> "one"; 2 -> "two"; else -> "other" }}"
+  val raw = """result: ${when (x) { 1 -> "one"; else -> "other" }}"""
+  val guard = "result: ${when (x) { 1 -> "one"; else -> computeSomethingWithAnExtremelyLongCall(y) }}"
+}
+
 syntax:
 syntax:
 KotlinFile
@@ -409,7 +415,236 @@ KotlinFile
                   ClosingQuote "\"\"\"" @ 662..665
               PropertyBodyMemberList
           RBrace "}" @ 666..667 leading=[Newline "\n"]
-  Eof "" @ 668..668 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 669..672 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "templateWhenEntries" @ 673..692
+      ValueParameterList
+        LParen "(" @ 692..693
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "x" @ 693..694
+            Colon ":" @ 694..695 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 696..699
+          Comma "," @ 699..700 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "y" @ 701..702
+            Colon ":" @ 702..703 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 704..707
+        RParen ")" @ 707..708 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 709..710
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 713..716 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "compact" @ 717..724 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 725..726 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 727..728
+                    StringTemplateEntry
+                      RegularStringPart "result: " @ 728..736
+                    StringTemplateEntry
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 736..738
+                        WhenExpression
+                          WhenKw "when" @ 738..742 trailing=[Whitespace " "]
+                          WhenSubject
+                            LParen "(" @ 743..744
+                            NameExpression
+                              Identifier "x" @ 744..745
+                            RParen ")" @ 745..746 trailing=[Whitespace " "]
+                          LBrace "{" @ 747..748 trailing=[Whitespace " "]
+                          WhenEntryList
+                            WhenEntry
+                              WhenConditionSeparatedList
+                                WhenCondition
+                                  LiteralExpression
+                                    IntegerLiteral "1" @ 749..750 trailing=[Whitespace " "]
+                              Arrow "->" @ 751..753 trailing=[Whitespace " "]
+                              WhenEntryBody
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 754..755
+                                    StringTemplateEntry
+                                      RegularStringPart "one" @ 755..758
+                                  ClosingQuote "\"" @ 758..759
+                            Semicolon ";" @ 759..760 trailing=[Whitespace " "]
+                            WhenEntry
+                              WhenConditionSeparatedList
+                                WhenCondition
+                                  LiteralExpression
+                                    IntegerLiteral "2" @ 761..762 trailing=[Whitespace " "]
+                              Arrow "->" @ 763..765 trailing=[Whitespace " "]
+                              WhenEntryBody
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 766..767
+                                    StringTemplateEntry
+                                      RegularStringPart "two" @ 767..770
+                                  ClosingQuote "\"" @ 770..771
+                            Semicolon ";" @ 771..772 trailing=[Whitespace " "]
+                            WhenEntry
+                              ElseKw "else" @ 773..777 trailing=[Whitespace " "]
+                              WhenConditionSeparatedList
+                              Arrow "->" @ 778..780 trailing=[Whitespace " "]
+                              WhenEntryBody
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 781..782
+                                    StringTemplateEntry
+                                      RegularStringPart "other" @ 782..787
+                                  ClosingQuote "\"" @ 787..788 trailing=[Whitespace " "]
+                          RBrace "}" @ 789..790
+                        LongTemplateEntryEnd "}" @ 790..791
+                  ClosingQuote "\"" @ 791..792
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 795..798 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "raw" @ 799..802 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 803..804 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"\"\"" @ 805..808
+                    StringTemplateEntry
+                      RegularStringPart "result: " @ 808..816
+                    StringTemplateEntry
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 816..818
+                        WhenExpression
+                          WhenKw "when" @ 818..822 trailing=[Whitespace " "]
+                          WhenSubject
+                            LParen "(" @ 823..824
+                            NameExpression
+                              Identifier "x" @ 824..825
+                            RParen ")" @ 825..826 trailing=[Whitespace " "]
+                          LBrace "{" @ 827..828 trailing=[Whitespace " "]
+                          WhenEntryList
+                            WhenEntry
+                              WhenConditionSeparatedList
+                                WhenCondition
+                                  LiteralExpression
+                                    IntegerLiteral "1" @ 829..830 trailing=[Whitespace " "]
+                              Arrow "->" @ 831..833 trailing=[Whitespace " "]
+                              WhenEntryBody
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 834..835
+                                    StringTemplateEntry
+                                      RegularStringPart "one" @ 835..838
+                                  ClosingQuote "\"" @ 838..839
+                            Semicolon ";" @ 839..840 trailing=[Whitespace " "]
+                            WhenEntry
+                              ElseKw "else" @ 841..845 trailing=[Whitespace " "]
+                              WhenConditionSeparatedList
+                              Arrow "->" @ 846..848 trailing=[Whitespace " "]
+                              WhenEntryBody
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 849..850
+                                    StringTemplateEntry
+                                      RegularStringPart "other" @ 850..855
+                                  ClosingQuote "\"" @ 855..856 trailing=[Whitespace " "]
+                          RBrace "}" @ 857..858
+                        LongTemplateEntryEnd "}" @ 858..859
+                  ClosingQuote "\"\"\"" @ 859..862
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 865..868 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "guard" @ 869..874 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 875..876 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 877..878
+                    StringTemplateEntry
+                      RegularStringPart "result: " @ 878..886
+                    StringTemplateEntry
+                      LongStringTemplateEntry
+                        LongTemplateEntryStart "${" @ 886..888
+                        WhenExpression
+                          WhenKw "when" @ 888..892 trailing=[Whitespace " "]
+                          WhenSubject
+                            LParen "(" @ 893..894
+                            NameExpression
+                              Identifier "x" @ 894..895
+                            RParen ")" @ 895..896 trailing=[Whitespace " "]
+                          LBrace "{" @ 897..898 trailing=[Whitespace " "]
+                          WhenEntryList
+                            WhenEntry
+                              WhenConditionSeparatedList
+                                WhenCondition
+                                  LiteralExpression
+                                    IntegerLiteral "1" @ 899..900 trailing=[Whitespace " "]
+                              Arrow "->" @ 901..903 trailing=[Whitespace " "]
+                              WhenEntryBody
+                                StringTemplateExpression
+                                  StringTemplateEntryList
+                                    StringTemplateEntry
+                                      OpenQuote "\"" @ 904..905
+                                    StringTemplateEntry
+                                      RegularStringPart "one" @ 905..908
+                                  ClosingQuote "\"" @ 908..909
+                            Semicolon ";" @ 909..910 trailing=[Whitespace " "]
+                            WhenEntry
+                              ElseKw "else" @ 911..915 trailing=[Whitespace " "]
+                              WhenConditionSeparatedList
+                              Arrow "->" @ 916..918 trailing=[Whitespace " "]
+                              WhenEntryBody
+                                CallExpression
+                                  NameExpression
+                                    Identifier "computeSomethingWithAnExtremelyLongCall" @ 919..958
+                                  TypeArgumentListList
+                                  ValueArgumentList
+                                    LParen "(" @ 958..959
+                                    ValueArgumentEntryList
+                                      ValueArgument
+                                        ValueArgumentPrefixList
+                                        NameExpression
+                                          Identifier "y" @ 959..960
+                                    RParen ")" @ 960..961 trailing=[Whitespace " "]
+                                  LambdaExpressionList
+                          RBrace "}" @ 962..963
+                        LongTemplateEntryEnd "}" @ 963..964
+                  ClosingQuote "\"" @ 964..965
+              PropertyBodyMemberList
+          RBrace "}" @ 966..967 leading=[Newline "\n"]
+  Eof "" @ 968..968 leading=[Newline "\n"]
 
 diagnostics:
   (none)
