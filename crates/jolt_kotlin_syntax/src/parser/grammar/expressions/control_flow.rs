@@ -533,7 +533,7 @@ impl Parser<'_> {
             self.complete(delegation, K::DelegationClause);
         }
         if self.at(K::LBrace) {
-            self.parse_class_body();
+            self.parse_class_body(false);
         } else {
             let body = self.start();
             let diagnostic = self.pending_expected("expected object body");
