@@ -10,6 +10,12 @@ fun assignmentTargets(target: Target, index: Int, value: String) {
     target.items[index].label = value
 }
 
+fun postfixAssignmentTargets(clauses: MutableList<String>?, target: Target, index: Int) {
+    clauses!! += "element"
+    clauses!! -= "element"
+    target.items[index]!! += target
+}
+
 syntax:
 syntax:
 KotlinFile
@@ -132,7 +138,120 @@ KotlinFile
                     Identifier "value" @ 181..186
               TerminatorList
           RBrace "}" @ 187..188 leading=[Newline "\n"]
-  Eof "" @ 189..189 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 190..193 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "postfixAssignmentTargets" @ 194..218
+      ValueParameterList
+        LParen "(" @ 218..219
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "clauses" @ 219..226
+            Colon ":" @ 226..227 trailing=[Whitespace " "]
+            TypeReference
+              NullableType
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "MutableList" @ 228..239
+                      TypeArgumentList
+                        Lt "<" @ 239..240
+                        TypeProjectionSeparatedList
+                          TypeReference
+                            UserType
+                              UserTypeSegmentList
+                                UserTypeSegment
+                                  Identifier "String" @ 240..246
+                        Gt ">" @ 246..247
+                Question "?" @ 247..248
+          Comma "," @ 248..249 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "target" @ 250..256
+            Colon ":" @ 256..257 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Target" @ 258..264
+          Comma "," @ 264..265 trailing=[Whitespace " "]
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "index" @ 266..271
+            Colon ":" @ 271..272 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 273..276
+        RParen ")" @ 276..277 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 278..279
+          BlockItemList
+            Statement
+              ExpressionStatement
+                AssignmentExpression
+                  PostfixExpression
+                    NameExpression
+                      Identifier "clauses" @ 284..291 leading=[Newline "\n", Whitespace "    "]
+                    BangBang "!!" @ 291..293 trailing=[Whitespace " "]
+                  PlusEq "+=" @ 294..296 trailing=[Whitespace " "]
+                  StringTemplateExpression
+                    StringTemplateEntryList
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 297..298
+                      StringTemplateEntry
+                        RegularStringPart "element" @ 298..305
+                    ClosingQuote "\"" @ 305..306
+              TerminatorList
+            Statement
+              ExpressionStatement
+                AssignmentExpression
+                  PostfixExpression
+                    NameExpression
+                      Identifier "clauses" @ 311..318 leading=[Newline "\n", Whitespace "    "]
+                    BangBang "!!" @ 318..320 trailing=[Whitespace " "]
+                  MinusEq "-=" @ 321..323 trailing=[Whitespace " "]
+                  StringTemplateExpression
+                    StringTemplateEntryList
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 324..325
+                      StringTemplateEntry
+                        RegularStringPart "element" @ 325..332
+                    ClosingQuote "\"" @ 332..333
+              TerminatorList
+            Statement
+              ExpressionStatement
+                AssignmentExpression
+                  PostfixExpression
+                    IndexExpression
+                      NavigationExpression
+                        NameExpression
+                          Identifier "target" @ 338..344 leading=[Newline "\n", Whitespace "    "]
+                        Dot "." @ 344..345
+                        Identifier "items" @ 345..350
+                      LBracket "[" @ 350..351
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          NameExpression
+                            Identifier "index" @ 351..356
+                      RBracket "]" @ 356..357
+                    BangBang "!!" @ 357..359 trailing=[Whitespace " "]
+                  PlusEq "+=" @ 360..362 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "target" @ 363..369
+              TerminatorList
+          RBrace "}" @ 370..371 leading=[Newline "\n"]
+  Eof "" @ 372..372 leading=[Newline "\n"]
 
 diagnostics:
   (none)
