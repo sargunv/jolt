@@ -127,6 +127,8 @@ style/statements/for-headers.java
 style/statements/formatter-ignore-adjacent-ranges.java
 style/statements/formatter-ignore-block.java
 style/statements/formatter-ignore-surrounding-comments.java
+style/statements/formatter-ignore-unterminated-tail.java
+style/statements/formatter-ignore-unterminated.java
 style/statements/if-else-braced-bodies.java
 style/statements/jump-and-assert-statements.java
 style/statements/labels-and-loop-bodies.java

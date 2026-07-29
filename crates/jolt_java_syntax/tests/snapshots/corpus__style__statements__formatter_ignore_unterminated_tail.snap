@@ -1,0 +1,63 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Before {
+    int after   =   5;
+}
+
+// @formatter:off
+class Tail {
+    int kept   =   6;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Before" @ 6..12 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 13..14
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 19..22 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "after" @ 23..28 trailing=[Whitespace "   "]
+                Assign "=" @ 31..32 trailing=[Whitespace "   "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "5" @ 35..36
+            Semicolon ";" @ 36..37
+        RBrace "}" @ 38..39 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 59..64 leading=[Newline "\n", Newline "\n", LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Tail" @ 65..69 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 70..71
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 76..79 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "kept" @ 80..84 trailing=[Whitespace "   "]
+                Assign "=" @ 87..88 trailing=[Whitespace "   "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "6" @ 91..92
+            Semicolon ";" @ 92..93
+        RBrace "}" @ 94..95 leading=[Newline "\n"]
+  Eof "" @ 96..96 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

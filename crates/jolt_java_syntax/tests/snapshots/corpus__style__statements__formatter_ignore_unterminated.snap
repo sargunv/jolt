@@ -1,0 +1,102 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Unterminated {
+    void inMethod() {
+        int before = 1;
+        // @formatter:off
+        int kept   =   2  +  3;
+        int also   =   4;
+    }
+
+    int after   =   5;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Unterminated" @ 6..18 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 19..20
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 25..29 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "inMethod" @ 30..38
+            LParen "(" @ 38..39
+            RParen ")" @ 39..40 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 41..42
+              BlockStatementList
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 51..54 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "before" @ 55..61 trailing=[Whitespace " "]
+                        Assign "=" @ 62..63 trailing=[Whitespace " "]
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "1" @ 64..65
+                  Semicolon ";" @ 65..66
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 101..104 leading=[Newline "\n", Whitespace "        ", LineComment "// @formatter:off", Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "kept" @ 105..109 trailing=[Whitespace "   "]
+                        Assign "=" @ 112..113 trailing=[Whitespace "   "]
+                        VariableInitializer
+                          BinaryExpression
+                            LiteralExpression
+                              IntegerLiteral "2" @ 116..117 trailing=[Whitespace "  "]
+                            Plus "+" @ 119..120 trailing=[Whitespace "  "]
+                            LiteralExpression
+                              IntegerLiteral "3" @ 122..123
+                  Semicolon ";" @ 123..124
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 133..136 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "also" @ 137..141 trailing=[Whitespace "   "]
+                        Assign "=" @ 144..145 trailing=[Whitespace "   "]
+                        VariableInitializer
+                          LiteralExpression
+                            IntegerLiteral "4" @ 148..149
+                  Semicolon ";" @ 149..150
+              RBrace "}" @ 155..156 leading=[Newline "\n", Whitespace "    "]
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 162..165 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "after" @ 166..171 trailing=[Whitespace "   "]
+                Assign "=" @ 174..175 trailing=[Whitespace "   "]
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "5" @ 178..179
+            Semicolon ";" @ 179..180
+        RBrace "}" @ 181..182 leading=[Newline "\n"]
+  Eof "" @ 183..183 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -404,6 +404,30 @@ impl<'tree> SourceRangeClaim<'tree> {
             }
         }
     }
+
+    /// Rebrands a sub-range of an already-claimed range: the replacement is
+    /// always narrower, so it cannot conserve anything the original could
+    /// not.
+    ///
+    /// # Panics
+    ///
+    /// Panics when `range` is not contained in the claimed range.
+    #[must_use]
+    pub fn with_range(&self, range: TextRange, include_line_ending_at_end: bool) -> Self {
+        #[cfg(debug_assertions)]
+        {
+            assert!(
+                self.range.start() <= range.start() && range.end() <= self.range.end(),
+                "rebranded claim range must stay within the claimed range"
+            );
+            Self::from_tree(self.tree, range, include_line_ending_at_end)
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            let _ = (range, include_line_ending_at_end);
+            *self
+        }
+    }
 }
 
 impl fmt::Display for ConservationError {

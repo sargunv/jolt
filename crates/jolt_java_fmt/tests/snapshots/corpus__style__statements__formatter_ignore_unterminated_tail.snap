@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class Before {
+  int after = 5;
+}
+
+// @formatter:off
+class Tail {
+    int kept   =   6;
+}
+
+diagnostics:
+(none)

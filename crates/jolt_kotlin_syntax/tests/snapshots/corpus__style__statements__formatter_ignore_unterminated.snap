@@ -1,0 +1,90 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun inFunction() {
+    val before = 1
+    // @formatter:off
+    val kept   =   2  +  3
+    val also   =   4
+}
+
+val after   =   5
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "inFunction" @ 4..14
+      ValueParameterList
+        LParen "(" @ 14..15
+        ValueParameterSeparatedList
+        RParen ")" @ 15..16 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 17..18
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 23..26 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "before" @ 27..33 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 34..35 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "1" @ 36..37
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 64..67 leading=[Newline "\n", Whitespace "    ", LineComment "// @formatter:off", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "kept" @ 68..72 trailing=[Whitespace "   "]
+              PropertyInitializer
+                Assign "=" @ 75..76 trailing=[Whitespace "   "]
+                BinaryExpression
+                  LiteralExpression
+                    IntegerLiteral "2" @ 79..80 trailing=[Whitespace "  "]
+                  Plus "+" @ 82..83 trailing=[Whitespace "  "]
+                  LiteralExpression
+                    IntegerLiteral "3" @ 85..86
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 91..94 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "also" @ 95..99 trailing=[Whitespace "   "]
+              PropertyInitializer
+                Assign "=" @ 102..103 trailing=[Whitespace "   "]
+                LiteralExpression
+                  IntegerLiteral "4" @ 106..107
+              PropertyBodyMemberList
+          RBrace "}" @ 108..109 leading=[Newline "\n"]
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 111..114 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "after" @ 115..120 trailing=[Whitespace "   "]
+      PropertyInitializer
+        Assign "=" @ 123..124 trailing=[Whitespace "   "]
+        LiteralExpression
+          IntegerLiteral "5" @ 127..128
+      PropertyBodyMemberList
+  Eof "" @ 129..129 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

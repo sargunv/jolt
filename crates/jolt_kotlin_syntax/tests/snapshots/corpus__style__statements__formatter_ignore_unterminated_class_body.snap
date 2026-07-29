@@ -1,0 +1,57 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class InClass {
+    // @formatter:off
+    val kept   =   6
+    val also   =   7
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "InClass" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 42..45 leading=[Newline "\n", Whitespace "    ", LineComment "// @formatter:off", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "kept" @ 46..50 trailing=[Whitespace "   "]
+              PropertyInitializer
+                Assign "=" @ 53..54 trailing=[Whitespace "   "]
+                LiteralExpression
+                  IntegerLiteral "6" @ 57..58
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 63..66 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "also" @ 67..71 trailing=[Whitespace "   "]
+              PropertyInitializer
+                Assign "=" @ 74..75 trailing=[Whitespace "   "]
+                LiteralExpression
+                  IntegerLiteral "7" @ 78..79
+              PropertyBodyMemberList
+        RBrace "}" @ 80..81 leading=[Newline "\n"]
+  Eof "" @ 82..82 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
