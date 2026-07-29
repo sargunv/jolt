@@ -1,0 +1,181 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class LeadingCommentsBeforeInitializerBlocks {
+  /* instance lead */ {
+    instance();
+  }
+
+  // instance line lead
+  {
+    lineLead();
+  }
+
+  /* static lead */ static {
+    staticInit();
+  }
+
+  void nested() {
+    /* block lead */ {
+      nested();
+    }
+  }
+}
+
+class SameLineInstanceInitializerComment { /* dangling */ { body(); } }
+
+class SameLineNestedBlockComment {
+  void m() { /* dangling */ { body(); } }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "LeadingCommentsBeforeInitializerBlocks" @ 6..44 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 45..46
+        ClassBodyMemberList
+          InstanceInitializer
+            Block
+              LBrace "{" @ 69..70 leading=[Newline "\n", Whitespace "  ", BlockComment "/* instance lead */", Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "instance" @ 75..83 leading=[Newline "\n", Whitespace "    "]
+                        ArgumentList
+                          LParen "(" @ 83..84
+                          ExpressionList
+                          RParen ")" @ 84..85
+                    Semicolon ";" @ 85..86
+              RBrace "}" @ 89..90 leading=[Newline "\n", Whitespace "  "]
+          InstanceInitializer
+            Block
+              LBrace "{" @ 118..119 leading=[Newline "\n", Newline "\n", Whitespace "  ", LineComment "// instance line lead", Newline "\n", Whitespace "  "]
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "lineLead" @ 124..132 leading=[Newline "\n", Whitespace "    "]
+                        ArgumentList
+                          LParen "(" @ 132..133
+                          ExpressionList
+                          RParen ")" @ 133..134
+                    Semicolon ";" @ 134..135
+              RBrace "}" @ 138..139 leading=[Newline "\n", Whitespace "  "]
+          StaticInitializer
+            StaticKw "static" @ 161..167 leading=[Newline "\n", Newline "\n", Whitespace "  ", BlockComment "/* static lead */", Whitespace " "] trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 168..169
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "staticInit" @ 174..184 leading=[Newline "\n", Whitespace "    "]
+                        ArgumentList
+                          LParen "(" @ 184..185
+                          ExpressionList
+                          RParen ")" @ 185..186
+                    Semicolon ";" @ 186..187
+              RBrace "}" @ 190..191 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 195..199 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "nested" @ 200..206
+            LParen "(" @ 206..207
+            RParen ")" @ 207..208 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 209..210
+              BlockStatementList
+                BlockStatement
+                  Block
+                    LBrace "{" @ 232..233 leading=[Newline "\n", Whitespace "    ", BlockComment "/* block lead */", Whitespace " "]
+                    BlockStatementList
+                      BlockStatement
+                        ExpressionStatement
+                          MethodInvocationExpression
+                            UnqualifiedMethodInvocation
+                              NameExpression
+                                Identifier "nested" @ 240..246 leading=[Newline "\n", Whitespace "      "]
+                              ArgumentList
+                                LParen "(" @ 246..247
+                                ExpressionList
+                                RParen ")" @ 247..248
+                          Semicolon ";" @ 248..249
+                    RBrace "}" @ 254..255 leading=[Newline "\n", Whitespace "    "]
+              RBrace "}" @ 258..259 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 260..261 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 263..268 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "SameLineInstanceInitializerComment" @ 269..303 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 304..305 trailing=[Whitespace " ", BlockComment "/* dangling */", Whitespace " "]
+        ClassBodyMemberList
+          InstanceInitializer
+            Block
+              LBrace "{" @ 321..322 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "body" @ 323..327
+                        ArgumentList
+                          LParen "(" @ 327..328
+                          ExpressionList
+                          RParen ")" @ 328..329
+                    Semicolon ";" @ 329..330 trailing=[Whitespace " "]
+              RBrace "}" @ 331..332 trailing=[Whitespace " "]
+        RBrace "}" @ 333..334
+    ClassDeclaration
+      ClassKw "class" @ 336..341 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "SameLineNestedBlockComment" @ 342..368 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 369..370
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 373..377 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "m" @ 378..379
+            LParen "(" @ 379..380
+            RParen ")" @ 380..381 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 382..383 trailing=[Whitespace " ", BlockComment "/* dangling */", Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  Block
+                    LBrace "{" @ 399..400 trailing=[Whitespace " "]
+                    BlockStatementList
+                      BlockStatement
+                        ExpressionStatement
+                          MethodInvocationExpression
+                            UnqualifiedMethodInvocation
+                              NameExpression
+                                Identifier "body" @ 401..405
+                              ArgumentList
+                                LParen "(" @ 405..406
+                                ExpressionList
+                                RParen ")" @ 406..407
+                          Semicolon ";" @ 407..408 trailing=[Whitespace " "]
+                    RBrace "}" @ 409..410 trailing=[Whitespace " "]
+              RBrace "}" @ 411..412
+        RBrace "}" @ 413..414 leading=[Newline "\n"]
+  Eof "" @ 415..415 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

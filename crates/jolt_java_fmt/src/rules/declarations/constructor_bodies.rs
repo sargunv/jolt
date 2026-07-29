@@ -2,10 +2,10 @@ use super::{
     BodyItem, ConstructorInvocation, Doc, FormatterIgnoreItemRange, FormatterIgnoreSplice,
     JavaSyntaxToken, for_each_formatter_ignore_splice, format_argument_list,
     format_block_statement_item, format_construct_leading_comments, format_dangling_comments,
-    format_expression, format_name, format_removed_comments, format_statement_semicolon,
-    format_token_after_construct_leading_comments, format_token_with_comments,
-    format_type_argument_list_without_leading_comments, formatter_ignore_content_range,
-    formatter_ignore_run_doc, join_body_items,
+    format_expression, format_name_without_leading_comments, format_removed_comments,
+    format_statement_semicolon, format_token_after_construct_leading_comments,
+    format_token_with_comments, format_type_argument_list_without_leading_comments,
+    formatter_ignore_content_range, formatter_ignore_run_doc, join_body_items,
 };
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{ConstructorBodyEntry, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxView};
@@ -201,10 +201,22 @@ fn format_constructor_invocation<'source>(
     invocation: &ConstructorInvocation<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    // A qualifier owns the construct's first token and emits that token's
-    // leading comments itself, so there is nothing left to hoist.
+    // The statement begins its own line, so a comment leading the construct's
+    // first token is a statement-leading comment and keeps its own line. An
+    // unqualified invocation hoists it here and the target formats it as
+    // already handled. A name qualifier would inline it, so it is hoisted here
+    // as well, with the name formatting it as already handled; inlining it
+    // beside the qualifier would flip-flop with the constructor body's
+    // dangling-comment placement. An expression qualifier already keeps its
+    // first token's leading comments on their own line, so it owns them.
     let invocation_first_token = match invocation.qualifier() {
-        JavaSyntaxField::Present(_) => None,
+        JavaSyntaxField::Present(qualifier)
+            if qualifier
+                .cast_family::<jolt_java_syntax::NameSyntax<'source>>()
+                .is_none() =>
+        {
+            None
+        }
         _ => invocation.first_token(),
     };
     // The list never emits the leading comments on its opening angle bracket:
@@ -272,7 +284,7 @@ fn format_constructor_invocation_qualifier<'source>(
     let qualifier = match resolve_optional_field(invocation.qualifier(), doc) {
         JavaFormatField::Present(Some(qualifier)) => {
             if let Some(name) = qualifier.cast_family::<jolt_java_syntax::NameSyntax<'source>>() {
-                format_name(&name, doc)
+                format_name_without_leading_comments(&name, doc)
             } else if let Some(expression) =
                 qualifier.cast_family::<jolt_java_syntax::Expression<'source>>()
             {

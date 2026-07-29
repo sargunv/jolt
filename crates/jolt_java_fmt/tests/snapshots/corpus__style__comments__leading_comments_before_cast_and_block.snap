@@ -20,7 +20,8 @@ class LeadingCommentsBeforeCastAndBlock {
   }
 
   void blockComment() {
-    /* JOLT-TRIVIA:block-comment */ {
+    /* JOLT-TRIVIA:block-comment */
+    {
       int nested;
     }
   }

@@ -26,9 +26,9 @@ use crate::helpers::recovery::{format_malformed, resolve_required_delimiter};
 use crate::rules::annotations::format_annotation_element_value;
 use crate::rules::expressions::{format_argument_list, format_expression};
 use crate::rules::modifiers::{format_modifier_prefix, format_typed_modifier_prefix};
-use crate::rules::names::format_name;
+use crate::rules::names::{format_name, format_name_without_leading_comments};
 use crate::rules::statements::{
-    format_block, format_block_statement_item, format_statement_semicolon,
+    format_block, format_block_statement_item, format_line_start_block, format_statement_semicolon,
 };
 use crate::rules::types::{
     LeadingComments as TypeLeadingComments, format_array_dimensions, format_type,

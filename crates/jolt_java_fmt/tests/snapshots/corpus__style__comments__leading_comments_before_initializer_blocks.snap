@@ -1,0 +1,47 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class LeadingCommentsBeforeInitializerBlocks {
+  /* instance lead */
+  {
+    instance();
+  }
+
+  // instance line lead
+  {
+    lineLead();
+  }
+
+  /* static lead */
+  static {
+    staticInit();
+  }
+
+  void nested() {
+    /* block lead */
+    {
+      nested();
+    }
+  }
+}
+
+class SameLineInstanceInitializerComment {
+  /* dangling */
+  {
+    body();
+  }
+}
+
+class SameLineNestedBlockComment {
+  void m() {
+    /* dangling */
+    {
+      body();
+    }
+  }
+}
+
+diagnostics:
+(none)

@@ -14,6 +14,8 @@ style/comments/dangling-comment-blank-lines.java
 style/comments/enum-trailing-comma-comments.java
 style/comments/leading-comment-blank-lines.java
 style/comments/leading-comments-before-cast-and-block.java
+style/comments/leading-comments-before-initializer-blocks.java
+style/comments/leading-comments-before-nested-array-initializers.java
 style/comments/leading-comments-on-assignments.java
 style/comments/leading-comments-on-binary-operands.java
 style/comments/leading-comments-on-constructor-invocations.java

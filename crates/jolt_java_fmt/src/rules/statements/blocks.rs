@@ -7,7 +7,8 @@ use super::{
 };
 use crate::helpers::blocks::BodyContent;
 use crate::helpers::comments::{
-    InlineLeadingTrivia, format_token_after_relocated_leading_comments, format_token_removal,
+    InlineLeadingTrivia, format_construct_leading_comments,
+    format_token_after_relocated_leading_comments, format_token_removal,
     format_token_with_inline_leading_comments, has_removed_comments,
 };
 use crate::helpers::recovery::{JavaFormatField, format_malformed, resolve_required_field};
@@ -19,8 +20,38 @@ pub(crate) fn format_block<'source>(
     block: &Block<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    format_block_with_open_leading(block, OpenBraceLeading::Inline, doc)
+}
+
+/// Formats a block that begins its own line: an instance initializer or a
+/// nested block statement. A comment leading the open brace is a member- or
+/// statement-leading comment, so it keeps its own line like the leading
+/// comments of any other member or statement. Inlining it beside the brace
+/// would flip-flop with the enclosing body's dangling-comment placement.
+pub(crate) fn format_line_start_block<'source>(
+    block: &Block<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let open = present_block_token(block.open_brace());
+    let leading = format_construct_leading_comments(doc, open.as_ref());
+    let block = format_block_with_open_leading(block, OpenBraceLeading::Suppress, doc);
+    doc_concat!(doc, [leading, block])
+}
+
+fn format_block_with_open_leading<'source>(
+    block: &Block<'source>,
+    leading: OpenBraceLeading,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
     let open = match resolve_required_field(block.open_brace(), doc) {
-        JavaFormatField::Present(open) => format_block_open_brace(&open, doc),
+        JavaFormatField::Present(open) => match leading {
+            OpenBraceLeading::Inline => format_block_open_brace(&open, doc),
+            OpenBraceLeading::Suppress => format_token_after_relocated_leading_comments(
+                doc,
+                &open,
+                TrailingTrivia::RelocatedToEnclosingContext,
+            ),
+        },
         JavaFormatField::Malformed(malformed) => malformed,
     };
     let body = match format_block_statements_body(block, doc) {
@@ -41,6 +72,12 @@ pub(crate) fn format_block<'source>(
         JavaFormatField::Malformed(malformed) => malformed,
     };
     doc_concat!(doc, [open, body, close])
+}
+
+#[derive(Clone, Copy)]
+enum OpenBraceLeading {
+    Inline,
+    Suppress,
 }
 
 fn format_block_open_brace<'source>(
@@ -262,7 +299,7 @@ pub(crate) fn format_block_statement_item<'source>(
                 JavaFormatField::Malformed(malformed) => malformed,
             }
         }
-        BlockItem::Block(block) => format_block(&block, doc),
+        BlockItem::Block(block) => format_line_start_block(&block, doc),
         BlockItem::BogusBlockItem(value) => format_malformed(&value, doc),
         BlockItem::BogusStatement(value) => format_malformed(&value, doc),
         BlockItem::LabeledStatement(statement) => format_statement(&statement.into(), doc),

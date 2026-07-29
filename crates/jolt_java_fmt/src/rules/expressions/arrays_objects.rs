@@ -3,10 +3,11 @@ use super::{
     ArrayAccessExpression, ArrayCreationExpression, ArrayInitializer, CommaListItem, DimExpression,
     Doc, InlineLeadingTrivia, JavaSyntaxToken, LeadingTrivia, ObjectCreationExpression,
     TrailingTrivia, VariableInitializerValue, braced_comma_list_with_trailing_separator,
-    comment_forces_line, format_anonymous_class_body, format_array_dimensions, format_expression,
-    format_token, format_token_with_comments, format_token_with_inline_leading_comments,
-    format_trailing_comments_before_line_break, format_type, format_type_argument_list,
-    trailing_comments_force_line,
+    braced_comma_list_without_open_leading_comments, comment_forces_line,
+    format_anonymous_class_body, format_array_dimensions, format_construct_leading_comments,
+    format_expression, format_token, format_token_with_comments,
+    format_token_with_inline_leading_comments, format_trailing_comments_before_line_break,
+    format_type, format_type_argument_list, trailing_comments_force_line,
 };
 use crate::helpers::lists::syntax_comma_list_items;
 use crate::helpers::recovery::{
@@ -304,16 +305,61 @@ fn format_array_initializer<'source>(
     initializer: &ArrayInitializer<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    format_array_initializer_with_open_leading(initializer, LeadingTrivia::Preserve, doc)
+}
+
+/// Formats an array initializer that begins its own line as a nested braced
+/// element of an enclosing initializer. A comment leading its open brace is an
+/// element-leading comment, so it keeps its own line like the leading comments
+/// of any other element. Inlining it beside the brace would flip-flop with the
+/// enclosing initializer's dangling-comment placement.
+fn format_line_start_array_initializer<'source>(
+    initializer: &ArrayInitializer<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let open = present_delimiter_token(initializer.open_brace());
+    let leading = format_construct_leading_comments(doc, open.as_ref());
+    let initializer = format_array_initializer_with_open_leading(
+        initializer,
+        LeadingTrivia::SuppressAlreadyHandled,
+        doc,
+    );
+    doc_concat!(doc, [leading, initializer])
+}
+
+fn format_array_initializer_with_open_leading<'source>(
+    initializer: &ArrayInitializer<'source>,
+    open_leading: LeadingTrivia,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
     let open = resolve_required_delimiter(initializer.open_brace(), doc);
     let close = resolve_required_delimiter(initializer.close_brace(), doc);
     let items = array_initializer_items(initializer, doc);
-    braced_comma_list_with_trailing_separator(
-        doc,
-        open,
-        close,
-        items,
-        initializer.trailing_comma_claim(),
-    )
+    match open_leading {
+        LeadingTrivia::Preserve => braced_comma_list_with_trailing_separator(
+            doc,
+            open,
+            close,
+            items,
+            initializer.trailing_comma_claim(),
+        ),
+        LeadingTrivia::SuppressAlreadyHandled => braced_comma_list_without_open_leading_comments(
+            doc,
+            open,
+            close,
+            items,
+            initializer.trailing_comma_claim(),
+        ),
+    }
+}
+
+fn present_delimiter_token<'source>(
+    field: jolt_java_syntax::JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
+) -> Option<JavaSyntaxToken<'source>> {
+    match field {
+        jolt_java_syntax::JavaSyntaxField::Present(token) => Some(token),
+        _ => None,
+    }
 }
 
 fn array_initializer_items<'source, 'fmt>(
@@ -322,8 +368,11 @@ fn array_initializer_items<'source, 'fmt>(
 ) -> Vec<CommaListItem<'source>> {
     match resolve_required_field(initializer.values(), doc) {
         JavaFormatField::Present(values) => {
-            syntax_comma_list_items(doc, values.parts(), |value, doc| {
-                format_variable_initializer_value(value, doc)
+            syntax_comma_list_items(doc, values.parts(), |value, doc| match value {
+                VariableInitializerValue::ArrayInitializer(initializer) => {
+                    format_line_start_array_initializer(&initializer, doc)
+                }
+                _ => format_variable_initializer_value(value, doc),
             })
         }
         JavaFormatField::Malformed(recovery) => vec![CommaListItem::visible(recovery)],
