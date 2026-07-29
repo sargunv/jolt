@@ -87,6 +87,7 @@ style/expressions/readability-parenthesized-binaries.java
 style/expressions/unary-parenthesized-operators.java
 style/imports/case-sensitive-sorting.java
 style/imports/comment-barrier-blank-lines.java
+style/imports/comment-barrier-static-first.java
 style/imports/comment-barrier.java
 style/imports/normal-and-static-groups.java
 style/imports/sorted-comments.java

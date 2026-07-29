@@ -1,0 +1,81 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import static b.B;
+import static c.C;
+/* comment travels with its import */
+import static d.D;
+import a.A;
+class A {}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ImportDeclaration
+      ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+      StaticKw "static" @ 7..13 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "b" @ 14..15
+        Dot "." @ 15..16
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "B" @ 16..17
+      Semicolon ";" @ 17..18
+    ImportDeclaration
+      ImportKw "import" @ 19..25 leading=[Newline "\n"] trailing=[Whitespace " "]
+      StaticKw "static" @ 26..32 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "c" @ 33..34
+        Dot "." @ 34..35
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "C" @ 35..36
+      Semicolon ";" @ 36..37
+    ImportDeclaration
+      ImportKw "import" @ 76..82 leading=[Newline "\n", BlockComment "/* comment travels with its import */", Newline "\n"] trailing=[Whitespace " "]
+      StaticKw "static" @ 83..89 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "d" @ 90..91
+        Dot "." @ 91..92
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "D" @ 92..93
+      Semicolon ";" @ 93..94
+    ImportDeclaration
+      ImportKw "import" @ 95..101 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "a" @ 102..103
+        Dot "." @ 103..104
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "A" @ 104..105
+      Semicolon ";" @ 105..106
+    ClassDeclaration
+      ClassKw "class" @ 107..112 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "A" @ 113..114 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 115..116
+        ClassBodyMemberList
+        RBrace "}" @ 116..117
+  Eof "" @ 118..118 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
