@@ -34,7 +34,7 @@ impl Parser<'_> {
             }
             saw_body = true;
             let before = self.position();
-            self.parse_declaration_or_statement();
+            self.parse_declaration_or_statement(false);
             if self.position() == before {
                 let bogus = self.start();
                 let diagnostic = self.pending_unexpected("expected declaration or statement");

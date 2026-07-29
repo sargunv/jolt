@@ -10,17 +10,18 @@ mod callables;
 mod classes;
 
 impl Parser<'_> {
-    pub(super) fn parse_declaration_or_statement(&mut self) -> bool {
-        self.parse_declaration_or_statement_with_class_members(false)
+    pub(super) fn parse_declaration_or_statement(&mut self, local: bool) -> bool {
+        self.parse_declaration_or_statement_with_class_members(false, local)
     }
 
     pub(in crate::parser::grammar) fn parse_class_member_declaration_or_statement(&mut self) {
-        self.parse_declaration_or_statement_with_class_members(true);
+        self.parse_declaration_or_statement_with_class_members(true, false);
     }
 
     fn parse_declaration_or_statement_with_class_members(
         &mut self,
         allow_class_members: bool,
+        local: bool,
     ) -> bool {
         if !self.at_declaration_start(allow_class_members) {
             let marker = self.start();
@@ -67,7 +68,7 @@ impl Parser<'_> {
                 K::FunctionDeclaration
             }
             K::ValKw | K::VarKw => {
-                self.parse_property_tail();
+                self.parse_property_tail(local);
                 K::PropertyDeclaration
             }
             K::TypeAliasKw => {
