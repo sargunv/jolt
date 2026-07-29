@@ -45,6 +45,18 @@ run = "cargo nextest run --workspace"
 [tasks.machete]
 run = "cargo machete"
 
+[tasks.hunt]
+description = "Sweep the imported corpora for formatter bugs (idempotence, conservation, reparse validity)"
+depends = ["hunt:java", "hunt:kotlin"]
+
+[tasks."hunt:java"]
+description = "Sweep the imported Java corpora for formatter bugs"
+run = "cargo run --release -p jolt_java_fmt --example jhunt"
+
+[tasks."hunt:kotlin"]
+description = "Sweep the imported Kotlin corpora for formatter bugs"
+run = "cargo run --release -p jolt_kotlin_fmt --example khunt"
+
 [tasks.build]
 depends = ["build:jolt", "build:dprint-plugin"]
 

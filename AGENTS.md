@@ -13,6 +13,13 @@ Fast, opinionated JVM and Kotlin Multiplatform project tooling.
 - `mise run test`: run all tests.
 - `mise run test --update`: run tests with `INSTA_UPDATE=always`.
 - `mise run jolt ...`: run the Jolt CLI from local source.
+- `mise run hunt`: sweep the imported corpora (tools/import/.imports) for
+  formatter bugs: formats every file at several line widths and with block
+  comments injected at token boundaries, checking idempotence, reparse validity,
+  and structure/comment conservation. Runs in release mode (~5 s); too slow in
+  debug for the normal test suite. Reports land in `target/hunt/`. The
+  `jcheck`/`kcheck` examples re-run one file (or one probe position, e.g.
+  `.../File.java:comment12`) for repros.
 - `mise run dprint-with-jolt ...`: run the dprint cli with the jolt formatter
   plugin.
 - `mise x google-java-format -- google-java-format ...`: run the
