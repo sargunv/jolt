@@ -12,6 +12,20 @@ fun callChains(source: Sequence<String>): List<String> =
         .sorted()
         .toList()
 
+fun String.trimStackTrace(): String =
+    trimIndent()
+        // Remove source line
+        .replace(Regex(":[0-9]+"), "")
+        // Remove coroutine id
+        .replace(Regex("@[0-9]+"), "")
+
+fun midChainComments(text: String): String =
+    text
+        .trim()
+        // comment between suffixes
+        .uppercase()
+        .lowercase()
+
 syntax:
 syntax:
 KotlinFile
@@ -151,7 +165,179 @@ KotlinFile
             ValueArgumentEntryList
             RParen ")" @ 198..199
           LambdaExpressionList
-  Eof "" @ 200..200 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 201..204 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      CallableName
+        TypeReference
+          UserType
+            UserTypeSegmentList
+              UserTypeSegment
+                Identifier "String" @ 205..211
+        Dot "." @ 211..212
+        Name
+          Identifier "trimStackTrace" @ 212..226
+      ValueParameterList
+        LParen "(" @ 226..227
+        ValueParameterSeparatedList
+        RParen ")" @ 227..228
+      Colon ":" @ 228..229 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "String" @ 230..236 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 237..238
+        CallExpression
+          NavigationExpression
+            CallExpression
+              NavigationExpression
+                CallExpression
+                  NameExpression
+                    Identifier "trimIndent" @ 243..253 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 253..254
+                    ValueArgumentEntryList
+                    RParen ")" @ 254..255
+                  LambdaExpressionList
+                Dot "." @ 294..295 leading=[Newline "\n", Whitespace "        ", LineComment "// Remove source line", Newline "\n", Whitespace "        "]
+                Identifier "replace" @ 295..302
+              TypeArgumentListList
+              ValueArgumentList
+                LParen "(" @ 302..303
+                ValueArgumentEntryList
+                  ValueArgument
+                    ValueArgumentPrefixList
+                    CallExpression
+                      NameExpression
+                        Identifier "Regex" @ 303..308
+                      TypeArgumentListList
+                      ValueArgumentList
+                        LParen "(" @ 308..309
+                        ValueArgumentEntryList
+                          ValueArgument
+                            ValueArgumentPrefixList
+                            StringTemplateExpression
+                              StringTemplateEntryList
+                                StringTemplateEntry
+                                  OpenQuote "\"" @ 309..310
+                                StringTemplateEntry
+                                  RegularStringPart ":[0-9]+" @ 310..317
+                              ClosingQuote "\"" @ 317..318
+                        RParen ")" @ 318..319
+                      LambdaExpressionList
+                  Comma "," @ 319..320 trailing=[Whitespace " "]
+                  ValueArgument
+                    ValueArgumentPrefixList
+                    StringTemplateExpression
+                      StringTemplateEntryList
+                        StringTemplateEntry
+                          OpenQuote "\"" @ 321..322
+                      ClosingQuote "\"" @ 322..323
+                RParen ")" @ 323..324
+              LambdaExpressionList
+            Dot "." @ 364..365 leading=[Newline "\n", Whitespace "        ", LineComment "// Remove coroutine id", Newline "\n", Whitespace "        "]
+            Identifier "replace" @ 365..372
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 372..373
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                CallExpression
+                  NameExpression
+                    Identifier "Regex" @ 373..378
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 378..379
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        StringTemplateExpression
+                          StringTemplateEntryList
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 379..380
+                            StringTemplateEntry
+                              RegularStringPart "@[0-9]+" @ 380..387
+                          ClosingQuote "\"" @ 387..388
+                    RParen ")" @ 388..389
+                  LambdaExpressionList
+              Comma "," @ 389..390 trailing=[Whitespace " "]
+              ValueArgument
+                ValueArgumentPrefixList
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 391..392
+                  ClosingQuote "\"" @ 392..393
+            RParen ")" @ 393..394
+          LambdaExpressionList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 396..399 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "midChainComments" @ 400..416
+      ValueParameterList
+        LParen "(" @ 416..417
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "text" @ 417..421
+            Colon ":" @ 421..422 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "String" @ 423..429
+        RParen ")" @ 429..430
+      Colon ":" @ 430..431 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "String" @ 432..438 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 439..440
+        CallExpression
+          NavigationExpression
+            CallExpression
+              NavigationExpression
+                CallExpression
+                  NavigationExpression
+                    NameExpression
+                      Identifier "text" @ 445..449 leading=[Newline "\n", Whitespace "    "]
+                    Dot "." @ 458..459 leading=[Newline "\n", Whitespace "        "]
+                    Identifier "trim" @ 459..463
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 463..464
+                    ValueArgumentEntryList
+                    RParen ")" @ 464..465
+                  LambdaExpressionList
+                Dot "." @ 510..511 leading=[Newline "\n", Whitespace "        ", LineComment "// comment between suffixes", Newline "\n", Whitespace "        "]
+                Identifier "uppercase" @ 511..520
+              TypeArgumentListList
+              ValueArgumentList
+                LParen "(" @ 520..521
+                ValueArgumentEntryList
+                RParen ")" @ 521..522
+              LambdaExpressionList
+            Dot "." @ 531..532 leading=[Newline "\n", Whitespace "        "]
+            Identifier "lowercase" @ 532..541
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 541..542
+            ValueArgumentEntryList
+            RParen ")" @ 542..543
+          LambdaExpressionList
+  Eof "" @ 544..544 leading=[Newline "\n"]
 
 diagnostics:
   (none)
