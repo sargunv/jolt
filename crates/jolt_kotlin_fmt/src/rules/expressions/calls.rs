@@ -720,6 +720,21 @@ pub(crate) fn format_value_argument<'source>(
         argument.prefix(),
         KotlinSyntaxField::Present(ref prefix) if prefix.first_token().is_some()
     );
+    let has_annotated_prefix = matches!(
+        argument.prefix(),
+        KotlinSyntaxField::Present(ref prefix) if prefix.parts().any(|part| {
+            matches!(
+                part,
+                jolt_kotlin_syntax::KotlinSyntaxListPart::Item(item) if item
+                    .first_token()
+                    .is_some_and(|token| matches!(
+                        token.kind(),
+                        jolt_kotlin_syntax::KotlinSyntaxKind::At
+                            | jolt_kotlin_syntax::KotlinSyntaxKind::Hash
+                    ))
+            )
+        })
+    );
     let has_name = matches!(
         argument.name(),
         KotlinSyntaxField::Present(ref name) if name.first_token().is_some()
@@ -768,11 +783,12 @@ pub(crate) fn format_value_argument<'source>(
         };
         doc.concat([before, assign, after])
     });
-    let missing_assign_separator = if !has_assign && has_name && has_expression {
-        doc.space()
-    } else {
-        Doc::nil()
-    };
+    let missing_assign_separator =
+        if !has_assign && (has_annotated_prefix || has_name) && has_expression {
+            doc.space()
+        } else {
+            Doc::nil()
+        };
     let expression = format_required_field(argument.expression(), doc, |expression, doc| {
         let comments =
             format_expression_leading_comments(doc, &expression, LeadingTrivia::Preserve);

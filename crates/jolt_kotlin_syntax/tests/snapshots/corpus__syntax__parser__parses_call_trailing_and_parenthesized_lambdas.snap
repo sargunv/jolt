@@ -19,6 +19,14 @@ class Cached<T>(private val init: (Int) -> T) {
     private val values = List(8) { init(it) }
 }
 
+fun annotatedLambdas() {
+    run @Suppress("x") { 1 }
+    run() @Suppress("x") { 1 }
+    items.forEach @Synchronized { consume(it) }
+    run @kotlin.Suppress @Deprecated("old") { 2 }
+    run(@Suppress("x") { 3 })
+}
+
 syntax:
 syntax:
 KotlinFile
@@ -278,7 +286,241 @@ KotlinFile
                         RBrace "}" @ 302..303
               PropertyBodyMemberList
         RBrace "}" @ 304..305 leading=[Newline "\n"]
-  Eof "" @ 306..306 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 307..310 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "annotatedLambdas" @ 311..327
+      ValueParameterList
+        LParen "(" @ 327..328
+        ValueParameterSeparatedList
+        RParen ")" @ 328..329 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 330..331
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "run" @ 336..339 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      AnnotatedLambdaExpression
+                        ModifierList
+                          Annotation
+                            At "@" @ 340..341
+                            QualifiedName
+                              QualifiedNameSegmentList
+                                Name
+                                  Identifier "Suppress" @ 341..349
+                            AnnotationArgumentList
+                              LParen "(" @ 349..350
+                              ValueArgumentSeparatedList
+                                ValueArgument
+                                  ValueArgumentPrefixList
+                                  StringTemplateExpression
+                                    StringTemplateEntryList
+                                      StringTemplateEntry
+                                        OpenQuote "\"" @ 350..351
+                                      StringTemplateEntry
+                                        RegularStringPart "x" @ 351..352
+                                    ClosingQuote "\"" @ 352..353
+                              RParen ")" @ 353..354 trailing=[Whitespace " "]
+                        LambdaExpression
+                          LambdaBody
+                            LBrace "{" @ 355..356 trailing=[Whitespace " "]
+                            LambdaBodyItemList
+                              Statement
+                                ExpressionStatement
+                                  LiteralExpression
+                                    IntegerLiteral "1" @ 357..358 trailing=[Whitespace " "]
+                                TerminatorList
+                            RBrace "}" @ 359..360
+              TerminatorList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "run" @ 365..368 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 368..369
+                    ValueArgumentEntryList
+                    RParen ")" @ 369..370 trailing=[Whitespace " "]
+                  LambdaExpressionList
+                    LambdaExpression
+                      AnnotatedLambdaExpression
+                        ModifierList
+                          Annotation
+                            At "@" @ 371..372
+                            QualifiedName
+                              QualifiedNameSegmentList
+                                Name
+                                  Identifier "Suppress" @ 372..380
+                            AnnotationArgumentList
+                              LParen "(" @ 380..381
+                              ValueArgumentSeparatedList
+                                ValueArgument
+                                  ValueArgumentPrefixList
+                                  StringTemplateExpression
+                                    StringTemplateEntryList
+                                      StringTemplateEntry
+                                        OpenQuote "\"" @ 381..382
+                                      StringTemplateEntry
+                                        RegularStringPart "x" @ 382..383
+                                    ClosingQuote "\"" @ 383..384
+                              RParen ")" @ 384..385 trailing=[Whitespace " "]
+                        LambdaExpression
+                          LambdaBody
+                            LBrace "{" @ 386..387 trailing=[Whitespace " "]
+                            LambdaBodyItemList
+                              Statement
+                                ExpressionStatement
+                                  LiteralExpression
+                                    IntegerLiteral "1" @ 388..389 trailing=[Whitespace " "]
+                                TerminatorList
+                            RBrace "}" @ 390..391
+              TerminatorList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NavigationExpression
+                    NameExpression
+                      Identifier "items" @ 396..401 leading=[Newline "\n", Whitespace "    "]
+                    Dot "." @ 401..402
+                    Identifier "forEach" @ 402..409 trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      AnnotatedLambdaExpression
+                        ModifierList
+                          Annotation
+                            At "@" @ 410..411
+                            QualifiedName
+                              QualifiedNameSegmentList
+                                Name
+                                  Identifier "Synchronized" @ 411..423 trailing=[Whitespace " "]
+                        LambdaExpression
+                          LambdaBody
+                            LBrace "{" @ 424..425 trailing=[Whitespace " "]
+                            LambdaBodyItemList
+                              Statement
+                                ExpressionStatement
+                                  CallExpression
+                                    NameExpression
+                                      Identifier "consume" @ 426..433
+                                    TypeArgumentListList
+                                    ValueArgumentList
+                                      LParen "(" @ 433..434
+                                      ValueArgumentEntryList
+                                        ValueArgument
+                                          ValueArgumentPrefixList
+                                          NameExpression
+                                            Identifier "it" @ 434..436
+                                      RParen ")" @ 436..437 trailing=[Whitespace " "]
+                                    LambdaExpressionList
+                                TerminatorList
+                            RBrace "}" @ 438..439
+              TerminatorList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "run" @ 444..447 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      AnnotatedLambdaExpression
+                        ModifierList
+                          Annotation
+                            At "@" @ 448..449
+                            QualifiedName
+                              QualifiedNameSegmentList
+                                Name
+                                  Identifier "kotlin" @ 449..455
+                                Dot "." @ 455..456
+                                Name
+                                  Identifier "Suppress" @ 456..464 trailing=[Whitespace " "]
+                          Annotation
+                            At "@" @ 465..466
+                            QualifiedName
+                              QualifiedNameSegmentList
+                                Name
+                                  Identifier "Deprecated" @ 466..476
+                            AnnotationArgumentList
+                              LParen "(" @ 476..477
+                              ValueArgumentSeparatedList
+                                ValueArgument
+                                  ValueArgumentPrefixList
+                                  StringTemplateExpression
+                                    StringTemplateEntryList
+                                      StringTemplateEntry
+                                        OpenQuote "\"" @ 477..478
+                                      StringTemplateEntry
+                                        RegularStringPart "old" @ 478..481
+                                    ClosingQuote "\"" @ 481..482
+                              RParen ")" @ 482..483 trailing=[Whitespace " "]
+                        LambdaExpression
+                          LambdaBody
+                            LBrace "{" @ 484..485 trailing=[Whitespace " "]
+                            LambdaBodyItemList
+                              Statement
+                                ExpressionStatement
+                                  LiteralExpression
+                                    IntegerLiteral "2" @ 486..487 trailing=[Whitespace " "]
+                                TerminatorList
+                            RBrace "}" @ 488..489
+              TerminatorList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "run" @ 494..497 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 497..498
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                          ValueArgumentPrefix
+                            Annotation
+                              At "@" @ 498..499
+                              QualifiedName
+                                QualifiedNameSegmentList
+                                  Name
+                                    Identifier "Suppress" @ 499..507
+                              AnnotationArgumentList
+                                LParen "(" @ 507..508
+                                ValueArgumentSeparatedList
+                                  ValueArgument
+                                    ValueArgumentPrefixList
+                                    StringTemplateExpression
+                                      StringTemplateEntryList
+                                        StringTemplateEntry
+                                          OpenQuote "\"" @ 508..509
+                                        StringTemplateEntry
+                                          RegularStringPart "x" @ 509..510
+                                      ClosingQuote "\"" @ 510..511
+                                RParen ")" @ 511..512 trailing=[Whitespace " "]
+                        LambdaExpression
+                          LambdaBody
+                            LBrace "{" @ 513..514 trailing=[Whitespace " "]
+                            LambdaBodyItemList
+                              Statement
+                                ExpressionStatement
+                                  LiteralExpression
+                                    IntegerLiteral "3" @ 515..516 trailing=[Whitespace " "]
+                                TerminatorList
+                            RBrace "}" @ 517..518
+                    RParen ")" @ 518..519
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 520..521 leading=[Newline "\n"]
+  Eof "" @ 522..522 leading=[Newline "\n"]
 
 diagnostics:
   (none)

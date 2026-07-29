@@ -13,3 +13,11 @@ class Cached<T>(private val init: (Int) -> T) {
 
     private val values = List(8) { init(it) }
 }
+
+fun annotatedLambdas() {
+    run @Suppress("x") { 1 }
+    run() @Suppress("x") { 1 }
+    items.forEach @Synchronized { consume(it) }
+    run @kotlin.Suppress @Deprecated("old") { 2 }
+    run(@Suppress("x") { 3 })
+}

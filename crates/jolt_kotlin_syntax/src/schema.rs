@@ -262,6 +262,7 @@ macro_rules! kotlin_syntax_schema {
                 }
                 LambdaForm => BogusLambdaForm {
                     LabeledLambdaExpression,
+                    AnnotatedLambdaExpression,
                     LambdaBody,
                 }
                 LambdaParameterListEntry => BogusLambdaParameter {
@@ -976,6 +977,10 @@ macro_rules! kotlin_syntax_schema {
                 LabeledLambdaExpression => LabeledLambdaExpression [labeled_lambda_expression valid] {
                     label: required (token Identifier);
                     at: required (token At);
+                    lambda: required (node LambdaExpression);
+                }
+                AnnotatedLambdaExpression => AnnotatedLambdaExpression [annotated_lambda_expression valid] {
+                    annotations: required (list ModifierList);
                     lambda: required (node LambdaExpression);
                 }
                 LambdaBody => LambdaBody [lambda_body valid] {
