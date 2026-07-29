@@ -1,0 +1,179 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun commentOnlyLambdas() {
+    inner {
+        // do nothing
+    }
+    run({
+        // wait for it
+    })
+    inner { /* marker */ }
+    inner {
+        /* multi
+           line */
+    }
+}
+
+fun commentMixedLambdas() {
+    inner {
+        doStuff()
+        // trailing comment
+    }
+    inner { doStuff() }
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "commentOnlyLambdas" @ 4..22
+      ValueParameterList
+        LParen "(" @ 22..23
+        ValueParameterSeparatedList
+        RParen ")" @ 23..24 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 25..26
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "inner" @ 31..36 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 37..38
+                        LambdaBodyItemList
+                        RBrace "}" @ 65..66 leading=[Newline "\n", Whitespace "        ", LineComment "// do nothing", Newline "\n", Whitespace "    "]
+              TerminatorList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "run" @ 71..74 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 74..75
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        LambdaExpression
+                          LambdaBody
+                            LBrace "{" @ 75..76
+                            LambdaBodyItemList
+                            RBrace "}" @ 104..105 leading=[Newline "\n", Whitespace "        ", LineComment "// wait for it", Newline "\n", Whitespace "    "]
+                    RParen ")" @ 105..106
+                  LambdaExpressionList
+              TerminatorList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "inner" @ 111..116 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 117..118 trailing=[Whitespace " ", BlockComment "/* marker */", Whitespace " "]
+                        LambdaBodyItemList
+                        RBrace "}" @ 132..133
+              TerminatorList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "inner" @ 138..143 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 144..145
+                        LambdaBodyItemList
+                        RBrace "}" @ 186..187 leading=[Newline "\n", Whitespace "        ", BlockComment "/* multi\n           line */", Newline "\n", Whitespace "    "]
+              TerminatorList
+          RBrace "}" @ 188..189 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 191..194 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "commentMixedLambdas" @ 195..214
+      ValueParameterList
+        LParen "(" @ 214..215
+        ValueParameterSeparatedList
+        RParen ")" @ 215..216 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 217..218
+          BlockItemList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "inner" @ 223..228 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 229..230
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              CallExpression
+                                NameExpression
+                                  Identifier "doStuff" @ 239..246 leading=[Newline "\n", Whitespace "        "]
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 246..247
+                                  ValueArgumentEntryList
+                                  RParen ")" @ 247..248
+                                LambdaExpressionList
+                            TerminatorList
+                        RBrace "}" @ 281..282 leading=[Newline "\n", Whitespace "        ", LineComment "// trailing comment", Newline "\n", Whitespace "    "]
+              TerminatorList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "inner" @ 287..292 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      LambdaBody
+                        LBrace "{" @ 293..294 trailing=[Whitespace " "]
+                        LambdaBodyItemList
+                          Statement
+                            ExpressionStatement
+                              CallExpression
+                                NameExpression
+                                  Identifier "doStuff" @ 295..302
+                                TypeArgumentListList
+                                ValueArgumentList
+                                  LParen "(" @ 302..303
+                                  ValueArgumentEntryList
+                                  RParen ")" @ 303..304 trailing=[Whitespace " "]
+                                LambdaExpressionList
+                            TerminatorList
+                        RBrace "}" @ 305..306
+              TerminatorList
+          RBrace "}" @ 307..308 leading=[Newline "\n"]
+  Eof "" @ 309..309 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
