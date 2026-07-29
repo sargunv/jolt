@@ -972,7 +972,9 @@ impl<'source> Scanner<'source> {
             '&' if self.peek_char(1) == Some('&') => self.two(KotlinSyntaxKind::AndAnd),
             '|' if self.peek_char(1) == Some('|') => self.two(KotlinSyntaxKind::OrOr),
             '?' if self.peek_char(1) == Some('.') => self.two(KotlinSyntaxKind::SafeAccess),
-            '?' if self.peek_char(1) == Some(':') => self.two(KotlinSyntaxKind::Elvis),
+            '?' if self.peek_char(1) == Some(':') && self.peek_char(2) != Some(':') => {
+                self.two(KotlinSyntaxKind::Elvis)
+            }
             '*' if self.peek_char(1) == Some('=') => self.two(KotlinSyntaxKind::StarEq),
             '/' if self.peek_char(1) == Some('=') => self.two(KotlinSyntaxKind::SlashEq),
             '%' if self.peek_char(1) == Some('=') => self.two(KotlinSyntaxKind::PercentEq),

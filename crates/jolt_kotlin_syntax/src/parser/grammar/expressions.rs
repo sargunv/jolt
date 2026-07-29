@@ -18,6 +18,9 @@ use self::predicates::{
     expression_start_kind, is_assignment_operator, is_binary_operator, is_expression_continuation,
     is_literal_kind, is_unary_operator,
 };
+use crate::parser::grammar::support::is_identifier_like_kind;
+
+const MAX_CALLABLE_REFERENCE_RECEIVER_LOOKAHEAD: usize = 256;
 
 fn deferred_expression_stop(
     buffer: &mut TokenBuffer<'_>,
@@ -377,6 +380,13 @@ impl Parser<'_> {
     fn parse_callable_reference_suffix(&mut self, expression: CompletedMarker) -> CompletedMarker {
         let receiver = self.precede(expression);
         let receiver = self.complete(receiver, K::CallableReferenceReceiver);
+        self.parse_callable_reference_after_receiver(receiver)
+    }
+
+    fn parse_callable_reference_after_receiver(
+        &mut self,
+        receiver: CompletedMarker,
+    ) -> CompletedMarker {
         let reference = self.precede(receiver);
         self.bump();
         if self.at_identifier_like() || matches!(self.current_kind(), K::ClassKw) {
@@ -459,6 +469,12 @@ impl Parser<'_> {
                 self.parse_single_token_expression(K::LiteralExpression)
             }
             kind if self.at_label_start(kind) => self.parse_labeled_expression(stops),
+            _ if self.at_nullable_callable_reference_receiver() => {
+                let receiver = self.start();
+                self.parse_type_reference_until(&[K::ColonColon]);
+                let receiver = self.complete(receiver, K::CallableReferenceReceiver);
+                self.parse_callable_reference_after_receiver(receiver)
+            }
             kind if self.at_identifier_like() || matches!(kind, K::ClassKw) => {
                 self.parse_single_token_expression(K::NameExpression)
             }
@@ -478,6 +494,67 @@ impl Parser<'_> {
         let marker = self.start();
         self.bump();
         self.complete(marker, kind)
+    }
+
+    /// A callable reference receiver is a type, so a nullable receiver such as
+    /// `String?::plus` must parse through the type grammar rather than as an
+    /// expression. Detect that shape with a bounded scan: a qualified user
+    /// type, at least one `?`, then `::`. The `?` must not cross a newline,
+    /// matching the postfix rule that `::` binds tightly.
+    fn at_nullable_callable_reference_receiver(&mut self) -> bool {
+        let start = self.position();
+        let end = start + MAX_CALLABLE_REFERENCE_RECEIVER_LOOKAHEAD;
+        let mut index = start;
+        loop {
+            if !is_identifier_like_kind(self.kind_at(index)) {
+                return false;
+            }
+            index += 1;
+            if self.kind_at(index) == K::Lt {
+                let Some(after) = self.skip_type_angle_brackets(index, end) else {
+                    return false;
+                };
+                index = after;
+            }
+            if self.kind_at(index) == K::Dot && is_identifier_like_kind(self.kind_at(index + 1)) {
+                index += 1;
+                continue;
+            }
+            break;
+        }
+        let tail_start = index;
+        let mut questions = 0;
+        while self.kind_at(index) == K::Question {
+            questions += 1;
+            index += 1;
+        }
+        if questions == 0 || self.kind_at(index) != K::ColonColon {
+            return false;
+        }
+        (tail_start..=index).all(|boundary| !self.newline_between(boundary - 1, boundary))
+    }
+
+    fn skip_type_angle_brackets(&mut self, start: usize, end: usize) -> Option<usize> {
+        debug_assert_eq!(self.kind_at(start), K::Lt);
+        let mut depth = 0usize;
+        let mut index = start;
+        while index < end {
+            match self.kind_at(index) {
+                K::Lt => depth += 1,
+                K::Gt => {
+                    depth = depth.saturating_sub(1);
+                    index += 1;
+                    if depth == 0 {
+                        return Some(index);
+                    }
+                    continue;
+                }
+                K::Eof => return None,
+                _ => {}
+            }
+            index += 1;
+        }
+        None
     }
 
     fn parse_annotated_expression(&mut self, stops: StopSet) -> CompletedMarker {
