@@ -1,0 +1,17 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+import a.A;
+
+import static b.B;
+import static c.C;
+/* comment travels with its import */
+import static d.D;
+
+class A {
+}
+
+diagnostics:
+(none)
