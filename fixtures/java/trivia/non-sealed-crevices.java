@@ -1,0 +1,14 @@
+non- // JOLT-TRIVIA:non-sealed-minus-line-top-level
+sealed interface TopLevel {}
+
+class NonSealedCrevices {
+  non- // JOLT-TRIVIA:non-sealed-minus-line
+  sealed interface Member {}
+
+  non // JOLT-TRIVIA:non-sealed-non-line
+  - sealed class MemberClass {}
+
+  non /* JOLT-TRIVIA:non-sealed-non-block */ - sealed interface BlockBetween {}
+
+  non- /* JOLT-TRIVIA:non-sealed-minus-block */ sealed interface BlockAfterMinus {}
+}

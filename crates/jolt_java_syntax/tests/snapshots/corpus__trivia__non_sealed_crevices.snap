@@ -1,0 +1,98 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+non- // JOLT-TRIVIA:non-sealed-minus-line-top-level
+sealed interface TopLevel {}
+
+class NonSealedCrevices {
+  non- // JOLT-TRIVIA:non-sealed-minus-line
+  sealed interface Member {}
+
+  non // JOLT-TRIVIA:non-sealed-non-line
+  - sealed class MemberClass {}
+
+  non /* JOLT-TRIVIA:non-sealed-non-block */ - sealed interface BlockBetween {}
+
+  non- /* JOLT-TRIVIA:non-sealed-minus-block */ sealed interface BlockAfterMinus {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    InterfaceDeclaration
+      ModifierList
+        NonSealedModifier
+          Identifier "non" @ 0..3
+          Minus "-" @ 3..4 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:non-sealed-minus-line-top-level"]
+          Identifier "sealed" @ 52..58 leading=[Newline "\n"] trailing=[Whitespace " "]
+      InterfaceKw "interface" @ 59..68 trailing=[Whitespace " "]
+      Identifier "TopLevel" @ 69..77 trailing=[Whitespace " "]
+      InterfaceBody
+        LBrace "{" @ 78..79
+        InterfaceBodyMemberList
+        RBrace "}" @ 79..80
+    ClassDeclaration
+      ClassKw "class" @ 82..87 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "NonSealedCrevices" @ 88..105 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 106..107
+        ClassBodyMemberList
+          InterfaceDeclaration
+            ModifierList
+              NonSealedModifier
+                Identifier "non" @ 110..113 leading=[Newline "\n", Whitespace "  "]
+                Minus "-" @ 113..114 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:non-sealed-minus-line"]
+                Identifier "sealed" @ 154..160 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            InterfaceKw "interface" @ 161..170 trailing=[Whitespace " "]
+            Identifier "Member" @ 171..177 trailing=[Whitespace " "]
+            InterfaceBody
+              LBrace "{" @ 178..179
+              InterfaceBodyMemberList
+              RBrace "}" @ 179..180
+          ClassDeclaration
+            ModifierList
+              NonSealedModifier
+                Identifier "non" @ 184..187 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:non-sealed-non-line"]
+                Minus "-" @ 225..226 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                Identifier "sealed" @ 227..233 trailing=[Whitespace " "]
+            ClassKw "class" @ 234..239 trailing=[Whitespace " "]
+            Identifier "MemberClass" @ 240..251 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 252..253
+              ClassBodyMemberList
+              RBrace "}" @ 253..254
+          InterfaceDeclaration
+            ModifierList
+              NonSealedModifier
+                Identifier "non" @ 258..261 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:non-sealed-non-block */", Whitespace " "]
+                Minus "-" @ 301..302 trailing=[Whitespace " "]
+                Identifier "sealed" @ 303..309 trailing=[Whitespace " "]
+            InterfaceKw "interface" @ 310..319 trailing=[Whitespace " "]
+            Identifier "BlockBetween" @ 320..332 trailing=[Whitespace " "]
+            InterfaceBody
+              LBrace "{" @ 333..334
+              InterfaceBodyMemberList
+              RBrace "}" @ 334..335
+          InterfaceDeclaration
+            ModifierList
+              NonSealedModifier
+                Identifier "non" @ 339..342 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+                Minus "-" @ 342..343 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:non-sealed-minus-block */", Whitespace " "]
+                Identifier "sealed" @ 385..391 trailing=[Whitespace " "]
+            InterfaceKw "interface" @ 392..401 trailing=[Whitespace " "]
+            Identifier "BlockAfterMinus" @ 402..417 trailing=[Whitespace " "]
+            InterfaceBody
+              LBrace "{" @ 418..419
+              InterfaceBodyMemberList
+              RBrace "}" @ 419..420
+        RBrace "}" @ 421..422 leading=[Newline "\n"]
+  Eof "" @ 423..423 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

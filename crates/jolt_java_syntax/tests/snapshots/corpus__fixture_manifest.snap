@@ -465,6 +465,7 @@ trivia/declaration-headers.java
 trivia/delimiters-and-empty-bodies.java
 trivia/expressions-and-chains.java
 trivia/imports-and-package.java
+trivia/non-sealed-crevices.java
 trivia/operators-and-punctuation.java
 trivia/records-enums-and-annotations.java
 trivia/references-and-literals.java

@@ -1,5 +1,5 @@
 use jolt_fmt_ir::{Doc, DocBuilder, LayoutDoc};
-use jolt_java_syntax::{JavaSyntaxKind, JavaSyntaxToken, NonSealedModifier};
+use jolt_java_syntax::{JavaSyntaxField, JavaSyntaxKind, JavaSyntaxToken, NonSealedModifier};
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, format_token,
@@ -221,19 +221,42 @@ fn format_modifier_entry<'source>(
         }
         ModifierEntry::Malformed(layout) => layout.doc(),
         ModifierEntry::NonSealed(non_sealed) => doc.concat_list(|docs| {
-            let non = format_required_field(non_sealed.non_keyword(), docs, |token, docs| {
+            // `non-sealed` is three tokens with trivia allowed between them, so
+            // each internal token owns the break its trailing comments force;
+            // the enclosing modifier list only sees the last token.
+            let non = non_sealed.non_keyword();
+            let non_separator = non_sealed_separator(docs, &non);
+            let non = format_required_field(non, docs, |token, docs| {
                 format_modifier_token(docs, &token, leading_comments)
             });
             docs.push(non);
-            let minus = format_required_field(non_sealed.minus(), docs, |token, docs| {
+            docs.push(non_separator);
+            let minus = non_sealed.minus();
+            let minus_separator = non_sealed_separator(docs, &minus);
+            let minus = format_required_field(minus, docs, |token, docs| {
                 format_modifier_token(docs, &token, LeadingComments::Preserve)
             });
             docs.push(minus);
+            docs.push(minus_separator);
             let sealed = format_required_field(non_sealed.sealed_keyword(), docs, |token, docs| {
                 format_modifier_token(docs, &token, LeadingComments::Preserve)
             });
             docs.push(sealed);
         }),
+    }
+}
+
+/// Separates two tokens inside `non-sealed` when the first has trailing
+/// comments: a line comment must end its line before the next token, and any
+/// other trailing comment still needs whitespace before it.
+fn non_sealed_separator<'source>(
+    doc: &mut DocBuilder<'source>,
+    field: &JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
+    match field.as_ref() {
+        JavaSyntaxField::Present(token) if trailing_comments_force_line(token) => doc.hard_line(),
+        JavaSyntaxField::Present(token) if !token.trailing_comments().is_empty() => doc.space(),
+        _ => Doc::nil(),
     }
 }
 
