@@ -1,0 +1,354 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class AnnotationAfterIdentifierInitializer {
+    val product = 5 * factor
+
+    @Volatile
+    var counter = 0
+
+    var selfRef = this
+
+    @PublishedApi
+    internal var other = this
+
+    val state: String get() = backing
+
+    // used by reflective callers
+    @Volatile
+    @JvmField
+    var backing: String = "initial"
+}
+
+fun topLevel(): Int = other eq this
+
+// NOT EQUAL
+
+@LowPriority
+fun annotated() {}
+
+fun labels() {
+    loop@ for (i in 1..10) {
+        if (i > 1) break@loop
+        continue@loop
+    }
+    val labeled = run inner@{ 1 }
+    consume(this@labels, labeled)
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "AnnotationAfterIdentifierInitializer" @ 6..42 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 43..44
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 49..52 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "product" @ 53..60 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 61..62 trailing=[Whitespace " "]
+                BinaryExpression
+                  LiteralExpression
+                    IntegerLiteral "5" @ 63..64 trailing=[Whitespace " "]
+                  Star "*" @ 65..66 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "factor" @ 67..73
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+                Annotation
+                  At "@" @ 79..80 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+                  QualifiedName
+                    QualifiedNameSegmentList
+                      Name
+                        Identifier "Volatile" @ 80..88
+              ModifierList
+              VarKw "var" @ 93..96 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "counter" @ 97..104 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 105..106 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "0" @ 107..108
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              VarKw "var" @ 114..117 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "selfRef" @ 118..125 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 126..127 trailing=[Whitespace " "]
+                ThisExpression
+                  ThisKw "this" @ 128..132
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+                Annotation
+                  At "@" @ 138..139 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+                  QualifiedName
+                    QualifiedNameSegmentList
+                      Name
+                        Identifier "PublishedApi" @ 139..151
+                Identifier "internal" @ 156..164 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
+              VarKw "var" @ 165..168 trailing=[Whitespace " "]
+              Name
+                Identifier "other" @ 169..174 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 175..176 trailing=[Whitespace " "]
+                ThisExpression
+                  ThisKw "this" @ 177..181
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 187..190 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "state" @ 191..196
+              Colon ":" @ 196..197 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "String" @ 198..204 trailing=[Whitespace " "]
+              PropertyBodyMemberList
+                PropertyAccessor
+                  ModifierList
+                  Identifier "get" @ 205..208
+                  ValueParameterList
+                    LParen "(" @ 208..209
+                    ValueParameterSeparatedList
+                    RParen ")" @ 209..210 trailing=[Whitespace " "]
+                  ExpressionBody
+                    Assign "=" @ 211..212 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "backing" @ 213..220
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+                Annotation
+                  At "@" @ 260..261 leading=[Newline "\n", Newline "\n", Whitespace "    ", LineComment "// used by reflective callers", Newline "\n", Whitespace "    "]
+                  QualifiedName
+                    QualifiedNameSegmentList
+                      Name
+                        Identifier "Volatile" @ 261..269
+                Annotation
+                  At "@" @ 274..275 leading=[Newline "\n", Whitespace "    "]
+                  QualifiedName
+                    QualifiedNameSegmentList
+                      Name
+                        Identifier "JvmField" @ 275..283
+              ModifierList
+              VarKw "var" @ 288..291 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "backing" @ 292..299
+              Colon ":" @ 299..300 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "String" @ 301..307 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 308..309 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 310..311
+                    StringTemplateEntry
+                      RegularStringPart "initial" @ 311..318
+                  ClosingQuote "\"" @ 318..319
+              PropertyBodyMemberList
+        RBrace "}" @ 320..321 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 323..326 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "topLevel" @ 327..335
+      ValueParameterList
+        LParen "(" @ 335..336
+        ValueParameterSeparatedList
+        RParen ")" @ 336..337
+      Colon ":" @ 337..338 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Int" @ 339..342 trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 343..344 trailing=[Whitespace " "]
+        BinaryExpression
+          NameExpression
+            Identifier "other" @ 345..350 trailing=[Whitespace " "]
+          Identifier "eq" @ 351..353 trailing=[Whitespace " "]
+          ThisExpression
+            ThisKw "this" @ 354..358
+    FunctionDeclaration
+      ModifierList
+        Annotation
+          At "@" @ 374..375 leading=[Newline "\n", Newline "\n", LineComment "// NOT EQUAL", Newline "\n", Newline "\n"]
+          QualifiedName
+            QualifiedNameSegmentList
+              Name
+                Identifier "LowPriority" @ 375..386
+      ModifierList
+      FunKw "fun" @ 387..390 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "annotated" @ 391..400
+      ValueParameterList
+        LParen "(" @ 400..401
+        ValueParameterSeparatedList
+        RParen ")" @ 401..402 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 403..404
+          BlockItemList
+          RBrace "}" @ 404..405
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 407..410 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "labels" @ 411..417
+      ValueParameterList
+        LParen "(" @ 417..418
+        ValueParameterSeparatedList
+        RParen ")" @ 418..419 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 420..421
+          BlockItemList
+            Statement
+              ExpressionStatement
+                NameExpression
+                  Identifier "loop" @ 426..430 leading=[Newline "\n", Whitespace "    "]
+                  At "@" @ 430..431 trailing=[Whitespace " "]
+                  ForStatement
+                    ForKw "for" @ 432..435 trailing=[Whitespace " "]
+                    LParen "(" @ 436..437
+                    ForVariable
+                      ModifierList
+                      Name
+                        Identifier "i" @ 437..438 trailing=[Whitespace " "]
+                    InKw "in" @ 439..441 trailing=[Whitespace " "]
+                    BinaryExpression
+                      LiteralExpression
+                        IntegerLiteral "1" @ 442..443
+                      Range ".." @ 443..445
+                      LiteralExpression
+                        IntegerLiteral "10" @ 445..447
+                    RParen ")" @ 447..448 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 449..450
+                      BlockItemList
+                        Statement
+                          ExpressionStatement
+                            IfExpression
+                              IfKw "if" @ 459..461 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                              ParenthesizedExpression
+                                LParen "(" @ 462..463
+                                BinaryExpression
+                                  NameExpression
+                                    Identifier "i" @ 463..464 trailing=[Whitespace " "]
+                                  Gt ">" @ 465..466 trailing=[Whitespace " "]
+                                  LiteralExpression
+                                    IntegerLiteral "1" @ 467..468
+                                RParen ")" @ 468..469 trailing=[Whitespace " "]
+                              JumpExpression
+                                BreakKw "break" @ 470..475
+                                LabelReference
+                                  At "@" @ 475..476
+                                  Identifier "loop" @ 476..480
+                          TerminatorList
+                        Statement
+                          ExpressionStatement
+                            JumpExpression
+                              ContinueKw "continue" @ 489..497 leading=[Newline "\n", Whitespace "        "]
+                              LabelReference
+                                At "@" @ 497..498
+                                Identifier "loop" @ 498..502
+                          TerminatorList
+                      RBrace "}" @ 507..508 leading=[Newline "\n", Whitespace "    "]
+              TerminatorList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 513..516 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "labeled" @ 517..524 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 525..526 trailing=[Whitespace " "]
+                CallExpression
+                  NameExpression
+                    Identifier "run" @ 527..530 trailing=[Whitespace " "]
+                  TypeArgumentListList
+                  LambdaExpressionList
+                    LambdaExpression
+                      LabeledLambdaExpression
+                        Identifier "inner" @ 531..536
+                        At "@" @ 536..537
+                        LambdaExpression
+                          LambdaBody
+                            LBrace "{" @ 537..538 trailing=[Whitespace " "]
+                            LambdaBodyItemList
+                              Statement
+                                ExpressionStatement
+                                  LiteralExpression
+                                    IntegerLiteral "1" @ 539..540 trailing=[Whitespace " "]
+                                TerminatorList
+                            RBrace "}" @ 541..542
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "consume" @ 547..554 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 554..555
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        ThisExpression
+                          ThisKw "this" @ 555..559
+                          LabelReference
+                            At "@" @ 559..560
+                            Identifier "labels" @ 560..566
+                      Comma "," @ 566..567 trailing=[Whitespace " "]
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "labeled" @ 568..575
+                    RParen ")" @ 575..576
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 577..578 leading=[Newline "\n"]
+  Eof "" @ 579..579 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

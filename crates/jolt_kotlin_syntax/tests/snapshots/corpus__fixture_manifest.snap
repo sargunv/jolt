@@ -141,6 +141,7 @@ syntax/parser/diagnoses-callable-reference-call-like-reserved-form.kt
 syntax/parser/diagnoses-invalid-assignment-targets.kt
 syntax/parser/diagnoses-malformed-type-argument-call.kt
 syntax/parser/diagnoses-when-guard-without-subject.kt
+syntax/parser/parses-annotation-after-identifier-initializer.kt
 syntax/parser/parses-annotation-all-use-site-target.kt
 syntax/parser/parses-annotation-delegate-and-setparam-targets.kt
 syntax/parser/parses-annotation-type-use-and-receiver.kt

@@ -867,12 +867,19 @@ impl Parser<'_> {
     fn at_label_start(&mut self, kind: K) -> bool {
         (self.at_identifier_like() || matches!(kind, K::ThisKw | K::SuperKw))
             && self.nth_kind(1) == K::At
+            && self.current_tokens_are_adjacent(2)
     }
 
     fn at_labeled_lambda_start(&mut self, kind: K) -> bool {
         (self.at_identifier_like() || matches!(kind, K::ThisKw | K::SuperKw))
             && self.nth_kind(1) == K::At
+            && self.current_tokens_are_adjacent(2)
             && self.nth_kind(2) == K::LBrace
+    }
+
+    fn current_tokens_are_adjacent(&mut self, count: usize) -> bool {
+        let position = self.position();
+        self.tokens_are_adjacent(position, count)
     }
 
     fn parse_optional_label_definition(&mut self) {
@@ -884,6 +891,10 @@ impl Parser<'_> {
 
     pub(in crate::parser::grammar) fn parse_optional_typed_label_reference(&mut self) {
         if !self.at(K::At) {
+            return;
+        }
+        let previous = self.position() - 1;
+        if !self.tokens_are_adjacent(previous, 2) {
             return;
         }
 
