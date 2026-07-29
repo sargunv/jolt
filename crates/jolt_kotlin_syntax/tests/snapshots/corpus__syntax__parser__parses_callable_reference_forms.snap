@@ -11,6 +11,14 @@ fun callableReferences() {
     consume(top, member, bound, klass)
 }
 
+fun nullableTypeReceivers() {
+    val simple = String?::plus
+    val generic = List<String>?::plus
+    val qualified = Map.Entry?::key
+    val nestedArguments = Map<String, List<Int>>?::keys
+    consume(simple, generic, qualified, nestedArguments)
+}
+
 syntax:
 syntax:
 KotlinFile
@@ -133,7 +141,178 @@ KotlinFile
                   LambdaExpressionList
               TerminatorList
           RBrace "}" @ 183..184 leading=[Newline "\n"]
-  Eof "" @ 185..185 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 186..189 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "nullableTypeReceivers" @ 190..211
+      ValueParameterList
+        LParen "(" @ 211..212
+        ValueParameterSeparatedList
+        RParen ")" @ 212..213 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 214..215
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 220..223 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "simple" @ 224..230 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 231..232 trailing=[Whitespace " "]
+                CallableReferenceExpression
+                  CallableReferenceReceiver
+                    TypeReference
+                      NullableType
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              Identifier "String" @ 233..239
+                        Question "?" @ 239..240
+                  ColonColon "::" @ 240..242
+                  CallableReferenceTarget
+                    Identifier "plus" @ 242..246
+                  TypeArgumentListList
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 251..254 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "generic" @ 255..262 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 263..264 trailing=[Whitespace " "]
+                CallableReferenceExpression
+                  CallableReferenceReceiver
+                    TypeReference
+                      NullableType
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              Identifier "List" @ 265..269
+                              TypeArgumentList
+                                Lt "<" @ 269..270
+                                TypeProjectionSeparatedList
+                                  TypeReference
+                                    UserType
+                                      UserTypeSegmentList
+                                        UserTypeSegment
+                                          Identifier "String" @ 270..276
+                                Gt ">" @ 276..277
+                        Question "?" @ 277..278
+                  ColonColon "::" @ 278..280
+                  CallableReferenceTarget
+                    Identifier "plus" @ 280..284
+                  TypeArgumentListList
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 289..292 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "qualified" @ 293..302 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 303..304 trailing=[Whitespace " "]
+                CallableReferenceExpression
+                  CallableReferenceReceiver
+                    TypeReference
+                      NullableType
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              Identifier "Map" @ 305..308
+                            Dot "." @ 308..309
+                            UserTypeSegment
+                              Identifier "Entry" @ 309..314
+                        Question "?" @ 314..315
+                  ColonColon "::" @ 315..317
+                  CallableReferenceTarget
+                    Identifier "key" @ 317..320
+                  TypeArgumentListList
+              PropertyBodyMemberList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 325..328 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "nestedArguments" @ 329..344 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 345..346 trailing=[Whitespace " "]
+                CallableReferenceExpression
+                  CallableReferenceReceiver
+                    TypeReference
+                      NullableType
+                        UserType
+                          UserTypeSegmentList
+                            UserTypeSegment
+                              Identifier "Map" @ 347..350
+                              TypeArgumentList
+                                Lt "<" @ 350..351
+                                TypeProjectionSeparatedList
+                                  TypeReference
+                                    UserType
+                                      UserTypeSegmentList
+                                        UserTypeSegment
+                                          Identifier "String" @ 351..357
+                                  Comma "," @ 357..358 trailing=[Whitespace " "]
+                                  TypeReference
+                                    UserType
+                                      UserTypeSegmentList
+                                        UserTypeSegment
+                                          Identifier "List" @ 359..363
+                                          TypeArgumentList
+                                            Lt "<" @ 363..364
+                                            TypeProjectionSeparatedList
+                                              TypeReference
+                                                UserType
+                                                  UserTypeSegmentList
+                                                    UserTypeSegment
+                                                      Identifier "Int" @ 364..367
+                                            Gt ">" @ 367..368
+                                Gt ">" @ 368..369
+                        Question "?" @ 369..370
+                  ColonColon "::" @ 370..372
+                  CallableReferenceTarget
+                    Identifier "keys" @ 372..376
+                  TypeArgumentListList
+              PropertyBodyMemberList
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "consume" @ 381..388 leading=[Newline "\n", Whitespace "    "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 388..389
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "simple" @ 389..395
+                      Comma "," @ 395..396 trailing=[Whitespace " "]
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "generic" @ 397..404
+                      Comma "," @ 404..405 trailing=[Whitespace " "]
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "qualified" @ 406..415
+                      Comma "," @ 415..416 trailing=[Whitespace " "]
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "nestedArguments" @ 417..432
+                    RParen ")" @ 432..433
+                  LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 434..435 leading=[Newline "\n"]
+  Eof "" @ 436..436 leading=[Newline "\n"]
 
 diagnostics:
   (none)
