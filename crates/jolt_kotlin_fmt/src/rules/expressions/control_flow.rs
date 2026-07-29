@@ -2,17 +2,16 @@ use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     CatchClause, DoWhileBodySyntax, DoWhileStatement, EmptyStatement, Expression, FinallyClause,
     ForBodySyntax, ForStatement, ForVariableSyntax, IfElseBranchSyntax, IfExpression,
-    IfThenBranchSyntax, JumpExpression, KotlinSyntaxField, KotlinSyntaxToken, KotlinSyntaxView,
-    NameExpression, ParenthesizedExpression, ThrowExpression, TryClause, TryExpression,
-    WhenCondition, WhenConditionSyntax, WhenConditionValueSyntax, WhenEntry, WhenEntryBodySyntax,
-    WhenEntryListElement, WhenEntryListElementSyntax, WhenExpression, WhenGuard, WhenSubject,
-    WhileBodySyntax, WhileStatement,
+    IfThenBranchSyntax, JumpExpression, KotlinSyntaxField, KotlinSyntaxKind, KotlinSyntaxToken,
+    KotlinSyntaxView, NameExpression, ParenthesizedExpression, ThrowExpression, TryClause,
+    TryExpression, WhenCondition, WhenConditionSyntax, WhenConditionValueSyntax, WhenEntry,
+    WhenEntryBodySyntax, WhenEntryListElementSyntax, WhenExpression, WhenGuard, WhenSubject,
+    WhileBodySyntax, WhileStatement, boundary_separator_removal_claim,
 };
 
-use crate::helpers::blocks::join_line_boundaries;
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_dangling_comments, format_token,
-    format_trailing_comments_before_line_break, trailing_comments_force_line,
+    LeadingTrivia, TrailingTrivia, format_dangling_comments, format_removed_separator,
+    format_token, format_trailing_comments_before_line_break, trailing_comments_force_line,
 };
 use crate::helpers::lists::{CommaListItem, comma_list_between, physical_comma_list_items};
 use crate::helpers::recovery::{
@@ -192,9 +191,41 @@ pub(super) fn format_when_expression<'source>(
         KotlinFormatField::Present(entries) => {
             let mut parts = Vec::new();
             let mut invisible = Vec::new();
+            let mut preceding_entry = None;
             for part in entries.parts() {
                 let part = match resolve_list_part(part, doc) {
-                    KotlinFormatListPart::Item(element) => format_when_entry_element(doc, element),
+                    KotlinFormatListPart::Item(element) => match element.classify() {
+                        Ok(WhenEntryListElementSyntax::Entry(entry)) => {
+                            preceding_entry = Some(entry);
+                            format_when_entry(doc, &entry)
+                        }
+                        Ok(WhenEntryListElementSyntax::Terminator(token)) => {
+                            if matches!(
+                                token.kind(),
+                                KotlinSyntaxKind::Semicolon | KotlinSyntaxKind::DoubleSemicolon
+                            ) {
+                                let claim = preceding_entry.as_ref().and_then(|owner| {
+                                    boundary_separator_removal_claim(owner, token)
+                                });
+                                let removed = format_removed_separator(doc, &token, claim, true);
+                                let visible = format_plain_token(doc, token);
+                                let separator = doc.if_break(removed, visible);
+                                // The terminator belongs to the preceding entry:
+                                // removed when the list breaks, kept (as `;`)
+                                // directly after the entry when it is flat.
+                                match parts.pop() {
+                                    Some(previous) => doc.concat([previous, separator]),
+                                    None => separator,
+                                }
+                            } else {
+                                format_plain_token(doc, token)
+                            }
+                        }
+                        Err(error) => {
+                            doc.block_on_invariant(error.to_string());
+                            Doc::nil()
+                        }
+                    },
                     KotlinFormatListPart::Separator(token) => format_plain_token(doc, token),
                     KotlinFormatListPart::Recovery(recovery) => {
                         if recovery.is_visible() {
@@ -215,16 +246,18 @@ pub(super) fn format_when_expression<'source>(
     let entries = if entries.is_empty() {
         doc.hard_line()
     } else {
-        let line = doc.hard_line_boundary();
-        let entries = join_line_boundaries(doc, entries);
-        let entries = doc.concat([line, entries]);
+        let line = doc.line_boundary();
+        let entries = doc.join(line, entries);
+        let leading = doc.line_boundary();
+        let entries = doc.concat([leading, entries]);
         let entries = doc.indent(entries);
-        if has_close {
-            let trailing = doc.hard_line_boundary();
+        let entries = if has_close {
+            let trailing = doc.line_boundary();
             doc.concat([entries, trailing])
         } else {
             entries
-        }
+        };
+        doc.force_group(entries)
     };
     let invisible = doc.concat(invisible);
     let entries = doc.concat([invisible, entries]);
@@ -818,20 +851,6 @@ fn format_when_entry<'source>(
     };
     let contents = doc.concat([label, guard, arrow, body]);
     doc.group(contents)
-}
-
-fn format_when_entry_element<'source>(
-    doc: &mut DocBuilder<'source>,
-    element: WhenEntryListElement<'source>,
-) -> Doc<'source> {
-    match element.classify() {
-        Ok(WhenEntryListElementSyntax::Entry(entry)) => format_when_entry(doc, &entry),
-        Ok(WhenEntryListElementSyntax::Terminator(token)) => format_plain_token(doc, token),
-        Err(error) => {
-            doc.block_on_invariant(error.to_string());
-            Doc::nil()
-        }
-    }
 }
 
 fn format_when_conditions<'source>(

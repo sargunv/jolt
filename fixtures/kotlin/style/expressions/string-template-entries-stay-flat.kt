@@ -7,3 +7,9 @@ fun stringTemplateEntriesStayFlat(user: Long, pendingCredits: Long, pendingDebit
   val trailingLambdaChain = "value=${items.map { it + 1 }.filter { it > 1 }}"
   val rawTrailingLambdaChain = """value=${items.map { it + 1 }.filter { it > 1 }}"""
 }
+
+fun templateWhenEntries(x: Int, y: Int) {
+  val compact = "result: ${when (x) { 1 -> "one"; 2 -> "two"; else -> "other" }}"
+  val raw = """result: ${when (x) { 1 -> "one"; else -> "other" }}"""
+  val guard = "result: ${when (x) { 1 -> "one"; else -> computeSomethingWithAnExtremelyLongCall(y) }}"
+}
