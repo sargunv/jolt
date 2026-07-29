@@ -1,9 +1,9 @@
 use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder, LayoutDoc};
 use jolt_kotlin_syntax::{
-    BlockItem, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView,
-    LabeledLambdaExpression, LambdaBody, LambdaBodyItemSyntax, LambdaExpression, LambdaForm,
-    LambdaParameter, LambdaParameterBindingSyntax, LambdaParameterList, LambdaParameterListEntry,
-    boundary_separator_removal_claim,
+    AnnotatedLambdaExpression, BlockItem, KotlinSyntaxField, KotlinSyntaxListPart,
+    KotlinSyntaxToken, KotlinSyntaxView, LabeledLambdaExpression, LambdaBody, LambdaBodyItemSyntax,
+    LambdaExpression, LambdaForm, LambdaParameter, LambdaParameterBindingSyntax,
+    LambdaParameterList, LambdaParameterListEntry, boundary_separator_removal_claim,
 };
 
 use crate::helpers::comments::{
@@ -33,11 +33,33 @@ pub(super) fn format_lambda_expression<'source>(
         LambdaForm::LabeledLambdaExpression(labeled) => {
             format_labeled_lambda_expression(doc, &labeled, leading)
         }
+        LambdaForm::AnnotatedLambdaExpression(annotated) => {
+            format_annotated_lambda_expression(doc, &annotated, leading)
+        }
         LambdaForm::LambdaBody(body) => format_lambda_body(doc, &body, leading),
         LambdaForm::BogusLambdaForm(bogus) => {
             crate::helpers::recovery::format_malformed(&bogus, doc)
         }
     })
+}
+
+fn format_annotated_lambda_expression<'source>(
+    doc: &mut DocBuilder<'source>,
+    annotated: &AnnotatedLambdaExpression<'source>,
+    leading: LeadingTrivia,
+) -> Doc<'source> {
+    let annotations = match resolve_required_field(annotated.annotations(), doc) {
+        KotlinFormatField::Present(list) => {
+            crate::rules::declarations::format_modifier_list_with_leading(
+                doc, &list, false, leading,
+            )
+        }
+        KotlinFormatField::Malformed(recovery) => recovery,
+    };
+    let lambda = format_required_field(annotated.lambda(), doc, |lambda, doc| {
+        format_lambda_expression(doc, &lambda, LeadingTrivia::SuppressAlreadyHandled)
+    });
+    doc.concat([annotations, lambda])
 }
 
 fn format_labeled_lambda_expression<'source>(

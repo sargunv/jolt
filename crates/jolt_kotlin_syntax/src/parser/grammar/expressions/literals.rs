@@ -100,6 +100,15 @@ impl Parser<'_> {
         self.complete(marker, K::LambdaExpression)
     }
 
+    pub(super) fn parse_annotated_lambda_expression(&mut self) -> CompletedMarker {
+        let marker = self.start();
+        let annotated = self.start();
+        self.parse_modifier_list();
+        self.parse_lambda_expression();
+        self.complete(annotated, K::AnnotatedLambdaExpression);
+        self.complete(marker, K::LambdaExpression)
+    }
+
     pub(super) fn parse_collection_literal_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
         self.eat_asserted(K::LBracket);

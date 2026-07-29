@@ -323,6 +323,9 @@ impl Parser<'_> {
                 kind if self.at_labeled_lambda_start(kind) => {
                     expression = self.parse_call_suffix(expression);
                 }
+                K::At | K::Hash if self.at_annotated_lambda_start() => {
+                    expression = self.parse_call_suffix(expression);
+                }
                 K::Dot | K::SafeAccess => {
                     expression = self.parse_navigation_suffix(expression, false);
                 }
@@ -434,13 +437,14 @@ impl Parser<'_> {
         let lambdas = self.start();
         loop {
             let kind = self.current_kind();
-            if !self.at(K::LBrace) && !self.at_labeled_lambda_start(kind) {
-                break;
-            }
             if self.at(K::LBrace) {
                 self.parse_lambda_expression();
-            } else {
+            } else if self.at_labeled_lambda_start(kind) {
                 self.parse_labeled_lambda_expression();
+            } else if matches!(kind, K::At | K::Hash) && self.at_annotated_lambda_start() {
+                self.parse_annotated_lambda_expression();
+            } else {
+                break;
             }
         }
         self.complete(lambdas, K::LambdaExpressionList);
@@ -880,6 +884,58 @@ impl Parser<'_> {
     fn current_tokens_are_adjacent(&mut self, count: usize) -> bool {
         let position = self.position();
         self.tokens_are_adjacent(position, count)
+    }
+
+    /// An annotated trailing lambda (`run @Suppress("x") { ... }`) starts with
+    /// annotations and ends at the lambda's `{`. Scan the annotation shapes
+    /// with a bounded lookahead so a statement-level annotated expression is
+    /// never grabbed as a call suffix.
+    fn at_annotated_lambda_start(&mut self) -> bool {
+        const MAX_ANNOTATED_LAMBDA_LOOKAHEAD: usize = 256;
+
+        let end = self.position() + MAX_ANNOTATED_LAMBDA_LOOKAHEAD;
+        let mut index = self.position();
+        while index < end && matches!(self.kind_at(index), K::At | K::Hash) {
+            index += 1;
+            if !is_identifier_like_kind(self.kind_at(index)) {
+                return false;
+            }
+            index += 1;
+            while self.kind_at(index) == K::Dot && is_identifier_like_kind(self.kind_at(index + 1))
+            {
+                index += 2;
+            }
+            if self.kind_at(index) == K::LParen {
+                let Some(after) = self.skip_balanced_parens(index, end) else {
+                    return false;
+                };
+                index = after;
+            }
+        }
+        index < end && self.kind_at(index) == K::LBrace
+    }
+
+    fn skip_balanced_parens(&mut self, start: usize, end: usize) -> Option<usize> {
+        debug_assert_eq!(self.kind_at(start), K::LParen);
+        let mut depth = 0usize;
+        let mut index = start;
+        while index < end {
+            match self.kind_at(index) {
+                K::LParen => depth += 1,
+                K::RParen => {
+                    depth = depth.saturating_sub(1);
+                    index += 1;
+                    if depth == 0 {
+                        return Some(index);
+                    }
+                    continue;
+                }
+                K::Eof => return None,
+                _ => {}
+            }
+            index += 1;
+        }
+        None
     }
 
     fn parse_optional_label_definition(&mut self) {
