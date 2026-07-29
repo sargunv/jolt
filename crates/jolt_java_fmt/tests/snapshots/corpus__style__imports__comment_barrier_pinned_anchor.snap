@@ -3,14 +3,12 @@ source: crates/jolt_java_fmt/tests/corpus.rs
 expression: snapshot
 ---
 formatted:
-// travels with its import
 import z.Zed;
+/*hunt*/
+import m.Middle;
 import a.Alpha;
 
-// keeps the blank line before it
-import b.Beta;
-
-class A {
+class C {
 }
 
 diagnostics:

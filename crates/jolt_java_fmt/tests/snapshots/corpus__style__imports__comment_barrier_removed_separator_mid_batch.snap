@@ -1,0 +1,18 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+import java.utils.*;
+import something.Different;
+/*hunt*/
+import abc.def.Something;
+import abc.def;
+import abc.def.Another;
+import one.last;
+
+class C {
+}
+
+diagnostics:
+(none)

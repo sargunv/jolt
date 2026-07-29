@@ -1,0 +1,131 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import something.Different;
+import java.utils.*;
+import abc.def;
+import static abc.def;
+import static java.utils.*;; /*hunt*/ ;
+import static abc.def.Something;
+import one.last;
+class C {}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ImportDeclaration
+      ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "something" @ 7..16
+        Dot "." @ 16..17
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Different" @ 17..26
+      Semicolon ";" @ 26..27
+    ImportDeclaration
+      ImportKw "import" @ 28..34 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "java" @ 35..39
+        Dot "." @ 39..40
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "utils" @ 40..45
+      Dot "." @ 45..46
+      Star "*" @ 46..47
+      Semicolon ";" @ 47..48
+    ImportDeclaration
+      ImportKw "import" @ 49..55 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "abc" @ 56..59
+        Dot "." @ 59..60
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "def" @ 60..63
+      Semicolon ";" @ 63..64
+    ImportDeclaration
+      ImportKw "import" @ 65..71 leading=[Newline "\n"] trailing=[Whitespace " "]
+      StaticKw "static" @ 72..78 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "abc" @ 79..82
+        Dot "." @ 82..83
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "def" @ 83..86
+      Semicolon ";" @ 86..87
+    ImportDeclaration
+      ImportKw "import" @ 88..94 leading=[Newline "\n"] trailing=[Whitespace " "]
+      StaticKw "static" @ 95..101 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "java" @ 102..106
+        Dot "." @ 106..107
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "utils" @ 107..112
+      Dot "." @ 112..113
+      Star "*" @ 113..114
+      Semicolon ";" @ 114..115
+    EmptyDeclaration
+      Semicolon ";" @ 115..116 trailing=[Whitespace " ", BlockComment "/*hunt*/", Whitespace " "]
+    EmptyDeclaration
+      Semicolon ";" @ 126..127
+    ImportDeclaration
+      ImportKw "import" @ 128..134 leading=[Newline "\n"] trailing=[Whitespace " "]
+      StaticKw "static" @ 135..141 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "abc" @ 142..145
+        Dot "." @ 145..146
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "def" @ 146..149
+          Dot "." @ 149..150
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Something" @ 150..159
+      Semicolon ";" @ 159..160
+    ImportDeclaration
+      ImportKw "import" @ 161..167 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "one" @ 168..171
+        Dot "." @ 171..172
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "last" @ 172..176
+      Semicolon ";" @ 176..177
+    ClassDeclaration
+      ClassKw "class" @ 178..183 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "C" @ 184..185 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 186..187
+        ClassBodyMemberList
+        RBrace "}" @ 187..188
+  Eof "" @ 189..189 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

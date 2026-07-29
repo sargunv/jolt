@@ -1,7 +1,7 @@
 use jolt_fmt_ir::{BodyItemSeparator, Doc, DocBuilder};
 use jolt_java_syntax::{
-    CompilationUnit, CompilationUnitItem, ImportDeclaration, JavaMalformedSyntax,
-    JavaMissingSyntax, JavaSyntaxListPart, JavaSyntaxToken, JavaSyntaxView, PackageDeclaration,
+    CompilationUnit, CompilationUnitItem, JavaMalformedSyntax, JavaMissingSyntax,
+    JavaSyntaxListPart, JavaSyntaxToken, JavaSyntaxView, PackageDeclaration,
 };
 
 use crate::helpers::comments::{
@@ -14,7 +14,7 @@ use crate::helpers::recovery::{
 };
 use crate::rules::annotations::format_required_annotation_lines;
 use crate::rules::declarations::{format_method_declaration, format_type_declaration};
-use crate::rules::imports::format_imports;
+use crate::rules::imports::{ImportBatchEntry, format_imports};
 use crate::rules::modules::format_module_declaration;
 use crate::rules::names::format_name;
 use crate::rules::variables::format_field_declaration;
@@ -227,11 +227,24 @@ fn format_program_sections<'source>(
 ) -> Vec<ProgramSection<'source>> {
     let mut sections = Vec::with_capacity(entries.len());
     let mut imports = Vec::new();
+    let mut salvaged = None;
     for entry in entries {
         let blank_before = entry.starts_after_blank_line();
         let section = match entry {
             ProgramEntry::Item(CompilationUnitItem::ImportDeclaration(import)) => {
-                imports.push(import);
+                let entry = match salvaged.take() {
+                    Some((comments, salvaged_blank)) => ImportBatchEntry {
+                        declaration: import,
+                        salvaged_leading: Some(comments),
+                        blank_before: blank_before || salvaged_blank,
+                    },
+                    None => ImportBatchEntry {
+                        declaration: import,
+                        salvaged_leading: None,
+                        blank_before,
+                    },
+                };
+                imports.push(entry);
                 continue;
             }
             ProgramEntry::Item(CompilationUnitItem::EmptyDeclaration(empty))
@@ -246,8 +259,34 @@ fn format_program_sections<'source>(
                 sections.push(ProgramSection::claim_only(removed));
                 continue;
             }
+            ProgramEntry::Item(CompilationUnitItem::EmptyDeclaration(empty)) => {
+                let formatted =
+                    format_program_item(CompilationUnitItem::EmptyDeclaration(empty), doc);
+                if empty.separator_removal_claim().is_none() {
+                    // Removal was not authorized, so the formatted piece may
+                    // still hold the visible semicolon; it must stay in place.
+                    flush_imports(&mut imports, &mut sections, doc);
+                    flush_salvaged(&mut salvaged, &mut sections);
+                    sections.push(ProgramSection::salvaged_comments(formatted, blank_before));
+                    continue;
+                }
+                // A comment-carrying top-level semicolon is still canonically
+                // removed, but its comments read as leading trivia of the
+                // import that follows it. Hold them for that import instead of
+                // splitting the sorting batch around them; only a non-import
+                // entry turns them back into their own section.
+                salvaged = Some(match salvaged.take() {
+                    Some((previous, salvaged_blank)) => {
+                        let line = doc.hard_line();
+                        (doc.concat([previous, line, formatted]), salvaged_blank)
+                    }
+                    None => (formatted, blank_before),
+                });
+                continue;
+            }
             ProgramEntry::Item(CompilationUnitItem::BogusCompilationUnitItem(bogus)) => {
                 flush_imports(&mut imports, &mut sections, doc);
+                flush_salvaged(&mut salvaged, &mut sections);
                 let visible = bogus.first_token().is_some();
                 let recovery = format_malformed(&bogus, doc);
                 append_program_recovery(&mut sections, recovery, visible, blank_before, doc);
@@ -255,22 +294,20 @@ fn format_program_sections<'source>(
             }
             ProgramEntry::Item(item) => {
                 flush_imports(&mut imports, &mut sections, doc);
-                let salvaged = matches!(item, CompilationUnitItem::EmptyDeclaration(_));
+                flush_salvaged(&mut salvaged, &mut sections);
                 let formatted = format_program_item(item, doc);
-                if salvaged {
-                    ProgramSection::salvaged_comments(formatted, blank_before)
-                } else {
-                    ProgramSection::declaration(formatted, blank_before)
-                }
+                ProgramSection::declaration(formatted, blank_before)
             }
             ProgramEntry::Token(token) => {
                 flush_imports(&mut imports, &mut sections, doc);
+                flush_salvaged(&mut salvaged, &mut sections);
                 let recovery = format_token_with_comments(doc, &token);
                 append_program_recovery(&mut sections, recovery, true, blank_before, doc);
                 continue;
             }
             ProgramEntry::Malformed(malformed) => {
                 flush_imports(&mut imports, &mut sections, doc);
+                flush_salvaged(&mut salvaged, &mut sections);
                 let visible = malformed.first_token().is_some();
                 let recovery = format_malformed(&malformed, doc);
                 append_program_recovery(&mut sections, recovery, visible, blank_before, doc);
@@ -278,12 +315,14 @@ fn format_program_sections<'source>(
             }
             ProgramEntry::Missing(missing) => {
                 flush_imports(&mut imports, &mut sections, doc);
+                flush_salvaged(&mut salvaged, &mut sections);
                 ProgramSection::claim_only(format_missing(&missing, doc))
             }
         };
         sections.push(section);
     }
     flush_imports(&mut imports, &mut sections, doc);
+    flush_salvaged(&mut salvaged, &mut sections);
     sections
 }
 
@@ -313,17 +352,25 @@ fn append_program_recovery<'source>(
 }
 
 fn flush_imports<'source>(
-    imports: &mut Vec<ImportDeclaration<'source>>,
+    imports: &mut Vec<ImportBatchEntry<'source>>,
     sections: &mut Vec<ProgramSection<'source>>,
     doc: &mut DocBuilder<'source>,
 ) {
-    let blank_before = imports
-        .first()
-        .is_some_and(ImportDeclaration::starts_after_blank_line);
-    if let Some(formatted) = format_imports(imports, doc) {
+    let blank_before = imports.first().is_some_and(|entry| entry.blank_before);
+    if let Some(formatted) = format_imports(std::mem::take(imports), doc) {
         sections.push(ProgramSection::declaration(formatted, blank_before));
     }
-    imports.clear();
+}
+
+/// Emits comments a removed stray semicolon carried that no import followed,
+/// as the leading-trivia section they would have been before.
+fn flush_salvaged<'source>(
+    salvaged: &mut Option<(Doc<'source>, bool)>,
+    sections: &mut Vec<ProgramSection<'source>>,
+) {
+    if let Some((comments, blank_before)) = salvaged.take() {
+        sections.push(ProgramSection::salvaged_comments(comments, blank_before));
+    }
 }
 
 fn join_program_sections<'source>(
@@ -416,7 +463,15 @@ fn format_program_item<'source>(
         }
         CompilationUnitItem::ImportDeclaration(import) => {
             doc.block_on_invariant("import bypassed its compilation-unit sorting run");
-            crate::rules::imports::format_imports(&[import], doc).unwrap_or_else(Doc::nil)
+            crate::rules::imports::format_imports(
+                vec![ImportBatchEntry {
+                    salvaged_leading: None,
+                    blank_before: import.starts_after_blank_line(),
+                    declaration: import,
+                }],
+                doc,
+            )
+            .unwrap_or_else(Doc::nil)
         }
         CompilationUnitItem::ModuleDeclaration(module) => format_module_declaration(&module, doc),
         CompilationUnitItem::ClassDeclaration(declaration) => {
