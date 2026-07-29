@@ -765,6 +765,7 @@ impl Parser<'_> {
                     | K::ThisExpression
                     | K::SuperExpression
                     | K::ParenthesizedExpression
+                    | K::PostfixExpression
             )
         )
     }
