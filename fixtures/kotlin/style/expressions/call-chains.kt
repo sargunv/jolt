@@ -6,3 +6,17 @@ fun callChains(source: Sequence<String>): List<String> =
         .filter { it.isNotEmpty() }
         .sorted()
         .toList()
+
+fun String.trimStackTrace(): String =
+    trimIndent()
+        // Remove source line
+        .replace(Regex(":[0-9]+"), "")
+        // Remove coroutine id
+        .replace(Regex("@[0-9]+"), "")
+
+fun midChainComments(text: String): String =
+    text
+        .trim()
+        // comment between suffixes
+        .uppercase()
+        .lowercase()

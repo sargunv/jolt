@@ -266,8 +266,7 @@ impl<'source> MemberChainBuilder<'source> {
     ) -> Option<Doc<'source>> {
         let first_suffix = self.first_suffix?;
         let keep_first_suffix_with_root = first_suffix.must_keep_with_root
-            || is_simple_member_chain_root(root)
-                && (!first_suffix.forces_break || matches!(root, Expression::CallExpression(_)));
+            || is_simple_member_chain_root(root) && !first_suffix.forces_break;
         Some(member_chain(
             doc,
             root_doc,
