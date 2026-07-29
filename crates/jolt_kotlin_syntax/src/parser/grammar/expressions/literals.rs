@@ -115,11 +115,15 @@ impl Parser<'_> {
         self.complete(marker, K::CollectionLiteralExpression)
     }
 
-    fn lambda_has_parameter_arrow(&mut self) -> bool {
+    pub(super) fn lambda_has_parameter_arrow(&mut self) -> bool {
+        self.lambda_has_parameter_arrow_at(self.position())
+    }
+
+    pub(super) fn lambda_has_parameter_arrow_at(&mut self, start: usize) -> bool {
         const MAX_LAMBDA_PARAMETER_LOOKAHEAD: usize = 256;
 
         let mut depth = 0usize;
-        for index in (self.position()..).take(MAX_LAMBDA_PARAMETER_LOOKAHEAD) {
+        for index in (start..).take(MAX_LAMBDA_PARAMETER_LOOKAHEAD) {
             match self.kind_at(index) {
                 K::Arrow if depth == 0 => return true,
                 K::RBrace if depth == 0 => return false,

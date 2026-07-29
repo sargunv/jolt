@@ -153,6 +153,7 @@ syntax/parser/parses-binary-elvis-as-is-in-precedence.kt
 syntax/parser/parses-binary-range-and-range-until.kt
 syntax/parser/parses-bodiless-companion-object.kt
 syntax/parser/parses-bracketed-multi-annotations.kt
+syntax/parser/parses-branch-body-lambdas.kt
 syntax/parser/parses-call-explicit-context-argument-names.kt
 syntax/parser/parses-call-explicit-receiver-and-super-forms.kt
 syntax/parser/parses-call-infix-functions-and-soft-keywords.kt

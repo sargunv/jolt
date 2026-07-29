@@ -121,7 +121,7 @@ impl Parser<'_> {
             }
         }
         let body = self.start();
-        if self.at(K::LBrace) {
+        if self.at(K::LBrace) && !self.at_braced_lambda_with_parameter_arrow() {
             self.parse_block();
         } else if next_entry_boundary == Some(self.position())
             || matches!(
@@ -543,7 +543,7 @@ impl Parser<'_> {
     }
 
     fn parse_control_structure_body(&mut self, stops: StopSet, message: &'static str) {
-        if self.at(K::LBrace) {
+        if self.at(K::LBrace) && !self.at_braced_lambda_with_parameter_arrow() {
             self.parse_block();
         } else if matches!(self.current_kind(), K::Semicolon | K::DoubleSemicolon) {
             let empty = self.start();
@@ -556,6 +556,13 @@ impl Parser<'_> {
         } else {
             self.parse_expression_until(stops);
         }
+    }
+
+    /// A braced body is a block, unless it spells a lambda parameter list:
+    /// `if (c) { x: Int -> ... }` is a lambda, `if (c) { ... }` a block.
+    fn at_braced_lambda_with_parameter_arrow(&mut self) -> bool {
+        debug_assert!(self.at(K::LBrace));
+        self.lambda_has_parameter_arrow_at(self.position() + 1)
     }
 
     fn complete_missing_for_variable(&mut self) {
