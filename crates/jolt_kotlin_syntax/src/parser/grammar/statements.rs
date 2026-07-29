@@ -6,7 +6,7 @@ impl Parser<'_> {
     pub(super) fn parse_statement_tail(&mut self) {
         if self.at(K::ValKw) || self.at(K::VarKw) {
             let local = self.start();
-            self.parse_property_tail();
+            self.parse_property_tail(true);
             self.complete(local, K::LocalDeclaration);
         } else if matches!(self.current_kind(), K::Semicolon | K::DoubleSemicolon) {
             let empty = self.start();
@@ -45,7 +45,7 @@ impl Parser<'_> {
         let items = self.start();
         while !matches!(self.current_kind(), K::RBrace | K::Eof) {
             let before = self.position();
-            let declaration = self.parse_declaration_or_statement();
+            let declaration = self.parse_declaration_or_statement(true);
             if declaration && self.at(K::Semicolon) {
                 // A declaration's trailing semicolon separates body items; it
                 // is not an empty statement. Keeping it directly in the list

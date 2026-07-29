@@ -69,7 +69,7 @@ impl Parser<'_> {
         let items = self.start();
         while !matches!(self.current_kind(), K::RBrace | K::Eof) {
             let before = self.position();
-            let declaration = self.parse_declaration_or_statement();
+            let declaration = self.parse_declaration_or_statement(true);
             if declaration && self.at(K::Semicolon) {
                 // As in a block, this token separates complete body items. It
                 // must remain directly represented in the body list so the

@@ -79,7 +79,7 @@ impl Parser<'_> {
         self.parse_optional_body();
     }
 
-    pub(in crate::parser::grammar) fn parse_property_tail(&mut self) {
+    pub(in crate::parser::grammar) fn parse_property_tail(&mut self, local: bool) {
         self.bump();
         if self.at(K::Lt) {
             self.parse_type_parameter_list();
@@ -107,9 +107,9 @@ impl Parser<'_> {
             ]);
         }
         self.parse_type_constraint_list();
-        self.parse_property_initializer();
+        self.parse_property_initializer(local);
         let body_members = self.start();
-        if self.at_soft_keyword("field") {
+        if !local && self.at_soft_keyword("field") {
             let field = self.start();
             self.bump();
             if !self.eat(K::Assign) {
@@ -120,7 +120,7 @@ impl Parser<'_> {
                     [diagnostic],
                 );
             }
-            if self.at_property_accessor_start() || self.at_semicolon_boundary() {
+            if self.at_semicolon_boundary() {
                 let diagnostic = self.pending_expected("expected backing field expression");
                 self.missing_required_slot(
                     field.anchor(),
@@ -128,11 +128,11 @@ impl Parser<'_> {
                     [diagnostic],
                 );
             } else {
-                self.parse_property_expression_until_accessor(false);
+                self.parse_property_expression_until_accessor(false, true);
             }
             self.complete(field, K::ExplicitBackingField);
         }
-        while self.at_property_accessor_start() {
+        while !local && self.at_property_accessor_start() {
             let before = self.position();
             self.parse_property_accessor();
             debug_assert!(self.position() > before);
@@ -140,16 +140,14 @@ impl Parser<'_> {
         self.complete(body_members, K::PropertyBodyMemberList);
     }
 
-    fn parse_property_initializer(&mut self) {
+    fn parse_property_initializer(&mut self, local: bool) {
         if self.at(K::Assign) || self.at_soft_keyword("by") {
             let initializer = self.start();
             self.bump();
-            if self.at_property_accessor_start()
-                || matches!(
-                    self.current_kind(),
-                    K::Semicolon | K::DoubleSemicolon | K::RBrace | K::Eof
-                )
-                || self.at_expression_rhs_declaration_boundary()
+            if matches!(
+                self.current_kind(),
+                K::Semicolon | K::DoubleSemicolon | K::RBrace | K::Eof
+            ) || self.at_expression_rhs_declaration_boundary()
             {
                 let diagnostic = self.pending_expected("expected property initializer expression");
                 self.missing_required_slot(
@@ -158,7 +156,7 @@ impl Parser<'_> {
                     [diagnostic],
                 );
             } else {
-                self.parse_property_expression_until_accessor(true);
+                self.parse_property_expression_until_accessor(true, !local);
             }
             self.complete(initializer, K::PropertyInitializer);
             return;
@@ -179,7 +177,7 @@ impl Parser<'_> {
             crate::shape::property_initializer::Slot::operator as u16,
             [diagnostic],
         );
-        self.parse_property_expression_until_accessor(true);
+        self.parse_property_expression_until_accessor(true, !local);
         self.complete(initializer, K::PropertyInitializer);
     }
 
@@ -824,7 +822,7 @@ impl Parser<'_> {
                 crate::shape::expression_body::Slot::assign as u16,
                 [diagnostic],
             );
-            self.parse_property_expression_until_accessor(false);
+            self.parse_property_expression_until_accessor(false, true);
             self.complete(body, K::ExpressionBody);
         }
     }
@@ -834,7 +832,11 @@ impl Parser<'_> {
             .is_some()
     }
 
-    fn parse_property_expression_until_accessor(&mut self, include_where: bool) {
+    fn parse_property_expression_until_accessor(
+        &mut self,
+        include_where: bool,
+        stop_at_accessor: bool,
+    ) {
         const STOPS: &[K] = &[
             K::Semicolon,
             K::DoubleSemicolon,
@@ -854,8 +856,12 @@ impl Parser<'_> {
             StopSet::new(STOPS_WITH_WHERE)
         } else {
             StopSet::new(STOPS)
-        }
-        .with_position(self.next_property_accessor_start_position());
+        };
+        let stops = if stop_at_accessor {
+            stops.with_position(self.next_property_accessor_start_position())
+        } else {
+            stops
+        };
         self.parse_expression_until(stops);
     }
 
@@ -868,8 +874,7 @@ impl Parser<'_> {
         let missing_expression = matches!(
             self.current_kind(),
             K::Semicolon | K::DoubleSemicolon | K::RBrace | K::Eof
-        ) || accessor && self.at_property_accessor_start()
-            || self.at_expression_rhs_declaration_boundary();
+        ) || self.at_expression_rhs_declaration_boundary();
         if missing_expression {
             let diagnostic = self.pending_expected("expected declaration body expression");
             self.missing_required_slot(
@@ -878,7 +883,7 @@ impl Parser<'_> {
                 [diagnostic],
             );
         } else if accessor {
-            self.parse_property_expression_until_accessor(false);
+            self.parse_property_expression_until_accessor(false, true);
         } else {
             self.parse_expression_until(&[K::Semicolon, K::DoubleSemicolon, K::RBrace]);
         }
