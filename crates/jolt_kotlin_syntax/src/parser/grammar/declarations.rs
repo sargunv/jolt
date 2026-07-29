@@ -38,24 +38,24 @@ impl Parser<'_> {
         }
 
         let marker = self.start();
-        self.parse_declaration_modifier_list(allow_class_members);
+        let mut is_enum = self.parse_declaration_modifier_list(allow_class_members);
         if self.at_context_parameter_clause() {
             self.parse_context_parameter_clause();
         }
-        self.parse_declaration_modifier_list(allow_class_members);
+        is_enum |= self.parse_declaration_modifier_list(allow_class_members);
 
         let kind = match self.current_kind() {
             K::ClassKw => {
-                self.parse_class_or_interface_tail();
+                self.parse_class_or_interface_tail(is_enum);
                 K::ClassDeclaration
             }
             K::FunKw if self.nth_kind(1) == K::InterfaceKw => {
                 self.bump();
-                self.parse_class_or_interface_tail();
+                self.parse_class_or_interface_tail(false);
                 K::InterfaceDeclaration
             }
             K::InterfaceKw => {
-                self.parse_class_or_interface_tail();
+                self.parse_class_or_interface_tail(false);
                 K::InterfaceDeclaration
             }
             K::ObjectKw => {
@@ -226,12 +226,13 @@ impl Parser<'_> {
         self.parse_modifier_list_impl(false);
     }
 
-    fn parse_declaration_modifier_list(&mut self, allow_class_members: bool) {
-        self.parse_modifier_list_impl(allow_class_members);
+    fn parse_declaration_modifier_list(&mut self, allow_class_members: bool) -> bool {
+        self.parse_modifier_list_impl(allow_class_members)
     }
 
-    fn parse_modifier_list_impl(&mut self, stop_before_companion_object: bool) {
+    fn parse_modifier_list_impl(&mut self, stop_before_companion_object: bool) -> bool {
         let modifiers = self.start();
+        let mut saw_enum = false;
         while self.at_modifier_or_annotation()
             && !(stop_before_companion_object
                 && self.at_soft_keyword("companion")
@@ -241,11 +242,13 @@ impl Parser<'_> {
             if self.at(K::At) || self.at(K::Hash) {
                 self.parse_annotation();
             } else {
+                saw_enum |= self.at_soft_keyword("enum");
                 self.bump();
             }
             debug_assert!(self.position() > before);
         }
         self.complete(modifiers, K::ModifierList);
+        saw_enum
     }
 
     pub(super) fn parse_annotation(&mut self) {

@@ -12,6 +12,23 @@ interface Logger {
     fun write(message: String)
 }
 
+class ContextMembers {
+    context(_: VerificationScope)
+    fun verify() = true
+
+    context(scope: Scope)
+    val scoped: Boolean
+        get() = true
+}
+
+enum class ContextEnum {
+    Entry;
+
+    context(_: VerificationScope)
+    fun verify() = true
+}
+
+
 syntax:
 syntax:
 KotlinFile
@@ -108,7 +125,132 @@ KotlinFile
                             Identifier "String" @ 129..135
                 RParen ")" @ 135..136
         RBrace "}" @ 137..138 leading=[Newline "\n"]
-  Eof "" @ 139..139 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 140..145 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "ContextMembers" @ 146..160 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 161..162
+        ClassMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ContextParameterClause
+                Identifier "context" @ 167..174 leading=[Newline "\n", Whitespace "    "]
+                LParen "(" @ 174..175
+                ContextParameterSeparatedList
+                  ContextParameter
+                    Name
+                      Identifier "_" @ 175..176
+                    Colon ":" @ 176..177 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "VerificationScope" @ 178..195
+                RParen ")" @ 195..196
+              ModifierList
+              FunKw "fun" @ 201..204 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "verify" @ 205..211
+              ValueParameterList
+                LParen "(" @ 211..212
+                ValueParameterSeparatedList
+                RParen ")" @ 212..213 trailing=[Whitespace " "]
+              ExpressionBody
+                Assign "=" @ 214..215 trailing=[Whitespace " "]
+                LiteralExpression
+                  TrueKw "true" @ 216..220
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ContextParameterClause
+                Identifier "context" @ 226..233 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+                LParen "(" @ 233..234
+                ContextParameterSeparatedList
+                  ContextParameter
+                    Name
+                      Identifier "scope" @ 234..239
+                    Colon ":" @ 239..240 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "Scope" @ 241..246
+                RParen ")" @ 246..247
+              ModifierList
+              ValKw "val" @ 252..255 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "scoped" @ 256..262
+              Colon ":" @ 262..263 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "Boolean" @ 264..271
+              PropertyBodyMemberList
+                PropertyAccessor
+                  ModifierList
+                  Identifier "get" @ 280..283 leading=[Newline "\n", Whitespace "        "]
+                  ValueParameterList
+                    LParen "(" @ 283..284
+                    ValueParameterSeparatedList
+                    RParen ")" @ 284..285 trailing=[Whitespace " "]
+                  ExpressionBody
+                    Assign "=" @ 286..287 trailing=[Whitespace " "]
+                    LiteralExpression
+                      TrueKw "true" @ 288..292
+        RBrace "}" @ 293..294 leading=[Newline "\n"]
+    ClassDeclaration
+      ModifierList
+        Identifier "enum" @ 296..300 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 301..306 trailing=[Whitespace " "]
+      Name
+        Identifier "ContextEnum" @ 307..318 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 319..320
+        ClassMemberList
+          EnumEntry
+            ModifierList
+            Name
+              Identifier "Entry" @ 325..330 leading=[Newline "\n", Whitespace "    "]
+          Semicolon ";" @ 330..331
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ContextParameterClause
+                Identifier "context" @ 337..344 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+                LParen "(" @ 344..345
+                ContextParameterSeparatedList
+                  ContextParameter
+                    Name
+                      Identifier "_" @ 345..346
+                    Colon ":" @ 346..347 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        UserTypeSegmentList
+                          UserTypeSegment
+                            Identifier "VerificationScope" @ 348..365
+                RParen ")" @ 365..366
+              ModifierList
+              FunKw "fun" @ 371..374 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "verify" @ 375..381
+              ValueParameterList
+                LParen "(" @ 381..382
+                ValueParameterSeparatedList
+                RParen ")" @ 382..383 trailing=[Whitespace " "]
+              ExpressionBody
+                Assign "=" @ 384..385 trailing=[Whitespace " "]
+                LiteralExpression
+                  TrueKw "true" @ 386..390
+        RBrace "}" @ 391..392 leading=[Newline "\n"]
+  Eof "" @ 394..394 leading=[Newline "\n", Newline "\n"]
 
 diagnostics:
   (none)

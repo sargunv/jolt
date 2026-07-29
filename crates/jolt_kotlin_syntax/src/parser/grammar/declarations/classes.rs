@@ -4,7 +4,10 @@ use super::super::Parser;
 use super::super::support::is_identifier_like_kind;
 
 impl Parser<'_> {
-    pub(in crate::parser::grammar) fn parse_class_or_interface_tail(&mut self) {
+    pub(in crate::parser::grammar) fn parse_class_or_interface_tail(
+        &mut self,
+        allow_enum_entries: bool,
+    ) {
         self.bump();
         self.parse_name();
         if self.at(K::Lt) {
@@ -21,7 +24,7 @@ impl Parser<'_> {
         }
         self.parse_type_constraint_list();
         if self.at(K::LBrace) {
-            self.parse_class_body();
+            self.parse_class_body(allow_enum_entries);
         }
     }
 
@@ -42,24 +45,24 @@ impl Parser<'_> {
             self.parse_delegation_clause(recovered_delegation);
         }
         if self.at(K::LBrace) {
-            self.parse_class_body();
+            self.parse_class_body(false);
         }
     }
 
-    pub(in crate::parser::grammar) fn parse_class_body(&mut self) {
+    pub(in crate::parser::grammar) fn parse_class_body(&mut self, allow_enum_entries: bool) {
         if matches!(self.nth_kind(1), K::RBrace | K::Eof) {
-            self.parse_class_body_inner();
+            self.parse_class_body_inner(allow_enum_entries);
             return;
         }
         if self
-            .with_syntax_nesting(Self::parse_class_body_inner)
+            .with_syntax_nesting(|parser| parser.parse_class_body_inner(allow_enum_entries))
             .is_none()
         {
             self.parse_excessive_class_body();
         }
     }
 
-    fn parse_class_body_inner(&mut self) {
+    fn parse_class_body_inner(&mut self, allow_enum_entries: bool) {
         let marker = self.start();
         self.eat_asserted(K::LBrace);
         let members = self.start();
@@ -76,7 +79,7 @@ impl Parser<'_> {
                 continue;
             }
             let before = self.position();
-            if self.at_enum_entry_start() {
+            if allow_enum_entries && self.at_enum_entry_start() {
                 self.parse_enum_entry();
             } else if self.at(K::Plus)
                 && matches!(
@@ -164,7 +167,7 @@ impl Parser<'_> {
             self.parse_value_argument_list();
         }
         if self.at(K::LBrace) {
-            self.parse_class_body();
+            self.parse_class_body(false);
         }
         let _ = self.eat(K::Comma);
         self.complete(marker, K::EnumEntry);
@@ -202,6 +205,15 @@ impl Parser<'_> {
         } else {
             start
         };
+        if self.is_soft_kind_at(entry, "context")
+            && self.kind_at(entry + 1) == K::LParen
+            && let Some(after_clause) =
+                self.skip_balanced_delimiter(entry + 1, K::LParen, K::RParen)
+            && let Some(head) = self.skip_modifier_prefix(after_clause)
+            && self.declaration_head_at(head, true)
+        {
+            return false;
+        }
         (is_identifier_like_kind(self.kind_at(entry))
             && !self.is_soft_kind_at(entry, "constructor")
             && !self.is_soft_kind_at(entry, "init")
