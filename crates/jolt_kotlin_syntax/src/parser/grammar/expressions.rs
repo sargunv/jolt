@@ -86,7 +86,7 @@ impl Parser<'_> {
         }
 
         while expression_start_kind(self.current_kind())
-            && !self.at_expression_rhs_declaration_boundary()
+            && !self.at_expression_rhs_declaration_boundary(true)
         {
             let combined = self.precede(expression);
             let diagnostic = self.pending_unexpected("unexpected token in expression");
@@ -136,7 +136,8 @@ impl Parser<'_> {
 
         let assignment = self.precede(lhs);
         self.bump();
-        if self.at_expression_boundary(stops) || self.at_expression_rhs_declaration_boundary() {
+        if self.at_expression_boundary(stops) || self.at_expression_rhs_declaration_boundary(false)
+        {
             let rhs = self.start();
             let diagnostic = self.pending_expected("expected expression after operator");
 
@@ -187,7 +188,7 @@ impl Parser<'_> {
                 self.bump();
                 if self.at_expression_boundary(stops)
                     || !expression_start_kind(self.current_kind())
-                        && self.at_expression_rhs_declaration_boundary()
+                        && self.at_expression_rhs_declaration_boundary(false)
                 {
                     let rhs = self.start();
                     let diagnostic = self.pending_expected("expected expression after operator");
@@ -251,7 +252,7 @@ impl Parser<'_> {
                         || consumed_outside
                             && self.newline_before_current()
                             && !is_expression_continuation(current)
-                        || self.at_expression_rhs_declaration_boundary())
+                        || self.at_expression_rhs_declaration_boundary(true))
             {
                 break;
             }
@@ -694,7 +695,7 @@ impl Parser<'_> {
         self.parse_optional_typed_label_reference();
         if !self.at_semicolon_boundary()
             && !self.at_expression_boundary(stops.with_kind(K::RBrace))
-            && !self.at_expression_rhs_declaration_boundary()
+            && !self.at_expression_rhs_declaration_boundary(false)
         {
             if keyword == K::ReturnKw {
                 self.parse_expression_until(stops.with_kind(K::RBrace));
@@ -718,7 +719,7 @@ impl Parser<'_> {
         // it the way it ends a `return`, `break`, or `continue`.
         if self.at_statement_terminator()
             || self.at_expression_boundary(stops.with_kind(K::RBrace))
-            || self.at_expression_rhs_declaration_boundary()
+            || self.at_expression_rhs_declaration_boundary(false)
         {
             self.complete_missing_expression("expected expression after 'throw'");
         } else {
@@ -779,8 +780,11 @@ impl Parser<'_> {
         self.at_eof() || stops.contains(self.current_kind(), self.position())
     }
 
-    pub(in crate::parser::grammar) fn at_expression_rhs_declaration_boundary(&mut self) -> bool {
-        if !self.newline_before_current() || !self.at_declaration_start(true) {
+    pub(in crate::parser::grammar) fn at_expression_rhs_declaration_boundary(
+        &mut self,
+        allow_class_members: bool,
+    ) -> bool {
+        if !self.newline_before_current() || !self.at_declaration_start(allow_class_members) {
             return false;
         }
         if !self.at(K::FunKw) {

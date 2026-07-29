@@ -206,6 +206,7 @@ syntax/parser/parses-import-alias.kt
 syntax/parser/parses-import-qualified-members.kt
 syntax/parser/parses-import-soft-keyword-qualified-names.kt
 syntax/parser/parses-import-star.kt
+syntax/parser/parses-init-constructor-calls-after-line-break.kt
 syntax/parser/parses-interface-fun-and-sealed.kt
 syntax/parser/parses-interface-members-and-properties.kt
 syntax/parser/parses-jump-and-throw-before-else.kt

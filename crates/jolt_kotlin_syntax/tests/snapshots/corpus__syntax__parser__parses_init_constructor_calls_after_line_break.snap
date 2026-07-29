@@ -1,0 +1,416 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val fromWhen = when (a) {
+    1 ->
+        init(b)
+    2 ->
+        constructor(c)
+    else -> g()
+}
+
+val fromInitializer =
+    init(b)
+
+val fromConstructorInitializer =
+    constructor(b)
+
+fun branches(c: Boolean) {
+    if (c)
+        init(b)
+    else
+        constructor(d)
+    while (c)
+        init(e)
+}
+
+val fromLambda = {
+    init(b)
+}
+
+class MemberCalls(val key: Key) {
+    val fromMemberInitializer =
+        init(key)
+
+    fun fromMemberBody() =
+        init(key)
+
+    init {
+        init(key)
+    }
+
+    constructor() : this(DefaultKey)
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      Name
+        Identifier "fromWhen" @ 4..12 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 13..14 trailing=[Whitespace " "]
+        WhenExpression
+          WhenKw "when" @ 15..19 trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 20..21
+            NameExpression
+              Identifier "a" @ 21..22
+            RParen ")" @ 22..23 trailing=[Whitespace " "]
+          LBrace "{" @ 24..25
+          WhenEntryList
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  LiteralExpression
+                    IntegerLiteral "1" @ 30..31 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Arrow "->" @ 32..34
+              WhenEntryBody
+                CallExpression
+                  NameExpression
+                    Identifier "init" @ 43..47 leading=[Newline "\n", Whitespace "        "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 47..48
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "b" @ 48..49
+                    RParen ")" @ 49..50
+                  LambdaExpressionList
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  LiteralExpression
+                    IntegerLiteral "2" @ 55..56 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Arrow "->" @ 57..59
+              WhenEntryBody
+                CallExpression
+                  NameExpression
+                    Identifier "constructor" @ 68..79 leading=[Newline "\n", Whitespace "        "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 79..80
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "c" @ 80..81
+                    RParen ")" @ 81..82
+                  LambdaExpressionList
+            WhenEntry
+              ElseKw "else" @ 87..91 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              WhenConditionSeparatedList
+              Arrow "->" @ 92..94 trailing=[Whitespace " "]
+              WhenEntryBody
+                CallExpression
+                  NameExpression
+                    Identifier "g" @ 95..96
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 96..97
+                    ValueArgumentEntryList
+                    RParen ")" @ 97..98
+                  LambdaExpressionList
+          RBrace "}" @ 99..100 leading=[Newline "\n"]
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 102..105 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "fromInitializer" @ 106..121 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 122..123
+        CallExpression
+          NameExpression
+            Identifier "init" @ 128..132 leading=[Newline "\n", Whitespace "    "]
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 132..133
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                NameExpression
+                  Identifier "b" @ 133..134
+            RParen ")" @ 134..135
+          LambdaExpressionList
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 137..140 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "fromConstructorInitializer" @ 141..167 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 168..169
+        CallExpression
+          NameExpression
+            Identifier "constructor" @ 174..185 leading=[Newline "\n", Whitespace "    "]
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 185..186
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                NameExpression
+                  Identifier "b" @ 186..187
+            RParen ")" @ 187..188
+          LambdaExpressionList
+      PropertyBodyMemberList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 190..193 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "branches" @ 194..202
+      ValueParameterList
+        LParen "(" @ 202..203
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "c" @ 203..204
+            Colon ":" @ 204..205 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Boolean" @ 206..213
+        RParen ")" @ 213..214 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 215..216
+          BlockItemList
+            Statement
+              ExpressionStatement
+                IfExpression
+                  IfKw "if" @ 221..223 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 224..225
+                    NameExpression
+                      Identifier "c" @ 225..226
+                    RParen ")" @ 226..227
+                  CallExpression
+                    NameExpression
+                      Identifier "init" @ 236..240 leading=[Newline "\n", Whitespace "        "]
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 240..241
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          NameExpression
+                            Identifier "b" @ 241..242
+                      RParen ")" @ 242..243
+                    LambdaExpressionList
+                  ElseKw "else" @ 248..252 leading=[Newline "\n", Whitespace "    "]
+                  CallExpression
+                    NameExpression
+                      Identifier "constructor" @ 261..272 leading=[Newline "\n", Whitespace "        "]
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 272..273
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          NameExpression
+                            Identifier "d" @ 273..274
+                      RParen ")" @ 274..275
+                    LambdaExpressionList
+              TerminatorList
+            Statement
+              ExpressionStatement
+                WhileStatement
+                  WhileKw "while" @ 280..285 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  ParenthesizedExpression
+                    LParen "(" @ 286..287
+                    NameExpression
+                      Identifier "c" @ 287..288
+                    RParen ")" @ 288..289
+                  CallExpression
+                    NameExpression
+                      Identifier "init" @ 298..302 leading=[Newline "\n", Whitespace "        "]
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 302..303
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          NameExpression
+                            Identifier "e" @ 303..304
+                      RParen ")" @ 304..305
+                    LambdaExpressionList
+              TerminatorList
+          RBrace "}" @ 306..307 leading=[Newline "\n"]
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 309..312 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "fromLambda" @ 313..323 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 324..325 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 326..327
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  CallExpression
+                    NameExpression
+                      Identifier "init" @ 332..336 leading=[Newline "\n", Whitespace "    "]
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 336..337
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          NameExpression
+                            Identifier "b" @ 337..338
+                      RParen ")" @ 338..339
+                    LambdaExpressionList
+                TerminatorList
+            RBrace "}" @ 340..341 leading=[Newline "\n"]
+      PropertyBodyMemberList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 343..348 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "MemberCalls" @ 349..360
+      PrimaryConstructor
+        ModifierList
+        ValueParameterList
+          LParen "(" @ 360..361
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierList
+              ValKw "val" @ 361..364 trailing=[Whitespace " "]
+              Name
+                Identifier "key" @ 365..368
+              Colon ":" @ 368..369 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "Key" @ 370..373
+          RParen ")" @ 373..374 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 375..376
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 381..384 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "fromMemberInitializer" @ 385..406 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 407..408
+                CallExpression
+                  NameExpression
+                    Identifier "init" @ 417..421 leading=[Newline "\n", Whitespace "        "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 421..422
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "key" @ 422..425
+                    RParen ")" @ 425..426
+                  LambdaExpressionList
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            FunctionDeclaration
+              ModifierList
+              ModifierList
+              FunKw "fun" @ 432..435 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ModifierList
+              Name
+                Identifier "fromMemberBody" @ 436..450
+              ValueParameterList
+                LParen "(" @ 450..451
+                ValueParameterSeparatedList
+                RParen ")" @ 451..452 trailing=[Whitespace " "]
+              ExpressionBody
+                Assign "=" @ 453..454
+                CallExpression
+                  NameExpression
+                    Identifier "init" @ 463..467 leading=[Newline "\n", Whitespace "        "]
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 467..468
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        NameExpression
+                          Identifier "key" @ 468..471
+                    RParen ")" @ 471..472
+                  LambdaExpressionList
+          ClassMemberDeclaration
+            InitializerBlock
+              Identifier "init" @ 478..482 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 483..484
+                BlockItemList
+                  Statement
+                    ExpressionStatement
+                      CallExpression
+                        NameExpression
+                          Identifier "init" @ 493..497 leading=[Newline "\n", Whitespace "        "]
+                        TypeArgumentListList
+                        ValueArgumentList
+                          LParen "(" @ 497..498
+                          ValueArgumentEntryList
+                            ValueArgument
+                              ValueArgumentPrefixList
+                              NameExpression
+                                Identifier "key" @ 498..501
+                          RParen ")" @ 501..502
+                        LambdaExpressionList
+                    TerminatorList
+                RBrace "}" @ 507..508 leading=[Newline "\n", Whitespace "    "]
+          ClassMemberDeclaration
+            SecondaryConstructor
+              ModifierList
+              ModifierList
+              Identifier "constructor" @ 514..525 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+              ValueParameterList
+                LParen "(" @ 525..526
+                ValueParameterSeparatedList
+                RParen ")" @ 526..527 trailing=[Whitespace " "]
+              ConstructorDelegation
+                Colon ":" @ 528..529 trailing=[Whitespace " "]
+                ConstructorDelegationCall
+                  CallExpression
+                    ThisExpression
+                      ThisKw "this" @ 530..534
+                    TypeArgumentListList
+                    ValueArgumentList
+                      LParen "(" @ 534..535
+                      ValueArgumentEntryList
+                        ValueArgument
+                          ValueArgumentPrefixList
+                          NameExpression
+                            Identifier "DefaultKey" @ 535..545
+                      RParen ")" @ 545..546
+                    LambdaExpressionList
+        RBrace "}" @ 547..548 leading=[Newline "\n"]
+  Eof "" @ 549..549 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

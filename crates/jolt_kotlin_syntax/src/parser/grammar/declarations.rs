@@ -64,11 +64,11 @@ impl Parser<'_> {
                 K::ObjectDeclaration
             }
             K::FunKw => {
-                self.parse_function_tail();
+                self.parse_function_tail(allow_class_members);
                 K::FunctionDeclaration
             }
             K::ValKw | K::VarKw => {
-                self.parse_property_tail(local);
+                self.parse_property_tail(local, allow_class_members);
                 K::PropertyDeclaration
             }
             K::TypeAliasKw => {
@@ -212,7 +212,9 @@ impl Parser<'_> {
             && self.is_soft_kind_at(index, "constructor")
             && self.kind_at(index + 1) == K::LParen)
             || (self.kind_at(index) == K::ObjectKw && self.object_declaration_head_at(index))
-            || (allow_class_members && self.is_soft_kind_at(index, "init"))
+            || (allow_class_members
+                && self.is_soft_kind_at(index, "init")
+                && self.kind_at(index + 1) == K::LBrace)
             || (allow_class_members
                 && self.is_soft_kind_at(index, "companion")
                 && self.kind_at(index + 1) == K::ObjectKw)

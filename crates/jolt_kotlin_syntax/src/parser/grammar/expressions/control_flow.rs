@@ -63,7 +63,7 @@ impl Parser<'_> {
             );
             let entries = self.start();
             while !matches!(self.current_kind(), K::RBrace | K::Eof)
-                && !self.at_expression_rhs_declaration_boundary()
+                && !self.at_expression_rhs_declaration_boundary(true)
                 && self.current_line_has_when_arrow()
             {
                 let before = self.position();
@@ -128,7 +128,7 @@ impl Parser<'_> {
                 self.current_kind(),
                 K::Semicolon | K::DoubleSemicolon | K::RBrace | K::Eof
             )
-            || self.at_expression_rhs_declaration_boundary()
+            || self.at_expression_rhs_declaration_boundary(false)
         {
             self.complete_missing_expression("expected when entry body");
         } else {
@@ -550,7 +550,7 @@ impl Parser<'_> {
             self.bump();
             self.complete(empty, K::EmptyStatement);
         } else if self.at_expression_boundary(stops)
-            || self.at_expression_rhs_declaration_boundary()
+            || self.at_expression_rhs_declaration_boundary(false)
         {
             self.complete_missing_expression(message);
         } else {
