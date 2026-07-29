@@ -67,6 +67,26 @@ fn canonicalizing_modifier_keyword_order_is_tolerated() {
 }
 
 #[test]
+fn moving_an_annotation_across_a_node_modifier_is_tolerated() {
+    // `non-sealed` is a child node, not a keyword token, but the formatter still
+    // sorts an annotation ahead of it.
+    assert_eq!(
+        fingerprint("non-sealed @A class T {}"),
+        fingerprint("@A non-sealed class T {}"),
+    );
+}
+
+#[test]
+fn swapping_annotations_across_a_node_modifier_is_rejected() {
+    // The partition that tolerates crossing `non-sealed` is stable: declaration
+    // order among annotations still reaches the fingerprint.
+    assert_ne!(
+        fingerprint("@A non-sealed @B class T {}"),
+        fingerprint("@B non-sealed @A class T {}"),
+    );
+}
+
+#[test]
 fn reordering_repeated_annotations_is_rejected() {
     // Reflection exposes repeatable annotations in declaration order.
     assert_ne!(

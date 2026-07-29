@@ -572,12 +572,21 @@ pub struct StructurePolicy<K: 'static> {
     /// `NormalizationOwner` grants; a child carrying recovery keeps its position, so
     /// moving it past a sortable neighbour still fails.
     pub unordered_nodes: &'static [K],
-    /// Nodes whose keyword tokens are order-insensitive while their child nodes keep
-    /// their relative order, covering `ReorderReason::Modifiers`. Sorted keywords are
-    /// emitted ahead of the nodes so that moving a keyword across an annotation is
-    /// tolerated, but a swap of two repeated annotations still fails: reflection
-    /// exposes repeatable annotations in declaration order.
+    /// Nodes whose keyword tokens are order-insensitive, covering
+    /// `ReorderReason::Modifiers`. Sorted keywords are emitted ahead of the child
+    /// nodes so that moving a keyword across an annotation is tolerated. Child
+    /// nodes keep their relative order except for the kinds
+    /// `unordered_keywords_ordered_children` lists.
     pub unordered_keywords: &'static [K],
+    /// Child kinds of an `unordered_keywords` node that may cross the node's
+    /// other children but keep declaration order among themselves, covering an
+    /// annotation the formatter moves across a node-shaped modifier like
+    /// `non-sealed`. Canonicalization is a stable partition that emits these
+    /// children ahead of the rest, never a sort by rendering, so a swap of two
+    /// of them -- repeated annotations, which reflection exposes in declaration
+    /// order -- still fails. A child carrying recovery stays with the node's
+    /// other children, mirroring the authorization `NormalizationOwner` grants.
+    pub unordered_keywords_ordered_children: &'static [K],
     /// Child kinds the formatter may reorder among their own positions inside an
     /// otherwise order-sensitive parent, covering `ReorderReason::Imports` where
     /// imports share a list with other declarations. As with `unordered_nodes`, a
@@ -819,6 +828,10 @@ where
 
     let mut keywords: Vec<String> = Vec::new();
     let mut slots: Vec<String> = Vec::new();
+    // Parallel to `slots` in `unordered_keywords` mode, where only node
+    // children reach `slots`: whether the child joins the declaration-order
+    // partition (`unordered_keywords_ordered_children`).
+    let mut slot_ordered: Vec<bool> = Vec::new();
     let mut reorderable: Vec<usize> = Vec::new();
     for index in 0..node.slot_count() {
         match node.slot_at(index) {
@@ -839,6 +852,13 @@ where
                 if canonicalizable {
                     reorderable.push(slots.len());
                 }
+                slot_ordered.push(
+                    unordered_keywords
+                        && is_canonicalizable_child(
+                            child,
+                            policy.unordered_keywords_ordered_children,
+                        ),
+                );
                 slots.push(rendered);
             }
             Some(SyntaxSlot::Token(token)) => {
@@ -864,6 +884,16 @@ where
 
     if unordered_keywords {
         keywords.sort_unstable();
+        // A listed child may cross the node's other children but keeps
+        // declaration order among its own kind, so canonicalize with a stable
+        // partition rather than a sort by rendering: two of them swapping
+        // places still changes the fingerprint.
+        let mut partitioned: Vec<(bool, String)> = slot_ordered.into_iter().zip(slots).collect();
+        partitioned.sort_by_key(|&(ordered, _)| !ordered);
+        slots = partitioned
+            .into_iter()
+            .map(|(_, rendered)| rendered)
+            .collect();
         keywords.append(&mut slots);
         slots = keywords;
     } else if reorderable.len() > 1 {

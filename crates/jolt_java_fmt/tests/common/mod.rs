@@ -28,6 +28,9 @@ pub(crate) const STRUCTURE_POLICY: StructurePolicy<JavaSyntaxKind> = StructurePo
     // just `final` plus annotations, so it has no keyword order to canonicalize, and the
     // formatter preserves whichever spelling the source used.
     unordered_keywords: &[JavaSyntaxKind::ModifierList],
+    // Annotations keep declaration order among themselves but may cross the
+    // node-shaped `non-sealed` modifier when the formatter sorts the list.
+    unordered_keywords_ordered_children: &[JavaSyntaxKind::Annotation],
     reorderable_children: &[JavaSyntaxKind::ImportDeclaration],
     // `BlockStatementList` and `BlockStatement` are the list plumbing that brace
     // promotion interposes; neither owns a brace, so eliding them cannot hide a lost

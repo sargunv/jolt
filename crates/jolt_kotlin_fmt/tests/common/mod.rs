@@ -22,6 +22,7 @@ pub(crate) const STRUCTURE_POLICY: StructurePolicy<KotlinSyntaxKind> = Structure
     ],
     unordered_nodes: &[KotlinSyntaxKind::ImportDirectiveList],
     unordered_keywords: &[],
+    unordered_keywords_ordered_children: &[],
     reorderable_children: &[],
     // Eliding `ParenthesizedExpression` costs no precedence coverage: operator nesting
     // lives in the `BinaryExpression` spine, so a paren that actually mattered still
