@@ -4,3 +4,9 @@ fun assignmentTargets(target: Target, index: Int, value: String) {
     target.child!!.name = value
     target.items[index].label = value
 }
+
+fun postfixAssignmentTargets(clauses: MutableList<String>?, target: Target, index: Int) {
+    clauses!! += "element"
+    clauses!! -= "element"
+    target.items[index]!! += target
+}
