@@ -27,6 +27,10 @@ struct FormatterIgnoreRange<'source> {
     separators_without_on: ExceptionalSeparators,
     on_marker_is_trailing: bool,
     following_starts_after_line: bool,
+    /// Set when the region was opened by an `@formatter:off` with no matching
+    /// `@formatter:on`: the stored interior runs to end of source, and the
+    /// effective end is clamped to the innermost container at query time.
+    unterminated: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -108,6 +112,7 @@ pub fn formatter_ignore_runs_claim_boundary_comment<'source>(
 /// be shared by every nested formatter rule in one run.
 #[derive(Default)]
 pub(crate) struct FormatterIgnorePlan<'source> {
+    source: &'source str,
     ranges: Vec<FormatterIgnoreRange<'source>>,
     #[cfg(test)]
     query_comparisons: Cell<usize>,
@@ -304,8 +309,24 @@ pub(crate) fn formatter_ignore_runs<'source>(
         if !skipped_are_owned || overlaps_previous || overlaps_next {
             continue;
         }
+        let mut range = plan.ranges[range_index].clone();
+        if range.unterminated {
+            let clamped_interior = TextRange::new(range.interior.start(), container.end());
+            // The container's close delimiter follows: leave its leading
+            // whitespace out of the verbatim text, the same way a paired
+            // region ends before its on marker's line.
+            let clamped_text = strip_trailing_line_ending(
+                plan.source[clamped_interior.start().get()..clamped_interior.end().get()]
+                    .trim_end_matches([' ', '\t']),
+            );
+            range.raw_text = clamped_text;
+            range.raw_text_with_on = clamped_text;
+            range.claim_with_on = range.claim_with_on.with_range(clamped_interior, true);
+            range.claim_without_on = range.claim_without_on.with_range(clamped_interior, false);
+            range.interior = clamped_interior;
+        }
         runs.push(FormatterIgnoreRun {
-            range: plan.ranges[range_index].clone(),
+            range,
             insert_index: skip_start,
             skip_start,
             skip_end,
@@ -338,8 +359,21 @@ pub(crate) fn formatter_ignore_may_apply(
         .ranges
         .partition_point(|range| range.interior.start() < container.start());
     plan.ranges.get(index).is_some_and(|range| {
-        container.start() <= range.interior.start() && range.interior.end() <= container.end()
+        container.start() <= range.interior.start()
+            && effective_range_end(range, container) <= container.end()
     })
+}
+
+/// An unterminated region's interior runs to end of source; its effective
+/// end is the end of the container currently being queried, which both
+/// admits it to that container and lets the ownership and overlap guards
+/// below confine it to the innermost one.
+fn effective_range_end(range: &FormatterIgnoreRange<'_>, container: TextRange) -> TextSize {
+    if range.unterminated {
+        container.end()
+    } else {
+        range.interior.end()
+    }
 }
 
 fn range_containing_start(
@@ -351,13 +385,13 @@ fn range_containing_start(
         #[cfg(test)]
         plan.query_comparisons
             .set(plan.query_comparisons.get().saturating_add(1));
-        range.interior.end() <= item_start
+        effective_range_end(range, container) <= item_start
     });
     let range = plan.ranges.get(index)?;
     (container.start() <= range.interior.start()
-        && range.interior.end() <= container.end()
+        && effective_range_end(range, container) <= container.end()
         && range.interior.start() <= item_start
-        && item_start < range.interior.end())
+        && item_start < effective_range_end(range, container))
     .then_some(index)
 }
 
@@ -526,6 +560,7 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
                     on_marker_is_trailing,
                     following_starts_after_line: !on_marker_is_trailing
                         || owned_suffix_crosses_line,
+                    unterminated: false,
                 });
             }
         } else if leading_comment_start.is_none() && line.comment_starts_own_line {
@@ -537,8 +572,17 @@ pub(crate) fn formatter_ignore_plan_with_safety<'source, L: Language>(
         visit_token_comments(token, &mut visit_comment);
     }
 
+    // An off marker with no matching on marker opens a region that runs to
+    // the end of its innermost container (IntelliJ's convention, extended to
+    // end of file at top level): store it to end of source and clamp the
+    // effective end per container at query time.
+    if let Some(start) = off_comment_start {
+        ranges.push(unterminated_range(source, start, claim_anchor));
+    }
+
     populate_separators(&mut ranges, &tokens, safety);
     FormatterIgnorePlan {
+        source,
         ranges,
         #[cfg(test)]
         query_comparisons: Cell::new(0),
@@ -845,6 +889,33 @@ fn leading_indent(line: &str) -> &str {
         .find_map(|(index, character)| (!matches!(character, ' ' | '\t')).then_some(index))
         .unwrap_or(line.len());
     &line[..indent_end]
+}
+
+fn unterminated_range<'source, L: Language>(
+    source: &'source str,
+    start: usize,
+    claim_anchor: &SyntaxToken<'source, L>,
+) -> FormatterIgnoreRange<'source> {
+    let start = TextSize::new(start);
+    let end = TextSize::new(source.len());
+    FormatterIgnoreRange {
+        raw_text: strip_trailing_line_ending(&source[start.get()..]),
+        raw_text_with_on: strip_trailing_line_ending(&source[start.get()..]),
+        interior: TextRange::new(start, end),
+        claim_with_on: claim_anchor.source_range_claim(TextRange::new(start, end), true),
+        claim_without_on: claim_anchor.source_range_claim(TextRange::new(start, end), false),
+        separators_with_on: ExceptionalSeparators {
+            before: crate::ExceptionalSeparator::None,
+            after: crate::ExceptionalSeparator::None,
+        },
+        separators_without_on: ExceptionalSeparators {
+            before: crate::ExceptionalSeparator::None,
+            after: crate::ExceptionalSeparator::None,
+        },
+        on_marker_is_trailing: false,
+        following_starts_after_line: false,
+        unterminated: true,
+    }
 }
 
 fn strip_trailing_line_ending(text: &str) -> &str {

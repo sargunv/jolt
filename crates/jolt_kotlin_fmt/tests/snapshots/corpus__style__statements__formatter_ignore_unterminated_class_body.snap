@@ -1,0 +1,13 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class InClass {
+  // @formatter:off
+  val kept   =   6
+  val also   =   7
+}
+
+diagnostics:
+(none)

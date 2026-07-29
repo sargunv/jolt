@@ -155,7 +155,11 @@ validate whether the source is acceptable to a compiler.
 recursive rule-local searches. When the source contains a possible marker, the
 shared planner walks root tokens and their comments in source order, records
 complete first-off-wins pairs, derives their source claims, and computes their
-lexical boundaries. The resulting ordered plan is immutable for the run.
+lexical boundaries. An off marker with no matching on marker opens an
+unterminated region that runs to the end of its innermost container (to end of
+file at top level, matching IntelliJ's convention); its effective end is clamped
+per container when the region is queried. The resulting ordered plan is
+immutable for the run.
 
 Only source-ordered list rules that can own an ignored interval query the plan.
 They pass their syntax-owned container and direct item ranges, receive runs to

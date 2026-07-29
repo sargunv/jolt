@@ -82,6 +82,8 @@ style/program/qualified-name-comment-positions.kt
 style/program/qualified-names.kt
 style/program/section-visibility.kt
 style/program/top-level-blank-lines.kt
+style/statements/formatter-ignore-unterminated-class-body.kt
+style/statements/formatter-ignore-unterminated.kt
 style/statements/if-else.kt
 style/statements/local-declarations.kt
 style/statements/loops-and-labels.kt
