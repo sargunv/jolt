@@ -7,9 +7,9 @@ use jolt_kotlin_syntax::{
 };
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_dangling_comments, format_leading_comments,
-    format_removed_separator, format_separator_with_comments, format_token, token_has_comments,
-    trailing_comments_force_line,
+    LeadingTrivia, TrailingTrivia, comment_forces_line, format_dangling_comments,
+    format_leading_comments, format_removed_separator, format_separator_with_comments,
+    format_token, token_has_comments, trailing_comments_force_line,
 };
 use crate::helpers::lists::{
     CommaListItem, physical_comma_list_items, prepare_comma_list_items_between,
@@ -382,6 +382,7 @@ pub(super) fn lambda_body_doc<'source>(
                 if let Some(close) = close {
                     let comments = close.leading_comments().collect::<Vec<_>>();
                     if !comments.is_empty() {
+                        forces_line_after |= comments.iter().any(comment_forces_line);
                         let comments = format_dangling_comments(docs, comments);
                         push_lambda_body_doc(docs, &mut count, comments);
                     }
